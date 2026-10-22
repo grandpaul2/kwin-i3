@@ -75,7 +75,7 @@ trap teardown EXIT
 
 cat > "$XDG_CONFIG_HOME/kwinrc" <<'RC'
 [Desktops]
-Number=4
+Number=10
 Rows=1
 
 [Windows]

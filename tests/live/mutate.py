@@ -12,7 +12,7 @@ Run: make mutate-live.
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
-T, R, H, X = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh"
+T, R, H, X, M = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -33,8 +33,15 @@ muts = [
  (X, "src/kwin.js", "sticky windows kept", "            if (w.desktops.length !== 1) {\n                // Now on all desktops", "            if (false) {\n                // Now on all desktops"),
  (X, "src/kwin.js", "re-adopt on one desktop ignored", "            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }", "            if (!con) return;"),
  (X, "src/kwin.js", "guard logs nothing", "            catch (e) { log(\"ERROR in \" + name", "            catch (e) { (\"ERROR in \" + name"),
+ (M, "src/kwin.js", "no relocation", "        relocate(ws, screen);\n", ""),
+ (M, "src/kwin.js", "screen changes ignored", "        workspace.screensChanged.connect(guard(\"screens\", function () { scheduleAll(); wantFocus(); }));", ""),
+ (M, "src/kwin.js", "no neighbouring output", "        var t = Workspaces.screenToward(outputOf(ws), dir);", "        var t = null;"),
+ (M, "src/kwin.js", "pointer doesn't follow", "        if (from && from !== s) invoke(\"MoveMouseToFocus\");", ""),
+ (M, "src/kwin.js", "no login numbering", "        if (login) Workspaces.numberScreens();", ""),
+ (M, "src/workspaces.js", "a gone home is forgotten", "        if (!home[num] && s) home[num] = s.name;\n        return s || workspace.screens[0];", "        var f = s || workspace.screens[0];\n        home[num] = f.name;\n        return f;"),
+ (M, "src/kwin.js", "empty workspace opens at its old home", "            var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;", "            var s = Workspaces.outputOf(n);"),
 ]
-ALL = [H, T, R, X]
+ALL = [H, T, R, X, M]
 
 def run(scenarios, failfast):
     env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)

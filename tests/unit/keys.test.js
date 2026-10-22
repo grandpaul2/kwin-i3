@@ -38,3 +38,12 @@ test("every key has an action behind it", () => {
         assert.ok(src.includes(`"${action}": function`) || ["Focus", "Move"].some((p) => action.startsWith(p + " ")),
             `no action for "${action}"`);
 });
+
+test("workspace keys: Meta+1..0, Meta+Shift+1..0, and the shifted symbols (as i3ws)", () => {
+    const names = Function("return " + src.match(/var NAMES = (\[[^\]]*\]);/)[1])();
+    const shifted = Function("return " + src.match(/var SHIFTED = (\[[^\]]*\]);/)[1])();
+    assert.deepStrictEqual(names, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]);
+    assert.deepStrictEqual(shifted, ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"]);
+    for (const k of ['"Meta+" + k', '"Meta+Shift+" + k', '"Meta+" + SHIFTED[i]'])
+        assert.ok(src.includes(k), `workspace binding ${k} missing`);
+});

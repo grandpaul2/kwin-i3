@@ -12,7 +12,8 @@ var KI3 = (function () {
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
     var released = false;
-    var wsOutput = {};      // ws num -> KWin output it lives on (phase 3 widens this)
+    var placing = {};       // window id -> true while we move it between desktops/outputs
+    var focusPending = null; // { from: screen } : apply model focus after the next reconcile
 
     function id(w) { return String(w.internalId); }
 
@@ -26,26 +27,36 @@ var KI3 = (function () {
 
     // ---- workspaces ------------------------------------------------------------------------
 
-    function deskNum(desktop) { return workspace.desktops.indexOf(desktop) + 1; }
-    function deskOf(num) { return workspace.desktops[num - 1]; }
+    function deskNum(desktop) { return Workspaces.deskNum(desktop); }
+    function deskOf(num) { return Workspaces.deskOf(num); }
+    function outputOf(ws) { return Workspaces.outputOf(ws.num); }
+
+    // The model's workspace num, created with i3's orientation for the monitor it lives on.
+    function wsModel(num) {
+        var g = Workspaces.outputOf(num).geometry;
+        return model.ws(num, g.height > g.width ? "v" : "h");
+    }
 
     function wsForWindow(w) {
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
         if (num < 1) return null;
-        if (!wsOutput[num]) wsOutput[num] = w.output;
-        var g = w.output.geometry;
-        return model.ws(num, g.height > g.width ? "v" : "h");
+        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, w.output);
+        return wsModel(num);
     }
 
-    function outputOf(ws) {
-        var o = wsOutput[ws.num];
-        if (o && workspace.screens.indexOf(o) >= 0) return o;
-        // The screen showing it, else the first screen.
-        for (var i = 0; i < workspace.screens.length; i++)
-            if (workspace.currentDesktopForScreen(workspace.screens[i]) === deskOf(ws.num))
-                return (wsOutput[ws.num] = workspace.screens[i]);
-        return (wsOutput[ws.num] = workspace.screens[0]);
+    // i3's "visible workspace on the output next to this one" (move_to_output_directed, focus).
+    function outputNeighbour(ws, dir) {
+        var t = Workspaces.screenToward(outputOf(ws), dir);
+        if (!t) return null;
+        var num = deskNum(workspace.currentDesktopForScreen(t));
+        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, t);
+        return wsModel(num);
+    }
+
+    function invoke(action) {
+        callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component",
+                 "invokeShortcut", action);
     }
 
     // ---- scheduling ------------------------------------------------------------------------
@@ -67,6 +78,13 @@ var KI3 = (function () {
         var nums = Object.keys(dirty);
         dirty = {};
         nums.forEach(function (n) { reconcile(model.workspaces[n]); });
+        // Focus last, once windows are where they belong: a pointer warped earlier would land
+        // on the old place (i3ws learned this, 2026-10-21).
+        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from); }
+    }
+    function wantFocus() {
+        if (!focusPending) focusPending = { from: workspace.activeScreen };
+        if (!timer || !timer.active) schedule(model.focused ? Tree.wsOf(model.focused) : null);
     }
 
     // ---- projection: model -> the shape KWin's tiles can hold --------------------------------
@@ -206,6 +224,7 @@ var KI3 = (function () {
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
+        relocate(ws, screen);
         var p = project(ws);
         prepareTiles(root, screen);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
@@ -229,6 +248,25 @@ var KI3 = (function () {
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         checkInvariants(ws, root, p);
+    }
+
+    // Put every window of the workspace on its desktop and monitor: after Meta+Shift+N, a move
+    // across monitors, or a monitor coming back. Our own moves are flagged so the handlers
+    // below don't mistake them for someone else's.
+    function relocate(ws, screen) {
+        var desk = deskOf(ws.num);
+        model.leaves(ws).concat(ws.floating).forEach(function (c) {
+            var w = wins[c.win];
+            if (!w) return;
+            if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
+            var key = id(w);
+            if (w.tile) unmanageFrom(w.tile, w);
+            placing[key] = true;
+            try {
+                if (w.output !== screen) workspace.sendClientToScreen(w, screen);
+                w.desktops = [desk];      // after the screen: KWin gives a moved window that screen's desktop
+            } finally { delete placing[key]; }
+        });
     }
 
     // Logged, never thrown: the live tests fail on any "INVARIANT" line.
@@ -329,7 +367,7 @@ var KI3 = (function () {
         model.close(key);
         delete wins[key]; delete expected[key]; delete keptAbove[key];
         schedule(ws);
-        applyFocus();
+        wantFocus();
     }
 
     function reclassify(w) {
@@ -383,6 +421,7 @@ var KI3 = (function () {
                 schedule(was);
                 return;
             }
+            if (placing[key] || dragging) return;   // ours, or settled when the drag ends
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
             // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
@@ -399,8 +438,19 @@ var KI3 = (function () {
             if (!con) return;
             var ws = Tree.wsOf(con);
             if (kind === "resize" && con.type !== "floating") readBack(ws);
+            if (kind === "move" && w.output !== outputOf(ws)) {
+                // Dropped on another monitor: it joins the workspace shown there (as i3ws did).
+                var to = wsModel(deskNum(workspace.currentDesktopForScreen(w.output)));
+                model.moveToWorkspace(con, to);
+                schedule(to);
+            }
             schedule(ws);
         }));
+        // No outputChanged handler, on purpose. When a monitor goes or comes back, screensChanged
+        // re-places every window from the model (decision 10); when KWin moves a window to another
+        // monitor for any other reason, it also changes its desktop, and desktopsChanged above
+        // follows it, as i3ws did. A handler here was redundant: the fault battery could not tell
+        // it from nothing (2026-10-22).
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {
                 // Ours, possibly arriving late: nothing to do.
@@ -420,11 +470,24 @@ var KI3 = (function () {
 
     // ---- focus -----------------------------------------------------------------------------
 
-    function applyFocus() {
+    // Make KWin show what the model has focused: its workspace on its monitor, the window
+    // active; and the pointer follows when focus changed monitor (i3's mouse_warping output).
+    function applyFocus(from) {
         var f = model.focused;
-        if (!f || f.win === null) return;
+        if (!f) return;
+        var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
+        if (workspace.currentDesktopForScreen(s) !== desk) workspace.setCurrentDesktopForScreen(desk, s);
+        if (f.type === "ws" || f.win === null) {
+            if (workspace.activeScreen !== s) {
+                invoke("Switch to Screen " + workspace.screens.indexOf(s));
+                if (from && from !== s) invoke("MoveMouseToCenter");
+            }
+            return;
+        }
         var w = wins[f.win];
-        if (w && workspace.activeWindow !== w) workspace.activeWindow = w;
+        if (!w) return;
+        if (workspace.activeWindow !== w) workspace.activeWindow = w;
+        if (from && from !== s) invoke("MoveMouseToFocus");
     }
 
     function focusedCon() {
@@ -447,10 +510,10 @@ var KI3 = (function () {
             fn(con);
             var f = model.focused;
             schedule(before);
-            if (f) schedule(Tree.wsOf(f));
+            if (f) schedule(f.type === "ws" ? f : Tree.wsOf(f));
             // Every workspace a move can touch is rescheduled; reconcile is idempotent.
             scheduleAll();
-            applyFocus();
+            wantFocus();
             log("ACTION " + name);
         });
     }
@@ -480,6 +543,36 @@ var KI3 = (function () {
         actions["Move " + cap] = function (c) { model.move(c, DIRS[d]); };
     });
 
+    // Meta+N: show workspace N where it lives and focus it; an empty, hidden one opens on the
+    // current monitor (i3ws gotoWorkspace).
+    function gotoWorkspace(n) {
+        if (!deskOf(n)) return;
+        if (!Workspaces.showing(n)) {
+            var m = model.workspaces[n];
+            var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
+            var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;
+            Workspaces.setHome(n, s);
+            workspace.setCurrentDesktopForScreen(deskOf(n), s);
+        }
+        var ws = wsModel(n);
+        model.activate(model.descendFocused(ws));
+    }
+
+    // Meta+Shift+N: send the window to workspace N, on N's monitor (i3ws moveToWorkspace); an
+    // empty, hidden N comes to the window's monitor.
+    function moveToWorkspace(n, con) {
+        if (!con || !deskOf(n)) return;
+        if (!Workspaces.showing(n)) {
+            var m = model.workspaces[n];
+            var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
+            if (!occupied) Workspaces.setHome(n, outputOf(Tree.wsOf(con)));
+        }
+        model.moveToWorkspace(con, wsModel(n));
+    }
+
+    var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+    var SHIFTED = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"];
+
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
         "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
@@ -500,6 +593,15 @@ var KI3 = (function () {
                 var action = "kwin-i3 " + name + (i ? " (" + key.split("+").pop() + ")" : "");
                 registerShortcut(action, "kwin-i3: " + name.toLowerCase() + (i ? " (" + key + ")" : ""), key, fn);
             });
+        });
+        NAMES.forEach(function (k, i) {
+            var n = i + 1;
+            var go = act("Workspace " + n, function () { gotoWorkspace(n); });
+            var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(n, c); });
+            registerShortcut("kwin-i3 Workspace " + n, "kwin-i3: workspace " + n, "Meta+" + k, go);
+            registerShortcut("kwin-i3 Move to Workspace " + n, "kwin-i3: move to workspace " + n, "Meta+Shift+" + k, mv);
+            registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
+                             "kwin-i3: move to workspace " + n + " (Shift+digit as symbol)", "Meta+" + SHIFTED[i], mv);
         });
         registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
                          "Meta+Ctrl+Shift+Q", release);
@@ -551,15 +653,18 @@ var KI3 = (function () {
     }
 
     function start() {
-        model = Tree.create({ outputNeighbour: function () { return null; } });   // phase 3
+        model = Tree.create({ outputNeighbour: outputNeighbour });
+        // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
+        var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
+        if (login) Workspaces.numberScreens();
         // Windows already in KWin's tiles keep their layout (plan decision 5).
         workspace.screens.forEach(function (s) {
             workspace.desktops.forEach(function (d) {
                 var root = workspace.rootTile(s, d);
                 var spec = root ? specOf(root, 1) : null;
                 if (!spec) return;
-                var g = s.geometry, ws = model.ws(deskNum(d), g.height > g.width ? "v" : "h");
-                wsOutput[ws.num] = s;
+                Workspaces.setHome(deskNum(d), s);
+                var ws = wsModel(deskNum(d));
                 model.adopt(ws, spec.kids ? spec : { win: spec.win, percent: 1 });
                 model.leaves(ws).forEach(function (leaf) {
                     var w = null;
@@ -581,6 +686,20 @@ var KI3 = (function () {
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
+        workspace.screensChanged.connect(guard("screens", function () { scheduleAll(); wantFocus(); }));
+        // At login Plasma's activity service connects after scripts load and KWin then restores
+        // the desktop each screen showed at logout; number the screens again on that first
+        // activity event, once (from i3ws, seen in the log 2026-10-21).
+        if (login) {
+            var renumbered = false;
+            workspace.currentActivityChanged.connect(guard("activity", function () {
+                if (renumbered) return;
+                renumbered = true;
+                Workspaces.numberScreens();
+                model.activate(model.descendFocused(wsModel(1)));
+                wantFocus();
+            }));
+        }
         registerKeys();
         scheduleAll();
         log("kwin-i3 loaded");
