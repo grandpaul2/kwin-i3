@@ -234,6 +234,7 @@ var Tree = (function () {
     // tree_open_con, for a window KWin has put on workspace `ws`: it goes after the focus of that
     // workspace. Focus does not change here; KWin's activation tells us later (focusWin).
     M.open = function (win, ws) {
+        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf (review)
         var f = this.focused && wsOf(this.focused) === ws ? this.focused : this.descendFocused(ws);
         var con = f === ws ? ws : f.parent;
         if (isFloating(f)) {
@@ -249,6 +250,7 @@ var Tree = (function () {
 
     // A window that opens floating (dialogs, fixed size, rules).
     M.openFloating = function (win, ws) {
+        if (this.byWin[win]) return this.byWin[win];
         var node = newFloating(win);
         attach(node, ws, false);
         this.byWin[win] = node;
@@ -529,14 +531,14 @@ var Tree = (function () {
         if (isFloating(target)) target = target.parent;
         if (isFloating(con)) target = ws;
         var fs = fullscreenOn(ws);
-        if (con.fullscreen && fs) fs.fullscreen = false;
+        if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
         var parent = con.parent;
         detach(con);
         attach(con, target, false);
         fixPercent(parent);
         con.percent = 0;
         fixPercent(target);
-        focusUp(con);
+        if (!fs) focusUp(con);              // i3 step 6: not under the target's fullscreen window
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
     };
@@ -701,9 +703,16 @@ var Tree = (function () {
         return con || null;
     };
 
+    // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
+    // browser, then a video); two flags would block all directional focus (code review).
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
-        if (con && con.type === "con") con.fullscreen = !!on;
+        if (!con || con.type !== "con") return;
+        if (on) {
+            var other;
+            while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;
+        }
+        con.fullscreen = !!on;
     };
 
     // ---- adopting and reading ---------------------------------------------------------------

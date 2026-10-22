@@ -21,8 +21,27 @@ var KI3 = (function () {
         return function () {
             if (released) return;
             try { return fn.apply(null, arguments); }
-            catch (e) { log("ERROR in " + name + ": " + e + (e.stack ? " " + e.stack : "")); scheduleAll(); }
+            catch (e) { log("ERROR in " + name + ": " + e + (e.stack ? " " + e.stack : "")); retrySoon(); }
         };
+    }
+
+    // After an error: reconcile everything again 250 ms later, at most 3 times in a row; then wait
+    // for the next real event. Retrying at once used to re-arm a 0 ms timer for ever, spinning
+    // KWin's main thread on a repeating error (code review, 2026-10-22).
+    var failures = 0, retryTimer = null;
+    function retrySoon() {
+        failures++;
+        if (failures > 3) {
+            if (failures === 4) log("WARN giving up after 3 errors in a row; next try on the next event");
+            return;
+        }
+        if (!retryTimer) {
+            retryTimer = new QTimer();
+            retryTimer.singleShot = true;
+            retryTimer.interval = 250;
+            retryTimer.timeout.connect(function () { if (!released) scheduleAll(); });
+        }
+        retryTimer.start();
     }
 
     // ---- workspaces ------------------------------------------------------------------------
@@ -61,9 +80,7 @@ var KI3 = (function () {
 
     // ---- scheduling ------------------------------------------------------------------------
 
-    function schedule(ws) {
-        if (!ws) return;
-        dirty[ws.num] = true;
+    function kick() {
         if (!timer) {
             timer = new QTimer();
             timer.singleShot = true;
@@ -72,19 +89,30 @@ var KI3 = (function () {
         }
         if (!timer.active) timer.start();
     }
+    function schedule(ws) {
+        if (!ws) return;
+        dirty[ws.num] = true;
+        kick();
+    }
     function scheduleAll() { for (var n in model.workspaces) schedule(model.workspaces[n]); }
 
     function flush() {
-        var nums = Object.keys(dirty);
+        var nums = Object.keys(dirty), ok = true;
         dirty = {};
-        nums.forEach(function (n) { reconcile(model.workspaces[n]); });
+        // Each workspace on its own: one that fails can't stop the others.
+        nums.forEach(function (n) {
+            try { reconcile(model.workspaces[n]); }
+            catch (e) { ok = false; log("ERROR in reconcile " + n + ": " + e + (e.stack ? " " + e.stack : "")); }
+        });
+        if (ok) failures = 0; else retrySoon();
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place (i3ws learned this, 2026-10-21).
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from); }
+        rememberShown();
     }
     function wantFocus() {
         if (!focusPending) focusPending = { from: workspace.activeScreen };
-        if (!timer || !timer.active) schedule(model.focused ? Tree.wsOf(model.focused) : null);
+        kick();
     }
 
     // ---- projection: model -> the shape KWin's tiles can hold --------------------------------
@@ -136,9 +164,17 @@ var KI3 = (function () {
 
     // ---- reconcile: make one workspace's tiles match the model -------------------------------
 
+    var refused = false;    // set when KWin refused a manage() during this reconcile
+
+    // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
+    // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
-        tile.manage(w);
+        if (tile.manage(w)) return true;
+        expected[id(w)] = null;
+        floatWindow(w, "KWin refused to tile it");
+        refused = true;
+        return false;
     }
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
@@ -205,7 +241,10 @@ var KI3 = (function () {
         var dir = p.dir === "v" ? 2 : 1;
         if (tile.parent) tile.split(dir);          // a leaf becomes a layout with two children
         else { tile.layoutDirection = dir; tile.split(dir); }
-        while (tile.tiles.length < p.kids.length) tile.tiles[tile.tiles.length - 1].split(dir);
+        for (var n = 0; tile.tiles.length < p.kids.length; n++) {
+            if (n > 64) throw new Error("build: KWin would not split a tile");   // never spin
+            tile.tiles[tile.tiles.length - 1].split(dir);
+        }
         for (var i = 0; i < p.kids.length; i++) build(tile.tiles[i], p.kids[i].p);
     }
 
@@ -219,13 +258,19 @@ var KI3 = (function () {
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p);
     }
 
+    var selftestBroken = false;   // debug only: every reconcile throws (tests the backoff)
     function reconcile(ws) {
         if (!ws || released) return;
+        if (selftestBroken) throw new Error("selftest reconcile");
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
+        var rk = screen.name + "/" + ws.num;
+        if (!(rk in rootPadding)) rootPadding[rk] = root.padding;
         relocate(ws, screen);
+        floatWhatCannotFit(ws, screen);
         var p = project(ws);
+        refused = false;
         prepareTiles(root, screen);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
         if (want !== have) {
@@ -235,7 +280,7 @@ var KI3 = (function () {
                 var t = w.tile;
                 if (t) unmanageFrom(t, w); else expected[id(w)] = null;
             });
-            while (root.tiles.length) root.tiles[root.tiles.length - 1].remove();
+            clearRoot(root);
             if (p) {
                 build(root, p);
                 prepareTiles(root, screen);
@@ -247,7 +292,63 @@ var KI3 = (function () {
             setSizesStable(root, p);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
-        checkInvariants(ws, root, p);
+        if (refused) schedule(ws);          // the projection changed under us: one more pass
+        else checkInvariants(ws, root, p);
+    }
+
+    var rootPadding = {};   // "screen/ws" -> the root's padding before we set it (restored on release)
+
+    function clearRoot(root) {
+        for (var n = 0; root.tiles.length; n++) {
+            if (n > 256) throw new Error("clearRoot: tiles would not go away");
+            root.tiles[root.tiles.length - 1].remove();
+        }
+    }
+
+    function floatWindow(w, why) {
+        var con = model.byWin[id(w)];
+        if (!con || con.type === "floating") return;
+        if (w.tile) unmanageFrom(w.tile, w);
+        model.floatingEnable(con);
+        setFloatingLook(w, true);
+        log("FLOAT " + w.caption + ": " + why);
+    }
+
+    // The plan's rule "a window that can't fit floats" (code review: a window with a 900 px
+    // minimum hung 580 px off a 1280 px screen; a row of 12 windows broke KWin's sizing). While
+    // the tiled windows' minimum sizes can't fit the screen, float the one with the largest
+    // minimum along the axis that overflows.
+    function floatWhatCannotFit(ws, screen) {
+        var g = screen.geometry;
+        function minOf(p) {
+            if (p.win !== undefined) {
+                var m = wins[p.win].minSize;
+                return { w: m.width, h: m.height };
+            }
+            var r = { w: 0, h: 0 };
+            p.kids.forEach(function (k) {
+                var m = minOf(k.p);
+                if (p.dir === "h") { r.w += m.w; r.h = Math.max(r.h, m.h); }
+                else { r.h += m.h; r.w = Math.max(r.w, m.w); }
+            });
+            return r;
+        }
+        for (var n = 0; n < 32; n++) {
+            var p = project(ws);
+            if (!p) return;
+            var need = minOf(p);
+            var axis = need.w > g.width ? "w" : need.h > g.height ? "h" : null;
+            if (!axis) return;
+            var worst = null, worstMin = -1;
+            model.leaves(ws).forEach(function (leaf) {
+                var w = wins[leaf.win];
+                if (!w || w.minimized) return;
+                var m = axis === "w" ? w.minSize.width : w.minSize.height;
+                if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
+            });
+            if (!worst) return;
+            floatWindow(worst, "its minimum size can't fit beside the others");
+        }
     }
 
     // Put every window of the workspace on its desktop and monitor: after Meta+Shift+N, a move
@@ -310,7 +411,7 @@ var KI3 = (function () {
             if (c.win !== null && c.type !== "ws") {
                 var w = wins[c.win];
                 if (!w || w.minimized) return null;
-                var g = w.frameGeometry;
+                var g = w.tile ? w.tile.absoluteGeometry : w.frameGeometry;   // tiles: no size-step slack
                 return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };
             }
             var e = null;
@@ -345,11 +446,13 @@ var KI3 = (function () {
         var key = id(w);
         if (wins[key]) return;
         var kind = Rules.classify(w);
-        if (kind === "ignore") return;
+        // Ignored now, perhaps not later (class, transient or desktops set after it appears):
+        // watch it, so reclassify can adopt it then (code review).
+        if (kind === "ignore") { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
         var ws = wsForWindow(w);
-        if (!ws) return;
+        if (!ws) { connectWindow(w); return; }
         wins[key] = w;
-        if (w.maximizeMode !== 0) w.setMaximize(false, false);
+        if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         if (kind === "float") { model.openFloating(key, ws); setFloatingLook(w, true); }
         else model.open(key, ws);
         if (w.fullScreen) model.setFullscreen(key, true);
@@ -359,22 +462,27 @@ var KI3 = (function () {
         schedule(ws);
     }
 
-    function forgetWindow(w) {
+    // No longer ours: closed, made sticky, or now on the ignore list.
+    function dropWindow(w) {
         var key = id(w);
         if (!wins[key]) return;
         var con = model.byWin[key];
         var ws = con ? Tree.wsOf(con) : null;
+        try { if (!w.deleted && w.tile) unmanageFrom(w.tile, w); } catch (e) { /* gone */ }
+        if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
-        delete wins[key]; delete expected[key]; delete keptAbove[key];
+        delete wins[key]; delete expected[key]; delete keptAbove[key]; delete placing[key];
         schedule(ws);
-        wantFocus();
     }
+    // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
+    // still on screen and probably in use, so dropWindow alone doesn't move focus).
+    function forgetWindow(w) { dropWindow(w); wantFocus(); }
 
     function reclassify(w) {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
         var kind = Rules.classify(w);
-        if (kind === "ignore") return;
+        if (kind === "ignore") { dropWindow(w); return; }
         var floating = con.type === "floating";
         if ((kind === "float") !== floating) {
             model.toggleFloating(con);
@@ -413,12 +521,7 @@ var KI3 = (function () {
             if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }
             if (w.desktops.length !== 1) {
                 // Now on all desktops (sticky): no longer ours, as if it had never been (rules).
-                var was = Tree.wsOf(con);
-                if (w.tile) unmanageFrom(w.tile, w);
-                setFloatingLook(w, false);
-                model.close(key);
-                delete wins[key]; delete expected[key];
-                schedule(was);
+                dropWindow(w);
                 return;
             }
             if (placing[key] || dragging) return;   // ours, or settled when the drag ends
@@ -555,7 +658,9 @@ var KI3 = (function () {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
             var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;
-            Workspaces.setHome(n, s);
+            // An occupied workspace keeps its home even while that monitor is away, or it would
+            // never go back (code review: reproduced with Meta+2 during an unplug).
+            if (!occupied) Workspaces.setHome(n, s);
             workspace.setCurrentDesktopForScreen(deskOf(n), s);
         }
         var ws = wsModel(n);
@@ -609,16 +714,19 @@ var KI3 = (function () {
             registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
                              "kwin-i3: move to workspace " + n + " (Shift+digit as symbol)", "Meta+" + SHIFTED[i], mv);
         });
-        registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
-                         "Meta+Ctrl+Shift+Q", release);
         // Only with debug logging (the live tests): an action that throws, to prove the guard
         // logs it and kwin-i3 carries on. No key; never registered in normal use.
-        if (DEBUG_LOG) registerShortcut("kwin-i3 Selftest Throw", "kwin-i3: self-test (throws)", "",
-                                        act("Selftest Throw", function () { throw new Error("selftest"); }));
+        if (DEBUG_LOG) {
+            registerShortcut("kwin-i3 Selftest Throw", "kwin-i3: self-test (throws)", "",
+                             act("Selftest Throw", function () { throw new Error("selftest"); }));
+            registerShortcut("kwin-i3 Selftest Break Reconcile", "kwin-i3: self-test (reconcile throws)", "",
+                             function () { selftestBroken = !selftestBroken; scheduleAll(); });
+        }
     }
 
     // ---- release (the safety valve) --------------------------------------------------------
 
+    // Every step on its own: the safety valve must never stop half-way (code review).
     function release() {
         if (released) return;
         released = true;
@@ -627,12 +735,20 @@ var KI3 = (function () {
             try {
                 if (w.tile) w.tile.unmanage(w);
                 if (keptAbove[key]) w.keepAbove = false;
-            } catch (e) { /* the window may be gone */ }
+            } catch (e) { log("ERROR in release (window): " + e); }
         });
-        for (var n in model.workspaces) {
-            var root = workspace.rootTile(outputOf(model.workspaces[n]), deskOf(Number(n)));
-            if (root) while (root.tiles.length) root.tiles[root.tiles.length - 1].remove();
-        }
+        workspace.screens.forEach(function (s) {
+            workspace.desktops.forEach(function (d, i) {
+                try {
+                    var root = workspace.rootTile(s, d), rk = s.name + "/" + (i + 1);
+                    if (!root || !(rk in rootPadding)) return;     // only roots kwin-i3 touched
+                    var stray = tiledWindowsOf(root, []);
+                    stray.forEach(function (w) { root.unmanage(w); });
+                    for (var n = 0; root.tiles.length && n < 256; n++) root.tiles[root.tiles.length - 1].remove();
+                    root.padding = rootPadding[rk];
+                } catch (e) { log("ERROR in release (tiles): " + e); }
+            });
+        });
         log("RELEASED");
         log("ACTION Release");
     }
@@ -640,9 +756,13 @@ var KI3 = (function () {
     // ---- start -----------------------------------------------------------------------------
 
     // Read a root tile into a tree.adopt() spec; null if it holds nothing of ours.
-    function specOf(tile, total) {
+    function specOf(tile, total, desk) {
         if (!tile.tiles.length) {
-            var mine = tile.windows.filter(function (w) { return Rules.classify(w) === "tile"; });
+            // Only windows that really are on this desktop: KWin can leave a window in a tile
+            // after its desktop changed (spike); those go through adoptWindow instead (review).
+            var mine = tile.windows.filter(function (w) {
+                return Rules.classify(w) === "tile" && w.desktops.length === 1 && w.desktops[0] === desk;
+            });
             if (mine.length !== 1) return null;
             return { win: id(mine[0]), percent: total };
         }
@@ -651,7 +771,7 @@ var KI3 = (function () {
         tile.tiles.forEach(function (c) {
             var g = c.relativeGeometry, pg = tile.relativeGeometry;
             var share = dir === "h" ? g.width / (pg.width || 1) : g.height / (pg.height || 1);
-            var s = specOf(c, share);
+            var s = specOf(c, share, desk);
             if (s) kids.push(s);
         });
         if (!kids.length) return null;
@@ -660,6 +780,14 @@ var KI3 = (function () {
 
     function start() {
         model = Tree.create({ outputNeighbour: outputNeighbour });
+        // The safety valve first, so it exists whatever happens below (code review).
+        registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
+                         "Meta+Ctrl+Shift+Q", release);
+        try { startRest(); }
+        catch (e) { log("ERROR in start: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
+    }
+
+    function startRest() {
         // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
         var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
         if (login) Workspaces.numberScreens();
@@ -667,7 +795,7 @@ var KI3 = (function () {
         workspace.screens.forEach(function (s) {
             workspace.desktops.forEach(function (d) {
                 var root = workspace.rootTile(s, d);
-                var spec = root ? specOf(root, 1) : null;
+                var spec = root ? specOf(root, 1, d) : null;
                 if (!spec) return;
                 Workspaces.setHome(deskNum(d), s);
                 var ws = wsModel(deskNum(d));
@@ -675,14 +803,21 @@ var KI3 = (function () {
                 model.leaves(ws).forEach(function (leaf) {
                     var w = null;
                     workspace.windowList().forEach(function (x) { if (id(x) === leaf.win) w = x; });
+                    if (!w) { model.close(leaf.win); return; }
                     wins[leaf.win] = w;
                     expected[leaf.win] = w.tile;
+                    if (w.fullScreen) model.setFullscreen(leaf.win, true);
                     connectWindow(w);
                 });
             });
         });
         // Then every other window, bottom of the stack first, so focus order follows stacking.
-        workspace.stackingOrder.forEach(function (w) {
+        // stackingOrder can leave out a window that is still mapping, which then never got a
+        // windowAdded either (it came before the script): windowList() supplies those (found by
+        // 60-load.sh, after the live-desktop review saw a window left out).
+        var all = workspace.stackingOrder.slice();
+        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
+        all.forEach(function (w) {
             if (!wins[id(w)]) adoptWindow(w);
             else model.focusWin(id(w));
         });
@@ -692,25 +827,53 @@ var KI3 = (function () {
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
-        workspace.screensChanged.connect(guard("screens", function () { scheduleAll(); wantFocus(); }));
+        workspace.screensChanged.connect(guard("screens", screensChanged));
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
-        // activity event, once (from i3ws, seen in the log 2026-10-21).
-        if (login) {
-            var renumbered = false;
-            workspace.currentActivityChanged.connect(guard("activity", function () {
-                if (renumbered) return;
-                renumbered = true;
-                Workspaces.numberScreens();
-                model.activate(model.descendFocused(wsModel(1)));
-                wantFocus();
-            }));
-        }
+        // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
+        // load didn't look like a login (a session-restored window can exist already, review);
+        // with one activity it never fires mid-session.
+        var renumbered = false;
+        workspace.currentActivityChanged.connect(guard("activity", function () {
+            if (renumbered) return;
+            renumbered = true;
+            Workspaces.numberScreens();
+            model.activate(model.descendFocused(wsModel(1)));
+            scheduleAll();
+            wantFocus();
+        }));
         registerKeys();
         scheduleAll();
+        rememberShown();
         log("kwin-i3 loaded");
     }
 
+    // What each monitor showed, by name, so a monitor that comes back shows it again (review:
+    // nothing made a returning monitor show its workspace; KWin may restore something else).
+    var lastShown = {}, beforeLoss = null;
+    function rememberShown() {
+        workspace.screens.forEach(function (s) { lastShown[s.name] = deskNum(workspace.currentDesktopForScreen(s)); });
+    }
+    function screensChanged() {
+        var names = workspace.screens.map(function (s) { return s.name; });
+        var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
+        if (lost.length && !beforeLoss) beforeLoss = JSON.parse(JSON.stringify(lastShown));
+        if (beforeLoss) {
+            var allBack = Object.keys(beforeLoss).every(function (n) { return names.indexOf(n) >= 0; });
+            if (allBack) {
+                // Everyone is home: each monitor shows again what it showed before the loss.
+                workspace.screens.forEach(function (s) {
+                    var num = beforeLoss[s.name];
+                    if (num && deskOf(num)) workspace.setCurrentDesktopForScreen(deskOf(num), s);
+                });
+                beforeLoss = null;
+            }
+        }
+        lastShown = {};
+        rememberShown();
+        scheduleAll();
+        wantFocus();
+    }
     return {
         start: start,
         // for the live tests: the model as text

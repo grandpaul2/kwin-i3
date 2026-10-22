@@ -533,3 +533,32 @@ test("resize: nothing to resize against, or someone would vanish: refused", () =
     assert.strictEqual(m.resize(leaf(m, "b"), "width", 0.5), false, "a would vanish");
     assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
 });
+
+// ---- from the code review (2026-10-22) ------------------------------------------------------------
+
+test("fullscreen is one per workspace: a second clears the first (con_toggle_fullscreen)", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.setFullscreen("a", true);
+    m.setFullscreen("c", true);
+    assert.strictEqual(d(m), "H[a b c*!]");
+    m.setFullscreen("c", false);
+    assert.strictEqual(m.focusDir(LEFT).win, "b", "focus is not wedged");
+});
+
+test("open twice: no ghost leaf", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.open("b", m.ws(1));
+    m.openFloating("a", m.ws(1));
+    assert.strictEqual(d(m), "H[a b*]");
+});
+
+test("move to workspace: not focused under the target's fullscreen window", () => {
+    const m = model();
+    open(m, 2, "x");
+    m.setFullscreen("x", true);
+    open(m, 1, "a", "b");
+    m.moveToWorkspace(leaf(m, "b"), m.ws(2));
+    assert.deepStrictEqual(m.focusOrder(m.ws(2)), ["x", "b"]);
+});

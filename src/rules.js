@@ -1,7 +1,8 @@
 // Which windows kwin-i3 manages, and which of those float rather than tile. Mostly what the
 // patched Krohnkite decided (its shouldIgnore / shouldFloat, defaults from its main.xml), so
-// nothing changes for Paul at switch-over. Krohnkite's floatingTitle setting is read too: the
-// stage's Xephyr window floats by title ("STAGE (streamed)", ~/.dotfiles setup.sh).
+// nothing changes for Paul at switch-over. Settings come from kwin-i3's own [Script-kwin-i3]
+// group, not Krohnkite's; the floatingTitle default is the stage's Xephyr title
+// ("STAGE (streamed)", as ~/.dotfiles setup.sh set for Krohnkite).
 
 var Rules = (function () {
     function list(key, def) {

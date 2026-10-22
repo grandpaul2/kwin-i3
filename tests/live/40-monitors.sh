@@ -75,5 +75,18 @@ check "b is back on the second monitor"     geom_is b "1280,0 1280x720"
 check "c stayed on the first"               geom_is c "0,0 1280x720"
 check "and workspace 1 still holds only c"  wait_tree 1 "H[c]"
 
+# The code review's reproduction: pressing Meta+2 while 2's monitor is away must not move its
+# home; when the monitor returns, b goes back, and each monitor shows its own workspace again.
+press_key_fallback() { key "Workspace 2"; }
+timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
+check "unplugged again"                     poll one_screen
+key "Workspace 2"
+check "Meta+2 shows 2 on the remaining monitor" poll shows Virtual-0 2
+timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
+check "replugged"                           poll two_screens
+check "b goes home all the same"            poll on_output b Virtual-1
+check "its monitor shows 2 again"           poll shows Virtual-1 2
+check "and the first monitor shows 1, not 2 as well" poll shows Virtual-0 1
+
 check "no invariant failures or errors"     clean_log
 finish

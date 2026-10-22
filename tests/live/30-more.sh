@@ -64,7 +64,36 @@ back_in_tree() {
 }
 check "the minimized window comes back into the tree" poll back_in_tree
 
-# clean_log would see the deliberate ERROR above: look for anything else
-others_clean() { ! grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | grep -v 'Selftest Throw' | grep -q .; }
+# A window whose minimum can't fit beside the others floats instead of hanging off the screen
+# (the plan's rule; the live-desktop review saw 580 px off a 1280 px screen).
+for c in a c b f; do kclose "$c"; done
+client --title p; client --title q
+client --title big --min 900x500
+check "big floats, p and q tile"            wait_tree 1 "V[p q] ~big*"
+inside() {
+    local g; g=$(geom "$1")
+    [[ $g =~ ^(-?[0-9]+),(-?[0-9]+)\ ([0-9]+)x([0-9]+)$ ]] || return 1
+    (( BASH_REMATCH[1] >= 0 && BASH_REMATCH[1] + BASH_REMATCH[3] <= 1280 ))
+}
+check "every window inside the screen: p"   poll inside p
+check "q"                                   poll inside q
+check "big"                                 poll inside big
+check "logged why"                          wait_log '^.{9}FLOAT big: '
+
+# A reconcile that throws every time: three retries 250 ms apart, then it waits for an event
+# (it used to retry at once for ever, spinning KWin). Then it recovers on the next event.
+m=$(mark)
+busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
+check "it gives up after 3 retries"         wait_log '^.{9}WARN giving up after 3 errors' "$m"
+sleep 1
+errors=$(after "$m" | grep -c 'ERROR in reconcile')
+check "a bounded number of errors ($errors)" test "$errors" -ge 4 -a "$errors" -le 8
+busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
+m=$(mark)
+client --title r
+check "and it recovers on the next event"   wait_tree 1 "V[p q r*] ~big" "$m"
+
+# clean_log would see the deliberate ERRORs above: look for anything else
+others_clean() { ! grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | grep -vE 'Selftest Throw|selftest reconcile|giving up after 3' | grep -q .; }
 check "no other invariant failures or errors" others_clean
 finish

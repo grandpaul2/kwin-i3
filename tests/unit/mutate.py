@@ -18,10 +18,13 @@ muts = [
  ("no focus wrap", "                if (!firstWrap && permitsFocusing(wrap)) firstWrap = wrap;", ""),
  ("split always wraps", "        if (parent.nodes.length === 1) { parent.layout = o; return; }", ""),
  ("#3001 special case off", "if (con.parent.type !== \"ws\" && con.nodes.length === 1 && con.parent.nodes.length === 1) {", "if (false) {"),
- ("moved window not ws focus", "        focusUp(con);\n        if (focusNext)", "        if (focusNext)"),
+ ("moved window not ws focus", "        if (!fs) focusUp(con);", "        if (false) focusUp(con);"),
  ("attachToWorkspace side flipped", "if (dir === RIGHT || dir === DOWN) ws.nodes.unshift(con);", "if (dir === LEFT || dir === UP) ws.nodes.unshift(con);"),
  ("lone child at edge stays", "            this.moveToOutputDirected(con, dir);\n            return;\n        } else {", "            return;\n        } else {"),
  ("fullscreen permits all", "        if (!fs) return true;", "        return true;"),
+ ("fullscreen not exclusive", "            while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;", ""),
+ ("open not idempotent", "        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf (review)", ""),
+ ("focused under a fullscreen window", "        if (!fs) focusUp(con);", "        focusUp(con);"),
 ]
 survivors = []
 for name, a, b in muts:

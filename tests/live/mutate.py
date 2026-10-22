@@ -12,7 +12,7 @@ Run: make mutate-live.
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
-T, R, H, X, M, K, I = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh"
+T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -49,8 +49,13 @@ muts = [
  (K, "src/kwin.js", "Meta+: not registered", ", \"Meta+:\"],", "],"),
  (K, "src/kwin.js", "key table typo: Split V on Meta+B", "\"Split V\": [\"Meta+V\"]", "\"Split V\": [\"Meta+B\"]"),
  (K, "src/kwin.js", "a registration dropped (Meta+Ctrl+L)", "\"Shrink Height\": [\"Meta+Ctrl+Up\", \"Meta+Ctrl+L\"]", "\"Shrink Height\": [\"Meta+Ctrl+Up\"]"),
+ (X, "src/kwin.js", "no backoff: retry at once, for ever", "        if (failures > 3) {", "        if (false) {"),
+ (X, "src/kwin.js", "can't-fit windows still tile", "        floatWhatCannotFit(ws, screen);\n", ""),
+ (M, "src/kwin.js", "Meta+N moves a gone home", "            if (!occupied) Workspaces.setHome(n, s);", "            Workspaces.setHome(n, s);"),
+ (M, "src/kwin.js", "a returning monitor's workspace not restored", "            if (allBack) {", "            if (false) {"),
+ (L, "src/kwin.js", "windows missing from stackingOrder not adopted", "        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });", ""),
 ]
-ALL = [H, T, R, X, M, K, I]
+ALL = [H, T, R, X, M, K, I, L]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
