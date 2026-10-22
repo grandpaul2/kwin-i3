@@ -1101,10 +1101,14 @@ var KI3 = (function () {
     }
     // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
     // a fullscreen window dragged to the other monitor went back, small, to the old one when its
-    // old workspace let go of it (fuzzer I9). A fullscreen window keeps its geometry.
+    // old workspace let go of it (fuzzer I9). A fullscreen window keeps its geometry. So does a
+    // hidden one (its desktop not shown on its monitor): a hidden window never acknowledges a new
+    // size, and KWin applies no geometry to it until it does, so it froze at that old size, out
+    // of sight, through every later move (fuzzer I2, a monitor unplugged and back: 2026-10-22).
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
-        var g = w.fullScreen ? w.frameGeometry : null;
+        var hidden = w.output && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
+        var g = w.fullScreen || hidden ? w.frameGeometry : null;
         tile.unmanage(w);
         if (g) w.frameGeometry = g;
     }
