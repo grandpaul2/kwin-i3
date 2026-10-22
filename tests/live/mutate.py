@@ -29,7 +29,7 @@ muts = [
  (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized && !(w.fullScreen && !w.tile);", "        return !!w && !(w.fullScreen && !w.tile);"),
  (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
  (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1, d) : null;", "                var spec = null;"),
- (R, "src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
+ (R, "src/kwin.js", "release leaves windows tiled", "                untile(w);\n                if (keptAbove[key])", "                if (keptAbove[key])"),
  (T, "src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
  (T, "src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
  (T, "src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
@@ -72,6 +72,7 @@ muts = [
  (U, "src/kwin.js", "no pass after focus shows a desktop", "            schedule(ws);\n        }\n        if (f.type === \"ws\"", "        }\n        if (f.type === \"ws\""),
  (P, "src/kwin.js", "a returning monitor shows its old workspace even after it moved", "                    if (num && h && h !== s.name) num = unusedWorkspace(s);\n", ""),
  (D, "src/kwin.js", "a rebuilt root unmanages by w.tile (hidden windows stay listed)", "                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });", "                t.windows.slice().forEach(function (w) { if (w.tile) unmanageFrom(w.tile, w); });"),
+ (D, "src/kwin.js", "a modal pair's two-desktop moment taken for sticky", "            if (relocating && w.desktops.length !== 1) return;\n", ""),
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
 ]
 ALL = [H, T, R, X, M, U, P, D, K, I, L, C]
@@ -83,6 +84,10 @@ ALL = [H, T, R, X, M, U, P, D, K, I, L, C]
 # - "Meta+N moves a gone home": the fix in gotoWorkspace overlaps the screensChanged restore (a
 #   returning monitor shows again what it showed), which corrects the same symptom; kept as
 #   defence in depth, no test can separate them.
+# - "untile() back to w.tile in dropWindow" (and the other five call sites): with the relocate
+#   guard in place no test drops a hidden, listed window any more; untile is kept because KWin's
+#   listing without w.tile on a hidden desktop is real (KWin 6.7.5 Tile::manage), so unmanaging
+#   by w.tile alone is wrong wherever it happens (fuzzer I1, 2026-10-22).
 # - "windows missing from stackingOrder not adopted": guards a timing race (a window too new to be
 #   in stackingOrder when kwin-i3 loads) seen twice but not reproducible on demand; one harmless line.
 

@@ -38,7 +38,10 @@ check "minimized: main fills the screen"    geom_is main "0,0 1280x720"
 on a 'w.minimized = false;'
 check "unminimized: back on the left"       geom_is a "0,0 640x720"
 
-# a reload keeps the layout (decision 5)
+# a reload keeps the layout (decision 5). Focus main first: after the unminimize KWin may hand
+# a the focus late, and under load c then opened beside a (seen 2026-10-22 with the fuzzer running).
+on main 'workspace.activeWindow = w;'
+check "main focused"                        wait_tree 1 "H[a main*]"
 client --title c
 key "Split V"; client --title d
 check "before reload"                       wait_tree 1 "H[a main V[c d*]]"

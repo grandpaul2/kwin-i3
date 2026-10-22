@@ -191,6 +191,19 @@ var KI3 = (function () {
         if (g) w.frameGeometry = g;
     }
 
+    // Off whatever tile has it. On a hidden desktop KWin lists a window in a tile without placing
+    // it, so w.tile is null there; by w.tile alone the window stayed listed and the next manage()
+    // was a no-op (fuzzer I1: a window with a modal dialog, moved to a hidden workspace, is
+    // dropped and adopted again). So also the tile we put it in, if that still lists it.
+    function untile(w) {
+        var t = w.tile;
+        if (!t) {
+            t = expected[id(w)];
+            try { if (t && t.windows.indexOf(w) < 0) t = null; } catch (e) { t = null; }   // a removed tile
+        }
+        if (t) unmanageFrom(t, w); else expected[id(w)] = null;
+    }
+
     function tiledWindowsOf(t, out) {
         t.windows.forEach(function (w) { out.push(w); });
         t.tiles.forEach(function (c) { tiledWindowsOf(c, out); });
@@ -399,7 +412,7 @@ var KI3 = (function () {
     function floatWindow(w, why) {
         var con = model.byWin[id(w)];
         if (!con || con.type === "floating") return;
-        if (w.tile) unmanageFrom(w.tile, w);
+        untile(w);
         model.floatingEnable(con);
         setFloatingLook(w, true);
         log("FLOAT " + w.caption + ": " + why);
@@ -432,6 +445,10 @@ var KI3 = (function () {
     // Put every window of the workspace on its desktop and monitor: after Meta+Shift+N, a move
     // across monitors, or a monitor coming back. Our own moves are flagged so the handlers
     // below don't mistake them for someone else's.
+    // >0 while relocate moves a window. KWin moves a modal dialog and its parent together and gives
+    // them the new screen's current desktop as well: two desktops for a moment, which
+    // desktopsChanged took for "made sticky" and dropped, adopted, and sent again (fuzzer I1).
+    var relocating = 0;
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
         model.leaves(ws).concat(ws.floating).forEach(function (c) {
@@ -439,12 +456,13 @@ var KI3 = (function () {
             if (!w) return;
             if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
             var key = id(w);
-            if (w.tile) unmanageFrom(w.tile, w);
+            untile(w);
             placing[key] = true;
+            relocating++;
             try {
                 if (w.output !== screen) workspace.sendClientToScreen(w, screen);
                 w.desktops = [desk];      // after the screen: KWin gives a moved window that screen's desktop
-            } finally { delete placing[key]; }
+            } finally { delete placing[key]; relocating--; }
         });
     }
 
@@ -546,7 +564,7 @@ var KI3 = (function () {
         if (!wins[key]) return;
         var con = model.byWin[key];
         var ws = con ? Tree.wsOf(con) : null;
-        try { if (!w.deleted && w.tile) unmanageFrom(w.tile, w); } catch (e) { /* gone */ }
+        try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
         delete wins[key]; delete expected[key]; delete keptAbove[key]; delete placing[key];
@@ -565,7 +583,7 @@ var KI3 = (function () {
         if ((kind === "float") !== floating) {
             model.toggleFloating(con);
             setFloatingLook(w, kind === "float");
-            if (kind === "float" && w.tile) unmanageFrom(w.tile, w);
+            if (kind === "float") untile(w);
             schedule(Tree.wsOf(model.byWin[key]));
         }
     }
@@ -595,6 +613,9 @@ var KI3 = (function () {
         // maximize. A separate handler doing the same was found redundant by the fault battery
         // (2026-10-22): with two paths, removing either changed nothing, so neither was tested.
         w.desktopsChanged.connect(guard("desktops", function () {
+            // Two desktops while relocate moves it or its dialog: KWin's moment, not "made sticky".
+            // A parent KWin moves along with its modal dialog is still followed (below).
+            if (relocating && w.desktops.length !== 1) return;
             var con = model.byWin[key];
             if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }
             if (w.desktops.length !== 1) {
@@ -726,7 +747,7 @@ var KI3 = (function () {
             var n = model.toggleFloating(c), w = wins[c.win];
             if (n && w) {
                 setFloatingLook(w, n.type === "floating");
-                if (n.type === "floating" && w.tile) unmanageFrom(w.tile, w);
+                if (n.type === "floating") untile(w);
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
@@ -825,7 +846,7 @@ var KI3 = (function () {
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
-                if (w.tile) w.tile.unmanage(w);
+                untile(w);
                 if (keptAbove[key]) w.keepAbove = false;
             } catch (e) { log("ERROR in release (window): " + e); }
         });
