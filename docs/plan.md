@@ -84,16 +84,17 @@ tools/             testkwin.sh, logsink.py, testclient (below)
 | Meta+Shift+ same | move dir | i3 `tree_move`, all cases incl. `ws_force_orientation`; at the workspace edge, to the visible workspace of the neighbouring monitor (i3ws's `screenToward`), landing on the side it came from |
 | Meta+H / Meta+V | split h / split v | new |
 | Meta+E | layout toggle split | new |
-| Meta+Shift+Space | floating toggle | new (scope question 4) |
-| Meta+Space | focus mode_toggle | new (scope question 4) |
+| Meta+Shift+Space | floating toggle | new (Paul: yes, 2026-10-21) |
+| Meta+Space | focus mode_toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of 10 % as in the old config |
 | Meta+F | fullscreen | KWin's own; the window returns to its tile (verified). Focus and move keys do nothing while the focused window is fullscreen |
 | Meta+Shift+Q | kill | KWin's own |
 | Meta+Ctrl+Shift+Q | **release** | safety valve: unmanage every window, restore KWin's default tiles, stop acting until reload |
 
-Not planned unless Paul asks: tabbed and stacked (Meta+W is the Overview now; KWin has no tab bar),
-`focus parent` (KWin can't focus a container), urgent windows (i3 shows them in its bar; there is no
-bar), and i3's reload/restart/exit keys (reload is `unloadScript` from here; exit is Plasma's own).
+**Left out, Paul's decisions (2026-10-21):** tabbed and stacked ("I don't use tabbed"),
+`focus parent` ("never used this"), urgent windows (i3 showed them in its bar; there is no bar here).
+Also left out: i3's reload/restart/exit keys (reload is `unloadScript` from a session; exit is
+Plasma's own).
 
 ## Policies the adapter applies
 
@@ -133,7 +134,7 @@ Every root the script sees, including new desktops and returning outputs, gets `
    numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: if the virtual
    backend can't unplug an output, reconcile is driven from a synthetic "windows lost their tiles and
    the screen set changed" state, which is what a hotplug leaves behind. Not by hand on Paul's desktop.
-4. **Real input, outside Paul's session (ask first).** A nested `kwin_wayland` window with two
+4. **Real input, outside Paul's session. Tell Paul before it starts** (his words, 2026-10-21). A nested `kwin_wayland` window with two
    outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer
    warp, border drag, Meta+drag. It shows a window on his desktop, so only with his OK.
 5. **Switch-over on Paul's desktop**, with Paul, at a logout (Krohnkite is QML). kwinrc:
@@ -144,7 +145,7 @@ Every root the script sees, including new desktops and returning outputs, gets `
    and links `package/`; its shortcut pruning, `tests/test-claude-config.sh` and `health-check` move to
    the new action names; README's Plasma table is updated; `i3ws` and the Krohnkite copy are retired
    in one change. The laptop runs real i3 and is not touched.
-7. **Extras** from Paul's answers.
+7. **Extras**: none decided yet.
 
 **Action names are fixed now** (they persist in `kglobalshortcutsrc`, and renaming leaves dead
 entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kwin-i3 Split V`.
