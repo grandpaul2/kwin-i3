@@ -133,13 +133,36 @@ var KI3 = (function () {
         return out;
     }
 
-    function zeroPadding(t) {
+    // No gaps, and minimum sizes that are the windows' own. KWin gives every tile a minimum of
+    // 15% of the screen (tile.h m_minimumSize = 0.15 x 0.15, inherited by children), which would
+    // stop i3 sizes below 384 px on a 2560 px monitor. Splits get no minimum; a window's tile gets
+    // the window's minimum size, relative to the screen.
+    function prepareTiles(t, screen) {
         if (t.padding !== 0) t.padding = 0;
-        t.tiles.forEach(zeroPadding);
+        var min = { width: 0, height: 0 };
+        if (!t.tiles.length && t.windows.length === 1) {
+            var ms = t.windows[0].minSize, g = screen.geometry;
+            min = { width: ms.width / g.width, height: ms.height / g.height };
+        }
+        var cur = t.minimumSize;
+        if (Math.abs(cur.width - min.width) > 1e-6 || Math.abs(cur.height - min.height) > 1e-6)
+            t.minimumSize = min;
+        t.tiles.forEach(function (c) { prepareTiles(c, screen); });
     }
 
+    // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
+    // in order can leave a stale edge behind (seen 2026-10-22: four columns, the third left at
+    // 0.567 wide over the fourth). Passes repeat until every tile is where it should be.
+    function setSizesStable(root, p) {
+        for (var pass = 0; pass < 4; pass++)
+            if (!setSizes(root, p, { x: 0, y: 0, width: 1, height: 1 })) return;
+        log("WARN sizes did not settle after 4 passes");
+    }
+
+    // Returns true if anything had to change.
     function setSizes(tile, p, rect) {
-        if (p.win !== undefined) return;
+        if (p.win !== undefined) return false;
+        var changed = false;
         var pos = p.dir === "h" ? rect.x : rect.y;
         for (var i = 0; i < p.kids.length; i++) {
             var k = p.kids[i], child = tile.tiles[i];
@@ -149,10 +172,13 @@ var KI3 = (function () {
             pos += p.dir === "h" ? r.width : r.height;
             var g = child.relativeGeometry;
             if (Math.abs(g.x - r.x) > 1e-4 || Math.abs(g.y - r.y) > 1e-4 ||
-                Math.abs(g.width - r.width) > 1e-4 || Math.abs(g.height - r.height) > 1e-4)
+                Math.abs(g.width - r.width) > 1e-4 || Math.abs(g.height - r.height) > 1e-4) {
                 child.relativeGeometry = r;
-            setSizes(child, k.p, r);
+                changed = true;
+            }
+            if (setSizes(child, k.p, r)) changed = true;
         }
+        return changed;
     }
 
     // Build p's shape under `tile`, which has no children. Returns nothing; windows come after.
@@ -177,10 +203,11 @@ var KI3 = (function () {
 
     function reconcile(ws) {
         if (!ws || released) return;
-        var root = workspace.rootTile(outputOf(ws), deskOf(ws.num));
+        var screen = outputOf(ws);
+        var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
         var p = project(ws);
-        zeroPadding(root);
+        prepareTiles(root, screen);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
         if (want !== have) {
             // Different shape or different windows: rebuild this root. Unmanage first, so removing
@@ -192,12 +219,13 @@ var KI3 = (function () {
             while (root.tiles.length) root.tiles[root.tiles.length - 1].remove();
             if (p) {
                 build(root, p);
-                zeroPadding(root);
+                prepareTiles(root, screen);
             }
         }
         if (p) {
-            setSizes(root, p, { x: 0, y: 0, width: 1, height: 1 });
             placeWindows(root, p);
+            prepareTiles(root, screen);       // now each leaf holds its window: its minimum
+            setSizesStable(root, p);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         checkInvariants(ws, root, p);
@@ -210,6 +238,14 @@ var KI3 = (function () {
             if (t.padding !== 0) problems.push("padding " + t.padding);
             if (!t.tiles.length && t.windows.length > 1) problems.push("tile holds " + t.windows.length + " windows");
             if (!t.tiles.length && t.windows.length === 0 && p) problems.push("empty leaf tile");
+            if (t.tiles.length) {
+                var h = t.layoutDirection !== 2, pos = h ? t.relativeGeometry.x : t.relativeGeometry.y;
+                t.tiles.forEach(function (c) {
+                    var g = c.relativeGeometry, start = h ? g.x : g.y;
+                    if (Math.abs(start - pos) > 1e-3) problems.push("tiles overlap or leave a gap at " + start.toFixed(3));
+                    pos = start + (h ? g.width : g.height);
+                });
+            }
             t.tiles.forEach(walk);
         })(root);
         model.leaves(ws).forEach(function (leaf) {
@@ -423,6 +459,11 @@ var KI3 = (function () {
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
+        // i3's resize mode, as direct keys (a script can't have mode-only keys): 10 ppt.
+        "Shrink Width": function (c) { model.resize(c, "width", -0.1); },
+        "Grow Width": function (c) { model.resize(c, "width", 0.1); },
+        "Shrink Height": function (c) { model.resize(c, "height", -0.1); },
+        "Grow Height": function (c) { model.resize(c, "height", 0.1); },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
@@ -437,6 +478,10 @@ var KI3 = (function () {
         "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
         "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
         "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"], "Move Right": ["Meta+Shift+Right", "Meta+Shift+;"],
+        // The old config's resize mode: Left/J shrink width, Down/K grow height,
+        // Up/L shrink height, Right/; grow width.
+        "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
+        "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
     };
 
     function registerKeys() {

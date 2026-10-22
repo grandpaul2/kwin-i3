@@ -14,6 +14,9 @@ muts = [
  ("src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
  ("src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
  ("src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
+ ("src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
+ ("src/kwin.js", "KWin's 15% tile minimum kept", "            t.minimumSize = min;", ""),
+ ("src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
  ("src/rules.js", "dialogs tile", "        if (w.transient || w.modal || !w.resizeable) return \"float\";", "        if (!w.resizeable) return \"float\";"),
  ("src/rules.js", "title rule ignored", "            titleHas(w.caption, FLOAT_TITLE)) return \"float\";", "            false) return \"float\";"),
 ]

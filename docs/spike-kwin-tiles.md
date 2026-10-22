@@ -53,6 +53,16 @@ session, except one read-only dump of his live trees. Scripts are in `spike/`.
 6. **The trees persist** in kwinrc `[Tiling][<desktop>][<output>]`. At start the script rebuilds
    each tree from the windows actually there, rather than trusting what was saved.
 
+## Found in phase 2 (2026-10-22)
+
+7. **Every tile has a minimum of 15% of the screen** (`tile.h`: `m_minimumSize = QSizeF(0.15, 0.15)`,
+   inherited by child tiles). KWin silently refuses a narrower tile, so i3 shares below 15% (384 px
+   on 2560) don't happen. The adapter sets each tile's `minimumSize` itself: zero for splits, the
+   window's `minSize` for a window's tile. (The review said the default was 0.)
+8. **Setting one tile's `relativeGeometry` moves its neighbours' shared edges**, so one pass in
+   order can leave a stale edge (four columns: the third stayed 0.567 wide, over the fourth). The
+   adapter repeats the pass until nothing changes; the invariant check flags overlapping tiles.
+
 ## Not shown (needs a real session)
 
 - Dragging the border between two tiled windows with the mouse. KWin supports it for its own

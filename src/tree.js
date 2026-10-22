@@ -619,6 +619,39 @@ var Tree = (function () {
         return null;
     };
 
+    // ---- resize (commands.c cmd_resize_tiling_width_height) --------------------------------
+
+    // resize grow|shrink width|height <ppt>: the nearest ancestor (or con itself) that has a
+    // sibling along that orientation grows by ppt, the siblings give it up equally. False if it
+    // can't (nothing to resize against, or someone would vanish). i3's minimum is one pixel; the
+    // model has no pixels, so the floor is a thousandth (about 1-3 px on these monitors).
+    var MIN_SHARE = 0.001;
+    M.resize = function (con, what, ppt) {
+        if (!con || con.type !== "con") return false;
+        var o = what === "width" ? "h" : "v";
+        var current = con;
+        // resize_find_tiling_participants(..., both_sides = true)
+        while (current.type !== "ws") {
+            if (current.parent.layout === o && current.parent.nodes.length > 1) break;
+            current = current.parent;
+        }
+        if (current.type === "ws") return false;
+        var parent = current.parent, children = parent.nodes.length;
+        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / children; });
+        var next = current.percent + ppt;
+        var subtract = ppt / (children - 1);
+        if (ppt < 0 && next < MIN_SHARE) return false;
+        if (subtract >= 0) {
+            for (var i = 0; i < children; i++) {
+                var c = parent.nodes[i];
+                if (c !== current && c.percent - subtract < MIN_SHARE) return false;
+            }
+        }
+        current.percent = next;
+        parent.nodes.forEach(function (c) { if (c !== current) c.percent -= subtract; });
+        return true;
+    };
+
     // ---- focus (tree.c get_tree_next / tree_next) ------------------------------------------
 
     // Directional focus with i3's default focus_wrapping (yes): out of the workspace to the

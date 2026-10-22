@@ -501,3 +501,35 @@ test("adopt: a single window fills the workspace", () => {
     m.adopt(m.ws(1), { win: "a", percent: 1 });
     assert.strictEqual(d(m), "H[a]");
 });
+
+// ---- resize (cmd_resize_tiling_width_height) ----------------------------------------------------
+
+test("resize: grow width takes it from the siblings equally", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.focusWin("b");
+    assert.strictEqual(m.resize(leaf(m, "b"), "width", 0.1), true);
+    assert.deepStrictEqual(pct(m, "a", "b", "c"), [0.283, 0.433, 0.283]);
+});
+
+test("resize: inside a vertical split, width resizes the split", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");
+    m.resize(leaf(m, "c"), "width", -0.1);
+    assert.strictEqual(Math.round(leaf(m, "c").parent.percent * 1000) / 1000, 0.4);
+    assert.deepStrictEqual(pct(m, "a"), [0.6]);
+    m.resize(leaf(m, "c"), "height", 0.1);
+    assert.deepStrictEqual(pct(m, "b", "c"), [0.4, 0.6]);
+});
+
+test("resize: nothing to resize against, or someone would vanish: refused", () => {
+    const m = model();
+    open(m, 1, "a");
+    assert.strictEqual(m.resize(leaf(m, "a"), "width", 0.1), false);
+    open(m, 1, "b");
+    assert.strictEqual(m.resize(leaf(m, "b"), "height", 0.1), false, "no vertical split");
+    assert.strictEqual(m.resize(leaf(m, "b"), "width", 0.5), false, "a would vanish");
+    assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
+});

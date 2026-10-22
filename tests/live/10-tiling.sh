@@ -46,5 +46,27 @@ key "Toggle Split"
 check "toggle again: same-direction nest"   wait_tree 1 "H[H[a b*]]"
 check "projected flat: a left half"         geom_is a "0,0 640x720"
 
+
+# A same-direction nest *with siblings* must be merged into its parent: H[H[a d] b] -> 3 columns.
+kclose a; kclose b; sleep 0.5
+check "all closed: an empty workspace"      wait_tree 1 "H[]*"
+client --title a; sleep 1
+client --title b; sleep 1
+client --title c; sleep 1
+check "three windows side by side"          wait_tree 1 "H[a b c*]"
+key "Focus Left"; key "Focus Left"
+key "Split H"
+client --title d; sleep 1
+check "a nested split of the same direction" wait_tree 1 "H[H[a d*] b c]"
+check "projected flat: a is a sixth"        geom_is a "0,0 213x720"
+check "projected flat: d is the next sixth" geom_is d "213,0 213x720"
+check "projected flat: b is a third"        geom_is b "427,0 427x720"
+
+key "Focus Right"
+key "Grow Width"
+check "grow width: b gains 10% of the screen" geom_is b "363,0 555x720"
+key "Shrink Width"
+check "shrink width: back"                  geom_is b "427,0 427x720"
+
 check "no invariant failures or errors"     clean_log
 finish

@@ -24,7 +24,9 @@ check "back in its tile"                    geom_is a "0,0 640x720"
 
 # maximize is undone
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "main") w.setMaximize(true, true); })' >/dev/null; sleep 0.8
-check "maximize is undone"                  geom_is main "640,0 640x720"
+check "maximize is undone: back in its tile" geom_is main "640,0 640x720"
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "main") log(w.maximizeMode); })' | grep -qx 0
+check "maximize is undone: not maximized"   test $? -eq 0
 
 # minimize: its space goes to the others, and it comes back in place
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "a") w.minimized = true; })' >/dev/null; sleep 0.8
@@ -49,6 +51,8 @@ key "Release"
 check "release logs"                        wait_log '^.{9}RELEASED$'
 kjs 'var n = 0; workspace.windowList().forEach(function (w) { if (w.tile) n++; }); log(n)' | grep -qx 0
 check "no window is left in a tile"         test $? -eq 0
+g=$(geom a)
+check "released windows get their own size back (not tile-sized: $g)" test "$g" != "0,0 427x720" -a "$g" != "0,0 1280x720"
 
 check "no invariant failures or errors"     clean_log
 finish
