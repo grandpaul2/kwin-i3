@@ -18,6 +18,10 @@ binds work here too: commit and push as you go, without asking).
   here. `make fuzz` and `make test` build `src/` as it stands, so don't leave trace lines in `src/`.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) finds bugs; **`~/.local/state/kwin-i3/captures/`**
   holds the ones Paul hit (Meta+Shift+B, `tools/capture`). Each becomes a live test, watched red.
+  Run the fuzzer after a major change or a batch of minor ones, not after every fix (Paul,
+  2026-10-22): `make test` covers a small fix. It runs ~20 min in the background; poll it in the
+  turn and give Paul a line every couple of minutes. Its finds cluster at the KWin seam (hidden
+  desktops, monitor unplug/replug, fullscreen, modal dialogs), not in `tree.js`.
 
 ## Working rules
 
