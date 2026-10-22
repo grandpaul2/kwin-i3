@@ -924,6 +924,7 @@ var KI3 = (function () {
     var timer = null;
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
+    var rootPadding = {};   // "screen/ws" -> the root's padding before we set it (restored on release)
     var focusPending = null; // { from: screen } : apply model focus after the next reconcile
 
     function id(w) { return String(w.internalId); }
@@ -1207,7 +1208,6 @@ var KI3 = (function () {
         else checkInvariants(ws, root, p);
     }
 
-    var rootPadding = {};   // "screen/ws" -> the root's padding before we set it (restored on release)
 
     function clearRoot(root) {
         for (var n = 0; root.tiles.length; n++) {
