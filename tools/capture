@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Meta+Shift+B on Paul's desktop: save kwin-i3's state the moment something looks wrong, so it can
+# become a test later without him describing it. Silent (no notification), takes about a second.
+#   ~/.local/state/kwin-i3/captures/<time>/state.txt   kwin-i3's "Dump State": outputs, every
+#                                                      workspace's tree, every window, its last log
+#   .../journal.txt   KWin's journal lines from the last 10 minutes
+#   .../screen.png    both monitors
+# KI3_CAPTURE_DIR overrides the parent directory (the live test uses it). Inside the test KWin
+# (KI3_INNER=1) the journal and the screenshot are skipped: they would be Paul's, not the test's.
+set -uo pipefail
+here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+dir=${KI3_CAPTURE_DIR:-$HOME/.local/state/kwin-i3/captures}/$(date +%Y-%m-%d_%H%M%S.%3N)
+mkdir -p "$dir"
+state=$dir/state.txt
+
+"$here/logsink.py" "$state" net.local.kwini3.dump &
+sink=$!
+trap 'kill $sink 2>/dev/null' EXIT
+for _ in $(seq 40); do busctl --user status net.local.kwini3.dump >/dev/null 2>&1 && break; sleep 0.05; done
+
+timeout 5 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component \
+    invokeShortcut s "kwin-i3 Dump State" >/dev/null 2>&1
+for _ in $(seq 40); do grep -q 'DUMP END$' "$state" 2>/dev/null && break; sleep 0.05; done
+grep -q 'DUMP END$' "$state" 2>/dev/null || echo "capture: kwin-i3 did not answer (not loaded?)" >> "$dir/errors.txt"
+
+if [[ ${KI3_INNER:-} != 1 ]]; then
+    timeout 10 journalctl --user -b --since -10min --no-pager -o short-precise _COMM=kwin_wayland \
+        > "$dir/journal.txt" 2>&1
+    timeout 10 spectacle -b -n -f -o "$dir/screen.png" >/dev/null 2>&1
+fi
+exit 0

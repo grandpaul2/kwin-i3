@@ -4,13 +4,14 @@
 KWin drops print() from scripts unless the kwin_scripting logging category is on, and turning
 it on needs a KWin restart. So scripts call:
     callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", line)
-Usage: logsink.py <file>   (runs until killed; run it under `timeout`)
+Usage: logsink.py <file> [bus name]   (runs until killed; run it under `timeout`)
+The default name is the test log's; tools/capture passes net.local.kwini3.dump.
 """
 import sys, time
 import dbus, dbus.service, dbus.mainloop.glib
 from gi.repository import GLib
 
-NAME = "net.local.kwini3.log"
+NAME = sys.argv[2] if len(sys.argv) > 2 else "net.local.kwini3.log"
 
 class Sink(dbus.service.Object):
     def __init__(self, bus, out):

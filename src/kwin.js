@@ -799,6 +799,60 @@ var KI3 = (function () {
         log("ACTION Release");
     }
 
+    // ---- dump (tools/capture, Meta+Shift+B) ------------------------------------------------
+
+    // Everything needed to turn a bug Paul saw into a test, sent line by line to whoever owns
+    // net.local.kwini3.dump (tools/capture). Never throws: a broken part says so and the rest goes.
+    function dump() {
+        function out(s) { callDBus("net.local.kwini3.dump", "/", "net.local.kwini3.dump", "Log", String(s)); }
+        function part(name, fn) {
+            out("== " + name);
+            try { fn(); } catch (e) { out("ERROR in dump " + name + ": " + e); }
+        }
+        function rect(g) { return Math.round(g.x) + "," + Math.round(g.y) + " " + Math.round(g.width) + "x" + Math.round(g.height); }
+        out("DUMP BEGIN released=" + released + " debugLog=" + DEBUG_LOG);
+        part("outputs", function () {
+            workspace.screens.forEach(function (s) {
+                out(s.name + " " + rect(s.geometry) + " shows " + deskNum(workspace.currentDesktopForScreen(s)) +
+                    (s === workspace.activeScreen ? " active" : ""));
+            });
+            var c = workspace.cursorPos;
+            out("cursor " + Math.round(c.x) + "," + Math.round(c.y));
+            out("homes " + JSON.stringify(Workspaces.homes()));
+        });
+        part("tree", function () {
+            Object.keys(model.workspaces).forEach(function (n) {
+                var ws = model.workspaces[n];
+                out("TREE " + n + " " + named(model.describe(n)));
+                (function walk(c, depth) {
+                    out(new Array(depth + 1).join("  ") + (c.win !== null ? named(String(c.win)) : c.type + " " + c.layout) +
+                        " percent=" + (+c.percent).toFixed(4) + " focus=" + named(model.focusOrder(c).join(",")));
+                    c.nodes.forEach(function (k) { walk(k, depth + 1); });
+                })(ws, 1);
+                ws.floating.forEach(function (f) { out("  ~" + named(String(f.win))); });
+            });
+        });
+        part("windows", function () {
+            var active = workspace.activeWindow;
+            workspace.windowList().forEach(function (w) {
+                var m = w.minSize;
+                out([JSON.stringify(String(w.caption)), "class=" + w.resourceClass, "id=" + id(w),
+                     wins[id(w)] ? "managed" : "unmanaged", "rule=" + Rules.classify(w),
+                     "frame=" + rect(w.frameGeometry), "client=" + rect(w.clientGeometry),
+                     "min=" + Math.round(m.width) + "x" + Math.round(m.height),
+                     "output=" + (w.output ? w.output.name : "-"),
+                     "desktops=" + w.desktops.map(deskNum).join("+"),
+                     "tile=" + (w.tile ? rect(w.tile.absoluteGeometry) : "-"),
+                     "expected=" + (expected[id(w)] ? "set" : "-"),
+                     w.minimized ? "minimized" : "", w.fullScreen ? "fullscreen" : "",
+                     w.transient ? "transient" : "", w.keepAbove ? "above" : "",
+                     w === active ? "ACTIVE" : ""].filter(Boolean).join(" "));
+            });
+        });
+        part("log", function () { logRing.forEach(out); });
+        out("DUMP END");
+    }
+
     // ---- start -----------------------------------------------------------------------------
 
     // Read a root tile into a tree.adopt() spec; null if it holds nothing of ours.
@@ -829,6 +883,8 @@ var KI3 = (function () {
         // The safety valve first, so it exists whatever happens below (code review).
         registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
                          "Meta+Ctrl+Shift+Q", release);
+        // No key: tools/capture (on Meta+Shift+B) invokes it, after starting its sink.
+        registerShortcut("kwin-i3 Dump State", "kwin-i3: dump state for a bug report", "", dump);
         try { startRest(); }
         catch (e) { log("ERROR in start: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
     }
