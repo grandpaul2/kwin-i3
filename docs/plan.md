@@ -140,9 +140,11 @@ Every root the script sees, including new desktops and returning outputs, gets `
    **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
    min sizes, the policies above, the release action. Live tests drive keys with `invokeShortcut`
    and read geometry back; the invariant check runs after each step.
-3. **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,
-   numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: if the virtual
-   backend can't unplug an output, reconcile is driven from a synthetic "windows lost their tiles and
+3. **Workspaces and monitors. Done 2026-10-22** (`src/workspaces.js`; live scenario
+   40-monitors with a real unplug/replug through `kscreen-doctor`; battery: 26 faults, all caught,
+   3 min). **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,
+   numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: the virtual backend *can*
+   unplug an output (`kscreen-doctor output.Virtual-1.disable`). If it couldn't, reconcile is driven from a synthetic "windows lost their tiles and
    the screen set changed" state, which is what a hotplug leaves behind. Not by hand on Paul's desktop.
 4. **Real input, outside Paul's session. Tell Paul before it starts** (his words, 2026-10-21). A nested `kwin_wayland` window with two
    outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer

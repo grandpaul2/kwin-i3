@@ -3,7 +3,9 @@
 i3's window management as one KWin script, for Plasma 6.7+ on Wayland: i3's window tree,
 workspaces that live on a monitor, and i3's keys, inside an ordinary Plasma session.
 
-**Status: phase 0 done (scaffold and test harness, 2026-10-21); nothing runs on the desktop yet.** It replaces two pieces in Paul's dotfiles (`~/.dotfiles`), which stay
+**Status: phases 0-3 done (2026-10-22): the i3 tree, the adapter onto KWin's tiles, workspaces on
+both monitors, hotplug. Tested headless only; nothing runs on the desktop yet. Next: phase 4,
+real input in a nested KWin window (with Paul).** It replaces two pieces in Paul's dotfiles (`~/.dotfiles`), which stay
 running as the fallback until this matches them:
 
 - `i3ws`, a plain-JS KWin script: i3's workspaces on per-screen desktops, focus and moves across
