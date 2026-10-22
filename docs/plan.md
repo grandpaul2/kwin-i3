@@ -151,7 +151,12 @@ Every root the script sees, including new desktops and returning outputs, gets `
    scenarios 50-keys and 51-input. The nested-window session with Paul below is dropped. ~~Real input, outside Paul's session. Tell Paul before it starts~~ (his words, 2026-10-21). A nested `kwin_wayland` window with two
    outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer
    warp, border drag, Meta+drag. It shows a window on his desktop, so only with his OK.
-5. **Switch-over on Paul's desktop**, with Paul present, at a logout (Krohnkite is QML). The
+5. **Switch-over on Paul's desktop. Done 2026-10-22**, all steps: login numbering right (1 on the
+   right/primary, 2 on the left); every kwin-i3 key one live owner after Dolphin moved to Meta+T;
+   the stage floats at 1280x720 above; Firefox, Prism Launcher and KeePassXC tile with nothing
+   off-screen; Minecraft fullscreen on 5 survives a workspace switch; the release key releases
+   everything on the real desktop; a clean reload with no journal warnings. Discord skipped (Paul
+   no longer uses it). Way back stays in `~/kwin-i3-WAYBACK.txt` until phase 6. With Paul present, at a logout (Krohnkite is QML). The
    checklist is from the live-desktop review (docs/code-review-live-2026-10-22.md):
    0. Pre-flight, read-only: `make test` green, both repos clean and pushed; no `[Script-kwin-i3]`
       group in kwinrc (debug log off); back up `kwinrc` and `kglobalshortcutsrc`
