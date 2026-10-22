@@ -131,7 +131,9 @@ kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count 2 \
     --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 &
 kwin=$!
 up=""
-for _ in $(seq 50); do
+# Up to 15 s: with every live scenario starting a KWin at once (15 since 2026-10-22), 5 s was
+# too short for some (testkwin: KWin or the log sink did not start).
+for _ in $(seq 150); do
     if [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && busctl --user status org.kde.KWin >/dev/null 2>&1 &&
        busctl --user status net.local.kwini3.log >/dev/null 2>&1; then up=1; break; fi
     sleep 0.1

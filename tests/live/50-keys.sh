@@ -35,10 +35,13 @@ one_action() {   # exactly one ACTION after mark $2, and it is $1
     [[ $lines == "$1" ]]
 }
 missed=()
+w=$WAIT   # the first key gets the full wait: with every scenario's KWin starting at once it can
+          # take over 2 s (seen 2026-10-22, 15 scenarios); the rest 2 s each
 for c in "${chords[@]}"; do
     action=${c%%|*} chord=${c#*|}
     m=$(mark); press "$chord"
-    WAIT=2 poll one_action "$action" "$m" || missed+=("$chord -> wanted '$action', got '$(after "$m" | grep -E '^.{9}ACTION ' | cut -c17- | tr '\n' ',')'")
+    WAIT=$w poll one_action "$action" "$m" || missed+=("$chord -> wanted '$action', got '$(after "$m" | grep -E '^.{9}ACTION ' | cut -c17- | tr '\n' ',')'")
+    w=2
 done
 check "all ${#chords[@]} default keys fire exactly their action" test ${#missed[@]} -eq 0
 for x in "${missed[@]}"; do echo "    $x"; done

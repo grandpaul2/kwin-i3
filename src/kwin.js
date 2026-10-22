@@ -449,12 +449,23 @@ var KI3 = (function () {
     // them the new screen's current desktop as well: two desktops for a moment, which
     // desktopsChanged took for "made sticky" and dropped, adopted, and sent again (fuzzer I1).
     var relocating = 0;
+    // A window being dragged, or one KWin moves along with it (the parent of a modal dialog being
+    // dragged), is left where the pointer has it: the drag's end settles its workspace. Relocating
+    // it mid-drag (any reconcile of its workspace) snapped the dialog back, or left the parent
+    // tiled on the drop workspace but standing on the other monitor (fuzzer I2, seed 215).
+    function inDrag(w) {
+        if (w.move || w.resize) return true;
+        return workspace.windowList().some(function (d) {
+            return d.modal && d.transientFor === w && (d.move || d.resize);
+        });
+    }
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
         model.leaves(ws).concat(ws.floating).forEach(function (c) {
             var w = wins[c.win];
             if (!w) return;
             if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
+            if (inDrag(w)) return;
             var key = id(w);
             untile(w);
             placing[key] = true;
