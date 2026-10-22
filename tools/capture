@@ -7,10 +7,18 @@
 #   .../screen.png    both monitors
 # KI3_CAPTURE_DIR overrides the parent directory (the live test uses it). Inside the test KWin
 # (KI3_INNER=1) the journal and the screenshot are skipped: they would be Paul's, not the test's.
+# Captions, the journal and the screenshot can be private: the directory is mode 700.
 set -uo pipefail
 here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
-dir=${KI3_CAPTURE_DIR:-$HOME/.local/state/kwin-i3/captures}/$(date +%Y-%m-%d_%H%M%S.%3N)
-mkdir -p "$dir"
+parent=${KI3_CAPTURE_DIR:-$HOME/.local/state/kwin-i3/captures}
+mkdir -p -m 700 "$parent"
+# Never more than 15 s, and one at a time (a double press would race for the sink's name).
+# The timeout re-exec comes first: it would inherit the lock and then find it taken.
+[[ ${KI3_CAPTURE_TIMED:-} == 1 ]] || KI3_CAPTURE_TIMED=1 exec timeout 15 "$0" "$@"
+exec 9>"$parent/.lock"
+flock -n 9 || exit 0
+dir=$parent/$(date +%Y-%m-%d_%H%M%S.%3N)
+mkdir -m 700 "$dir"
 state=$dir/state.txt
 
 "$here/logsink.py" "$state" net.local.kwini3.dump &

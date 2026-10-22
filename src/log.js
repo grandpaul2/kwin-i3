@@ -7,7 +7,7 @@ var LOG_KEEP = 300;
 var logRing = [];
 
 function log(line) {
-    logRing.push(new Date().toTimeString().slice(0, 8) + " " + String(line));
+    logRing.push(new Date().toTimeString().slice(0, 8) + " " + String(line).slice(0, 500));   // captions can be URLs
     if (logRing.length > LOG_KEEP) logRing.shift();
     if (!DEBUG_LOG) return;
     callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", String(line));

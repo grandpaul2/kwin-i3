@@ -20,8 +20,9 @@ class Sink(dbus.service.Object):
 
     @dbus.service.method(NAME, in_signature="s", out_signature="")
     def Log(self, line):
-        with open(self.out, "a") as f:
-            f.write(time.strftime("%H:%M:%S ") + line + "\n")
+        stamp = time.strftime("%H:%M:%S ")
+        with open(self.out, "a") as f:          # one call may carry several lines
+            f.writelines(stamp + l + "\n" for l in line.split("\n"))
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 bus = dbus.SessionBus()

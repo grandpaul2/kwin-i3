@@ -804,7 +804,10 @@ var KI3 = (function () {
     // Everything needed to turn a bug Paul saw into a test, sent line by line to whoever owns
     // net.local.kwini3.dump (tools/capture). Never throws: a broken part says so and the rest goes.
     function dump() {
-        function out(s) { callDBus("net.local.kwini3.dump", "/", "net.local.kwini3.dump", "Log", String(s)); }
+        // Collected, then sent in a few large calls: hundreds of small ones would each be a D-Bus
+        // round on KWin's main thread (design review 23).
+        var lines = [];
+        function out(s) { lines.push(String(s)); }
         function part(name, fn) {
             out("== " + name);
             try { fn(); } catch (e) { out("ERROR in dump " + name + ": " + e); }
@@ -851,6 +854,8 @@ var KI3 = (function () {
         });
         part("log", function () { logRing.forEach(out); });
         out("DUMP END");
+        for (var i = 0; i < lines.length; i += 200)
+            callDBus("net.local.kwini3.dump", "/", "net.local.kwini3.dump", "Log", lines.slice(i, i + 200).join("\n"));
     }
 
     // ---- start -----------------------------------------------------------------------------

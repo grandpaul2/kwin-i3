@@ -35,4 +35,12 @@ check "a second capture"                    test "$state2" != "$state"
 check "debugLog off: nothing went to the test log" eval '! after "$m" | grep -q "kwin-i3 loaded"'
 check "debugLog off: the dump says so"      grep -q "DUMP BEGIN released=false debugLog=false" "$state2"
 check "debugLog off: the in-memory log still has the load" grep -qE "^.{9}[0-9:]{8} kwin-i3 loaded$" "$state2"
+
+# A second press while one is running does nothing (the lock), rather than fight for the name.
+n_before=$(ls -d "$KI3_CAPTURE_DIR"/*/ | wc -l)
+flock "$KI3_CAPTURE_DIR/.lock" sleep 2 & holder=$!; sleep 0.3
+"$root/tools/capture"
+check "a capture while one runs is skipped" test "$(ls -d "$KI3_CAPTURE_DIR"/*/ | wc -l)" = "$n_before"
+check "the capture directory is private"   test "$(stat -c %a "$(dirname "$state2")")" = 700
+wait "$holder"     # not a bare wait: the test clients never exit
 finish
