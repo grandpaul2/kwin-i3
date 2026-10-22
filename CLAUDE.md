@@ -18,16 +18,9 @@ binds work here too: commit and push as you go, without asking).
 
 - Edit `src/`, then `make test`. `package/contents/code/main.js` is built; never edit it by hand,
   but commit it (the dotfiles will link `package/`).
-- A test counts only once a deliberate fault has been seen to turn it red (`make mutate`,
-  `make mutate-live`).
-- **New tests are designed first, reviewed by a second agent, then implemented** (Paul,
-  2026-10-22: "make sure the tests get reviewed before they are implemented"). The design is a
-  short doc under docs/ (what each test asserts, how it waits, which faults it must catch); the
-  reviewer gets the code and the design, not my conclusions.
-- **Any test or suite that takes longer than about a minute also gets a review of the
-  implementation**, for faults and for speed (Paul, 2026-10-22: in his Minecraft projects this
-  "found a lot of faults and made things a lot faster"; slow tests bog a project down).
-- **Behaviour that needs real input is tested with real input**, injected (`tools/inject.py`), not
-  left for Paul to try by hand (Paul, 2026-10-22: "set the precedent now"). Only what exists solely
-  in his real session (his monitors, login, his running Plasma) is checked by hand, at switch-over.
+- Testing, as defaults rather than ritual (Paul, 2026-10-22: keep room for creativity): a
+  substantial new set of tests gets a second agent's look before it's relied on — at the design
+  stage when that's cheap — especially if it's slow; behaviour that needs real input gets injected
+  input (`tools/inject.py`) rather than a manual session; and a test is trusted once a deliberate
+  fault has turned it red (`make mutate`, `make mutate-live`). Use judgment about scale.
 - i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
