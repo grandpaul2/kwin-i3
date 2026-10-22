@@ -98,3 +98,32 @@ On the live desktop `debugLog` is off, so nothing is logged anywhere today.
 Making it live means rebuilding, reloading kwin-i3 in Paul's session (it re-tiles his windows
 once), and registering the launcher shortcut through kglobalaccel (dotfiles CLAUDE.md table, the
 App-launch row). That step is done with Paul's OK.
+
+## As built (after the design review, 2026-10-22)
+
+The review (24 findings) changed these; the code is `tests/fuzz/fuzz.py` and `tests/fuzz/run.py`.
+
+- **The probe is Dump State**, not kjs plus the latest TREE line: one in-process snapshot with
+  window ids, so a stale TREE (mid-unplug) or a retitled caption can't mislead it. Dump State has a
+  `JSON` line for this.
+- **Settling** ignores the probe's own `kjs:` lines, waits 350 ms after pointer actions (focus
+  follows the mouse after 150 ms), caps at 10 s, and a run that never settles is a *harness*
+  result, reported apart from invariant failures. So is an inject failure, after which every
+  modifier and button is released.
+- **Keys** come from `tests/keys.json` plus Workspace / Move to Workspace 1–4, never from the
+  registered list (Selftest Throw, Selftest Break Reconcile and Release are excluded). Fullscreen is
+  KWin's own "Window Fullscreen", so the fullscreen exclusion is exercised. A Meta+left drag is a
+  move-drag (it floats the window, as in 51-input.sh), and a resize drag is only drawn when a tiled
+  window is visible.
+- **Invariants as built:** I1–I6, I8 and I9 as above, with I6 counting floating windows (`~`) and
+  skipping ignored, minimized and multi-desktop windows; I7 was dropped (I6 covers it);
+  **I10 added**: a tiled window's frame is its tile, to within 1 px. I10 is the one that caught the
+  minimum-size bug: KWin enforces the window's own minimum, so the window spills past its tile and
+  I5 never fires.
+- **Shrinking** cuts the trace at the failing step, replays twice first (0 of 2 is `flaky`, kept,
+  not shrunk), then ddmin with at most 40 replays or 10 minutes, matching the same signature (the
+  invariant and its message with numbers and window names taken out). The result is replayed 3 times
+  for a rate. Actions refer to windows by caption; one whose window is gone does nothing.
+- **`--skip I8,...`** keeps a run going past a known bug that would otherwise end most seeds early.
+- **Validated** (watched red): with `snap()` disabled (the 1 px hole) the fuzzer reports I4 in 6
+  minutes on 2 jobs; with `fitMinimums` disabled (minimum sizes), I10.

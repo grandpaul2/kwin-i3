@@ -852,6 +852,30 @@ var KI3 = (function () {
                      w === active ? "ACTIVE" : ""].filter(Boolean).join(" "));
             });
         });
+        // The same facts as one JSON line, for tests/fuzz (one snapshot, ids rather than captions).
+        part("json", function () {
+            function r(g) { return [Math.round(g.x), Math.round(g.y), Math.round(g.width), Math.round(g.height)]; }
+            var active = workspace.activeWindow, j = { outputs: [], windows: [], ws: {} };
+            workspace.screens.forEach(function (s) {
+                j.outputs.push({ name: s.name, geom: r(s.geometry), shows: deskNum(workspace.currentDesktopForScreen(s)),
+                                 active: s === workspace.activeScreen });
+            });
+            workspace.windowList().forEach(function (w) {
+                j.windows.push({ id: id(w), caption: String(w.caption), rule: Rules.classify(w), managed: !!wins[id(w)],
+                                 frame: r(w.frameGeometry), client: r(w.clientGeometry),
+                                 min: [Math.round(w.minSize.width), Math.round(w.minSize.height)],
+                                 output: w.output ? w.output.name : null, desktops: w.desktops.map(deskNum),
+                                 tile: w.tile ? r(w.tile.absoluteGeometry) : null, minimized: !!w.minimized,
+                                 fullscreen: !!w.fullScreen, active: w === active });
+            });
+            Object.keys(model.workspaces).forEach(function (n) {
+                var ws = model.workspaces[n];
+                j.ws[n] = { tiled: model.leaves(ws).map(function (l) { return String(l.win); }),
+                            floating: ws.floating.map(function (f) { return String(f.win); }),
+                            tree: named(model.describe(n)) };
+            });
+            out("JSON " + JSON.stringify(j));
+        });
         part("log", function () { logRing.forEach(out); });
         out("DUMP END");
         for (var i = 0; i < lines.length; i += 200)

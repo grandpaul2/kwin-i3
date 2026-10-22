@@ -6,6 +6,7 @@
 #   KI3_XWAYLAND=1                       also start Xwayland, for X11 clients (DISPLAY is set);
 #                                        finding its display is not parallel-safe
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
+#   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 # Inside the command: WAYLAND_DISPLAY is the test KWin, the session bus is private (so busctl
 # --user reaches the test KWin), and KI3_LOG is the file tools/logsink.py writes.
 #
@@ -48,7 +49,7 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
 </busconfig>
 CONF
     status=0
-    timeout 120 dbus-run-session --config-file="$tmp/bus.conf" -- "$0" "$@" \
+    timeout "${KI3_TIMEOUT:-120}" dbus-run-session --config-file="$tmp/bus.conf" -- "$0" "$@" \
         2> >(grep -vE 'dbus-daemon\[|dbind-WARNING|AT-SPI' >&2) || status=$?
     exit $status
 fi
