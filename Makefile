@@ -1,4 +1,4 @@
-.PHONY: build test unit live
+.PHONY: build test unit live mutate
 build:
 	./build.sh
 unit:
@@ -6,3 +6,5 @@ unit:
 live: build
 	tests/live/run.sh
 test: unit live
+mutate:
+	python3 tests/unit/mutate.py

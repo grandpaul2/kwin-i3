@@ -366,3 +366,115 @@ test("focus mode_toggle: between the tiling and the floating focus", () => {
     assert.strictEqual(m.focusModeToggle().win, "b");
     assert.strictEqual(m.focusModeToggle().win, "f");
 });
+
+// ---- cases found by the mutation battery (2026-10-21) ---------------------------------------
+
+test("toggle split: no redundant one-child containers pile up (i3 #3001)", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");          // H[a V[b]]
+    m.split(leaf(m, "b").parent, "h");   // H[a H[V[b]]]
+    assert.strictEqual(d(m), "H[a H[V[b*]]]");
+    m.toggleSplit(leaf(m, "b"));
+    assert.strictEqual(d(m), "H[a H[b*]]", "V is closed and its parent takes the layout");
+});
+
+test("move: the lone child of a split at the workspace edge goes to the next output", () => {
+    const m = model(true);
+    open(m, 1, "x");
+    open(m, 2, "a", "b");
+    m.split(leaf(m, "a"), "v");          // ws 2: H[V[a] b]
+    m.focusWin("a");
+    m.move(leaf(m, "a"), LEFT);
+    assert.strictEqual(d(m, 2), "H[b]");
+    assert.strictEqual(d(m, 1), "H[x a*]", "entering from the right, it goes last");
+});
+
+test("focus: blocked from leaving while another window is fullscreen", () => {
+    const m = model(false);
+    open(m, 1, "a", "b", "c");
+    m.setFullscreen("c", true);
+    m.focusWin("a");
+    assert.strictEqual(m.focusDir(RIGHT), null, "b is behind the fullscreen c");
+    assert.strictEqual(d(m), "H[a* b c!]");
+});
+
+// ---- i3's own testsuite (testcases/t/, branch next), translated ------------------------------
+// The independent check: these expectations come from tests run against real i3, not from my
+// reading of its source. `cmd 'open'` is a new focused window; `focus parent` is activate(parent).
+
+test("i3 t/124-move.t §1-2: lone window can't move; two windows swap and stop at the edges", () => {
+    const m = model();
+    open(m, 1, "first");
+    for (const dir of [LEFT, RIGHT, UP, DOWN]) m.move(leaf(m, "first"), dir);
+    assert.strictEqual(d(m), "H[first*]");
+    open(m, 1, "second");
+    m.move(leaf(m, "second"), LEFT);
+    assert.strictEqual(d(m), "H[second* first]");
+    m.move(leaf(m, "second"), LEFT);
+    assert.strictEqual(d(m), "H[second* first]");
+    m.move(leaf(m, "second"), RIGHT);
+    m.move(leaf(m, "second"), RIGHT);
+    assert.strictEqual(d(m), "H[first second*]");
+});
+
+test("i3 t/124-move.t §3: into a split container, up inside it, out and back", () => {
+    const m = model();
+    open(m, 1, "first", "second");
+    m.split(leaf(m, "second"), "v");
+    m.activate(leaf(m, "second").parent);          // focus parent
+    open(m, 1, "third");
+    assert.strictEqual(m.ws(1).nodes.length, 3);
+    m.move(leaf(m, "third"), LEFT);
+    assert.strictEqual(d(m), "H[first V[second third*]]", "second on top, third below");
+    m.move(leaf(m, "third"), UP);
+    assert.strictEqual(d(m), "H[first V[third* second]]");
+    m.move(leaf(m, "third"), LEFT);
+    assert.strictEqual(m.ws(1).nodes.length, 3, "three containers after moving left");
+    m.move(leaf(m, "third"), RIGHT);
+    assert.strictEqual(m.ws(1).nodes.length, 2, "two containers after moving right");
+});
+
+test("i3 t/124-move.t §4: emptying a v-split by moving closes it", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");
+    m.focusDir(LEFT);
+    m.split(leaf(m, "a"), "v");
+    open(m, 1, "d");
+    m.move(leaf(m, "d"), RIGHT);
+    m.focusDir(LEFT);
+    m.move(m.focused, RIGHT);
+    assert.strictEqual(m.ws(1).nodes.length, 1, "only one node on this workspace");
+});
+
+test("i3 t/145-flattening.t: move up then right leaves all three on workspace level", () => {
+    const m = model();
+    open(m, 1, "left", "mid", "right");
+    m.move(leaf(m, "right"), UP);
+    m.move(leaf(m, "right"), RIGHT);
+    assert.strictEqual(m.ws(1).layout, "h", "workspace layout is splith");
+    assert.strictEqual(m.ws(1).nodes.length, 3, "all three windows on workspace level");
+});
+
+test("i3 t/129-focus-after-close.t §2: closing goes to the focus stack, not the neighbour", () => {
+    const m = model();
+    m.activate(m.ws(1));
+    m.split(m.ws(1), "v");
+    open(m, 1, "first", "bottom");
+    m.focusDir(UP);
+    m.split(leaf(m, "first"), "h");
+    open(m, 1, "middle", "right");
+    m.focusDir(DOWN);
+    m.close("bottom");
+    assert.strictEqual(m.focused.win, "right", "top right container focused (in focus stack)");
+});
+
+test("i3 t/129-focus-after-close.t §3: closing an unfocused window leaves focus alone", () => {
+    const m = model();
+    open(m, 1, "first", "middle", "right", "win");
+    m.focusWin("middle");
+    m.close("win");
+    assert.strictEqual(m.focused.win, "middle");
+});

@@ -23,9 +23,11 @@ kept exactly where it already matches i3 (Paul called it "ideal").
    - The model is an i3 tree per workspace: containers with orientation, leaves holding windows,
      i3's focus stack. That is what `tree_move`, `tree_flatten` and tree-based focus need, and it
      can be tested in node with no KWin.
-   - **Sizes live only in the tiles** (`relativeGeometry`). The model never stores weights, so
-     nothing flows back except when the model needs to rebuild (below). After an insert or close the
-     adapter sets equal shares in that container, as i3 does (KWin's `split` halves).
+   - **The model keeps i3's shares (`percent`)**, because i3's rules for them are exact and
+     testable: a new window gets the average share, a closed one's share is spread proportionally
+     (`con_fix_percent`). Reconcile writes them to the tiles. A size changed *in KWin* (a border drag)
+     is read back into the model once, when the drag ends, not on every `relativeGeometryChanged`.
+     (Changed in phase 1, 2026-10-21: "sizes only in the tiles" could not reproduce i3's shares.)
    - Considered and rejected for now: tiles as the only structure (review S3-11.1). It removes the
      projection, but i3's flatten and move rules would then be written against a structure that
      collapses on its own and can't be tested without a fake. Revisit if the projection proves costly.
@@ -45,10 +47,13 @@ kept exactly where it already matches i3 (Paul called it "ideal").
    `tileChanged` arrives (it lags for Wayland clients). A foreign `tileChanged(null)` means KWin or
    the user untiled the window; the policy table below says what happens.
 8. **i3's semantics are ported from i3's source, not re-derived**: `tree_move` (src/move.c) with all
-   its cases, `tree_flatten` after every move and close, tree-based `focus` (`tree_next`,
-   descend by focus stack), insertion after the focused container, `split`, `layout toggle split`,
-   close and focus-after-close (`tree_close_internal`). Single-child containers exist only as long as
-   i3 keeps them: from `split` until the next flatten.
+   its cases, `tree_flatten` where i3 calls it, tree-based `focus` (`tree_next`, descend by focus
+   stack), insertion after the focused container, `split`, `layout toggle split`, close and
+   focus-after-close (`tree_close_internal`). **Done in phase 1** (`src/tree.js`). Checked against
+   the source, i3 calls `tree_flatten` only after a move that re-parents and after a layout change
+   on a workspace; *not* after a close or a plain swap (the review said otherwise). And
+   `tree_flatten` only removes a one-child split whose child is itself a split: a split holding one
+   window stays, as i3 keeps it. KWin collapses those itself; the projection must tolerate that.
 9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
    (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
    one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity
@@ -87,7 +92,7 @@ tools/             testkwin.sh, logsink.py, testclient (below)
 | Meta+Shift+Space | floating toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Space | focus mode_toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of 10 % as in the old config |
-| Meta+F | fullscreen | KWin's own; the window returns to its tile (verified). Focus and move keys do nothing while the focused window is fullscreen |
+| Meta+F | fullscreen | KWin's own; the window returns to its tile (verified). As in i3 (per-output fullscreen): focus and move from a fullscreen window go to the neighbouring monitor; other windows on that workspace can't be focused while it is fullscreen |
 | Meta+Shift+Q | kill | KWin's own |
 | Meta+Ctrl+Shift+Q | **release** | safety valve: unmanage every window, restore KWin's default tiles, stop acting until reload |
 
@@ -110,7 +115,7 @@ transient rule is what floats dialogs. Floating windows stay above tiled ones |
 | maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
 | minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize |
 | foreign untile (Meta+drag, KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
-| close | leaf removed, `tree_flatten`, focus to the previous focus in that container |
+| close | leaf removed, empty splits removed upwards (no flatten), focus to the previous focus in that container |
 | focus follows mouse | KWin's `windowActivated` updates the focus stack; the last focus event wins, as in i3 |
 | errors | every handler in try/catch: log over D-Bus (`tools/logsink.py` protocol, behind a config flag in production) and reconcile |
 
@@ -126,7 +131,8 @@ Every root the script sees, including new desktops and returning outputs, gets `
 0. **Scaffold.** Layout, `build.sh`, `make test` (unit + live). A small test client for the
    harness (Python + GTK 4 or Qt) with flags: fixed size, large minimum size, transient dialog,
    slow to map, retitles itself. Alacritty can't be any of those.
-1. **Model.** `src/tree.js` with unit tests per `tree_move` case, `tree_flatten`, tree focus,
+1. **Model. Done 2026-10-21**: 46 unit tests (6 translated from i3's own testsuite), and
+   `make mutate`, 16 deliberate faults, every one caught. `src/tree.js` with unit tests per `tree_move` case, `tree_flatten`, tree focus,
    close-focus, split, toggle, insertion. Each test written from i3's source; each guard watched to
    fail with a deliberate fault before it counts.
 2. **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
