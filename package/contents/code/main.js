@@ -1279,10 +1279,13 @@ var KI3 = (function () {
         if (want !== have) {
             // Different shape or different windows: rebuild this root. Unmanage first, so removing
             // tiles can't push windows around (KWin moves a removed tile's windows elsewhere).
-            tiledWindowsOf(root, []).forEach(function (w) {
-                var t = w.tile;
-                if (t) unmanageFrom(t, w); else expected[id(w)] = null;
-            });
+            // From the tile that lists each window, not w.tile: on a hidden desktop a listed window
+            // has no w.tile, and left listed it rode into a child tile when the root split, never
+            // managed again (fuzzer I1).
+            (function off(t) {
+                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });
+                t.tiles.forEach(off);
+            })(root);
             clearRoot(root);
             if (p) {
                 build(root, p);
@@ -1941,6 +1944,17 @@ var KI3 = (function () {
     // What each monitor showed, by name, so a monitor that comes back shows it again (review:
     // nothing made a returning monitor show its workspace; KWin may restore something else).
     var lastShown = {}, beforeLoss = null;
+    // The lowest workspace with no windows, shown nowhere, and living on no other monitor; it
+    // becomes s's. null if all ten are taken.
+    function unusedWorkspace(s) {
+        for (var n = 1; n <= NAMES.length; n++) {
+            var m = model.workspaces[n], h = Workspaces.homes()[n];
+            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name)) continue;
+            Workspaces.setHome(n, s);
+            return n;
+        }
+        return null;
+    }
     function rememberShown() {
         workspace.screens.forEach(function (s) { lastShown[s.name] = deskNum(workspace.currentDesktopForScreen(s)); });
     }
@@ -1951,9 +1965,14 @@ var KI3 = (function () {
         if (beforeLoss) {
             var allBack = Object.keys(beforeLoss).every(function (n) { return names.indexOf(n) >= 0; });
             if (allBack) {
-                // Everyone is home: each monitor shows again what it showed before the loss.
+                // Everyone is home: each monitor shows again what it showed before the loss,
+                // unless that workspace has moved to another monitor meanwhile (a window sent to
+                // it while it was hidden there). Then the monitor gets an unused workspace, as i3
+                // gives a returning output a new one; showing it again put its windows out of
+                // sight on the other monitor (fuzzer I2).
                 workspace.screens.forEach(function (s) {
-                    var num = beforeLoss[s.name];
+                    var num = beforeLoss[s.name], h = num ? Workspaces.homes()[num] : null;
+                    if (num && h && h !== s.name) num = unusedWorkspace(s);
                     if (num && deskOf(num)) workspace.setCurrentDesktopForScreen(deskOf(num), s);
                 });
                 beforeLoss = null;

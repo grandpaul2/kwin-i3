@@ -20,7 +20,7 @@ if live == os.path.realpath("package"):
              "  git worktree add /tmp/ki3-mutate && cp -r tools/bin /tmp/ki3-mutate/tools/ && make -C /tmp/ki3-mutate mutate-live")
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
-U, C = "41-unplug-focus.sh", "70-capture.sh"
+U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -70,9 +70,11 @@ muts = [
  (I, "src/kwin.js", "a window dragged to the other monitor loses the focus", "                model.focusWin(key);\n                wantFocus();\n", ""),
  (U, "src/kwin.js", "a window listed in a tile but not placed stays unplaced", "            if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);\n", ""),
  (U, "src/kwin.js", "no pass after focus shows a desktop", "            schedule(ws);\n        }\n        if (f.type === \"ws\"", "        }\n        if (f.type === \"ws\""),
+ (P, "src/kwin.js", "a returning monitor shows its old workspace even after it moved", "                    if (num && h && h !== s.name) num = unusedWorkspace(s);\n", ""),
+ (D, "src/kwin.js", "a rebuilt root unmanages by w.tile (hidden windows stay listed)", "                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });", "                t.windows.slice().forEach(function (w) { if (w.tile) unmanageFrom(w.tile, w); });"),
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
 ]
-ALL = [H, T, R, X, M, U, K, I, L, C]
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
