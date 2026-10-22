@@ -18,7 +18,7 @@ const want = {
     "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],
     "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
     "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
-    "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"], "Move Right": ["Meta+Shift+Right", "Meta+Shift+;"],
+    "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"], "Move Right": ["Meta+Shift+Right", "Meta+Shift+;", "Meta+:"],
     "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
     "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
 };

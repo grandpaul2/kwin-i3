@@ -1331,10 +1331,14 @@ var KI3 = (function () {
             model.moveToWorkspace(con, to);
             schedule(from); schedule(to);
         }));
-        w.interactiveMoveResizeStarted.connect(guard("dragStart", function () { dragging = w.move ? "move" : "resize"; }));
+        w.interactiveMoveResizeStarted.connect(guard("dragStart", function () {
+            dragging = w.move ? "move" : "resize";
+            log("DRAG start " + dragging + " " + w.caption);
+        }));
         w.interactiveMoveResizeFinished.connect(guard("dragEnd", function () {
             var kind = dragging;
             dragging = false;
+            log("DRAG end " + kind + " " + w.caption);
             var con = model.byWin[key];
             if (!con) return;
             var ws = Tree.wsOf(con);
@@ -1480,7 +1484,9 @@ var KI3 = (function () {
         "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],
         "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
         "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
-        "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"], "Move Right": ["Meta+Shift+Right", "Meta+Shift+;"],
+        "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"],
+        // Shift+; arrives as ":" on a US keyboard; i3ws registered both (input-test review).
+        "Move Right": ["Meta+Shift+Right", "Meta+Shift+;", "Meta+:"],
         // The old config's resize mode: Left/J shrink width, Down/K grow height,
         // Up/L shrink height, Right/; grow width.
         "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],

@@ -28,6 +28,9 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     export XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data XDG_STATE_HOME=$tmp/state XDG_CACHE_HOME=$tmp/cache
     export WAYLAND_DISPLAY=ki3test-${tmp##*.}
     unset DISPLAY XAUTHORITY
+    # No system bus: the test KWin read Paul's session lock state through it, and while his screen
+    # was locked nothing tiled and input was swallowed (input-test review, 2026-10-22).
+    export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none
     mkdir -p "$XDG_CONFIG_HOME"
     cat > "$tmp/bus.conf" <<'CONF'
 <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
@@ -80,10 +83,38 @@ Rows=1
 
 [Windows]
 PerOutputVirtualDesktops=true
+FocusPolicy=FocusFollowsMouse
+NextFocusPrefersMouse=true
+DelayFocusInterval=150
+
+[ModifierOnlyShortcuts]
+Meta=
 
 [Script-kwin-i3]
 debugLog=true
 RC
+# Paul's desktop unbinds these stock shortcuts (~/.dotfiles setup.sh keeps only its own list);
+# the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
+# locked the test KWin, Meta+E launched Dolphin). Focus settings above are his too.
+cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
+[kwin]
+Window Quick Tile Left=none,Meta+Left,Quick Tile Window to the Left
+Window Quick Tile Right=none,Meta+Right,Quick Tile Window to the Right
+Window Quick Tile Top=none,Meta+Up,Quick Tile Window to the Top
+Window Quick Tile Bottom=none,Meta+Down,Quick Tile Window to the Bottom
+Switch One Desktop to the Left=none,Meta+Ctrl+Left,Switch One Desktop to the Left
+Switch One Desktop to the Right=none,Meta+Ctrl+Right,Switch One Desktop to the Right
+Switch One Desktop Up=none,Meta+Ctrl+Up,Switch One Desktop Up
+Switch One Desktop Down=none,Meta+Ctrl+Down,Switch One Desktop Down
+Window to Previous Screen=none,Meta+Shift+Left,Move Window to Previous Screen
+Window to Next Screen=none,Meta+Shift+Right,Move Window to Next Screen
+
+[ksmserver]
+Lock Session=none,Meta+L,Lock Session
+
+[services][org.kde.dolphin.desktop]
+_launch=none
+SC
 export KI3_LOG=$tmp/ki3.log
 "$here/logsink.py" "$KI3_LOG" &
 sink=$!
