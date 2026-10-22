@@ -95,7 +95,7 @@ debugLog=true
 RC
 # Paul's desktop unbinds these stock shortcuts (~/.dotfiles setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
-# locked the test KWin, Meta+E launched Dolphin). Focus settings above are his too.
+# locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). Focus settings above are his too.
 cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
 [kwin]
 Window Quick Tile Left=none,Meta+Left,Quick Tile Window to the Left
@@ -108,6 +108,9 @@ Switch One Desktop Up=none,Meta+Ctrl+Up,Switch One Desktop Up
 Switch One Desktop Down=none,Meta+Ctrl+Down,Switch One Desktop Down
 Window to Previous Screen=none,Meta+Shift+Left,Move Window to Previous Screen
 Window to Next Screen=none,Meta+Shift+Right,Move Window to Next Screen
+view_actual_size=none,Meta+0,Zoom to Actual Size
+view_zoom_in=none,Meta++,Zoom In
+view_zoom_out=none,Meta+-,Zoom Out
 
 [ksmserver]
 Lock Session=none,Meta+L,Lock Session

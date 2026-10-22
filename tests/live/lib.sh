@@ -130,3 +130,42 @@ finish() {
     (( passed + failed > 0 )) || { echo "  FAIL no checks ran"; return 1; }
     [[ $failed -eq 0 ]]
 }
+
+# Real input (tools/inject.py; see docs/input-tests-design.md and its review).
+#   press "Meta+Shift+V"            one chord: modifiers down, key down/up, modifiers up
+#   drag "Meta" left|right X1 Y1 X2 Y2   button drag with modifiers held, 4 steps
+#   point X Y                       move the pointer
+declare -A EVDEV=(
+    [Meta]=125 [Shift]=42 [Ctrl]=29 [Alt]=56
+    [Left]=105 [Right]=106 [Up]=103 [Down]=108 [Space]=57 [";"]=39 [":"]=39
+    [Q]=16 [W]=17 [E]=18 [R]=19 [T]=20 [Y]=21 [U]=22 [I]=23 [O]=24 [P]=25
+    [A]=30 [S]=31 [D]=32 [F]=33 [G]=34 [H]=35 [J]=36 [K]=37 [L]=38
+    [Z]=44 [X]=45 [C]=46 [V]=47 [B]=48 [N]=49 [M]=50
+    [1]=2 [2]=3 [3]=4 [4]=5 [5]=6 [6]=7 [7]=8 [8]=9 [9]=10 [0]=11
+)
+INJECT="$root/tools/inject.py"
+press() {
+    local -a parts mods cmds; local k
+    IFS=+ read -ra parts <<<"$1"
+    local key=${parts[-1]}
+    unset 'parts[-1]'
+    mods=("${parts[@]}")
+    [[ $key == ":" ]] && mods+=(Shift)           # ':' is Shift+; on a US keyboard
+    for k in "${mods[@]}"; do cmds+=("key ${EVDEV[$k]} down"); done
+    cmds+=("key ${EVDEV[$key]} down" "key ${EVDEV[$key]} up")
+    for ((k = ${#mods[@]} - 1; k >= 0; k--)); do cmds+=("key ${EVDEV[${mods[k]}]} up"); done
+    "$INJECT" "${cmds[@]}"
+}
+point() { "$INJECT" "abs $1 $2" "wait 30"; }
+drag() {   # drag <mods> <button> x1 y1 x2 y2
+    local -a mods cmds; local k s
+    IFS=+ read -ra mods <<<"$1"
+    local b=$2 x1=$3 y1=$4 x2=$5 y2=$6
+    cmds+=("abs $x1 $y1" "wait 30")
+    for k in "${mods[@]}"; do cmds+=("key ${EVDEV[$k]} down"); done
+    cmds+=("btn $b down")
+    for s in 1 2 3 4; do cmds+=("abs $((x1 + (x2 - x1) * s / 4)) $((y1 + (y2 - y1) * s / 4))" "wait 0"); done
+    cmds+=("btn $b up")
+    for ((k = ${#mods[@]} - 1; k >= 0; k--)); do cmds+=("key ${EVDEV[${mods[k]}]} up"); done
+    "$INJECT" "${cmds[@]}"
+}
