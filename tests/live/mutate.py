@@ -20,7 +20,7 @@ muts = [
  (T, "src/kwin.js", "padding kept", "        if (t.padding !== 0) t.padding = 0;", ""),
  (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized;", "        return !!w;"),
  (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
- (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1) : null;", "                var spec = null;"),
+ (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1, d) : null;", "                var spec = null;"),
  (R, "src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
  (T, "src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
  (T, "src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
@@ -51,15 +51,19 @@ muts = [
  (K, "src/kwin.js", "a registration dropped (Meta+Ctrl+L)", "\"Shrink Height\": [\"Meta+Ctrl+Up\", \"Meta+Ctrl+L\"]", "\"Shrink Height\": [\"Meta+Ctrl+Up\"]"),
  (X, "src/kwin.js", "no backoff: retry at once, for ever", "        if (failures > 3) {", "        if (false) {"),
  (X, "src/kwin.js", "can't-fit windows still tile", "        floatWhatCannotFit(ws, screen);\n", ""),
- (M, "src/kwin.js", "Meta+N moves a gone home", "            if (!occupied) Workspaces.setHome(n, s);", "            Workspaces.setHome(n, s);"),
  (M, "src/kwin.js", "a returning monitor's workspace not restored", "            if (allBack) {", "            if (false) {"),
- (L, "src/kwin.js", "windows missing from stackingOrder not adopted", "        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });", ""),
 ]
 ALL = [H, T, R, X, M, K, I, L]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
 # window while it is still being dragged.
+# Also not listed, with reasons (2026-10-22):
+# - "Meta+N moves a gone home": the fix in gotoWorkspace overlaps the screensChanged restore (a
+#   returning monitor shows again what it showed), which corrects the same symptom; kept as
+#   defence in depth, no test can separate them.
+# - "windows missing from stackingOrder not adopted": guards a timing race (a window too new to be
+#   in stackingOrder when kwin-i3 loads) seen twice but not reproducible on demand; one harmless line.
 
 def run(scenarios, failfast):
     env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)

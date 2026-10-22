@@ -82,9 +82,15 @@ timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
 check "unplugged again"                     poll one_screen
 key "Workspace 2"
 check "Meta+2 shows 2 on the remaining monitor" poll shows Virtual-0 2
+m=$(mark)
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
 check "replugged"                           poll two_screens
-check "b goes home all the same"            poll on_output b Virtual-1
+# After kwin-i3 has reconciled, not the first moment: KWin itself briefly puts b back on its old
+# monitor, and a wrong home moves it away again a moment later (fault battery, 2026-10-22).
+check "reconciled after the replug"         wait_log '^.{9}TREE 2 ' "$m"
+check "b goes home all the same, and stays: it fills the second monitor" geom_is b "1280,0 1280x720"
+sleep 0.3
+check "still there"                         geom_is b "1280,0 1280x720"
 check "its monitor shows 2 again"           poll shows Virtual-1 2
 check "and the first monitor shows 1, not 2 as well" poll shows Virtual-0 1
 

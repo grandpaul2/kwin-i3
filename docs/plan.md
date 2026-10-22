@@ -151,12 +151,31 @@ Every root the script sees, including new desktops and returning outputs, gets `
    scenarios 50-keys and 51-input. The nested-window session with Paul below is dropped. ~~Real input, outside Paul's session. Tell Paul before it starts~~ (his words, 2026-10-21). A nested `kwin_wayland` window with two
    outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer
    warp, border drag, Meta+drag. It shows a window on his desktop, so only with his OK.
-5. **Switch-over on Paul's desktop**. Check first, read-only, on the live bus: every kwin-i3 key has
-   exactly one owner once i3ws is off (his kglobalshortcutsrc still binds i3ws to all of them, and
-   plasmashell may hold Meta+V and Meta+1..9: input-test review, finding 2). with Paul, at a logout (Krohnkite is QML). kwinrc:
-   `i3wsEnabled=false`, `krohnkiteEnabled=false`, `kwin-i3Enabled=true`. The way back is the
-   release key at once, then the same three lines reversed and a logout. Checked here: the login
-   numbering after Plasma's activity restore, and a real monitor sleep/wake.
+5. **Switch-over on Paul's desktop**, with Paul present, at a logout (Krohnkite is QML). The
+   checklist is from the live-desktop review (docs/code-review-live-2026-10-22.md):
+   0. Pre-flight, read-only: `make test` green, both repos clean and pushed; no `[Script-kwin-i3]`
+      group in kwinrc (debug log off); back up `kwinrc` and `kglobalshortcutsrc`
+      (`*.pre-kwin-i3`); write the way back to `~/kwin-i3-WAYBACK.txt` (on disk: the clipboard
+      dies at logout).
+   1. Install: `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3` (metadata Id is
+      `kwin-i3`).
+   2. kwinrc `[Plugins]`: `i3wsEnabled=false`, `krohnkiteEnabled=false`, `kwin-i3Enabled=true`
+      (kwriteconfig6, no reconfigure: three scripts must never run together). Keep the old keys,
+      don't delete them.
+   3. Close the stage and Minecraft; log out and in.
+   4. Verify live: `isScriptLoaded kwin-i3` true and the old two false; workspace 1 on the right
+      (primary), 2 on the left; every kwin-i3 key has exactly one owner on the live bus (his
+      kglobalshortcutsrc still binds i3ws to all of them; plasmashell may hold Meta+V, Meta+1..9).
+   5. Awkward apps one at a time: the stage (floats at 1280x720, above), Firefox, Prism Launcher,
+      KeePassXC, Discord (nothing off-screen), Minecraft fullscreen on 5 and back.
+   6. Release test while nothing is at stake: Meta+Ctrl+Shift+Q with 3 windows. Windows float where
+      they were; the keys stay grabbed by the released script (workspace keys stop working) until
+      `unloadScript kwin-i3` or a logout. A client grabbing the keyboard (the stage's Xephyr) blocks
+      global keys: Meta+Shift+Esc first.
+   7. If the desktop freezes: Ctrl+Alt+F3, log in, reverse step 2, log out (or
+      `systemctl --user restart plasma-kwin_wayland`).
+   Floating windows are kept above tiled ones (i3's behaviour; Krohnkite didn't): a "why is this
+   on top" is that.
 6. **Dotfiles.** After Paul has used it for a while and says it's good: `setup.sh` clones `kwin-i3`
    and links `package/`; its shortcut pruning, `tests/test-claude-config.sh` and `health-check` move to
    the new action names; README's Plasma table is updated; `i3ws` and the Krohnkite copy are retired
