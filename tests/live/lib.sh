@@ -42,3 +42,23 @@ ok()   { passed=$((passed + 1)); echo "  ok   $*"; }
 fail() { failed=$((failed + 1)); echo "  FAIL $*"; }
 check() { local msg=$1; shift; if "$@"; then ok "$msg"; else fail "$msg"; fi; }
 finish() { echo "  $passed passed, $failed failed"; [[ $failed -eq 0 ]]; }
+
+# kwin-i3 specifics
+#   key "<action>"        press a kwin-i3 shortcut ("Split V", "Move Left", ...)
+#   tree <n>              the last logged tree of workspace n, e.g. "H[a V[b c*]]"
+#   wait_tree <n> <want>  wait up to 5 s for workspace n's tree to be <want>; prints it if not
+#   geom <caption>        "x,y wxh" of that window's frame
+#   kclose <caption>      close that window
+#   clean_log             no INVARIANT or ERROR line has been logged
+key() { busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 $1"; sleep 0.3; }
+tree() { grep -E "^.{9}TREE $1 " "$KI3_LOG" | tail -1 | cut -d' ' -f4-; }
+wait_tree() {
+    for _ in $(seq 50); do [[ "$(tree "$1")" == "$2" ]] && return 0; sleep 0.1; done
+    echo "    workspace $1 is: $(tree "$1")   wanted: $2"; return 1
+}
+geom() {
+    kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(Math.round(g.x) + \",\" + Math.round(g.y) + \" \" + Math.round(g.width) + \"x\" + Math.round(g.height)); } });"
+}
+kclose() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") w.closeWindow(); });" >/dev/null; sleep 0.5; }
+clean_log() { ! grep -qE '^.{9}(INVARIANT|ERROR)' "$KI3_LOG"; }
+geom_is() { local g; g=$(geom "$1"); [[ "$g" == "$2" ]] || { echo "    $1 is at $g, wanted $2"; return 1; }; }

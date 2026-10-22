@@ -673,6 +673,42 @@ var Tree = (function () {
         if (con && con.type === "con") con.fullscreen = !!on;
     };
 
+    // ---- adopting and reading ---------------------------------------------------------------
+
+    // Rebuild a workspace's tiling tree from a spec read off KWin's live tiles at start-up:
+    // { layout, percent, kids: [spec...] } for a split, { win, percent } for a window. Replaces
+    // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
+    // until focusWin() calls refine them.
+    M.adopt = function (ws, spec) {
+        var self = this;
+        ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
+        function build(s, parent) {
+            var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
+            attach(c, parent, true);
+            c.percent = s.percent || 0;
+            if (s.kids) s.kids.forEach(function (k) { build(k, c); });
+            else self.byWin[s.win] = c;
+            fixPercent(c);
+            return c;
+        }
+        if (spec.kids) {
+            ws.layout = spec.layout;
+            spec.kids.forEach(function (k) { build(k, ws); });
+        } else if (spec.win !== undefined) {
+            build(spec, ws);
+        }
+        fixPercent(ws);
+    };
+
+    // Every window leaf (tiling) of a workspace, in tree order.
+    M.leaves = function (ws) {
+        var out = [];
+        (function walk(c) {
+            c.nodes.forEach(function (k) { if (k.win !== null) out.push(k); else walk(k); });
+        })(ws);
+        return out;
+    };
+
     // ---- reading the tree ------------------------------------------------------------------
 
     // "H[a V[b c*]] ~f": layout letter and children in order, * on the global focus, ! on a

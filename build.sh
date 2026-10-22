@@ -4,7 +4,7 @@
 #   grep -n '^// ---- src/' package/contents/code/main.js
 set -euo pipefail
 cd "$(dirname "$0")"
-files=(src/log.js src/tree.js src/main.js)
+files=(src/log.js src/tree.js src/rules.js src/kwin.js src/main.js)
 out=package/contents/code/main.js
 tmp=$(mktemp)
 {

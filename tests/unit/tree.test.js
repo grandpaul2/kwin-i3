@@ -478,3 +478,26 @@ test("i3 t/129-focus-after-close.t §3: closing an unfocused window leaves focus
     m.close("win");
     assert.strictEqual(m.focused.win, "middle");
 });
+
+// ---- adopt (start-up from KWin's live tiles) --------------------------------------------------
+
+test("adopt: rebuilds the tree, shares and all, and leaves floating windows alone", () => {
+    const m = model();
+    open(m, 1, "old");
+    m.openFloating("f", m.ws(1));
+    m.adopt(m.ws(1), { layout: "h", kids: [
+        { win: "a", percent: 0.25 },
+        { layout: "v", percent: 0.75, kids: [{ win: "b", percent: 0.5 }, { win: "c", percent: 0.5 }] },
+    ] });
+    assert.strictEqual(d(m), "H[a V[b c]] ~f*", "old had the focus; con_next_focused gives it to f");
+    assert.deepStrictEqual(pct(m, "a", "b"), [0.25, 0.5]);
+    assert.strictEqual(m.byWin.old, undefined, "the old tree is gone");
+    open(m, 1, "d");
+    assert.ok(d(m).includes("d*"), "a usable tree: new windows open into it");
+});
+
+test("adopt: a single window fills the workspace", () => {
+    const m = model();
+    m.adopt(m.ws(1), { win: "a", percent: 1 });
+    assert.strictEqual(d(m), "H[a]");
+});
