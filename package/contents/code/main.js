@@ -1038,9 +1038,12 @@ var KI3 = (function () {
     // (split() then adds a sibling). So: drop one-child splits, merge same-direction nesting into
     // the parent with shares multiplied through, skip minimized windows. Geometry is unchanged.
 
+    // In the layout: not minimized, and not a fullscreen window that has no tile yet. KWin
+    // refuses to tile a window that is already fullscreen (one dragged to the other monitor),
+    // and the refusal used to float it (fuzzer I9); it joins the layout when fullscreen ends.
     function visibleLeaf(c) {
         var w = wins[c.win];
-        return w && !w.minimized;
+        return w && !w.minimized && !(w.fullScreen && !w.tile);
     }
 
     // -> null | { win } | { dir: "h"|"v", kids: [{ node, share }] }
@@ -1094,9 +1097,14 @@ var KI3 = (function () {
         refused = true;
         return false;
     }
+    // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
+    // a fullscreen window dragged to the other monitor went back, small, to the old one when its
+    // old workspace let go of it (fuzzer I9). A fullscreen window keeps its geometry.
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
+        var g = w.fullScreen ? w.frameGeometry : null;
         tile.unmanage(w);
+        if (g) w.frameGeometry = g;
     }
 
     function tiledWindowsOf(t, out) {
@@ -1223,14 +1231,34 @@ var KI3 = (function () {
         for (var i = 0; i < p.kids.length; i++) build(tile.tiles[i], p.kids[i].p);
     }
 
-    function placeWindows(tile, p) {
+    // shown: the workspace's desktop is current on its monitor.
+    function placeWindows(tile, p, shown) {
         if (p.win !== undefined) {
             var w = wins[p.win];
             tile.windows.slice().forEach(function (o) { if (o !== w) unmanageFrom(tile, o); });
+            // Listed is not placed: a tile managed while its desktop was hidden lists the window
+            // but never requested it (Tile::manage), and manage() again returns early for a window
+            // it already lists. Once shown: off the list, then on (fuzzer I4, a monitor unplug).
+            if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
             return;
         }
-        for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p);
+        for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
+    }
+
+    // A tiled window fills its tile. KWin only moves a window when its tile changes, so a resize
+    // drag that changes no share (a lone window, an outer edge) left the window smaller than its
+    // tile for good (fuzzer I10). Not while a drag is still going. By tile, not by w.tile: KWin
+    // can list a window in a tile whose w.tile is null (a monitor going away; the fuzzer again).
+    function refit(t) {
+        t.windows.forEach(function (w) {
+            if (w.tile !== t || w.move || w.resize || w.fullScreen || !wins[id(w)]) return;
+            var g = w.frameGeometry, a = t.absoluteGeometry;
+            if (Math.abs(g.x - a.x) > 1 || Math.abs(g.y - a.y) > 1 ||
+                Math.abs(g.width - a.width) > 1 || Math.abs(g.height - a.height) > 1)
+                w.frameGeometry = a;
+        });
+        t.tiles.forEach(refit);
     }
 
     var selftestBroken = false;   // debug only: every reconcile throws (tests the backoff)
@@ -1262,10 +1290,11 @@ var KI3 = (function () {
             }
         }
         if (p) {
-            placeWindows(root, p);
+            placeWindows(root, p, workspace.currentDesktopForScreen(screen) === deskOf(ws.num));
             prepareTiles(root, screen, true);   // sizes first, with no tile minimums in the way
             setSizesStable(root, p, screen);
             prepareTiles(root, screen);         // then each leaf gets its window's minimum
+            refit(root);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
@@ -1351,7 +1380,7 @@ var KI3 = (function () {
         })(root);
         model.leaves(ws).forEach(function (leaf) {
             var w = wins[leaf.win];
-            if (!w || w.minimized) return;
+            if (!visibleLeaf(leaf)) return;
             var t = expected[leaf.win];
             if (!t || t.windows.indexOf(w) < 0) problems.push("window " + w.caption + " not in its tile");
         });
@@ -1508,9 +1537,12 @@ var KI3 = (function () {
             var ws = Tree.wsOf(con);
             if (kind === "resize" && con.type !== "floating") readBack(ws);
             if (kind === "move" && w.output !== outputOf(ws)) {
-                // Dropped on another monitor: it joins the workspace shown there (as i3ws did).
+                // Dropped on another monitor: it joins the workspace shown there (as i3ws did),
+                // and keeps the focus, as a dragged window does in i3.
                 var to = wsModel(deskNum(workspace.currentDesktopForScreen(w.output)));
                 model.moveToWorkspace(con, to);
+                model.focusWin(key);
+                wantFocus();
                 schedule(to);
             }
             schedule(ws);
@@ -1545,7 +1577,14 @@ var KI3 = (function () {
         var f = model.focused;
         if (!f) return;
         var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
-        if (workspace.currentDesktopForScreen(s) !== desk) workspace.setCurrentDesktopForScreen(desk, s);
+        if (workspace.currentDesktopForScreen(s) !== desk) {
+            workspace.setCurrentDesktopForScreen(desk, s);
+            // KWin places a tile's windows only while its desktop is current (Tile::manage calls
+            // requestTile only if isActive), and nothing in KWin catches up when it becomes so.
+            // This switch comes after the reconcile, so one more pass places them (fuzzer I4:
+            // a monitor unplugged, its workspace reconciled on the other while still hidden).
+            schedule(ws);
+        }
         if (f.type === "ws" || f.win === null) {
             if (workspace.activeScreen !== s) {
                 invoke("Switch to Screen " + workspace.screens.indexOf(s));

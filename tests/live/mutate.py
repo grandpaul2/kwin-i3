@@ -13,12 +13,13 @@ import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
+U, C = "41-unplug-focus.sh", "70-capture.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
- (T, "src/kwin.js", "sizes never set", "            setSizesStable(root, p);", ""),
+ (T, "src/kwin.js", "sizes never set", "            setSizesStable(root, p, screen);", ""),
  (T, "src/kwin.js", "padding kept", "        if (t.padding !== 0) t.padding = 0;", ""),
- (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized;", "        return !!w;"),
+ (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized && !(w.fullScreen && !w.tile);", "        return !!w && !(w.fullScreen && !w.tile);"),
  (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
  (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1, d) : null;", "                var spec = null;"),
  (R, "src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
@@ -34,7 +35,7 @@ muts = [
  (X, "src/kwin.js", "re-adopt on one desktop ignored", "            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }", "            if (!con) return;"),
  (X, "src/kwin.js", "guard logs nothing", "            catch (e) { log(\"ERROR in \" + name", "            catch (e) { (\"ERROR in \" + name"),
  (M, "src/kwin.js", "no relocation", "        relocate(ws, screen);\n", ""),
- (M, "src/kwin.js", "screen changes ignored", "        workspace.screensChanged.connect(guard(\"screens\", function () { scheduleAll(); wantFocus(); }));", ""),
+ (M, "src/kwin.js", "screen changes ignored", "        workspace.screensChanged.connect(guard(\"screens\", screensChanged));\n", ""),
  (M, "src/kwin.js", "no neighbouring output", "        var t = Workspaces.screenToward(outputOf(ws), dir);", "        var t = null;"),
  (M, "src/kwin.js", "pointer doesn't follow", "        if (from && from !== s) invoke(\"MoveMouseToFocus\");", ""),
  (M, "src/kwin.js", "no login numbering", "        if (login) Workspaces.numberScreens();", ""),
@@ -54,8 +55,17 @@ muts = [
  (M, "src/kwin.js", "a returning monitor's workspace not restored", "            if (allBack) {", "            if (false) {"),
  (X, "src/kwin.js", "minimums not shared out", "        if (sumMin > total) return want;", "        return want;"),
  (X, "src/kwin.js", "tile minimums left in place while sizing", "            prepareTiles(root, screen, true);   // sizes first", "            prepareTiles(root, screen);   // sizes first"),
+ # The fuzzer's finds, 2026-10-22 (tests/fuzz, docs/fuzz-design.md)
+ (M, "src/kwin.js", "an empty workspace leaves a hidden window active", "            if (f.type === \"ws\" && ac && Tree.wsOf(ac) !== ws) workspace.activeWindow = null;", ""),
+ (I, "src/kwin.js", "a window resized smaller than its tile stays so", "            refit(root);\n", ""),
+ (I, "src/kwin.js", "fullscreen geometry lost on unmanage", "        if (g) w.frameGeometry = g;\n", ""),
+ (I, "src/kwin.js", "untiled fullscreen windows are tiled (and floated on refusal)", "        return w && !w.minimized && !(w.fullScreen && !w.tile);", "        return w && !w.minimized;"),
+ (I, "src/kwin.js", "a window dragged to the other monitor loses the focus", "                model.focusWin(key);\n                wantFocus();\n", ""),
+ (U, "src/kwin.js", "a window listed in a tile but not placed stays unplaced", "            if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);\n", ""),
+ (U, "src/kwin.js", "no pass after focus shows a desktop", "            schedule(ws);\n        }\n        if (f.type === \"ws\"", "        }\n        if (f.type === \"ws\""),
+ (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
 ]
-ALL = [H, T, R, X, M, K, I, L]
+ALL = [H, T, R, X, M, U, K, I, L, C]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a

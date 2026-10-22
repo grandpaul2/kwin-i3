@@ -13,6 +13,33 @@ close_all() { local c; for c in "$@"; do kclose "$c"; done; }
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
+# 1. Resizing an edge with no neighbour (here a lone window) changes no share, so it changes no
+#    tile either: the window must still go back to filling its tile, as in i3 (fuzzer I10,
+#    shrunk to: open a window, Meta+right-drag it).
+client --title solo
+check "solo fills the monitor"              geom_is solo "0,0 1280x720"
+m=$(mark)
+drag Meta right 960 360 856 445
+check "a resize drag happened"              wait_log '^.{9}DRAG end resize solo' "$m"
+check "solo fills the monitor again"        geom_is solo "0,0 1280x720"
+
+#    A fullscreen window Meta+dragged to the other monitor goes to the workspace shown there and
+#    stays fullscreen on it. KWin refuses to tile a window that is already fullscreen, and that
+#    refusal used to float it, small, on the old monitor (fuzzer I9). Leaving fullscreen tiles it.
+fs() { busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Window Fullscreen"; }
+fs
+check "solo is fullscreen"                  wait_tree 1 "H[solo*!]"
+m=$(mark)
+drag Meta left 256 360 1855 349
+check "a move drag happened"                wait_log '^.{9}DRAG end move solo' "$m"
+check "solo moved to workspace 2, still tiled and fullscreen" wait_tree 2 "H[solo*!]" "$m"
+check "it fills the second monitor"         geom_is solo "1280,0 1280x720"
+fs
+check "out of fullscreen it tiles there"    wait_tree 2 "H[solo*]"
+check "filling the second monitor"          geom_is solo "1280,0 1280x720"
+kclose solo
+key "Workspace 1"
+
 # 2. Dragging the border resizes, and the model keeps it: the check comes after the reconcile
 #    that follows the drag (without the read-back it snaps back to half).
 client --title a; client --title b
@@ -65,6 +92,7 @@ check "workspace 1 keeps only a"            poll has_word 1 "a" "$m"
 only_a() { [[ "$(words_of 1 "$m" | tr -s ' ')" == " H a " ]]; }
 check "and nothing else"                    poll only_a
 check "b is on the second monitor"          poll output_is b Virtual-1
+check "and still has the focus"             poll active_is b
 m=$(mark)
 drag Meta left 1700 360 700 360
 check "a floating window dragged back"      wait_log '^.{9}DRAG end move b' "$m"
