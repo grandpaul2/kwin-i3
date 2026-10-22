@@ -346,8 +346,12 @@ var KI3 = (function () {
         }
     }
 
+    var connected = {};     // window id -> true once its signals are connected (once only)
+
     function connectWindow(w) {
         var key = id(w);
+        if (connected[key]) return;
+        connected[key] = true;
         var dragging = false;
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
         w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
@@ -368,7 +372,17 @@ var KI3 = (function () {
         // (2026-10-22): with two paths, removing either changed nothing, so neither was tested.
         w.desktopsChanged.connect(guard("desktops", function () {
             var con = model.byWin[key];
-            if (!con) return;
+            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }
+            if (w.desktops.length !== 1) {
+                // Now on all desktops (sticky): no longer ours, as if it had never been (rules).
+                var was = Tree.wsOf(con);
+                if (w.tile) unmanageFrom(w.tile, w);
+                setFloatingLook(w, false);
+                model.close(key);
+                delete wins[key]; delete expected[key];
+                schedule(was);
+                return;
+            }
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
             // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
@@ -489,6 +503,10 @@ var KI3 = (function () {
         });
         registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
                          "Meta+Ctrl+Shift+Q", release);
+        // Only with debug logging (the live tests): an action that throws, to prove the guard
+        // logs it and kwin-i3 carries on. No key; never registered in normal use.
+        if (DEBUG_LOG) registerShortcut("kwin-i3 Selftest Throw", "kwin-i3: self-test (throws)", "",
+                                        act("Selftest Throw", function () { throw new Error("selftest"); }));
     }
 
     // ---- release (the safety valve) --------------------------------------------------------

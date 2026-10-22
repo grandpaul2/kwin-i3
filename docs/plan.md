@@ -113,7 +113,7 @@ transient rule is what floats dialogs. Floating windows stay above tiled ones |
 | never managed | `onAllDesktops`, `skipTaskbar`, other activities (one activity: everything else is ignored) |
 | minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
 | maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
-| minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize |
+| minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize. **Not across a reload**: KWin's tiles don't hold a minimized window's place and a script can't save state, so after a reload it comes back after the focus (found 2026-10-22) |
 | foreign untile (Meta+drag, KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
 | close | leaf removed, empty splits removed upwards (no flatten), focus to the previous focus in that container |
 | focus follows mouse | KWin's `windowActivated` updates the focus stack; the last focus event wins, as in i3 |
@@ -135,10 +135,9 @@ Every root the script sees, including new desktops and returning outputs, gets `
    `make mutate`, 16 deliberate faults, every one caught. `src/tree.js` with unit tests per `tree_move` case, `tree_flatten`, tree focus,
    close-focus, split, toggle, insertion. Each test written from i3's source; each guard watched to
    fail with a deliberate fault before it counts.
-2. **Adapter, one monitor. Mostly done 2026-10-22** (`src/kwin.js`, `src/rules.js`; live
-   scenarios 10-tiling and 20-rules; `make mutate-live`, 15 faults, all caught). Still to add
-   before phase 3: live checks for the ignore rules, focus/move up and down, the guard's error
-   path, and a reload with floating and minimized windows. **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
+2. **Adapter, one monitor. Done 2026-10-22** (`src/kwin.js`, `src/rules.js`; live scenarios
+   10-tiling, 20-rules, 30-more, 80 checks in 6 s; `make mutate-live`, 19 faults, all caught).
+   **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
    min sizes, the policies above, the release action. Live tests drive keys with `invokeShortcut`
    and read geometry back; the invariant check runs after each step.
 3. **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,

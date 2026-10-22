@@ -12,7 +12,7 @@ Run: make mutate-live.
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 
-T, R, H = "10-tiling.sh", "20-rules.sh", "00-harness.sh"
+T, R, H, X = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -29,8 +29,12 @@ muts = [
  (T, "src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
  (R, "src/rules.js", "dialogs tile", "        if (w.transient || w.modal || !w.resizeable) return \"float\";", "        if (!w.resizeable) return \"float\";"),
  (R, "src/rules.js", "title rule ignored", "            titleHas(w.caption, FLOAT_TITLE)) return \"float\";", "            false) return \"float\";"),
+ (X, "src/rules.js", "ignore list empty", "    var IGNORE_CLASS = list(\"ignoreClass\",", "    var IGNORE_CLASS = [] || list(\"ignoreClass\","),
+ (X, "src/kwin.js", "sticky windows kept", "            if (w.desktops.length !== 1) {\n                // Now on all desktops", "            if (false) {\n                // Now on all desktops"),
+ (X, "src/kwin.js", "re-adopt on one desktop ignored", "            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }", "            if (!con) return;"),
+ (X, "src/kwin.js", "guard logs nothing", "            catch (e) { log(\"ERROR in \" + name", "            catch (e) { (\"ERROR in \" + name"),
 ]
-ALL = [H, T, R]
+ALL = [H, T, R, X]
 
 def run(scenarios, failfast):
     env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)

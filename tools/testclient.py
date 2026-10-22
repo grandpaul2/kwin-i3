@@ -2,7 +2,7 @@
 """A GTK 4 window for the live tests, able to be the awkward kinds Alacritty can't.
 
   testclient.py --title T [--size WxH] [--min WxH] [--fixed] [--dialog]
-                [--map-delay SECONDS] [--retitle SECONDS:NEWTITLE]
+                [--map-delay SECONDS] [--retitle SECONDS:NEWTITLE] [--app-id ID]
 
 --min       minimum size (GTK's size request), for windows bigger than their tile
 --fixed     not resizable (Krohnkite floated these; so will kwin-i3)
@@ -10,6 +10,7 @@
             (on Wayland a transient must come from the same process)
 --map-delay show the window only after this long, like a slow app
 --retitle   change the title after this long, like the stage's Xephyr or a browser
+--app-id    the Wayland app id, which KWin reports as the window class (for the ignore rules)
 
 Runs until killed. Software rendering, so it works in the headless test KWin.
 """
@@ -35,8 +36,11 @@ def main():
     p.add_argument("--dialog", action="store_true")
     p.add_argument("--map-delay", type=float, default=0)
     p.add_argument("--retitle")
+    p.add_argument("--app-id")
     a = p.parse_args()
 
+    if a.app_id:
+        GLib.set_prgname(a.app_id)          # GTK uses it as the xdg_toplevel app id
     app = Gtk.Application(application_id=None)
 
     def activate(app):
