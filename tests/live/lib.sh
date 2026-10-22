@@ -1,28 +1,66 @@
 # Helpers for live scenarios. Sourced inside tools/testkwin.sh (headless KWin, private bus).
-#   kjs '<js>'        run a throwaway KWin script; it has log(); prints the lines it logged
-#   load_kwin_i3      load package/contents/code/main.js as the script "kwin-i3"
-#   client <args>     start tools/testclient.py in the background (see its --help)
-#   wait_log <regex>  wait up to 5 s for a log line matching regex
-#   ok/fail <msg>     record a result; finish prints the tally and sets the exit status
+# Every wait polls for the event it needs; no helper sleeps a fixed time and hopes
+# (test review 2026-10-22, faults 1-4).
+#
+#   kjs '<js>'            run a throwaway KWin script that has log(); prints what it logged.
+#                         Fails loudly (stderr, status 1) on a script error or a timeout.
+#   load_kwin_i3          load package/contents/code/main.js as the script "kwin-i3"
+#   client <args>         start tools/testclient.py (see its --help) and wait for its window
+#   kclose <caption>      close that window and wait until it is gone
+#   key "<action>"        press a kwin-i3 shortcut ("Split V", ...) and wait for it to run
+#   mark                  the log's current length, for the [mark] arguments below
+#   wait_log <regex> [mark]           a log line matching regex (after mark)
+#   tree <n> [mark]                   workspace n's last logged tree (after mark)
+#   wait_tree <n> <want> [mark]       wait for workspace n's tree to be <want>
+#   geom <caption>                    "x,y wxh" of that window's frame
+#   wait_geom <caption> <want>        wait for that frame (geom_is is the same)
+#   clean_log             no INVARIANT/ERROR/WARN line logged (prints the first one if there is)
+#   check <msg> <cmd...>  run cmd, record ok/FAIL; finish prints the tally and sets the status
+#   KI3_FAILFAST=1        stop at the first FAIL (the mutation battery uses this)
 here_live=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$here_live/../.." && pwd)
 passed=0; failed=0
+WAIT=${KI3_WAIT:-5}                     # seconds any one wait may take
 
-_kjs_n=0
+mark() { wc -l < "$KI3_LOG" 2>/dev/null || echo 0; }
+after() { tail -n +"$((${1:-0} + 1))" "$KI3_LOG" 2>/dev/null; }
+
+# poll <cmd...>: retry cmd every 0.05 s for up to $WAIT seconds.
+poll() {
+    local end=$((SECONDS + WAIT))
+    while :; do
+        "$@" && return 0
+        (( SECONDS >= end )) && return 1
+        sleep 0.05
+    done
+}
+
 kjs() {
-    _kjs_n=$((_kjs_n + 1))
-    local f=$KI3_TMP/kjs$_kjs_n.js mark="KJS$_kjs_n-END"
+    # A unique id per call without shell state: kjs runs in subshells ($(kjs ...)), where a
+    # counter never advances (review fault 1).
+    local n="kjs-$(date +%s%N)-$RANDOM" before f
+    f=$KI3_TMP/$n.js
     {
         echo 'function log(s) { callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", "kjs: " + s); }'
+        echo "try {"
         echo "$1"
-        echo "log(\"$mark\");"
+        echo "} catch (e) { log(\"ERROR \" + e); }"
+        echo "log(\"$n-END\");"
     } > "$f"
-    local before; before=$(wc -l < "$KI3_LOG" 2>/dev/null || echo 0)
-    busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting loadScript ss "$f" "kjs$_kjs_n" >/dev/null
+    before=$(mark)
+    busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting loadScript ss "$f" "$n" >/dev/null
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting start
-    for _ in $(seq 50); do grep -q "$mark" "$KI3_LOG" 2>/dev/null && break; sleep 0.1; done
-    busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s "kjs$_kjs_n" >/dev/null
-    tail -n +"$((before + 1))" "$KI3_LOG" | grep '^.\{9\}kjs: ' | grep -v "$mark" | cut -c15-
+    local end=$((SECONDS + WAIT)) done=""
+    while (( SECONDS < end )); do
+        after "$before" | grep -qF "kjs: $n-END" && { done=1; break; }
+        sleep 0.02
+    done
+    busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s "$n" >/dev/null
+    local out; out=$(after "$before" | grep '^.\{9\}kjs: ' | grep -vF "$n-END" | cut -c15-)
+    if [[ -z $done ]]; then echo "kjs: no answer in ${WAIT}s (a syntax error?): $1" >&2; return 1; fi
+    if grep -q '^ERROR ' <<<"$out"; then echo "kjs: $(grep '^ERROR ' <<<"$out" | head -1)" >&2; return 1; fi
+    [[ -n $out ]] && printf '%s\n' "$out"
+    return 0
 }
 
 load_kwin_i3() {
@@ -31,34 +69,64 @@ load_kwin_i3() {
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting start
 }
 
-client() { "$root/tools/testclient.py" "$@" >/dev/null 2>&1 & }
+_has_window() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(1); });" | grep -q 1; }
+_no_window() { ! _has_window "$1"; }
 
-wait_log() {
-    for _ in $(seq 50); do grep -qE "$1" "$KI3_LOG" 2>/dev/null && return 0; sleep 0.1; done
-    return 1
+client() {
+    local title="" a=("$@") i
+    for ((i = 0; i < ${#a[@]}; i++)); do [[ ${a[i]} == --title ]] && title=${a[i+1]}; done
+    "$root/tools/testclient.py" "$@" >/dev/null 2>&1 &
+    if [[ -n $title ]] && ! poll _has_window "$title"; then
+        echo "    client: no window \"$title\" after ${WAIT}s" >&2
+    fi
+    return 0
 }
 
-ok()   { passed=$((passed + 1)); echo "  ok   $*"; }
-fail() { failed=$((failed + 1)); echo "  FAIL $*"; }
-check() { local msg=$1; shift; if "$@"; then ok "$msg"; else fail "$msg"; fi; }
-finish() { echo "  $passed passed, $failed failed"; [[ $failed -eq 0 ]]; }
+kclose() {
+    kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") w.closeWindow(); });" >/dev/null
+    poll _no_window "$1" || echo "    kclose: \"$1\" still open after ${WAIT}s" >&2
+}
 
-# kwin-i3 specifics
-#   key "<action>"        press a kwin-i3 shortcut ("Split V", "Move Left", ...)
-#   tree <n>              the last logged tree of workspace n, e.g. "H[a V[b c*]]"
-#   wait_tree <n> <want>  wait up to 5 s for workspace n's tree to be <want>; prints it if not
-#   geom <caption>        "x,y wxh" of that window's frame
-#   kclose <caption>      close that window
-#   clean_log             no INVARIANT or ERROR line has been logged
-key() { busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 $1"; sleep 0.3; }
-tree() { grep -E "^.{9}TREE $1 " "$KI3_LOG" | tail -1 | cut -d' ' -f4-; }
+_logged_since() { after "$2" | grep -qE "$1"; }
+wait_log() { poll _logged_since "$1" "${2:-0}"; }
+
+key() {
+    local m; m=$(mark)
+    busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 $1"
+    wait_log "^.{9}ACTION $1\$" "$m" || echo "    key: \"$1\" did not run within ${WAIT}s" >&2
+}
+
+tree() { after "${2:-0}" | grep -E "^.{9}TREE $1 " | tail -1 | cut -d' ' -f4-; }
+_tree_is() { [[ "$(tree "$1" "$3")" == "$2" ]]; }
 wait_tree() {
-    for _ in $(seq 50); do [[ "$(tree "$1")" == "$2" ]] && return 0; sleep 0.1; done
-    echo "    workspace $1 is: $(tree "$1")   wanted: $2"; return 1
+    poll _tree_is "$1" "$2" "${3:-0}" && return 0
+    echo "    workspace $1 is: $(tree "$1" "${3:-0}")   wanted: $2"; return 1
 }
+
 geom() {
     kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(Math.round(g.x) + \",\" + Math.round(g.y) + \" \" + Math.round(g.width) + \"x\" + Math.round(g.height)); } });"
 }
-kclose() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") w.closeWindow(); });" >/dev/null; sleep 0.5; }
-clean_log() { ! grep -qE '^.{9}(INVARIANT|ERROR)' "$KI3_LOG"; }
-geom_is() { local g; g=$(geom "$1"); [[ "$g" == "$2" ]] || { echo "    $1 is at $g, wanted $2"; return 1; }; }
+_geom_is() { [[ "$(geom "$1")" == "$2" ]]; }
+wait_geom() {
+    poll _geom_is "$1" "$2" && return 0
+    echo "    $1 is at $(geom "$1"), wanted $2"; return 1
+}
+geom_is() { wait_geom "$@"; }
+
+clean_log() {
+    local bad; bad=$(grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | head -1)
+    [[ -z $bad ]] && return 0
+    echo "    log: ${bad:9}"; return 1
+}
+
+ok()   { passed=$((passed + 1)); echo "  ok   $*"; }
+fail() {
+    failed=$((failed + 1)); echo "  FAIL $*"
+    if [[ -n ${KI3_FAILFAST:-} ]]; then finish; exit 1; fi
+}
+check() { local msg=$1; shift; if "$@"; then ok "$msg"; else fail "$msg"; fi; }
+finish() {
+    echo "  $passed passed, $failed failed"
+    (( passed + failed > 0 )) || { echo "  FAIL no checks ran"; return 1; }
+    [[ $failed -eq 0 ]]
+}

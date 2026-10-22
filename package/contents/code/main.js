@@ -1343,6 +1343,7 @@ var KI3 = (function () {
             if (root) while (root.tiles.length) root.tiles[root.tiles.length - 1].remove();
         }
         log("RELEASED");
+        log("ACTION Release");
     }
 
     // ---- start -----------------------------------------------------------------------------

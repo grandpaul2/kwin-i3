@@ -10,7 +10,7 @@ client --title fixed --fixed
 client --title dialoger --dialog
 client --title slow --map-delay 1.5
 client --title before --retitle 1:after
-sleep 3.5
+poll _has_window "dialoger dialog"; poll _has_window after
 
 info=$(kjs 'workspace.windowList().forEach(function (w) {
     log(w.caption + "|normal=" + w.normalWindow + "|resizeable=" + w.resizeable +
@@ -22,4 +22,7 @@ check "--fixed: not resizeable"             has "fixed|normal=true|resizeable=fa
 check "--dialog: modal transient dialog"    has "dialoger dialog|normal=true|resizeable=true|transient=true|modal=true"
 check "--map-delay: appears late"           has "slow|normal=true"
 check "--retitle: new title"                has "after|normal=true"
+broken_kjs_fails() { ! WAIT=1 kjs 'this is not javascript' 2>/dev/null; }
+check "kjs fails loudly on a broken script" broken_kjs_fails
+check "no invariant failures or errors"     clean_log
 finish

@@ -4,15 +4,15 @@ source "$(dirname "$0")/lib.sh"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
-client --title a; sleep 1
+client --title a
 check "one window fills the screen"         geom_is a "0,0 1280x720"
-client --title b; sleep 1
+client --title b
 check "two windows: H[a b*]"                wait_tree 1 "H[a b*]"
 check "a takes the left half"               geom_is a "0,0 640x720"
 check "b takes the right half"              geom_is b "640,0 640x720"
 
 key "Split V"
-client --title c; sleep 1
+client --title c
 check "split v then open: H[a V[b c*]]"     wait_tree 1 "H[a V[b c*]]"
 check "b top right"                         geom_is b "640,0 640x360"
 check "c bottom right"                      geom_is c "640,360 640x360"
@@ -25,7 +25,8 @@ check "three equal columns: b"              geom_is b "853,0 427x720"
 
 key "Focus Right"
 check "focus right reaches b"               wait_tree 1 "H[a c V[b*]]"
-kjs 'log(workspace.activeWindow.caption)' | grep -qx b; check "KWin's active window follows" test $? -eq 0
+active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
+check "KWin's active window follows"        poll active_is b
 
 kclose c
 check "close c: H[a V[b*]]"                 wait_tree 1 "H[a V[b*]]"
@@ -34,8 +35,9 @@ check "a back to half"                      geom_is a "0,0 640x720"
 key "Floating Toggle"
 check "b floats"                            wait_tree 1 "H[a] ~b*"
 check "a fills the screen"                  geom_is a "0,0 1280x720"
-kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "b") log(w.keepAbove); })' | grep -qx true
-check "a floating window is kept above"     test $? -eq 0
+prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
+prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
+check "a floating window is kept above"     poll prop_is b keepAbove true
 key "Floating Toggle"
 check "b tiles again"                       wait_tree 1 "H[a b*]"
 
@@ -46,17 +48,16 @@ key "Toggle Split"
 check "toggle again: same-direction nest"   wait_tree 1 "H[H[a b*]]"
 check "projected flat: a left half"         geom_is a "0,0 640x720"
 
-
 # A same-direction nest *with siblings* must be merged into its parent: H[H[a d] b] -> 3 columns.
-kclose a; kclose b; sleep 0.5
+kclose a; kclose b
 check "all closed: an empty workspace"      wait_tree 1 "H[]*"
-client --title a; sleep 1
-client --title b; sleep 1
-client --title c; sleep 1
+client --title a
+client --title b
+client --title c
 check "three windows side by side"          wait_tree 1 "H[a b c*]"
 key "Focus Left"; key "Focus Left"
 key "Split H"
-client --title d; sleep 1
+client --title d
 check "a nested split of the same direction" wait_tree 1 "H[H[a d*] b c]"
 check "projected flat: a is a sixth"        geom_is a "0,0 213x720"
 check "projected flat: d is the next sixth" geom_is d "213,0 213x720"
