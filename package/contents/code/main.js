@@ -1551,6 +1551,10 @@ var KI3 = (function () {
                 invoke("Switch to Screen " + workspace.screens.indexOf(s));
                 if (from && from !== s) invoke("MoveMouseToCenter");
             }
+            // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
+            // it with the window just moved away, hidden on another workspace (fuzzer, I8).
+            var a = workspace.activeWindow, ac = a ? model.byWin[id(a)] : null;
+            if (f.type === "ws" && ac && Tree.wsOf(ac) !== ws) workspace.activeWindow = null;
             return;
         }
         var w = wins[f.win];

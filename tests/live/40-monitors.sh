@@ -94,5 +94,17 @@ check "still there"                         geom_is b "1280,0 1280x720"
 check "its monitor shows 2 again"           poll shows Virtual-1 2
 check "and the first monitor shows 1, not 2 as well" poll shows Virtual-0 1
 
+# The fuzzer's first find (I8, shrunk to 2 steps): moving the only window away leaves its
+# workspace empty and focused, as in i3. KWin kept the moved window active, hidden on the other
+# workspace, so typing went into a window nobody could see.
+key "Focus Left"
+check "c is active"                         poll active_is c
+key "Move to Workspace 6"
+check "c went to workspace 6"               wait_tree 6 "H[c]"
+check "workspace 1 is empty and focused"    wait_tree 1 "H[]*"
+check "no window is active (not the hidden c)" poll active_is ""
+key "Workspace 6"
+check "Meta+6: c is active again"           poll active_is c
+
 check "no invariant failures or errors"     clean_log
 finish
