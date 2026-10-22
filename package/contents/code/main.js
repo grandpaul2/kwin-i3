@@ -1104,17 +1104,20 @@ var KI3 = (function () {
     // 15% of the screen (tile.h m_minimumSize = 0.15 x 0.15, inherited by children), which would
     // stop i3 sizes below 384 px on a 2560 px monitor. Splits get no minimum; a window's tile gets
     // the window's minimum size, relative to the screen.
-    function prepareTiles(t, screen) {
+    // noMin: minimums cleared, for while setSizes moves edges one by one: a tile minimum blocks
+    // KWin's in-between steps and the sizes never settle (seen 2026-10-22: 280|680|500 asked
+    // 280|500|500, the last window off the screen).
+    function prepareTiles(t, screen, noMin) {
         if (t.padding !== 0) t.padding = 0;
         var min = { width: 0, height: 0 };
-        if (!t.tiles.length && t.windows.length === 1) {
+        if (!noMin && !t.tiles.length && t.windows.length === 1) {
             var ms = t.windows[0].minSize, g = screen.geometry;
             min = { width: ms.width / g.width, height: ms.height / g.height };
         }
         var cur = t.minimumSize;
         if (Math.abs(cur.width - min.width) > 1e-6 || Math.abs(cur.height - min.height) > 1e-6)
             t.minimumSize = min;
-        t.tiles.forEach(function (c) { prepareTiles(c, screen); });
+        t.tiles.forEach(function (c) { prepareTiles(c, screen, noMin); });
     }
 
     // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
@@ -1128,6 +1131,42 @@ var KI3 = (function () {
         log("WARN sizes did not settle after 4 passes");
     }
 
+    // The smallest a projected subtree can be, in pixels: windows' minimum sizes added up along a
+    // split and the largest across it.
+    function minOf(p) {
+        if (p.win !== undefined) {
+            var m = wins[p.win].minSize;
+            return { w: m.width, h: m.height };
+        }
+        var r = { w: 0, h: 0 };
+        p.kids.forEach(function (k) {
+            var m = minOf(k.p);
+            if (p.dir === "h") { r.w += m.w; r.h = Math.max(r.h, m.h); }
+            else { r.h += m.h; r.w = Math.max(r.w, m.w); }
+        });
+        return r;
+    }
+
+    // i3's shares, but no child below its minimum: the shortfall comes from children with room
+    // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Paul's
+    // desktop, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
+    // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
+    function fitMinimums(want, mins, total) {
+        var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
+        if (sumMin > total) return want;
+        var out = want.slice(), locked = out.map(function () { return false; });
+        for (var round = 0; round < out.length; round++) {
+            var deficit = 0;
+            out.forEach(function (v, i) { if (!locked[i] && v < mins[i]) { deficit += mins[i] - v; out[i] = mins[i]; locked[i] = true; } });
+            if (deficit <= 0) break;
+            var slack = 0;
+            out.forEach(function (v, i) { if (!locked[i]) slack += v - mins[i]; });
+            if (slack <= 0) break;
+            out.forEach(function (v, i) { if (!locked[i]) out[i] = v - deficit * (v - mins[i]) / slack; });
+        }
+        return out;
+    }
+
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
     // 1 px hole the wallpaper showed through (Paul's desktop, 2026-10-22).
@@ -1138,10 +1177,14 @@ var KI3 = (function () {
         if (p.win !== undefined) return false;
         var changed = false, h = p.dir === "h", n = h ? snapW : snapH;
         var start = h ? rect.x : rect.y, size = h ? rect.width : rect.height, pos = start;
+        var px = fitMinimums(
+            p.kids.map(function (k) { return k.share * size * n; }),
+            p.kids.map(function (k) { var m = minOf(k.p); return h ? m.w : m.h; }),
+            size * n);
         for (var i = 0; i < p.kids.length; i++) {
             var k = p.kids[i], child = tile.tiles[i];
             var a = snap(pos, n);
-            pos += size * k.share;
+            pos += px[i] / n;
             var b = i === p.kids.length - 1 ? snap(start + size, n) : snap(pos, n);
             var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
                       : { x: rect.x, y: a, width: rect.width, height: b - a };
@@ -1209,8 +1252,9 @@ var KI3 = (function () {
         }
         if (p) {
             placeWindows(root, p);
-            prepareTiles(root, screen);       // now each leaf holds its window: its minimum
+            prepareTiles(root, screen, true);   // sizes first, with no tile minimums in the way
             setSizesStable(root, p, screen);
+            prepareTiles(root, screen);         // then each leaf gets its window's minimum
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
@@ -1240,19 +1284,6 @@ var KI3 = (function () {
     // minimum along the axis that overflows.
     function floatWhatCannotFit(ws, screen) {
         var g = screen.geometry;
-        function minOf(p) {
-            if (p.win !== undefined) {
-                var m = wins[p.win].minSize;
-                return { w: m.width, h: m.height };
-            }
-            var r = { w: 0, h: 0 };
-            p.kids.forEach(function (k) {
-                var m = minOf(k.p);
-                if (p.dir === "h") { r.w += m.w; r.h = Math.max(r.h, m.h); }
-                else { r.h += m.h; r.w = Math.max(r.w, m.w); }
-            });
-            return r;
-        }
         for (var n = 0; n < 32; n++) {
             var p = project(ws);
             if (!p) return;

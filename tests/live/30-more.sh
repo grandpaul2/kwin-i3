@@ -80,8 +80,36 @@ check "q"                                   poll inside q
 check "big"                                 poll inside big
 check "logged why"                          wait_log '^.{9}FLOAT big: '
 
+# Minimums that fit in total but not in i3's shares: they get the space from neighbours with
+# room to spare (Paul's desktop, 2026-10-22: KeePassXC, minimum 800 px, in a 640 px quarter, hung
+# 162 px onto the other monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
+kclose big; kclose p; kclose q; kclose r
+key "Workspace 3"                          # a fresh, horizontal workspace
+client --title s1
+client --title w1 --min 500x300
+client --title w2 --min 500x300
+has_tiled_row() { [[ "$(tree 3)" == "H[s1 w1 w2*]" ]]; }
+check "three in a row, all tiled"           poll has_tiled_row
+min_ok() {
+    local g x w; for c in w1 w2; do
+        g=$(geom $c); [[ $g =~ ^(-?[0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1
+        x=${BASH_REMATCH[1]} w=${BASH_REMATCH[2]}
+        (( w >= 500 && x >= 0 && x + w <= 1280 )) || return 1
+    done
+}
+check "each wide window gets its minimum, inside the screen" poll min_ok
+row_meets() {
+    local g; g=$(geom s1); [[ $g =~ ^0,[0-9]+\ ([0-9]+)x ]] || return 1; local e=${BASH_REMATCH[1]}
+    g=$(geom w1); [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1; (( BASH_REMATCH[1] == e )) || return 1; e=$((BASH_REMATCH[1] + BASH_REMATCH[2]))
+    g=$(geom w2); [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1; (( BASH_REMATCH[1] == e && BASH_REMATCH[1] + BASH_REMATCH[2] == 1280 ))
+}
+check "and the row still meets edge to edge" poll row_meets
+kclose s1; kclose w1; kclose w2
+key "Workspace 1"
+
 # A reconcile that throws every time: three retries 250 ms apart, then it waits for an event
 # (it used to retry at once for ever, spinning KWin). Then it recovers on the next event.
+client --title p; client --title q; client --title big --min 900x500
 m=$(mark)
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
 check "it gives up after 3 retries"         wait_log '^.{9}WARN giving up after 3 errors' "$m"

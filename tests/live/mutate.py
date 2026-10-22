@@ -52,6 +52,8 @@ muts = [
  (X, "src/kwin.js", "no backoff: retry at once, for ever", "        if (failures > 3) {", "        if (false) {"),
  (X, "src/kwin.js", "can't-fit windows still tile", "        floatWhatCannotFit(ws, screen);\n", ""),
  (M, "src/kwin.js", "a returning monitor's workspace not restored", "            if (allBack) {", "            if (false) {"),
+ (X, "src/kwin.js", "minimums not shared out", "        if (sumMin > total) return want;", "        return want;"),
+ (X, "src/kwin.js", "tile minimums left in place while sizing", "            prepareTiles(root, screen, true);   // sizes first", "            prepareTiles(root, screen);   // sizes first"),
 ]
 ALL = [H, T, R, X, M, K, I, L]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
