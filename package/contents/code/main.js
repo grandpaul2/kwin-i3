@@ -1119,23 +1119,32 @@ var KI3 = (function () {
     // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
     // in order can leave a stale edge behind (seen 2026-10-22: four columns, the third left at
     // 0.567 wide over the fourth). Passes repeat until every tile is where it should be.
-    function setSizesStable(root, p) {
+    function setSizesStable(root, p, screen) {
+        var g = screen.geometry;
+        snapW = g.width; snapH = g.height;
         for (var pass = 0; pass < 4; pass++)
             if (!setSizes(root, p, { x: 0, y: 0, width: 1, height: 1 })) return;
         log("WARN sizes did not settle after 4 passes");
     }
 
+    // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
+    // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
+    // 1 px hole the wallpaper showed through (Paul's desktop, 2026-10-22).
+    var snapW = 1, snapH = 1;
+    function snap(v, n) { return Math.round(v * n) / n; }
+
     // Returns true if anything had to change.
     function setSizes(tile, p, rect) {
         if (p.win !== undefined) return false;
-        var changed = false;
-        var pos = p.dir === "h" ? rect.x : rect.y;
+        var changed = false, h = p.dir === "h", n = h ? snapW : snapH;
+        var start = h ? rect.x : rect.y, size = h ? rect.width : rect.height, pos = start;
         for (var i = 0; i < p.kids.length; i++) {
             var k = p.kids[i], child = tile.tiles[i];
-            var r = p.dir === "h"
-                ? { x: pos, y: rect.y, width: rect.width * k.share, height: rect.height }
-                : { x: rect.x, y: pos, width: rect.width, height: rect.height * k.share };
-            pos += p.dir === "h" ? r.width : r.height;
+            var a = snap(pos, n);
+            pos += size * k.share;
+            var b = i === p.kids.length - 1 ? snap(start + size, n) : snap(pos, n);
+            var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
+                      : { x: rect.x, y: a, width: rect.width, height: b - a };
             var g = child.relativeGeometry;
             if (Math.abs(g.x - r.x) > 1e-4 || Math.abs(g.y - r.y) > 1e-4 ||
                 Math.abs(g.width - r.width) > 1e-4 || Math.abs(g.height - r.height) > 1e-4) {
@@ -1201,7 +1210,7 @@ var KI3 = (function () {
         if (p) {
             placeWindows(root, p);
             prepareTiles(root, screen);       // now each leaf holds its window: its minimum
-            setSizesStable(root, p);
+            setSizesStable(root, p, screen);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
