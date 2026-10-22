@@ -135,7 +135,10 @@ Every root the script sees, including new desktops and returning outputs, gets `
    `make mutate`, 16 deliberate faults, every one caught. `src/tree.js` with unit tests per `tree_move` case, `tree_flatten`, tree focus,
    close-focus, split, toggle, insertion. Each test written from i3's source; each guard watched to
    fail with a deliberate fault before it counts.
-2. **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
+2. **Adapter, one monitor. Mostly done 2026-10-22** (`src/kwin.js`, `src/rules.js`; live
+   scenarios 10-tiling and 20-rules; `make mutate-live`, 15 faults, all caught). Still to add
+   before phase 3: live checks for the ignore rules, focus/move up and down, the guard's error
+   path, and a reload with floating and minimized windows. **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
    min sizes, the policies above, the release action. Live tests drive keys with `invokeShortcut`
    and read geometry back; the invariant check runs after each step.
 3. **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,

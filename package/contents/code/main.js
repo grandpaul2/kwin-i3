@@ -1192,15 +1192,10 @@ var KI3 = (function () {
             var con = model.byWin[key];
             if (con) schedule(Tree.wsOf(con));
         }));
-        w.maximizedChanged.connect(guard("maximized", function () {
-            // i3 has no maximize: undo it and keep the window in its tile.
-            var con = model.byWin[key];
-            if (con && con.type !== "floating" && w.maximizeMode !== 0) {
-                w.setMaximize(false, false);
-                expected[key] = null;
-                schedule(Tree.wsOf(con));
-            }
-        }));
+        // Maximize (i3 has none) needs no handler of its own: it drops the window out of its
+        // tile, the foreign-untile path below re-tiles it, and KWin's Tile::manage clears the
+        // maximize. A separate handler doing the same was found redundant by the fault battery
+        // (2026-10-22): with two paths, removing either changed nothing, so neither was tested.
         w.desktopsChanged.connect(guard("desktops", function () {
             var con = model.byWin[key];
             if (!con) return;

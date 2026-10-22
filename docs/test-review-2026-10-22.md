@@ -170,3 +170,30 @@ default keys (kwin.js:487-498). A typo in `KEYS` goes unnoticed. See coverage.
 - The mutation list in mutate.py has 13 of 15 faults in kwin.js but none for: desktopsChanged, readBack,
   tileChanged, ignore path, focus follow for Up/Down; adding a fault there would fail nowhere today, which is
   the evidence of the gap.
+
+---
+
+## Disposition (2026-10-22, same session)
+
+| finding | disposition |
+|---|---|
+| 1 kjs counter in subshells | FIXED: unique id per call from time + `$RANDOM`; the wait looks only after its own start mark |
+| 2 kjs swallows failures | FIXED: script wrapped in try/catch, errors and timeouts go to stderr with status 1; 00-harness checks a broken script fails; the release check asserts a real geometry first |
+| 3 single-shot geometry reads | FIXED: `geom_is` polls (`wait_geom`) |
+| 4 reload check passes without a reload | FIXED: `mark` before the unload; `wait_log`/`wait_tree` take a mark and look only after it |
+| 5 invariants only at the end | FIXED in part: `clean_log` prints the offending line and also fails on WARN; 00-harness calls it. Per-phase calls: WON'T-FIX for now, the first offending line names the step |
+| 6 run.sh / testkwin.sh status gaps | FIXED: run.sh builds first and requires each scenario's tally line; `finish` fails when no check ran; testkwin fails fast if KWin or the log sink don't come up; one timeout layer each (110 s per scenario, 120 s harness) |
+| 7 mutate.py: no baseline, any non-zero = red, leaves a mutant built | FIXED: baseline must be green; only a FAIL line counts as caught (timeouts/crashes reported separately); rebuild in `finally` |
+| 8 test-client sleeps | FIXED: waits for the window titles |
+| 9 exact pixel geometry | WON'T-FIX: the headless KWin is fixed at 1280x720 with no decorations, so exact values are stable, and exactness is what caught the 15 % tile-minimum and stale-edge bugs. If decorations are ever turned on, every check fails at once, loudly |
+| 10 key bypasses the bindings | FIXED: tests/unit/keys.test.js checks the default keys against the old i3 config (watched to fail on a typo) |
+| S1 event-driven waits | DONE |
+| S2 parallel scenarios | DONE: unique Wayland socket per run. `make live` 36 s -> 6 s |
+| S3 faster battery | DONE: failfast, the expected scenario first, the rest only if it stays green. 9 min -> 2 min. Parallel faults: not needed at this size |
+| Coverage: monitors, desktops, cross-output moves | phase 3 (that is its scope) |
+| Coverage: drag/resize read-back, real keys | phase 4 (needs real input; headless can't drag) |
+| Coverage: tileChanged foreign path | FIXED: the maximize check now depends on it (battery: "foreign untile ignored" is caught) |
+| Coverage: ignore rules, focus/move up/down, guard error path, reload with floating/minimized | OPEN.md-style next step for phase 2's remainder: listed in docs/plan.md phase 2 |
+
+Also found while fixing: a separate maximize handler duplicated the foreign-untile path, so removing
+either changed nothing (two "green" faults). The handler was deleted; the general path stays.

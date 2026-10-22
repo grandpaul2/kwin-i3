@@ -8,5 +8,5 @@ live: build
 test: unit live
 mutate:
 	python3 tests/unit/mutate.py
-mutate-live: build
+mutate-live:
 	python3 tests/live/mutate.py

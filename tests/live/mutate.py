@@ -1,38 +1,77 @@
 #!/usr/bin/env python3
-"""Deliberate faults in src/kwin.js and src/rules.js; each must turn a live scenario red.
-Run: make mutate-live   (several minutes: every fault reruns the scenarios in a fresh KWin)."""
+"""Deliberate faults in src/kwin.js and src/rules.js; each must make a live check FAIL.
+Run: make mutate-live.
+
+- The unmutated suite must pass first, or nothing here means anything (test review fault 7).
+- A fault counts as caught only when a check printed FAIL: a timeout, a crash or a harness error is
+  reported as such, not as caught.
+- Each fault names the scenario expected to catch it, which runs first with KI3_FAILFAST=1; the
+  others run only if that one stays green.
+- src/ and the built package are restored even on an exception or Ctrl-C.
+"""
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+
+T, R, H = "10-tiling.sh", "20-rules.sh", "00-harness.sh"
 muts = [
- ("src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
- ("src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
- ("src/kwin.js", "sizes never set", "            setSizes(root, p, { x: 0, y: 0, width: 1, height: 1 });", ""),
- ("src/kwin.js", "padding kept", "        if (t.padding !== 0) t.padding = 0;\n        t.tiles.forEach(zeroPadding);", "        t.tiles.forEach(zeroPadding);"),
- ("src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized;", "        return !!w;"),
- ("src/kwin.js", "maximize not undone", "                w.setMaximize(false, false);\n                expected[key] = null;", "                expected[key] = null;"),
- ("src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1) : null;", "                var spec = null;"),
- ("src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
- ("src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
- ("src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
- ("src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
- ("src/kwin.js", "KWin's 15% tile minimum kept", "            t.minimumSize = min;", ""),
- ("src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
- ("src/rules.js", "dialogs tile", "        if (w.transient || w.modal || !w.resizeable) return \"float\";", "        if (!w.resizeable) return \"float\";"),
- ("src/rules.js", "title rule ignored", "            titleHas(w.caption, FLOAT_TITLE)) return \"float\";", "            false) return \"float\";"),
+ (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
+ (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
+ (T, "src/kwin.js", "sizes never set", "            setSizesStable(root, p);", ""),
+ (T, "src/kwin.js", "padding kept", "        if (t.padding !== 0) t.padding = 0;", ""),
+ (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized;", "        return !!w;"),
+ (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
+ (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1) : null;", "                var spec = null;"),
+ (R, "src/kwin.js", "release leaves windows tiled", "                if (w.tile) w.tile.unmanage(w);", ""),
+ (T, "src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
+ (T, "src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
+ (T, "src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
+ (T, "src/kwin.js", "KWin's 15% tile minimum kept", "            t.minimumSize = min;", ""),
+ (T, "src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
+ (R, "src/rules.js", "dialogs tile", "        if (w.transient || w.modal || !w.resizeable) return \"float\";", "        if (!w.resizeable) return \"float\";"),
+ (R, "src/rules.js", "title rule ignored", "            titleHas(w.caption, FLOAT_TITLE)) return \"float\";", "            false) return \"float\";"),
 ]
-survivors = []
-for path, name, a, b in muts:
-    orig = open(path).read()
-    if a not in orig:
-        print(f"!! pattern missing (src changed?): {name}"); survivors.append(name); continue
-    open(path, "w").write(orig.replace(a, b, 1))
+ALL = [H, T, R]
+
+def run(scenarios, failfast):
+    env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)
     try:
-        subprocess.run(["./build.sh"], check=True, capture_output=True)
-        r = subprocess.run(["tests/live/run.sh"], capture_output=True, text=True, timeout=400)
-        red = r.returncode != 0
-    finally:
-        open(path, "w").write(orig)
-    print(f"{'red   ' if red else 'GREEN '} {name}", flush=True)
-    if not red: survivors.append(name)
-subprocess.run(["./build.sh"], check=True, capture_output=True)
-sys.exit(1 if survivors else 0)
+        r = subprocess.run(["tests/live/run.sh", *scenarios], capture_output=True, text=True, env=env, timeout=300)
+    except subprocess.TimeoutExpired:
+        return "timeout", ""
+    out = r.stdout + r.stderr
+    if r.returncode == 0:
+        return "green", out
+    fails = [l.strip() for l in out.splitlines() if l.startswith("  FAIL ")]
+    real = [f for f in fails if f not in ("FAIL timed out", "FAIL no checks ran") and not f.startswith("FAIL exited")]
+    return ("red", real[0]) if real else ("broken", out[-400:])
+
+def main():
+    base, out = run(ALL, False)
+    if base != "green":
+        print(f"baseline is {base}, not green: fix the suite before trusting any fault result\n{out}")
+        return 2
+    print("baseline green", flush=True)
+    survivors, broken = [], []
+    for scenario, path, name, a, b in muts:
+        orig = open(path).read()
+        if a not in orig:
+            print(f"!! pattern missing (src changed?): {name}"); survivors.append(name); continue
+        try:
+            open(path, "w").write(orig.replace(a, b, 1))
+            state, why = run([scenario], True)
+            if state == "green":
+                state, why = run([s for s in ALL if s != scenario], True)
+        finally:
+            open(path, "w").write(orig)
+        label = {"red": "red    ", "green": "GREEN  ", "broken": "BROKEN ", "timeout": "TIMEOUT"}[state]
+        print(f"{label} {name}" + (f"   <- {why}" if state == "red" else ""), flush=True)
+        if state == "green": survivors.append(name)
+        if state in ("broken", "timeout"): broken.append(name)
+    if broken: print("not caught by a check (harness trouble): " + ", ".join(broken))
+    return 1 if survivors or broken else 0
+
+try:
+    code = main()
+finally:
+    subprocess.run(["./build.sh"], capture_output=True)    # never leave a mutant built
+sys.exit(code)
