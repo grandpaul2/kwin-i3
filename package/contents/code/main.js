@@ -1111,8 +1111,8 @@ var KI3 = (function () {
         if (t.padding !== 0) t.padding = 0;
         var min = { width: 0, height: 0 };
         if (!noMin && !t.tiles.length && t.windows.length === 1) {
-            var ms = t.windows[0].minSize, g = screen.geometry;
-            min = { width: ms.width / g.width, height: ms.height / g.height };
+            var fm = frameMin(t.windows[0]), g = screen.geometry;
+            min = { width: fm.w / g.width, height: fm.h / g.height };
         }
         var cur = t.minimumSize;
         if (Math.abs(cur.width - min.width) > 1e-6 || Math.abs(cur.height - min.height) > 1e-6)
@@ -1131,13 +1131,19 @@ var KI3 = (function () {
         log("WARN sizes did not settle after 4 passes");
     }
 
+    // A window's minimum as a frame: apps report it for their content, and the frame adds the
+    // decoration (Paul's i3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // or KWin leaves it where it was (2026-10-22). The headless tests have no decorations.
+    function frameMin(w) {
+        var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
+        var bw = c ? Math.max(0, f.width - c.width) : 0, bh = c ? Math.max(0, f.height - c.height) : 0;
+        return { w: m.width + bw, h: m.height + bh };
+    }
+
     // The smallest a projected subtree can be, in pixels: windows' minimum sizes added up along a
     // split and the largest across it.
     function minOf(p) {
-        if (p.win !== undefined) {
-            var m = wins[p.win].minSize;
-            return { w: m.width, h: m.height };
-        }
+        if (p.win !== undefined) return frameMin(wins[p.win]);
         var r = { w: 0, h: 0 };
         p.kids.forEach(function (k) {
             var m = minOf(k.p);
@@ -1294,7 +1300,7 @@ var KI3 = (function () {
             model.leaves(ws).forEach(function (leaf) {
                 var w = wins[leaf.win];
                 if (!w || w.minimized) return;
-                var m = axis === "w" ? w.minSize.width : w.minSize.height;
+                var fm = frameMin(w), m = axis === "w" ? fm.w : fm.h;
                 if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
             });
             if (!worst) return;
