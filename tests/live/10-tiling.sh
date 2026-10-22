@@ -42,6 +42,9 @@ check "b tiles again"                       wait_tree 1 "H[a b*]"
 key "Toggle Split"
 check "toggle split: stacked"               wait_tree 1 "H[V[a b*]]"
 check "a on top"                            geom_is a "0,0 1280x360"
+key "Toggle Split"
+check "toggle again: same-direction nest"   wait_tree 1 "H[H[a b*]]"
+check "projected flat: a left half"         geom_is a "0,0 640x720"
 
 check "no invariant failures or errors"     clean_log
 finish
