@@ -3,7 +3,7 @@
 i3's window management as one KWin script, for Plasma 6.7+ on Wayland: i3's window tree,
 workspaces that live on a monitor, and i3's keys, inside an ordinary Plasma session.
 
-**Status: not started.** It replaces two pieces in Paul's dotfiles (`~/.dotfiles`), which stay
+**Status: phase 0 done (scaffold and test harness, 2026-10-21); nothing runs on the desktop yet.** It replaces two pieces in Paul's dotfiles (`~/.dotfiles`), which stay
 running as the fallback until this matches them:
 
 - `i3ws`, a plain-JS KWin script: i3's workspaces on per-screen desktops, focus and moves across
@@ -16,3 +16,14 @@ calls), and i3's tree needs to be the single truth. Krohnkite is also a QML scri
 a logout), and its `script.js` is compiled upstream output we were patching by hand.
 
 `docs/plan.md` is the plan; `docs/spike-kwin-tiles.md` is why it builds on KWin's own tile tree.
+
+## Working on it
+
+```
+make test        # unit tests (node) + live tests (each in its own headless KWin)
+make build       # src/ -> package/contents/code/main.js
+```
+
+The live tests never touch the running desktop: `tools/testkwin.sh` starts a private KWin with two
+virtual 1280x720 monitors, its own D-Bus session and its own config. `tools/testclient.py` opens the
+awkward windows (fixed size, large minimum, dialog, slow to appear, retitled).
