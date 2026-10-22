@@ -1,4 +1,4 @@
-.PHONY: build test unit live mutate mutate-live tools fuzz plugin
+.PHONY: build test unit live mutate mutate-live tools fuzz plugin plugin-install
 build:
 	./build.sh
 unit:
@@ -21,3 +21,5 @@ tools/bin/ei-send: tools/ei-send.c
 plugin:
 	cmake -S plugin -B plugin/build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
 	cmake --build plugin/build -j8
+plugin-install: plugin
+	tools/plugin-install.sh

@@ -75,8 +75,13 @@ plugins of this kind (`buttonsrebind.so`, `MouseKeysPlugin.so` in `/usr/lib64/qt
   `UnloadPlugin` (`dbusinterface.cpp:468`). *Review*: `QPluginLoader` never unloads, so loading the
   same path again re-instantiates the old code, and overwriting a mapped `.so` can SIGBUS KWin. So
   each install is a new file name (`kwini3mouse-<hash>.so`, written beside and renamed in), the old
-  file is removed (unlinking a mapped file is safe), and then unload + load. The metadata keeps an
-  explicit `Id` for that reason (Qt warns about it; harmless).
+  file is removed (unlinking a mapped file is safe), the old id unloaded and the new one loaded.
+  *Found*: the plugin id **is** the file name (Qt ignores an `Id` in the metadata and warns), so the
+  id changes with each build; `tools/plugin-install.sh` handles that. *Checked* headless: install,
+  install a faulty build (its fault showed live), install the good one again (good again), unload.
+- Installed (Paul's choice, 2026-10-22): `make plugin-install` -> `~/.local/lib/kwin-i3/qt6plugins/`,
+  and a drop-in `~/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf`
+  (`QT_PLUGIN_PATH` for KWin's unit only). One relog for the drop-in; after that no sudo and no relog.
 - *Checked*: a copy of the build with its IID patched to 6.7.4 is refused in the headless KWin
   ("kwini3mouse" has mismatching plugin version) and KWin carries on without it.
 
