@@ -20,4 +20,11 @@ Last reconciled: **2026-10-22**.
   starts, and skipping confirmation on `--reshrink`, have not run yet. Next: the two reshrinks above
   are its test; fix whichever phase misbehaves.
 
+- **Mouse chords plugin: first live load waits for Paul's next login** (installed 2026-10-22 by
+  `make plugin-install`; the drop-in giving KWin `QT_PLUGIN_PATH` only applies to a new KWin). Until
+  then Meta+drag still moves (`CommandAll1=Nothing` is written, not applied). Next, after the login:
+  `busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins` lists
+  `kwini3mouse-…` (health-check says so too), then Paul tries Meta+Shift+drag. The fuzzer still
+  drives moves with KWin's Meta+drag, not the plugin; worth a plugin action there if the plugin grows.
+
 `tests/fuzz/out/` is gitignored: those traces live only on this disk.
