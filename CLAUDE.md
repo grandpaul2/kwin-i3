@@ -13,6 +13,11 @@ binds work here too: commit and push as you go, without asking).
 - **Nothing that shows a window on Paul's desktop** (the nested KWin of plan phase 4 included)
   without telling him first.
 - The switch-over (plan phase 5) happens only with Paul, at a logout.
+- **`package/` here is what Paul's KWin loads** (linked since the switch-over). Anything that
+  builds a fault or a debug trace into it runs in a worktree: `make mutate-live` refuses to run
+  here. `make fuzz` and `make test` build `src/` as it stands, so don't leave trace lines in `src/`.
+- **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) finds bugs; **`~/.local/state/kwin-i3/captures/`**
+  holds the ones Paul hit (Meta+Shift+B, `tools/capture`). Each becomes a live test, watched red.
 
 ## Working rules
 
