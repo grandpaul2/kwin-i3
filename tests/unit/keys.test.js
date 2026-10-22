@@ -12,16 +12,9 @@ const block = src.match(/var KEYS = (\{[\s\S]*?\n    \});/);
 assert.ok(block, "KEYS table not found in src/kwin.js");
 const KEYS = Function("return " + block[1])();
 
-const want = {
-    "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
-    "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
-    "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],
-    "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
-    "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
-    "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"], "Move Right": ["Meta+Shift+Right", "Meta+Shift+;", "Meta+:"],
-    "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
-    "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
-};
+// The spec: tests/keys.json, Paul's old i3 config translated. Shared with the live key sweep
+// (tests/live/50-keys.sh), so neither reads the table it is checking.
+const want = require("../keys.json");
 
 test("every default key matches the old i3 config", () => {
     assert.deepStrictEqual(KEYS, want);

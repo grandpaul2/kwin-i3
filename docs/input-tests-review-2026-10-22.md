@@ -257,3 +257,24 @@ the `muts` table (the scenario that should catch it), as mutate.py already does.
 - That the lock-state fix is sufficient while Paul is away for hours (the idle autolock of the test KWin itself is a
   separate possibility: a long mutate-live run could trigger kscreenlockerrc's autolock in the private config; set
   `[Daemon] Autolock=false` in the test's kscreenlockerrc to be sure).
+
+---
+
+## Disposition (2026-10-22, same session)
+
+| finding | disposition |
+|---|---|
+| 1 lock state through the system bus | FIXED in testkwin.sh (no system bus); confirmed with Paul's session locked |
+| 2 stock shortcuts take kwin-i3's keys | FIXED in testkwin.sh (his unbindings, plus the zoom keys: Meta+0 was the zoom reset). The live-session ownership check is a phase-5 item in docs/plan.md |
+| 3 Meta+Shift+; dead | FIXED in kwin.js (Meta+: registered); the sweep guards it |
+| 4 test 5 didn't test windowActivated | FIXED: hover, then close another window by other means than a key; its fault is caught |
+| 5 test 2 could pass before the snap-back | FIXED: asserts the model's tile share after the reconcile that follows DRAG end |
+| 6 no exact drop position | FIXED: b lies under the drop point, inside the monitor, not in its old tile |
+| 7 no drag events to wait on | FIXED: DRAG start/end logged; `wait 0` between steps |
+| 8 drag to the other monitor | DONE, plus the reverse drag of a floating window (13) |
+| 9 no-bounce check | DONE as a sampled hold after the pointer arrives |
+| 10 sweep details | DONE: exactly one ACTION per chord, negative control. Changed further: the sweep runs in its own scenario (50-keys.sh), because pressing Meta+1..0 for real moved workspaces between monitors and skewed every later test; and it reads the spec (tests/keys.json), not kwin.js, after the battery showed a typo or a dropped key passing when it read the table under test |
+| 11 headless vs real session | i3frame decorations, X11 clients, unequal monitors, fuzzel focus: WON'T-FIX headless for now; the switch-over checks them on the real desktop |
+| 12 parallelism/runtime | whole suite ~8.5 s with 7 scenarios |
+| 13 gaps | floating cross-monitor drag and nested resize ADDED; vertical border inside V and drag-to-edge quick tiling: OPEN, next input tests |
+| 14 faults | ADDED (10); "mid-drag desktop changes not ignored" is an equivalent fault (same end state), noted in mutate.py |

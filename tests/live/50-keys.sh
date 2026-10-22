@@ -19,16 +19,17 @@ wait_log 'kwin-i3 loaded$'
 #    are no-ops but still log). The ':' chord is physically Meta+Shift+;, already in the list;
 #    a symbol variant (Meta+!) is the same physical chord as Meta+Shift+1 and can't be told apart
 #    here: tests/unit/keys.test.js checks the table for those.
+# The chords come from tests/keys.json (the spec, from Paul's old i3 config), never from kwin.js:
+# reading the table under test let a typo or a dropped key pass (fault battery, 2026-10-22).
 mapfile -t chords < <(node -e '
-const src = require("fs").readFileSync(process.argv[1], "utf8");
-const K = Function("return " + src.match(/var KEYS = (\{[\s\S]*?\n    \});/)[1])();
+const K = require(process.argv[1]);
 const seen = new Set();
 for (const [a, keys] of Object.entries(K)) for (let k of keys) {
     if (k === "Meta+:") k = "Meta+Shift+;";
     if (!seen.has(k)) { seen.add(k); console.log(a + "|" + k); }
 }
 for (let n = 1; n <= 10; n++) { const d = String(n % 10);
-    console.log("Workspace " + n + "|Meta+" + d); console.log("Move to Workspace " + n + "|Meta+Shift+" + d); }' "$root/src/kwin.js")
+    console.log("Workspace " + n + "|Meta+" + d); console.log("Move to Workspace " + n + "|Meta+Shift+" + d); }' "$root/tests/keys.json")
 one_action() {   # exactly one ACTION after mark $2, and it is $1
     local lines; lines=$(after "$2" | grep -E '^.{9}ACTION ' | cut -c17-)
     [[ $lines == "$1" ]]

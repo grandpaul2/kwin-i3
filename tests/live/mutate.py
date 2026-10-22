@@ -45,13 +45,16 @@ muts = [
  (I, "src/kwin.js", "dragged out of a tile doesn't float", "            if (!tile && dragging === \"move\") {", "            if (false) {"),
  (I, "src/kwin.js", "drop on another monitor doesn't join", "            if (kind === \"move\" && w.output !== outputOf(ws)) {", "            if (false) {"),
  (I, "src/kwin.js", "dragStart never sets dragging", "            dragging = w.move ? \"move\" : \"resize\";", "            dragging = false;"),
- (I, "src/kwin.js", "mid-drag desktop changes not ignored", "            if (placing[key] || dragging) return;   // ours, or settled when the drag ends", "            if (placing[key]) return;"),
  (I, "src/kwin.js", "windowActivated not followed (input)", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
  (K, "src/kwin.js", "Meta+: not registered", ", \"Meta+:\"],", "],"),
  (K, "src/kwin.js", "key table typo: Split V on Meta+B", "\"Split V\": [\"Meta+V\"]", "\"Split V\": [\"Meta+B\"]"),
  (K, "src/kwin.js", "a registration dropped (Meta+Ctrl+L)", "\"Shrink Height\": [\"Meta+Ctrl+Up\", \"Meta+Ctrl+L\"]", "\"Shrink Height\": [\"Meta+Ctrl+Up\"]"),
 ]
 ALL = [H, T, R, X, M, K, I]
+# Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
+# window then joins the other monitor's workspace when it crosses rather than when dropped; the
+# end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
+# window while it is still being dragged.
 
 def run(scenarios, failfast):
     env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)

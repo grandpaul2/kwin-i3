@@ -146,10 +146,14 @@ Every root the script sees, including new desktops and returning outputs, gets `
    numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: the virtual backend *can*
    unplug an output (`kscreen-doctor output.Virtual-1.disable`). If it couldn't, reconcile is driven from a synthetic "windows lost their tiles and
    the screen set changed" state, which is what a hotplug leaves behind. Not by hand on Paul's desktop.
-4. **Real input, outside Paul's session. Tell Paul before it starts** (his words, 2026-10-21). A nested `kwin_wayland` window with two
+4. **Real input. Done 2026-10-22, automated** (Paul: "why can't this be automated ... set the
+   precedent now"): input injected through libei into the headless KWin (`tools/inject.py`);
+   scenarios 50-keys and 51-input. The nested-window session with Paul below is dropped. ~~Real input, outside Paul's session. Tell Paul before it starts~~ (his words, 2026-10-21). A nested `kwin_wayland` window with two
    outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer
    warp, border drag, Meta+drag. It shows a window on his desktop, so only with his OK.
-5. **Switch-over on Paul's desktop**, with Paul, at a logout (Krohnkite is QML). kwinrc:
+5. **Switch-over on Paul's desktop**. Check first, read-only, on the live bus: every kwin-i3 key has
+   exactly one owner once i3ws is off (his kglobalshortcutsrc still binds i3ws to all of them, and
+   plasmashell may hold Meta+V and Meta+1..9: input-test review, finding 2). with Paul, at a logout (Krohnkite is QML). kwinrc:
    `i3wsEnabled=false`, `krohnkiteEnabled=false`, `kwin-i3Enabled=true`. The way back is the
    release key at once, then the same three lines reversed and a logout. Checked here: the login
    numbering after Plasma's activity restore, and a real monitor sleep/wake.
