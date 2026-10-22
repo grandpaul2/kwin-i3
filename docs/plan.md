@@ -1,7 +1,8 @@
 # kwin-i3 — plan
 
-Rewritten 2026-10-21 after the tile spike (`docs/spike-kwin-tiles.md`). The first version, a new
-layout inside Krohnkite, is in git history.
+Rewritten 2026-10-21 after the tile spike (`docs/spike-kwin-tiles.md`), then revised the same night
+after an independent review (`docs/review-2026-10-21.md`; each finding's disposition is at its end).
+The first version, a new layout inside Krohnkite, is in git history.
 
 ## Goal
 
@@ -14,117 +15,151 @@ kept exactly where it already matches i3 (Paul called it "ideal").
 
 1. **One plain-JS KWin script** (`KWin/Script`, `X-Plasma-API: javascript`). No QML: a plain-JS
    script reloads with `unloadScript` + reconfigure in seconds; a QML one needs a logout and can
-   leave a stale copy running (dotfiles CLAUDE.md, 2026-10-21).
-2. **Plain JavaScript, no compiler.** i3ws is plain JS; a TypeScript toolchain is a second thing to
-   keep working. Revisit only if the code outgrows it.
-3. **Our model is the truth; KWin's tiles are the display.** The script keeps its own i3 tree per
-   workspace and projects it onto `workspace.rootTile(output, desktop)`. Not the other way round,
-   because KWin's tiles differ from i3 in ways that would leak into behaviour (spike §"Differences":
-   empty tiles survive a close, single-child splits collapse, `split` halves, a desktop change
-   leaves a window in the old tree). The model can then be tested in node with no KWin at all.
-4. **Sizes flow both ways.** Structure goes model → tiles. A size the user changes (a border drag,
-   once confirmed to work) comes back tiles → model, through `relativeGeometryChanged`.
-5. **i3's semantics are ported from i3's source, not re-derived** (`src/tree.c`, `src/move.c`,
-   `src/con.c`): insertion after the focused container, `split`, `tree_move`, closing,
-   `layout toggle split`. Where KWin forces a difference, the difference is written down here.
-6. **Single-child containers: keep them in the model, as i3 does.** The projection may flatten them
-   for KWin (KWin collapses them anyway); the model never does, so `move` behaves as in i3.
-7. **Workspaces work as i3ws does today**: desktop N is workspace N; it lives on one monitor; the
-   login numbering (1 on the primary, 2 on the next); the pointer follows focus across monitors;
-   hotplug keeps workspaces. i3ws's code is the starting point, merged in rather than called.
+   leave a stale copy running. Plain JS has everything needed: `registerShortcut`, `callDBus`,
+   `QTimer` (registered for scripts in `scripting.cpp`).
+2. **Plain JavaScript, no compiler.** `build.sh` concatenates `src/` into the one file KWin loads,
+   with a `// ---- src/<file>.js` marker at each file start so KWin's line numbers can be mapped back.
+3. **The model owns structure and focus; KWin's tiles own sizes and are the display.**
+   - The model is an i3 tree per workspace: containers with orientation, leaves holding windows,
+     i3's focus stack. That is what `tree_move`, `tree_flatten` and tree-based focus need, and it
+     can be tested in node with no KWin.
+   - **Sizes live only in the tiles** (`relativeGeometry`). The model never stores weights, so
+     nothing flows back except when the model needs to rebuild (below). After an insert or close the
+     adapter sets equal shares in that container, as i3 does (KWin's `split` halves).
+   - Considered and rejected for now: tiles as the only structure (review S3-11.1). It removes the
+     projection, but i3's flatten and move rules would then be written against a structure that
+     collapses on its own and can't be tested without a fake. Revisit if the projection proves costly.
+4. **One idempotent `reconcile(workspace)`** applies the model to KWin: compute the wanted tile tree
+   and window assignment, diff against the live tiles, change only what differs. Every event handler
+   updates the model and schedules a reconcile; a zero-interval `QTimer` coalesces a burst into one
+   pass. Nothing else writes to tiles. (Replaces "project on each change" and i3ws's 5-second window.)
+5. **Start-up reads the live tiles back** into the model (structure from layout tiles and their
+   directions, focus from `workspace.stackingOrder`), so a reload keeps the layout. Only tiles that
+   hold zero or several windows fall back to inserting after the focus. KWin's saved defaults (the
+   3-column template) hold no windows and are discarded.
+6. **Tile calls, in this order, always**: `oldTile.unmanage(w)`, then change `w.desktops` / output,
+   then `newTile.manage(w)`. `manage` refuses a window not on the tile's desktop (verified, round 4).
+   `window.tile =` is deprecated in 6.7 and is not used.
+7. **Our own tile events are expected, everything else is foreign.** The adapter records
+   `expected[window] = tile` before each `manage`/`unmanage` and clears it when the matching
+   `tileChanged` arrives (it lags for Wayland clients). A foreign `tileChanged(null)` means KWin or
+   the user untiled the window; the policy table below says what happens.
+8. **i3's semantics are ported from i3's source, not re-derived**: `tree_move` (src/move.c) with all
+   its cases, `tree_flatten` after every move and close, tree-based `focus` (`tree_next`,
+   descend by focus stack), insertion after the focused container, `split`, `layout toggle split`,
+   close and focus-after-close (`tree_close_internal`). Single-child containers exist only as long as
+   i3 keeps them: from `split` until the next flatten.
+9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
+   (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
+   one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity
+   restore); the pointer follows focus across monitors. Only its calls into Krohnkite change.
+10. **When a monitor goes away, its workspaces move to a remaining monitor and go back when it
+    returns**, as in i3. The model keeps each workspace's home output; reconcile re-tiles everything
+    once the screens settle. Windows KWin moves on its own during a hotplug are ignored: the model,
+    not KWin's move, says where they belong. (Verified: a window KWin moves to another monitor loses
+    its tile and is switched to the desktop that monitor shows.)
 
-## Layout of the repo
+## Repo layout
 
 ```
-src/tree.js        the i3 tree: containers, leaves, focus, every operation. No KWin calls.
-src/kwin.js        the adapter: KWin signals in, model operations, projection onto tiles out
-src/keys.js        shortcut table (one place, matching README)
-build.sh           concatenates src/ into package/contents/code/main.js (KWin loads one file)
+src/tree.js        the i3 tree: containers, leaves, focus stack, every operation. No KWin calls.
+src/workspaces.js  i3ws: per-monitor workspaces, numbering, pointer warp, screen tracking
+src/kwin.js        adapter: KWin signals in, model operations, reconcile out, the tile-event protocol
+src/rules.js       which windows tile, and when that is decided
+src/keys.js        the shortcut table (it must match the dotfiles README "Plasma" table)
+build.sh           src/ -> package/contents/code/main.js, with file markers
 package/           the installable KWin script (metadata.json + built main.js)
-tests/unit/        node tests of src/tree.js
+tests/unit/        node tests of tree.js (and workspaces.js against a fake)
 tests/live/        scenarios run in tools/testkwin.sh (headless KWin, two virtual outputs)
-tools/             testkwin.sh, logsink.py
+tools/             testkwin.sh, logsink.py, testclient (below)
 ```
-
-`src/tree.js` ends with `if (typeof module !== "undefined") module.exports = …` so node can load it
-and KWin ignores it.
-
-## The model
-
-- `Workspace { desktop, output, root }`; `root` is a `Container`.
-- `Container { orient: "h" | "v", children: [Container | Leaf], weights: [number], focus: [child] }`
-  (`focus` is i3's focus stack, most recent first).
-- `Leaf { windowId }`.
-- Floating windows are not in the tree; they belong to the workspace, as in i3.
 
 ## Behaviour (the spec is Paul's old i3 config, git `d3de958^` in `~/.dotfiles`)
 
 | keys | i3 | notes |
 |---|---|---|
 | Meta+1…0 | workspace N | i3ws behaviour, unchanged |
-| Meta+Shift+1…0 (and the symbols) | move container to workspace N | lands beside the focused window there, as i3 |
-| Meta+arrows, Meta+J/K/L/; | focus dir | across monitors, as i3ws |
-| Meta+Shift+ same | move dir | i3 `tree_move`; at a monitor edge, crosses to the other monitor's workspace, landing on the side it came from (as i3ws) |
+| Meta+Shift+1…0 (and the symbols) | move container to workspace N | lands after the focus there; a hidden workspace is fine (KWin places it when shown, verified) |
+| Meta+arrows, Meta+J/K/L/; | focus dir | **i3's tree-based focus**, across monitors at the edge (i3 picks the most recently focused leaf of the neighbouring branch, not the geometrically nearest; i3ws's was geometric) |
+| Meta+Shift+ same | move dir | i3 `tree_move`, all cases incl. `ws_force_orientation`; at the workspace edge, to the visible workspace of the neighbouring monitor (i3ws's `screenToward`), landing on the side it came from |
 | Meta+H / Meta+V | split h / split v | new |
 | Meta+E | layout toggle split | new |
 | Meta+Shift+Space | floating toggle | new (scope question 4) |
 | Meta+Space | focus mode_toggle | new (scope question 4) |
-| resize | Meta+R mode in i3 | scope question 2: a mode, or Meta+Ctrl+arrows |
-| Meta+F | fullscreen | stays KWin's own; spike: the window returns to its tile |
-| Meta+Shift+Q | kill | stays KWin's own |
+| Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of 10 % as in the old config |
+| Meta+F | fullscreen | KWin's own; the window returns to its tile (verified). Focus and move keys do nothing while the focused window is fullscreen |
+| Meta+Shift+Q | kill | KWin's own |
+| Meta+Ctrl+Shift+Q | **release** | safety valve: unmanage every window, restore KWin's default tiles, stop acting until reload |
 
-Not planned unless Paul asks (scope questions 1, 3): tabbed (Meta+W is the Overview now, and KWin
-has no tab bar), stacked, focus parent (KWin cannot focus a container; we would draw the highlight).
+Not planned unless Paul asks: tabbed and stacked (Meta+W is the Overview now; KWin has no tab bar),
+`focus parent` (KWin can't focus a container), urgent windows (i3 shows them in its bar; there is no
+bar), and i3's reload/restart/exit keys (reload is `unloadScript` from here; exit is Plasma's own).
 
-**Which windows float** (from what Krohnkite handled for us): dialogs and other transients,
-utility/splash/notification types, fixed-size windows (min == max), the stage's Xephyr window
-(title `STAGE (streamed)`), and anything toggled by hand. Maximize is not an i3 state: a maximize
-request is undone and the window stays tiled (spike: maximize drops a window out of its tile).
+## Policies the adapter applies
 
-## KWin events the adapter handles
+| event | policy |
+|---|---|
+| new window | tiled after the focused container **of the workspace it appeared on** (KWin chooses the monitor; the desktop is that monitor's current one, as i3ws does), classified as below |
+| classification | decided when the window is ready (`readyForPaintingChanged` if not ready at `windowAdded`) and redone on `captionChanged`, `windowClassChanged`, `transientChanged` |
+| floats | transients and modals, `!resizeable`, `skipPager`, Krohnkite's default ignore-class list (krunner, yakuake, spectacle, plasmashell, ksplashqml, polkit agent, kruler, …) and the stage window (`STAGE (streamed)`); not `normalWindow` is never a candidate. Floating windows stay above tiled ones |
+| never managed | `onAllDesktops`, `skipTaskbar`, other activities (one activity: everything else is ignored) |
+| minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
+| maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
+| minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize |
+| foreign untile (Meta+drag, KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
+| close | leaf removed, `tree_flatten`, focus to the previous focus in that container |
+| focus follows mouse | KWin's `windowActivated` updates the focus stack; the last focus event wins, as in i3 |
+| errors | every handler in try/catch: log over D-Bus (`tools/logsink.py` protocol, behind a config flag in production) and reconcile |
 
-`windowAdded`, `windowRemoved`, `windowActivated`, per window `desktopsChanged`,
-`outputChanged`, `fullScreenChanged`, `maximizedChanged`, `minimizedChanged`, `tileChanged`
-(something else moved it out of its tile), `workspace.screensChanged` and the per-screen current
-desktop change. At start (and after a reload) every tree is rebuilt from the windows actually
-present; trees KWin saved in kwinrc are not trusted.
+An **invariant check** runs after every reconcile in the live tests and, cheaply, in production
+(logged): every tiled window is in exactly one leaf, each leaf's tile holds exactly that window, no
+tile is empty, no root has padding.
+
+Every root the script sees, including new desktops and returning outputs, gets `padding = 0`;
+`setup.sh` also sets `[Tiling] padding=0` so new roots start that way.
 
 ## Phases — each ends green, committed, pushed
 
-0. **Scaffold.** Repo layout, `build.sh`, `make test` running unit + live tests. The live harness
-   exists (`tools/testkwin.sh`).
-1. **Model.** `src/tree.js` with unit tests for insert, split, close, every `tree_move` case,
-   toggle split, weights, focus stack. Each test written against i3's source behaviour; each guard
-   watched to fail with a deliberate fault before it counts.
-2. **Adapter, one monitor.** Projection onto tiles, the events above, floating rules. Live tests:
-   open N clients, run key actions over D-Bus (`invokeShortcut`), read geometry back.
-3. **Workspaces and monitors.** Merge i3ws: per-monitor workspaces, cross-monitor focus and move,
-   login numbering, hotplug. Live tests with both virtual outputs. Whether the virtual backend can
-   unplug an output at runtime is an open question; if it can't, hotplug is tested by hand.
-4. **Switch-over on Paul's desktop.** Only with Paul, and only after 0–3 are green. kwinrc:
-   `i3wsEnabled=false`, `krohnkiteEnabled=false`, `kwin-i3Enabled=true`. Krohnkite is QML, so
-   turning it off takes effect at the next logout; the switch is done at a logout. **Fallback** is
-   the same three lines reversed and a logout. The two checks only a real session can do happen
-   here: dragging a tiled border, and a logout/login.
-5. **Dotfiles.** After Paul has used it for a while and says it's good: `setup.sh` clones
-   `kwin-i3` and links `package/` into `~/.local/share/kwin/scripts/kwin-i3`; health-check checks
-   that link; README's Plasma table is updated; `i3ws` and the Krohnkite copy are retired from the
-   dotfiles in one change (CLAUDE.md "retire on both machines" does not apply: the laptop runs i3).
-6. **Extras** from Paul's answers to the scope questions.
+0. **Scaffold.** Layout, `build.sh`, `make test` (unit + live). A small test client for the
+   harness (Python + GTK 4 or Qt) with flags: fixed size, large minimum size, transient dialog,
+   slow to map, retitles itself. Alacritty can't be any of those.
+1. **Model.** `src/tree.js` with unit tests per `tree_move` case, `tree_flatten`, tree focus,
+   close-focus, split, toggle, insertion. Each test written from i3's source; each guard watched to
+   fail with a deliberate fault before it counts.
+2. **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
+   min sizes, the policies above, the release action. Live tests drive keys with `invokeShortcut`
+   and read geometry back; the invariant check runs after each step.
+3. **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,
+   numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: if the virtual
+   backend can't unplug an output, reconcile is driven from a synthetic "windows lost their tiles and
+   the screen set changed" state, which is what a hotplug leaves behind. Not by hand on Paul's desktop.
+4. **Real input, outside Paul's session (ask first).** A nested `kwin_wayland` window with two
+   outputs on his desktop, real apps inside, for what headless can't do: focus follows mouse, pointer
+   warp, border drag, Meta+drag. It shows a window on his desktop, so only with his OK.
+5. **Switch-over on Paul's desktop**, with Paul, at a logout (Krohnkite is QML). kwinrc:
+   `i3wsEnabled=false`, `krohnkiteEnabled=false`, `kwin-i3Enabled=true`. The way back is the
+   release key at once, then the same three lines reversed and a logout. Checked here: the login
+   numbering after Plasma's activity restore, and a real monitor sleep/wake.
+6. **Dotfiles.** After Paul has used it for a while and says it's good: `setup.sh` clones `kwin-i3`
+   and links `package/`; its shortcut pruning, `tests/test-claude-config.sh` and `health-check` move to
+   the new action names; README's Plasma table is updated; `i3ws` and the Krohnkite copy are retired
+   in one change. The laptop runs real i3 and is not touched.
+7. **Extras** from Paul's answers.
+
+**Action names are fixed now** (they persist in `kglobalshortcutsrc`, and renaming leaves dead
+entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kwin-i3 Split V`.
 
 Never load kwin-i3 into Paul's session while i3ws and Krohnkite are running: three scripts would
 place the same windows.
 
 ## Risks
 
-- **KWin's tile API is young.** `tilingForScreen` was deprecated in 6.3; per-output desktops are
-  new in 6.7. A Fedora update can change it. Mitigation: the live tests run against the installed
-  KWin, so `make test` after a `dnf upgrade` says whether it still holds.
-- **Projection flicker.** Rebuilding a workspace's tiles on each change may make windows jump or
-  resize twice. Start with a diff (change only tiles that differ); measure in the live tests.
-- **Things Krohnkite solved that we haven't met yet**: minimum sizes larger than the tile, windows
-  that resize themselves, apps that open several windows at once, Steam/Minecraft/X11 quirks.
-  Mitigation: run side by side with the old setup as long as needed; collect each one as a live test.
-- **Hotplug**, the bug class of 2026-10-21: KWin moves windows when a monitor goes and comes back.
-  The model keeps each window's workspace and re-projects when the monitor returns, rather than
-  reacting to each window move.
+- **KWin's tile API is young** (`tilingForScreen` deprecated in 6.3, `window.tile =` in 6.7,
+  per-output desktops new in 6.7). The live tests run against the installed KWin, so `make test` after
+  a `dnf upgrade` says whether it still holds.
+- **Reconcile churn**: windows jumping or resizing twice. The diff keeps it to what changed; the live
+  tests count geometry changes per operation.
+- **What Krohnkite solved that we haven't met yet** (Steam, Minecraft, Electron apps that re-parent,
+  apps opening several windows at once). Each one met becomes a live test with the test client.
+- **Untestable headless**: input-driven behaviour. Phase 4 exists for it.
+- **kwinrc churn**: KWin rewrites `[Tiling]` on every tile change. Harmless; kwinrc is not captured.

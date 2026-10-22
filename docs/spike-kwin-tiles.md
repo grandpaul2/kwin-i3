@@ -16,7 +16,9 @@ session, except one read-only dump of his live trees. Scripts are in `spike/`.
   `manage(w)` / `unmanage(w)`; signals `windowAdded/Removed`, `childTilesChanged`.
 - `CustomTile`: `layoutDirection` (1 horizontal, 2 vertical; writable), `split(direction)`,
   `remove()`.
-- `window.tile` — read/write; setting it puts the window in that tile.
+- `window.tile` — reads the *requested* tile. Writing it works but is deprecated in 6.7 (review
+  S1-3); use `tile.manage(w)` / `tile.unmanage(w)`. `manage` refuses a window that is not on the
+  tile's desktop, so set `w.desktops` first.
 
 ## What was shown
 
@@ -31,6 +33,8 @@ session, except one read-only dump of his live trees. Scripts are in `spike/`.
 | `resizeByPixels(100, RightEdge)` | the tile grew 100 px and its neighbour shrank 100 px |
 | fullscreen a tiled window, then un-fullscreen | full screen, then back into its tile |
 | an X11 window (xmessage via Xwayland) | tiles exactly like a Wayland one |
+| round 4: `manage` into a hidden desktop's tile | no geometry until that desktop is shown, then KWin places it by itself |
+| round 4: send a tiled window to the other output | it loses its tile and is switched to the desktop that output shows |
 
 ## Differences from i3 the script must own
 
