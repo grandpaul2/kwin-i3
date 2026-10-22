@@ -11,6 +11,13 @@ Run: make mutate-live.
 """
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+# Every fault is built into package/, and Paul's desktop loads kwin-i3 from a checkout's package/
+# (~/.local/share/kwin/scripts/kwin-i3): one KWin reload mid-run would give him a broken window
+# manager. Run it from a worktree instead (2026-10-22).
+live = os.path.realpath(os.path.expanduser("~/.local/share/kwin/scripts/kwin-i3"))
+if live == os.path.realpath("package"):
+    sys.exit("mutate.py: this checkout's package/ is the live kwin-i3; run it in a worktree:\n"
+             "  git worktree add /tmp/ki3-mutate && cp -r tools/bin /tmp/ki3-mutate/tools/ && make -C /tmp/ki3-mutate mutate-live")
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C = "41-unplug-focus.sh", "70-capture.sh"
