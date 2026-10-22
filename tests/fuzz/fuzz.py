@@ -251,7 +251,8 @@ def check(k, d, prev):
                 bad.append(("I4", "%s: tiled windows cover %d of %d px (a hole)" % (o["name"], covered, o["geom"][2] * o["geom"][3])))
         for i in ws["floating"]:
             w = wins.get(i)
-            if w and not w["minimized"] and overlap(w["frame"], o["geom"])[0] < 2500:
+            # not one with a fullscreen request KWin can't apply: a known limit (plan, policies)
+            if w and not w["minimized"] and not w.get("pending") and overlap(w["frame"], o["geom"])[0] < 2500:
                 bad.append(("I9", "floating %s at %s is off %s" % (w["caption"], w["frame"], o["name"])))
     for w in d["windows"]:
         if w["rule"] == "ignore" or w["minimized"] or len(w["desktops"]) != 1:

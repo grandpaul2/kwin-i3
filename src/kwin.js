@@ -177,6 +177,8 @@ var KI3 = (function () {
         expected[id(w)] = tile;
         if (tile.manage(w)) return true;
         expected[id(w)] = null;
+        // Also a window whose fullscreen request is pending, on a hidden desktop: a known limit
+        // (plan, policies: monitor returns).
         floatWindow(w, "KWin refused to tile it");
         refused = true;
         return false;
@@ -944,7 +946,11 @@ var KI3 = (function () {
                                  min: [Math.round(w.minSize.width), Math.round(w.minSize.height)],
                                  output: w.output ? w.output.name : null, desktops: w.desktops.map(deskNum),
                                  tile: w.tile ? r(w.tile.absoluteGeometry) : null, minimized: !!w.minimized,
-                                 fullscreen: !!w.fullScreen, active: w === active });
+                                 fullscreen: !!w.fullScreen, active: w === active,
+                                 // a fullscreen request KWin can't apply yet: resizable by its size
+                                 // limits, but KWin says not (plan, policies: monitor returns)
+                                 pending: !w.resizeable && !w.fullScreen && (w.minSize.width < w.maxSize.width ||
+                                                                            w.minSize.height < w.maxSize.height) });
             });
             Object.keys(model.workspaces).forEach(function (n) {
                 var ws = model.workspaces[n];
