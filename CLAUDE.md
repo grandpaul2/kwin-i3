@@ -18,5 +18,9 @@ binds work here too: commit and push as you go, without asking).
 
 - Edit `src/`, then `make test`. `package/contents/code/main.js` is built; never edit it by hand,
   but commit it (the dotfiles will link `package/`).
-- A test counts only once a deliberate fault has been seen to turn it red.
+- A test counts only once a deliberate fault has been seen to turn it red (`make mutate`,
+  `make mutate-live`).
+- **Any test or suite that takes longer than about a minute gets a second agent's review**, for
+  faults and for speed, before it is relied on (Paul, 2026-10-22: in his Minecraft projects this
+  "found a lot of faults and made things a lot faster"; slow tests bog a project down).
 - i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
