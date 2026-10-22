@@ -1,0 +1,14 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "kwin-i3",
+        "Name": "kwin-i3",
+        "Description": "i3's window tree, workspaces and keys inside a Plasma session",
+        "Version": "0.0.1",
+        "License": "MIT",
+        "EnabledByDefault": false
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js",
+    "X-Plasma-API-Minimum-Version": "6.7"
+}

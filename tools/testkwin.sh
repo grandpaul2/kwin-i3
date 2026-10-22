@@ -49,6 +49,9 @@ Rows=1
 
 [Windows]
 PerOutputVirtualDesktops=true
+
+[Script-kwin-i3]
+debugLog=true
 RC
 export KI3_LOG=$tmp/ki3.log
 "$here/logsink.py" "$KI3_LOG" &

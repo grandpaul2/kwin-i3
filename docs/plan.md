@@ -102,7 +102,9 @@ Plasma's own).
 |---|---|
 | new window | tiled after the focused container **of the workspace it appeared on** (KWin chooses the monitor; the desktop is that monitor's current one, as i3ws does), classified as below |
 | classification | decided when the window is ready (`readyForPaintingChanged` if not ready at `windowAdded`) and redone on `captionChanged`, `windowClassChanged`, `transientChanged` |
-| floats | transients and modals, `!resizeable`, `skipPager`, Krohnkite's default ignore-class list (krunner, yakuake, spectacle, plasmashell, ksplashqml, polkit agent, kruler, …) and the stage window (`STAGE (streamed)`); not `normalWindow` is never a candidate. Floating windows stay above tiled ones |
+| floats | transients and modals, `!resizeable`, `skipPager`, Krohnkite's default ignore-class list (krunner, yakuake, spectacle, plasmashell, ksplashqml, polkit agent, kruler, …) and the stage window (`STAGE (streamed)`); not `normalWindow` is never a candidate. **On Wayland a dialog *is* `normalWindow`**
+(xdg-toplevel has no window type; only `transient`/`modal` mark it, seen in phase 0), so the
+transient rule is what floats dialogs. Floating windows stay above tiled ones |
 | never managed | `onAllDesktops`, `skipTaskbar`, other activities (one activity: everything else is ignored) |
 | minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
 | maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
