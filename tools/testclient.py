@@ -11,6 +11,8 @@
 --map-delay show the window only after this long, like a slow app
 --retitle   change the title after this long, like the stage's Xephyr or a browser
 --app-id    the Wayland app id, which KWin reports as the window class (for the ignore rules)
+--clicks    append every raw button press/release the window receives to FILE ("press 1",
+            "release 3"), so a test can tell which clicks KWin passed on
 
 Runs until killed. Software rendering, so it works in the headless test KWin.
 """
@@ -37,6 +39,7 @@ def main():
     p.add_argument("--map-delay", type=float, default=0)
     p.add_argument("--retitle")
     p.add_argument("--app-id")
+    p.add_argument("--clicks")
     a = p.parse_args()
 
     if a.app_id:
@@ -51,6 +54,17 @@ def main():
             win.get_child().set_size_request(*a.min)
         if a.fixed:
             win.set_resizable(False)
+        if a.clicks:
+            def note(what):
+                with open(a.clicks, "a") as f:
+                    f.write(what + "\n")
+            # A click gesture, any button. (EventControllerLegacy's "event" reaches Python as None.)
+            # "unpaired-release" is a release whose press this window never saw.
+            g = Gtk.GestureClick(button=0, propagation_phase=Gtk.PropagationPhase.CAPTURE)
+            g.connect("pressed", lambda g, n, x, y: note("press %d" % g.get_current_button()))
+            g.connect("released", lambda g, n, x, y: note("release %d" % g.get_current_button()))
+            g.connect("unpaired-release", lambda g, x, y, b, s: note("unpaired-release %d" % b))
+            win.add_controller(g)
 
         def show():
             win.present()

@@ -1,3 +1,4 @@
 tools/bin/
 tests/fuzz/out/
 tests/fuzz/out.*/
+plugin/build/

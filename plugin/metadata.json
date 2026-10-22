@@ -1,0 +1,7 @@
+{
+    "KPlugin": {
+        "Id": "kwini3mouse",
+        "Name": "kwin-i3 mouse chords",
+        "EnabledByDefault": true
+    }
+}

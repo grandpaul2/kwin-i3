@@ -7,6 +7,8 @@
 #                                        finding its display is not parallel-safe
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
+#   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3mouse.so (make
+#                                        plugin: plugin/build/bin) for the test KWin to load
 # Inside the command: WAYLAND_DISPLAY is the test KWin, the session bus is private (so busctl
 # --user reaches the test KWin), and KI3_LOG is the file tools/logsink.py writes.
 #
@@ -29,6 +31,8 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     export XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data XDG_STATE_HOME=$tmp/state XDG_CACHE_HOME=$tmp/cache
     export WAYLAND_DISPLAY=ki3test-${tmp##*.}
     unset DISPLAY XAUTHORITY
+    # Only the plugin a test asks for, never one from the caller's environment.
+    if [[ -n ${KI3_PLUGIN:-} ]]; then export QT_PLUGIN_PATH=$KI3_PLUGIN; else unset QT_PLUGIN_PATH; fi
     # No system bus: the test KWin read Paul's session lock state through it, and while his screen
     # was locked nothing tiled and input was swallowed (input-test review, 2026-10-22).
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none

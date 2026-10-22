@@ -10,7 +10,9 @@ scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 for t in "${scenarios[@]}"; do
-    ( timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
+    # "# needs: plugin" in a scenario: its test KWin loads plugin/ (built by make plugin)
+    plugin=""; grep -q '^# needs: plugin' "$t" && plugin=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
+    ( KI3_PLUGIN=$plugin timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
 done
 wait
 status=0

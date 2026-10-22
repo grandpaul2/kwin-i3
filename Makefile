@@ -1,9 +1,9 @@
-.PHONY: build test unit live mutate mutate-live tools fuzz
+.PHONY: build test unit live mutate mutate-live tools fuzz plugin
 build:
 	./build.sh
 unit:
 	node --test tests/unit/*.test.js
-live: build tools
+live: build tools plugin
 	tests/live/run.sh
 test: unit live
 mutate:
@@ -16,3 +16,8 @@ mutate-live:
 tools: tools/bin/ei-send
 tools/bin/ei-send: tools/ei-send.c
 	mkdir -p tools/bin && gcc -O2 -Wall -Wextra -o $@ $< $$(pkg-config --cflags --libs libei-1.0)
+
+# The KWin plugin (plugin/, docs/mouse-plugin-design.md), against the installed kwin-devel.
+plugin:
+	cmake -S plugin -B plugin/build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
+	cmake --build plugin/build -j8
