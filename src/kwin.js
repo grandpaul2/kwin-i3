@@ -13,6 +13,7 @@ var KI3 = (function () {
     var timer = null;
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
+    var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
     var rootPadding = {};   // "screen/ws" -> the root's padding before we set it (restored on release)
     var focusPending = null; // { from: screen } : apply model focus after the next reconcile
 
@@ -219,7 +220,6 @@ var KI3 = (function () {
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
     // 1 px hole the wallpaper showed through (Paul's desktop, 2026-10-22).
-    var snapW = 1, snapH = 1;
     function snap(v, n) { return Math.round(v * n) / n; }
 
     // Returns true if anything had to change.
