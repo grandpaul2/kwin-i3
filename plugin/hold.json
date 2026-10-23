@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Name": "kwin-i3 atomic layout",
+        "Description": "Holds the old window layout on screen until every moved window has its new frame",
+        "Category": "Appearance",
+        "EnabledByDefault": true
+    },
+    "org.kde.kwin.effect": {
+        "internal": true
+    }
+}

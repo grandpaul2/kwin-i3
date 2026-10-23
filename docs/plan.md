@@ -59,6 +59,9 @@ kept exactly where it already matches i3 (Paul called it "ideal").
    each one costs a move key press. They only matter in i3 because of `focus parent` and
    tabbed/stacked, both left out here; adding either means revisiting this first.
    `docs/spec-nested-boxes.md` has the reasoning, i3's side and the risks.
+   **Atomic layout changes (Paul, 2026-10-23)**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
+   holds the old layout on screen until every moved window has its new frame, as Sway's
+   transactions do; i3 on X11 never had the gap. `docs/spec-atomic-layout.md`.
 9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
    (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
    one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity

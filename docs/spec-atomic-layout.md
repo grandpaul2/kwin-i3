@@ -1,6 +1,6 @@
 # Spec: atomic layout changes (no wallpaper flash when windows move)
 
-Requested by Paul, 2026-10-23. Status: **reviewed (four full reviews and a focused check); ready for code.** No code yet.
+Requested by Paul, 2026-10-23. Status: **implemented on branch `atomic-layout` (plugin/hold.cpp, tests/live/53-hold.sh); code review pending; not live.**
 
 ## The problem, measured
 
@@ -63,8 +63,12 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    inside kwin-i3's own call.
 2. **Eligible windows**: tiled (`requestedTile()` or `tile()` set; `tile()` only changes at the
    client's ack, so both are needed to cover untiling), shown (on its output's current desktop,
-   not minimized), not fullscreen (including a window leaving fullscreen: it is still
-   fullscreen when its `aboutToChange` fires), **with a buffer already** (a newly mapped window's first
+   not minimized), not fullscreen (a window *leaving* fullscreen is still fullscreen when
+   KWin's own restore fires, so that isn't held; kwin-i3's re-tile that follows is. A window
+   *going* fullscreen isn't fullscreen yet when it fires, KWin only records the request until the
+   app acknowledges, so it is held: its tiled picture stays until its fullscreen frame arrives,
+   and neighbours kwin-i3 re-tiles switch with it. Found in testing; it is the atomic behaviour
+   wanted, so kept), **with a buffer already** (a newly mapped window's first
    placement would snapshot an empty texture). Nothing is held on an output while any window on
    it is in an interactive move or resize. The effect keeps the set of windows in an interactive
    move or resize (`windowStartUserMovedResized` / `windowFinishUserMovedResized`, `QPointer`s)
@@ -113,8 +117,10 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    to copy kwin-i3's rules for which windows float (src/rules.js: transients, dialogs, fixed size,
    Paul's own lists): if the window gets a tile (`requestedTile()` set, seen at its
    `aboutToChange`), it **joins the transaction without a snapshot** and stays hidden until the
-   release, which then shows it in its tile; if no tile comes within **20 ms**, it is shown where
-   it is (a floated window, or kwin-i3 not running). Without this, it would flash at its default
+   release, which then shows it in its tile; if its first `aboutToChange` comes without a tile
+   (kwin-i3 floated and placed it), or no tile comes within **20 ms**, it is shown where it is.
+   Dialogs, modal and transient windows are never hidden (on Wayland a transient is still
+   "Normal" by KWin's type, so the effect checks `isDialog`, `isModal` and `transientFor`). Without this, it would flash at its default
    spot for a frame. Cost: a window kwin-i3 floats appears up to 20 ms later. This applies whether
    or not kwin-i3 is loaded: a plugin can't ask KWin's scripting (kwin-devel installs no
    `scripting.h`), and with kwin-i3 off the only cost is the same 20 ms. Hidden windows are skipped in our `drawWindow`, marked transformed (so their opaque
@@ -206,6 +212,8 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
     own enable key (`<id>Enabled`) changes with every build; the effect is therefore enabled by
     default, and the **kill switch is its own config**: `kwinrc [kwin-i3-hold] Enabled=false`,
     read and watched by the effect (`KConfigWatcher`, as `kwini3mouse` does), takes effect at once.
+    The same group's `TimeoutMs` (default 100) exists for the tests, which raise it to capture
+    mid-hold; it is not a knob to tune the desktop with.
     kwin-i3 works unchanged with or without it.
 
 ## What it changes for Paul
@@ -316,6 +324,32 @@ positions during that time, as it already does. No animation; nothing else chang
 
 Animations of any kind. A plain workspace switch (KWin shows the other desktop at once); the
 second pass kwin-i3 sometimes makes after one is covered by rule 6's quiet period.
+
+## Implementation notes (2026-10-23)
+
+- `plugin/hold.{h,cpp}`, `plugin/holdmain.cpp`, `plugin/hold.json`; a second target in
+  `plugin/CMakeLists.txt` (`CMAKE_AUTOMOC_MACRO_NAMES` must list `KWIN_EFFECT_FACTORY_SUPPORTED`,
+  or automoc misses the factory's `Q_OBJECT`). `tools/plugin-install.sh` installs and loads it
+  beside the mouse plugin.
+- Tests: `tests/live/53-hold.sh`, with `tools/shot.py` (ScreenShot2 captures and pixel probes),
+  the test client's `--color` and `--resize-delay`, and `KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1`
+  in the test KWin. The headless KWin's background is black, so a hole reads as `0,0,0`.
+- Measured there: a snapshot takes 0.25-1 ms; a no-op change releases in under 40 ms.
+- The queued settle check and the quiet period each prevent a release mid-reconcile on their own
+  (a 0 ms timer still counts as active until the event loop runs it), so a fault in one is masked
+  by the other; the battery disables both together to prove the test sees it.
+- Mutation battery (scratchpad `mutate-hold.py`, 10 faults, 2026-10-23): blank-snapshot guard
+  off, settle check synchronous (+ no quiet period), new windows not hidden, closing windows not
+  kept, hidden held window not kept visible, snapshot drawn at the new frame, everything counts as
+  settled, transients hidden too, kill switch ignored. Every one turned at least one check red,
+  the intended one in each case.
+- Test plan coverage (`53-hold.sh`, 65 checks): tests 1-4, 6, 8, 10 (loaded, supported), 11, 15,
+  16 (close while held), 18, 19, 22, 25 and the chained-snapshot test 7 (a swap on the second
+  output while the first holds). Not written: 5 (minimized: same path as 19), 9 (the new
+  window's placement order), 12 (across outputs), 13 (done as a snapshot-time check), 14 (GTK
+  shadow, by eye on the desktop), 17 (two-pass), 20 (unplug mid-hold), 21 (kwin-i3 unload),
+  23 (fractional scale), 24 (OpenGL off). `make fuzz` now loads the plugins into its test KWins
+  (`tests/fuzz/run.py`), so the effect runs under the random actions (test 26).
 
 ## Decisions
 

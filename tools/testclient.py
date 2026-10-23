@@ -3,6 +3,7 @@
 
   testclient.py --title T [--size WxH] [--min WxH] [--fixed] [--dialog]
                 [--map-delay SECONDS] [--retitle SECONDS:NEWTITLE] [--app-id ID]
+                [--color CSS] [--resize-delay SECONDS]
 
 --min       minimum size (GTK's size request), for windows bigger than their tile
 --fixed     not resizable (Krohnkite floated these; so will kwin-i3)
@@ -13,10 +14,14 @@
 --app-id    the Wayland app id, which KWin reports as the window class (for the ignore rules)
 --clicks    append every raw button press/release the window receives to FILE ("press 1",
             "release 3"), so a test can tell which clicks KWin passed on
+--color     fill the window with this CSS colour ("red", "#00f"), so a screenshot can tell
+            windows apart by a pixel
+--resize-delay  sleep this long whenever the window's size changes, like an app slow to redraw:
+            its frame at the new size reaches KWin that much later (docs/spec-atomic-layout.md)
 
 Runs until killed. Software rendering, so it works in the headless test KWin.
 """
-import argparse, os, sys
+import argparse, os, sys, time
 
 os.environ.setdefault("GSK_RENDERER", "cairo")
 import gi
@@ -40,6 +45,8 @@ def main():
     p.add_argument("--retitle")
     p.add_argument("--app-id")
     p.add_argument("--clicks")
+    p.add_argument("--color")
+    p.add_argument("--resize-delay", type=float, default=0)
     a = p.parse_args()
 
     if a.app_id:
@@ -50,6 +57,11 @@ def main():
         win = Gtk.ApplicationWindow(application=app, title=a.title)
         win.set_default_size(*a.size)
         win.set_child(Gtk.Label(label=a.title))
+        if a.color:
+            css = Gtk.CssProvider()
+            css.load_from_string("window, label { background-color: %s; color: %s; }" % (a.color, a.color))
+            Gtk.StyleContext.add_provider_for_display(win.get_display(), css,
+                                                      Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         if a.min:
             win.get_child().set_size_request(*a.min)
         if a.fixed:
@@ -68,6 +80,13 @@ def main():
 
         def show():
             win.present()
+            if a.resize_delay:
+                last = [None]
+                def layout(surface, width, height):
+                    if last[0] is not None and last[0] != (width, height):
+                        time.sleep(a.resize_delay)      # blocks the frame at the new size
+                    last[0] = (width, height)
+                win.get_surface().connect("layout", layout)
             if a.dialog:
                 d = Gtk.Window(title=a.title + " dialog", transient_for=win, modal=True)
                 d.set_default_size(200, 100)

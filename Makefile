@@ -8,7 +8,7 @@ live: build tools plugin
 test: unit live
 mutate:
 	python3 tests/unit/mutate.py
-fuzz: build tools
+fuzz: build tools plugin
 	python3 tests/fuzz/run.py --minutes $(or $(FUZZ_MINUTES),20) --jobs $(or $(FUZZ_JOBS),4) $(if $(FUZZ_SKIP),--skip $(FUZZ_SKIP))
 mutate-live:
 	python3 tests/live/mutate.py

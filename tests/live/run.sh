@@ -7,6 +7,8 @@ set -u
 cd "$(dirname "$0")"
 ../../build.sh || exit 1
 scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
+# How many test KWins share the GPU: timing checks (53-hold.sh) allow for it.
+export KI3_PARALLEL=${#scenarios[@]}
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 for t in "${scenarios[@]}"; do

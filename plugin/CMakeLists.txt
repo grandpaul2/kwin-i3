@@ -1,4 +1,5 @@
 # kwini3mouse: modifier + mouse button chords for KWin (docs/mouse-plugin-design.md).
+# kwini3hold: atomic layout changes, a KWin effect (docs/spec-atomic-layout.md).
 # Built against the installed kwin-devel; KWin refuses a build from another KWin version.
 cmake_minimum_required(VERSION 3.22)
 project(kwini3mouse LANGUAGES CXX)
@@ -19,3 +20,9 @@ find_package(KWin REQUIRED COMPONENTS kwin)
 kcoreaddons_add_plugin(kwini3mouse INSTALL_NAMESPACE "kwin/plugins")
 target_sources(kwini3mouse PRIVATE main.cpp mousechords.cpp)
 target_link_libraries(kwini3mouse PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)
+
+# automoc scans for macro names, and KWin's factory macro hides the Q_OBJECT inside it.
+list(APPEND CMAKE_AUTOMOC_MACRO_NAMES "KWIN_EFFECT_FACTORY_SUPPORTED")
+kcoreaddons_add_plugin(kwini3hold INSTALL_NAMESPACE "kwin/effects/plugins")
+target_sources(kwini3hold PRIVATE holdmain.cpp hold.cpp)
+target_link_libraries(kwini3hold PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)

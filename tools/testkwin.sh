@@ -7,8 +7,9 @@
 #                                        finding its display is not parallel-safe
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
-#   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3mouse.so (make
-#                                        plugin: plugin/build/bin) for the test KWin to load
+#   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3mouse.so and
+#                                        kwin/effects/plugins/kwini3hold.so (make plugin:
+#                                        plugin/build/bin) for the test KWin to load
 # Inside the command: WAYLAND_DISPLAY is the test KWin, the session bus is private (so busctl
 # --user reaches the test KWin), and KI3_LOG is the file tools/logsink.py writes.
 #
@@ -124,6 +125,9 @@ Lock Session=none,Meta+L,Lock Session
 _launch=none
 SC
 export KI3_LOG=$tmp/ki3.log
+# Screenshots (tools/shot.py) without KWin's per-caller permission check: a test is not a
+# desktop app with a .desktop file (docs/spec-atomic-layout.md, test 1).
+export KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1
 "$here/logsink.py" "$KI3_LOG" &
 sink=$!
 xbefore=$(ls /tmp/.X11-unix/)
