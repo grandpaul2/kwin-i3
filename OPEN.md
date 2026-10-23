@@ -11,7 +11,15 @@ Last reconciled: **2026-10-23**.
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
   timeout by 03:50, and 6 of 125 (max 112 ms) later that day, when Paul had seen no more flashes
-  (a timed-out hold shows the flash it was meant to hide). Sway's default is 200 ms. **Every
+  (a timed-out hold shows the flash it was meant to hide). **~06:30 that day: one flash on
+  closing a window**, while the machine was busy (the test suite and a build were running);
+  counters then 7 timeouts of 136 transactions, max 112 ms, close holds 41 kept and 1 dropped
+  (the one dropped close hold is the likely flash: the effect keeps a closed window's pixels
+  only until its neighbours' layout change begins, and gives up after a grace period if none
+  comes, `hold.cpp` `s_graceMs`, 20 ms; with the machine busy, kwin-i3's reconcile of
+  the neighbours came later than that, so the gap showed). Paul: no action yet, document it. If
+  it recurs: measure the close-to-reconcile delay on a busy machine and lengthen the grace, or
+  tie it to the timeout. Sway's default is 200 ms. **Every
   session until Paul closes this: ask whether he has noticed any**, and read the counters
   (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
   `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
