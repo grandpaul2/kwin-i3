@@ -8,6 +8,13 @@ Last reconciled: **2026-10-23**.
 
 ## Open
 
+- **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
+  first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
+  timeout by 03:50 (a timed-out hold shows the flash it was meant to hide). Sway's default is
+  200 ms. **Next session: ask Paul whether he has noticed any more**, and read the counters
+  (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
+  `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
+  `kwinrc [kwin-i3-hold] TimeoutMs` to 150-200 and reconfigure. Counters reset when KWin restarts.
 - **Fuzz I10: a tiled window's frame is not its tile** (2026-10-22 campaign: seeds 7, 14, 25, 33,
   each 0/2 on replay). **Now reproducible**: seed 14 of the 2026-10-23 run, shrunk to 27 actions,
   fails 3/3 (`w9 frame [299,0,981,720] is not its tile [199,0,654,720]`), on the code before and
