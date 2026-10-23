@@ -29,10 +29,6 @@ Last reconciled: **2026-10-23**.
   (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
   `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
   `kwinrc [kwin-i3-hold] TimeoutMs` to 150-200 and reconfigure. Counters reset when KWin restarts.
-- **Fuzz I1, seed 2: "window w3 not in its tile; window w12 not in its tile" on workspace 2**
-  (138 steps, reproduces on every replay; the shrinker reached only 123 in its 20 minutes). Next:
-  replay with a trace in a worktree to find the step where the two leave their tiles (also
-  `tests/fuzz/out.run3/2/shrunk.json`, 2026-10-23).
 - **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; the three safe ones are done:
   shrinking out of the campaign, known signatures skipped, the shrinker's no-op loop). Left, each
   with a risk to the timing bugs the fuzzer finds: shorter fixed waits in `fuzz.py` (0.45 s per
