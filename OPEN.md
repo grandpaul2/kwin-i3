@@ -8,27 +8,24 @@ Last reconciled: **2026-10-23**.
 
 ## Open
 
-- **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
-  first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
-  timeout by 03:50, and 6 of 125 (max 112 ms) later that day, when Paul had seen no more flashes
-  (a timed-out hold shows the flash it was meant to hide). **~06:30 that day: one flash on
-  closing a window**, while the machine was busy (the test suite and a build were running);
-  counters then 7 timeouts of 136 transactions, max 112 ms, close holds 41 kept and 1 dropped
-  (the one dropped close hold is the likely flash: the effect keeps a closed window's pixels
-  only until its neighbours' layout change begins, and gives up after a grace period if none
-  comes, `hold.cpp` `s_graceMs`, 20 ms; with the machine busy, kwin-i3's reconcile of
-  the neighbours came later than that, so the gap showed). Paul: no action yet, document it. If
-  it recurs: measure the close-to-reconcile delay on a busy machine and lengthen the grace, or
-  tie it to the timeout. Sway's default is 200 ms. **Every
-  session until Paul closes this: ask whether he has noticed any**, and read the counters
-  (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
-  `timeouts` against `transactions`, `maxMs`). **TimeoutMs is 200 (Sway's) live since ~06:45,
-  2026-10-23**, Paul: "I'd like to see it; if it doesn't feel slow we could just leave it". Ask
-  him; if it stays, `kset kwinrc kwin-i3-hold TimeoutMs 200` goes into dotfiles' setup.sh, and the
-  spec's "100 ms" becomes 200. Trap found setting it: change the key with `kwriteconfig6 --notify`
-  ALONE. A plain write followed by KWin's `reconfigure` reparses the shared config without running
-  the effect's reconfigure, and the watcher then sees no change on the next `--notify` write of
-  the same value (it had to be nudged with another key). Counters reset when KWin restarts.
+- **Atomic layout effect (kwini3hold), live since 2026-10-23 03:20: watch for flashes, and the
+  200 ms trial.** Flashes seen: a few in its first minutes, then none until ~06:30, one on closing
+  a window while the machine was busy (the suite and a build running). The counters then: 7
+  timeouts of 136 transactions (max 112 ms), close holds 41 kept, **1 dropped**, which fits that
+  flash: the effect keeps a closed window's pixels only until its neighbours' layout change
+  begins and gives up after `s_graceMs` (20 ms, `hold.cpp`); with the machine busy, kwin-i3's
+  reconcile came later. Paul: no action yet, documented. If it recurs: measure the
+  close-to-reconcile delay on a busy machine and lengthen the grace, or tie it to the timeout.
+  **`TimeoutMs` is 200 (Sway's) live since ~06:45** (Paul: "I'd like to see it; if it doesn't
+  feel slow we could just leave it"). **Every session: ask Paul** about flashes and whether 200
+  feels slow, and read the counters (`busctl --user --json=short call org.kde.KWin /kwini3hold
+  net.local.kwini3hold Stats`: `timeouts`/`transactions`, `maxMs`, `closeHoldsDropped`; they
+  reset when KWin restarts). If 200 stays: `kset kwinrc kwin-i3-hold TimeoutMs 200` in dotfiles'
+  setup.sh and the spec's "100 ms" becomes 200. Change the keys with `kwriteconfig6 --notify`
+  alone (README, Configuration).
+- **Fuzz with the frame selected**: `KI3_FRAME=1 make fuzz` started 2026-10-23 ~07:05 (20 min),
+  the first campaign with kwini3frame in the test KWins (the suite otherwise runs Breeze, whose
+  150 px minimum and 28 px frame the Breeze campaigns cover). Result goes here or the item goes.
 - **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; done: shrinking out of the
   campaign, known signatures skipped, the shrinker's no-op loop, and `--jobs 6` as the default
   since 2026-10-23: 94 seeds in 20 min against 73 with 4 jobs, at the same steps per seed, median
