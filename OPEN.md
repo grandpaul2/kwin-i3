@@ -34,17 +34,6 @@ Last reconciled: **2026-10-23**.
   (138 steps, reproduces on every replay; the shrinker reached only 123 in its 20 minutes). Next:
   replay with a trace in a worktree to find the step where the two leave their tiles (also
   `tests/fuzz/out.run3/2/shrunk.json`, 2026-10-23).
-- **Fuzz I9, seed 28: a floating dialog (w7 dialog) off its monitor after an unplug and replug**
-  (shrunk 73 -> 26 actions, `tests/fuzz/out.run3/28/shrunk.json`, reproduces every replay). Traced: when
-  the monitor returns, relocate() sends the parent w7 there; KWin's `sendToOutput` sends its
-  transients along (`window.cpp:3918`), and the dialog, hidden, gets a request it never applies
-  (its size changes too, 128 -> 178 high; the parent, same size, moved at once). relocate()'s own
-  send of the dialog is then a no-op: KWin already counts it as on that monitor
-  (`moveResizeOutput() == newOutput`, `window.cpp:3892`). Same family as the accepted I9 limit and
-  the seed-1 fix (a hidden window can't apply a size change), but here KWin, not kwin-i3, asks for
-  the size. Next: find where the 50 px comes from (KWin's `ensureSpecialStateGeometry` or the
-  client), then decide: avoid it, or accept it with the I9 limit.
-
 - **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; the three safe ones are done:
   shrinking out of the campaign, known signatures skipped, the shrinker's no-op loop). Left, each
   with a risk to the timing bugs the fuzzer finds: shorter fixed waits in `fuzz.py` (0.45 s per

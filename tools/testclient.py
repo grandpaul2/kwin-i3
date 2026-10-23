@@ -89,7 +89,10 @@ def main():
                 win.get_surface().connect("layout", layout)
             if a.dialog:
                 d = Gtk.Window(title=a.title + " dialog", transient_for=win, modal=True)
-                d.set_default_size(200, 100)
+                # Not below KWin's 150 px minimum for a decorated window (xdgshellwindow.cpp
+                # minSize): a smaller dialog on a hidden desktop gets a resize with every move
+                # KWin sends it, and never applies it (fuzz I9, seed 28, 2026-10-23).
+                d.set_default_size(200, 160)
                 d.set_child(Gtk.Label(label="dialog"))
                 d.present()
             if a.retitle:
