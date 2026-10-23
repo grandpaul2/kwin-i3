@@ -16,20 +16,6 @@ Last reconciled: **2026-10-23**.
   (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
   `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
   `kwinrc [kwin-i3-hold] TimeoutMs` to 150-200 and reconfigure. Counters reset when KWin restarts.
-- **Fuzz I10: a tiled window's frame is not its tile** (2026-10-22 campaign: seeds 7, 14, 25, 33,
-  each 0/2 on replay). **Now reproducible**: seed 14 of the 2026-10-23 run, shrunk to 27 actions,
-  fails 3/3 (`w9 frame [299,0,981,720] is not its tile [199,0,654,720]`), on the code before and
-  after the nested-box change alike. Trace: `tests/fuzz/out.run3/14/shrunk.json`. Probably the same
-  as `51-input.sh`'s one failure under the full parallel suite (1176 after a resize drag, wanted
-  1280; never alone). Seed 3 of the 2026-10-23 run with the kwini3hold effect loaded is the same
-  signature and fails 3/3 on the code without the effect too (105 actions, unshrunk:
-  `tests/fuzz/out.run4/3/trace.json`). **Shrunk to 7 actions** by the fixed shrinker
-  (`tests/fuzz/out.run3/14/shrunk-7.json`, 3/3): open w12, w13; disable the second output; open a
-  slow window (map delay 1 s); kill w13; open a window with a dialog; enable the output again.
-  Next: replay those 7 with a trace in a worktree.
-- **Fuzz I2, seed 7: a tiled window outside its monitor** (2026-10-23 run: `w13 [1280,0,501,720]
-  outside Virtual-0 [0,0,1280,720]`), shrunk to 51 actions, 3/3, on the code before and after the
-  nested-box change alike. Trace: `tests/fuzz/out.run3/7/shrunk.json`. Next: replay with a trace.
 - **Fuzz I1, seed 2: "window w3 not in its tile; window w12 not in its tile" on workspace 2**
   (138 steps, reproduces on every replay; the shrinker reached only 123 in its 20 minutes). Next:
   replay with a trace in a worktree to find the step where the two leave their tiles (also

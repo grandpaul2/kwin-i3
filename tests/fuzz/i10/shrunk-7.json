@@ -1,0 +1,46 @@
+{
+ "signature": "I10 W frame [N, N, N, N] is not its tile [N, N, N, N]",
+ "actions": [
+  {
+   "op": "open",
+   "name": "w12",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "open",
+   "name": "w13",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "output",
+   "state": "disable"
+  },
+  {
+   "op": "open",
+   "name": "w14",
+   "kind": "slow",
+   "args": [
+    "--map-delay",
+    "1.0"
+   ]
+  },
+  {
+   "op": "kill",
+   "name": "w13"
+  },
+  {
+   "op": "open",
+   "name": "w15",
+   "kind": "dialog",
+   "args": [
+    "--dialog"
+   ]
+  },
+  {
+   "op": "output",
+   "state": "enable"
+  }
+ ]
+}

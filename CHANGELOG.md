@@ -5,6 +5,13 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Fix: after a monitor replug, activating a fullscreen window KWin could not move switched the
+  other monitor to that window's workspace, so both monitors showed it and its tiled windows
+  stood off-screen (fuzz I2, seed 7; `tests/live/46-replug-fullscreen.sh`).
+- Fix: when a monitor returns, KWin restores every window's geometry from that layout, as a
+  pending resize kwin-i3's refit could not see; a window whose tile had changed meanwhile ended up
+  at its old size. After a screens change, tiled windows are refitted as their frames change until
+  each shows its tile (fuzz I10; `tests/live/47-replug-restore.sh`).
 - Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
   of KWin's `tile.cpp` removed from the tree (git history before 2026-10-23 has them).
 - The floating-title default is empty; the stage's title moved to the dotfiles' setup (it was a

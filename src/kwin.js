@@ -354,19 +354,52 @@ var KI3 = (function () {
     // tile for good (fuzzer I10). Not while a drag is still going. By tile, not by w.tile: KWin
     // can list a window in a tile whose w.tile is null (a monitor going away; the fuzzer again).
     function refit(t) {
-        t.windows.forEach(function (w) {
-            if (w.tile !== t || w.move || w.resize || w.fullScreen || !wins[id(w)]) return;
-            var g = w.frameGeometry, a = t.absoluteGeometry;
-            if (Math.abs(g.x - a.x) > 1 || Math.abs(g.y - a.y) > 1 ||
-                Math.abs(g.width - a.width) > 1 || Math.abs(g.height - a.height) > 1)
-                w.frameGeometry = a;
-        });
+        t.windows.forEach(function (w) { fitToTile(w, t); });
         t.tiles.forEach(refit);
+    }
+    function fits(w, t) {
+        var g = w.frameGeometry, a = t.absoluteGeometry;
+        return Math.abs(g.x - a.x) <= 1 && Math.abs(g.y - a.y) <= 1 &&
+               Math.abs(g.width - a.width) <= 1 && Math.abs(g.height - a.height) <= 1;
+    }
+    function fitToTile(w, t) {
+        if (w.tile !== t || w.move || w.resize || w.fullScreen || !wins[id(w)]) return;
+        if (!fits(w, t)) w.frameGeometry = t.absoluteGeometry;
+    }
+
+    // When a monitor returns, KWin's PlacementTracker asks every window for the geometry it had in
+    // that layout (workspace.cpp updateOutputs). A window whose tile changed meanwhile looks
+    // fitting to refit, and writing its tile again does nothing: XdgSurfaceWindow::moveResizeInternal
+    // sends no configure when the size asked for is the size it has, so the old request still in
+    // flight lands afterwards (fuzzer I10, 2026-10-23). So after a screens change every tiled
+    // window is watched ("armed") until its frame next shows its tile, and refitted whenever the
+    // frame changes to something else. Only then: a general watch fought slow clients that answer
+    // a resize in steps (53-hold). Not inside a reconcile (the tiles are mid-change; it ends with a
+    // refit), not a frame that fills the monitor (a window going fullscreen: the frame changes a
+    // moment before the fullScreen flag), and not twice for the same frame and tile (a client that
+    // refuses the size, its own minimum, would be asked again for every answer).
+    var reconciling = false, armed = {}, lastFit = {};
+    function armRefit() { for (var key in wins) armed[key] = true; }
+    function refitOnFrameChange(w) {
+        var key = id(w), t = expected[key];
+        if (!armed[key] || reconciling || !t || w.tile !== t) return;
+        if (fits(w, t)) { delete armed[key]; delete lastFit[key]; return; }
+        var f = w.frameGeometry, o = w.output.geometry;
+        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) return;
+        var a = t.absoluteGeometry;
+        var seen = [f.x, f.y, f.width, f.height, a.x, a.y, a.width, a.height].join(",");
+        if (lastFit[key] === seen) return;
+        lastFit[key] = seen;
+        fitToTile(w, t);
     }
 
     var selftestBroken = false;   // debug only: every reconcile throws (tests the backoff)
     function reconcile(ws) {
         if (!ws || released) return;
+        reconciling = true;
+        try { reconcileNow(ws); } finally { reconciling = false; }
+    }
+    function reconcileNow(ws) {
         if (selftestBroken) throw new Error("selftest reconcile");
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
@@ -584,7 +617,7 @@ var KI3 = (function () {
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
-        delete wins[key]; delete expected[key]; delete keptAbove[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
         schedule(ws);
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
@@ -677,6 +710,7 @@ var KI3 = (function () {
         // monitor for any other reason, it also changes its desktop, and desktopsChanged above
         // follows it, as i3ws did. A handler here was redundant: the fault battery could not tell
         // it from nothing (2026-10-22).
+        w.frameGeometryChanged.connect(guard("frame", function () { refitOnFrameChange(w); }));
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {
                 // Ours, possibly arriving late: nothing to do.
@@ -723,7 +757,17 @@ var KI3 = (function () {
         }
         var w = wins[f.win];
         if (!w) return;
-        if (workspace.activeWindow !== w) workspace.activeWindow = w;
+        if (workspace.activeWindow !== w) {
+            // Activating a window whose desktop is hidden switches the desktop of the window's
+            // OUTPUT, and that is not always s: a fullscreen window that cannot resize stays on
+            // the monitor it was on while its workspace was away, so after a replug the first
+            // monitor was switched to the returned monitor's workspace and both showed it
+            // (fuzzer I2, seed 7). The window is on its way to s; nothing else changes what a
+            // monitor shows.
+            var o = w.output, before = o !== s ? workspace.currentDesktopForScreen(o) : null;
+            workspace.activeWindow = w;
+            if (before && workspace.currentDesktopForScreen(o) !== before) workspace.setCurrentDesktopForScreen(before, o);
+        }
         if (from && from !== s) invoke("MoveMouseToFocus");
     }
 
@@ -1106,6 +1150,7 @@ var KI3 = (function () {
         }
         lastShown = {};
         rememberShown();
+        armRefit();
         scheduleAll();
         wantFocus();
     }
