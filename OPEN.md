@@ -16,10 +16,12 @@ Last reconciled: **2026-10-23**.
   read-back) stay. A third target in `plugin/`, installed by `tools/plugin-install.sh` (a
   `org.kde.kdecoration3/` dir under the plugin root; `kwinrc [org.kde.kdecoration2] library=`
   must name the installed file, so each install rewrites it); dotfiles' setup.sh then retires the
-  Aurorae theme. **`docs/spec-decoration.md` is the draft**, with everything the dotfiles session
-  traced in the 6.7.5 sources (the frame starts nothing from the pointer; the kdecoration3 IID is
-  not version-locked; `library=` plus reconfigure reloads it; `kdecoration-devel` must be
-  installed, sudo). Next: review the draft against the source, then code.
+  Aurorae theme. **`docs/spec-decoration.md` is at revision 2** (written against the 6.7.5
+  sources, reviewed once, `docs/review-decoration-2026-10-23.md`, every finding folded in; Paul's
+  answers in; focus on the frame follows i3 through kwini3mouse). Next: a second review of
+  revision 2 (a fresh agent, against the sources; the painting, the version guard and the
+  kwini3mouse hover path are the parts that changed), then `sudo dnf install kdecoration-devel`,
+  then code.
 
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms

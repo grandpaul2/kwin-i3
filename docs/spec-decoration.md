@@ -1,13 +1,11 @@
 # Spec: kwini3frame, the i3 frame as a KDecoration3 plugin
 
-Decided by Paul, 2026-10-23. Status: **written 2026-10-23 against KDecoration 6.7.5, KWin 6.7.5 and
-Breeze 6.7.5 source; awaiting review.** Not code until reviewed; not live until Paul says go.
+Decided by Paul, 2026-10-23. Status: **revision 2, 2026-10-23, after review 1
+(`docs/review-decoration-2026-10-23.md`, every finding folded in below and marked "R1-n"); awaiting
+a second review.** Not code until reviewed; not live until Paul says go.
 
-Sources read (fetched from invent.kde.org at v6.7.5): kdecoration `src/decoration.h`,
-`src/decoration.cpp`, `src/decoratedwindow.h`, `src/decorationsettings.h`; kwin
-`src/decorations/decorationbridge.cpp`, `src/decorations/decoratedwindow.cpp`, `src/window.cpp`,
-`src/input.cpp`; breeze `kdecoration/breezedecoration.cpp`, `breeze.json`, `CMakeLists.txt`. The
-Aurorae findings are the dotfiles session's (2026-10-23), not re-read here.
+Sources: KDecoration, KWin and Breeze at v6.7.5 (`invent.kde.org`), kcoreaddons 6.31.0, i3 `next`
+`src/click.c`. The Aurorae findings are the dotfiles session's (2026-10-23).
 
 ## The problem
 
@@ -26,8 +24,7 @@ i3's `default_border pixel 1`). Three things come with it that i3 never had:
    cursor flip between tiled windows. `BorderSize=None` makes it all four sides.
 
 No theme key switches any of it off. The only gate KWin has is `isResizable()`, which is what
-decides tiling, so a window rule is out. Paul says the edge drag does not even work for him in
-practice; untested, and moot after this.
+decides tiling, so a window rule is out.
 
 ## Decision
 
@@ -37,149 +34,254 @@ Meta+Ctrl keys; move is Meta+Shift+drag (kwini3mouse) and the Meta+Shift keys. A
 resizes only by Meta+right-drag and the keys (Paul asked; accepted). The read-back after an
 interactive resize (`readBack`, `src/kwin.js`; 51-input) stays: it serves Meta+right-drag.
 
+**Focus on the frame follows i3** (Paul, 2026-10-23: "since we are trying to mimic i3 ... follow
+that precedent"). In i3 (`src/click.c` `route_click`) the border is part of the window for focus:
+the pointer entering it focuses under focus-follows-mouse, and any click on it focuses and, for a
+floating window, raises (`con_activate`, step 3). KWin treats a decoration as no window at all for
+pointer focus (`input.cpp` `InputDeviceHandler::updateFocus`: over a decoration the focus window is
+null; R1-1), so neither hover nor click on the line focuses today under Aurorae either, and the
+decoration API has no way to ask for activation. The frame itself stays "nothing"; **kwini3mouse**,
+which already runs before KWin's decoration filter, does the focusing (below).
+
+**Deliberate break from i3, like the nested boxes** (`docs/spec-nested-boxes.md`): no resize by
+dragging the border (i3's `tiling_resize`, `click.c` step 10) and no move or resize of a floating
+window from its border (steps 5 and 6). That is what Paul wants gone.
+
 ## What the frame is
 
 The theme as it is today: a square **1 px border on all four sides of every decorated window**,
 `#4c7899` on the active window, `#333333` on the rest; no title bar, no buttons, no rounding, no
-shadow. Kept at screen edges and when maximized (i3's `hide_edge_borders none`; Breeze drops them
-there, we don't). The border is 1 logical pixel: at Paul's scale 1 that is 1 device pixel. Fullscreen
-windows have no decoration (KWin's doing, as now). Firefox uses it too (`browser.tabs.inTitlebar=0`).
-Clients that draw their own decoration (GTK with CSD) are untouched, as now.
+shadow (the theme's `decoration.svg` has no shadow elements, so none now, none after; R1-12).
+Kept at screen edges and when maximized (i3's `hide_edge_borders none`; Breeze drops them there;
+Aurorae's `TitleEdgeTopMaximized=0` drops the top one on a KWin-maximized window today, so that
+case changes, welcome; R1-12). The border is **1 device pixel at any scale**:
+`KDecoration3::snapToPixelGrid(1, window()->nextScale())`, recomputed on `nextScaleChanged`, as
+Breeze does (`breezedecoration.cpp:465, 418, 253`; R1-5). At Paul's scale 1 that is 1 logical px.
+Fullscreen windows have no decoration (KWin's doing, as now). Firefox uses it too
+(`browser.tabs.inTitlebar=0`). Clients that draw their own decoration (GTK with CSD) are untouched.
 
 The plugin ignores `settings()->borderSize()`: the frame is 1 px whatever kwinrc says. The
 `[org.kde.kdecoration2] BorderSize=Tiny`, `BorderSizeAuto=false` keys stay (harmless, and they keep
-Breeze tolerable if KWin ever falls back to it).
+Breeze tolerable if KWin ever falls back to it). The stale `theme=__aurorae__svg__i3frame` key is
+ignored without a `themes` entry in our metadata (`decorationbridge.cpp` `findTheme`); delete it at
+retirement (R1-8).
 
-## How (the KDecoration3 API, 6.7.5)
+## How: the decoration (KDecoration3 API, 6.7.5)
 
 One class, `KWinI3::Frame : public KDecoration3::Decoration`, in `plugin/frame.cpp` + `frame.h`,
-about 80 lines, plus `frame.json` and a CMake target. Nothing else in the repo changes.
+about 80 lines, plus `frame.json` and a CMake target.
 
 - **Factory**: `K_PLUGIN_FACTORY_WITH_JSON(FrameFactory, "frame.json", registerPlugin<KWinI3::Frame>();)`
   (Breeze's pattern, `breezedecoration.cpp:37`). KWin creates one `Frame` per decorated window
-  through `m_factory->create<KDecoration3::Decoration>(window, args)` and calls `init()`
-  (`decorationbridge.cpp` `createDecoration`). The constructor takes `(QObject *parent, const
-  QVariantList &args)` and passes them to the base; all setup happens in `init()` (the header says so).
-- **`init()`**: `setBorders(QMarginsF(1, 1, 1, 1))` (double-buffered state; KWin applies it with the
-  window's next configure, `decoration.cpp:379`); `setTitleBar(QRectF())` (empty: the top strip is a
-  plain border like the others, and nothing is `TitleBarArea`); `setOpaque(true)` (the 1 px is
-  solid); `resizeOnlyBorders` untouched (default zero; `decoration.cpp:388`); no `setShadow`, no
-  `setBorderRadius`, no `setBorderOutline` (defaults: none, 0, null). Connect
-  `window()->activeChanged` to `update()`. That is all: the borders never change, so none of
-  Breeze's `recalculateBorders` triggers (border size, font, maximized, adjacent edges, scale) apply.
-- **`paint(QPainter *p, const QRectF &)`**: fill `rect()` transparent, then with antialiasing off, a
-  1 px pen of the active or inactive colour and no brush, `p->drawRect(rect().adjusted(0, 0, -1, -1))`.
-  `rect()` is the decoration's geometry in local coordinates, client size plus borders
-  (`decoration.h:241`). Colour from `window()->isActive()`, hard-coded hex, no palette (the theme's
-  colours are literal too).
+  (`decorationbridge.cpp` `createDecoration`: `create()`, then `init()`), on Wayland before the
+  window's first configure, so the first configure already carries the borders
+  (`xdgshellwindow.cpp:1625-1629, 803-806`; R1-6). The constructor is `explicit Frame(QObject
+  *parent, const QVariantList &args)`, passed to the base; all setup is in `init()`, which returns
+  `bool` (true).
+- **`init()`**: `setBorders(QMarginsF(b, b, b, b))` with `b = snapToPixelGrid(1, window()->nextScale())`,
+  again on `window()->nextScaleChanged` (double-buffered state, `decoration.cpp:379`);
+  `setTitleBar(QRectF())`; `setOpaque(true)` (the fill covers every device pixel of the four border
+  parts, which KWin sizes rounded, `decorationitem.cpp:113-115`; R1-5); `resizeOnlyBorders`
+  untouched (default zero, `decoration.cpp:388`); no `setShadow`, `setBorderRadius`,
+  `setBorderOutline` (defaults: none, 0, null). Connect `window()->activeChanged` to
+  `qOverload<>(&Decoration::update)` (`update` is overloaded; R1-6). The borders never otherwise
+  change, so none of Breeze's `recalculateBorders` triggers (border size, font, maximized, adjacent
+  edges) apply.
+- **`paint(QPainter *p, const QRectF &)`**: `p->fillRect(rect(), colour)`, nothing else. KWin renders
+  the decoration as four border parts, each clipped to its strip (`decorationitem.cpp:140-151`,
+  `window.cpp` `layoutDecorationRects`), so a full fill is exactly the border, exact at any scale
+  and at the corners; a stroked 1 px rectangle straddles the device pixel grid at scale 2 and is
+  1.25 px wide at 1.25 (R1-5). No transparent pre-fill (KWin clears with `Source` first; R1-6).
+  Colour from `window()->isActive()`, hard-coded hex, no palette (the theme's colours are literal
+  too). While kwini3hold holds a snapshot, the held frame keeps its old colour until the hold ends;
+  not a bug, and no test asserts colour during a hold (R1-6).
 - **The section never changes.** `sectionUnderMouse` starts as `Qt::NoSection`
-  (`decoration.cpp:184`) and only `Private::updateSectionUnderMouse` changes it, which only the base
-  class's `hoverEnterEvent`, `hoverMoveEvent` and `mouseReleaseEvent` call (`decoration.cpp:569,
-  599, 635`; `mouseMoveEvent` and `mousePressEvent` only talk to buttons, and we have none).
-  Override **all six pointer handlers** (`hoverEnterEvent`, `hoverLeaveEvent`, `hoverMoveEvent`,
-  `mouseMoveEvent`, `mousePressEvent`, `mouseReleaseEvent`) without calling the base. Press and
-  release handlers call `event->setAccepted(true)`; the rest do nothing. `wheelEvent` stays the
-  base's (no buttons: it does nothing, and KWin's title-bar wheel action needs a title bar under
-  the mouse, `input.cpp:1680`). With the section fixed at NoSection:
-  - `Window::mouseGravity()` is `Gravity::None`, so `updateCursor()` gives the arrow and
-    `processDecorationMove` (re-read on every hover, `window.cpp:2688`) never sets a gravity;
-  - an accepted press means `DecorationEventFilter::pointerButton` never calls
-    `processDecorationButtonPress` (`input.cpp:1641-1643`): no delayed move or resize, no
-    double-click timer, no title-bar mouse command (menu, raise, lower, ...);
+  (`decoration.cpp:184`); its only writers are `updateSectionUnderMouse` (called from the base
+  `hoverEnterEvent`, `hoverMoveEvent`, `mouseReleaseEvent`: `decoration.cpp:569, 599, 635`) and the
+  base `hoverLeaveEvent` (sets NoSection, harmless); KWin only reads it (R1-3). Override **all six
+  pointer handlers** (`hoverEnterEvent`, `hoverLeaveEvent`, `hoverMoveEvent`, `mouseMoveEvent`,
+  `mousePressEvent`, `mouseReleaseEvent`) without calling the base; three would do, six is uniform.
+  Press and release call `event->setAccepted(true)`; the rest do nothing. Wheel: KWin sends it to
+  its own `DecoratedWindowImpl`, not the decoration, and its title-bar wheel action needs
+  `titlebarPositionUnderMouse()`, false at NoSection (`input.cpp:1672-1676`; R1-3). Note: with an
+  empty title bar the base class would still label the top line `TitleBarArea`
+  (`decoration.cpp:248-260`); that only matters if the overrides are removed (R1-4).
+  With the section fixed at NoSection and every press accepted:
+  - `Window::mouseGravity()` is `Gravity::None`, so `updateCursor()` and `endInteractiveMoveResize`
+    give the arrow (`window.cpp:2328, 2544-2571`), and `processDecorationMove` (re-read on every
+    hover, `window.cpp:2688`) never sets a gravity;
+  - `processDecorationButtonPress` has exactly three callers, all behind the acceptance test:
+    pointer (`input.cpp:1641-1643`), touch (`:1709-1711`) and tablet (`:1823-1825`). So no delayed
+    move or resize, no double-click timer, no title-bar mouse command (menu, raise, lower), from
+    any input device (R1-2, R1-3). `processDecorationButtonRelease` still runs and only clears state.
   - `globalWindowAction` (Meta+button, `input.cpp:1630`) runs **before** the decoration sees the
-    press, in the same filter, so Meta+right-drag resize and Meta+left-drag (off, `CommandAll1
+    press, in the same filter, and computes its gravity from the pointer position, not the section
+    (`window.cpp:2105-2127`), so Meta+right-drag resize and Meta+left-drag (off, `CommandAll1
     Nothing`) are as before; kwini3mouse runs before this filter too (same slot, inserted first)
-    and keeps Meta+Shift+drag.
+    and keeps Meta+Shift+drag. The window menu's Move/Resize, keyboard moves and a client's own
+    move request never read the section either (R1-3).
 - **Input region** = borders + resizeOnlyBorders (`window.cpp` `updateDecorationInputShape`): exactly
   the 1 px line. Nothing invisible.
-- **Consequences to accept** (each is "the frame does nothing", which is the decision):
-  - a plain click on the 1 px line neither activates nor raises the window (the title-bar mouse
-    commands don't run). Focus follows the mouse there as anywhere else: KWin's focus policy acts on
-    the window under the pointer, decoration included. Inside the frame the client gets the click.
-  - no window menu from the frame (Alt+F3 and the keys still exist).
-  - touch on the frame would still start a move: the touch path calls `processDecorationButtonPress`
-    without consulting the decoration (`input.cpp:1704-1710`). No touch screen here.
-  - no shadow on any window, as the theme has none now (to confirm with Paul: does i3frame draw one?).
+
+## How: focus on the frame (kwini3mouse, `plugin/mousechords.cpp`)
+
+KWin's `DecorationEventFilter` returns true for every pointer event over a decoration, so the
+`WindowActionInputFilter` that activates on click never runs there, and `InputDeviceHandler::
+updateFocus` gives the pointer no focus window over a decoration, so `Window::pointerEnterEvent`,
+the only place focus-follows-mouse asks for focus (`window.cpp` `pointerEnterEvent` ->
+`workspace()->requestDelayFocus`, `pointer_input.cpp` `focusUpdate`), never runs for it (R1-1).
+Both gaps exist today under Aurorae; the review found them, and they matter most at screen edges,
+where the frame is kept and a flung pointer lands exactly on the line.
+
+kwini3mouse (an `InputEventFilter` at `InputFilterOrder::Decoration`, inserted before KWin's) gets
+two additions, about 25 lines, both returning false so the event goes on to the decoration (which
+accepts it, so nothing moves):
+
+1. **Hover**: in `pointerMotion`, track `input()->pointer()->decoration()`. When it becomes the
+   decoration of window W (from none or from another window's), call `W->pointerEnterEvent(pos)`:
+   that is KWin's own focus-follows-mouse path (public virtual, `window.h:1148`), with its
+   checks for click-to-focus, the open window menu, auto-raise and the delay. When it goes from W's
+   decoration to none or another window, call `W->pointerLeaveEvent()` (cancels a pending delayed
+   focus and auto-raise, `window.h:1149`), unless the pointer went into W's own client area, where
+   KWin's own enter runs anyway. Verify at code time that `pointer()->decoration()` is updated
+   before the filters run on that motion (`PointerInputRedirection::processMotion` -> `update()`).
+2. **Click**: in `pointerButton`, a press with no modifier of interest (not a configured chord) while
+   `input()->pointer()->decoration()` is set: `workspace()->activateWindow(window)` (focus and
+   raise, as i3's `con_activate` on a click; the raise is what i3 does for a floating window on
+   click, and a tiled window's raise is a no-op in the tile), then return false. Under
+   click-to-focus this is the only focus path on the frame, under focus-follows-mouse it covers the
+   parked-pointer case. Do not get this by leaving the press unaccepted in the decoration: any
+   unaccepted left press arms KWin's delayed move whatever the title-bar command is
+   (`window.cpp:2769-2781` excludes only Menu and Minimize; R1-1).
+
+Both are the stock KWin calls the client area gets; nothing is re-implemented. No config key:
+the frame is part of the window for focus, full stop. They do nothing when no decoration is under
+the pointer, so Breeze or CSD windows see no change.
+
+**Consequences to accept**: no window menu from the frame (Alt+F3 and the keys still exist); no
+double-click action; no cursor change. A click on the frame reaches no client (the frame is 1 px).
 
 ## Metadata, build, install
 
 - **`plugin/frame.json`**: `{"KPlugin": {"Name": "kwin-i3 frame", "Description": "i3's 1 px
   frame: nothing starts from the pointer", "EnabledByDefault": true}, "org.kde.kdecoration3":
-  {"blur": false, "recommendedBorderSize": "Tiny"}}`. No `Id`: the id is the file name (KWin warns
-  about an embedded Id, as with our other plugins). No KCM. KWin reads only `recommendedBorderSize`
-  and the theme keys from the namespace object (`decorationbridge.cpp` `loadMetaData`).
-- **CMake** (`plugin/CMakeLists.txt`, third target): `find_package(KDecoration3 REQUIRED)`,
-  `kcoreaddons_add_plugin(kwini3frame INSTALL_NAMESPACE "org.kde.kdecoration3")`, sources
-  `frame.cpp`, link `KDecoration3::KDecoration Qt6::Gui`. The build lands in
-  `plugin/build/bin/org.kde.kdecoration3/kwini3frame.so` (the namespace is the directory, as
-  `kwin/plugins/` is for kwini3mouse). Needs **`kdecoration-devel`** (6.7.5-1.fc44 is in the
-  `updates` repo, matching the installed library; sudo, proposed per command).
-- **Not version-locked to KWin**: the plugin IID is the plain string `org.kde.kdecoration3`
-  (verified in `org.kde.breeze.so` by the dotfiles session), unlike KWin's own plugin interfaces.
-  Rebuild when kdecoration's soversion (`KDecoration3`, major 6) or ABI changes, not at every Plasma
-  update. `health-check` can compare the build's kdecoration version with `rpm -q kdecoration`.
-- **Install** (`tools/plugin-install.sh`, a third branch): a new file per build,
+  {"blur": false, "recommendedBorderSize": "Tiny"}}`. No `Id`: the id is the file's complete base
+  name (`kpluginmetadata.cpp:186-192`, kcoreaddons 6.31; R1-8). No KCM. KWin reads only
+  `recommendedBorderSize` and theme keys from the namespace object (`decorationbridge.cpp` `loadMetaData`).
+- **CMake** (`plugin/CMakeLists.txt`, third target): `find_package(KDecoration3 REQUIRED)` (exported
+  target `KDecoration3::KDecoration`; its config also sets `KDECORATION_PLUGIN_DIR`, the directory
+  name `org.kde.kdecoration3`: use it, so the string lives in one place; R1-8),
+  `kcoreaddons_add_plugin(kwini3frame INSTALL_NAMESPACE "${KDECORATION_PLUGIN_DIR}")`, sources
+  `frame.cpp`, link `KDecoration3::KDecoration Qt6::Gui`. Build lands in
+  `plugin/build/bin/org.kde.kdecoration3/kwini3frame.so`. Needs **`kdecoration-devel`**
+  (6.7.5-1.fc44 in `updates`, matching the installed library; sudo, proposed per command).
+- **No version guard at all** (R1-7, corrected): the plugin IID is `org.kde.KPluginFactory`;
+  `org.kde.kdecoration3` is only the directory and the JSON key. So, unlike kwini3mouse (IID
+  `...PluginFactoryInterface6.7.5`), a build against a kdecoration whose `Decoration` layout changed
+  **loads without complaint and can crash KWin at the first window, every login**. KWin's Breeze
+  fallback (`decorationbridge.cpp:107-116`) covers only a load failure. Mitigations, all required:
+  - the build records the `kdecoration-devel` version it used (`plugin/build/kdecoration.version`);
+    `make plugin-install` and dotfiles' `health-check` compare it with `rpm -q kdecoration` and the
+    install refuses to write `library=` on a mismatch; rebuild at every Plasma update, as KDE
+    rebuilds Breeze;
+  - the recovery for a crash-looping session, in README and `health-check`'s output: from a TTY or
+    ssh, `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.breeze`,
+    then log in again.
+- **Install** (`tools/plugin-install.sh`, a third branch; R1-9): a new file per build,
   `<root>/org.kde.kdecoration3/kwini3frame-<hash>.so`, old ones unlinked (KWin never unloads a
-  library and overwriting a mapped one can crash it: the same reason as for the other two). Then
-  `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library kwini3frame-<hash>` and
-  `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`: `DecorationBridge::reconfigure`
-  sees a new `library`, `initPlugin`s it and `recreateDecorations()` (`decorationbridge.cpp:167-171`).
-  **Every decorated window is re-decorated at once, visibly, no logout.** The install script owns
-  `library=`; dotfiles' `kset` writes a key only when it is empty, so the two don't fight.
-- **Loading**: `KPluginMetaData::findPluginById("org.kde.kdecoration3", <library=>)` through
-  `QCoreApplication::libraryPaths`, so the existing systemd drop-in (`QT_PLUGIN_PATH` for KWin's unit
-  only) covers it. If the plugin can't be loaded at login, `DecorationBridge::init` falls back to
-  `org.kde.breeze` and logs a warning (`decorationbridge.cpp:106-113`); KWin keeps running with
-  Breeze's frame. That is the failure mode after a kdecoration ABI change: ugly, not broken.
+  library, and the old factory is only `reset()` while its library stays mapped, so unlinking is
+  safe, as for the other two). When the file exists and the version check passes:
+  `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library kwini3frame-<hash>`, only
+  if it differs (same id: no reconfigure, no flash), then `busctl --user call org.kde.KWin /KWin
+  org.kde.KWin reconfigure`: `DecorationBridge::reconfigure` sees a new `library`, `initPlugin`s it
+  and `recreateDecorations()` (`decorationbridge.cpp:157-180`; Wayland `invalidateDecoration`,
+  `xdgshellwindow.cpp:768-772`). **Every decorated window is re-decorated at once, visibly, no
+  logout; say so before running it live.** Then verify: `busctl --user call org.kde.KWin /KWin
+  org.kde.KWin supportInformation` must show `Plugin: kwini3frame-<hash>`
+  (`decorationbridge.cpp:274`); if it still shows the old id, KWin did not load the new file (it
+  retries at every reconfigure with a warning): print the journal hint and exit 1. With
+  `KI3_PLUGIN_ROOT` set (tests) the branch touches neither kwinrc nor KWin.
+- **Loading**: `KPluginMetaData::findPluginById("org.kde.kdecoration3", <library=>)` is a
+  `QPluginLoader` on `<dir>/<id>` through `QCoreApplication::libraryPaths`
+  (`kpluginmetadata.cpp:206-224`), which the existing systemd drop-in (`QT_PLUGIN_PATH` for KWin's
+  unit) covers. The metadata is valid iff the JSON has a non-empty `KPlugin` object (`:309-313`).
+- **Who else writes `library=`** (R1-8): the Window Decorations KCM (it will list "kwin-i3 frame"
+  under the hashed id, and can write a stale id after a rebuild), `kwin-applywindowdecoration`, and
+  applying a Plasma global theme (look-and-feel defaults). `health-check` checks that `library=`
+  names an existing file under the root; README says a global theme resets the frame.
 - **Way back** until dotfiles retires the theme: `library=__aurorae__svg__i3frame` + reconfigure.
 - **Then in dotfiles** (the dotfiles session does it, given the id `kwini3frame-<hash>` and the
   root `~/.local/lib/kwin-i3/qt6plugins`): retire the Aurorae theme, drop setup.sh's theme link and
-  its `kwin-applywindowdecoration` call (lines 170-182; keep the BorderSize keys), drop
-  health-check's theme link check, add a check that `library=` names a file under the root, update
-  README's Plasma table row.
+  its `kwin-applywindowdecoration` call (lines 170-182; keep the BorderSize keys; delete the
+  `theme=` key), drop health-check's theme link check, add the two checks above, update README's
+  Plasma table row.
+
+## Interaction with kwin-i3 (R1-12)
+
+`frameMin` (`src/kwin.js:253`) takes frame minus client from the live window, so it follows the
+2 px; the re-decoration at install time changes client size at the next configure with the frame
+geometry unchanged (`xdgshellwindow.cpp:803-817`), so `fits`/`refit` see nothing; `frameMin` is
+stale for one tick, harmless. kwini3hold snapshots the whole window, frame included. The fuzzer's
+invariants use geometry, not pixels. The stale comment at `src/kwin.js:252` ("the headless tests
+have no decorations"; they run Breeze, 28 px title bar, 150 px enforced minimum) gets corrected
+with this change.
 
 ## Tests
 
-`tests/live/54-frame.sh`, real input through `tools/inject.py`, the plugin loaded as 52-mouse loads
-kwini3mouse (`KI3_PLUGIN=plugin/build/bin`) and selected in the test KWin by writing `library=
-kwini3frame` to its kwinrc and reconfiguring inside the test (the test KWin keeps Breeze otherwise,
-so the other scenarios don't change). The test client is GTK4 with server-side decoration (its
-dialog's frame is 28 px taller than its client under Breeze, seen 2026-10-23), so it gets the frame.
+`tests/live/54-frame.sh`, real input through `tools/inject.py`, the plugin built into
+`plugin/build/bin` and loaded as 52-mouse loads kwini3mouse (`KI3_PLUGIN`). The frame is selected
+**per scenario**, by writing `[org.kde.kdecoration2] library=kwini3frame` to the test kwinrc and
+reconfiguring inside the test, as 52-mouse writes its chord (`52-mouse.sh:33-35`); the test KWin
+keeps Breeze by default, so the other scenarios, 52-mouse's title-bar check among them, are
+unchanged, and Breeze's 150 px minimum and 28 px frame stay covered (R1-11). The test client is
+GTK4 with server-side decoration (`DecorationBridge::init` sets the default mode to Server;
+`testclient.py:92`), so it gets the frame.
 
+0. **The switch took**: `supportInformation` shows `Plugin: kwini3frame`; otherwise KWin fell
+   back to Breeze silently and only check 1 would notice.
 1. **Geometry**: two tiled windows a | b; `a.frameGeometry` minus `a.clientGeometry` is 1 px on each
-   side (so `frameMin` in kwin.js sees 2 px, and KeePassXC's 802 px tile stays right).
-2. **Pixels** (`tools/shot.py same`): a's left border pixel is `76,120,153` while a is active, b's
-   left border pixel is `51,51,51`; focus b and the two swap. Proves paint and `activeChanged`.
-3. **Nothing from the pointer**: pointer to a's right border (x = 639, the 1 px line), left press,
-   drag 100 px right, release: no `DRAG start` line, a and b unchanged. Same from a's top line (the
-   old title bar) dragging down: no move. Right press and release on the line: no new window in
-   `workspace.windowList()` (KWin's menu is an internal window). Double left click on the line: a
-   not maximized, unchanged.
-4. **Meta+right-drag still resizes and reads back**: 51-input's check 2, repeated here with the
-   frame loaded.
-5. **Between tiled windows** (the Aurorae strip): pointer 4 px above the seam of two stacked
-   windows, left drag: nothing moves or resizes.
+   side (so `frameMin` sees 2 px, and KeePassXC's 802 px tile stays right).
+2. **Pixels** (`tools/shot.py same`): a's four corner pixels and one per side are `76,120,153`
+   while a is active, b's are `51,51,51`; focus b and they swap.
+3. **Nothing from the pointer**: pointer to a's right line (x = 639), left press, drag 100 px,
+   release: no `DRAG start` line, a and b unchanged. Same from a's top line dragging down: no move.
+   Right press and release on the line: `workspace.activeWindow` unchanged and no `DRAG`, and the
+   menu check (no new entry in `workspace.windowList()`) only if fault A below proves it observable.
+   Double left click on the line: a not maximized, unchanged. A second click on the line after a
+   Meta+right-drag started on the line: starts nothing (cursor state reset).
+4. **The chords still work from the line**: Meta+Shift+drag started on a's line moves a (floats
+   it); Meta+right-drag started on it resizes and reads back (51-input's check 2, repeated here).
+5. **Nothing invisible above a window** (the Aurorae strip), positive: two stacked windows, a left
+   click 4 px above the seam, inside the upper window's client area, reaches the client (`--clicks`
+   log, as 52-mouse's `press 1 release 1`).
+6. **Focus follows i3**: b active; pointer moved onto a's screen-edge line (x = 0) without entering
+   its client: a becomes active (hover). b active, pointer parked on a's line beforehand by a key
+   focus change: a left click on the line activates a (click). A floating window c under a: a click
+   on c's line raises it (stacking order).
+7. **Re-decoration without restart**: switch `library=` to Breeze and back with the windows open:
+   geometry unchanged, no `WARN`/`ERROR` in the log; a modal dialog and a floating window stay put.
 
-**Watched red** before it counts: the cursor shape is not readable from a script, so the proof is a
-deliberate fault, built once in a worktree: `hoverMoveEvent` calling the base. Check 3's edge drag
-must then resize (a `DRAG start resize` line). A second fault, `mousePressEvent` not accepting:
-check 3's drag must then move or resize. Both go in the spec's review notes, not in mutate.py (the
-plugins aren't in its scope).
+**Watched red** before it counts (R1-10), each fault built once in a worktree:
+- A: press not accepted (handlers still overridden): check 3's left drag gives `DRAG start move`
+  and the right press opens the menu. The real guard.
+- B: press not accepted and `hoverMoveEvent` calling the base: the right-line drag gives `DRAG
+  start resize` (the section drives the gravity).
+- C: `setResizeOnlyBorders(QMarginsF(8, 8, 8, 8))`: check 5 red.
+- D: colours swapped, and a 2 px border: checks 1 and 2 red.
+- E: kwini3mouse's two additions removed: check 6 red, hover and click.
+- The hover fault alone (base called, press accepted) changes only the cursor, which no script can
+  read: verified by eye once, live, and that is written in the review notes.
 
-Then `make test` green, `make fuzz` once with the frame loaded in the fuzzer's test KWins (the
-fuzzer already loads the other two plugins; frame = tile holds with any border width), and live on
-Paul's word, with the re-decoration flash announced first.
+Then `make test` green; `make fuzz` once with the frame selected in the fuzzer's test KWins
+(`tests/fuzz/run.py` sets a `KI3_FRAME=1` that `testkwin.sh` turns into the `library=` line when
+the built file exists) and once as now with Breeze, since the two exercise different minimums; and
+live on Paul's word, with the re-decoration flash announced first. If the virtual backend takes a
+scale option, one run of check 2 at scale 2 pins the pixel-snapped border; otherwise the spec says
+"verified at scale 1".
 
 ## Paul's answers (2026-10-23)
 
-1. **A click on the 1 px line does nothing, not even focus or raise**: yes. Paul asked whether that
-   is consistent with i3; it is not, on two counts, and it is a deliberate break like the nested
-   boxes (`docs/spec-nested-boxes.md`). In i3 (`src/click.c`, `route_click`), every click on a
-   container, border included, focuses it (`con_activate`, step 3), and a left or right press on a
-   tiled window's border starts a border-drag resize (`tiling_resize`, step 10); on a floating
-   window a left drag on the border moves it and a right drag resizes it (steps 5 and 6). Here the
-   border does none of that. Focus follows the mouse covers the focus part in daily use; the
-   border-drag resize is what Paul wants gone (it never worked for him under Aurorae anyway).
-2. **Shadows**: Paul: "all decorations are off, I don't believe any shadows are being drawn". The
-   plugin draws none.
-3. **Borders at screen edges and on a maximized window**: OK.
+1. A click on the line does nothing: first "yes", then, told that i3 focuses on border click and
+   hover, "follow that precedent". Hence the kwini3mouse section. The border-drag resize stays out.
+2. Shadows: none now, none after.
+3. Borders at screen edges and on a maximized window: OK.
