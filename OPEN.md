@@ -2,7 +2,7 @@
 
 **State, not history**: rewrite it as things change, never append. If it isn't here, it isn't open.
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
-action**. The dotfiles' `OPEN.md` keeps only what touches the system (phase 6).
+action**. Phase 6 (the dotfiles side) is done.
 
 Last reconciled: **2026-10-22**.
 

@@ -182,11 +182,10 @@ Every root the script sees, including new desktops and returning outputs, gets `
       `systemctl --user restart plasma-kwin_wayland`).
    Floating windows are kept above tiled ones (i3's behaviour; Krohnkite didn't): a "why is this
    on top" is that.
-6. **Dotfiles.** Also: `setup.sh` sets Dolphin's `_launch` to Meta+T (done by hand on the desktop
-   2026-10-22; Plasma's default Meta+E is kwin-i3's toggle split). After Paul has used it for a while and says it's good: `setup.sh` clones `kwin-i3`
-   and links `package/`; its shortcut pruning, `tests/test-claude-config.sh` and `health-check` move to
-   the new action names; README's Plasma table is updated; `i3ws` and the Krohnkite copy are retired
-   in one change. The laptop runs real i3 and is not touched.
+6. **Dotfiles. Done 2026-10-22** (Paul: "I'm happy with kwin-i3 now"). `setup.sh` clones `kwin-i3`,
+   links `package/`, enables it and sets Dolphin to Meta+T; its shortcut pruning skips `kwin-i3*`;
+   `health-check` checks the link; `i3ws` and the Krohnkite copy are retired, with their 83 live
+   shortcut entries unregistered; the way-back files are deleted. The laptop runs real i3, untouched.
 7. **Extras**: none decided yet.
 
 **Action names are fixed now** (they persist in `kglobalshortcutsrc`, and renaming leaves dead

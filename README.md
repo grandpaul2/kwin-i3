@@ -3,9 +3,9 @@
 i3's window management as one KWin script, for Plasma 6.7+ on Wayland: i3's window tree,
 workspaces that live on a monitor, and i3's keys, inside an ordinary Plasma session.
 
-**Status: running on Paul's desktop since 2026-10-22 (phases 0-5 done). Next: phase 6, the
-dotfiles cleanup, once Paul has lived with it and says it's good.** It replaces two pieces in Paul's dotfiles (`~/.dotfiles`), which stay
-running as the fallback until this matches them:
+**Status: Paul's window manager since 2026-10-22 (phases 0-6 done); the dotfiles' `setup.sh`
+installs it.** It replaced two pieces of Paul's dotfiles, retired the same day and kept in their
+git history:
 
 - `i3ws`, a plain-JS KWin script: i3's workspaces on per-screen desktops, focus and moves across
   monitors;

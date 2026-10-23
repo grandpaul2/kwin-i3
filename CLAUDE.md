@@ -70,8 +70,6 @@ spans both, and commit there too:
 - the launchers: `plasma/.local/share/applications/net.local.ki3-capture.desktop` (Meta+Shift+B);
   plus `setup.sh` (links, the shortcut keep-list), `scripts/Documents/health-check.sh` and README's
   "Plasma" table, which describes the keys;
-- `localbin/.local/bin/hotkeys`, Paul's cheat sheet: update it when a key changes;
-- phase 6 of the plan (setup.sh installs kwin-i3, i3ws and Krohnkite retired), which is the
-  dotfiles' `OPEN.md` item, after Paul's OK.
+- `localbin/.local/bin/hotkeys`, Paul's cheat sheet: update it when a key changes.
 
 Backups need nothing from here: dotfiles' `/sessionend` copies this project's Claude memories too.
