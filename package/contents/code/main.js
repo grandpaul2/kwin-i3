@@ -1285,8 +1285,13 @@ var KI3 = (function () {
             // Listed is not placed: a tile managed while its desktop was hidden lists the window
             // but never requested it (Tile::manage), and manage() again returns early for a window
             // it already lists. Once shown: off the list, then on (fuzzer I4, a monitor unplug).
+            // Listed by KWin itself: a monitor returning takes a window and its modal dialog back
+            // into its own tile on that monitor (fuzzer I1, 2026-10-23). `expected` followed the
+            // window to the first monitor's tile meanwhile and was left there: the invariant check
+            // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
+            else expected[id(w)] = tile;    // KWin put it there itself (see above): that is the tile it is in
             return;
         }
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
