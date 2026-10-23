@@ -23,9 +23,10 @@ Last reconciled: **2026-10-23**.
   reset when KWin restarts). If 200 stays: `kset kwinrc kwin-i3-hold TimeoutMs 200` in dotfiles'
   setup.sh and the spec's "100 ms" becomes 200. Change the keys with `kwriteconfig6 --notify`
   alone (README, Configuration).
-- **Fuzz with the frame selected**: `KI3_FRAME=1 make fuzz` started 2026-10-23 ~07:05 (20 min),
-  the first campaign with kwini3frame in the test KWins (the suite otherwise runs Breeze, whose
-  150 px minimum and 28 px frame the Breeze campaigns cover). Result goes here or the item goes.
+- **Fuzz once with the frame selected** (`KI3_FRAME=1 make fuzz`, 20 min): the spec's last step
+  for kwini3frame, not yet run (a session-end start of it was wrong and was killed, 2026-10-23).
+  The suite otherwise runs Breeze, whose 150 px minimum and 28 px frame the normal campaigns
+  cover. Next: run it at the start of a working session, in the background with 2-minute checks.
 - **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; done: shrinking out of the
   campaign, known signatures skipped, the shrinker's no-op loop, and `--jobs 6` as the default
   since 2026-10-23: 94 seeds in 20 min against 73 with 4 jobs, at the same steps per seed, median
