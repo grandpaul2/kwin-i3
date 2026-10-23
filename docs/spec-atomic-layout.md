@@ -1,6 +1,6 @@
 # Spec: atomic layout changes (no wallpaper flash when windows move)
 
-Requested by Paul, 2026-10-23. Status: **revised after review 4; focused check of the changes pending.** No code yet.
+Requested by Paul, 2026-10-23. Status: **reviewed (four full reviews and a focused check); ready for code.** No code yet.
 
 ## The problem, measured
 
@@ -145,9 +145,12 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    untile it first, so it is held while still visible) **counts as settled**: a hidden window gets
    no frame callbacks (windowitem.cpp:172, item.cpp:727), never acknowledges, and would otherwise
    hold everything to the timeout. But its snapshot is **kept and still drawn** until the release:
-   the effect takes an `EffectWindowVisibleRef` on it (effectwindow.h:898), because a hidden window
-   leaves the stacking order (workspacescene.cpp:770) and its slot would show wallpaper while its
-   neighbours are still held at their old size. The ref is released with the transaction.
+   the effect takes an `EffectWindowVisibleRef` on it (effectwindow.h:898) with all four reasons
+   (`PAINT_DISABLED_BY_HIDDEN | _DESKTOP | _MINIMIZE | _ACTIVITY`), because a hidden window leaves
+   the stacking order (workspacescene.cpp:770) and its slot would show wallpaper while its
+   neighbours are still held at their old size. The ref also makes KWin paint the live window, so
+   for a held window that is no longer shown our `drawWindow` draws **only the snapshot** and
+   skips the live window, as for hidden new windows. The ref is released with the transaction.
    `desktopsChanged` and `minimizedChanged` also queue a check.
    Settledness is **never evaluated synchronously**. A held window's
    `windowFrameGeometryChanged`, and every `aboutToChange` (KWin emits it even when nothing
@@ -188,7 +191,8 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    connection (service `org.kde.KWin`), interface `net.local.kwini3hold`, method `Stats` returning
    a map: transactions, timeouts, last and maximum duration, the last quiet-period wait, close
    holds kept and dropped, new windows hidden and how long, snapshots taken and the time spent
-   rendering them (last and maximum). For tests, and for kwin-i3's Dump State / Meta+Shift+B
+   rendering them (last and maximum). Exported with `registerObject(..., ExportAllSlots)` and
+   unregistered in the destructor. For tests, and for kwin-i3's Dump State / Meta+Shift+B
    capture. Counters are driven by geometry events, never by paints, so
    a screenshot (which renders through the effect chain) doesn't change them.
 11. **Installing and the kill switch.** `tools/plugin-install.sh` installs it like `kwini3mouse`:
@@ -208,7 +212,8 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
 
 A move, open or close shows the old layout for a few milliseconds longer (typically 5 to 8,
 counting the 3 ms quiet period; at most 100), then the new layout in one frame: no wallpaper in
-between. A window kwin-i3 floats (a dialog) appears up to 20 ms after it opens. Input goes to the windows' real
+between. A window kwin-i3 floats (other than a dialog, which is never hidden) appears up to
+20 ms after it opens. Input goes to the windows' real
 positions during that time, as it already does. No animation; nothing else changes.
 
 ## Risks
@@ -295,7 +300,7 @@ positions during that time, as it already does. No animation; nothing else chang
     captured.
 18. **Fullscreen** in and out: neither held (Stats).
 19. **Meta+Shift+N**: the window sent away with a slow neighbour: a capture mid-hold shows the
-    sent window's snapshot in its slot, not wallpaper.
+    sent window's snapshot in its slot, not wallpaper, and no live copy of it anywhere.
 20. **Monitor unplugged mid-hold** (the test KWin can disable an output): no crash, the hold
     ends, nothing left drawn.
 21. **kwin-i3 unloaded mid-hold**: the hold ends normally (the effect doesn't depend on it).
@@ -353,6 +358,10 @@ second pass kwin-i3 sometimes makes after one is covered by rule 6's quiet perio
    path, a precise 3 ms timer, output removal, copy-then-unref clean-up order (rules 5, 6, 9);
    six implementer decisions settled (rules 2, 5, 6, 9, 10); timing tests read Stats; tests
    19-24. The race argument held. Paul: fold in, then a focused review of the changes only.
+5. **2026-10-23, focused check of revision 4** against the installed kwin-devel headers: every API
+   the spec uses exists; ready for code after two fixes, both made: a hidden held window drew its
+   live self too (rule 6: snapshot only); a dialog line contradicted rule 5. Settled the visible
+   ref's reasons and the Stats export.
 
 ## Sources
 
