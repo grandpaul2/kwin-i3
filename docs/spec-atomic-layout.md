@@ -102,7 +102,8 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    the top-left: `CrossFadeEffect::drawWindow` draws the snapshot over the window's *current*
    frame, and this transform puts it back on the old one (its shadow margins use the same ratio,
    so they line up). Progress is set only in `paintWindow`, never in `drawWindow`: the snapshot
-   itself is rendered through `drawWindow` (rule 3). **New windows**: while kwin-i3 is loaded,
+   itself is rendered through `drawWindow` (rule 3). **New windows**: while kwin-i3 is loaded (asked of KWin's
+   scripting directly, `Scripting::self()->isScriptLoaded("kwin-i3")`, to be verified),
    every newly added normal window is hidden from `windowAdded` (the effect's slot runs before
    kwin-i3's, which only schedules a zero-delay pass: kwin.js `schedule`). The effect doesn't try
    to copy kwin-i3's rules for which windows float (src/rules.js: transients, dialogs, fixed size,
