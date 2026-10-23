@@ -122,7 +122,7 @@ Animations of any kind. Workspace switches (they replace the whole screen at onc
 
 ## Open questions (for Paul and the review)
 
-1. Timeout 100 ms, or Sway's 200?
+1. ~~Timeout 100 ms, or Sway's 200?~~ 100 ms (Paul, 2026-10-23: "100 is plenty").
 2. Settled = "frame equals requested geometry" vs "last configure acknowledged" (risk 4).
 
 ## Sources
