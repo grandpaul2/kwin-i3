@@ -90,7 +90,7 @@ Rows=1
 PerOutputVirtualDesktops=true
 FocusPolicy=FocusFollowsMouse
 NextFocusPrefersMouse=true
-DelayFocusInterval=150
+DelayFocusInterval=0
 
 [ModifierOnlyShortcuts]
 Meta=

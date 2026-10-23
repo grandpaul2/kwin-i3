@@ -53,6 +53,10 @@ check "the model keeps a at 760 px (tile share ~0.594)" poll share_is 0 594
 check "a is 760 wide"                       geom_is a "0,0 760x720"
 
 # Nested: three columns, drag the b|c border; then a horizontal border inside a vertical split.
+# The drag began inside a, so a has the focus (focus follows the mouse at once). It ended inside b,
+# but an enter during the drag doesn't count: cross back into b, so c opens after it.
+point 300 360
+point 1000 360
 client --title c
 check "H[a b c*]"                           wait_tree 1 "H[a b c*]"
 point 640 360

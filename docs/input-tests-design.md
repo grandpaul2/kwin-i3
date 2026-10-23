@@ -19,7 +19,7 @@ they are implemented."* This document is what gets reviewed; nothing below is wr
 
 To behave like Paul's desktop, `tools/testkwin.sh` writes his focus settings (read from his live
 kwinrc 2026-10-22, and set by `~/.dotfiles/setup.sh`): `[Windows] FocusPolicy=FocusFollowsMouse`,
-`NextFocusPrefersMouse=true`, `DelayFocusInterval=150`. Open question for the review: does turning
+`NextFocusPrefersMouse=true`, `DelayFocusInterval=150` (0 since 2026-10-23). Open question for the review: does turning
 focus-follows-mouse on for *every* scenario make the existing ones flaky (the pointer rests at the
 screen centre at start, so whatever window is under it gets focus after 150 ms)? Alternative: only
 `50-input.sh` gets it, through a `KI3_KWINRC_EXTRA` hook in testkwin.sh.

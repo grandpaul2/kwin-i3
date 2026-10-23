@@ -11,7 +11,7 @@ client --title a; client --title b
 check "a | b on workspace 2"                wait_tree 2 "H[a b*]"
 m=$(mark)
 drag Meta left 1600 360 1343 275
-check "a dragged out: it floats"            wait_tree 2 "H[b*] ~a" "$m"
+check "a dragged out: it floats"            wait_tree 2 "H[b] ~a*" "$m"   # focused: it is under the pointer
 point 1920 360
 check "b fills the second monitor"          geom_is b "1280,0 1280x720"
 timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1

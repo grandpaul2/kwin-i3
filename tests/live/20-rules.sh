@@ -32,7 +32,9 @@ wait_log '^.{9}TREE 1 ' "$m"
 check "maximize is undone: back in its tile" geom_is main "640,0 640x720"
 check "maximize is undone: not maximized"   poll prop_is main maximizeMode 0
 
-# minimize: its space goes to the others, and it comes back in place
+# minimize: its space goes to the others, and it comes back in place. The pointer goes well inside
+# main first: at the start-up centre (x=640) it is on a's border, and a would take the focus.
+point 960 360
 on a 'w.minimized = true;'
 check "minimized: main fills the screen"    geom_is main "0,0 1280x720"
 on a 'w.minimized = false;'
