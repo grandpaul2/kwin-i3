@@ -244,7 +244,7 @@ test("flatten: a one-child split holding a window is kept", () => {
 });
 
 // ---- tidy (kwin-i3's own, not i3's) ------------------------------------------------------------
-// i3 keeps a one-child split holding a split, and each one costs a move key press: Paul's capture
+// i3 keeps a one-child split holding a split, and each one costs a move key press: a capture
 // of 2026-10-22 (real i3 4.25.1 replayed the same 62 keys to the same tree). We remove them.
 
 test("tidy: after Split/Move churn, Meta+H then one move joins the left window", () => {

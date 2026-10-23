@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
 # Mouse chords: the kwini3mouse KWin plugin (plugin/, docs/mouse-plugin-design.md), driven by real
-# input. Paul's setup: Meta+Shift+left-sdrag moves, KWin's own Meta+left-sdrag move is off, KWin's
+# input. The author's setup: Meta+Shift+left-sdrag moves, KWin's own Meta+left-sdrag move is off, KWin's
 # Meta+right-sdrag resize stays.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks

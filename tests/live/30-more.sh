@@ -81,7 +81,7 @@ check "big"                                 poll inside big
 check "logged why"                          wait_log '^.{9}FLOAT big: '
 
 # Minimums that fit in total but not in i3's shares: they get the space from neighbours with
-# room to spare (Paul's desktop, 2026-10-22: KeePassXC, minimum 800 px, in a 640 px quarter, hung
+# room to spare (seen live, 2026-10-22: KeePassXC, minimum 800 px, in a 640 px quarter, hung
 # 162 px onto the other monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
 kclose big; kclose p; kclose q; kclose r
 key "Workspace 3"                          # a fresh, horizontal workspace

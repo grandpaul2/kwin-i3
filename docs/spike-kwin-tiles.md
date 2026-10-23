@@ -5,7 +5,8 @@ which is exactly i3's "one tree per workspace", and a plain-JS script can build,
 it. KWin then does the placing (and, being its own tiles, the border resize and the padding).
 
 Everything below was run in the headless test KWin (`tools/testkwin.sh`), never in Paul's
-session, except one read-only dump of his live trees. Scripts are in `spike/`.
+session, except one read-only dump of his live trees. The probe scripts were `spike/`, removed
+on 2026-10-23 once the project was feature complete; git history before that has them.
 
 ## API (KWin 6.7, `src/scripting/workspace_wrapper.h`, `src/tiles/{tile,customtile}.h`)
 

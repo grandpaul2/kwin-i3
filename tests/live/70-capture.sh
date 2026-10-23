@@ -22,7 +22,7 @@ check "no errors in the dump"               eval '! has "ERROR in dump"'
 check "no errors.txt"                       test ! -e "$(dirname "$state")/errors.txt"
 check "no invariant failures or errors"     clean_log
 
-# Paul's desktop runs with debugLog off: the in-memory log must fill all the same.
+# A live desktop runs with debugLog off: the in-memory log must fill all the same.
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 kwriteconfig6 --file "$XDG_CONFIG_HOME/kwinrc" --group Script-kwin-i3 --key debugLog false
 busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure

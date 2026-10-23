@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # A private, headless KWin for tests: its own D-Bus session, its own config dirs, its own Wayland
-# socket, two virtual 1280x720 outputs side by side. Nothing appears on Paul's screens and nothing
-# reads his config. Several can run at once (tests/live/run.sh runs scenarios in parallel).
+# socket, two virtual 1280x720 outputs side by side. Nothing appears on the live screens and nothing
+# reads the live config. Several can run at once (tests/live/run.sh runs scenarios in parallel).
 #   tools/testkwin.sh <command...>       runs the command inside it, then tears it all down
 #   KI3_XWAYLAND=1                       also start Xwayland, for X11 clients (DISPLAY is set);
 #                                        finding its display is not parallel-safe
@@ -16,10 +16,10 @@
 # History, so it isn't undone:
 # - The environment is set BEFORE the private bus starts: dbus-daemon hands its environment to
 #   whatever it starts. The first version (2026-10-21) set it after, and the portals and ksecretd
-#   the test bus started pointed at Paul's real display and config.
+#   the test bus started pointed at the live display and config.
 # - The private bus starts NO services (a bus config with no service directories). With them, every
 #   test window started xdg-desktop-portal-kde on the test bus, which aborted when the test KWin
-#   went away: 22 core dumps in a night, each a "Service Crash" notification on Paul's desktop
+#   went away: 22 core dumps in a night, each a "Service Crash" notification on the live desktop
 #   (2026-10-22). KWin and the GTK test client run fine without a portal.
 # - Teardown stops the clients first, then KWin (waiting for it), then anything left on the bus.
 set -euo pipefail
@@ -34,8 +34,8 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     unset DISPLAY XAUTHORITY
     # Only the plugin a test asks for, never one from the caller's environment.
     if [[ -n ${KI3_PLUGIN:-} ]]; then export QT_PLUGIN_PATH=$KI3_PLUGIN; else unset QT_PLUGIN_PATH; fi
-    # No system bus: the test KWin read Paul's session lock state through it, and while his screen
-    # was locked nothing tiled and input was swallowed (input-test review, 2026-10-22).
+    # No system bus: the test KWin read the live session's lock state through it, and while that
+    # screen was locked nothing tiled and input was swallowed (input-test review, 2026-10-22).
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none
     mkdir -p "$XDG_CONFIG_HOME"
     cat > "$tmp/bus.conf" <<'CONF'
@@ -98,10 +98,11 @@ Meta=
 
 [Script-kwin-i3]
 debugLog=true
+floatingTitle=STAGE (streamed)
 RC
-# Paul's desktop unbinds these stock shortcuts (~/.dotfiles setup.sh keeps only its own list);
+# The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
-# locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). Focus settings above are his too.
+# locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). The focus settings above are that desktop's too.
 cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
 [kwin]
 Window Quick Tile Left=none,Meta+Left,Quick Tile Window to the Left

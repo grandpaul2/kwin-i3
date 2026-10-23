@@ -15,7 +15,7 @@
 //   - Outputs are not modelled. Where i3 asks for "the visible workspace on the next output in
 //     this direction", the model calls env.outputNeighbour(ws, dir), supplied by the caller.
 //   - Fullscreen is i3's per-output fullscreen (CF_OUTPUT) only, a flag on the leaf.
-//   - No stacked/tabbed layouts, marks, urgency or scratchpad (Paul, 2026-10-21).
+//   - No stacked/tabbed layouts, marks, urgency or scratchpad (decided 2026-10-21).
 
 var Tree = (function () {
     "use strict";
@@ -373,7 +373,7 @@ var Tree = (function () {
 
     // Not i3: a split whose only child is another split goes, and the child takes its place.
     // i3 keeps these, and each one stops a move one level short, so after some splitting and
-    // moving a window took several presses to cross (Paul, 2026-10-22). A one-child split
+    // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
     // every operation that can leave one: move (via flatten), close, float, send to workspace,
     // adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.

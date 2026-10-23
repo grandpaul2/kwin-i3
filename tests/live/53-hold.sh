@@ -57,7 +57,7 @@ check "the dialog was not hidden (only g)"  _stat_is newHidden $((h + 1))
 kclose "g dialog"; kclose g
 check "a | b again"                         wait_tree 1 "H[a b*]"
 
-# 1. Paul's case: a big window on the left, two stacked on the right, the bottom one slow (c).
+# 1. The case that prompted the effect: a big window on the left, two stacked on the right, the bottom one slow (c).
 #    Moving c left makes three columns; without the effect its new column shows black until it
 #    has redrawn, while a and b have already moved.
 key "Split V"

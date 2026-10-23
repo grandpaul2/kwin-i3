@@ -14,7 +14,7 @@ client --title main --dialog
 check "a dialog floats, its parent tiles"   wait_tree 1 "H[a main] ~fixed ~main_dialog*"
 kclose "main dialog"; kclose fixed
 client --title before --retitle "1:STAGE (streamed)"
-check "retitled to the stage's title: floats" wait_tree 1 "H[a main] ~STAGE_(streamed)*"
+check "retitled to a floatingTitle word: floats" wait_tree 1 "H[a main] ~STAGE_(streamed)*"
 kclose "STAGE (streamed)"
 check "back to two"                         wait_tree 1 "H[a main*]"
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Meta+Shift+B on Paul's desktop: save kwin-i3's state the moment something looks wrong, so it can
-# become a test later without him describing it. Silent (no notification), takes about a second.
+# Meta+Shift+B on the live desktop: save kwin-i3's state the moment something looks wrong, so it
+# can become a test later without a description. Silent (no notification), takes about a second.
 #   ~/.local/state/kwin-i3/captures/<time>/state.txt   kwin-i3's "Dump State": outputs, every
 #                                                      workspace's tree, every window, its last log
 #   .../journal.txt   KWin's journal lines from the last 10 minutes
 #   .../screen.png    both monitors
 # KI3_CAPTURE_DIR overrides the parent directory (the live test uses it). Inside the test KWin
-# (KI3_INNER=1) the journal and the screenshot are skipped: they would be Paul's, not the test's.
+# (KI3_INNER=1) the journal and the screenshot are skipped: they would be the live desktop's, not the test's.
 # Captions, the journal and the screenshot can be private: the directory is mode 700.
 set -uo pipefail
 here=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)

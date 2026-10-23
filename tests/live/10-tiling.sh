@@ -22,7 +22,7 @@ check "move left out of the split"          wait_tree 1 "H[a c* V[b]]"
 check "three equal columns: a"              geom_is a "0,0 427x720"
 check "three equal columns: c"              geom_is c "427,0 426x720"
 check "three equal columns: b"              geom_is b "853,0 427x720"
-# Neighbours share an exact edge: no 1 px hole (wallpaper showed through on Paul's 2560 px monitor,
+# Neighbours share an exact edge: no 1 px hole (wallpaper showed through on a 2560 px monitor,
 # 2026-10-22: thirds of 853.33 px rounded separately) and no overlap.
 edges_meet() {
     local ga gc gb; ga=$(geom a); gc=$(geom c); gb=$(geom b)

@@ -1,0 +1,43 @@
+# Changelog
+
+What changed between the versions that ran on a desktop. Newest first; the git log has the
+detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
+
+## Unreleased
+
+- Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
+  of KWin's `tile.cpp` removed from the tree (git history before 2026-10-23 has them).
+- The floating-title default is empty; the stage's title moved to the dotfiles' setup (it was a
+  default of the author's).
+- Test client: the dialog starts at 200x160, above KWin's 150 px decorated minimum (fuzz I9,
+  seed 28: a smaller dialog on a hidden desktop can't take the resize KWin sends with a move).
+
+## 1.0.0 — 2026-10-23
+
+Feature complete for its author's use, after two nights' work (2026-10-21 to 2026-10-23), the
+window manager on his desktop since 2026-10-22. One KWin script plus two small KWin plugins:
+
+- **The i3 tree** (`src/tree.js`), ported from i3's source: insertion after the focus, `tree_move`
+  with every case, split and toggle-split, tree-based focus in a direction, close with i3's
+  focus-after-close, shares (`percent`) with i3's rules. One deliberate break: a split that holds
+  only another split is removed (`docs/spec-nested-boxes.md`).
+- **KWin's own tiles as the display** (`src/kwin.js`): one idempotent reconcile per workspace,
+  minimum sizes honoured with neighbours giving up room, edges snapped to whole pixels, start-up
+  reads the live tiles back so a reload keeps the layout, a release key that hands everything
+  back to KWin.
+- **Workspaces per monitor** (`src/workspaces.js`, from i3ws): workspace N is desktop N on one
+  monitor, numbering at login, pointer follows focus, workspaces move to a remaining monitor on
+  unplug and back on replug.
+- **Rules** (`src/rules.js`): which windows tile, float or are ignored, with Krohnkite's
+  defaults; configurable under `kwinrc [Script-kwin-i3]`.
+- **Keys**: i3's, as `kwin-i3 <verb>` actions (workspace N, move to workspace N, focus and move
+  in four directions, split h/v, toggle split, floating toggle, focus mode toggle, resize,
+  release, dump state).
+- **kwini3mouse** (`plugin/`): modifier + mouse button chords, so window move is
+  Meta+Shift+drag (`docs/mouse-plugin-design.md`).
+- **kwini3hold** (`plugin/`): an effect that holds the old layout on screen until every moved
+  window has its new frame, like Sway's transactions (`docs/spec-atomic-layout.md`).
+- **Tests**: unit tests of the tree (cases from i3's own testsuite), live scenarios in a private
+  headless KWin with two virtual outputs and real hotplug, real input through libei, a fuzzer
+  with pixel invariants and a shrinker, mutation batteries for the unit and live suites, and a
+  capture key (Meta+Shift+B) that turns a bug seen into a file.

@@ -19,7 +19,7 @@ wait_log 'kwin-i3 loaded$'
 #    are no-ops but still log). The ':' chord is physically Meta+Shift+;, already in the list;
 #    a symbol variant (Meta+!) is the same physical chord as Meta+Shift+1 and can't be told apart
 #    here: tests/unit/keys.test.js checks the table for those.
-# The chords come from tests/keys.json (the spec, from Paul's old i3 config), never from kwin.js:
+# The chords come from tests/keys.json (the spec, from the author's old i3 config), never from kwin.js:
 # reading the table under test let a typo or a dropped key pass (fault battery, 2026-10-22).
 mapfile -t chords < <(node -e '
 const K = require(process.argv[1]);

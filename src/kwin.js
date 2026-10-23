@@ -248,7 +248,7 @@ var KI3 = (function () {
     }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
-    // decoration (Paul's i3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // decoration (the i3frame decoration: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
     // or KWin leaves it where it was (2026-10-22). The headless tests have no decorations.
     function frameMin(w) {
         var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
@@ -270,8 +270,8 @@ var KI3 = (function () {
     }
 
     // i3's shares, but no child below its minimum: the shortfall comes from children with room
-    // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Paul's
-    // desktop, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
+    // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Seen
+    // live, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
     // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
     function fitMinimums(want, mins, total) {
         var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
@@ -291,7 +291,7 @@ var KI3 = (function () {
 
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
-    // 1 px hole the wallpaper showed through (Paul's desktop, 2026-10-22).
+    // 1 px hole the wallpaper showed through (seen live, 2026-10-22).
     function snap(v, n) { return Math.round(v * n) / n; }
 
     // Returns true if anything had to change.
@@ -885,7 +885,7 @@ var KI3 = (function () {
 
     // ---- dump (tools/capture, Meta+Shift+B) ------------------------------------------------
 
-    // Everything needed to turn a bug Paul saw into a test, sent line by line to whoever owns
+    // Everything needed to turn a bug seen live into a test, sent line by line to whoever owns
     // net.local.kwini3.dump (tools/capture). Never throws: a broken part says so and the rest goes.
     function dump() {
         // Collected, then sent in a few large calls: hundreds of small ones would each be a D-Bus

@@ -1,8 +1,8 @@
 // Which windows kwin-i3 manages, and which of those float rather than tile. Mostly what the
 // patched Krohnkite decided (its shouldIgnore / shouldFloat, defaults from its main.xml), so
-// nothing changes for Paul at switch-over. Settings come from kwin-i3's own [Script-kwin-i3]
-// group, not Krohnkite's; the floatingTitle default is the stage's Xephyr title
-// ("STAGE (streamed)", as ~/.dotfiles setup.sh set for Krohnkite).
+// nothing changed at the switch-over from it. Settings are comma-separated lists in kwinrc's
+// [Script-kwin-i3] group (not Krohnkite's): ignoreClass, ignoreRole, floatingClass,
+// floatingTitle (a window whose caption contains one of the words floats).
 
 var Rules = (function () {
     function list(key, def) {
@@ -14,7 +14,7 @@ var Rules = (function () {
         "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter");
     var IGNORE_ROLE = list("ignoreRole", "quake");
     var FLOAT_CLASS = list("floatingClass", "");
-    var FLOAT_TITLE = list("floatingTitle", "STAGE (streamed)");
+    var FLOAT_TITLE = list("floatingTitle", "");
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
     function titleHas(caption, words) {

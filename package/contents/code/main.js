@@ -32,7 +32,7 @@ function log(line) {
 //   - Outputs are not modelled. Where i3 asks for "the visible workspace on the next output in
 //     this direction", the model calls env.outputNeighbour(ws, dir), supplied by the caller.
 //   - Fullscreen is i3's per-output fullscreen (CF_OUTPUT) only, a flag on the leaf.
-//   - No stacked/tabbed layouts, marks, urgency or scratchpad (Paul, 2026-10-21).
+//   - No stacked/tabbed layouts, marks, urgency or scratchpad (decided 2026-10-21).
 
 var Tree = (function () {
     "use strict";
@@ -390,7 +390,7 @@ var Tree = (function () {
 
     // Not i3: a split whose only child is another split goes, and the child takes its place.
     // i3 keeps these, and each one stops a move one level short, so after some splitting and
-    // moving a window took several presses to cross (Paul, 2026-10-22). A one-child split
+    // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
     // every operation that can leave one: move (via flatten), close, float, send to workspace,
     // adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
@@ -831,9 +831,9 @@ if (typeof module !== "undefined") module.exports = Tree;
 // ---- src/rules.js
 // Which windows kwin-i3 manages, and which of those float rather than tile. Mostly what the
 // patched Krohnkite decided (its shouldIgnore / shouldFloat, defaults from its main.xml), so
-// nothing changes for Paul at switch-over. Settings come from kwin-i3's own [Script-kwin-i3]
-// group, not Krohnkite's; the floatingTitle default is the stage's Xephyr title
-// ("STAGE (streamed)", as ~/.dotfiles setup.sh set for Krohnkite).
+// nothing changed at the switch-over from it. Settings are comma-separated lists in kwinrc's
+// [Script-kwin-i3] group (not Krohnkite's): ignoreClass, ignoreRole, floatingClass,
+// floatingTitle (a window whose caption contains one of the words floats).
 
 var Rules = (function () {
     function list(key, def) {
@@ -845,7 +845,7 @@ var Rules = (function () {
         "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter");
     var IGNORE_ROLE = list("ignoreRole", "quake");
     var FLOAT_CLASS = list("floatingClass", "");
-    var FLOAT_TITLE = list("floatingTitle", "STAGE (streamed)");
+    var FLOAT_TITLE = list("floatingTitle", "");
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
     function titleHas(caption, words) {
@@ -1191,7 +1191,7 @@ var KI3 = (function () {
     }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
-    // decoration (Paul's i3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // decoration (the i3frame decoration: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
     // or KWin leaves it where it was (2026-10-22). The headless tests have no decorations.
     function frameMin(w) {
         var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
@@ -1213,8 +1213,8 @@ var KI3 = (function () {
     }
 
     // i3's shares, but no child below its minimum: the shortfall comes from children with room
-    // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Paul's
-    // desktop, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
+    // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Seen
+    // live, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
     // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
     function fitMinimums(want, mins, total) {
         var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
@@ -1234,7 +1234,7 @@ var KI3 = (function () {
 
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
-    // 1 px hole the wallpaper showed through (Paul's desktop, 2026-10-22).
+    // 1 px hole the wallpaper showed through (seen live, 2026-10-22).
     function snap(v, n) { return Math.round(v * n) / n; }
 
     // Returns true if anything had to change.
@@ -1828,7 +1828,7 @@ var KI3 = (function () {
 
     // ---- dump (tools/capture, Meta+Shift+B) ------------------------------------------------
 
-    // Everything needed to turn a bug Paul saw into a test, sent line by line to whoever owns
+    // Everything needed to turn a bug seen live into a test, sent line by line to whoever owns
     // net.local.kwini3.dump (tools/capture). Never throws: a broken part says so and the rest goes.
     function dump() {
         // Collected, then sent in a few large calls: hundreds of small ones would each be a D-Bus

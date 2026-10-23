@@ -1,5 +1,5 @@
 // KWin's JS engine warns at every load when a variable is used above its `var` declaration
-// ("Variable ... is used before its declaration"). Harmless in JS, but it fills Paul's journal on
+// ("Variable ... is used before its declaration"). Harmless in JS, but it fills the journal on
 // every login (seen twice on 2026-10-22). This keeps the built script free of it.
 const test = require("node:test");
 const assert = require("node:assert");

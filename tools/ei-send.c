@@ -1,5 +1,5 @@
 // Real input for the live tests: pointer moves, clicks and keys sent into a KWin over libei, the
-// interface remote-desktop tools use. Never pointed at Paul's session: tools/inject.py gets the
+// interface remote-desktop tools use. Never pointed at the live session: tools/inject.py gets the
 // connection from the test KWin on the private bus and hands its fd here.
 //
 //   ei-send <fd>        then commands on stdin, one per line:

@@ -11,8 +11,8 @@ Run: make mutate-live.
 """
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
-# Every fault is built into package/, and Paul's desktop loads kwin-i3 from a checkout's package/
-# (~/.local/share/kwin/scripts/kwin-i3): one KWin reload mid-run would give him a broken window
+# Every fault is built into package/, and the live desktop loads kwin-i3 from a checkout's package/
+# (~/.local/share/kwin/scripts/kwin-i3): one KWin reload mid-run would give it a broken window
 # manager. Run it from a worktree instead (2026-10-22).
 live = os.path.realpath(os.path.expanduser("~/.local/share/kwin/scripts/kwin-i3"))
 if live == os.path.realpath("package"):

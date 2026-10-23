@@ -4,8 +4,8 @@
         "Id": "kwin-i3",
         "Name": "kwin-i3",
         "Description": "i3's window tree, workspaces and keys inside a Plasma session",
-        "Version": "0.0.1",
-        "License": "MIT",
+        "Version": "1.0.0",
+        "License": "GPL-2.0-or-later",
         "EnabledByDefault": false
     },
     "X-Plasma-API": "javascript",

@@ -1,4 +1,4 @@
-// The default keys in src/kwin.js against Paul's old i3 config (git d3de958^ in ~/.dotfiles),
+// The default keys in src/kwin.js against the author's old i3 config (git d3de958^ in the dotfiles),
 // translated: $mod is Meta, resize mode becomes Meta+Ctrl (a script can't have mode-only keys).
 // The live tests press actions by name, so without this a typo in a key would ship unnoticed
 // (test review 2026-10-22, fault 10).
@@ -12,7 +12,7 @@ const block = src.match(/var KEYS = (\{[\s\S]*?\n    \});/);
 assert.ok(block, "KEYS table not found in src/kwin.js");
 const KEYS = Function("return " + block[1])();
 
-// The spec: tests/keys.json, Paul's old i3 config translated. Shared with the live key sweep
+// The spec: tests/keys.json, the author's old i3 config translated. Shared with the live key sweep
 // (tests/live/50-keys.sh), so neither reads the table it is checking.
 const want = require("../keys.json");
 

@@ -17,6 +17,10 @@ calls), and i3's tree needs to be the single truth. Krohnkite is also a QML scri
 a logout), and its `script.js` is compiled upstream output we were patching by hand.
 
 `docs/plan.md` is the plan; `docs/spike-kwin-tiles.md` is why it builds on KWin's own tile tree.
+`CHANGELOG.md` says what changed between versions.
+
+License: GPL-2.0-or-later (`LICENSE`). `src/tree.js` ports i3's tree code, which is BSD-licensed;
+`NOTICE` carries its notice and the other credits.
 
 ## Working on it
 
