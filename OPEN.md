@@ -14,8 +14,13 @@ Last reconciled: **2026-10-23**.
   arrow cursor on a frame and no drag from it (the one check no script makes), and anything odd
   about focus at window edges. Way back: `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2
   --key library org.kde.kwin.aurorae.v2` + reconfigure (KWin had migrated the key to the v2
-  engine; `theme=` is still the i3frame theme) until dotfiles retires the theme. The dotfiles
-  session has the id, root and the three health-check items (sent 2026-10-23). Known gap: the
+  engine; `theme=` is still the i3frame theme) until dotfiles retires the theme. **Dotfiles side
+  still to do, from here, once Paul has checked the frame by eye** (the dotfiles session that
+  planned it had ended when the hand-off was sent): retire `plasma/.local/share/aurorae/themes/
+  i3frame`, drop setup.sh's theme link and `kwin-applywindowdecoration` call (keep the BorderSize
+  keys, delete the `theme=` key), README's Plasma table row, and three `health-check` items:
+  `library=` names an existing file under the root's `org.kde.kdecoration3/`, `frame-guard.sh
+  --check` passes, and a kwini3mouse plugin is loaded whenever the frame is selected. Known gap: the
   hover-focus path skips KWin's "window menu is open" check (its header is not buildable from
   kwin-devel). `~/kwin-i3-wt-frame` can go once Paul is happy (branch `frame` is merged).
 
