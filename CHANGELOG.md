@@ -5,7 +5,7 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
-- **kwini3frame**, a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
+- **kwini3frame** (live 2026-10-23), a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
   nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
   the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.
   `make plugin-install` selects it in kwinrc; `tools/frame-guard.sh` falls back to Breeze before a

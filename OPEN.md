@@ -8,21 +8,16 @@ Last reconciled: **2026-10-23**.
 
 ## Open
 
-- **kwini3frame, the i3 frame as a KDecoration3 plugin: built, tested, NOT live.** Branch `frame`
-  (commit f672049, pushed; worktree `~/kwin-i3-wt-frame`): `plugin/frame.cpp`, kwini3mouse's
-  focus-on-the-frame, `tools/frame-guard.sh`, `tests/live/54-frame.sh` (42 checks; the seven
-  faults of the spec's matrix all went red), full suite green in the worktree.
-  `docs/spec-decoration.md` says what and why (reviewed twice; deviations at code time listed at
-  its top). **Next, on Paul's word**: merge `frame` into main, `make test`, then `make
-  plugin-install` on the live desktop. That re-decorates every window at once (visible), writes
-  `library=kwini3frame-<hash>` to kwinrc and adds `ExecStartPre=frame-guard.sh` to KWin's drop-in;
-  verify the arrow cursor on a frame by eye (the one check no script can make); way back is
-  `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library __aurorae__svg__i3frame`
-  + reconfigure. Then tell the dotfiles session the id and root (`~/.local/lib/kwin-i3/qt6plugins`)
-  so it retires the Aurorae theme, drops setup.sh's theme link and `kwin-applywindowdecoration`
-  call, and adds to `health-check`: `library=` names an existing file, kwini3mouse loaded whenever
-  the frame is selected, and the frame-guard version check. Known gap: the hover-focus path skips
-  KWin's "window menu is open" check (its header is not buildable from kwin-devel).
+- **kwini3frame live since 2026-10-23 ~06:15: watch it.** The i3 frame as a KDecoration3 plugin
+  (`docs/spec-decoration.md`), installed by `make plugin-install` (`library=kwini3frame-<hash>`,
+  `ExecStartPre=frame-guard.sh` in KWin's drop-in, active from the next login). **Ask Paul**: the
+  arrow cursor on a frame and no drag from it (the one check no script makes), and anything odd
+  about focus at window edges. Way back: `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2
+  --key library org.kde.kwin.aurorae.v2` + reconfigure (KWin had migrated the key to the v2
+  engine; `theme=` is still the i3frame theme) until dotfiles retires the theme. The dotfiles
+  session has the id, root and the three health-check items (sent 2026-10-23). Known gap: the
+  hover-focus path skips KWin's "window menu is open" check (its header is not buildable from
+  kwin-devel). `~/kwin-i3-wt-frame` can go once Paul is happy (branch `frame` is merged).
 
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
