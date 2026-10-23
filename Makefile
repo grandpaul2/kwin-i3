@@ -9,7 +9,7 @@ test: unit live
 mutate:
 	python3 tests/unit/mutate.py
 fuzz: build tools plugin
-	python3 tests/fuzz/run.py --minutes $(or $(FUZZ_MINUTES),20) --jobs $(or $(FUZZ_JOBS),4) $(if $(FUZZ_SKIP),--skip $(FUZZ_SKIP))
+	python3 tests/fuzz/run.py --minutes $(or $(FUZZ_MINUTES),20) --jobs $(or $(FUZZ_JOBS),6) $(if $(FUZZ_SKIP),--skip $(FUZZ_SKIP))
 # Shrink the new failures a campaign saved (FUZZ_SEEDS=214,215 for particular ones).
 fuzz-shrink: build tools plugin
 	python3 tests/fuzz/run.py --reshrink $(or $(FUZZ_SEEDS),all)
