@@ -22,7 +22,7 @@ Last reconciled: **2026-10-23**.
   replay with a trace in a worktree to find the step where the two leave their tiles (also
   `tests/fuzz/out.run3/2/shrunk.json`, 2026-10-23).
 - **Fuzz I9, seed 28: a floating dialog (w7 dialog) off its monitor after an unplug and replug**
-  (shrunk 73 -> 26 actions, `tests/fuzz/out/28/shrunk.json`, reproduces every replay). Traced: when
+  (shrunk 73 -> 26 actions, `tests/fuzz/out.run3/28/shrunk.json`, reproduces every replay). Traced: when
   the monitor returns, relocate() sends the parent w7 there; KWin's `sendToOutput` sends its
   transients along (`window.cpp:3918`), and the dialog, hidden, gets a request it never applies
   (its size changes too, 128 -> 178 high; the parent, same size, moved at once). relocate()'s own
