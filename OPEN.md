@@ -15,7 +15,10 @@ Last reconciled: **2026-10-23**.
   as `51-input.sh`'s one failure under the full parallel suite (1176 after a resize drag, wanted
   1280; never alone). Seed 3 of the 2026-10-23 run with the kwini3hold effect loaded is the same
   signature and fails 3/3 on the code without the effect too (105 actions, unshrunk:
-  `tests/fuzz/out.run4/3/trace.json`). Next: replay seed 14 with a trace in a worktree.
+  `tests/fuzz/out.run4/3/trace.json`). **Shrunk to 7 actions** by the fixed shrinker
+  (`tests/fuzz/out.run3/14/shrunk-7.json`, 3/3): open w12, w13; disable the second output; open a
+  slow window (map delay 1 s); kill w13; open a window with a dialog; enable the output again.
+  Next: replay those 7 with a trace in a worktree.
 - **Fuzz I2, seed 7: a tiled window outside its monitor** (2026-10-23 run: `w13 [1280,0,501,720]
   outside Virtual-0 [0,0,1280,720]`), shrunk to 51 actions, 3/3, on the code before and after the
   nested-box change alike. Trace: `tests/fuzz/out.run3/7/shrunk.json`. Next: replay with a trace.

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""Fuzz kwin-i3 for a while: many seeds in parallel, each failure replayed and shrunk.
+"""Fuzz kwin-i3 for a while: many seeds in parallel; new failures confirmed, shrunk separately.
 
   tests/fuzz/run.py [--minutes 20] [--jobs 4] [--budget 90] [--seed 1] [--skip I8,..]   (make fuzz)
+  tests/fuzz/run.py --reshrink all|214,215   shrink the saved failures (make fuzz-shrink)
 
-Every seed runs tests/fuzz/fuzz.py in its own headless test KWin. A failure is replayed twice
-(0 of 2: "flaky", kept but not shrunk), then shrunk (see shrink()) to the shortest action list
-that still fails with the same signature, and that list is replayed 3 times for a rate.
-  tests/fuzz/run.py --reshrink 214,215    shrink saved failures again (after a shrinker change)
+Every seed runs tests/fuzz/fuzz.py in its own headless test KWin. A failure with a signature in
+tests/fuzz/known.txt (a bug already in OPEN.md) is counted and nothing more. A new one is
+replayed twice (0 of 2: "flaky") and recorded; `--reshrink` then shrinks it (see shrink()) to
+the shortest action list that still fails with the same signature, replayed 3 times for a rate.
+Shrinking used to run inside the campaign: a failing seed then held a job slot for up to 20
+minutes, and most of that went to re-shrinking known bugs (review, 2026-10-23), so a "20-minute"
+run took 29 and ran 22 seeds where 50 fit.
 Results: tests/fuzz/out/REPORT.md, one section per signature; per seed, tests/fuzz/out/<seed>/.
-Only the first failure of each signature is shrunk; the others are counted.
+Only the first failure of each signature is confirmed and shrunk; the others are counted.
 """
 import argparse, concurrent.futures as cf, json, os, shutil, subprocess, threading, time
 
@@ -22,6 +26,16 @@ PAR = 3                      # replays at once, per shrink
 lock = threading.Lock()
 SKIP = []                    # ["--skip", codes] for every inner run
 groups = {}                  # signature -> {"seeds": [...], "state": "shrinking"/"done", ...}
+KNOWN = os.path.join(HERE, "known.txt")
+
+
+def known_signatures():
+    """Signatures of bugs already in OPEN.md: one per line, "#" comments; a line matches a
+    signature it is a prefix of."""
+    try:
+        return [l.strip() for l in open(KNOWN) if l.strip() and not l.startswith("#")]
+    except FileNotFoundError:
+        return []
 
 
 def inner(args, out, budget):
@@ -67,7 +81,10 @@ def shrink(actions, sig, work):
             f.write("%s %3d tries  %3d actions  %s\n" % (time.strftime("%H:%M:%S"), tries[0], len(actions), msg))
     def first_failing(cands):
         """Replay candidates in parallel; the first (in order) that still fails, or None."""
-        cands = [c for c in cands if c]
+        # Only real reductions: a candidate equal to the trace (dropping a kind it has none of)
+        # "still failed" and looped step 2 until MAX_TRIES ran out (seed 14 spent 13 of its 17
+        # minutes there, 2026-10-23).
+        cands = [c for c in cands if c and len(c) < len(actions)]
         if not cands or time.time() > stop:
             return None
         base = tries[0]
@@ -136,14 +153,17 @@ def shrink(actions, sig, work):
     return actions, tries[0]
 
 
-def handle_failure(seed, out, r, confirm=True):
+def handle_failure(seed, out, r, confirm=True, do_shrink=True, skip_known=False):
     sig = r["signature"]
     with lock:
         g = groups.setdefault(sig, {"seeds": [], "state": None, "first": r["failures"][0]})
         g["seeds"].append(seed)
         if g["state"]:
             return
-        g["state"] = "shrinking"
+        if skip_known and any(sig.startswith(k) for k in known_signatures()):
+            g["state"] = "known (OPEN.md); not replayed"
+            return
+        g["state"] = "confirming"
     actions = json.load(open(os.path.join(out, "trace.json")))["actions"][:r["steps"]]
     work = os.path.join(out, "shrink")
     again = sum(fails_same(actions, sig, os.path.join(work, "again%d" % i)) for i in range(2)) if confirm else 1
@@ -151,6 +171,12 @@ def handle_failure(seed, out, r, confirm=True):
         with lock:
             g.update(state="flaky", seed=seed, actions=actions, rate="0/2 replays")
         return
+    if not do_shrink:
+        with lock:
+            g.update(state="confirmed, not shrunk yet (make fuzz-shrink)", seed=seed, rate="%d/2 replays" % again)
+        return
+    with lock:
+        g["state"] = "shrinking"
     small, tries = shrink(actions, sig, work)
     rate = sum(fails_same(small, sig, os.path.join(work, "final%d" % i)) for i in range(3))
     json.dump({"signature": sig, "actions": small}, open(os.path.join(out, "shrunk.json"), "w"), indent=1)
@@ -163,7 +189,7 @@ def run_seed(seed, budget):
     out = os.path.join(OUT, str(seed))
     r = inner(["gen", "--seed", str(seed), "--budget", str(budget)], out, budget)
     if r.get("signature"):
-        handle_failure(seed, out, r)
+        handle_failure(seed, out, r, do_shrink=False, skip_known=True)
     elif r.get("harness"):
         with lock:
             groups.setdefault("harness: " + r["harness"], {"seeds": [], "state": "harness"})["seeds"].append(seed)
@@ -202,19 +228,41 @@ def main():
     ap.add_argument("--budget", type=float, default=90, help="seconds of actions per seed")
     ap.add_argument("--seed", type=int, default=1, help="first seed")
     ap.add_argument("--skip", default="", help="invariants not to stop for (known bugs), e.g. I8")
-    ap.add_argument("--reshrink", default="", help="seeds in tests/fuzz/out to shrink again, e.g. 214,215")
+    ap.add_argument("--reshrink", default="", help="seeds in tests/fuzz/out to shrink, e.g. 214,215, or all (every unshrunk new failure)")
     a = ap.parse_args()
     if a.skip:
         SKIP[:] = ["--skip", a.skip]
     if a.reshrink:
         subprocess.run([os.path.join(ROOT, "build.sh")], check=True, stdout=subprocess.DEVNULL)
+        seeds = a.reshrink.split(",")
+        if a.reshrink == "all":
+            # Every saved failure that is new (not a known signature) and not shrunk yet, the
+            # first seed per signature.
+            seeds, seen = [], set()
+            for d in sorted(os.listdir(OUT), key=lambda x: (not x.isdigit(), int(x) if x.isdigit() else 0)):
+                try:
+                    r = json.load(open(os.path.join(OUT, d, "result.json")))
+                except (FileNotFoundError, json.JSONDecodeError, NotADirectoryError):
+                    continue
+                sig = r.get("signature")
+                if not sig or sig in seen or any(sig.startswith(k) for k in known_signatures()):
+                    continue
+                if os.path.exists(os.path.join(OUT, d, "shrunk.json")):
+                    seen.add(sig)
+                    continue
+                seen.add(sig)
+                seeds.append(d)
+            if not seeds:
+                print("nothing to shrink: every saved failure is known or shrunk")
+                return
+            print("shrinking seeds " + ", ".join(seeds))
         def again(seed):
             out = os.path.join(OUT, seed)
             r = json.load(open(os.path.join(out, "result.json")))
             shutil.rmtree(os.path.join(out, "shrink"), ignore_errors=True)
             handle_failure(int(seed), out, r, confirm=False)   # known to reproduce
-        with cf.ThreadPoolExecutor(len(a.reshrink.split(","))) as ex:
-            list(ex.map(again, a.reshrink.split(",")))
+        with cf.ThreadPoolExecutor(max(1, min(2, len(seeds)))) as ex:
+            list(ex.map(again, seeds))
         report()
         print(open(os.path.join(OUT, "REPORT.md")).read())
         return

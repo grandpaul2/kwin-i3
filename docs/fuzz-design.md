@@ -125,5 +125,16 @@ The review (24 findings) changed these; the code is `tests/fuzz/fuzz.py` and `te
   invariant and its message with numbers and window names taken out). The result is replayed 3 times
   for a rate. Actions refer to windows by caption; one whose window is gone does nothing.
 - **`--skip I8,...`** keeps a run going past a known bug that would otherwise end most seeds early.
+- **The campaign and shrinking are separate (2026-10-23, after an efficiency review).** A
+  failing seed used to shrink inside the campaign, holding one of its 4 job slots for up to 20
+  minutes; 70-90 % of that re-shrank bugs already in OPEN.md, a "20-minute" run took 29, and 22
+  seeds ran where ~50 fit. Now `make fuzz` only runs seeds: a failure whose signature is in
+  `tests/fuzz/known.txt` (the open bugs; remove a line when its bug is fixed) is counted and left
+  alone; a new one is replayed twice and recorded. `make fuzz-shrink` shrinks the new ones
+  afterwards (`FUZZ_SEEDS=214,215` for particular seeds, known or not). The shrinker also used to
+  loop on no-op candidates ("drop every pointer action" of a trace with none still "failed"), to
+  the try limit: seed 14 spent 13 of its 17 minutes there. Only real reductions are tried now.
+  A known signature still ends its seed at that step, so later steps of that seed go unfuzzed;
+  `--skip` on its invariant is the way past that.
 - **Validated** (watched red): with `snap()` disabled (the 1 px hole) the fuzzer reports I4 in 6
   minutes on 2 jobs; with `fitMinimums` disabled (minimum sizes), I10.

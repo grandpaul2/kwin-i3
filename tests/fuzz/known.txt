@@ -1,0 +1,8 @@
+# Fuzz signatures of bugs already in OPEN.md: a campaign counts these and moves on, instead of
+# replaying and shrinking them again every run (that was most of a run's time, 2026-10-23).
+# One signature prefix per line; the signature is the invariant's message with numbers as N.
+# Remove a line when its bug is fixed, so the fuzzer proves the fix.
+I10 W frame [N, N, N, N] is not its tile [N, N, N, N]
+I1 INVARIANT ws N: window W not in its tile; window W not in its tile
+I2 W [N, N, N, N] outside VirtualN [N, N, N, N]
+I9 floating W dialog at [N, N, N, N] is off VirtualN
