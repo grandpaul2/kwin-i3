@@ -8,6 +8,20 @@ Last reconciled: **2026-10-23**.
 
 ## Open
 
+- **Next session: the i3frame decoration as a KDecoration3 plugin** (Paul, 2026-10-23: "we can
+  build it here next session"). Goal: no resize cursor at window edges and no edge drag; the same
+  1 px blue/grey frame, borders Tiny, no resize-only strips, an empty title bar, every pointer
+  event accepted so the section never changes. Meta+left/right-drag are global window actions,
+  handled before the decoration, so the mouse chords and Meta+right-drag resize (and its
+  read-back) stay. A third target in `plugin/`, installed by `tools/plugin-install.sh` (a
+  `org.kde.kdecoration3/` dir under the plugin root; `kwinrc [org.kde.kdecoration2] library=`
+  must name the installed file, so each install rewrites it); dotfiles' setup.sh then retires the
+  Aurorae theme. The dotfiles session traced KWin/KDecoration/Aurorae 6.7.5 for this and will
+  send over what else it found. Paul's sequence: spec (`docs/spec-decoration.md`), review, code,
+  review, live on his word. Two things to verify first: whether the kdecoration3 plugin IID is
+  version-locked like KWin's, and whether `kwin-applywindowdecoration` sees a plugin outside
+  `/usr/lib64` (else setup.sh writes `library=` itself).
+
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
   timeout by 03:50, and 6 of 125 (max 112 ms) later that day, when Paul had seen no more flashes
