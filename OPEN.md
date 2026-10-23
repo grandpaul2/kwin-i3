@@ -13,7 +13,9 @@ Last reconciled: **2026-10-23**.
   fails 3/3 (`w9 frame [299,0,981,720] is not its tile [199,0,654,720]`), on the code before and
   after the nested-box change alike. Trace: `tests/fuzz/out.run3/14/shrunk.json`. Probably the same
   as `51-input.sh`'s one failure under the full parallel suite (1176 after a resize drag, wanted
-  1280; never alone). Next: replay seed 14 with a trace in a worktree.
+  1280; never alone). Seed 3 of the 2026-10-23 run with the kwini3hold effect loaded is the same
+  signature and fails 3/3 on the code without the effect too (105 actions, unshrunk:
+  `tests/fuzz/out.run4/3/trace.json`). Next: replay seed 14 with a trace in a worktree.
 - **Fuzz I2, seed 7: a tiled window outside its monitor** (2026-10-23 run: `w13 [1280,0,501,720]
   outside Virtual-0 [0,0,1280,720]`), shrunk to 51 actions, 3/3, on the code before and after the
   nested-box change alike. Trace: `tests/fuzz/out.run3/7/shrunk.json`. Next: replay with a trace.

@@ -60,6 +60,11 @@ bool Hold::supported()
     return effects->isOpenGLCompositing();
 }
 
+void Hold::reconfigure(ReconfigureFlags)
+{
+    loadConfig();
+}
+
 void Hold::loadConfig()
 {
     auto config = m_watcher->config();
@@ -107,8 +112,12 @@ void Hold::onAdded(EffectWindow *w)
 
 void Hold::onClosed(EffectWindow *w)
 {
-    m_hidden.remove(w);
     m_dragging.removeAll(w);
+    if (m_hidden.remove(w)) {      // never shown: nothing to keep on screen
+        m_held.remove(w);
+        queueCheck();
+        return;
+    }
     if (!m_enabled || !supported()) {
         return;
     }
@@ -129,6 +138,7 @@ void Hold::onClosed(EffectWindow *w)
         h.closed = true;
         m_held.insert(w, h);
         ++m_stats.closeHoldsKept;
+        restartQuiet();
         return;
     }
     // Pending: its neighbours' aboutToChange, if any, promotes it (ensureOpen); else let it go.
@@ -215,7 +225,7 @@ bool Hold::outputDragged(EffectWindow *w) const
 
 bool Hold::eligible(EffectWindow *w) const
 {
-    return tiled(w) && shown(w) && !w->isFullScreen() && !w->isDeleted()
+    return tiled(w) && shown(w) && !w->isFullScreen() && !w->isDeleted() && w->screen()
         && !w->bufferGeometry().isEmpty() && !outputDragged(w);
 }
 
@@ -364,6 +374,7 @@ void Hold::release(bool timedOut)
         ++m_stats.timeouts;
     }
     // On copies: unrefWindow can delete a window, and windowDeleted then edits these lists.
+    // (The copies hold their own visible refs, so a hidden window stays drawn until the end.)
     const QHash<EffectWindow *, Held> held = m_held;
     m_held.clear();
     for (auto it = held.cbegin(); it != held.cend(); ++it) {
@@ -376,9 +387,14 @@ void Hold::release(bool timedOut)
             unhide(it.key());
         }
     }
-    // held's Held values (and their visible refs) die at the end of this function; the closed
-    // windows' refs go now.
-    for (auto it = held.cbegin(); it != held.cend(); ++it) {
+    // Visible refs before the closed windows' refs: unrefWindow can delete the window and its
+    // item, and a visible ref dying later would touch it (a window sent away, then closed, in
+    // one hold).
+    QHash<EffectWindow *, Held> mutableHeld = held;
+    for (auto it = mutableHeld.begin(); it != mutableHeld.end(); ++it) {
+        it->visible.reset();
+    }
+    for (auto it = mutableHeld.begin(); it != mutableHeld.end(); ++it) {
         if (it->closed) {
             it.key()->unrefWindow();
         }
@@ -458,6 +474,11 @@ void Hold::postPaintScreen()
 {
     if (isActive()) {
         effects->addRepaintFull();
+    }
+    if (m_open) {
+        // A client that answers a configure with its current size changes no geometry, so no
+        // signal would ever say it settled (a window at its minimum size in a smaller tile).
+        queueCheck();
     }
     effects->postPaintScreen();
 }

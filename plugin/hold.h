@@ -30,6 +30,7 @@ public:
 
     static bool supported();
 
+    void reconfigure(ReconfigureFlags flags) override;   // KWin's reconfigure, as well as the watcher
     bool isActive() const override;
     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
     void prePaintWindow(KWin::RenderView *view, KWin::EffectWindow *w, KWin::WindowPrePaintData &data) override;

@@ -1,6 +1,6 @@
 # Spec: atomic layout changes (no wallpaper flash when windows move)
 
-Requested by Paul, 2026-10-23. Status: **implemented on branch `atomic-layout` (plugin/hold.cpp, tests/live/53-hold.sh); code review pending; not live.**
+Requested by Paul, 2026-10-23. Status: **implemented and code-reviewed on branch `atomic-layout` (plugin/hold.cpp, tests/live/53-hold.sh); not live.**
 
 ## The problem, measured
 
@@ -159,8 +159,10 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    skips the live window, as for hidden new windows. The ref is released with the transaction.
    `desktopsChanged` and `minimizedChanged` also queue a check.
    Settledness is **never evaluated synchronously**. A held window's
-   `windowFrameGeometryChanged`, and every `aboutToChange` (KWin emits it even when nothing
-   changes, and then no geometry change follows), only mark "check needed" and queue one check
+   `windowFrameGeometryChanged`, every `aboutToChange` (KWin emits it even when nothing changes,
+   and then no geometry change follows), and every painted frame while a transaction is open (a
+   client that answers a configure with its *current* size, e.g. one at its minimum, changes no
+   geometry, so no signal would ever say it settled: found by the code review) only mark "check needed" and queue one check
    (`QMetaObject::invokeMethod(..., Qt::QueuedConnection)`), which runs after the code that caused
    it has returned. Otherwise a same-size move, applied synchronously inside kwin-i3's
    reconcile (xdgshellwindow.cpp:277), would make the first window look settled before the
@@ -211,7 +213,8 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
     unrefs every closed window and removes every `ItemEffect`, so nothing is left drawn or leaked. A plugin's id is its file name, so KWin's
     own enable key (`<id>Enabled`) changes with every build; the effect is therefore enabled by
     default, and the **kill switch is its own config**: `kwinrc [kwin-i3-hold] Enabled=false`,
-    read and watched by the effect (`KConfigWatcher`, as `kwini3mouse` does), takes effect at once.
+    read and watched by the effect (`KConfigWatcher`, as `kwini3mouse` does, and on KWin's
+    `reconfigure`), takes effect at once.
     The same group's `TimeoutMs` (default 100) exists for the tests, which raise it to capture
     mid-hold; it is not a knob to tune the desktop with.
     kwin-i3 works unchanged with or without it.
@@ -396,6 +399,17 @@ second pass kwin-i3 sometimes makes after one is covered by rule 6's quiet perio
    the spec uses exists; ready for code after two fixes, both made: a hidden held window drew its
    live self too (rule 6: snapshot only); a dialog line contradicted rule 5. Settled the visible
    ref's reasons and the Stats export.
+6. **2026-10-23, code review of the implementation** (branch `atomic-layout`): nothing blocking.
+   Fixed: a use-after-free at release (a window sent away, then closed, in one hold: its visible
+   ref was dropped after `unrefWindow` had freed it; now refs go first, as rule 9 says); a stall
+   to the timeout when a client answers a configure with its current size (rule 6: a check per
+   painted frame; test 12 asks KWin for a size under a window's minimum); a hidden new window
+   that closes was kept as a close hold (dropped outright now); a window with no output could
+   reach `redirect` (guarded); the quiet period now restarts on a close hold too. Test 12 (a
+   GTK window asked for a size under its minimum) passes with the per-frame check removed as
+   well: KWin still signals in that case, so the check is insurance for a client that commits
+   its current size without any signal, and no test has turned it red. Noted: every
+   no-op `aboutToChange` costs a ~1 ms snapshot (kwin-i3's `setSizes` on each re-tile), accepted.
 
 ## Sources
 

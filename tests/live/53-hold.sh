@@ -17,7 +17,8 @@ slack=1; (( ${KI3_PARALLEL:-1} > 1 )) && slack=15
 stats() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats 2>/dev/null |
     python3 -c 'import json,sys; d=json.load(sys.stdin)["data"][0]; print("\n".join("%s=%s"%(k,v["data"]) for k,v in sorted(d.items())))'; }
 stat() { stats | grep "^$1=" | cut -d= -f2; }
-hold_set() { kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key "$1" "$2"; }
+# The watcher's notification is slow under the parallel suite; KWin's reconfigure is immediate.
+hold_set() { kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 _stat_is() { [[ "$(stat "$1")" == "$2" ]]; }
 wait_stat() { poll _stat_is "$1" "$2" && return 0; echo "    $1 is $(stat "$1"), wanted $2"; return 1; }
 capture() { "$shot" capture Virtual-0 "$png"; }
@@ -46,6 +47,7 @@ check "f opened"                            wait_tree 1 "H[a b f*]"
 wait_stat open False
 check "f was hidden until placed"           _stat_is newHidden $((h + 1))
 check "for a few ms only"                   lt "$(stat lastHiddenMs)" $((60 * slack))
+check "fast windows: no timeout"            _stat_is timeouts 0
 kclose f
 h=$(stat newHidden)
 client --title g --dialog
@@ -223,7 +225,23 @@ check "one transaction for both"            _stat_is transactions $((t + 1))
 kclose p; kclose q
 check "empty once more"                     wait_tree 1 "H[]*"
 
-# 12. Unloading the effect in the middle of a hold: nothing breaks, and it loads again.
+# 12. A window asked for a size under its minimum answers with its current size: KWin changes
+#     no geometry and emits nothing. The hold must still end at once (a check per frame), not at
+#     the timeout. (kwin-i3 never asks for that itself: fitMinimums; this asks KWin directly.)
+client --title m --color red --min 900x200; client --title n --color lime
+check "m | n (m at its minimum)"            wait_tree 1 "H[m n*]"
+sleep 0.3
+wait_stat open False
+to=$(stat timeouts); t=$(stat transactions)
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "m") { var g = w.frameGeometry; w.frameGeometry = { x: g.x, y: g.y, width: g.width - 60, height: g.height }; } });' >/dev/null
+check "asking under the minimum opened a hold"   wait_stat transactions $((t + 1))
+wait_stat open False
+check "the app kept its size: no timeout"   _stat_is timeouts $to
+check "and quick"                           lt "$(stat lastMs)" $((40 * slack))
+kclose m; kclose n
+check "empty yet again"                     wait_tree 1 "H[]*"
+
+# 13. Unloading the effect in the middle of a hold: nothing breaks, and it loads again.
 hold_set TimeoutMs 2000
 client --title i --color red; client --title j --color lime --resize-delay 1.5
 check "i | j"                               wait_tree 1 "H[i j*]"
