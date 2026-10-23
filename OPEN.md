@@ -22,8 +22,13 @@ Last reconciled: **2026-10-23**.
   tie it to the timeout. Sway's default is 200 ms. **Every
   session until Paul closes this: ask whether he has noticed any**, and read the counters
   (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
-  `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
-  `kwinrc [kwin-i3-hold] TimeoutMs` to 150-200 and reconfigure. Counters reset when KWin restarts.
+  `timeouts` against `transactions`, `maxMs`). **TimeoutMs is 200 (Sway's) live since ~06:45,
+  2026-10-23**, Paul: "I'd like to see it; if it doesn't feel slow we could just leave it". Ask
+  him; if it stays, `kset kwinrc kwin-i3-hold TimeoutMs 200` goes into dotfiles' setup.sh, and the
+  spec's "100 ms" becomes 200. Trap found setting it: change the key with `kwriteconfig6 --notify`
+  ALONE. A plain write followed by KWin's `reconfigure` reparses the shared config without running
+  the effect's reconfigure, and the watcher then sees no change on the next `--notify` write of
+  the same value (it had to be nudged with another key). Counters reset when KWin restarts.
 - **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; done: shrinking out of the
   campaign, known signatures skipped, the shrinker's no-op loop, and `--jobs 6` as the default
   since 2026-10-23: 94 seeds in 20 min against 73 with 4 jobs, at the same steps per seed, median
