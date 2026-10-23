@@ -44,4 +44,12 @@ Last reconciled: **2026-10-23**.
   the size. Next: find where the 50 px comes from (KWin's `ensureSpecialStateGeometry` or the
   client), then decide: avoid it, or accept it with the I9 limit.
 
+- **Fuzzer, further speed-ups** (efficiency review, 2026-10-23; the three safe ones are done:
+  shrinking out of the campaign, known signatures skipped, the shrinker's no-op loop). Left, each
+  with a risk to the timing bugs the fuzzer finds: shorter fixed waits in `fuzz.py` (0.45 s per
+  step; polling the log for 100 ms of quiet instead of a 250 ms sleep is the safe form), more
+  `--jobs` than 4 (compare steps per seed first: fewer means contention), and a known signature
+  still ending its seed early (`--skip` on the invariant is the way past). Next: try `--jobs 6`
+  once and compare steps per seed with the 58-seed run of 2026-10-23.
+
 `tests/fuzz/out*/` is gitignored: those traces live only on this disk (`out` is overwritten by each run).
