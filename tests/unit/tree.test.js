@@ -243,6 +243,36 @@ test("flatten: a one-child split holding a window is kept", () => {
     assert.strictEqual(d(m), "H[a V[b*]]");
 });
 
+// ---- tidy (kwin-i3's own, not i3's) ------------------------------------------------------------
+// i3 keeps a one-child split holding a split, and each one costs a move key press: Paul's capture
+// of 2026-10-22 (real i3 4.25.1 replayed the same 62 keys to the same tree). We remove them.
+
+test("tidy: after Split/Move churn, Meta+H then one move joins the left window", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    for (let i = 0; i < 3; i++) {           // the capture's loop: split b, move c into b's box
+        m.focusWin("b"); m.split(leaf(m, "b"), "h");
+        m.focusWin("c"); m.move(leaf(m, "c"), LEFT);
+    }
+    m.focusWin("b"); m.split(leaf(m, "b"), "v");
+    m.focusWin("c"); m.move(leaf(m, "c"), LEFT);
+    assert.strictEqual(d(m), "H[a V[b c*]]", "big a on the left, b and c stacked, no boxes left");
+    m.focusWin("a"); m.split(leaf(m, "a"), "h");
+    m.focusWin("c"); m.move(leaf(m, "c"), LEFT);
+    assert.strictEqual(d(m), "H[H[a c*] V[b]]", "c shares a's half, as on a fresh layout");
+});
+
+test("tidy: a box left holding only a box goes on close", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");                         // H[a V[b c*]]
+    m.split(leaf(m, "c"), "h");
+    open(m, 1, "d");                         // H[a V[b H[c d*]]]
+    m.close("b");                            // V would hold only H[c d]
+    assert.strictEqual(d(m), "H[a H[c d*]]", "the V box holding only a box is gone");
+});
+
 // ---- toggle split (con_toggle_layout "split" -> con_set_layout) ----------------------------
 
 test("toggle split: on a workspace's direct children, wraps them in the other orientation", () => {

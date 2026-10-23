@@ -54,6 +54,12 @@ kept exactly where it already matches i3 (Paul called it "ideal").
    on a workspace; *not* after a close or a plain swap (the review said otherwise). And
    `tree_flatten` only removes a one-child split whose child is itself a split: a split holding one
    window stays, as i3 keeps it. KWin collapses those itself; the projection must tolerate that.
+   **One deliberate difference (Paul, 2026-10-23)**: after every move, close, layout change,
+   float and send-to-workspace, a split whose only child is another split is removed (`tidy` in
+   `src/tree.js`). i3 keeps them, invisible, and each stops a move one level short: after some
+   splitting and moving, Meta+H on the left window and a move left no longer joined it, and
+   the window needed several presses to cross. (Real i3 4.25.1, replayed with the same 62 keys,
+   built the same chain.) A split holding one window still stays.
 9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
    (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
    one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity

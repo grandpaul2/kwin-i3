@@ -272,6 +272,7 @@ var Tree = (function () {
     M.close = function (win) {
         var con = this.byWin[win];
         if (con) this.closeCon(con, false);
+        this.tidy();
     };
 
     // con_on_remove_child: an empty split closes itself, and so on upwards. Workspaces stay.
@@ -328,6 +329,7 @@ var Tree = (function () {
             con = parent;
         }
         con.layout = layout;
+        this.tidy();
     };
 
     // con_toggle_layout(con, "split")
@@ -367,6 +369,27 @@ var Tree = (function () {
 
     M.flatten = function () {
         for (var n in this.workspaces) flattenCon(this, this.workspaces[n]);
+        this.tidy();
+    };
+
+    // Not i3: a split whose only child is another split goes, and the child takes its place.
+    // i3 keeps these, and each one stops a move one level short, so after some splitting and
+    // moving a window took several presses to cross (Paul, 2026-10-22). A one-child split
+    // holding a window stays: that is what Split H makes, and what a move goes into.
+    function tidyCon(con) {
+        while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
+            var parent = con.parent, child = con.nodes[0];
+            parent.nodes[parent.nodes.indexOf(con)] = child;
+            parent.focus[parent.focus.indexOf(con)] = child;
+            child.parent = parent;
+            child.percent = con.percent;
+            con = child;
+        }
+        con.nodes.forEach(tidyCon);
+    }
+
+    M.tidy = function () {
+        for (var n in this.workspaces) this.workspaces[n].nodes.forEach(tidyCon);
     };
 
     // ---- moving (move.c) -------------------------------------------------------------------
@@ -541,6 +564,7 @@ var Tree = (function () {
         if (!fs) focusUp(con);              // i3 step 6: not under the target's fullscreen window
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
+        this.tidy();
     };
 
     // ---- floating (floating.c) -------------------------------------------------------------
@@ -574,6 +598,7 @@ var Tree = (function () {
         this.byWin[con.win] = node;
         if (wasFocused) this.activate(node);
         this.onRemoveChild(parent);
+        this.tidy();
         return node;
     };
 
