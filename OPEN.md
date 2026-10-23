@@ -10,8 +10,9 @@ Last reconciled: **2026-10-23**.
 
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
-  timeout by 03:50 (a timed-out hold shows the flash it was meant to hide). Sway's default is
-  200 ms. **Next session: ask Paul whether he has noticed any more**, and read the counters
+  timeout by 03:50, and 6 of 125 (max 112 ms) later that day, when Paul had seen no more flashes
+  (a timed-out hold shows the flash it was meant to hide). Sway's default is 200 ms. **Every
+  session until Paul closes this: ask whether he has noticed any**, and read the counters
   (`busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats`:
   `timeouts` against `transactions`, `maxMs`). If timeouts keep coming in normal use, raise
   `kwinrc [kwin-i3-hold] TimeoutMs` to 150-200 and reconfigure. Counters reset when KWin restarts.
