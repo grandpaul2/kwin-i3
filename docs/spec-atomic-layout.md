@@ -214,9 +214,13 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
     own enable key (`<id>Enabled`) changes with every build; the effect is therefore enabled by
     default, and the **kill switch is its own config**: `kwinrc [kwin-i3-hold] Enabled=false`,
     read and watched by the effect (`KConfigWatcher`, as `kwini3mouse` does, and on KWin's
-    `reconfigure`), takes effect at once.
-    The same group's `TimeoutMs` (default 100) exists for the tests, which raise it to capture
-    mid-hold; it is not a knob to tune the desktop with.
+    `reconfigure`), takes effect at once. **Change either key with `kwriteconfig6 --notify` and
+    nothing else** (live, 2026-10-23: a plain write plus KWin's `reconfigure` left the effect on
+    the old value, and a later `--notify` write of the same value was ignored by the watcher,
+    which sees no change against the already-reparsed shared config; another key in the group had
+    to change to make it reread).
+    The same group's `TimeoutMs` (default 100) was meant for the tests, which raise it to capture
+    mid-hold. Paul set it to 200 (Sway's) on 2026-10-23 to see whether it feels slow.
     kwin-i3 works unchanged with or without it.
 
 ## What it changes for Paul
