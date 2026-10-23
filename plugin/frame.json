@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Name": "kwin-i3 frame",
+        "Description": "i3's 1 px frame: nothing starts from the pointer",
+        "EnabledByDefault": true
+    },
+    "org.kde.kdecoration3": {
+        "blur": false,
+        "recommendedBorderSize": "Tiny"
+    }
+}

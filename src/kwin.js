@@ -248,8 +248,9 @@ var KI3 = (function () {
     }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
-    // decoration (the i3frame decoration: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
-    // or KWin leaves it where it was (2026-10-22). The headless tests have no decorations.
+    // decoration (kwini3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // or KWin leaves it where it was (2026-10-22). The headless tests run Breeze (a 28 px title
+    // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
         var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
         var bw = c ? Math.max(0, f.width - c.width) : 0, bh = c ? Math.max(0, f.height - c.height) : 0;

@@ -1,6 +1,10 @@
 // Modifier + mouse button chords (docs/mouse-plugin-design.md): kwinrc [kwin-i3-mouse], one entry
 // per chord, "Meta+Shift+Left=Move". An action is a KWin mouse command by KWin's own name, or
 // "shortcut:<name>", a global shortcut of KWin's component (kwin-i3's are "kwin-i3 ...").
+// Also: focus on a window's frame as i3 does (docs/spec-decoration.md, "focus on the frame"):
+// KWin gives the pointer no focus window over a decoration, so neither hover nor click there
+// focuses; this filter, which runs before KWin's decoration filter, makes the frame part of the
+// window for focus, with KWin's own calls.
 #pragma once
 
 #include <input.h>
@@ -39,6 +43,7 @@ public:
     MouseChords();
     ~MouseChords() override;
 
+    bool pointerMotion(KWin::PointerMotionEvent *event) override;
     bool pointerButton(KWin::PointerButtonEvent *event) override;
 
 private:
@@ -48,9 +53,11 @@ private:
         QString shortcut; // set: a global shortcut instead of a mouse command
     };
     void loadConfig();
+    KWin::Window *frameWindow() const;
 
     ChordMoveFilter m_moveFilter;
     KConfigWatcher::Ptr m_watcher;
     QHash<QPair<int, int>, Action> m_chords; // (modifiers, button) -> action
     QSet<int> m_swallowRelease; // buttons whose press we took
+    QPointer<KWin::Window> m_frameWindow; // the window whose frame the pointer is on, if any
 };

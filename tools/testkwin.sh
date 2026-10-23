@@ -100,6 +100,12 @@ Meta=
 debugLog=true
 floatingTitle=STAGE (streamed)
 RC
+# The decoration is Breeze (KWin's default) unless KI3_FRAME=1 and the kwini3frame build is in
+# the plugin dir: then kwin-i3's own frame (docs/spec-decoration.md). The two have different
+# minimum sizes and frames, so the suite runs Breeze by default and selects the frame per scenario.
+if [[ ${KI3_FRAME:-} == 1 && -f ${KI3_PLUGIN:-/nonexistent}/org.kde.kdecoration3/kwini3frame.so ]]; then
+    printf '\n[org.kde.kdecoration2]\nlibrary=kwini3frame\n' >> "$XDG_CONFIG_HOME/kwinrc"
+fi
 # The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
 # locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). The focus settings above are that desktop's too.
