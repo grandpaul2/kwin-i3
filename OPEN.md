@@ -8,22 +8,6 @@ Last reconciled: **2026-10-23**.
 
 ## Open
 
-- **kwini3frame live since 2026-10-23 ~06:15: watch it.** The i3 frame as a KDecoration3 plugin
-  (`docs/spec-decoration.md`), installed by `make plugin-install` (`library=kwini3frame-<hash>`,
-  `ExecStartPre=frame-guard.sh` in KWin's drop-in, active from the next login). **Ask Paul**: the
-  arrow cursor on a frame and no drag from it (the one check no script makes), and anything odd
-  about focus at window edges. Way back: `kwriteconfig6 --file kwinrc --group org.kde.kdecoration2
-  --key library org.kde.kwin.aurorae.v2` + reconfigure (KWin had migrated the key to the v2
-  engine; `theme=` is still the i3frame theme) until dotfiles retires the theme. **Dotfiles side
-  still to do, from here, once Paul has checked the frame by eye** (the dotfiles session that
-  planned it had ended when the hand-off was sent): retire `plasma/.local/share/aurorae/themes/
-  i3frame`, drop setup.sh's theme link and `kwin-applywindowdecoration` call (keep the BorderSize
-  keys, delete the `theme=` key), README's Plasma table row, and three `health-check` items:
-  `library=` names an existing file under the root's `org.kde.kdecoration3/`, `frame-guard.sh
-  --check` passes, and a kwini3mouse plugin is loaded whenever the frame is selected. Known gap: the
-  hover-focus path skips KWin's "window menu is open" check (its header is not buildable from
-  kwin-devel). `~/kwin-i3-wt-frame` can go once Paul is happy (branch `frame` is merged).
-
 - **Atomic layout effect, live since 2026-10-23 03:20: watch for flashes.** Paul saw a few in the
   first minute or two, then none; the effect's counters showed 4 of 89 holds hitting the 100 ms
   timeout by 03:50, and 6 of 125 (max 112 ms) later that day, when Paul had seen no more flashes
