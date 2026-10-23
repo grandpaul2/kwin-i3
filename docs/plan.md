@@ -54,6 +54,11 @@ kept exactly where it already matches i3 (Paul called it "ideal").
    on a workspace; *not* after a close or a plain swap (the review said otherwise). And
    `tree_flatten` only removes a one-child split whose child is itself a split: a split holding one
    window stays, as i3 keeps it. KWin collapses those itself; the projection must tolerate that.
+   **One deliberate break (Paul, 2026-10-23)**: a split whose only child is another split is
+   removed after moves, closes, layout changes, float and send-to-workspace. i3 keeps them, and
+   each one costs a move key press. They only matter in i3 because of `focus parent` and
+   tabbed/stacked, both left out here; adding either means revisiting this first.
+   `docs/spec-nested-boxes.md` has the reasoning, i3's side and the risks.
 9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
    (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
    one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity
