@@ -12,6 +12,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   pending resize kwin-i3's refit could not see; a window whose tile had changed meanwhile ended up
   at its old size. After a screens change, tiled windows are refitted as their frames change until
   each shows its tile (fuzz I10; `tests/live/47-replug-restore.sh`).
+- Fix: a window that KWin itself tiles on a returning monitor (one with a modal dialog) kept
+  kwin-i3's record of its old tile, which the invariant check read as "not in its tile" and could
+  throw on once that tile was gone (fuzz I1, seed 2; `tests/live/48-replug-listed.sh`).
 - Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
   of KWin's `tile.cpp` removed from the tree (git history before 2026-10-23 has them).
 - The floating-title default is empty; the stage's title moved to the dotfiles' setup (it was a
