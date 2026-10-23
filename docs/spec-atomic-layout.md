@@ -1,6 +1,6 @@
 # Spec: atomic layout changes (no wallpaper flash when windows move)
 
-Requested by Paul, 2026-10-23. Status: **revised after review 3; fourth review pending.** No code yet.
+Requested by Paul, 2026-10-23. Status: **revised after review 4; focused check of the changes pending.** No code yet.
 
 ## The problem, measured
 
@@ -47,7 +47,9 @@ desktop and the test KWin composite with OpenGL on his GPU; without it the effec
 It needs **no messages from kwin-i3**, and it works on any tiling change. (Review 3 suggested
 two messages from kwin-i3, "this window is placed" and "this rearrangement is done". Worked
 through, they race: D-Bus calls are asynchronous, so a "done" sent at the end of one pass can
-arrive after the next pass has already opened a new transaction, and release it early. Rules 5
+arrive after the next pass has already opened a new transaction, and release it early. A pass
+counter with begin/end messages would avoid that, but the effect still couldn't tell which
+`aboutToChange` belongs to which pass, and a script has no synchronous channel to an effect. Rules 5
 and 6 get the same result from timing alone, with no change to kwin-i3.)
 
 1. **Trigger.** For every window, the effect connects to the public
@@ -64,8 +66,10 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    not minimized), not fullscreen (including a window leaving fullscreen: it is still
    fullscreen when its `aboutToChange` fires), **with a buffer already** (a newly mapped window's first
    placement would snapshot an empty texture). Nothing is held on an output while any window on
-   it is in an interactive move or resize, tracked per output with
-   `windowStartUserMovedResized` / `windowFinishUserMovedResized`: a border drag is an
+   it is in an interactive move or resize. The effect keeps the set of windows in an interactive
+   move or resize (`windowStartUserMovedResized` / `windowFinishUserMovedResized`, `QPointer`s)
+   and, at each decision, suppresses holds on the outputs those windows are on *now* (so a drag
+   that crosses outputs, or an output removed mid-drag, leaves nothing dangling): a border drag is an
    interactive resize of the dragged window only (window.cpp:1161), and its neighbours are moved
    through `Tile::setRelativeGeometry` with no interactive state of their own.
 3. **Snapshot.** On the first `aboutToChange` of an eligible window, the effect snapshots it into
@@ -102,30 +106,34 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    the top-left: `CrossFadeEffect::drawWindow` draws the snapshot over the window's *current*
    frame, and this transform puts it back on the old one (its shadow margins use the same ratio,
    so they line up). Progress is set only in `paintWindow`, never in `drawWindow`: the snapshot
-   itself is rendered through `drawWindow` (rule 3). **New windows**: while kwin-i3 is loaded (asked of KWin's
-   scripting directly, `Scripting::self()->isScriptLoaded("kwin-i3")`, to be verified),
-   every newly added normal window is hidden from `windowAdded` (the effect's slot runs before
+   itself is rendered through `drawWindow` (rule 3). **New windows**: every newly added normal window (`isNormalWindow()`, which excludes dialogs,
+   utilities and other special types) that is shown (rule 2's test: on its output's current
+   desktop and current activity, not minimized) is hidden from `windowAdded` (the effect's slot runs before
    kwin-i3's, which only schedules a zero-delay pass: kwin.js `schedule`). The effect doesn't try
    to copy kwin-i3's rules for which windows float (src/rules.js: transients, dialogs, fixed size,
    Paul's own lists): if the window gets a tile (`requestedTile()` set, seen at its
    `aboutToChange`), it **joins the transaction without a snapshot** and stays hidden until the
    release, which then shows it in its tile; if no tile comes within **20 ms**, it is shown where
    it is (a floated window, or kwin-i3 not running). Without this, it would flash at its default
-   spot for a frame. Cost: a window kwin-i3 floats appears up to 20 ms later. Hidden windows are skipped in our `drawWindow`, marked transformed (so their opaque
+   spot for a frame. Cost: a window kwin-i3 floats appears up to 20 ms later. This applies whether
+   or not kwin-i3 is loaded: a plugin can't ask KWin's scripting (kwin-devel installs no
+   `scripting.h`), and with kwin-i3 off the only cost is the same 20 ms. Hidden windows are skipped in our `drawWindow`, marked transformed (so their opaque
    region doesn't cut what's painted beneath; 6.7.5 has no API to hide a window, and
    `EffectWindowVisibleRef` only forces visibility), and given an `ItemEffect` on their window item,
    as held windows get from `redirect`: that keeps them off hardware overlay planes and direct
    scanout (`findOverlayCandidates` rejects items with effects, workspacescene.cpp:280), which
    could otherwise show a window KWin didn't draw.
-   The output is repainted fully (`addRepaintFull`) when a transaction starts, every frame while
+   While anything is held or hidden, `prePaintScreen` sets `PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS`
+   (the generic paint path: a full region per window, full damage), so drawing at old positions
+   doesn't depend on the simple path's culling. The screen is repainted fully (global
+   `effects->addRepaintFull()`, never per output) when a transaction starts, every frame while
    one is open, and once at release. Frame callbacks keep reaching held and hidden windows'
    clients: KWin sends them from the scene's frame handling, not from `drawWindow`
    (surfaceitem_wayland.cpp:237), so a held app still gets to draw its new size.
    **Shadow caveat**: the transform assumes the window's shadow margins at capture equal its
    current ones. True for server-side decorations (Alacritty, Paul's 1 px border); a client that
-   draws its own shadow (GTK, Firefox) can change it with the new buffer. So the effect stores the
-   captured expanded geometry itself and computes the transform from it, not from the current
-   margins.
+   draws its own shadow (GTK, Firefox) can change it with the new buffer, and then the shadow is
+   squeezed for the length of the hold (risk 6).
 6. **Release.** A transaction ends when every held window has **settled**: its frame geometry
    equals `moveResizeGeometry()` (public, window.cpp:3353), compared after snapping to device
    pixels (fractional scales give fractional rects). `moveResize` sets it before emitting, so a
@@ -134,10 +142,13 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    (xdgshellwindow.cpp:181), so it still settles, once its last configure is acknowledged (KWin
    skips the rewrite while one is pending, l.183; the timeout covers a client that never acks).
    A held window that has become hidden (another desktop, minimized: Meta+Shift+N and minimize
-   untile it first, so it is held while still visible) counts as settled and its snapshot is
-   dropped: a hidden window gets no frame callbacks (windowitem.cpp:172, item.cpp:727), never
-   acknowledges, and would otherwise hold everything to the timeout. `desktopsChanged` and
-   `minimizedChanged` also queue a check.
+   untile it first, so it is held while still visible) **counts as settled**: a hidden window gets
+   no frame callbacks (windowitem.cpp:172, item.cpp:727), never acknowledges, and would otherwise
+   hold everything to the timeout. But its snapshot is **kept and still drawn** until the release:
+   the effect takes an `EffectWindowVisibleRef` on it (effectwindow.h:898), because a hidden window
+   leaves the stacking order (workspacescene.cpp:770) and its slot would show wallpaper while its
+   neighbours are still held at their old size. The ref is released with the transaction.
+   `desktopsChanged` and `minimizedChanged` also queue a check.
    Settledness is **never evaluated synchronously**. A held window's
    `windowFrameGeometryChanged`, and every `aboutToChange` (KWin emits it even when nothing
    changes, and then no geometry change follows), only mark "check needed" and queue one check
@@ -145,7 +156,9 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    it has returned. Otherwise a same-size move, applied synchronously inside kwin-i3's
    reconcile (xdgshellwindow.cpp:277), would make the first window look settled before the
    second window's `aboutToChange` arrived, and release the transaction mid-change.
-   **Quiet period.** Release also needs **3 ms** with no new `aboutToChange`, close or new window.
+   **Quiet period.** Release also needs **3 ms** with no new `aboutToChange` of an eligible
+   window (a held window's repeated ones included), close hold or hidden new window; each of those
+   restarts it. A `Qt::PreciseTimer` (a coarse timer can be 5% late, fine at 100 ms, not at 3 ms).
    kwin-i3 sometimes spreads one change over two passes, the second from a zero-delay timer
    (kwin.js `kick`): after a workspace switch (`applyFocus`), or when KWin refused a tile
    (`reconcile`'s `refused`). If the first pass's moves were all same-size they settle at once, and
@@ -162,13 +175,21 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    outputs and one side released first. Drag suppression (rule 2) stays per output. A window
    moving to another output is held where its snapshot was taken (drawn by the old output's
    paint). The two outputs (240 and 144 Hz) still present the release on their own next frames.
-9. **Bookkeeping.** Every held, pending-close and hidden entry is erased on `windowDeleted` (a
-   held window can be deleted without passing the close path, e.g. its app killed), and every
-   reference to an `EffectWindow` in queued work is a `QPointer` or is re-validated. Snapshot
-   textures are pooled by size and reused, not allocated per move.
-10. **Observability.** The effect counts transactions, durations, timeouts and pending close-holds
-   dropped, and answers a D-Bus call `net.local.kwini3hold.Stats` (for tests, and for kwin-i3's
-   Dump State / Meta+Shift+B capture). Counters are driven by geometry events, never by paints, so
+9. **Bookkeeping.** Every held, pending-close and hidden entry is also erased on `windowDeleted`
+   (KWin emits `closed` before deleting, xdgshellwindow.cpp:310, so this is a safety net), and
+   every reference to an `EffectWindow` in queued work is a `QPointer` or is re-validated.
+   Ending everything (release, kill switch, unload, destructor) works on a **copy** of the lists,
+   because `unrefWindow` can delete a window and call back into them, in this order: unredirect
+   every snapshot, remove every `ItemEffect`, release every `EffectWindowVisibleRef`, then unref
+   every closed window. An output removed mid-hold: the transaction continues; its windows'
+   snapshots are drawn by whichever output now covers them, or not at all, and the global repaint
+   covers the change.
+10. **Observability.** The effect registers an object at `/kwini3hold` on KWin's own session-bus
+   connection (service `org.kde.KWin`), interface `net.local.kwini3hold`, method `Stats` returning
+   a map: transactions, timeouts, last and maximum duration, the last quiet-period wait, close
+   holds kept and dropped, new windows hidden and how long, snapshots taken and the time spent
+   rendering them (last and maximum). For tests, and for kwin-i3's Dump State / Meta+Shift+B
+   capture. Counters are driven by geometry events, never by paints, so
    a screenshot (which renders through the effect chain) doesn't change them.
 11. **Installing and the kill switch.** `tools/plugin-install.sh` installs it like `kwini3mouse`:
     a new file per build (`kwini3hold-<hash>.so`, since KWin never unloads a library), the old
@@ -202,8 +223,9 @@ positions during that time, as it already does. No animation; nothing else chang
    OPEN.md, seed 28).
 3. **Snapshot cost**: one texture per held window (about 7 MB at 1280x1440), rendered on KWin's
    main thread inside the call that moves it. Three to five windows at once might exceed one
-   frame at 240 Hz (4.2 ms) and cause a hitch. Textures are pooled (rule 9); the cost is measured
-   (test 13) before this goes live.
+   frame at 240 Hz (4.2 ms) and cause a hitch. Textures can't be reused through `CrossFadeEffect`
+   (its private `OffscreenData` owns them), so the cost is measured (test 13, from Stats' snapshot
+   timings) before this goes live; if it's too high, the fix is drawing snapshots ourselves.
 4. **Stale pixels** if a window is drawn or culled wrongly during a hold (rule 5): covered by the
    screenshot tests, mid-hold and after release.
 5. **Interactive drags** must never hold (rule 2); the drag scenarios check it with Stats.
@@ -258,18 +280,32 @@ positions during that time, as it already does. No animation; nothing else chang
     each with a slow neighbour: release well under 100 ms (Stats).
 12. **Across outputs**: a window moved to the other output with a slow neighbour on either side:
     whole-output captures of both outputs mid-hold and after release show no hole and no overlap.
-13. **Cost**: a five-window reflow: KWin's frame time stays under 4.2 ms (measured on Paul's GPU
-    in the test KWin).
+    (The test KWin's two virtual outputs present together, so the per-output presentation at 240
+    and 144 Hz can't be tested here; Paul's eyes are that test.)
+13. **Cost**: a five-window reflow: Stats' snapshot rendering time for the whole change stays well
+    under 4.2 ms (on Paul's GPU, in the test KWin; the headless KWin has no frame-time figure).
 14. **GTK shadow**: the GTK4 client moved from floating to tiled: capture mid-hold, judged by eye.
-15. **New windows not tiled**: a dialog, a window kwin-i3 floats, and any window with kwin-i3
-    unloaded: each visible within about 20 ms, and never shown inside a tile first.
+15. **New windows not tiled**: a dialog (never hidden), a window kwin-i3 floats, and any window
+    with kwin-i3 unloaded: Stats' hidden duration at most about 20 ms, and never shown inside a
+    tile first. A new window on a desktop not shown isn't hidden at all.
 16. **Bookkeeping**: close a held window; close a hidden new window; kill a client mid-hold:
     Stats counters return to zero, nothing left drawn, no crash.
 17. **Two-pass change**: a refused tile forcing a second pass, and the workspace-switch case
-    (fuzzer I4): one transaction, no in-between layout captured.
-18. **Fullscreen exit** isn't held (Stats).
-19. **Every rule watched red**: each guard removed in turn in a worktree and its test fails.
-20. `make test` and a fuzz run with the effect loaded, then Paul's eyes on the live desktop.
+    (fuzzer I4): Stats shows one transaction and its quiet-period wait; no in-between layout
+    captured.
+18. **Fullscreen** in and out: neither held (Stats).
+19. **Meta+Shift+N**: the window sent away with a slow neighbour: a capture mid-hold shows the
+    sent window's snapshot in its slot, not wallpaper.
+20. **Monitor unplugged mid-hold** (the test KWin can disable an output): no crash, the hold
+    ends, nothing left drawn.
+21. **kwin-i3 unloaded mid-hold**: the hold ends normally (the effect doesn't depend on it).
+22. **Last window on a screen closed**: it lingers at most 20 ms (Stats), then wallpaper.
+23. **Fractional scale** (a test output at 1.25): the settle comparison still releases before the
+    timeout.
+24. **`supported()` false** (the test KWin with OpenGL off, if available; otherwise a forced flag):
+    the effect doesn't load, and everything works as without it.
+25. **Every rule watched red**: each guard removed in turn in a worktree and its test fails.
+26. `make test` and a fuzz run with the effect loaded, then Paul's eyes on the live desktop.
 
 ## Not in scope
 
@@ -310,6 +346,13 @@ second pass kwin-i3 sometimes makes after one is covered by rule 6's quiet perio
    two-pass changes could release between passes (rule 6, quiet period). It suggested messages
    from kwin-i3 for the last two; they race (see "The design"), so timing rules do it instead.
    Paul asked for a fourth review before code.
+4. **2026-10-23, a fourth fresh agent**: core design sound; nine scenarios walked, one failure.
+   Build blocker: a plugin can't call KWin's scripting to see if kwin-i3 is loaded (rule 5: no
+   detection). Changes: Meta+Shift+N left a hole (rule 6, keep the snapshot drawn with a visible
+   ref); texture pooling can't be built on `CrossFadeEffect` (rule 9, risk 3); the generic paint
+   path, a precise 3 ms timer, output removal, copy-then-unref clean-up order (rules 5, 6, 9);
+   six implementer decisions settled (rules 2, 5, 6, 9, 10); timing tests read Stats; tests
+   19-24. The race argument held. Paul: fold in, then a focused review of the changes only.
 
 ## Sources
 
