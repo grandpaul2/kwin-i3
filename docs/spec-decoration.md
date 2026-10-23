@@ -170,9 +170,16 @@ Then `make test` green, `make fuzz` once with the frame loaded in the fuzzer's t
 fuzzer already loads the other two plugins; frame = tile holds with any border width), and live on
 Paul's word, with the re-decoration flash announced first.
 
-## Questions for Paul
+## Paul's answers (2026-10-23)
 
-1. A click on the 1 px line does nothing, not even focus or raise (focus follows the mouse there
-   anyway). OK?
-2. Shadows: the plugin draws none. Does the current theme?
-3. Borders stay at screen edges and on a maximized window, as i3's default. OK?
+1. **A click on the 1 px line does nothing, not even focus or raise**: yes. Paul asked whether that
+   is consistent with i3; it is not, on two counts, and it is a deliberate break like the nested
+   boxes (`docs/spec-nested-boxes.md`). In i3 (`src/click.c`, `route_click`), every click on a
+   container, border included, focuses it (`con_activate`, step 3), and a left or right press on a
+   tiled window's border starts a border-drag resize (`tiling_resize`, step 10); on a floating
+   window a left drag on the border moves it and a right drag resizes it (steps 5 and 6). Here the
+   border does none of that. Focus follows the mouse covers the focus part in daily use; the
+   border-drag resize is what Paul wants gone (it never worked for him under Aurorae anyway).
+2. **Shadows**: Paul: "all decorations are off, I don't believe any shadows are being drawn". The
+   plugin draws none.
+3. **Borders at screen edges and on a maximized window**: OK.
