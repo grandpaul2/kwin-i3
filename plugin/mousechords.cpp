@@ -155,6 +155,43 @@ void MouseChords::loadConfig()
     }
 }
 
+// The window whose decoration the pointer is on, else null. KWin updates the pointer's decoration
+// and hover before the filters run (pointer_input.cpp processMotion -> update()); over a
+// decoration the pointer's focus() is null but hover() is the window.
+KWin::Window *MouseChords::frameWindow() const
+{
+    if (!input()->pointer()->decoration()) {
+        return nullptr;
+    }
+    Window *window = input()->pointer()->hover();
+    return window && window->isClient() ? window : nullptr;
+}
+
+// Focus follows the mouse onto a frame, as into a client: the same request KWin's own
+// Window::pointerEnterEvent makes for a client area. Not pointerEnterEvent itself: KWin has just
+// stored this pointer position as the focus-mouse position, so its "has the mouse moved" check
+// would refuse (review 2, 2026-10-23). No cancel when the frame is left for another window: KWin
+// has already requested that window's focus, and cancelDelayFocus would drop it. One check of
+// pointerEnterEvent's is not made: "the window menu is open" (useractions.h is not buildable
+// from kwin-devel: it includes a generated ui_ header); the menu can't open from a frame any
+// more, and it closes on the first click anyway.
+bool MouseChords::pointerMotion(PointerMotionEvent *)
+{
+    Window *window = frameWindow();
+    if (window == m_frameWindow) {
+        return false;
+    }
+    m_frameWindow = window;
+    if (window) {
+        if (options->focusPolicy() != Options::ClickToFocus && !window->isDesktop() && !window->isDock()) {
+            workspace()->requestDelayFocus(window);
+        }
+    } else if (!input()->pointer()->hover()) {
+        workspace()->cancelDelayFocus();
+    }
+    return false;
+}
+
 bool MouseChords::pointerButton(PointerButtonEvent *event)
 {
     const int button = int(event->button);
@@ -175,6 +212,17 @@ bool MouseChords::pointerButton(PointerButtonEvent *event)
     const int mods = int(event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier);
     const auto it = m_chords.constFind({mods, button});
     if (it == m_chords.cend()) {
+        // A plain press on a window's frame: what a press in its client area does (KWin's
+        // WindowActionInputFilter, which never runs over a decoration), activate and raise by
+        // the [MouseBindings] CommandWindow* commands, as i3's click on a border does. The press
+        // goes on to the decoration, which accepts it, so nothing moves.
+        if (mods == 0) {
+            if (Window *window = frameWindow()) {
+                if (const auto command = window->getMousePressCommand(event->button)) {
+                    window->performMousePressCommand(*command, event->position);
+                }
+            }
+        }
         return false;
     }
     // hover, not focus: on a title bar or border focus() is null (the decoration has the pointer)

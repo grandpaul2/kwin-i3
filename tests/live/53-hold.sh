@@ -21,6 +21,10 @@ stat() { stats | grep "^$1=" | cut -d= -f2; }
 hold_set() { kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 _stat_is() { [[ "$(stat "$1")" == "$2" ]]; }
 wait_stat() { poll _stat_is "$1" "$2" && return 0; echo "    $1 is $(stat "$1"), wanted $2"; return 1; }
+# The first config read under the full parallel suite (17 KWins starting at once) took more than
+# the 5 s a wait allows (2026-10-23, three runs): the effect's reconfigure is a KWin timer plus a
+# KConfigWatcher notification, both slow then. Only the first wait gets the slack.
+wait_stat_slow() { WAIT=$((5 + slack)) wait_stat "$@"; }
 capture() { "$shot" capture Virtual-0 "$png"; }
 pixel() { "$shot" same "$png" "$1" "$2" "$3"; }     # pixel x y r,g,b (prints what it saw on a miss)
 # shot_after <action> <x> <y> <colour>: do the action, capture at once (mid-hold), check the pixel
@@ -33,7 +37,7 @@ check "the effect is loaded"                effect_loaded true
 check "and supported (OpenGL)"              _stat_is supported True
 hold_set Enabled true
 hold_set TimeoutMs 400                      # room for a screenshot mid-hold (the default is 100)
-check "the config reached it"               wait_stat timeoutMs 400
+check "the config reached it"               wait_stat_slow timeoutMs 400
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 

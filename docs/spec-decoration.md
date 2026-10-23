@@ -1,10 +1,19 @@
 # Spec: kwini3frame, the i3 frame as a KDecoration3 plugin
 
-Decided by Paul, 2026-10-23. Status: **revision 3, 2026-10-23, after reviews 1 and 2
-(`docs/review-decoration-2026-10-23.md`, `docs/review-decoration-2-2026-10-23.md`; every finding
-folded in below, marked "R1-n" / "R2-n"). Review 2 confirmed the R1 fold-in and found two bugs in
-the focus mechanism, both fixed here. Ready for code unless Paul wants a third review.** Not live
-until Paul says go.
+Decided by Paul, 2026-10-23. Status: **built from revision 3 on 2026-10-23 (branch `frame`:
+`plugin/frame.cpp`, kwini3mouse's two additions, `tools/frame-guard.sh`, `tests/live/54-frame.sh`,
+42 checks; all seven faults of the matrix went red where this spec says). Not live until Paul says
+go.** Reviews 1 and 2 (`docs/review-decoration-2026-10-23.md`, `docs/review-decoration-2-2026-10-23.md`)
+are folded in below, marked "R1-n" / "R2-n".
+
+Deviations found at code time:
+- the "window menu is open" check of KWin's `pointerEnterEvent` is not made in kwini3mouse's hover
+  path: `useractions.h` includes a generated `ui_shortcutdialog.h` that kwin-devel does not ship.
+  The menu can't open from a frame any more and closes on its first click, so the gap is a hover
+  over a frame while Alt+F3's menu is open.
+- the decoration target links `KF6::CoreAddons` too (for `KPluginFactory`).
+- the cursor fault (base hover called, press accepted) was not run: it changes only the cursor,
+  which no script reads. To verify by eye once, live.
 
 Sources: KDecoration, KWin and Breeze at v6.7.5 (`invent.kde.org`), kcoreaddons 6.31.0, i3 `next`
 `src/click.c`. The Aurorae findings are the dotfiles session's (2026-10-23).

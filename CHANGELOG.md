@@ -5,6 +5,11 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **kwini3frame**, a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
+  nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
+  the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.
+  `make plugin-install` selects it in kwinrc; `tools/frame-guard.sh` falls back to Breeze before a
+  KWin start if the build no longer matches the installed kdecoration (`docs/spec-decoration.md`).
 - Fix: after a monitor replug, activating a fullscreen window KWin could not move switched the
   other monitor to that window's workspace, so both monitors showed it and its tiled windows
   stood off-screen (fuzz I2, seed 7; `tests/live/46-replug-fullscreen.sh`).
