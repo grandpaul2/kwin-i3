@@ -19,8 +19,8 @@ convenience and accessibility before the README pass).
 7. **A settings page of its own, and a tidier form** (Paul, 2026-10-24: convenience and
    accessibility before the README pass). kwin-i3's own entry in System Settings > Window
    Management, with its keys on a sub-page, and the script's form tidied to match.
-   Spec reviewed: `docs/spec-settings-page.md`. Next: Paul's go and decisions A-C; then the form,
-   then the page (`sudo dnf install kf6-kcmutils-devel kf6-ki18n-devel` first).
+   Spec reviewed, decisions A-C taken, the form done: `docs/spec-settings-page.md`. Next:
+   the page (`sudo dnf install kf6-kcmutils-devel kf6-ki18n-devel` first).
 
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in

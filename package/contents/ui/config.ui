@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- kwin-i3's settings form (KWin's generic scripted KCM). Plain Qt widgets only: QUiLoader
-     needs no designer plugin for them. Each kcfg_<name> is an entry of ../config/main.xml. -->
+     needs no designer plugin for them. Each kcfg_<name> is an entry of ../config/main.xml.
+     Laid out as Plasma's own pages are (docs/spec-settings-page.md, "The tidied form"): one
+     centred form, so every label shares one right-aligned column, and bold section headings
+     instead of group boxes. -->
 <ui version="4.0">
  <class>KWinI3ConfigForm</class>
  <widget class="QWidget" name="KWinI3ConfigForm">
@@ -8,369 +11,598 @@
    <item>
     <widget class="QLabel" name="applyHint">
      <property name="text">
-      <string>With the kwin-i3 plugins installed, Apply applies at once. Without them, press Meta+Shift+C (kwin-i3's reload, as in i3) after Apply, or log in again.</string>
+      <string>With the kwin-i3 plugins installed, Apply takes effect at once. Without them, press Meta+Shift+C after Apply.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="gapsGroup">
-     <property name="title">
-      <string>Gaps</string>
-     </property>
-     <layout class="QFormLayout" name="gapsLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="gapsInnerLabel">
-        <property name="text">
-         <string>Between windows:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QSpinBox" name="kcfg_gapsInner">
-        <property name="suffix">
-         <string> px</string>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="toolTip">
-         <string>i3's gaps inner: the space between two tiled windows.</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="gapsOuterLabel">
-        <property name="text">
-         <string>More at the screen edge:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="kcfg_gapsOuter">
-        <property name="suffix">
-         <string> px</string>
-        </property>
-        <property name="maximum">
-         <number>200</number>
-        </property>
-        <property name="toolTip">
-         <string>i3's gaps outer: added to the inner gap at the screen's edge (the edge gap is inner + outer).</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="layoutGroup">
-     <property name="title">
-      <string>Layout and focus</string>
-     </property>
-     <layout class="QFormLayout" name="layoutLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="defaultOrientationLabel">
-        <property name="text">
-         <string>New workspaces split:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="kcfg_defaultOrientation">
-        <property name="kcfg_property" stdset="0">
-         <cstring>currentText</cstring>
-        </property>
-        <property name="toolTip">
-         <string>i3's default_orientation. auto: side by side, unless the monitor is taller than wide. Applies to workspaces created after the change.</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>auto</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>horizontal</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>vertical</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="resizeStepLabel">
-        <property name="text">
-         <string>Resize step (Meta+Ctrl+arrows):</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="kcfg_resizeStep">
-        <property name="suffix">
-         <string> %</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>50</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="focusWrappingLabel">
-        <property name="text">
-         <string>Focus wrapping:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="kcfg_focusWrapping">
-        <property name="kcfg_property" stdset="0">
-         <cstring>currentText</cstring>
-        </property>
-        <property name="toolTip">
-         <string>i3's focus_wrapping. yes: at the edge, to the next monitor, else wrap around. no: never wrap, but cross to the next monitor. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
-        </property>
-        <item>
-         <property name="text">
-          <string>yes</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>no</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>force</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>workspace</string>
-         </property>
-        </item>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="workspacesGroup">
-     <property name="title">
-      <string>Workspaces</string>
-     </property>
-     <layout class="QFormLayout" name="workspacesLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="workspaceOutputsLabel">
-        <property name="text">
-         <string>Workspace on monitor:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="kcfg_workspaceOutputs">
-        <property name="placeholderText">
-         <string>1=DP-4, 2=DP-6</string>
-        </property>
-        <property name="toolTip">
-         <string>i3's "workspace N output X": a workspace lives on that monitor, by its connector name (kscreen-doctor -o lists them). Applies at login, when the monitor appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary monitor, then the next free one.</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="rulesGroup">
-     <property name="title">
-      <string>Window rules (comma-separated)</string>
-     </property>
-     <layout class="QFormLayout" name="rulesLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="ignoreClassLabel">
-        <property name="text">
-         <string>Never manage these window classes:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="kcfg_ignoreClass"/>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="ignoreRoleLabel">
-        <property name="text">
-         <string>Never manage these window roles:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="kcfg_ignoreRole"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="floatingClassLabel">
-        <property name="text">
-         <string>Float these window classes:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="kcfg_floatingClass"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="floatingTitleLabel">
-        <property name="text">
-         <string>Float windows whose title contains:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLineEdit" name="kcfg_floatingTitle"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="frameGroup">
-     <property name="title">
-      <string>Frame (needs the kwin-i3 plugins, the kwini3frame decoration selected)</string>
-     </property>
-     <layout class="QFormLayout" name="frameLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="frameWidthLabel">
-        <property name="text">
-         <string>Width:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QSpinBox" name="kcfg_frameWidth">
-        <property name="suffix">
-         <string> px</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>10</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="frameActiveLabel">
-        <property name="text">
-         <string>Active window:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="kcfg_frameActive">
-        <property name="placeholderText">
-         <string>#4c7899</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="frameInactiveLabel">
-        <property name="text">
-         <string>Inactive window:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="kcfg_frameInactive">
-        <property name="placeholderText">
-         <string>#333333</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="frameFloatingActiveLabel">
-        <property name="text">
-         <string>Active floating window:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QLineEdit" name="kcfg_frameFloatingActive">
-        <property name="placeholderText">
-         <string>#4c995a</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="frameFloatingInactiveLabel">
-        <property name="text">
-         <string>Inactive floating window:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QLineEdit" name="kcfg_frameFloatingInactive">
-        <property name="placeholderText">
-         <string>#333333</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="holdGroup">
-     <property name="title">
-      <string>Atomic layout (needs the kwin-i3 plugins)</string>
-     </property>
-     <layout class="QFormLayout" name="holdLayout">
-      <item row="0" column="0" colspan="2">
-       <widget class="QCheckBox" name="kcfg_holdEnabled">
-        <property name="text">
-         <string>Hold the old layout until every moved window has its new size (no wallpaper flashing through)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="holdTimeoutMsLabel">
-        <property name="text">
-         <string>Wait at most for a slow window:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
-        <property name="suffix">
-         <string> ms</string>
-        </property>
-        <property name="minimum">
-         <number>10</number>
-        </property>
-        <property name="maximum">
-         <number>2000</number>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="kcfg_warnTakenKeys">
-     <property name="text">
-      <string>At login, say which of kwin-i3's keys other shortcuts have taken</string>
+     <property name="alignment">
+      <set>Qt::AlignHCenter</set>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="kcfg_debugLog">
-     <property name="text">
-      <string>Debug log (every action, over D-Bus to tools/logsink.py; for bug reports)</string>
+    <layout class="QFormLayout" name="form">
+     <property name="formAlignment">
+      <set>Qt::AlignHCenter|Qt::AlignTop</set>
      </property>
-    </widget>
+     <property name="labelAlignment">
+      <set>Qt::AlignRight|Qt::AlignVCenter</set>
+     </property>
+     <property name="fieldGrowthPolicy">
+      <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+     </property>
+     <!-- Layout -->
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="layoutHeading">
+       <property name="text">
+        <string>Layout</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="gapsInnerLabel">
+       <property name="text">
+        <string>Gap between windows:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_gapsInner</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSpinBox" name="kcfg_gapsInner">
+       <property name="suffix">
+        <string> px</string>
+       </property>
+       <property name="maximum">
+        <number>100</number>
+       </property>
+       <property name="toolTip">
+        <string>i3's gaps inner: the space between two tiled windows.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="gapsOuterLabel">
+       <property name="text">
+        <string>Extra gap at screen edges:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_gapsOuter</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSpinBox" name="kcfg_gapsOuter">
+       <property name="suffix">
+        <string> px</string>
+       </property>
+       <property name="maximum">
+        <number>200</number>
+       </property>
+       <property name="toolTip">
+        <string>i3's gaps outer: added to the gap between windows at the screen's edge.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="defaultOrientationLabel">
+       <property name="text">
+        <string>New workspaces split:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_defaultOrientation</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="kcfg_defaultOrientation">
+       <property name="kcfg_property" stdset="0">
+        <cstring>currentText</cstring>
+       </property>
+       <property name="toolTip">
+        <string>i3's default_orientation. auto: side by side, unless the monitor is taller than wide. For workspaces created after the change.</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>auto</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>horizontal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>vertical</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="resizeStepLabel">
+       <property name="text">
+        <string>Resize step:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_resizeStep</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="kcfg_resizeStep">
+       <property name="suffix">
+        <string> %</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>50</number>
+       </property>
+       <property name="toolTip">
+        <string>How far one press of Meta+Ctrl+arrow resizes a window.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="focusWrappingLabel">
+       <property name="text">
+        <string>Focus wrapping:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_focusWrapping</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QComboBox" name="kcfg_focusWrapping">
+       <property name="kcfg_property" stdset="0">
+        <cstring>currentText</cstring>
+       </property>
+       <property name="toolTip">
+        <string>i3's focus_wrapping. yes: at the edge, to the next monitor, else wrap around. no: never wrap, but cross to the next monitor. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>yes</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>no</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>force</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>workspace</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <!-- Workspaces -->
+     <item row="6" column="0" colspan="2">
+      <widget class="QLabel" name="workspacesHeading">
+       <property name="text">
+        <string>Workspaces</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+       <property name="margin">
+        <number>6</number>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="workspaceOutputsLabel">
+       <property name="text">
+        <string>Workspace monitors:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_workspaceOutputs</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="kcfg_workspaceOutputs">
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="placeholderText">
+        <string>1=DP-4, 2=DP-6</string>
+       </property>
+       <property name="toolTip">
+        <string>i3's "workspace N output X": a workspace lives on that monitor, by its connector name (kscreen-doctor -o lists them). Applies at login, when the monitor appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary monitor, then the next free one.</string>
+       </property>
+      </widget>
+     </item>
+     <!-- Window rules -->
+     <item row="8" column="0" colspan="2">
+      <widget class="QLabel" name="rulesHeading">
+       <property name="text">
+        <string>Window rules</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+       <property name="margin">
+        <number>6</number>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="ignoreClassLabel">
+       <property name="text">
+        <string>Never manage classes:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_ignoreClass</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="1">
+      <widget class="QLineEdit" name="kcfg_ignoreClass">
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Comma-separated window classes kwin-i3 leaves alone: they float and keep their own place. KWin's Window Rules can detect a window's class.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="ignoreRoleLabel">
+       <property name="text">
+        <string>Never manage roles:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_ignoreRole</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="1">
+      <widget class="QLineEdit" name="kcfg_ignoreRole">
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Comma-separated window roles kwin-i3 leaves alone.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="floatingClassLabel">
+       <property name="text">
+        <string>Float classes:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingClass</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="1">
+      <widget class="QLineEdit" name="kcfg_floatingClass">
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Comma-separated window classes that open floating (Meta+Shift+Space tiles them).</string>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="0">
+      <widget class="QLabel" name="floatingTitleLabel">
+       <property name="text">
+        <string>Float titles containing:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingTitle</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QLineEdit" name="kcfg_floatingTitle">
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Comma-separated pieces of text: a window whose title contains one opens floating.</string>
+       </property>
+      </widget>
+     </item>
+     <!-- Frame -->
+     <item row="13" column="0" colspan="2">
+      <widget class="QLabel" name="frameHeading">
+       <property name="text">
+        <string>Frame</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+       <property name="margin">
+        <number>6</number>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="0" colspan="2">
+      <widget class="QLabel" name="frameNote">
+       <property name="text">
+        <string>Needs the kwin-i3 plugins, with the kwini3frame decoration selected.</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="0">
+      <widget class="QLabel" name="frameWidthLabel">
+       <property name="text">
+        <string>Width:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameWidth</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QSpinBox" name="kcfg_frameWidth">
+       <property name="suffix">
+        <string> px</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0">
+      <widget class="QLabel" name="frameActiveLabel">
+       <property name="text">
+        <string>Focused window:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameActive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="1">
+      <widget class="QLineEdit" name="kcfg_frameActive">
+       <property name="placeholderText">
+        <string>#4c7899</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0">
+      <widget class="QLabel" name="frameInactiveLabel">
+       <property name="text">
+        <string>Other windows:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameInactive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="1">
+      <widget class="QLineEdit" name="kcfg_frameInactive">
+       <property name="placeholderText">
+        <string>#333333</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="0">
+      <widget class="QLabel" name="frameFloatingActiveLabel">
+       <property name="text">
+        <string>Focused floating window:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameFloatingActive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="1">
+      <widget class="QLineEdit" name="kcfg_frameFloatingActive">
+       <property name="placeholderText">
+        <string>#4c995a</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="frameFloatingInactiveLabel">
+       <property name="text">
+        <string>Other floating windows:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameFloatingInactive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="1">
+      <widget class="QLineEdit" name="kcfg_frameFloatingInactive">
+       <property name="placeholderText">
+        <string>#333333</string>
+       </property>
+      </widget>
+     </item>
+     <!-- Atomic layout -->
+     <item row="20" column="0" colspan="2">
+      <widget class="QLabel" name="holdHeading">
+       <property name="text">
+        <string>Atomic layout</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+       <property name="margin">
+        <number>6</number>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="0" colspan="2">
+      <widget class="QLabel" name="holdNote">
+       <property name="text">
+        <string>Needs the kwin-i3 plugins.</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="0">
+      <widget class="QLabel" name="holdEnabledLabel">
+       <property name="text">
+        <string>Atomic layout:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_holdEnabled</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="1">
+      <widget class="QCheckBox" name="kcfg_holdEnabled">
+       <property name="text">
+        <string>Show the new layout only once every window has its new size</string>
+       </property>
+       <property name="toolTip">
+        <string>Holds the old picture while windows resize, so the wallpaper doesn't flash through.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="0">
+      <widget class="QLabel" name="holdTimeoutMsLabel">
+       <property name="text">
+        <string>Wait at most:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_holdTimeoutMs</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="1">
+      <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
+       <property name="suffix">
+        <string> ms</string>
+       </property>
+       <property name="minimum">
+        <number>10</number>
+       </property>
+       <property name="maximum">
+        <number>2000</number>
+       </property>
+       <property name="toolTip">
+        <string>How long to wait for a slow window before showing the new layout anyway.</string>
+       </property>
+      </widget>
+     </item>
+     <!-- Advanced -->
+     <item row="24" column="0" colspan="2">
+      <widget class="QLabel" name="advancedHeading">
+       <property name="text">
+        <string>Advanced</string>
+       </property>
+       <property name="font">
+        <font>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignHCenter</set>
+       </property>
+       <property name="margin">
+        <number>6</number>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="0">
+      <widget class="QLabel" name="warnTakenKeysLabel">
+       <property name="text">
+        <string>Taken keys:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_warnTakenKeys</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="1">
+      <widget class="QCheckBox" name="kcfg_warnTakenKeys">
+       <property name="text">
+        <string>Say at login which of kwin-i3's keys other shortcuts hold</string>
+       </property>
+      </widget>
+     </item>
+     <item row="26" column="0">
+      <widget class="QLabel" name="debugLogLabel">
+       <property name="text">
+        <string>Debug log:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_debugLog</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="26" column="1">
+      <widget class="QCheckBox" name="kcfg_debugLog">
+       <property name="text">
+        <string>Log every action, for bug reports</string>
+       </property>
+       <property name="toolTip">
+        <string>Over D-Bus to tools/logsink.py.</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <spacer name="bottomSpacer">

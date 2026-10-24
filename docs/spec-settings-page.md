@@ -11,8 +11,14 @@ Paul's go.** Nothing built.
 - kwin-i3 gets **its own entry in System Settings > Window Management**, a Plasma-style page.
 - The script's existing form (the cog in KWin Scripts) is **tidied** too.
 
-Open, with a recommendation each (below): A, what the cog opens; B, where the page is installed;
-C, its name and icon.
+- A, B, C below: the recommendations, all three (Paul, 2026-10-24, with his go).
+
+**The tidied form is built** (2026-10-24): one centred `QFormLayout` for every section, so the
+labels share one right-aligned column (the group boxes each aligned their own, the main reason
+the form looked untidy), bold headings, shorter labels, and a tooltip on every list. Checked on a
+screenshot of the generic KCM in the test KWin (`kcmshell6
+kwin/effects/configs/kcm_kwin4_genericscripted --args "kwin-i3 KWin/Script"` with the package
+linked into the test's `XDG_DATA_HOME`), which also settles that the form can be run headless.
 
 ## Facts this rests on (KWin 6.7.5, KF6 6.31; read in the source unless marked)
 
