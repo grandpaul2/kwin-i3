@@ -5,6 +5,9 @@
 
 #include <KDecoration3/Decoration>
 
+#include <KConfigWatcher>
+
+#include <QColor>
 #include <QVariant>
 
 namespace KWinI3
@@ -34,6 +37,13 @@ protected:
 
 private:
     void updateBorders();
+    void loadConfig();
+
+    // Four colours: tiled/floating x active/inactive, kwinrc [kwin-i3-frame]
+    // (docs/spec-frame-colours.md). "Floating" is the keep-above flag kwin-i3 sets on every
+    // floating window; the decoration API has no other channel to the script.
+    QColor m_active, m_inactive, m_floatingActive, m_floatingInactive;
+    KConfigWatcher::Ptr m_watcher;
 };
 
 } // namespace KWinI3

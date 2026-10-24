@@ -5,6 +5,10 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- The frame paints the active floating window green (`#4c995a`), so a floating window is told
+  from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
+  (`[kwin-i3-frame]`, README), changed live with `--notify`. Paul's ask, 2026-10-24
+  (`docs/spec-frame-colours.md`; `tests/live/54-frame.sh` section 2b).
 - **kwini3frame** (live 2026-10-23), a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
   nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
   the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.

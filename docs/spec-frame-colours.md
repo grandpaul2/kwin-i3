@@ -2,8 +2,10 @@
 
 Asked by Paul, 2026-10-24: "make the outline highlight of floating windows a different colour,
 like green instead of blue, so they were easy to tell apart". Status: **decided by Paul, 2026-10-24
-(1: the green, unfocused stays grey; 2: keys; 3: trap accepted). Next: a second agent's short
-review. Not built, not reviewed, not live.** An addition to `docs/spec-decoration.md`
+(1: the green, unfocused stays grey; 2: keys; 3: trap accepted). **Built 2026-10-24**
+(`plugin/frame.cpp`, `54-frame.sh` section 2b, 53 checks; the three faults below each went red).
+Next: a second agent reviews the code and this spec; then Paul decides about deployment.
+Not live.** An addition to `docs/spec-decoration.md`
 (kwini3frame); i3 itself has no floating colour (its `client.*` classes are focused, unfocused,
 focused-inactive, urgent, placeholder), so this is a deliberate addition, not a port.
 
@@ -85,9 +87,14 @@ frame through kwini3mouse, Breeze as the fallback, `tools/frame-guard.sh`.
 - Config: `kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive
   '#ff0000'`, then an unfocused floating window's corner is `255,0,0` (this also proves the
   fourth key does something with its default equal to the tiled grey); reset the key.
-- Watched red before it counts: (A) `paint` ignoring `isKeepAbove()` (today's code): the first
-  green check. (B) `keepAboveChanged` not connected: the toggle check, since the frame would
-  repaint only on the next focus change. (C) the watcher not connected: the config check.
+- The signal alone: keep-above set by hand on a tiled, active window (`w.keepAbove = true`
+  from a script) turns its frame green with no move; cleared, blue again. Found at build time:
+  a floating toggle also resizes the window, and KWin repaints the decoration for that, so fault
+  B stayed green until this check existed. It doubles as the test of decision 3's trap.
+- Watched red before it counts (built once each, 2026-10-24): (A) `paint` ignoring
+  `isKeepAbove()` (the old code): the first green check and the config check red. (B)
+  `keepAboveChanged` not connected: the keep-above-by-hand check red (the toggle check alone did
+  not catch it, above). (C) the watcher not connected: the config check red.
 
 ## Order
 

@@ -92,6 +92,10 @@ then ignores a later notification of the same value, seen 2026-10-23).
 | `[kwin-i3-mouse] <chord>` | none | one entry per chord, `Meta+Shift+Left=Move`: a KWin mouse command by KWin's name, or `shortcut:<global shortcut>` |
 | `[kwin-i3-hold] Enabled` | `true` | the atomic-layout effect's kill switch |
 | `[kwin-i3-hold] TimeoutMs` | `100` | how long the old layout may be held for a slow window (Sway: 200) |
+| `[kwin-i3-frame] Active` | `#4c7899` | the frame's colour on the active tiled window |
+| `[kwin-i3-frame] Inactive` | `#333333` | on an inactive tiled window |
+| `[kwin-i3-frame] FloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
+| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window: a window you keep above yourself paints the same |
 | `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
 | `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |
 

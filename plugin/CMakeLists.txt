@@ -36,5 +36,5 @@ target_link_libraries(kwini3hold PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)
 # kwinrc [org.kde.kdecoration2] library=<id>.
 kcoreaddons_add_plugin(kwini3frame INSTALL_NAMESPACE "${KDECORATION_PLUGIN_DIR}")
 target_sources(kwini3frame PRIVATE frame.cpp)
-target_link_libraries(kwini3frame PRIVATE KDecoration3::KDecoration KF6::CoreAddons Qt6::Gui)
+target_link_libraries(kwini3frame PRIVATE KDecoration3::KDecoration KF6::CoreAddons KF6::ConfigCore Qt6::Gui)
 file(WRITE ${CMAKE_BINARY_DIR}/kdecoration.version "${KDecoration3_VERSION}\n")

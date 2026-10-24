@@ -60,6 +60,39 @@ check "a active: its frame turns blue"      poll pixel_is 0 0 $ACTIVE
 check "  (bottom right)"                    pixel_is 639 719 $ACTIVE
 check "b's frame turns grey"                pixel_is 1279 719 $INACTIVE
 
+# 2b. A floating window's frame is green while active and i3's grey while not
+#     (docs/spec-frame-colours.md); the colours are kwinrc keys in [kwin-i3-frame], changed live
+#     with --notify. The frame reads "floating" from the keep-above flag kwin-i3 sets.
+FLOAT_ACTIVE=76,153,90
+activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
+corner() { local g; g=$(geom "$1"); [[ $g =~ ^([0-9]+),([0-9]+)\ ([0-9]+)x([0-9]+)$ ]] && echo "$((BASH_REMATCH[1] + BASH_REMATCH[3] - 1)) $((BASH_REMATCH[2] + BASH_REMATCH[4] - 1))"; }
+corner_is() { local c; c=$(corner "$1"); [[ -n $c ]] && pixel_is ${c% *} ${c#* } "$2"; }
+key "Focus Right"
+# The signal alone: keep-above set by hand on a tiled window, which moves nothing, so only the
+# keepAboveChanged repaint can show it (a floating toggle also resizes, which repaints anyway).
+# This is also the README's trap: a window kept above by hand paints as floating.
+on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { $2 } })" >/dev/null; }
+on b 'w.keepAbove = true;'
+check "keep-above by hand, no move: green"  poll pixel_is 1279 719 $FLOAT_ACTIVE
+on b 'w.keepAbove = false;'
+check "cleared: blue"                       poll pixel_is 1279 719 $ACTIVE
+key "Floating Toggle"
+check "b floats"                            wait_tree 1 "H[a] ~b*"
+check "floating b, active: green"           poll corner_is b $FLOAT_ACTIVE
+check "a, tiled and inactive: grey"         pixel_is 0 0 $INACTIVE
+activate a
+check "b unfocused: grey, as i3"            poll corner_is b $INACTIVE
+kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive '#ff0000'
+check "FloatingInactive key, live: red"     poll corner_is b 255,0,0
+kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive --delete
+check "key deleted: the default, grey"      poll corner_is b $INACTIVE
+activate b
+key "Floating Toggle"
+check "b tiles again"                       wait_tree 1 "H[a b*]"
+check "tiled b, active: blue again"         poll pixel_is 1279 719 $ACTIVE
+key "Focus Left"
+check "a active again"                      poll active_is a
+
 # 3. Nothing from the pointer: a is active; drags from a's lines, a right click, a double click.
 m=$(mark)
 sdrag "" left 639 360 739 360
