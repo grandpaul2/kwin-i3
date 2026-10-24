@@ -36,9 +36,8 @@ window management, with Plasma doing the rest. The scope and its reasons:
    `plugin-install`: `make take-keys`, which saves the old bindings, and `make restore-keys`.
    (b) and (c) share **one notification at load** listing every problem (kwin-i3's first
    notification; everything else stays in the journal).
-   (d) **Built, not live** (2026-10-24, `docs/spec-own-keys.md`, `33-own-keys.sh`): kwin-i3
-   registers Meta+F / Meta+Shift+Q, running KWin's own actions; dotfiles `setup.sh` no longer
-   binds them. Next, with Paul's go: reload kwin-i3, then clear KWin's two bindings. (e) Focus follows mouse and Meta-alone: README only. Then a
+   (d) **Live** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3 registers Meta+F / Meta+Shift+Q;
+   KWin's bindings cleared on the desktop. Left: Paul's one Meta+F. (e) Focus follows mouse and Meta-alone: README only. Then a
    `KI3_STOCK=1` mode of `testkwin.sh` (stock config) with a scenario for (a)-(d) and a sweep of
    the existing ones.
 5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
