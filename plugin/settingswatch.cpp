@@ -1,5 +1,7 @@
 #include "settingswatch.h"
 
+#include <workspace.h>
+
 #include <KConfig>
 #include <KConfigGroup>
 
@@ -32,6 +34,15 @@ SettingsWatch::SettingsWatch()
         }
     });
     connect(&m_debounce, &QTimer::timeout, this, &SettingsWatch::check);
+    // m_last is what KWin last loaded, not what this last saw: another reconfigure (Meta+Shift+C,
+    // kwin-i3's own) can load a change that is undone before the next check, and the undo must
+    // still reach KWin (tests/live/55-helper.sh, section 5). This reads the file a few ms after
+    // KWin's reparse (slotReconfigure emits after options' update), so a save inside those ms is
+    // missed until the next reconfigure; reading KWin's own copy instead would close that, but
+    // its cascade (/etc/xdg/kwinrc) would never equal the file's group (review, 2026-10-24).
+    connect(KWin::workspace(), &KWin::Workspace::configChanged, this, [this] {
+        m_last = entries();
+    });
 }
 
 void SettingsWatch::watchFile()

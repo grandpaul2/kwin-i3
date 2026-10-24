@@ -57,5 +57,24 @@ check "kwin-i3 took both"                   wait_log '^.{9}SETTINGS .*gaps' "$m"
 sleep 1
 check "one or two reconfigures, no storm"   bash -c "(( \$(grep -cE '^.{9}probe: reconfigure' '$KI3_LOG') <= $((base + 3)) ))"
 
+# 5. A change and its undo inside one debounce, with another reconfigure between them: KWin
+#    loads the changed value from that reconfigure, so the undo must reach it too. The helper
+#    compared with what it last saw itself, the group as before, and sent nothing (53-hold's
+#    "deleted: on again" under load, 2026-10-24). KWin's reconfigure is a 200 ms timer, so 170-190
+#    ms after one, the write lands just before KWin reparses; the undo 40 ms later. The hold
+#    effect's timeoutMs is what KWin last loaded.
+timeout_ms() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["data"][0]["timeoutMs"]["data"])'; }
+for d in 0.17 0.18 0.19; do
+    busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+    sleep "$d"
+    set_key holdTimeoutMs 300
+    sleep 0.04
+    kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdTimeoutMs --delete
+    sleep 1.5
+    check "undone within the debounce ($d s after a reconfigure): back to 100" test "$(timeout_ms)" = 100
+    busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5   # put it right for the next
+done
+
 check "no invariant failures or errors"     clean_log
 finish

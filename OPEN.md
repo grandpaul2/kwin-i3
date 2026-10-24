@@ -45,9 +45,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
    2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
    counters: whether it measures the effect or the loaded machine.
-   And 53-hold's "deleted: on again (the old key's default)" (the effect not hearing a
-   `kwriteconfig6 --delete`) failed in 5 of 5 full runs on 2026-10-24, HEAD and stock mode alike,
-   and passed 6 of 6 alone, so `make test` is red on that check now. Next: the same counters.
+   And 51-input's "solo fills the monitor again" (after a resize drag, solo 1176 wide, not 1280)
+   failed in 2 of 7 full runs on 2026-10-24, before and after the settings-watch fix. Next: run it
+   alone in a loop; if it is only under load, what the drag's release waits for.
    Cosmetic: some scenarios print "lib.sh: line 25: …/ki3.log: No such file or directory" after
    their tally (seen 2026-10-24): a `mark` running after teardown removed the test dir. Next:
    find which background call does it.
