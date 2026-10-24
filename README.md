@@ -148,7 +148,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins) |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the active tiled window |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
-| `[Script-kwin-i3] frameFloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
+| `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | on the active floating window (a muted green, to tell it apart; i3 has no such colour) |
 | `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself paints the same and, if it is in no tile when kwin-i3 loads, is adopted as floating; a floating window whose keep-above you clear paints as tiled. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
 | `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
 | `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |

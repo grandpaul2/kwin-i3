@@ -25,7 +25,7 @@ static const char s_group[] = "Script-kwin-i3";
 static const char s_oldGroup[] = "kwin-i3-frame";       // before 2026-10-24, still read
 static const QColor s_active(0x4c, 0x78, 0x99);
 static const QColor s_inactive(0x33, 0x33, 0x33);
-static const QColor s_floatingActive(0x4c, 0x99, 0x5a);
+static const QColor s_floatingActive(0x4d, 0x72, 0x54);
 static const QColor s_floatingInactive(0x33, 0x33, 0x33);
 
 // A key's colour, or its default when the key is missing or not a colour QColor can read.

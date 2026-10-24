@@ -5,6 +5,12 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`): Paul's
+  pick in the settings page's colour button, 2026-10-24.
+- kwin-i3's own page in System Settings > Window Management (live 2026-10-24): every setting, laid
+  out as Plasma's pages are, Apply that applies without the plugins, and a Keys sub-page where a
+  key another shortcut holds is named and taken on Apply (`make restore-keys` gives it back);
+  `make kcm-install`. The Configure form is tidied to match (`docs/spec-settings-page.md`).
 - Settings, step 5: the plugins' settings move into the form (`frameWidth`, new; the frame's colours;
   the hold's kill switch and timeout), their old groups still read. **Apply applies** with the
   plugins: the KWin plugin, renamed `kwini3helper` (frame focus, settings apply), watches `kwinrc`

@@ -62,7 +62,7 @@ check "b's frame turns grey"                pixel_is 1279 719 $INACTIVE
 # 2b. A floating window's frame is green while active and i3's grey while not
 #     (docs/spec-frame-colours.md); the colours are kwinrc keys in [kwin-i3-frame], changed live
 #     with --notify. The frame reads "floating" from the keep-above flag kwin-i3 sets.
-FLOAT_ACTIVE=76,153,90
+FLOAT_ACTIVE=77,114,84
 activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
 corner() { local g; g=$(geom "$1"); [[ $g =~ ^([0-9]+),([0-9]+)\ ([0-9]+)x([0-9]+)$ ]] && echo "$((BASH_REMATCH[1] + BASH_REMATCH[3] - 1)) $((BASH_REMATCH[2] + BASH_REMATCH[4] - 1))"; }
 corner_is() { local c; c=$(corner "$1"); [[ -n $c ]] && pixel_is ${c% *} ${c#* } "$2"; }

@@ -450,7 +450,7 @@
      <item row="18" column="1">
       <widget class="QLineEdit" name="kcfg_frameFloatingActive">
        <property name="placeholderText">
-        <string>#4c995a</string>
+        <string>#4d7254</string>
        </property>
       </widget>
      </item>

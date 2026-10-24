@@ -45,7 +45,7 @@ var Settings = (function () {
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
         frameInactive: { type: "colour", def: "#333333" },
-        frameFloatingActive: { type: "colour", def: "#4c995a" },
+        frameFloatingActive: { type: "colour", def: "#4d7254" },
         frameFloatingInactive: { type: "colour", def: "#333333" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "100", min: 10, max: 2000 },
