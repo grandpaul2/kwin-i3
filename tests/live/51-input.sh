@@ -17,6 +17,22 @@ wait_log 'kwin-i3 loaded$'
 # 1. Resizing an edge with no neighbour (here a lone window) changes no share, so it changes no
 #    tile either: the window must still go back to filling its tile, as in i3 (fuzzer I10,
 #    shrunk to: open a window, Meta+right-drag it).
+#    A resize drag with the client's answer to its last step still in flight at the release: kwin-i3
+#    puts the window back in its tile at each step, so at the end the frame fits and nothing is
+#    written, then the late answer lands (make test, 2026-10-24: 1176 wide, 2 runs in 7). A slow
+#    client (20 ms a resize) and steps 30 ms apart, the last one with the release: stuck 10 of 10.
+slow_drag() {
+    "$INJECT" "abs 960 360" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" \
+        "abs 934 381" "wait 30" "abs 908 402" "wait 30" "abs 882 423" "wait 30" "abs 856 445" "wait 0" \
+        "btn right up" "key ${EVDEV[Meta]} up"
+}
+for i in 1 2 3; do
+    client --title slow$i --resize-delay 0.02
+    m=$(mark); slow_drag
+    wait_log "^.{9}DRAG end resize slow$i" "$m" >/dev/null
+    check "a late answer to the drag ($i): refitted" geom_is slow$i "0,0 1280x720"
+    kclose slow$i
+done
 client --title solo
 check "solo fills the monitor"              geom_is solo "0,0 1280x720"
 m=$(mark)

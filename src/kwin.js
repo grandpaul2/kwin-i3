@@ -451,11 +451,27 @@ var KI3 = (function () {
     // refit), not a frame that fills the monitor (a window going fullscreen: the frame changes a
     // moment before the fullScreen flag), and not twice for the same frame and tile (a client that
     // refuses the size, its own minimum, would be asked again for every answer).
+    // A resize drag arms its one window the same way (51-input), but only for the tile it ends in:
+    // armed[key] is "pending" until the drag's reconcile, then that tile's rect, and dropped by a
+    // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
+    // slow client's answer to the old one only doubled the request (53-hold, a closing window).
     var reconciling = false, armed = {}, lastFit = {};
     function armRefit() { for (var key in wins) armed[key] = true; }
+    function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
+    function settleDragArms(ws) {
+        model.leaves(ws).forEach(function (leaf) {
+            var a = armed[leaf.win], t = expected[leaf.win];
+            if (typeof a !== "string") return;
+            var r = t ? rectKey(windowRect(t)) : "";
+            if (a === "pending") armed[leaf.win] = r;
+            else if (a !== r) delete armed[leaf.win];
+        });
+    }
     function refitOnFrameChange(w) {
         var key = id(w), t = expected[key];
         if (!armed[key] || reconciling || !t || w.tile !== t) return;
+        if (armed[key] === "pending") return;
+        if (typeof armed[key] === "string" && armed[key] !== rectKey(windowRect(t))) { delete armed[key]; return; }
         if (fits(w, t)) { delete armed[key]; delete lastFit[key]; return; }
         var f = w.frameGeometry, o = w.output.geometry;
         if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) return;
@@ -513,6 +529,7 @@ var KI3 = (function () {
             setSizesStable(root, p, area);
             prepareTiles(root, area);           // then each leaf gets its window's minimum
             refit(root);
+            settleDragArms(ws);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
@@ -820,7 +837,14 @@ var KI3 = (function () {
             var con = model.byWin[key];
             if (!con) return;
             var ws = Tree.wsOf(con);
-            if (kind === "resize" && con.type !== "floating") readBack(ws);
+            if (kind === "resize" && con.type !== "floating") {
+                readBack(ws);
+                // The window was put back in its tile at each step, so it can fit now while the
+                // client's answer to the last step is still in flight, and lands after this
+                // reconcile's refit: watched until a frame shows its tile (51-input, section 1).
+                if (armed[key] !== true) armed[key] = "pending";
+                delete lastFit[key];
+            }
             if (kind === "move" && w.output !== outputOf(ws)) {
                 // Dropped on another monitor: it joins the workspace shown there (as i3ws did),
                 // and keeps the focus, as a dragged window does in i3.

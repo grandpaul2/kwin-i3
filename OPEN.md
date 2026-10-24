@@ -45,12 +45,11 @@ window management, with Plasma doing the rest. The scope and its reasons:
    And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
    2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
    counters: whether it measures the effect or the loaded machine.
-   And 51-input's "solo fills the monitor again" (after a resize drag, solo 1176 wide, not 1280)
-   failed in 2 of 7 full runs on 2026-10-24, before and after the settings-watch fix. Next: run it
-   alone in a loop; if it is only under load, what the drag's release waits for.
-   Cosmetic: some scenarios print "lib.sh: line 25: …/ki3.log: No such file or directory" after
-   their tally (seen 2026-10-24): a `mark` running after teardown removed the test dir. Next:
-   find which background call does it.
+   Unverified, seen while fixing the resize drag's late answer (2026-10-24, 51-input): a drag of
+   the edge between two tiled windows changes their tiles, so its arm is dropped, and if the
+   frame at the release already equals the new tile KWin sends nothing and a late answer could
+   still land; and a tiled window Meta+dragged onto another monitor is not armed at all. Neither
+   seen failing. Next: a slow-client drag of each, as 51-input section 1 does.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
