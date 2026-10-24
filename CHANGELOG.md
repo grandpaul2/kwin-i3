@@ -5,7 +5,7 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
-- Fix: a window opened on a workspace whose focused window was fullscreen seemed not to open.
+- Fix (live 2026-10-24): a window opened on a workspace whose focused window was fullscreen seemed not to open.
   The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused to
   tile it again (a fullscreen window is not resizable to KWin), and kwin-i3 floated it,
   monitor-sized and above the tiles; leaving fullscreen changed nothing. It now stays in the tree

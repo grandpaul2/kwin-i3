@@ -14,7 +14,7 @@ equivalent and its code removed (the `outOfTiles` record, part A). The change re
 agent, `docs/review-fullscreen-change-2026-10-24.md`); its three should-fix findings applied: a
 newcomer that opens fullscreen itself gets no hand-back (it takes the fullscreen over, as in i3);
 the "no spin" check reads its count once instead of polling; the stopped-client case is in the
-test. Awaiting Paul's decision about deployment. Not live.**
+test. **Live since 2026-10-24 01:10 (Paul: go); the first Firefox fullscreen session is the live check.**
 
 Deviations and findings at code time:
 - **Meta+N onto a workspace with a fullscreen window and a newcomer sent there while hidden**
