@@ -41,11 +41,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
    strict in `make test`.
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
    2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
-   Unverified, seen while fixing the resize drag's late answer (2026-10-24, 51-input): a drag of
-   the edge between two tiled windows changes their tiles, so its arm is dropped, and if the
-   frame at the release already equals the new tile KWin sends nothing and a late answer could
-   still land; and a tiled window Meta+dragged onto another monitor is not armed at all. Neither
-   seen failing. Next: a slow-client drag of each, as 51-input section 1 does.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
