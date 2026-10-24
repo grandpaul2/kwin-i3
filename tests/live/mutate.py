@@ -21,6 +21,7 @@ if live == os.path.realpath("package"):
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
+F = "32-fullscreen-open.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -74,8 +75,15 @@ muts = [
  (D, "src/kwin.js", "a rebuilt root unmanages by w.tile (hidden windows stay listed)", "                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });", "                t.windows.slice().forEach(function (w) { if (w.tile) unmanageFrom(w.tile, w); });"),
  (D, "src/kwin.js", "a modal pair's two-desktop moment taken for sticky", "            if (relocating && w.desktops.length !== 1) return;\n", ""),
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
+ # A fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, 2026-10-24)
+ (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            outOfTiles[id(w)] = true;", "        if (false) {\n            outOfTiles[id(w)] = true;"),
+ (F, "src/kwin.js", "A: out-of-tiles record ignored (decided from w.tile)", "        return w && !w.minimized && !(w.fullScreen && (!w.tile || outOfTiles[c.win]));", "        return w && !w.minimized && !(w.fullScreen && !w.tile);"),
+ (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),
+ (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient) return null;", "        return null;"),
+ (F, "src/kwin.js", "C: the hand-back also on a hidden workspace", "        if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;\n", ""),
+ (F, "src/kwin.js", "C: a workspace switch focuses what KWin chose under fullscreen", "        model.activate(fs || model.descendFocused(ws));", "        model.activate(model.descendFocused(ws));"),
 ]
-ALL = [H, T, R, X, M, U, P, D, K, I, L, C]
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a

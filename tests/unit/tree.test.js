@@ -628,3 +628,26 @@ test("move to workspace: not focused under the target's fullscreen window", () =
     m.moveToWorkspace(leaf(m, "b"), m.ws(2));
     assert.deepStrictEqual(m.focusOrder(m.ws(2)), ["x", "b"]);
 });
+
+// ---- a fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, 2026-10-24) --------------
+
+test("a window opened under a fullscreen one is second in the focus stack (manage.c: fs != NULL)", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.setFullscreen("b", true);
+    m.open("c", m.ws(1));                  // KWin's activation is handed back: no focusWin
+    assert.strictEqual(d(m), "H[a b*! c]", "beside the focused b, b keeps the focus");
+    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "c", "a"], "c right after the fullscreen b");
+    assert.strictEqual(m.nextFocused(leaf(m, "b")), leaf(m, "c"), "closing b gives c the focus");
+    m.open("e", m.ws(1));
+    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "e", "c", "a"], "the latest newcomer is second");
+    m.setFullscreen("b", false);
+    assert.strictEqual(d(m), "H[a b* e c]", "leaving fullscreen moves no focus (con.c)");
+});
+
+test("no fullscreen window: a new window goes to the tail of the focus stack as before", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.open("c", m.ws(1));
+    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "a", "c"]);
+});

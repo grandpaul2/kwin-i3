@@ -122,12 +122,19 @@ var KI3 = (function () {
     // (split() then adds a sibling). So: drop one-child splits, merge same-direction nesting into
     // the parent with shares multiplied through, skip minimized windows. Geometry is unchanged.
 
-    // In the layout: not minimized, and not a fullscreen window that has no tile yet. KWin
-    // refuses to tile a window that is already fullscreen (one dragged to the other monitor),
-    // and the refusal used to float it (fuzzer I9); it joins the layout when fullscreen ends.
+    // In the layout: not minimized, and not a fullscreen window that is out of the tiles. KWin
+    // refuses to tile a fullscreen window (Tile::manage: not resizable). One dragged to the
+    // other monitor arrives without a tile (fuzzer I9); one that had a tile loses it when the
+    // tiles are rebuilt for a newcomer, and the refusal then floated it, monitor-sized, over
+    // everything opened after (Paul's capture, 2026-10-23 23:25; docs/spec-fullscreen-tree.md).
+    // Both stay in the tree and join the layout when fullscreen ends. `outOfTiles` is kwin-i3's
+    // own record of the second case: w.tile lags, KWin clears it only when the client
+    // acknowledges the configure, so a decision read from it could rebuild in a loop (review).
+    // A fullscreen window still in its tile stays there: KWin puts it back when fullscreen ends.
+    var outOfTiles = {};
     function visibleLeaf(c) {
         var w = wins[c.win];
-        return w && !w.minimized && !(w.fullScreen && !w.tile);
+        return w && !w.minimized && !(w.fullScreen && (!w.tile || outOfTiles[c.win]));
     }
 
     // -> null | { win } | { dir: "h"|"v", kids: [{ node, share }] }
@@ -177,10 +184,18 @@ var KI3 = (function () {
         expected[id(w)] = tile;
         if (tile.manage(w)) return true;
         expected[id(w)] = null;
+        refused = true;
+        // A fullscreen window stays in the tree, as in i3: out of the tiles (the next pass
+        // leaves it out, see visibleLeaf), back in when fullscreen ends. Whatever the refusal
+        // (not resizable, or not on the tile's desktop while fullscreen), the same.
+        if (w.fullScreen) {
+            outOfTiles[id(w)] = true;
+            log("FULLSCREEN " + w.caption + ": out of the tiles until it ends");
+            return false;
+        }
         // Also a window whose fullscreen request is pending, on a hidden desktop: a known limit
         // (plan, policies: monitor returns).
         floatWindow(w, "KWin refused to tile it");
-        refused = true;
         return false;
     }
     // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
@@ -478,7 +493,7 @@ var KI3 = (function () {
             var worst = null, worstMin = -1;
             model.leaves(ws).forEach(function (leaf) {
                 var w = wins[leaf.win];
-                if (!w || w.minimized) return;
+                if (!w || !visibleLeaf(leaf)) return;     // not one out of the tiles (review)
                 var fm = frameMin(w), m = axis === "w" ? fm.w : fm.h;
                 if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
             });
@@ -562,7 +577,7 @@ var KI3 = (function () {
         function extent(c) {
             if (c.win !== null && c.type !== "ws") {
                 var w = wins[c.win];
-                if (!w || w.minimized) return null;
+                if (!w || !visibleLeaf(c)) return null;   // a fullscreen window out of the tiles has no extent
                 var g = w.tile ? w.tile.absoluteGeometry : w.frameGeometry;   // tiles: no size-step slack
                 return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };
             }
@@ -594,7 +609,25 @@ var KI3 = (function () {
         if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
     }
 
-    function adoptWindow(w) {
+    // i3's rule for a new window under a fullscreen one (manage.c, "fs != NULL, not focusing"):
+    // it opens behind and gets no focus, unless it is the fullscreen window's own dialog
+    // (popup_during_fullscreen smart). KWin activated it before windowAdded (workspace.cpp
+    // addWaylandWindow), and a fullscreen window is on top only while active
+    // (Window::isActiveFullScreen), so the focus is handed straight back from the handler: one
+    // event-loop turn, nothing painted in between. Only for a window that just appeared
+    // (`fresh`): adoptWindow also runs from reclassify, desktopsChanged and a reload, where it
+    // must not pull focus from a window in use. Not on a hidden workspace: activating a window
+    // there switches its monitor's desktop (activation.cpp, SwitchToOtherDesktop). A transient
+    // gets no hand-back (the dialog; a dialog of another window is KWin's call, review).
+    function keepsFullscreenFocus(w, ws, fresh) {
+        if (!fresh || !w.active || w.transient) return null;
+        var fs = model.fullscreenOn(ws);
+        if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
+        if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
+        return wins[fs.win];
+    }
+
+    function adoptWindow(w, fresh) {
         var key = id(w);
         if (wins[key]) return;
         var kind = Rules.classify(w);
@@ -605,12 +638,17 @@ var KI3 = (function () {
         if (!ws) { connectWindow(w); return; }
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
+        var fs = keepsFullscreenFocus(w, ws, fresh);
         if (kind === "float") { model.openFloating(key, ws); setFloatingLook(w, true); }
-        else model.open(key, ws);
+        else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);
         connectWindow(w);
-        if (w.active) model.focusWin(key);
+        if (w.active && !fs) model.focusWin(key);
         log("ADD " + w.caption + " " + kind + " ws " + ws.num);
+        if (fs) {
+            workspace.activeWindow = fs;   // windowActivated then tells the model, as for any activation
+            log("FULLSCREEN " + fs.caption + ": keeps the focus over " + w.caption);
+        }
         schedule(ws);
     }
 
@@ -624,6 +662,7 @@ var KI3 = (function () {
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
+        delete outOfTiles[key];
         schedule(ws);
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
@@ -660,6 +699,7 @@ var KI3 = (function () {
             if (con) schedule(Tree.wsOf(con));
         }));
         w.fullScreenChanged.connect(guard("fullscreen", function () {
+            if (!w.fullScreen) delete outOfTiles[key];   // it joins the layout again (manageInto)
             model.setFullscreen(key, w.fullScreen);
             var con = model.byWin[key];
             if (con) schedule(Tree.wsOf(con));
@@ -844,7 +884,13 @@ var KI3 = (function () {
             workspace.setCurrentDesktopForScreen(deskOf(n), s);
         }
         var ws = wsModel(n);
-        model.activate(model.descendFocused(ws));
+        // The desktop switch above makes KWin activate the window it last used there, which
+        // focusWin takes into the model before this line; under a fullscreen window that is a
+        // newcomer sent there while hidden, and activating it drops the fullscreen window
+        // from the top layer. As in i3, a fullscreen window keeps the focus on its workspace
+        // (con_fullscreen_permits_focusing; docs/spec-fullscreen-tree.md).
+        var fs = model.fullscreenOn(ws);
+        model.activate(fs || model.descendFocused(ws));
     }
 
     // Meta+Shift+N: send the window to workspace N, on N's monitor (i3ws moveToWorkspace); an
@@ -1091,7 +1137,7 @@ var KI3 = (function () {
             else model.focusWin(id(w));
         });
         if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
-        workspace.windowAdded.connect(guard("windowAdded", adoptWindow));
+        workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
         workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             if (w && wins[id(w)]) model.focusWin(id(w));

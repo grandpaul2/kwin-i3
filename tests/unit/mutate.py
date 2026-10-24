@@ -25,6 +25,7 @@ muts = [
  ("fullscreen not exclusive", "            while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;", ""),
  ("open not idempotent", "        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf (review)", ""),
  ("focused under a fullscreen window", "        if (!fs) focusUp(con);", "        focusUp(con);"),
+ ("a newcomer under fullscreen goes last, not second", "        if (fullscreenOn(ws) && con.focus[0] !== leaf) {", "        if (false) {"),
 ]
 survivors = []
 for name, a, b in muts:

@@ -8,6 +8,7 @@
 --min       minimum size (GTK's size request), for windows bigger than their tile
 --fixed     not resizable (Krohnkite floated these; so will kwin-i3)
 --dialog    also open a modal dialog transient for the window, titled "<T> dialog"
+--dialog-delay  open that dialog this many seconds after the window (a dialog during fullscreen)
             (on Wayland a transient must come from the same process)
 --map-delay show the window only after this long, like a slow app
 --retitle   change the title after this long, like the stage's Xephyr or a browser
@@ -41,6 +42,7 @@ def main():
     p.add_argument("--min", type=size)
     p.add_argument("--fixed", action="store_true")
     p.add_argument("--dialog", action="store_true")
+    p.add_argument("--dialog-delay", type=float, default=0)   # the dialog this long after the window
     p.add_argument("--map-delay", type=float, default=0)
     p.add_argument("--retitle")
     p.add_argument("--app-id")
@@ -87,7 +89,7 @@ def main():
                         time.sleep(a.resize_delay)      # blocks the frame at the new size
                     last[0] = (width, height)
                 win.get_surface().connect("layout", layout)
-            if a.dialog:
+            def open_dialog():
                 d = Gtk.Window(title=a.title + " dialog", transient_for=win, modal=True)
                 # Not below KWin's 150 px minimum for a decorated window (xdgshellwindow.cpp
                 # minSize): a smaller dialog on a hidden desktop gets a resize with every move
@@ -95,6 +97,11 @@ def main():
                 d.set_default_size(200, 160)
                 d.set_child(Gtk.Label(label="dialog"))
                 d.present()
+                return False
+            if a.dialog and a.dialog_delay:       # a dialog opened later, e.g. while fullscreen
+                GLib.timeout_add(int(a.dialog_delay * 1000), open_dialog)
+            elif a.dialog:
+                open_dialog()
             if a.retitle:
                 secs, new = a.retitle.split(":", 1)
                 GLib.timeout_add(int(float(secs) * 1000), lambda: (win.set_title(new), False)[1])

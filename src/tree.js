@@ -245,6 +245,13 @@ var Tree = (function () {
         attach(leaf, con, false);
         fixPercent(con);
         this.byWin[win] = leaf;
+        // manage.c, "fs != NULL, not focusing": under a fullscreen window the newcomer gets no
+        // focus and goes second in its parent's focus stack, right after the first, so it is
+        // what focus falls to when the fullscreen window closes (TAILQ_INSERT_AFTER(first)).
+        if (fullscreenOn(ws) && con.focus[0] !== leaf) {
+            remove(con.focus, leaf);
+            con.focus.splice(1, 0, leaf);
+        }
         return leaf;
     };
 
@@ -731,6 +738,7 @@ var Tree = (function () {
 
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
     // browser, then a video); two flags would block all directional focus (code review).
+    M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen leaf, or null
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
         if (!con || con.type !== "con") return;

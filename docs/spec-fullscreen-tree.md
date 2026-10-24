@@ -4,7 +4,29 @@ Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by
 (1: i3's rule, 2: confirmed, 3: same change); reviewed (second agent, 2026-10-24,
 `docs/review-fullscreen-2026-10-24.md`, folded in below as "R-n"); the review's two questions
 decided by Paul, 2026-10-24 (4: i3's, focus stays; 5: i3's, every newcomer but the fullscreen
-window's own dialog opens behind). Not built, not live.**
+window's own dialog opens behind). **Built 2026-10-24** (parts A, B, C below; `32-fullscreen-open.sh`
+47 checks, `53-hold.sh` section 8 extended, a unit test; found at build time: the workspace-switch
+case, "Deviations" below). Next: the live mutants in a worktree, the full suite, a second agent's
+review of the change; then Paul decides about deployment. Not live.**
+
+Deviations and findings at code time:
+- **Meta+N onto a workspace with a fullscreen window and a newcomer sent there while hidden**
+  focused the newcomer: `gotoWorkspace` switches the desktop first, KWin activates the window it
+  last used there (the newcomer, from its own focus chain) and `focusWin` takes that into the
+  model before the action applies the workspace's focus, so the newcomer came out on top of the
+  fullscreen window. Within this spec's rule (plan, Meta+F: other windows on that workspace can't
+  be focused while it is fullscreen): `gotoWorkspace` activates the workspace's fullscreen window
+  when it has one. The general case (KWin's choice on a desktop switch wins over the model's
+  remembered focus when nothing is fullscreen) is pre-existing and unchanged: a question for Paul.
+- **A reload** rebuilds the tree from KWin's tiles, which an out-of-tiles fullscreen window is
+  not in, so it comes back at the end of its row (still in the tree, still fullscreen; it joins
+  the tiles there when fullscreen ends). Accepted as a limit of reloads; the test pins it.
+- **Hold effect, measured** (`53-hold.sh`): a newcomer under a fullscreen window is one
+  transaction (the test allows 1-3); leaving with the newcomer, one (allowed 1-2). Two
+  pre-existing expected trees in that section had the focus on the wrong window and had been
+  timing out silently (5 s each); corrected.
+- The transient check in the hand-back is the cheap reading from the review: any transient
+  (`w.transient`) keeps KWin's focus, not only the fullscreen window's own.
 
 A first build of parts A and B ran on Paul's desktop for a few minutes on 2026-10-23 without his
 approval and was reverted (commits a01e788, d23c445). Its diff is history to read, not a build to

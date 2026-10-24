@@ -5,6 +5,17 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Fix: a window opened on a workspace whose focused window was fullscreen seemed not to open.
+  The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused to
+  tile it again (a fullscreen window is not resizable to KWin), and kwin-i3 floated it,
+  monitor-sized and above the tiles; leaving fullscreen changed nothing. It now stays in the tree
+  as in i3, out of the tiles until fullscreen ends; the rules judge a fullscreen window by its
+  size limits (a caption change floated it the same way); and, as in i3, the newcomer opens
+  behind the fullscreen window without taking its focus (its own dialog excepted), also when
+  sent there while the workspace is hidden or when the workspace is shown again with Meta+N.
+  Paul's capture of 2026-10-23 23:25; `docs/spec-fullscreen-tree.md` and its review;
+  `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test; six live mutants and
+  one unit mutant.
 - The frame paints the active floating window green (live 2026-10-24) (`#4c995a`), so a floating window is told
   from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
   (`[kwin-i3-frame]`, README), changed live with `--notify`. Paul's ask, 2026-10-24

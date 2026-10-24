@@ -159,16 +159,40 @@ wait_stat open False
 # changes: kwin-i3 keeps a tiled fullscreen window in its layout, so h never moves.
 t=$(stat transactions)
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = true; });' >/dev/null
-wait_tree 1 "H[c*! h]"
+wait_tree 1 "H[c! h*]"                       # h keeps the focus: fullscreen by property moves none
 wait_stat open False
 n=$(( $(stat transactions) - t ))
 check "going fullscreen beside h: held ($n transactions)"   between "$n" 1 2
 t=$(stat transactions)
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = false; });' >/dev/null
-wait_tree 1 "H[c* h]"
+wait_tree 1 "H[c h*]"
 wait_stat open False
 n=$(( $(stat transactions) - t ))
 check "leaving fullscreen: KWin's restore alone, not held ($n transactions)"   between "$n" 0 1
+# A newcomer under the fullscreen window (docs/spec-fullscreen-tree.md): the rebuild for it
+# loses c its tile (KWin refuses a fullscreen window), a second pass lays out without c: the
+# newcomer's placement and up to two rebuilds, held. Leaving: KWin's restore, then the rebuild
+# that takes c back in beside h and i (bounds measured 2026-10-24).
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = true; });' >/dev/null
+wait_tree 1 "H[c! h*]"
+wait_stat open False
+t=$(stat transactions)
+client --title i --color blue
+wait_tree 1 "H[c*! h i]"                     # i beside the focused h; the focus handed back to c
+wait_stat open False
+n=$(( $(stat transactions) - t ))
+check "a newcomer under fullscreen c: held ($n transactions)"   between "$n" 1 3
+t=$(stat transactions)
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = false; });' >/dev/null
+wait_tree 1 "H[c* h i]"
+wait_stat open False
+n=$(( $(stat transactions) - t ))
+check "leaving with the newcomer: restore, then the rebuild ($n transactions)"   between "$n" 1 2
+check "c is the left third again"           geom_is c "0,0 427x720"
+kclose i
+wait_tree 1 "H[c* h]"
+wait_stat open False
+check "c is half the screen again"          geom_is c "0,0 640x720"   # the drag below starts in c
 t=$(stat transactions)
 m=$(mark)
 drag Meta right 600 360 500 360
