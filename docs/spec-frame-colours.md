@@ -1,8 +1,9 @@
 # Spec: a different frame colour for floating windows
 
 Asked by Paul, 2026-10-24: "make the outline highlight of floating windows a different colour,
-like green instead of blue, so they were easy to tell apart". Status: **draft; decisions 1-3
-below are Paul's. Not built, not reviewed, not live.** An addition to `docs/spec-decoration.md`
+like green instead of blue, so they were easy to tell apart". Status: **decided by Paul, 2026-10-24
+(1: the green, unfocused stays grey; 2: keys; 3: trap accepted). Next: a second agent's short
+review. Not built, not reviewed, not live.** An addition to `docs/spec-decoration.md`
 (kwini3frame); i3 itself has no floating colour (its `client.*` classes are focused, unfocused,
 focused-inactive, urgent, placeholder), so this is a deliberate addition, not a port.
 
@@ -31,13 +32,13 @@ colours. Four colours, active and inactive for each:
 | tiled, active | `#4c7899` (unchanged) | `#4c7899` |
 | tiled, inactive | `#333333` (unchanged) | `#333333` |
 | floating, active | `#4c995a` (a green of the same weight as the blue) | `#4c7899` |
-| floating, inactive | `#2f4f38` (a dim green: a floating window is told apart unfocused too) | `#333333` |
+| floating, inactive | `#333333` (unchanged: i3's grey, Paul's choice) | `#333333` |
 
-## Decisions
+## Decisions (Paul, 2026-10-24: 1 green as proposed, unfocused grey; 2 keys; 3 accepted)
 
-1. **The two greens.** The defaults above are a proposal; any `#rrggbb` works. Should the
-   inactive floating frame be green at all, or stay i3's grey (then only the focused floating
-   window is told apart)? Proposed: dim green, as in the table.
+1. **The green.** `#4c995a` for the focused floating window. The unfocused floating frame stays
+   i3's grey: only the focused floating window is told apart. `FloatingInactive` is still a key
+   (default `#333333`) so that can change without a rebuild.
 2. **Config keys, or constants?** Proposed: keys, in a new kwinrc group `[kwin-i3-frame]`:
    `Active`, `Inactive`, `FloatingActive`, `FloatingInactive`, each `#rrggbb`, defaults as the
    table, watched with `KConfigWatcher` as `hold.cpp:23-29, 68-76` does, so `kwriteconfig6
@@ -79,10 +80,11 @@ frame through kwini3mouse, Breeze as the fallback, `tools/frame-guard.sh`.
 
 `tests/live/54-frame.sh`, after the existing colour checks:
 - `Floating Toggle` on `b`: its corner pixel turns floating-active green (`76,153,90`); `a`
-  stays inactive grey. Focus `a`: `b`'s corner turns floating-inactive (`47,79,56`), `a`'s
-  active blue. Toggle `b` back: active blue again.
-- Config: `kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingActive
-  '#ff0000'`, then a floating window's corner is `255,0,0`; reset the key.
+  stays inactive grey. Focus `a`: `b`'s corner is inactive grey, `a`'s active blue. Toggle `b`
+  back and focus it: active blue again.
+- Config: `kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive
+  '#ff0000'`, then an unfocused floating window's corner is `255,0,0` (this also proves the
+  fourth key does something with its default equal to the tiled grey); reset the key.
 - Watched red before it counts: (A) `paint` ignoring `isKeepAbove()` (today's code): the first
   green check. (B) `keepAboveChanged` not connected: the toggle check, since the frame would
   repaint only on the next focus change. (C) the watcher not connected: the config check.
