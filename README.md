@@ -68,7 +68,12 @@ and a click on it focus the window, as i3's border does.
    you'd rather. The check runs at load: an app that registers a clashing key later is seen at
    the next login. The author's dotfiles `setup.sh` does the unbinding and the rest (focus
    follows mouse with no delay, per-output virtual desktops, border size Tiny).
-3. The author's launcher for bug captures, Meta+Shift+B running `tools/capture`, lives in the
+3. **With more than one monitor**: System Settings > Virtual Desktops > "Switch desktops
+   independently for each screen" on (off by default). With it off, a desktop switch changes every
+   monitor and windows tile on the wrong one; kwin-i3 says so in a notification at load, or when
+   a second monitor arrives. Turned on, it takes effect at once: each monitor shows its own
+   workspace again.
+4. The author's launcher for bug captures, Meta+Shift+B running `tools/capture`, lives in the
    dotfiles too (a `.desktop` file with a `_launch` shortcut).
 
 That is all kwin-i3 needs. Windows keep Plasma's decoration (Breeze, title bars and all), and

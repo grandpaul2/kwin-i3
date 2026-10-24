@@ -2192,6 +2192,7 @@ var KI3 = (function () {
         var parts = report.parts;
         report.parts = [];
         var summary = "kwin-i3: " + (parts.length === 1 ? parts[0].title : parts.length + " things to fix in this setup");
+        if (parts.length > 1) parts.forEach(function (p) { p.title = p.title.charAt(0).toUpperCase() + p.title.slice(1) + ":"; });
         var body = parts.map(function (p) {
             return (parts.length > 1 ? p.title + "\n" : "") + p.lines.join("\n");
         }).join("\n\n");
@@ -2241,6 +2242,47 @@ var KI3 = (function () {
                 }));
             });
         }));
+    }
+
+    // Plasma's "Switch desktops independently for each screen" (off by default): with it off a
+    // desktop switch changes every monitor, so with two or more, login numbering alone puts
+    // both on workspace 2 and windows tile on the wrong one (docs/spec-per-output-desktops.md).
+    // Reported, never set: a script's value would last only to the next reconfigure. At load in
+    // the report; later, when it becomes a problem (a second monitor, the setting turned off),
+    // once per load on its own.
+    var perOutputBad = false, perOutputLater = false;
+    function checkPerOutput(atLoad) {
+        var was = perOutputBad, n = workspace.screens.length;
+        perOutputBad = n >= 2 && !options.perOutputVirtualDesktops;
+        log("PEROUTPUT " + (perOutputBad ? "off, " + n + " screens" : "ok"));
+        var lines = ["With more than one monitor, kwin-i3 needs System Settings > Virtual Desktops > " +
+                     "\"Switch desktops independently for each screen\" on. With it off, a desktop switch " +
+                     "changes every monitor, and windows tile on the wrong one."];
+        if (atLoad) { reportOpen(); reportClose("per-screen desktops are off", perOutputBad ? lines : []); return; }
+        if (!perOutputBad || was || perOutputLater) return;
+        perOutputLater = true;
+        reportOpen();
+        reportClose("per-screen desktops are off", lines);
+    }
+
+    // The setting turned on: each monitor showing a workspace that lives on another one (left
+    // by the switches made while it was off) gets its own, as the setting takes effect where it
+    // is set: the lowest workspace living there and shown nowhere, else an unused one. Windows
+    // opened meanwhile stay on the workspaces they joined.
+    function reshowHomes() {
+        workspace.screens.forEach(function (s) {
+            var homes = Workspaces.homes(), h = homes[deskNum(workspace.currentDesktopForScreen(s))];
+            if (!h || h === s.name) return;
+            var pick = null;
+            for (var n = 1; n <= NAMES.length && !pick; n++)
+                if (deskOf(n) && homes[n] === s.name && !Workspaces.showing(n)) pick = n;
+            if (!pick) pick = unusedWorkspace(s);
+            if (pick) workspace.setCurrentDesktopForScreen(deskOf(pick), s);
+        });
+        log("PEROUTPUT on: each monitor shows its own");
+        rememberShown();
+        scheduleAll();
+        wantFocus();
     }
 
     // ---- release (the safety valve) --------------------------------------------------------
@@ -2458,7 +2500,13 @@ var KI3 = (function () {
             wantFocus();
         }));
         registerKeys();
+        // Both open their part of the report before either can close it: one notification.
         checkTakenKeys();
+        checkPerOutput(true);
+        options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
+            checkPerOutput(false);
+            if (options.perOutputVirtualDesktops) reshowHomes();
+        }));
         scheduleAll();
         rememberShown();
         log("kwin-i3 loaded");
@@ -2500,6 +2548,7 @@ var KI3 = (function () {
         workspace.screens.forEach(function (s) { lastShown[s.name] = deskNum(workspace.currentDesktopForScreen(s)); });
     }
     function screensChanged() {
+        checkPerOutput(false);
         var names = workspace.screens.map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
         names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });

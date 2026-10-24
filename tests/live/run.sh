@@ -15,14 +15,15 @@ trap 'rm -rf "$out"' EXIT
 # are optional: with no build (no kwin-devel), those scenarios are skipped, and the summary says so.
 plugins=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
 skipped=()
-# "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10).
+# "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10);
+# "# peroutput: false": with per-output desktops off (default on).
 for t in "${scenarios[@]}"; do
-    plugin="" desktops=$(sed -n 's/^# desktops: \([0-9]*\)$/\1/p' "$t")
+    plugin="" desktops=$(sed -n 's/^# desktops: \([0-9]*\)$/\1/p' "$t") perout=$(sed -n 's/^# peroutput: \([a-z]*\)$/\1/p' "$t")
     if grep -q '^# needs: plugin' "$t"; then
         if [[ -z $plugins ]]; then skipped+=("$t"); continue; fi
         plugin=$plugins
     fi
-    ( KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
+    ( KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
 done
 wait
 status=0

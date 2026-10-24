@@ -1,6 +1,6 @@
 # Spec: report per-monitor desktops being off (OPEN.md item 4 (b))
 
-Draft 2026-10-24, waiting on Paul's go. The design was agreed earlier the same day: **report,
+Paul's go 2026-10-24; built the same day. The design was agreed earlier the same day: **report,
 never set**. It's Plasma's setting; a value set by a script lasts only to the next reconfigure,
 which kwin-i3 itself triggers; and kwin-i3 gives back what it borrows. The notice goes in the
 one load-time notification that (c) built (`docs/spec-taken-keys.md`).
@@ -35,9 +35,12 @@ passed).
    - **later, once per load**: when a second monitor arrives (`screensChanged`) or the setting is
      turned off (`options.perOutputVirtualDesktopsChanged`), and the condition becomes true.
      That's its own notification, since the load one has gone, and only the first time.
-   Turning it on needs nothing from kwin-i3: KWin applies it at once (`setPerOutputVirtualDesktops`).
-   Whether kwin-i3 then needs a reload to put the monitors right is checked in the test, and if
-   it does, the notice says so.
+   Turning it on: KWin applies it at once (`setPerOutputVirtualDesktops`), but the monitors keep
+   what the switches made while it was off: in the test both still showed workspace 2. So
+   (Paul, 2026-10-24, option 2 of two; the other was telling the user to log out and in)
+   **`reshowHomes()`** on the change to on: each monitor showing a workspace that lives on
+   another one gets the lowest workspace living there and shown nowhere, else an unused one
+   (`unusedWorkspace`). Windows opened while it was off stay on the workspaces they joined.
 3. **No setting to silence it.** Unlike a key given away on purpose, there's no reason to want
    this off with two monitors, and the notice comes only when the condition holds.
 4. **The report's wording with two parts**: summary "kwin-i3: 2 things to fix in this setup",
@@ -57,14 +60,13 @@ shows it on, and no kwin-i3 notification arrives.
 - **New live scenario `36-per-output-off.sh`**, `# peroutput: false`, with `fakenotify.py`:
   1. at load (two outputs): one notification, with the per-output part, and `PEROUTPUT off,
      2 screens` logged;
-  2. the setting turned on (`kwriteconfig6`, then KWin's reconfigure): no new notification; then
-     whether workspace 2 is on the second monitor with no reload, which decides the notice's
-     wording (point 2);
+  2. the setting turned on (`kwriteconfig6`, then KWin's reconfigure): no new notification, and
+     with no reload, screen 0 shows workspace 1 again and screen 1 still 2;
   3. turned off again: one more notification (the "later" one); off and on and off a second time:
      no third (once per load).
 - **One monitor**: the same scenario's last step unplugs an output (as 41 does), reloads
   kwin-i3, and checks `PEROUTPUT ok` and no notification.
-- **Watched red**: the check never reporting (step 1 fails), and the "once per load" guard
-  removed (step 3 fails).
+- **Watched red** (2026-10-24, in a worktree): the check never reporting (8 checks fail), the
+  "once per load" guard removed (3), `reshowHomes` switching nothing (1: screen 0 stays on 2).
 - 35-taken-keys keeps testing the taken-keys part; a combined run (a taken key and the setting off)
   checks the two-part summary: one notification, "2 things to fix in this setup".
