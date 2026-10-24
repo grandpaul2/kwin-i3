@@ -20,10 +20,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
 4. **No dependence on Paul's dotfiles.** Inventory done 2026-10-24 (what `setup.sh` and
    `testkwin.sh`'s config give kwin-i3 that stock Plasma doesn't). Design agreed with Paul
-   2026-10-24; build order a, c, b, stock tests, README.
-   (a) **Built, not live** (2026-10-24, `docs/spec-desktops-on-demand.md`,
-   `34-desktops-on-demand.sh`): workspaces created on demand, up to 10, never removed. No effect
-   on Paul's desktop (ten already); goes live with the next reload.
+   2026-10-24; build order b, stock tests, README.
+   (a) **Done, live** 2026-10-24 (`docs/spec-desktops-on-demand.md`): workspaces created on
+   demand, up to 10, never removed.
    (b) Per-monitor desktops off by default: **report, never set** (Plasma's setting; a script's
    value lasts only to the next reconfigure, which kwin-i3 itself triggers; kwin-i3 gives back
    what it borrows). Read `options.perOutputVirtualDesktops`; with 2+ monitors and off, report it.
@@ -31,10 +30,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    (c) 21 stock shortcut defaults collide (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right,
    Meta+1..9, Meta+0, Meta+V) plus Meta+E, Meta+L, and KWin gives a taken key away silently
    (`registerShortcut` always returns true): at load ask kglobalaccel which keys kwin-i3 got and
-   report the taken ones. **Built, not live** (2026-10-24, `docs/spec-taken-keys.md`,
-   `35-taken-keys.sh`): the check at load (active holders only), one notification,
-   `warnTakenKeys`, `make take-keys` / `make restore-keys`. Live check: no notification on
-   Paul's desktop, and `make take-keys` says nothing was taken.
+   report the taken ones. **Done, live** 2026-10-24 (`docs/spec-taken-keys.md`): the check at
+   load (active holders only), one notification, `warnTakenKeys`, `make take-keys` /
+   `make restore-keys`. On Paul's desktop all 64 keys fire kwin-i3's: no notification.
    (b) and (c) share **one notification at load** listing every problem (kwin-i3's first
    notification; everything else stays in the journal).
    (d) **Done** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3's own Meta+F / Meta+Shift+Q, live. (e) Focus follows mouse and Meta-alone: README only. Then a
