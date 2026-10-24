@@ -689,13 +689,19 @@ var Tree = (function () {
 
     // ---- focus (tree.c get_tree_next / tree_next) ------------------------------------------
 
-    // Directional focus with i3's default focus_wrapping (yes): out of the workspace to the
-    // visible workspace of the neighbouring output, else wrap inside the innermost container of
-    // that orientation. Returns what is focused now, or null if nothing changed.
-    M.focusDir = function (dir) {
+    // Directional focus, with i3's focus_wrapping (get_tree_next, 4.24): "yes" (the default)
+    // goes out of the workspace to the visible workspace of the neighbouring output, else wraps
+    // inside the innermost container of that orientation; "no" never wraps inside a container
+    // but still crosses to the next output; "force" always wraps inside the container and never
+    // leaves it; "workspace" wraps as "yes" but never leaves the workspace. An empty workspace
+    // focused goes to the next output in every mode, as in i3 (handle_workspace). Returns what
+    // is focused now, or null if nothing changed.
+    M.focusDir = function (dir, wrapping) {
+        wrapping = wrapping || "yes";
         var con = this.focused;
         if (!con) return null;
         var previous = isBefore(dir), o = orientationOf(dir), firstWrap = null, next = null;
+        var fromWs = con.type === "ws";
         if (isFloating(con)) {
             if (o !== "h") return null;
             var fl = con.parent.floating, k = fl.indexOf(con);
@@ -711,13 +717,22 @@ var Tree = (function () {
                 var cand = previous ? parent.nodes[idx - 1] : parent.nodes[idx + 1];
                 if (cand && permitsFocusing(cand)) { next = cand; break; }
                 var wrap = previous ? parent.nodes[parent.nodes.length - 1] : parent.nodes[0];
-                if (!firstWrap && permitsFocusing(wrap)) firstWrap = wrap;
+                if (wrapping === "force") {
+                    // never leaves the parent; a next one blocked by fullscreen blocks the wrap too
+                    if (cand || !permitsFocusing(wrap)) return null;
+                    next = wrap;
+                    break;
+                }
+                if (wrapping !== "no" && !firstWrap && permitsFocusing(wrap)) firstWrap = wrap;
             }
             con = parent;
         }
         if (!next) {
-            var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(this.focused), dir) : null;
-            next = ws || firstWrap;
+            if (wrapping === "workspace" && !fromWs) next = firstWrap;
+            else {
+                var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(this.focused), dir) : null;
+                next = ws || firstWrap;
+            }
         }
         if (!next) return null;
         var focus = this.descendFocused(next);

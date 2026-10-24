@@ -16,6 +16,104 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="layoutGroup">
+     <property name="title">
+      <string>Layout and focus</string>
+     </property>
+     <layout class="QFormLayout" name="layoutLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="defaultOrientationLabel">
+        <property name="text">
+         <string>New workspaces split:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="kcfg_defaultOrientation">
+        <property name="kcfg_property" stdset="0">
+         <cstring>currentText</cstring>
+        </property>
+        <property name="toolTip">
+         <string>i3's default_orientation. auto: side by side, unless the monitor is taller than wide. Applies to workspaces created after the change.</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>horizontal</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>vertical</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="resizeStepLabel">
+        <property name="text">
+         <string>Resize step (Meta+Ctrl+arrows):</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="kcfg_resizeStep">
+        <property name="suffix">
+         <string> %</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>50</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="focusWrappingLabel">
+        <property name="text">
+         <string>Focus wrapping:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="kcfg_focusWrapping">
+        <property name="kcfg_property" stdset="0">
+         <cstring>currentText</cstring>
+        </property>
+        <property name="toolTip">
+         <string>i3's focus_wrapping. yes: at the edge, to the next monitor, else wrap around. no: never wrap, but cross to the next monitor. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>yes</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>no</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>force</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>workspace</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="rulesGroup">
      <property name="title">
       <string>Window rules (comma-separated)</string>

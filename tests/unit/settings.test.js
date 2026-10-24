@@ -26,21 +26,30 @@ const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", 
 
 function xmlEntries() {
     const out = {};
-    const re = /<entry name="([^"]+)" type="([^"]+)">\s*<default>([^<]*)<\/default>\s*<\/entry>/g;
-    for (let m; (m = re.exec(read("package/contents/config/main.xml"))); ) out[m[1]] = { type: m[2], def: m[3] };
+    const re = /<entry name="([^"]+)" type="([^"]+)">\s*<default>([^<]*)<\/default>([\s\S]*?)<\/entry>/g;
+    for (let m; (m = re.exec(read("package/contents/config/main.xml"))); ) {
+        out[m[1]] = { type: m[2], def: m[3] };
+        const min = /<min>(-?\d+)<\/min>/.exec(m[4]), max = /<max>(-?\d+)<\/max>/.exec(m[4]);
+        if (min) out[m[1]].min = Number(min[1]);
+        if (max) out[m[1]].max = Number(max[1]);
+    }
     return out;
 }
 
 test("main.xml has every setting, with its type and default, and nothing else", () => {
     const { S } = loadSettings({});
     const want = {};
-    for (const [k, t] of Object.entries(S.table)) want[k] = { type: KCFG_TYPE[t.type], def: t.def };
+    for (const [k, t] of Object.entries(S.table)) {
+        want[k] = { type: KCFG_TYPE[t.type], def: t.def };
+        if (t.min !== undefined) want[k].min = t.min;
+        if (t.max !== undefined) want[k].max = t.max;
+    }
     assert.deepStrictEqual(xmlEntries(), want);
 });
 
 test("config.ui has one kcfg_ widget per main.xml entry", () => {
     const ui = read("package/contents/ui/config.ui");
-    const widgets = [...ui.matchAll(/name="kcfg_([^"]+)"/g)].map((m) => m[1]).sort();
+    const widgets = [...ui.matchAll(/<widget class="[^"]+" name="kcfg_([^"]+)"/g)].map((m) => m[1]).sort();
     assert.deepStrictEqual(widgets, Object.keys(xmlEntries()).sort());
 });
 
@@ -97,4 +106,33 @@ test("uic and kconfig_compiler accept the form", (t) => {
         fs.writeFileSync(path.join(dir, "x.kcfgc"), "File=x.kcfg\nClassName=X\n");
         execFileSync(kcc, ["x.kcfg", "x.kcfgc"], { cwd: dir, stdio: "pipe" });
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+// A choice is stored as its text (the combo box is bound by kcfg_property=currentText), so the
+// form's items must be exactly the table's choices, in its order.
+test("each choice's combo box lists exactly the table's choices", () => {
+    const { S } = loadSettings({});
+    const ui = read("package/contents/ui/config.ui");
+    for (const [k, t] of Object.entries(S.table)) {
+        if (t.type !== "choice") continue;
+        const block = ui.split(`name="kcfg_${k}"`)[1].split("</widget>")[0];
+        assert.match(block, /name="kcfg_property"[^>]*>\s*<cstring>currentText<\/cstring>/, k + ": bound by text");
+        const items = [...block.matchAll(/<item>\s*<property name="text">\s*<string>([^<]*)<\/string>/g)].map((m) => m[1]);
+        assert.deepStrictEqual(items, t.choices, k);
+    }
+});
+
+test("an int: in range parses, out of range or not a number is the default", () => {
+    assert.strictEqual(loadSettings({ resizeStep: "25" }).S.get("resizeStep"), 25);
+    for (const bad of ["0", "51", "ten", "12.5", ""]) {
+        const { S, logs } = loadSettings({ resizeStep: bad });
+        assert.strictEqual(S.get("resizeStep"), 10, JSON.stringify(bad));
+        assert.ok(logs.some((l) => /WARN setting resizeStep/.test(l)), JSON.stringify(bad));
+    }
+});
+
+test("a choice: one of the list, else the default", () => {
+    assert.strictEqual(loadSettings({ focusWrapping: "force" }).S.get("focusWrapping"), "force");
+    assert.strictEqual(loadSettings({ focusWrapping: "sometimes" }).S.get("focusWrapping"), "yes");
+    assert.strictEqual(loadSettings({}).S.get("defaultOrientation"), "auto");
 });

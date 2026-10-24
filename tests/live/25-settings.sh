@@ -61,5 +61,49 @@ key "Reload Settings"
 sleep 0.5
 check "nothing changed: no SETTINGS line"   bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -qE '^.{9}(SETTINGS|UNTILE|ADD)'"
 
+# 7. resizeStep: 25 % instead of 10 at the next key.
+kclose b
+check "a | c"                               wait_tree 1 "H[a c*]"
+key "Focus Left"
+m=$(mark)
+set_key resizeStep 25
+key "Reload Settings"
+check "reload: resizeStep changed"          wait_log '^.{9}SETTINGS resizeStep$' "$m"
+key "Grow Width"
+check "Grow Width by 25 %: a is 960 wide"   geom_is a "0,0 960x720"
+key "Shrink Width"
+check "and back: 640"                       geom_is a "0,0 640x720"
+
+# 8. focusWrapping: from a, the left edge of the left monitor (no output there), Focus Left
+#    wraps to c under "yes" and stays under "no".
+m=$(mark)
+set_key focusWrapping no
+key "Reload Settings"
+check "reload: focusWrapping changed"       wait_log '^.{9}SETTINGS focusWrapping$' "$m"
+m=$(mark)
+key "Focus Left"
+sleep 0.3
+check "no: Focus Left at the edge stays on a" _tree_is 1 "H[a* c]"
+m=$(mark)
+del_key focusWrapping
+key "Reload Settings"
+check "reload: focusWrapping back to yes"   wait_log '^.{9}SETTINGS focusWrapping$' "$m"
+m=$(mark)
+key "Focus Left"
+check "yes again: it wraps to c"            wait_tree 1 "H[a c*]" "$m"
+
+# 9. defaultOrientation: a workspace created after the change splits vertically; workspace 1,
+#    which exists, keeps its horizontal split (i3: only at creation).
+m=$(mark)
+set_key defaultOrientation vertical
+key "Reload Settings"
+check "reload: defaultOrientation changed"  wait_log '^.{9}SETTINGS defaultOrientation$' "$m"
+key "Workspace 3"
+client --title x; client --title y
+check "workspace 3 is vertical"             wait_tree 3 "V[x y*]"
+key "Workspace 1"
+client --title z
+check "workspace 1 stays horizontal"        wait_tree 1 "H[a c z*]"
+
 check "no invariant failures or errors"     clean_log
 finish

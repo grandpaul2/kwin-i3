@@ -23,5 +23,16 @@
     <entry name="debugLog" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="resizeStep" type="Int">
+      <default>10</default>
+      <min>1</min>
+      <max>50</max>
+    </entry>
+    <entry name="defaultOrientation" type="String">
+      <default>auto</default>
+    </entry>
+    <entry name="focusWrapping" type="String">
+      <default>yes</default>
+    </entry>
   </group>
 </kcfg>

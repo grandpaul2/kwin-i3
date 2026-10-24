@@ -34,12 +34,22 @@ var Settings = (function () {
         floatingClass: { type: "list", def: "" },
         floatingTitle: { type: "list", def: "" },
         debugLog: { type: "bool", def: "false" },
+        resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
+        defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
+        focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
     };
     var values = {};
 
     // Every value is read as text (KConfig stores text) and parsed here, so a value the form
     // wrote and one written by hand read the same; one that doesn't parse is the default.
-    function parse(type, text) {
+    function parse(t, text) {
+        var type = t.type;
+        if (type === "int") {
+            if (!/^-?[0-9]+$/.test(text)) return null;
+            var n = parseInt(text, 10);
+            return n >= t.min && n <= t.max ? n : null;
+        }
+        if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
         if (type === "list")
             return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
         if (type === "bool") {
@@ -54,10 +64,10 @@ var Settings = (function () {
         var changed = [];
         Object.keys(TABLE).forEach(function (key) {
             var t = TABLE[key];
-            var v = parse(t.type, String(readConfig(key, t.def)).trim());
+            var v = parse(t, String(readConfig(key, t.def)).trim());
             if (v === null) {
-                log("WARN setting " + key + ": not a " + t.type + ", using the default");
-                v = parse(t.type, t.def);
+                log("WARN setting " + key + ": not a valid " + t.type + ", using the default");
+                v = parse(t, t.def);
             }
             if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);
             values[key] = v;
@@ -765,13 +775,19 @@ var Tree = (function () {
 
     // ---- focus (tree.c get_tree_next / tree_next) ------------------------------------------
 
-    // Directional focus with i3's default focus_wrapping (yes): out of the workspace to the
-    // visible workspace of the neighbouring output, else wrap inside the innermost container of
-    // that orientation. Returns what is focused now, or null if nothing changed.
-    M.focusDir = function (dir) {
+    // Directional focus, with i3's focus_wrapping (get_tree_next, 4.24): "yes" (the default)
+    // goes out of the workspace to the visible workspace of the neighbouring output, else wraps
+    // inside the innermost container of that orientation; "no" never wraps inside a container
+    // but still crosses to the next output; "force" always wraps inside the container and never
+    // leaves it; "workspace" wraps as "yes" but never leaves the workspace. An empty workspace
+    // focused goes to the next output in every mode, as in i3 (handle_workspace). Returns what
+    // is focused now, or null if nothing changed.
+    M.focusDir = function (dir, wrapping) {
+        wrapping = wrapping || "yes";
         var con = this.focused;
         if (!con) return null;
         var previous = isBefore(dir), o = orientationOf(dir), firstWrap = null, next = null;
+        var fromWs = con.type === "ws";
         if (isFloating(con)) {
             if (o !== "h") return null;
             var fl = con.parent.floating, k = fl.indexOf(con);
@@ -787,13 +803,22 @@ var Tree = (function () {
                 var cand = previous ? parent.nodes[idx - 1] : parent.nodes[idx + 1];
                 if (cand && permitsFocusing(cand)) { next = cand; break; }
                 var wrap = previous ? parent.nodes[parent.nodes.length - 1] : parent.nodes[0];
-                if (!firstWrap && permitsFocusing(wrap)) firstWrap = wrap;
+                if (wrapping === "force") {
+                    // never leaves the parent; a next one blocked by fullscreen blocks the wrap too
+                    if (cand || !permitsFocusing(wrap)) return null;
+                    next = wrap;
+                    break;
+                }
+                if (wrapping !== "no" && !firstWrap && permitsFocusing(wrap)) firstWrap = wrap;
             }
             con = parent;
         }
         if (!next) {
-            var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(this.focused), dir) : null;
-            next = ws || firstWrap;
+            if (wrapping === "workspace" && !fromWs) next = firstWrap;
+            else {
+                var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(this.focused), dir) : null;
+                next = ws || firstWrap;
+            }
         }
         if (!next) return null;
         var focus = this.descendFocused(next);
@@ -1065,10 +1090,12 @@ var KI3 = (function () {
     function deskOf(num) { return Workspaces.deskOf(num); }
     function outputOf(ws) { return Workspaces.outputOf(ws.num); }
 
-    // The model's workspace num, created with i3's orientation for the monitor it lives on.
+    // The model's workspace num, created with i3's default_orientation: "auto" is horizontal
+    // unless the monitor it lives on is taller than wide. Only at creation, as i3: a changed
+    // setting leaves existing workspaces as they are.
     function wsModel(num) {
-        var g = Workspaces.outputOf(num).geometry;
-        return model.ws(num, g.height > g.width ? "v" : "h");
+        var o = Settings.get("defaultOrientation"), g = Workspaces.outputOf(num).geometry;
+        return model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
     }
 
     function wsForWindow(w) {
@@ -1857,6 +1884,7 @@ var KI3 = (function () {
     // ---- actions (keys) --------------------------------------------------------------------
 
     var DIRS = { left: Tree.LEFT, right: Tree.RIGHT, up: Tree.UP, down: Tree.DOWN };
+    function step() { return Settings.get("resizeStep") / 100; }
 
     function act(name, fn) {
         return guard(name, function () {
@@ -1886,18 +1914,18 @@ var KI3 = (function () {
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
-        // i3's resize mode, as direct keys (a script can't have mode-only keys): 10 ppt.
-        "Shrink Width": function (c) { model.resize(c, "width", -0.1); },
-        "Grow Width": function (c) { model.resize(c, "width", 0.1); },
-        "Shrink Height": function (c) { model.resize(c, "height", -0.1); },
-        "Grow Height": function (c) { model.resize(c, "height", 0.1); },
+        // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt.
+        "Shrink Width": function (c) { model.resize(c, "width", -step()); },
+        "Grow Width": function (c) { model.resize(c, "width", step()); },
+        "Shrink Height": function (c) { model.resize(c, "height", -step()); },
+        "Grow Height": function (c) { model.resize(c, "height", step()); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values. The config form saves without telling KWin (docs/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
-        actions["Focus " + cap] = function () { model.focusDir(DIRS[d]); };
+        actions["Focus " + cap] = function () { model.focusDir(DIRS[d], Settings.get("focusWrapping")); };
         actions["Move " + cap] = function (c) { model.move(c, DIRS[d]); };
     });
 

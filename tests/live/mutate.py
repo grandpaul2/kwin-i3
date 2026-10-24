@@ -36,7 +36,7 @@ muts = [
  (T, "src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
  (T, "src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
  (T, "src/kwin.js", "KWin's 15% tile minimum kept", "            t.minimumSize = min;", ""),
- (T, "src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
+ (T, "src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", step()); },", "        \"Grow Width\": function (c) {},"),
  (R, "src/rules.js", "dialogs tile", "        if (w.transient || w.modal || fixedSize(w)) return \"float\";", "        if (fixedSize(w)) return \"float\";"),
  (R, "src/rules.js", "title rule ignored", "            titleHas(w.caption, S(\"floatingTitle\"))) return \"float\";", "            false) return \"float\";"),
  (X, "src/rules.js", "ignore list empty", "        if (has(S(\"ignoreClass\"), w.resourceClass) || has(S(\"ignoreClass\"), w.resourceName) ||", "        if ("),
@@ -89,6 +89,9 @@ muts = [
  (S, "src/kwin.js", "settings not re-read on a reconfigure", "        options.configChanged.connect(guard(\"settings\", settingsChanged));\n", ""),
  (S, "src/kwin.js", "Reload Settings does nothing", "callDBus(\"org.kde.KWin\", \"/KWin\", \"org.kde.KWin\", \"reconfigure\");", ""),
  (S, "src/kwin.js", "a rule change leaves open windows as they were", "            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });\n", "            ;\n"),
+ (S, "src/kwin.js", "the resize step stays 10 %", "    function step() { return Settings.get(\"resizeStep\") / 100; }", "    function step() { return 0.1; }"),
+ (S, "src/kwin.js", "focus wrapping not passed to the model", "model.focusDir(DIRS[d], Settings.get(\"focusWrapping\"));", "model.focusDir(DIRS[d]);"),
+ (S, "src/kwin.js", "default orientation ignored", "return model.ws(num, o === \"horizontal\" ? \"h\" : o === \"vertical\" ? \"v\" : g.height > g.width ? \"v\" : \"h\");", "return model.ws(num, g.height > g.width ? \"v\" : \"h\");"),
  (S, "src/settings.js", "every key reported changed on every reload", "            if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);", "            changed.push(key);"),
 ]
 ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S]

@@ -5,6 +5,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Settings, step 2: `resizeStep` (Meta+Ctrl+arrows, default 10 %), `defaultOrientation`
+  (i3's `default_orientation`, default auto) and `focusWrapping` (i3's `focus_wrapping`, all four
+  modes ported from `get_tree_next`, default yes), in the form and the README.
 - Settings, step 1 (`docs/spec-settings.md`): a Configure form in System Settings for the
   script's keys, and i3's reload, **Meta+Shift+C**, which has KWin reparse its config and kwin-i3
   take the new values (the form itself tells KWin nothing on save). A changed rule re-judges the

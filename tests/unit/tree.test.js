@@ -651,3 +651,75 @@ test("no fullscreen window: a new window goes to the tail of the focus stack as 
     m.open("c", m.ws(1));
     assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "a", "c"]);
 });
+
+// ---- focus_wrapping (tree.c get_tree_next, i3 4.24; docs/spec-settings.md) ------------------
+
+// V[a H[b V[c d]]] on workspace 1, c focused: Up from c has no sibling above it in the inner V
+// (the wrap would be d), but the outer V has a above the H. "force" wraps inside the inner V;
+// every other mode goes on up and finds a.
+function nested(twoOutputs) {
+    const m = model(twoOutputs);
+    m.adopt(m.ws(1), { layout: "v", kids: [{ win: "a" }, { layout: "h", kids: [{ win: "b" }, { layout: "v", kids: [{ win: "c" }, { win: "d" }] }] }] });
+    m.focusWin("c");
+    return m;
+}
+
+test("focus_wrapping: a real neighbour further up wins over a wrap, except under force", () => {
+    for (const mode of ["yes", "no", "workspace"]) assert.strictEqual(nested().focusDir(UP, mode).win, "a", mode);
+    assert.strictEqual(nested().focusDir(UP, "force").win, "d", "force wraps in the innermost container");
+});
+
+test("focus_wrapping: at the workspace edge with no output there", () => {
+    const at = (mode) => { const m = model(false); open(m, 1, "a", "b", "c"); return m.focusDir(RIGHT, mode); };
+    assert.strictEqual(at("yes").win, "a");
+    assert.strictEqual(at("workspace").win, "a");
+    assert.strictEqual(at("force").win, "a");
+    assert.strictEqual(at("no"), null, "no wrap, and no output to go to");
+});
+
+test("focus_wrapping: at the workspace edge with an output there", () => {
+    const at = (mode) => { const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b"); return m.focusDir(RIGHT, mode); };
+    assert.strictEqual(at("yes").win, "x");
+    assert.strictEqual(at("no").win, "x", "no still crosses to the next output");
+    assert.strictEqual(at("workspace").win, "a", "workspace wraps instead of leaving");
+    assert.strictEqual(at("force").win, "a", "force never leaves the container");
+});
+
+test("focus_wrapping: no default given is yes", () => {
+    const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b");
+    assert.strictEqual(m.focusDir(RIGHT).win, "x");
+});
+
+test("focus_wrapping: from a fullscreen window, workspace mode stays, the others cross", () => {
+    const at = (mode) => {
+        const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b");
+        m.setFullscreen("a", true); m.focusWin("a");
+        return m.focusDir(RIGHT, mode);
+    };
+    for (const mode of ["yes", "no", "force"]) assert.strictEqual(at(mode).win, "x", mode);
+    assert.strictEqual(at("workspace"), null, "the fullscreen window's workspace is the limit");
+});
+
+test("focus_wrapping: an empty workspace focused goes to the next output in every mode", () => {
+    for (const mode of ["yes", "no", "force", "workspace"]) {
+        const m = model(true); open(m, 2, "x");
+        m.activate(m.ws(1));
+        assert.strictEqual(m.focusDir(RIGHT, mode).win, "x", mode);
+    }
+});
+
+test("focus_wrapping: floating focus is the same in every mode (left/right through the floats)", () => {
+    for (const mode of ["yes", "no", "force", "workspace"]) {
+        const m = model(); open(m, 1, "a");
+        m.openFloating("f", m.ws(1)); m.openFloating("g", m.ws(1)); m.focusWin("g");
+        assert.strictEqual(m.focusDir(RIGHT, mode).win, "f", mode + ": wraps to the first float");
+        assert.strictEqual(m.focusDir(UP, mode), null, mode);
+    }
+});
+
+test("focus_wrapping: force, the next one blocked by fullscreen: no wrap either (i3: return NULL)", () => {
+    const m = model(); open(m, 1, "a", "b", "c");
+    m.setFullscreen("a", true); m.focusWin("b");        // the mouse can focus b; c is behind a
+    assert.strictEqual(m.focusDir(RIGHT, "force"), null);
+    assert.strictEqual(m.focusDir(RIGHT, "yes").win, "a", "yes: the wrap to the fullscreen a");
+});

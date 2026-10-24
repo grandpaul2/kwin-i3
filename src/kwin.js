@@ -53,10 +53,12 @@ var KI3 = (function () {
     function deskOf(num) { return Workspaces.deskOf(num); }
     function outputOf(ws) { return Workspaces.outputOf(ws.num); }
 
-    // The model's workspace num, created with i3's orientation for the monitor it lives on.
+    // The model's workspace num, created with i3's default_orientation: "auto" is horizontal
+    // unless the monitor it lives on is taller than wide. Only at creation, as i3: a changed
+    // setting leaves existing workspaces as they are.
     function wsModel(num) {
-        var g = Workspaces.outputOf(num).geometry;
-        return model.ws(num, g.height > g.width ? "v" : "h");
+        var o = Settings.get("defaultOrientation"), g = Workspaces.outputOf(num).geometry;
+        return model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
     }
 
     function wsForWindow(w) {
@@ -845,6 +847,7 @@ var KI3 = (function () {
     // ---- actions (keys) --------------------------------------------------------------------
 
     var DIRS = { left: Tree.LEFT, right: Tree.RIGHT, up: Tree.UP, down: Tree.DOWN };
+    function step() { return Settings.get("resizeStep") / 100; }
 
     function act(name, fn) {
         return guard(name, function () {
@@ -874,18 +877,18 @@ var KI3 = (function () {
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
-        // i3's resize mode, as direct keys (a script can't have mode-only keys): 10 ppt.
-        "Shrink Width": function (c) { model.resize(c, "width", -0.1); },
-        "Grow Width": function (c) { model.resize(c, "width", 0.1); },
-        "Shrink Height": function (c) { model.resize(c, "height", -0.1); },
-        "Grow Height": function (c) { model.resize(c, "height", 0.1); },
+        // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt.
+        "Shrink Width": function (c) { model.resize(c, "width", -step()); },
+        "Grow Width": function (c) { model.resize(c, "width", step()); },
+        "Shrink Height": function (c) { model.resize(c, "height", -step()); },
+        "Grow Height": function (c) { model.resize(c, "height", step()); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values. The config form saves without telling KWin (docs/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
-        actions["Focus " + cap] = function () { model.focusDir(DIRS[d]); };
+        actions["Focus " + cap] = function () { model.focusDir(DIRS[d], Settings.get("focusWrapping")); };
         actions["Move " + cap] = function (c) { model.move(c, DIRS[d]); };
     });
 

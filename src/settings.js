@@ -16,12 +16,22 @@ var Settings = (function () {
         floatingClass: { type: "list", def: "" },
         floatingTitle: { type: "list", def: "" },
         debugLog: { type: "bool", def: "false" },
+        resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
+        defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
+        focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
     };
     var values = {};
 
     // Every value is read as text (KConfig stores text) and parsed here, so a value the form
     // wrote and one written by hand read the same; one that doesn't parse is the default.
-    function parse(type, text) {
+    function parse(t, text) {
+        var type = t.type;
+        if (type === "int") {
+            if (!/^-?[0-9]+$/.test(text)) return null;
+            var n = parseInt(text, 10);
+            return n >= t.min && n <= t.max ? n : null;
+        }
+        if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
         if (type === "list")
             return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
         if (type === "bool") {
@@ -36,10 +46,10 @@ var Settings = (function () {
         var changed = [];
         Object.keys(TABLE).forEach(function (key) {
             var t = TABLE[key];
-            var v = parse(t.type, String(readConfig(key, t.def)).trim());
+            var v = parse(t, String(readConfig(key, t.def)).trim());
             if (v === null) {
-                log("WARN setting " + key + ": not a " + t.type + ", using the default");
-                v = parse(t.type, t.def);
+                log("WARN setting " + key + ": not a valid " + t.type + ", using the default");
+                v = parse(t, t.def);
             }
             if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);
             values[key] = v;
