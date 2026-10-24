@@ -11,9 +11,16 @@ Last reconciled: **2026-10-24**.
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". Suggested order: 4, 5 (1, 2 and 3 are done).
+`docs/plan.md`, "Scope". Suggested order: 7, 4, 5 (1, 2 and 3 are done; Paul, 2026-10-24:
+convenience and accessibility before the README pass).
 
 ## Open
+
+7. **A settings page of its own, and a tidier form** (Paul, 2026-10-24: convenience and
+   accessibility before the README pass). kwin-i3's own entry in System Settings > Window
+   Management, with its keys on a sub-page, and the script's form tidied to match.
+   Spec reviewed: `docs/spec-settings-page.md`. Next: Paul's go and decisions A-C; then the form,
+   then the page (`sudo dnf install kf6-kcmutils-devel kf6-ki18n-devel` first).
 
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
