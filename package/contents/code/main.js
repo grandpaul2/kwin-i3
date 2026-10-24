@@ -1,10 +1,11 @@
 // Built by build.sh from src/ — do not edit; edit src/ and rebuild.
 // ---- src/log.js
 // Logging. KWin drops print() from scripts on this machine (the kwin_scripting category is off),
-// so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true. Silent otherwise:
-// if nothing owns the name, the call fails quietly.
-// The last LOG_KEEP lines are kept in memory either way, for "Dump State" (tools/capture).
-var DEBUG_LOG = readConfig("debugLog", false) === true || readConfig("debugLog", "") === "true";
+// so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true (src/settings.js
+// sets DEBUG_LOG, at load and on a reload). Silent otherwise: if nothing owns the name, the call
+// fails quietly. The last LOG_KEEP lines are kept in memory either way, for "Dump State"
+// (tools/capture).
+var DEBUG_LOG = false;
 var LOG_KEEP = 300;
 var logRing = [];
 
@@ -14,6 +15,64 @@ function log(line) {
     if (!DEBUG_LOG) return;
     callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", String(line));
 }
+// ---- src/settings.js
+// Settings: every key kwin-i3 reads from kwinrc's [Script-kwin-i3] group, with its type and
+// default (docs/spec-settings.md). The one table the config form (package/contents/config/
+// main.xml) and the README follow; tests/unit/settings.test.js holds the three together.
+//
+// Read at load and again on every KWin reconfigure (options.configChanged; Meta+Shift+C asks for
+// one): the config form writes the file and tells KWin nothing (genericscriptedconfig.cpp
+// ScriptingConfig::reload is a TODO in 6.7.5), and a script sees a new value only once KWin has
+// reparsed its config. load() returns the keys whose value changed.
+
+var Settings = (function () {
+    var TABLE = {
+        ignoreClass: { type: "list", def: "krunner,yakuake,spectacle,kded5,xwaylandvideobridge," +
+            "plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1," +
+            "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter" },
+        ignoreRole: { type: "list", def: "quake" },
+        floatingClass: { type: "list", def: "" },
+        floatingTitle: { type: "list", def: "" },
+        debugLog: { type: "bool", def: "false" },
+    };
+    var values = {};
+
+    // Every value is read as text (KConfig stores text) and parsed here, so a value the form
+    // wrote and one written by hand read the same; one that doesn't parse is the default.
+    function parse(type, text) {
+        if (type === "list")
+            return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+        if (type === "bool") {
+            if (text === "true") return true;
+            if (text === "false") return false;
+            return null;
+        }
+        return text;
+    }
+
+    function load() {
+        var changed = [];
+        Object.keys(TABLE).forEach(function (key) {
+            var t = TABLE[key];
+            var v = parse(t.type, String(readConfig(key, t.def)).trim());
+            if (v === null) {
+                log("WARN setting " + key + ": not a " + t.type + ", using the default");
+                v = parse(t.type, t.def);
+            }
+            if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);
+            values[key] = v;
+        });
+        DEBUG_LOG = values.debugLog;
+        return changed;
+    }
+
+    load();
+    return {
+        get: function (key) { return values[key]; },
+        load: load,
+        table: TABLE,
+    };
+})();
 // ---- src/tree.js
 // The i3 tree: workspaces, split containers, leaves (windows), focus stacks, and the operations
 // on them. A port of i3's own code (github.com/i3/i3, branch next at be04c853ee, 2026-10-12);
@@ -841,19 +900,11 @@ if (typeof module !== "undefined") module.exports = Tree;
 // patched Krohnkite decided (its shouldIgnore / shouldFloat, defaults from its main.xml), so
 // nothing changed at the switch-over from it. Settings are comma-separated lists in kwinrc's
 // [Script-kwin-i3] group (not Krohnkite's): ignoreClass, ignoreRole, floatingClass,
-// floatingTitle (a window whose caption contains one of the words floats).
+// floatingTitle (a window whose caption contains one of the words floats). Read from Settings at
+// each judgement, so a reload changes them (src/settings.js).
 
 var Rules = (function () {
-    function list(key, def) {
-        return String(readConfig(key, def)).split(",").map(function (s) { return s.trim(); })
-            .filter(function (s) { return s.length > 0; });
-    }
-    var IGNORE_CLASS = list("ignoreClass", "krunner,yakuake,spectacle,kded5,xwaylandvideobridge," +
-        "plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1," +
-        "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter");
-    var IGNORE_ROLE = list("ignoreRole", "quake");
-    var FLOAT_CLASS = list("floatingClass", "");
-    var FLOAT_TITLE = list("floatingTitle", "");
+    var S = function (key) { return Settings.get(key); };
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
     function titleHas(caption, words) {
@@ -875,13 +926,13 @@ var Rules = (function () {
     function classify(w) {
         if (w.deleted || !w.normalWindow || w.popupWindow || w.specialWindow) return "ignore";
         if (w.onAllDesktops || w.skipTaskbar) return "ignore";
-        if (has(IGNORE_CLASS, w.resourceClass) || has(IGNORE_CLASS, w.resourceName) ||
-            has(IGNORE_ROLE, w.windowRole)) return "ignore";
+        if (has(S("ignoreClass"), w.resourceClass) || has(S("ignoreClass"), w.resourceName) ||
+            has(S("ignoreRole"), w.windowRole)) return "ignore";
         // On Wayland a dialog is a normal window; only transient/modal mark it (phase 0).
         if (w.transient || w.modal || fixedSize(w)) return "float";
         if (w.dialog || w.splash || w.utility) return "float";
-        if (has(FLOAT_CLASS, w.resourceClass) || has(FLOAT_CLASS, w.resourceName) ||
-            titleHas(w.caption, FLOAT_TITLE)) return "float";
+        if (has(S("floatingClass"), w.resourceClass) || has(S("floatingClass"), w.resourceName) ||
+            titleHas(w.caption, S("floatingTitle"))) return "float";
         return "tile";
     }
 
@@ -1840,6 +1891,9 @@ var KI3 = (function () {
         "Grow Width": function (c) { model.resize(c, "width", 0.1); },
         "Shrink Height": function (c) { model.resize(c, "height", -0.1); },
         "Grow Height": function (c) { model.resize(c, "height", 0.1); },
+        // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
+        // new values. The config form saves without telling KWin (docs/spec-settings.md).
+        "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
@@ -1898,6 +1952,7 @@ var KI3 = (function () {
         // Up/L shrink height, Right/; grow width.
         "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
         "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
+        "Reload Settings": ["Meta+Shift+C"],
     };
 
     function registerKeys() {
@@ -2120,6 +2175,7 @@ var KI3 = (function () {
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
+        options.configChanged.connect(guard("settings", settingsChanged));
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
@@ -2138,6 +2194,21 @@ var KI3 = (function () {
         scheduleAll();
         rememberShown();
         log("kwin-i3 loaded");
+    }
+
+    // KWin reconfigured: take the settings again and act on what changed. Also called once just
+    // after a load (KWin's own start-up reconfigure), with nothing changed.
+    var RULE_KEYS = ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"];
+    function settingsChanged() {
+        var changed = Settings.load();
+        if (!changed.length) return;
+        log("SETTINGS " + changed.join(" "));
+        // The rules: every window judged again; one whose verdict changed follows it, one floated
+        // or tiled by hand under an unchanged verdict stays (reclassify).
+        if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; }))
+            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
+        scheduleAll();
+        wantFocus();
     }
 
     // What each monitor showed, by name, so a monitor that comes back shows it again (review:

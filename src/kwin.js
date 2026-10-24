@@ -879,6 +879,9 @@ var KI3 = (function () {
         "Grow Width": function (c) { model.resize(c, "width", 0.1); },
         "Shrink Height": function (c) { model.resize(c, "height", -0.1); },
         "Grow Height": function (c) { model.resize(c, "height", 0.1); },
+        // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
+        // new values. The config form saves without telling KWin (docs/spec-settings.md).
+        "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
@@ -937,6 +940,7 @@ var KI3 = (function () {
         // Up/L shrink height, Right/; grow width.
         "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
         "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
+        "Reload Settings": ["Meta+Shift+C"],
     };
 
     function registerKeys() {
@@ -1159,6 +1163,7 @@ var KI3 = (function () {
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
+        options.configChanged.connect(guard("settings", settingsChanged));
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
@@ -1177,6 +1182,21 @@ var KI3 = (function () {
         scheduleAll();
         rememberShown();
         log("kwin-i3 loaded");
+    }
+
+    // KWin reconfigured: take the settings again and act on what changed. Also called once just
+    // after a load (KWin's own start-up reconfigure), with nothing changed.
+    var RULE_KEYS = ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"];
+    function settingsChanged() {
+        var changed = Settings.load();
+        if (!changed.length) return;
+        log("SETTINGS " + changed.join(" "));
+        // The rules: every window judged again; one whose verdict changed follows it, one floated
+        // or tiled by hand under an unchanged verdict stays (reclassify).
+        if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; }))
+            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
+        scheduleAll();
+        wantFocus();
     }
 
     // What each monitor showed, by name, so a monitor that comes back shows it again (review:

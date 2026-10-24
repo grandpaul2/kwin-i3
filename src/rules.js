@@ -2,19 +2,11 @@
 // patched Krohnkite decided (its shouldIgnore / shouldFloat, defaults from its main.xml), so
 // nothing changed at the switch-over from it. Settings are comma-separated lists in kwinrc's
 // [Script-kwin-i3] group (not Krohnkite's): ignoreClass, ignoreRole, floatingClass,
-// floatingTitle (a window whose caption contains one of the words floats).
+// floatingTitle (a window whose caption contains one of the words floats). Read from Settings at
+// each judgement, so a reload changes them (src/settings.js).
 
 var Rules = (function () {
-    function list(key, def) {
-        return String(readConfig(key, def)).split(",").map(function (s) { return s.trim(); })
-            .filter(function (s) { return s.length > 0; });
-    }
-    var IGNORE_CLASS = list("ignoreClass", "krunner,yakuake,spectacle,kded5,xwaylandvideobridge," +
-        "plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1," +
-        "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter");
-    var IGNORE_ROLE = list("ignoreRole", "quake");
-    var FLOAT_CLASS = list("floatingClass", "");
-    var FLOAT_TITLE = list("floatingTitle", "");
+    var S = function (key) { return Settings.get(key); };
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
     function titleHas(caption, words) {
@@ -36,13 +28,13 @@ var Rules = (function () {
     function classify(w) {
         if (w.deleted || !w.normalWindow || w.popupWindow || w.specialWindow) return "ignore";
         if (w.onAllDesktops || w.skipTaskbar) return "ignore";
-        if (has(IGNORE_CLASS, w.resourceClass) || has(IGNORE_CLASS, w.resourceName) ||
-            has(IGNORE_ROLE, w.windowRole)) return "ignore";
+        if (has(S("ignoreClass"), w.resourceClass) || has(S("ignoreClass"), w.resourceName) ||
+            has(S("ignoreRole"), w.windowRole)) return "ignore";
         // On Wayland a dialog is a normal window; only transient/modal mark it (phase 0).
         if (w.transient || w.modal || fixedSize(w)) return "float";
         if (w.dialog || w.splash || w.utility) return "float";
-        if (has(FLOAT_CLASS, w.resourceClass) || has(FLOAT_CLASS, w.resourceName) ||
-            titleHas(w.caption, FLOAT_TITLE)) return "float";
+        if (has(S("floatingClass"), w.resourceClass) || has(S("floatingClass"), w.resourceName) ||
+            titleHas(w.caption, S("floatingTitle"))) return "float";
         return "tile";
     }
 

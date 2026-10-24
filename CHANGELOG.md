@@ -5,6 +5,10 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Settings, step 1 (`docs/spec-settings.md`): a Configure form in System Settings for the
+  script's keys, and i3's reload, **Meta+Shift+C**, which has KWin reparse its config and kwin-i3
+  take the new values (the form itself tells KWin nothing on save). A changed rule re-judges the
+  open windows; a window floated or tiled by hand under an unchanged verdict stays.
 - Mouse chords dropped (Paul, 2026-10-24): window move is KWin's own Meta+drag again, not
   Meta+Shift+drag; `[kwin-i3-mouse]` is no longer read. `kwini3mouse` stays for focus on the
   frame alone. The plugins are optional: README's install is the script, the plugins a section of

@@ -62,5 +62,8 @@
  "Grow Width": [
   "Meta+Ctrl+Right",
   "Meta+Ctrl+;"
+ ],
+ "Reload Settings": [
+  "Meta+Shift+C"
  ]
 }

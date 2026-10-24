@@ -139,8 +139,8 @@ tools/             testkwin.sh, logsink.py, testclient (below)
 
 **Left out, Paul's decisions (2026-10-21):** tabbed and stacked ("I don't use tabbed"),
 `focus parent` ("never used this"), urgent windows (i3 showed them in its bar; there is no bar here).
-Also left out: i3's reload/restart/exit keys (reload is `unloadScript` from a session; exit is
-Plasma's own).
+Also left out: i3's restart/exit keys (exit is Plasma's own). i3's reload is in since
+2026-10-24: Meta+Shift+C re-reads the settings (`docs/spec-settings.md`).
 
 ## Policies the adapter applies
 

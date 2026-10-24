@@ -8,6 +8,7 @@ Run: make mutate-live.
 - Each fault names the scenario expected to catch it, which runs first with KI3_FAILFAST=1; the
   others run only if that one stays green.
 - src/ and the built package are restored even on an exception or Ctrl-C.
+- KI3_ONLY="a|b": only the faults whose name contains one of those (the baseline still runs whole).
 """
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -21,7 +22,7 @@ if live == os.path.realpath("package"):
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
-F = "32-fullscreen-open.sh"
+F, S = "32-fullscreen-open.sh", "25-settings.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -31,14 +32,14 @@ muts = [
  (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
  (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1, d) : null;", "                var spec = null;"),
  (R, "src/kwin.js", "release leaves windows tiled", "                untile(w);\n                if (keptAbove[key])", "                if (keptAbove[key])"),
- (T, "src/kwin.js", "floating not kept above", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
+ (T, "src/kwin.js", "floating not kept above", "        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }", ""),
  (T, "src/kwin.js", "KWin focus not followed", "            if (w && wins[id(w)]) model.focusWin(id(w));\n        }));", "        }));"),
  (T, "src/kwin.js", "one size pass only", "        for (var pass = 0; pass < 4; pass++)", "        for (var pass = 0; pass < 1; pass++)"),
  (T, "src/kwin.js", "KWin's 15% tile minimum kept", "            t.minimumSize = min;", ""),
  (T, "src/kwin.js", "grow width does nothing", "        \"Grow Width\": function (c) { model.resize(c, \"width\", 0.1); },", "        \"Grow Width\": function (c) {},"),
- (R, "src/rules.js", "dialogs tile", "        if (w.transient || w.modal || !w.resizeable) return \"float\";", "        if (!w.resizeable) return \"float\";"),
- (R, "src/rules.js", "title rule ignored", "            titleHas(w.caption, FLOAT_TITLE)) return \"float\";", "            false) return \"float\";"),
- (X, "src/rules.js", "ignore list empty", "    var IGNORE_CLASS = list(\"ignoreClass\",", "    var IGNORE_CLASS = [] || list(\"ignoreClass\","),
+ (R, "src/rules.js", "dialogs tile", "        if (w.transient || w.modal || fixedSize(w)) return \"float\";", "        if (fixedSize(w)) return \"float\";"),
+ (R, "src/rules.js", "title rule ignored", "            titleHas(w.caption, S(\"floatingTitle\"))) return \"float\";", "            false) return \"float\";"),
+ (X, "src/rules.js", "ignore list empty", "        if (has(S(\"ignoreClass\"), w.resourceClass) || has(S(\"ignoreClass\"), w.resourceName) ||", "        if ("),
  (X, "src/kwin.js", "sticky windows kept", "            if (w.desktops.length !== 1) {\n                // Now on all desktops", "            if (false) {\n                // Now on all desktops"),
  (X, "src/kwin.js", "re-adopt on one desktop ignored", "            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }", "            if (!con) return;"),
  (X, "src/kwin.js", "guard logs nothing", "            catch (e) { log(\"ERROR in \" + name", "            catch (e) { (\"ERROR in \" + name"),
@@ -82,10 +83,15 @@ muts = [
  # A fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, 2026-10-24)
  (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            log(\"FULLSCREEN \"", "        if (false) {\n            log(\"FULLSCREEN \""),
  (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),
- (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient) return null;", "        return null;"),
+ (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient || w.fullScreen) return null;", "        return null;"),
  (F, "src/kwin.js", "C: a workspace switch focuses what KWin chose under fullscreen", "        model.activate(fs || model.descendFocused(ws));", "        model.activate(model.descendFocused(ws));"),
+ # Settings and the reload (docs/spec-settings.md, 2026-10-24)
+ (S, "src/kwin.js", "settings not re-read on a reconfigure", "        options.configChanged.connect(guard(\"settings\", settingsChanged));\n", ""),
+ (S, "src/kwin.js", "Reload Settings does nothing", "callDBus(\"org.kde.KWin\", \"/KWin\", \"org.kde.KWin\", \"reconfigure\");", ""),
+ (S, "src/kwin.js", "a rule change leaves open windows as they were", "            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });\n", "            ;\n"),
+ (S, "src/settings.js", "every key reported changed on every reload", "            if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);", "            changed.push(key);"),
 ]
-ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F]
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
@@ -131,7 +137,9 @@ def main():
         return 2
     print("baseline green", flush=True)
     survivors, broken = [], []
+    only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
     for scenario, path, name, a, b in muts:
+        if only and not any(o in name for o in only): continue
         orig = open(path).read()
         if a not in orig:
             print(f"!! pattern missing (src changed?): {name}"); survivors.append(name); continue

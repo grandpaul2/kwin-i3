@@ -1,8 +1,9 @@
 // Logging. KWin drops print() from scripts on this machine (the kwin_scripting category is off),
-// so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true. Silent otherwise:
-// if nothing owns the name, the call fails quietly.
-// The last LOG_KEEP lines are kept in memory either way, for "Dump State" (tools/capture).
-var DEBUG_LOG = readConfig("debugLog", false) === true || readConfig("debugLog", "") === "true";
+// so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true (src/settings.js
+// sets DEBUG_LOG, at load and on a reload). Silent otherwise: if nothing owns the name, the call
+// fails quietly. The last LOG_KEEP lines are kept in memory either way, for "Dump State"
+// (tools/capture).
+var DEBUG_LOG = false;
 var LOG_KEEP = 300;
 var logRing = [];
 

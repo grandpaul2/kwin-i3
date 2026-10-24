@@ -35,6 +35,7 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize by 10 % (i3's resize mode, without the mode: a script can't have mode-only keys) |
 | Meta+F | fullscreen (KWin's own; per output, as i3) |
 | Meta+Shift+Q | close (KWin's own) |
+| Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
 | Meta+Ctrl+Shift+Q | **release**: hand every window back to KWin and stop, the safety valve |
 
 Mouse, KWin's own: **Meta+left-drag** moves a window (a tiled one floats where it is dropped),
@@ -95,7 +96,10 @@ window once.
 
 ## Configuration
 
-All in `~/.config/kwinrc`. The script's keys are read at load (reload after a change); the
+System Settings > Window Management > KWin Scripts > kwin-i3 > Configure, or by hand in
+`~/.config/kwinrc`. The script's keys (`[Script-kwin-i3]`) apply at **Meta+Shift+C** or the next
+login: the Configure dialog saves without telling KWin (KWin 6.7.5's generic script config does
+nothing after a save), so the reload key asks KWin to reparse, as i3's reload does. The
 plugins' keys are watched: **change them with `kwriteconfig6 --notify`, and nothing else** (a
 plain write followed by KWin's `reconfigure` leaves the plugin on the old value and the watcher
 then ignores a later notification of the same value, seen 2026-10-23). Under heavy load

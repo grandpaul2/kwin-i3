@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- kwin-i3's settings form (KWin's generic scripted KCM). Plain Qt widgets only: QUiLoader
+     needs no designer plugin for them. Each kcfg_<name> is an entry of ../config/main.xml. -->
+<ui version="4.0">
+ <class>KWinI3ConfigForm</class>
+ <widget class="QWidget" name="KWinI3ConfigForm">
+  <layout class="QVBoxLayout" name="mainLayout">
+   <item>
+    <widget class="QLabel" name="applyHint">
+     <property name="text">
+      <string>Changes apply when you press Meta+Shift+C (kwin-i3's reload, as in i3), or at the next login.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="rulesGroup">
+     <property name="title">
+      <string>Window rules (comma-separated)</string>
+     </property>
+     <layout class="QFormLayout" name="rulesLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="ignoreClassLabel">
+        <property name="text">
+         <string>Never manage these window classes:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="kcfg_ignoreClass"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="ignoreRoleLabel">
+        <property name="text">
+         <string>Never manage these window roles:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="kcfg_ignoreRole"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="floatingClassLabel">
+        <property name="text">
+         <string>Float these window classes:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="kcfg_floatingClass"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="floatingTitleLabel">
+        <property name="text">
+         <string>Float windows whose title contains:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="kcfg_floatingTitle"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="kcfg_debugLog">
+     <property name="text">
+      <string>Debug log (every action, over D-Bus to tools/logsink.py; for bug reports)</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="bottomSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
