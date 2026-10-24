@@ -11,6 +11,33 @@ entities in a tree that move among each other, not contents moved between fixed 
 KWin script, replacing `i3ws` + patched Krohnkite in `~/.dotfiles`, with the current behaviour
 kept exactly where it already matches i3 (Paul called it "ideal").
 
+## Scope (Paul, 2026-10-24)
+
+kwin-i3 gives Plasma i3's feel and basic window management, and leaves the rest to Plasma. It is
+not i3 on KWin: the more of i3 it takes on, the more of it duplicates Plasma. From v1.0.0 on, the
+work is making what is here **configurable and reliable**, on a machine and a setup that are not
+the author's (`OPEN.md`), not adding more of i3.
+
+**In:** i3's tree, with its focus, move, split, layout toggle and resize; workspaces that live on
+a monitor; floating and the focus-mode toggle; i3's keys; the frame; mouse move and resize; the
+rules that decide what is managed and what floats.
+
+**Out, with the reason:**
+
+| left out | why |
+|---|---|
+| tabbed and stacked layouts, `focus parent`, urgency | Paul's decisions, 2026-10-21 (Behaviour, below) |
+| marks, the scratchpad | where the line is drawn: features the author never used are not built (Paul, 2026-10-24) |
+| a bar, launcher, notifications, lock, session control | Plasma's panel, KRunner, notifications, screen locker and logout |
+| i3's config file and `i3-msg` IPC | settings belong in System Settings (and `kwinrc`); KWin's D-Bus is the scripting surface |
+| `assign`, `for_window` and other per-window rules beyond managed / floating | KWin's Window Rules already do them |
+| X11 | Plasma's direction is Wayland, and the plugins and tests are Wayland-only |
+
+**The test for anything new:** if Plasma already does it, kwin-i3 doesn't. A feature belongs
+here only if it is part of how i3 arranges windows and Plasma can't do it. A setting belongs here
+only if a user would reasonably want it different, not because a constant exists. The one
+addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting that defaults to 0.
+
 ## Decisions
 
 1. **One plain-JS KWin script** (`KWin/Script`, `X-Plasma-API: javascript`). No QML: a plain-JS

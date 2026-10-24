@@ -10,13 +10,11 @@ Last reconciled: **2026-10-24**.
 
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
-window management, with Plasma doing the rest. Suggested order: 1, 3, 2, 4, 5.
+window management, with Plasma doing the rest. The scope and its reasons:
+`docs/plan.md`, "Scope". Suggested order: 3, 2, 4, 5 (1, the scope fence, is done).
 
 ## Open
 
-1. **Scope fence.** Next: write a goals / non-goals section in `docs/plan.md` (tabbed/stacked,
-   marks, scratchpad, urgency, bars, i3's config language and IPC are out; "if Plasma does it,
-   kwin-i3 doesn't"), and point README's status line at it.
 2. **Settings.** Next: inventory what is hard-coded (resize step 10 %, no gaps, 1 px frame width,
    new-window split, focus wrapping, workspace-to-monitor start), choose the few worth a setting
    (gaps, default 0, is the one new feature that fits), then the stock `contents/config/main.xml`

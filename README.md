@@ -7,8 +7,10 @@ and the frame.
 
 **Status: feature complete (v1.0.0, 2026-10-23), the author's window manager since 2026-10-22.**
 Everything of i3 the author used is here; what is left out is deliberate (tabbed and stacked
-layouts, `focus parent`, urgency, marks, the scratchpad). From here it is maintenance:
-`CHANGELOG.md` says what changed, `OPEN.md` what is open.
+layouts, `focus parent`, urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
+not all of i3: from here the work is making it configurable and reliable, not adding more of i3
+(the scope and its reasons are in `docs/plan.md`, "Scope"). `CHANGELOG.md` says what changed,
+`OPEN.md` what is open.
 
 Why one script rather than a tiling script plus a workspace script: i3's tree has to be the single
 truth, so that windows move *among each other* instead of being contents of fixed divisions.
