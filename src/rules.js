@@ -22,14 +22,6 @@ var Rules = (function () {
         return false;
     }
 
-    // KWin calls every fullscreen window not resizeable (XdgToplevelWindow::isResizable), so one
-    // is judged by its own size limits: read as "fixed size", a caption change while fullscreen
-    // (a browser) floated a tiled window (Paul's capture, 2026-10-23).
-    function fixedSize(w) {
-        if (!w.fullScreen) return !w.resizeable;
-        return !(w.minSize.width < w.maxSize.width || w.minSize.height < w.maxSize.height);
-    }
-
     // "ignore": not ours at all. "float" / "tile": managed.
     function classify(w) {
         if (w.deleted || !w.normalWindow || w.popupWindow || w.specialWindow) return "ignore";
@@ -37,7 +29,7 @@ var Rules = (function () {
         if (has(IGNORE_CLASS, w.resourceClass) || has(IGNORE_CLASS, w.resourceName) ||
             has(IGNORE_ROLE, w.windowRole)) return "ignore";
         // On Wayland a dialog is a normal window; only transient/modal mark it (phase 0).
-        if (w.transient || w.modal || fixedSize(w)) return "float";
+        if (w.transient || w.modal || !w.resizeable) return "float";
         if (w.dialog || w.splash || w.utility) return "float";
         if (has(FLOAT_CLASS, w.resourceClass) || has(FLOAT_CLASS, w.resourceName) ||
             titleHas(w.caption, FLOAT_TITLE)) return "float";

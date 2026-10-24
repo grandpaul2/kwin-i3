@@ -5,13 +5,6 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
-- Fix: a window opened on a workspace whose focused window was fullscreen seemed not to open.
-  The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused
-  to tile it again (a fullscreen window is not resizable to KWin), and kwin-i3 floated it,
-  monitor-sized and above the tiles; leaving fullscreen changed nothing. It now stays in the
-  tree as in i3, out of the tiles until fullscreen ends. A caption change while fullscreen (a
-  browser) floated a tiled window the same way, through the rules' "not resizeable" test
-  (Paul's capture, 2026-10-23 23:25; `tests/live/32-fullscreen-open.sh`).
 - **kwini3frame** (live 2026-10-23), a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
   nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
   the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.

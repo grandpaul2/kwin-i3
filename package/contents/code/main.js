@@ -853,14 +853,6 @@ var Rules = (function () {
         return false;
     }
 
-    // KWin calls every fullscreen window not resizeable (XdgToplevelWindow::isResizable), so one
-    // is judged by its own size limits: read as "fixed size", a caption change while fullscreen
-    // (a browser) floated a tiled window (Paul's capture, 2026-10-23).
-    function fixedSize(w) {
-        if (!w.fullScreen) return !w.resizeable;
-        return !(w.minSize.width < w.maxSize.width || w.minSize.height < w.maxSize.height);
-    }
-
     // "ignore": not ours at all. "float" / "tile": managed.
     function classify(w) {
         if (w.deleted || !w.normalWindow || w.popupWindow || w.specialWindow) return "ignore";
@@ -868,7 +860,7 @@ var Rules = (function () {
         if (has(IGNORE_CLASS, w.resourceClass) || has(IGNORE_CLASS, w.resourceName) ||
             has(IGNORE_ROLE, w.windowRole)) return "ignore";
         // On Wayland a dialog is a normal window; only transient/modal mark it (phase 0).
-        if (w.transient || w.modal || fixedSize(w)) return "float";
+        if (w.transient || w.modal || !w.resizeable) return "float";
         if (w.dialog || w.splash || w.utility) return "float";
         if (has(FLOAT_CLASS, w.resourceClass) || has(FLOAT_CLASS, w.resourceName) ||
             titleHas(w.caption, FLOAT_TITLE)) return "float";
@@ -1074,11 +1066,8 @@ var KI3 = (function () {
     // the parent with shares multiplied through, skip minimized windows. Geometry is unchanged.
 
     // In the layout: not minimized, and not a fullscreen window that has no tile yet. KWin
-    // refuses to tile a window that is already fullscreen (Tile::manage: a fullscreen window is
-    // not resizable), and the refusal used to float it (fuzzer I9: one dragged to the other
-    // monitor; Paul's capture of 2026-10-23: a window opened beside it, the rebuild lost its
-    // tile). A window in its tile stays there through fullscreen, and KWin puts it back in the
-    // tile's geometry after; one without joins the layout when fullscreen ends.
+    // refuses to tile a window that is already fullscreen (one dragged to the other monitor),
+    // and the refusal used to float it (fuzzer I9); it joins the layout when fullscreen ends.
     function visibleLeaf(c) {
         var w = wins[c.win];
         return w && !w.minimized && !(w.fullScreen && !w.tile);
@@ -1131,14 +1120,10 @@ var KI3 = (function () {
         expected[id(w)] = tile;
         if (tile.manage(w)) return true;
         expected[id(w)] = null;
-        refused = true;
-        // A fullscreen window stays in the tree, as in i3: out of the tiles (the next pass leaves
-        // it out, see visibleLeaf) and back in when fullscreen ends. Floating it put it, monitor-
-        // sized, above everything the workspace opened after (Paul's capture, 2026-10-23 23:25).
-        if (w.fullScreen) { log("FULLSCREEN " + w.caption + ": out of the tiles until it ends"); return false; }
         // Also a window whose fullscreen request is pending, on a hidden desktop: a known limit
         // (plan, policies: monitor returns).
         floatWindow(w, "KWin refused to tile it");
+        refused = true;
         return false;
     }
     // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
