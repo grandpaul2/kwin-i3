@@ -75,6 +75,9 @@ muts = [
  (D, "src/kwin.js", "a rebuilt root unmanages by w.tile (hidden windows stay listed)", "                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });", "                t.windows.slice().forEach(function (w) { if (w.tile) unmanageFrom(w.tile, w); });"),
  (D, "src/kwin.js", "a modal pair's two-desktop moment taken for sticky", "            if (relocating && w.desktops.length !== 1) return;\n", ""),
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
+ # A reload keeps owning the floating windows' keep-above flags (docs/spec-reload-keepabove.md)
+ (L, "src/kwin.js", "a flag already set is not owned (orphaned by a reload)", "        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }"),
+ (L, "src/kwin.js", "a reload re-tiles a hand-floated window", "        if (kind === \"tile\" && !fresh && !w.tile && w.keepAbove) kind = \"float\";\n", ""),
  # A fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, 2026-10-24)
  (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            log(\"FULLSCREEN \"", "        if (false) {\n            log(\"FULLSCREEN \""),
  (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),

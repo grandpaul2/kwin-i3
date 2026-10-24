@@ -1,8 +1,8 @@
 # Spec: a reload keeps owning the floating windows' keep-above flags
 
-From Paul's question, 2026-10-24 ("even when I unfloat it, it stays green"). Status: **draft,
-decided in substance by Paul (spec it, 2026-10-24); the two questions under "Decisions" are
-open. Not built, not reviewed, not live.**
+From Paul's question, 2026-10-24 ("even when I unfloat it, it stays green"). Status: **decided by Paul, 2026-10-24
+(1: spec and change reviewed together; 2: a hand-floated window stays floating across a reload,
+by the flag). Not built, not reviewed, not live.**
 
 Sources: `src/kwin.js` (`setFloatingLook`, `adoptWindow`, the load path, `release`, the
 "Floating Toggle" action), `tests/live/60-load.sh`.
@@ -37,25 +37,32 @@ it. A tiled window with a flag Paul set by hand is untouched, as today: nothing 
 cleared when it tiles again; Paul accepted that reading when he accepted the frame colours' trap
 (decision 3 there), and he does not use the flag.
 
-## Decisions
+## Decisions (Paul, 2026-10-24)
 
-1. **Reviews.** One line of code, one check and one mutant: review the spec and the change
-   together, as for the frame colours, or the spec first?
-2. **A reload re-tiles a window floated by hand** (Meta+Shift+Space): at a load, kwin-i3 takes
-   the windows in KWin's tiles as tiled and classifies the rest by the rules, so a resizable
-   window Paul floated by hand comes back tiled; only rule-floated windows (dialogs, fixed size)
-   come back floating. Pre-existing, separate from this spec, and the likely reason Paul's
-   Firefox was tiled again by the revert's reload while keeping the flag. Leave it (a reload is
-   rare and re-tiles everything anyway), or note it as a known limit in the plan?
+1. **Reviews: together.** One review of this spec and the change.
+2. **A reload keeps a hand-floated window floating.** Today a load takes the windows in KWin's
+   tiles as tiled and classifies the rest by the rules, so a resizable window Paul floated by
+   hand came back tiled (the likely reason his Firefox was tiled again by the revert's reload
+   while keeping the flag). Nothing in KWin records kwin-i3's tree, but the keep-above flag is
+   set by kwin-i3 on every floating window and on nothing else, and it survives on the window:
+   at a load, a window in no tile that carries the flag was floating and is adopted as such.
+   Paul: "why can't they just stay floating?" The edge: a login with a session-restored window
+   that KWin brings back with keep-above set would float it; no app of Paul's does that, and
+   the floating toggle undoes it.
 
 ## The change
 
 - `src/kwin.js`, `setFloatingLook`: `if (on) { if (!w.keepAbove) w.keepAbove = true;
   keptAbove[id(w)] = true; }`. The comment says why (this spec).
+- `src/kwin.js`, `adoptWindow`: a window that did not just appear (`fresh` false: a load, a
+  window re-adopted after a desktop change), is in no tile and carries keep-above is adopted
+  floating whatever the rules say (decision 2).
 - `tests/live/60-load.sh`: after the load, float `a` by the toggle; unload and load kwin-i3
-  again; toggle `a` back to tiled: its keep-above is off. Then `release`: no managed window is
-  kept above (`fixed` and the dialog were floated by the first instance). Red today at both.
-- `tests/live/mutate.py`: the old line back (scenario `60-load.sh`).
+  again: `a` is still floating; toggle `a` back to tiled: its keep-above is off; `fixed` is
+  still floating and kept above; `release`: no window is kept above. Red today at "still
+  floating" and at "keep-above off" / "nothing kept above".
+- `tests/live/mutate.py`: the old `setFloatingLook` line back, and the adoption rule removed
+  (scenario `60-load.sh`).
 - `CHANGELOG.md`.
 
 ## What stays
@@ -69,5 +76,4 @@ already treats as its own in every other way.
 
 ## Order
 
-Decide (1, 2) → review → change → `make test` → (review of the change, if 1 says separate) →
-Paul says go → live reload.
+Change → `make test` → one review of spec and change → Paul says go → live reload.

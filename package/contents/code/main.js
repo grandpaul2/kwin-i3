@@ -1563,8 +1563,12 @@ var KI3 = (function () {
 
     // ---- windows ---------------------------------------------------------------------------
 
+    // A window kwin-i3 floats owns its keep-above flag, set here or not: after a reload the flag
+    // the old instance set is still on the window, and recording it only when setting it left
+    // the window kept above (and green, since the frame colours) for good once un-floated
+    // (docs/spec-reload-keepabove.md, 2026-10-24).
     function setFloatingLook(w, on) {
-        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }
+        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }
         if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
     }
 
@@ -1595,6 +1599,10 @@ var KI3 = (function () {
         // Ignored now, perhaps not later (class, transient or desktops set after it appears):
         // watch it, so reclassify can adopt it then (code review).
         if (kind === "ignore") { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
+        // Not just appeared (a load, a window taken back after a desktop change), in no tile and
+        // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
+        // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
+        if (kind === "tile" && !fresh && !w.tile && w.keepAbove) kind = "float";
         var ws = wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         wins[key] = w;
