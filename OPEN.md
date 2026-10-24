@@ -21,8 +21,16 @@ convenience and accessibility before the README pass).
    Management, with its keys on a sub-page, and the script's form tidied to match.
    Built and tested in the test KWin (`docs/spec-settings-page.md`, "The page is built"; form,
    page, `make kcm-install`, `37-settings-page.sh`, code-reviewed). Installed on Paul's desktop 2026-10-24
-   (`make kcm-install`; shows after his next login). Next: his look at it, by hand for what has
-   no automated test (the colour buttons, Reset, clearing a key).
+   (`make kcm-install`). After the first login it was missing from a System Settings that KWin
+   had launched (KWin's drop-in hid the session path); the drop-in now names the page's directory
+   too, from the next login. Next: Paul's look after that login, by hand for what has no
+   automated test (the colour buttons, Reset, clearing a key).
+8. **Apps KWin launches see the plugins' directory**, the frame decoration included: KWin's
+   drop-in puts it on KWin's `QT_PLUGIN_PATH`, and an app on a global shortcut inherits KWin's
+   environment. A System Settings started that way could load a stale frame after a kdecoration
+   update (its Window Decorations page), which `tools/frame-guard.sh` doesn't guard. Found
+   2026-10-24. Next: a narrow fix, e.g. KWin's path holding only the KWin plugins and the
+   decoration loaded another way; investigate, then spec.
 
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in

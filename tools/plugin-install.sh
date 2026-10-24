@@ -48,18 +48,7 @@ fid=$(place "$frame" "$fdir" kwini3frame)
 # drop-in below) and for the check here.
 install -m 644 "$frameversion" "$fdir/kwini3frame.version"
 
-if [[ -z ${KI3_PLUGIN_ROOT:-} ]]; then
-    dropin=$HOME/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf
-    want="[Service]
-Environment=QT_PLUGIN_PATH=$root
-ExecStartPre=-$here/tools/frame-guard.sh"
-    if [[ "$(cat "$dropin" 2>/dev/null)" != "$want" ]]; then
-        mkdir -p "$(dirname "$dropin")"
-        printf '%s\n' "$want" > "$dropin"
-        systemctl --user daemon-reload
-        echo "wrote $dropin (KWin reads it at the next login)"
-    fi
-fi
+[[ -z ${KI3_PLUGIN_ROOT:-} ]] && "$here/tools/kwin-dropin.sh"
 
 prop() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins "$1" 2>/dev/null; }
 busctl --user status org.kde.KWin >/dev/null 2>&1 || { echo "no KWin on this bus: installed only"; exit 0; }

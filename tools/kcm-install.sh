@@ -20,6 +20,9 @@ install -m 644 "$built" "$dir/.kcm_kwin_i3.so.tmp"
 mv "$dir/.kcm_kwin_i3.so.tmp" "$dir/kcm_kwin_i3.so"
 echo "installed $dir/kcm_kwin_i3.so"
 [[ -n ${KI3_KCM_ROOT:-} ]] && exit 0
+# KWin's own QT_PLUGIN_PATH (the plugins' drop-in) replaces the session's, and apps KWin launches
+# inherit it: the page's dir goes in there too (tools/kwin-dropin.sh).
+[[ -f $HOME/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf ]] && "$here/tools/kwin-dropin.sh"
 
 # Its launcher (systemsettings kcm_kwin_i3), as a package would install it.
 apps=${XDG_DATA_HOME:-$HOME/.local/share}/applications

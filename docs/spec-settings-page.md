@@ -38,6 +38,11 @@ tested by `tests/live/37-settings-page.sh` (30 checks, `# needs: kcm`) and
   nothing when it has.
 - Keyboard: the scenario sets a value by typing, and reaches the focus choice with Tab from the
   resize step; a full Tab walk of the page is not checked.
+- **KWin's own environment hid the page** (Paul's first look, 2026-10-24): the plugins' drop-in
+  sets KWin's `QT_PLUGIN_PATH` with `Environment=`, which replaces the session's, and an app KWin
+  launches (one on a global shortcut: kglobalaccel runs in KWin) inherits KWin's. Such a System
+  Settings had no page. `tools/kwin-dropin.sh`, used by both install scripts, now writes both
+  directories into the drop-in (tested in a scratch home).
 - Code review (second agent, 2026-10-24), acted on: a key whose take fails (the record can't be
   written, or kglobalaccel refuses) is not given to kwin-i3 either, and the page names it
   (tested, watched red); a key edit updates only the rows it changed, so the edited item keeps
