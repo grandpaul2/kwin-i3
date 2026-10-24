@@ -2,8 +2,9 @@
 
 Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by Paul, 2026-10-24
 (1: i3's rule, 2: confirmed, 3: same change); reviewed (second agent, 2026-10-24,
-`docs/review-fullscreen-2026-10-24.md`, folded in below as "R-n"); two questions the review
-raised are open (Decisions 4 and 5). Not built, not live.**
+`docs/review-fullscreen-2026-10-24.md`, folded in below as "R-n"); the review's two questions
+decided by Paul, 2026-10-24 (4: i3's, focus stays; 5: i3's, every newcomer but the fullscreen
+window's own dialog opens behind). Not built, not live.**
 
 A first build of parts A and B ran on Paul's desktop for a few minutes on 2026-10-23 without his
 approval and was reverted (commits a01e788, d23c445). Its diff is history to read, not a build to
@@ -74,7 +75,7 @@ while it is fullscreen". Today that is enforced only for the keys (`focusDir`,
 `moveToWorkspace`); the mouse and KWin's own activation are not blocked (R-13). The plan line is
 to say so once part C is built.
 
-## Decisions (Paul, 2026-10-24: 1(a), 2 confirmed, 3 same change; 4 and 5 open)
+## Decisions (Paul, 2026-10-24: 1(a), 2 confirmed, 3 same change, 4 i3's, 5 i3's)
 
 1. **The newcomer under a fullscreen window: i3's rule or KWin's?** Decided: (a), i3's rule.
    KWin keeps a fullscreen window on the top layer only while it is active
@@ -89,12 +90,12 @@ to say so once part C is built.
    on top of everything else while its transient is active (window.cpp:2287-2289, 492-497;
    layers.cpp:600-640). Part C leaves it alone (R-8).
 3. **The caption-change door (part B):** decided, same change.
-4. **Open (R-6): leaving fullscreen.** The draft said "leaving fullscreen shows it and focuses
+4. **Decided, i3's (R-6): leaving fullscreen.** The draft said "leaving fullscreen shows it and focuses
    it", which is not i3 and not what the design does: the fullscreen window keeps the focus and
    the tree reads `H[a b* c]` after exit. Keep i3's behaviour (recommended; no code), or focus
    the newcomer when fullscreen ends (a deviation, code in the `fullScreenChanged` handler)?
    What is shown is the same either way; only the keyboard differs.
-5. **Open (R-5c): a floating newcomer that is not the fullscreen window's dialog** (a fixed-size
+5. **Decided, i3's (R-5c): a floating newcomer that is not the fullscreen window's dialog** (a fixed-size
    app, a `floatingClass` window, a calculator). i3 gives it no focus either: it opens behind the
    fullscreen window. Follow i3 (recommended: the hand-back applies to every newcomer except a
    transient of the fullscreen window, which is also the simpler code), or let it show and take
@@ -151,7 +152,7 @@ layer, in one event-loop turn, before any frame is painted.
   window, the workspace is shown on its monitor (R-5a: `activateWindow` on a hidden desktop
   switches desktops), and the newcomer is not a transient of the fullscreen window (R-8: walk
   `w.transientFor`; a newcomer with `w.transient` set and no parent known yet gets no hand-back,
-  the cheap reading). Decision 5 says whether other floating newcomers are included.
+  the cheap reading). Every other newcomer, tiled or floating, gets the hand-back (decision 5).
 - **Model (R-6):** `M.open` inserts the new leaf second in its parent's focus stack when the
   workspace has a fullscreen container (i3's `TAILQ_INSERT_AFTER(first)`, including the "if
   first is not the new one" guard), so `nextFocused` picks it when the fullscreen window closes.
@@ -206,8 +207,7 @@ part (the first build's version went red at A and, with B alone reverted, at B):
   `workspace.stackingOrder` ends with `b` (R-9: both, the pixel is what Paul sees). Exactly two
   `TREE 1` lines after the newcomer (R-1: a spin shows as more), and `b.tile` null before the
   geometry checks.
-- **Exit.** `b` leaves fullscreen. Expect `H[a b* c]` in thirds (decision 4; `c*` only if Paul
-  chooses the deviation).
+- **Exit.** `b` leaves fullscreen. Expect `H[a b* c]` in thirds (decision 4).
 - **B.** `r` tiled beside `b`, fullscreen (wait for `H[b r*!]`), retitled while fullscreen
   (`--retitle`). Expect it still tiled and fullscreen; leaving fullscreen gives two halves. (A
   reclassify that floats logs no `FLOAT` line; the half-geometry check is the one that sees it.)
@@ -232,7 +232,7 @@ and are rerun alone when they do.
 
 ## Order
 
-Decisions 4 and 5 → change (A, B, C, the test client option, the unit test, the mutants, the
+Change (A, B, C, the test client option, the unit test, the mutants, the
 plan's line 103 and known-limit text) → `make test` → second agent reviews the change → Paul
 says go → live reload → watch the next fullscreen session → fuzz campaign.
 
