@@ -20,7 +20,7 @@ window management, with Plasma doing the rest. The scope and its reasons:
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
 4. **No dependence on Paul's dotfiles.** Inventory done 2026-10-24 (what `setup.sh` and
    `testkwin.sh`'s config give kwin-i3 that stock Plasma doesn't). Design agreed with Paul
-   2026-10-24; build order d, a, c, b, stock tests, README.
+   2026-10-24; build order a, c, b, stock tests, README.
    (a) 10 virtual desktops (stock: 1): create on demand up to N at Meta+N / Meta+Shift+N
    (`workspace.createDesktop`), as i3 creates workspaces.
    (b) Per-monitor desktops off by default: **report, never set** (Plasma's setting; a script's
@@ -36,8 +36,7 @@ window management, with Plasma doing the rest. The scope and its reasons:
    `plugin-install`: `make take-keys`, which saves the old bindings, and `make restore-keys`.
    (b) and (c) share **one notification at load** listing every problem (kwin-i3's first
    notification; everything else stays in the journal).
-   (d) **Live** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3 registers Meta+F / Meta+Shift+Q;
-   KWin's bindings cleared on the desktop. Left: Paul's one Meta+F. (e) Focus follows mouse and Meta-alone: README only. Then a
+   (d) **Done** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3's own Meta+F / Meta+Shift+Q, live. (e) Focus follows mouse and Meta-alone: README only. Then a
    `KI3_STOCK=1` mode of `testkwin.sh` (stock config) with a scenario for (a)-(d) and a sweep of
    the existing ones.
 5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
