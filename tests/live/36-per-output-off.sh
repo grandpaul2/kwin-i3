@@ -14,6 +14,7 @@ peroutput() {   # set Plasma's setting as System Settings does, and wait for KWi
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
 _peroutput_is() { [[ "$(kjs 'log(options.perOutputVirtualDesktops)')" == "$1" ]]; }
 shows() { [[ "$(kjs "log(workspace.desktops.indexOf(workspace.currentDesktopForScreen(workspace.screens[$1])) + 1)")" == "$2" ]]; }
+: > "$KI3_TMP/notify.out"                  # there before the first poll reads it
 "$root/tools/fakenotify.py" > "$KI3_TMP/notify.out" 2>&1 &
 poll grep -q READY "$KI3_TMP/notify.out"
 check "the test KWin has it off"            _peroutput_is false

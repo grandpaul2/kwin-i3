@@ -22,7 +22,10 @@ root=$(cd "$here_live/../.." && pwd)
 passed=0; failed=0
 WAIT=${KI3_WAIT:-5}                     # seconds any one wait may take
 
-mark() { wc -l < "$KI3_LOG" 2>/dev/null || echo 0; }
+# Before the sink's first line there is no log: 0. The braces silence the redirect's own error,
+# which a 2>/dev/null after it comes too late for (it printed after the tally: testkwin.sh's
+# stderr filter holds it until the end).
+mark() { { wc -l < "$KI3_LOG"; } 2>/dev/null || echo 0; }
 after() { tail -n +"$((${1:-0} + 1))" "$KI3_LOG" 2>/dev/null; }
 
 # poll <cmd...>: retry cmd every 0.05 s for up to $WAIT seconds.

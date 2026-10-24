@@ -9,6 +9,7 @@ keys_of() { kga shortcutKeys as 4 "$1" "$2" x "$2"; }
 setk() { local c=$1 a=$2; shift 2; kga setForeignShortcutKeys 'asa(ai)' 4 "$c" "$a" x "$a" "$@" >/dev/null; }
 notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
 notes_are() { [[ $(notes) == "$1" ]]; }
+: > "$KI3_TMP/notify.out"                  # there before the first poll reads it
 "$root/tools/fakenotify.py" > "$KI3_TMP/notify.out" 2>&1 &
 poll grep -q READY "$KI3_TMP/notify.out"
 
