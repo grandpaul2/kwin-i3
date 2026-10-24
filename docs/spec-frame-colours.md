@@ -2,14 +2,15 @@
 
 Asked by Paul, 2026-10-24: "make the outline highlight of floating windows a different colour,
 like green instead of blue, so they were easy to tell apart". Status: **decided by Paul, 2026-10-24
-(1: the green, unfocused stays grey; 2: keys; 3: trap accepted). **Built 2026-10-24**
-(`plugin/frame.cpp`, `54-frame.sh` section 2b, 53 checks; the three faults below each went red).
-Next: a second agent reviews the code and this spec; then Paul decides about deployment.
-Not live.** An addition to `docs/spec-decoration.md`
+(1: the green, unfocused stays grey; 2: keys; 3: trap accepted). Built 2026-10-24
+(`plugin/frame.cpp`, `54-frame.sh` section 2b; the three faults below each went red). Reviewed
+(second agent, `docs/review-frame-colours-2026-10-24.md`: no must-fix; its should-fix, an alpha
+value in a key breaking the opaque promise, is applied). Awaiting Paul's decision about
+deployment. Not live.** An addition to `docs/spec-decoration.md`
 (kwini3frame); i3 itself has no floating colour (its `client.*` classes are focused, unfocused,
 focused-inactive, urgent, placeholder), so this is a deliberate addition, not a port.
 
-Sources: `plugin/frame.cpp` (53 lines), `plugin/hold.cpp` (the config pattern), KDecoration3
+Sources: `plugin/frame.cpp` (53 lines before the change), `plugin/hold.cpp` (the config pattern), KDecoration3
 `decoratedwindow.h` (installed headers), `tests/live/54-frame.sh`, `tools/plugin-install.sh`.
 
 ## Today
@@ -56,7 +57,8 @@ colours. Four colours, active and inactive for each:
 
 - `plugin/frame.cpp`: four `QColor` members read from config (`loadConfig()`, `KConfigWatcher`
   on kwinrc, group `kwin-i3-frame`, `readEntry` with the defaults; an unparsable value falls
-  back to the default). `paint` picks by `isActive()` and `isKeepAbove()`. `init` connects
+  back to the default; an alpha channel is dropped, since the decoration is declared opaque:
+  review finding 1). `paint` picks by `isActive()` and `isKeepAbove()`. `init` connects
   `keepAboveChanged` to `update()` beside `activeChanged`. `plugin/CMakeLists.txt`: link
   `KF6::ConfigCore` for the decoration as the other two plugins do (`:26, :32`).
 - `README.md`, Configuration: four rows for the keys, with the trap in the meaning column.
@@ -84,9 +86,14 @@ frame through kwini3mouse, Breeze as the fallback, `tools/frame-guard.sh`.
 - `Floating Toggle` on `b`: its corner pixel turns floating-active green (`76,153,90`); `a`
   stays inactive grey. Focus `a`: `b`'s corner is inactive grey, `a`'s active blue. Toggle `b`
   back and focus it: active blue again.
-- Config: `kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive
-  '#ff0000'`, then an unfocused floating window's corner is `255,0,0` (this also proves the
-  fourth key does something with its default equal to the tiled grey); reset the key.
+- Config: `FloatingInactive` set to `#ff0000`, then an unfocused floating window's corner is
+  `255,0,0` (this also proves the fourth key does something with its default equal to the
+  tiled grey); deleted, grey again; `#80ff0000` paints opaque red; `notacolour` gives the
+  default. The write is a plain `kwriteconfig6` and the test sends the change signal itself
+  (`gdbus emit`, the same signal on the same path): `kwriteconfig6 --notify` exits right after
+  sending and under load its signal is sometimes lost (measured 2026-10-24: 1 of 100 on a
+  private bus under 8 busy loops; the "key deleted" check failed once that way under the full
+  suite's 23 KWins and never alone). The watcher checks no sender.
 - The signal alone: keep-above set by hand on a tiled, active window (`w.keepAbove = true`
   from a script) turns its frame green with no move; cleared, blue again. Found at build time:
   a floating toggle also resizes the window, and KWin repaints the decoration for that, so fault
@@ -98,5 +105,5 @@ frame through kwini3mouse, Breeze as the fallback, `tools/frame-guard.sh`.
 
 ## Order
 
-Decide (1-3) → second agent reviews this spec (short) → change → `make test` (54-frame among
-them) → review of the change → Paul says go → `make plugin-install`.
+Decided → built → `make test` → reviewed (code and spec together, Paul's choice) → Paul says go
+→ `make plugin-install`.

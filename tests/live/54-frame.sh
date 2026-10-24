@@ -82,10 +82,22 @@ check "floating b, active: green"           poll corner_is b $FLOAT_ACTIVE
 check "a, tiled and inactive: grey"         pixel_is 0 0 $INACTIVE
 activate a
 check "b unfocused: grey, as i3"            poll corner_is b $INACTIVE
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive '#ff0000'
+# The colour keys. The write is plain and the change signal is sent by hand (gdbus, the same
+# signal on the same path kwriteconfig6 --notify sends): kwriteconfig6 exits right after sending
+# and under load its signal is sometimes lost (1 of 100 on a private bus with 8 busy loops,
+# 2026-10-24; the full suite is 23 KWins). The watcher does not check the sender.
+notify_frame() { gdbus emit --session --object-path /kwinrc --signal org.kde.kconfig.notify.ConfigChanged "{'kwin-i3-frame': [b'$1']}"; }
+frame_set() { kwriteconfig6 --file kwinrc --group kwin-i3-frame --key "$1" "$2"; notify_frame "$1"; }
+frame_del() { kwriteconfig6 --file kwinrc --group kwin-i3-frame --key "$1" --delete; notify_frame "$1"; }
+frame_set FloatingInactive '#ff0000'
 check "FloatingInactive key, live: red"     poll corner_is b 255,0,0
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-frame --key FloatingInactive --delete
+frame_del FloatingInactive
 check "key deleted: the default, grey"      poll corner_is b $INACTIVE
+frame_set FloatingInactive '#80ff0000'
+check "an alpha value: painted opaque"      poll corner_is b 255,0,0
+frame_set FloatingInactive notacolour
+check "not a colour: the default"           poll corner_is b $INACTIVE
+frame_del FloatingInactive
 activate b
 key "Floating Toggle"
 check "b tiles again"                       wait_tree 1 "H[a b*]"

@@ -80,7 +80,9 @@ window once.
 All in `~/.config/kwinrc`. The script's keys are read at load (reload after a change); the
 plugins' keys are watched: **change them with `kwriteconfig6 --notify`, and nothing else** (a
 plain write followed by KWin's `reconfigure` leaves the plugin on the old value and the watcher
-then ignores a later notification of the same value, seen 2026-10-23).
+then ignores a later notification of the same value, seen 2026-10-23). Under heavy load
+`kwriteconfig6` can exit before its notification is out (1 in 100 measured, 2026-10-24): if a
+change did not take, write it again.
 
 | group and key | default | meaning |
 |---|---|---|
@@ -95,7 +97,7 @@ then ignores a later notification of the same value, seen 2026-10-23).
 | `[kwin-i3-frame] Active` | `#4c7899` | the frame's colour on the active tiled window |
 | `[kwin-i3-frame] Inactive` | `#333333` | on an inactive tiled window |
 | `[kwin-i3-frame] FloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
-| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window: a window you keep above yourself paints the same |
+| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window: a window you keep above yourself paints the same, and a floating window whose keep-above you clear paints as tiled |
 | `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
 | `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |
 

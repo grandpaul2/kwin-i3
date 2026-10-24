@@ -25,10 +25,16 @@ static const QColor s_floatingActive(0x4c, 0x99, 0x5a);
 static const QColor s_floatingInactive(0x33, 0x33, 0x33);
 
 // A key's colour, or its default when the key is missing or not a colour QColor can read.
+// Opaque whatever the key says (#aarrggbb, "transparent"): the decoration is declared opaque
+// (setOpaque below), so a translucent frame would be composed over nothing (review 2026-10-24).
 static QColor colourOf(const KConfigGroup &group, const char *key, const QColor &def)
 {
-    const QColor c(group.readEntry(key, def.name()));
-    return c.isValid() ? c : def;
+    QColor c(group.readEntry(key, def.name()));
+    if (!c.isValid()) {
+        return def;
+    }
+    c.setAlpha(255);
+    return c;
 }
 
 Frame::Frame(QObject *parent, const QVariantList &args)
