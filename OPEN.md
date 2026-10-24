@@ -11,20 +11,11 @@ Last reconciled: **2026-10-24**.
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". Suggested order: 7, 4, 5 (1, 2 and 3 are done; Paul, 2026-10-24:
-convenience and accessibility before the README pass).
+`docs/plan.md`, "Scope". Suggested order: 4, 8, 5 (1, 2, 3 and 7 are done; 7, the settings page, live
+2026-10-24: `docs/spec-settings-page.md`).
 
 ## Open
 
-7. **A settings page of its own, and a tidier form** (Paul, 2026-10-24: convenience and
-   accessibility before the README pass). kwin-i3's own entry in System Settings > Window
-   Management, with its keys on a sub-page, and the script's form tidied to match.
-   Built and tested in the test KWin (`docs/spec-settings-page.md`, "The page is built"; form,
-   page, `make kcm-install`, `37-settings-page.sh`, code-reviewed). Installed on Paul's desktop 2026-10-24
-   (`make kcm-install`). After the first login it was missing from a System Settings that KWin
-   had launched (KWin's drop-in hid the session path); the drop-in now names the page's directory
-   too, from the next login. Next: Paul's look after that login, by hand for what has no
-   automated test (the colour buttons, Reset, clearing a key).
 8. **Apps KWin launches see the plugins' directory**, the frame decoration included: KWin's
    drop-in puts it on KWin's `QT_PLUGIN_PATH`, and an app on a global shortcut inherits KWin's
    environment. A System Settings started that way could load a stale frame after a kdecoration
