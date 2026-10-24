@@ -133,8 +133,8 @@ tools/             testkwin.sh, logsink.py, testclient (below)
 | Meta+Shift+Space | floating toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Space | focus mode_toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of 10 % as in the old config |
-| Meta+F | fullscreen | KWin's own; the window returns to its tile (verified). As in i3 (per-output fullscreen): focus and move from a fullscreen window go to the neighbouring monitor; other windows on that workspace can't be focused while it is fullscreen: the keys don't, a new window opens behind it without focus (KWin's activation is handed back; its own dialog excepted) and Meta+N onto that workspace focuses it. The mouse is not blocked. A window opened or sent there while it is fullscreen is in the tree and joins the tiles when fullscreen ends (`docs/spec-fullscreen-tree.md`, 2026-10-24) |
-| Meta+Shift+Q | kill | KWin's own |
+| Meta+F | fullscreen | kwin-i3's key, running KWin's own action (since 2026-10-24; `docs/spec-own-keys.md`); the window returns to its tile (verified). As in i3 (per-output fullscreen): focus and move from a fullscreen window go to the neighbouring monitor; other windows on that workspace can't be focused while it is fullscreen: the keys don't, a new window opens behind it without focus (KWin's activation is handed back; its own dialog excepted) and Meta+N onto that workspace focuses it. The mouse is not blocked. A window opened or sent there while it is fullscreen is in the tree and joins the tiles when fullscreen ends (`docs/spec-fullscreen-tree.md`, 2026-10-24) |
+| Meta+Shift+Q | kill | kwin-i3's key, running KWin's own action (since 2026-10-24) |
 | Meta+Ctrl+Shift+Q | **release** | safety valve: unmanage every window, restore KWin's default tiles, stop acting until reload |
 
 **Left out, Paul's decisions (2026-10-21):** tabbed and stacked ("I don't use tabbed"),

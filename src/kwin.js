@@ -940,6 +940,10 @@ var KI3 = (function () {
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
+        // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
+        // not; a stock Plasma binds neither key (docs/spec-own-keys.md).
+        "Fullscreen": function () { invoke("Window Fullscreen"); },
+        "Close": function () { invoke("Window Close"); },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt.
         "Shrink Width": function (c) { model.resize(c, "width", -step()); },
         "Grow Width": function (c) { model.resize(c, "width", step()); },
@@ -997,6 +1001,7 @@ var KI3 = (function () {
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
         "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
+        "Fullscreen": ["Meta+F"], "Close": ["Meta+Shift+Q"],
         "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],
         "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
         "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
@@ -1010,9 +1015,15 @@ var KI3 = (function () {
         "Reload Settings": ["Meta+Shift+C"],
     };
 
+    // KWin's own actions run on KWin's active window, so not through act(): its focus request
+    // would activate kwin-i3's focused window before KWin's queued action ran, and a window
+    // kwin-i3 doesn't manage would lose the key to it (closed the wrong one; 33-own-keys.sh).
+    var KWIN_OWN = { "Fullscreen": true, "Close": true };
+
     function registerKeys() {
         Object.keys(KEYS).forEach(function (name) {
-            var fn = act(name, actions[name]);
+            var fn = KWIN_OWN[name] ? guard(name, function () { actions[name](); log("ACTION " + name); })
+                                    : act(name, actions[name]);
             KEYS[name].forEach(function (key, i) {
                 var action = "kwin-i3 " + name + (i ? " (" + key.split("+").pop() + ")" : "");
                 registerShortcut(action, "kwin-i3: " + name.toLowerCase() + (i ? " (" + key + ")" : ""), key, fn);

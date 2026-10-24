@@ -33,8 +33,8 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+Shift+Space | floating toggle |
 | Meta+Space | focus mode toggle (tiled / floating) |
 | Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize by 10 % (i3's resize mode, without the mode: a script can't have mode-only keys) |
-| Meta+F | fullscreen (KWin's own; per output, as i3) |
-| Meta+Shift+Q | close (KWin's own) |
+| Meta+F | fullscreen (per output, as i3; runs KWin's own action, on any window) |
+| Meta+Shift+Q | close (KWin's own action, on any window; Alt+F4 still works) |
 | Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
 | Meta+Ctrl+Shift+Q | **release**: hand every window back to KWin and stop, the safety valve |
 

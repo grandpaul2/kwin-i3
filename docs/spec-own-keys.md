@@ -1,6 +1,6 @@
 # Spec: kwin-i3's own fullscreen and close keys (OPEN.md item 4 (d))
 
-Draft 2026-10-24, waiting on Paul's go. Part of "no dependence on Paul's dotfiles".
+Paul's go 2026-10-24; built the same day. Part of "no dependence on Paul's dotfiles".
 
 ## The gap
 
@@ -27,9 +27,11 @@ anywhere. Other components are checked by the (c) probe, in the stock test mode.
      Acting on kwin-i3's focused con would miss those.
    - `invokeShortcut` works on an action with no key: tests 46 and 51 already rely on it in the
      test KWin, where "Window Fullscreen" has none.
-   They go through `act()` like the other keys, for the guard and the `ACTION` log line. The
-   rescheduling they cause is harmless: reconcile is idempotent, and fullscreen is handled on
-   `fullScreenChanged` as it is now.
+   They do **not** go through `act()`, only through `guard()` and the `ACTION` log line. Found by
+   the new scenario: `act()` asks for kwin-i3's focus afterwards, the flush activated kwin-i3's
+   focused window before KWin's queued action ran (`invokeShortcut` is asynchronous), and
+   Meta+Shift+Q on a window kwin-i3 doesn't manage closed a tiled one instead. Nothing needs
+   rescheduling: fullscreen is handled on `fullScreenChanged`, a close on `windowRemoved`.
 3. Alt+F4 stays KWin's, untouched.
 
 ## Paul's desktop (the migration)
@@ -42,13 +44,13 @@ whoever holds it, silently. So in the dotfiles:
 - `README.md` rows 95-96 (the "Plasma" table): the two keys are kwin-i3's now, not
   `setForeignShortcutKeys`. The hotkeys cheat sheet is unchanged (same keys, same meaning).
 
-**First, the premise to check** in the test KWin (it has its own kglobalaccel), before any of
-the above: when kwin-i3 registers a key another action holds, does kwin-i3's action get no key
-and *keep* none (written to `kglobalshortcutsrc`) after the other one lets go? If so, the
-order matters on the live desktop: clear KWin's two bindings first, then reload kwin-i3, then
-check with `shortcutKeys` that "kwin-i3 Fullscreen" / "kwin-i3 Close" have their keys. If they
-still have none, set them once with `setForeignShortcutKeys`. The probe decides; the deploy
-steps go to Paul with its result.
+**The premise, probed** in the test KWin (2026-10-24): a script that registers a key KWin's
+action already holds is *given* it too: `shortcutKeys` reports the key on both. A press runs only
+the first holder's action, KWin's, and the script's does nothing. Cleared from KWin's action,
+the key runs the script's at once, in the same session, and it stays after a reload. So the order
+on the live desktop doesn't matter; the smooth one: reload kwin-i3 (KWin's still wins, nothing
+changes), then clear KWin's two bindings. **For (c)**: `shortcutKeys` can't tell which keys
+kwin-i3 really got; the load-time check has to compare against the other holders.
 
 ## Docs
 
