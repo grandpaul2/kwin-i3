@@ -115,6 +115,7 @@ change did not take, write it again.
 | `[Script-kwin-i3] resizeStep` | `10` | % per Meta+Ctrl+arrow, 1-50 (i3's `resize ... 10 ppt`) |
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
+| `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |
 | `[Script-kwin-i3] debugLog` | `false` | log every action and tree over D-Bus to `tools/logsink.py` (the tests' log); off, an in-memory log feeds `Dump State` |
 | `[kwin-i3-hold] Enabled` | `true` | the atomic-layout effect's kill switch |
 | `[kwin-i3-hold] TimeoutMs` | `100` | how long the old layout may be held for a slow window (Sway: 200) |

@@ -22,7 +22,7 @@ function loadSettings(conf) {
     return { S, logs, store, debug: ctx.DEBUG_LOG };
 }
 
-const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", choice: "String" };
+const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String" };
 
 function xmlEntries() {
     const out = {};
@@ -135,4 +135,13 @@ test("a choice: one of the list, else the default", () => {
     assert.strictEqual(loadSettings({ focusWrapping: "force" }).S.get("focusWrapping"), "force");
     assert.strictEqual(loadSettings({ focusWrapping: "sometimes" }).S.get("focusWrapping"), "yes");
     assert.strictEqual(loadSettings({}).S.get("defaultOrientation"), "auto");
+});
+
+test("workspaceOutputs: N=OUTPUT pairs; a bad entry is skipped and logged, the rest apply", () => {
+    assert.deepStrictEqual(loadSettings({}).S.get("workspaceOutputs"), {});
+    assert.deepStrictEqual(loadSettings({ workspaceOutputs: "1=DP-4, 2 = DP-6,10=HDMI-A-1" }).S.get("workspaceOutputs"),
+        { 1: "DP-4", 2: "DP-6", 10: "HDMI-A-1" });
+    const { S, logs } = loadSettings({ workspaceOutputs: "1=DP-4, 11=DP-6, two=DP-6, 3=, 4=DP 6" });
+    assert.deepStrictEqual(S.get("workspaceOutputs"), { 1: "DP-4" });
+    assert.strictEqual(logs.filter((l) => /WARN setting workspaceOutputs/.test(l)).length, 4, logs.join("\n"));
 });

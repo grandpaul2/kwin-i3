@@ -37,6 +37,7 @@ var Settings = (function () {
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
+        workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
     };
     var values = {};
 
@@ -50,6 +51,19 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
+        // i3's "workspace N output X": { N: output name }. A malformed entry is skipped (and
+        // logged), the rest still apply.
+        if (type === "outputs") {
+            var out = {};
+            text.split(",").forEach(function (e) {
+                e = e.trim();
+                if (!e) return;
+                var m = /^([0-9]+)\s*=\s*(\S+)$/.exec(e);
+                if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2];
+                else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT, N 1-10)");
+            });
+            return out;
+        }
         if (type === "list")
             return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
         if (type === "bool") {
@@ -1002,6 +1016,20 @@ var Workspaces = (function () {
     function setHome(num, screen) { home[num] = screen.name; }
     function hasHome(num) { return !!home[num]; }
 
+    // i3's "workspace N output X" (workspaceOutputs; docs/spec-settings.md): the output a
+    // workspace is assigned to, by name, or null. Applied where a home is first claimed, so a
+    // changed setting moves no workspace that exists (i3 assigns at creation).
+    function assigned(num) { return Settings.get("workspaceOutputs")[num] || null; }
+    function assignedScreen(num) { var a = assigned(num); return a ? screenNamed(a) : null; }
+    // A workspace's first home: its assigned output (present or not: a home is kept by name),
+    // else the screen it is used on.
+    function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
+    // A monitor appeared: the workspaces assigned to it live there again (i3 moves them to it).
+    function claimAssigned(name) {
+        var a = Settings.get("workspaceOutputs");
+        Object.keys(a).forEach(function (n) { if (a[n] === name && deskOf(+n)) home[n] = name; });
+    }
+
     // The nearest screen in a direction (i3ws screenToward; i3's get_output_next, CLOSEST_OUTPUT).
     function screenToward(s, dir) {
         var a = s.geometry, best = null, bestDist = Infinity, all = workspace.screens;
@@ -1017,20 +1045,31 @@ var Workspaces = (function () {
         return best;
     }
 
-    // i3's numbering at login: workspace 1 on the primary screen, 2 on the next, ... (KWin lists
-    // the primary first). i3ws did this on every load, so reloading it mid-session reshuffled the
-    // monitors (2026-10-21); kwin-i3 does it only when it starts with no windows (a login).
+    // i3's numbering at login: each screen, primary first (KWin lists it first), shows the
+    // lowest-numbered workspace that is free and not assigned to another output
+    // (create_workspace_on_output); with no assignments, 1 on the primary, 2 on the next, ...
+    // Assigned workspaces get their homes first. i3ws did this on every load, so reloading it
+    // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
+    // no windows (a login).
     function numberScreens() {
-        var s = workspace.screens;
-        for (var i = 0; i < s.length && i < workspace.desktops.length; i++) {
-            workspace.setCurrentDesktopForScreen(workspace.desktops[i], s[i]);
-            home[i + 1] = s[i].name;
+        var s = workspace.screens, n = workspace.desktops.length, taken = {};
+        var a = Settings.get("workspaceOutputs");
+        Object.keys(a).forEach(function (k) { if (+k <= n) home[k] = a[k]; });
+        for (var i = 0; i < s.length; i++) {
+            for (var num = 1; num <= n; num++) {
+                if (taken[num] || (a[num] && a[num] !== s[i].name)) continue;
+                taken[num] = true;
+                workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
+                home[num] = s[i].name;
+                break;
+            }
         }
     }
 
     return {
         deskOf: deskOf, deskNum: deskNum, showing: showing, outputOf: outputOf,
         setHome: setHome, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
+        assigned: assigned, assignedScreen: assignedScreen, claimHome: claimHome, claimAssigned: claimAssigned,
         homes: function () { return home; },
     };
 })();
@@ -1102,7 +1141,7 @@ var KI3 = (function () {
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
         if (num < 1) return null;
-        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, w.output);
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, w.output);
         return wsModel(num);
     }
 
@@ -1111,7 +1150,7 @@ var KI3 = (function () {
         var t = Workspaces.screenToward(outputOf(ws), dir);
         if (!t) return null;
         var num = deskNum(workspace.currentDesktopForScreen(t));
-        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, t);
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, t);
         return wsModel(num);
     }
 
@@ -1936,10 +1975,11 @@ var KI3 = (function () {
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
-            var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;
+            // An empty one opens on its assigned monitor if that is here, else the current one.
+            var s = occupied ? Workspaces.outputOf(n) : Workspaces.assignedScreen(n) || workspace.activeScreen;
             // An occupied workspace keeps its home even while that monitor is away, or it would
             // never go back (code review: reproduced with Meta+2 during an unplug).
-            if (!occupied) Workspaces.setHome(n, s);
+            if (!occupied) Workspaces.claimHome(n, s);
             workspace.setCurrentDesktopForScreen(deskOf(n), s);
         }
         var ws = wsModel(n);
@@ -1959,7 +1999,7 @@ var KI3 = (function () {
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
-            if (!occupied) Workspaces.setHome(n, outputOf(Tree.wsOf(con)));
+            if (!occupied) Workspaces.claimHome(n, outputOf(Tree.wsOf(con)));
         }
         model.moveToWorkspace(con, wsModel(n));
     }
@@ -2247,7 +2287,8 @@ var KI3 = (function () {
     function unusedWorkspace(s) {
         for (var n = 1; n <= NAMES.length; n++) {
             var m = model.workspaces[n], h = Workspaces.homes()[n];
-            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name)) continue;
+            var a = Workspaces.assigned(n);
+            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name) || (a && a !== s.name)) continue;
             Workspaces.setHome(n, s);
             return n;
         }
@@ -2259,6 +2300,7 @@ var KI3 = (function () {
     function screensChanged() {
         var names = workspace.screens.map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
+        names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });
         if (lost.length && !beforeLoss) beforeLoss = JSON.parse(JSON.stringify(lastShown));
         if (beforeLoss) {
             var allBack = Object.keys(beforeLoss).every(function (n) { return names.indexOf(n) >= 0; });

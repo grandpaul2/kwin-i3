@@ -19,6 +19,7 @@ var Settings = (function () {
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
+        workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
     };
     var values = {};
 
@@ -32,6 +33,19 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
+        // i3's "workspace N output X": { N: output name }. A malformed entry is skipped (and
+        // logged), the rest still apply.
+        if (type === "outputs") {
+            var out = {};
+            text.split(",").forEach(function (e) {
+                e = e.trim();
+                if (!e) return;
+                var m = /^([0-9]+)\s*=\s*(\S+)$/.exec(e);
+                if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2];
+                else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT, N 1-10)");
+            });
+            return out;
+        }
         if (type === "list")
             return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
         if (type === "bool") {

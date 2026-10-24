@@ -34,5 +34,8 @@
     <entry name="focusWrapping" type="String">
       <default>yes</default>
     </entry>
+    <entry name="workspaceOutputs" type="String">
+      <default></default>
+    </entry>
   </group>
 </kcfg>

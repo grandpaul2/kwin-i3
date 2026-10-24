@@ -36,6 +36,20 @@ var Workspaces = (function () {
     function setHome(num, screen) { home[num] = screen.name; }
     function hasHome(num) { return !!home[num]; }
 
+    // i3's "workspace N output X" (workspaceOutputs; docs/spec-settings.md): the output a
+    // workspace is assigned to, by name, or null. Applied where a home is first claimed, so a
+    // changed setting moves no workspace that exists (i3 assigns at creation).
+    function assigned(num) { return Settings.get("workspaceOutputs")[num] || null; }
+    function assignedScreen(num) { var a = assigned(num); return a ? screenNamed(a) : null; }
+    // A workspace's first home: its assigned output (present or not: a home is kept by name),
+    // else the screen it is used on.
+    function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
+    // A monitor appeared: the workspaces assigned to it live there again (i3 moves them to it).
+    function claimAssigned(name) {
+        var a = Settings.get("workspaceOutputs");
+        Object.keys(a).forEach(function (n) { if (a[n] === name && deskOf(+n)) home[n] = name; });
+    }
+
     // The nearest screen in a direction (i3ws screenToward; i3's get_output_next, CLOSEST_OUTPUT).
     function screenToward(s, dir) {
         var a = s.geometry, best = null, bestDist = Infinity, all = workspace.screens;
@@ -51,20 +65,31 @@ var Workspaces = (function () {
         return best;
     }
 
-    // i3's numbering at login: workspace 1 on the primary screen, 2 on the next, ... (KWin lists
-    // the primary first). i3ws did this on every load, so reloading it mid-session reshuffled the
-    // monitors (2026-10-21); kwin-i3 does it only when it starts with no windows (a login).
+    // i3's numbering at login: each screen, primary first (KWin lists it first), shows the
+    // lowest-numbered workspace that is free and not assigned to another output
+    // (create_workspace_on_output); with no assignments, 1 on the primary, 2 on the next, ...
+    // Assigned workspaces get their homes first. i3ws did this on every load, so reloading it
+    // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
+    // no windows (a login).
     function numberScreens() {
-        var s = workspace.screens;
-        for (var i = 0; i < s.length && i < workspace.desktops.length; i++) {
-            workspace.setCurrentDesktopForScreen(workspace.desktops[i], s[i]);
-            home[i + 1] = s[i].name;
+        var s = workspace.screens, n = workspace.desktops.length, taken = {};
+        var a = Settings.get("workspaceOutputs");
+        Object.keys(a).forEach(function (k) { if (+k <= n) home[k] = a[k]; });
+        for (var i = 0; i < s.length; i++) {
+            for (var num = 1; num <= n; num++) {
+                if (taken[num] || (a[num] && a[num] !== s[i].name)) continue;
+                taken[num] = true;
+                workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
+                home[num] = s[i].name;
+                break;
+            }
         }
     }
 
     return {
         deskOf: deskOf, deskNum: deskNum, showing: showing, outputOf: outputOf,
         setHome: setHome, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
+        assigned: assigned, assignedScreen: assignedScreen, claimHome: claimHome, claimAssigned: claimAssigned,
         homes: function () { return home; },
     };
 })();

@@ -157,6 +157,12 @@ workspace number or a malformed pair is logged and ignored.
   and not assigned elsewhere (fact 7).
 - A workspace first used (a window sent there, Meta+N) with an assignment goes to its home if
   present, else stays on the current screen meanwhile (today's policy for a gone home).
+  As built: Meta+N does exactly that; a window *sent* (Meta+Shift+N) to an empty workspace whose
+  assigned monitor is away lands, hidden, on the first monitor (`outputOf`'s fallback for a home
+  that is away and shown nowhere), not the current one. Only with a monitor unplugged and a
+  workspace never used; Meta+N then shows it on the current monitor.
+- A monitor that appears: the workspaces assigned to it get it as their home (`claimAssigned`),
+  and the existing return logic does the rest.
 
 ## The form
 

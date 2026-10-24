@@ -22,7 +22,7 @@ if live == os.path.realpath("package"):
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
-F, S = "32-fullscreen-open.sh", "25-settings.sh"
+F, S, W = "32-fullscreen-open.sh", "25-settings.sh", "49-ws-outputs.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -49,7 +49,7 @@ muts = [
  (M, "src/kwin.js", "pointer doesn't follow", "        if (from && from !== s) invoke(\"MoveMouseToFocus\");", ""),
  (M, "src/kwin.js", "no login numbering", "        if (login) Workspaces.numberScreens();", ""),
  (M, "src/workspaces.js", "a gone home is forgotten", "        if (!home[num] && s) home[num] = s.name;\n        return s || workspace.screens[0];", "        var f = s || workspace.screens[0];\n        home[num] = f.name;\n        return f;"),
- (M, "src/kwin.js", "empty workspace opens at its old home", "            var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;", "            var s = Workspaces.outputOf(n);"),
+ (M, "src/kwin.js", "empty workspace opens at its old home", "            var s = occupied ? Workspaces.outputOf(n) : Workspaces.assignedScreen(n) || workspace.activeScreen;", "            var s = Workspaces.outputOf(n);"),
  (I, "src/kwin.js", "no read-back after a border drag", "            if (kind === \"resize\" && con.type !== \"floating\") readBack(ws);", ""),
  (I, "src/kwin.js", "resize condition inverted", "            if (kind === \"resize\" && con.type !== \"floating\") readBack(ws);", "            if (kind !== \"resize\" && con.type !== \"floating\") readBack(ws);"),
  (I, "src/kwin.js", "dragged out of a tile doesn't float", "            if (!tile && dragging === \"move\") {", "            if (false) {"),
@@ -93,8 +93,14 @@ muts = [
  (S, "src/kwin.js", "focus wrapping not passed to the model", "model.focusDir(DIRS[d], Settings.get(\"focusWrapping\"));", "model.focusDir(DIRS[d]);"),
  (S, "src/kwin.js", "default orientation ignored", "return model.ws(num, o === \"horizontal\" ? \"h\" : o === \"vertical\" ? \"v\" : g.height > g.width ? \"v\" : \"h\");", "return model.ws(num, g.height > g.width ? \"v\" : \"h\");"),
  (S, "src/settings.js", "every key reported changed on every reload", "            if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);", "            changed.push(key);"),
+ (W, "src/workspaces.js", "a first home ignores the assignment", "    function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }", "    function claimHome(num, screen) { home[num] = screen.name; }"),
+ (W, "src/workspaces.js", "login numbering ignores assignments", "                if (taken[num] || (a[num] && a[num] !== s[i].name)) continue;", "                if (taken[num]) continue;"),
+ (W, "src/kwin.js", "an empty assigned workspace opens on the current monitor", "Workspaces.assignedScreen(n) || workspace.activeScreen;", "workspace.activeScreen;"),
+ (W, "src/kwin.js", "a monitor that appears doesn't take its workspaces", "        names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });\n", ""),
+ (W, "src/kwin.js", "a reload re-applies assignments to existing workspaces", "        log(\"SETTINGS \" + changed.join(\" \"));\n", "        log(\"SETTINGS \" + changed.join(\" \"));\n        if (changed.indexOf(\"workspaceOutputs\") >= 0) { Workspaces.numberScreens(); }\n"),
+ (W, "src/kwin.js", "a returning monitor's spare workspace may be assigned elsewhere", " || (a && a !== s.name)) continue;", ") continue;"),
 ]
-ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S]
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W]
 # Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a

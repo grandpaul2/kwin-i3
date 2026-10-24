@@ -65,7 +65,7 @@ var KI3 = (function () {
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
         if (num < 1) return null;
-        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, w.output);
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, w.output);
         return wsModel(num);
     }
 
@@ -74,7 +74,7 @@ var KI3 = (function () {
         var t = Workspaces.screenToward(outputOf(ws), dir);
         if (!t) return null;
         var num = deskNum(workspace.currentDesktopForScreen(t));
-        if (!Workspaces.hasHome(num)) Workspaces.setHome(num, t);
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, t);
         return wsModel(num);
     }
 
@@ -899,10 +899,11 @@ var KI3 = (function () {
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
-            var s = occupied ? Workspaces.outputOf(n) : workspace.activeScreen;
+            // An empty one opens on its assigned monitor if that is here, else the current one.
+            var s = occupied ? Workspaces.outputOf(n) : Workspaces.assignedScreen(n) || workspace.activeScreen;
             // An occupied workspace keeps its home even while that monitor is away, or it would
             // never go back (code review: reproduced with Meta+2 during an unplug).
-            if (!occupied) Workspaces.setHome(n, s);
+            if (!occupied) Workspaces.claimHome(n, s);
             workspace.setCurrentDesktopForScreen(deskOf(n), s);
         }
         var ws = wsModel(n);
@@ -922,7 +923,7 @@ var KI3 = (function () {
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
-            if (!occupied) Workspaces.setHome(n, outputOf(Tree.wsOf(con)));
+            if (!occupied) Workspaces.claimHome(n, outputOf(Tree.wsOf(con)));
         }
         model.moveToWorkspace(con, wsModel(n));
     }
@@ -1210,7 +1211,8 @@ var KI3 = (function () {
     function unusedWorkspace(s) {
         for (var n = 1; n <= NAMES.length; n++) {
             var m = model.workspaces[n], h = Workspaces.homes()[n];
-            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name)) continue;
+            var a = Workspaces.assigned(n);
+            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name) || (a && a !== s.name)) continue;
             Workspaces.setHome(n, s);
             return n;
         }
@@ -1222,6 +1224,7 @@ var KI3 = (function () {
     function screensChanged() {
         var names = workspace.screens.map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
+        names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });
         if (lost.length && !beforeLoss) beforeLoss = JSON.parse(JSON.stringify(lastShown));
         if (beforeLoss) {
             var allBack = Object.keys(beforeLoss).every(function (n) { return names.indexOf(n) >= 0; });

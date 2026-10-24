@@ -114,6 +114,32 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="workspacesGroup">
+     <property name="title">
+      <string>Workspaces</string>
+     </property>
+     <layout class="QFormLayout" name="workspacesLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="workspaceOutputsLabel">
+        <property name="text">
+         <string>Workspace on monitor:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="kcfg_workspaceOutputs">
+        <property name="placeholderText">
+         <string>1=DP-4, 2=DP-6</string>
+        </property>
+        <property name="toolTip">
+         <string>i3's "workspace N output X": a workspace lives on that monitor, by its connector name (kscreen-doctor -o lists them). Applies at login, when the monitor appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary monitor, then the next free one.</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="rulesGroup">
      <property name="title">
       <string>Window rules (comma-separated)</string>
