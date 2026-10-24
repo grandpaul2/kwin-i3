@@ -4,7 +4,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-23**.
+Last reconciled: **2026-10-24**.
 
 ## Open
 
@@ -14,7 +14,10 @@ Last reconciled: **2026-10-23**.
   timeouts of 136 transactions (max 112 ms), close holds 41 kept, **1 dropped**, which fits that
   flash: the effect keeps a closed window's pixels only until its neighbours' layout change
   begins and gives up after `s_graceMs` (20 ms, `hold.cpp`); with the machine busy, kwin-i3's
-  reconcile came later. Paul: no action yet, documented. If it recurs: measure the
+  reconcile came later. Paul: no action yet, documented. By 2026-10-23 23:30 the counters read 9
+  timeouts of 198, max 211 ms, close holds 55 kept, **8 dropped**; Paul not yet asked. The
+  counters reset at 2026-10-24 ~00:20 (`make plugin-install` for the frame colours reloaded the
+  effect). If it recurs: measure the
   close-to-reconcile delay on a busy machine and lengthen the grace, or tie it to the timeout.
   **`TimeoutMs` is 200 (Sway's) live since ~06:45** (Paul: "I'd like to see it; if it doesn't
   feel slow we could just leave it"). **Every session: ask Paul** about flashes and whether 200
@@ -23,6 +26,19 @@ Last reconciled: **2026-10-23**.
   reset when KWin restarts). If 200 stays: `kset kwinrc kwin-i3-hold TimeoutMs 200` in dotfiles'
   setup.sh and the spec's "100 ms" becomes 200. Change the keys with `kwriteconfig6 --notify`
   alone (README, Configuration).
+- **Fullscreen change live since 2026-10-24 01:10** (`docs/spec-fullscreen-tree.md`): the one
+  check the headless KWin cannot run is Firefox: whether it stays fullscreen through the one-turn
+  focus hand-back when a window opens beside it. Next: ask Paul after his first fullscreen video
+  with a terminal opened beside it; if Firefox drops out of fullscreen, the pref to look at is
+  `full-screen-api.exit-on.windowRaise` (review of the change, 2026-10-24).
+- **The reload gap for floating windows** (`docs/spec-reload-keepabove.md`, 2026-10-24): after a
+  reload kwin-i3 does not record a floating window's keep-above flag as its own, so un-floating
+  leaves the window kept above (and green). Next: spec review, then the change.
+- **Capture 2026-10-23 17:43**: both monitors showed workspace 5 right after Minecraft was
+  launched from Prism Launcher (its "Please wait" splash opened on the left monitor with
+  workspace 5 as its desktop; activating a window on a desktop its monitor does not show switches
+  that monitor, the mechanism of `46-replug-fullscreen.sh`). Paul not yet asked what he saw.
+  Next: ask, then a live test.
 - **Fuzz once with the frame selected** (`KI3_FRAME=1 make fuzz`, 20 min): the spec's last step
   for kwini3frame, not yet run (a session-end start of it was wrong and was killed, 2026-10-23).
   The suite otherwise runs Breeze, whose 150 px minimum and 28 px frame the normal campaigns
