@@ -20,8 +20,9 @@ convenience and accessibility before the README pass).
    accessibility before the README pass). kwin-i3's own entry in System Settings > Window
    Management, with its keys on a sub-page, and the script's form tidied to match.
    Built and tested in the test KWin (`docs/spec-settings-page.md`, "The page is built"; form,
-   page, `make kcm-install`, `37-settings-page.sh`, code-reviewed). Next: install it on Paul's desktop (`make
-   kcm-install`, then a login) and his look at it.
+   page, `make kcm-install`, `37-settings-page.sh`, code-reviewed). Installed on Paul's desktop 2026-10-24
+   (`make kcm-install`; shows after his next login). Next: his look at it, by hand for what has
+   no automated test (the colour buttons, Reset, clearing a key).
 
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
