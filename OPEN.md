@@ -36,15 +36,13 @@ window management, with Plasma doing the rest. The scope and its reasons:
    or move (as a reload does), and a README line; then a live scenario for it.
 5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
    more than one activity, and with no plugins (the fuzzer loads them whenever they are built);
-   Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. Also `53-hold.sh` is
-   flaky under `run.sh` (2026-10-24: two failures in three runs, different checks: the kill
-   switch's `--notify` not taking, "a hold is open"; 3 of 3 green run alone, old and new build).
-   2026-10-24 again, step (e): "a hold is open" (section 13) failed ~2 in 20 solo runs with the
-   new plugin build, 0 in 9 with the old; no failure caught in a 10-run loop with the counters
-   printed. Next: find the timing it depends on (the counters at a failing run).
-   And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
-   2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
-   counters: whether it measures the effect or the loaded machine.
+   Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. 53-hold's
+   "a snapshot takes under a frame at 240 Hz" fails under the full parallel suite (2026-10-24:
+   70-112 ms in 3 of ~15 runs; 1.2 ms alone): wall-clock time with ~30 test KWins on one GPU.
+   Next: Paul's choice of (i) `# timing: alone` scenarios run by themselves after the batch,
+   (ii) unjudged under the parallel suite, (iii) CPU thread time.
+   53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
+   2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
    Unverified, seen while fixing the resize drag's late answer (2026-10-24, 51-input): a drag of
    the edge between two tiled windows changes their tiles, so its arm is dropped, and if the
    frame at the release already equals the new tile KWin sends nothing and a late answer could

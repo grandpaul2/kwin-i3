@@ -277,17 +277,20 @@ kclose m; kclose n
 check "empty yet again"                     wait_tree 1 "H[]*"
 
 # 13. Unloading the effect in the middle of a hold: nothing breaks, and it loads again.
+#     The action must change j's size: a swap of two halves only moves them, KWin sends no
+#     configure for an unchanged size, and the hold lasted ~4 ms, open to a poll by luck
+#     (2026-10-24). Toggle Split makes both 1280x360, so the slow j holds it ~1.5 s.
 hold_set TimeoutMs 2000
 client --title i --color red; client --title j --color lime --resize-delay 1.5
 check "i | j"                               wait_tree 1 "H[i j*]"
 wait_stat open False
-key "Move Left"
+key "Toggle Split"
 check "a hold is open"                      wait_stat open True
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s kwini3hold >/dev/null
 check "unloaded mid-hold"                   effect_loaded false
 sleep 1.8
-check "KWin and the windows are fine"       wait_tree 1 "H[j* i]"
-check "j is where it should be"             geom_is j "0,0 640x720"
+check "KWin and the windows are fine"       wait_tree 1 "H[V[i j*]]"
+check "j is where it should be"             geom_is j "0,360 1280x360"
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s kwini3hold >/dev/null
 check "loaded again"                        effect_loaded true
 check "counters start afresh"               _stat_is transactions 0
