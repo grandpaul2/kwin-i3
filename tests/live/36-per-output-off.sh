@@ -2,6 +2,7 @@
 # Per-output desktops off (Plasma's default), with two monitors: kwin-i3 says so, once at load
 # and once more if it becomes a problem later; never sets it (docs/spec-per-output-desktops.md).
 # peroutput: false
+# stock: own
 source "$(dirname "$0")/lib.sh"
 notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
 notes_are() { [[ $(notes) == "$1" ]]; }

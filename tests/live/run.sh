@@ -17,13 +17,20 @@ plugins=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
 skipped=()
 # "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10);
 # "# peroutput: false": with per-output desktops off (default on).
+# KI3_STOCK=1 (make live-stock, docs/spec-stock-mode.md): Plasma's stock settings, one desktop,
+# per-output on, and those two headers ignored; "# focus: mouse" gives the scenario focus follows
+# mouse, and "# stock: own" runs it as the default mode does.
 for t in "${scenarios[@]}"; do
     plugin="" desktops=$(sed -n 's/^# desktops: \([0-9]*\)$/\1/p' "$t") perout=$(sed -n 's/^# peroutput: \([a-z]*\)$/\1/p' "$t")
+    stock="" focus=""
+    if [[ ${KI3_STOCK:-} == 1 ]] && ! grep -q '^# stock: own$' "$t"; then
+        stock=1 desktops=1 perout=true focus=$(sed -n 's/^# focus: \([a-z]*\)$/\1/p' "$t")
+    fi
     if grep -q '^# needs: plugin' "$t"; then
         if [[ -z $plugins ]]; then skipped+=("$t"); continue; fi
         plugin=$plugins
     fi
-    ( KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
+    ( KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
 done
 wait
 status=0

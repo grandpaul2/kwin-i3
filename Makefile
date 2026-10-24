@@ -1,4 +1,4 @@
-.PHONY: build test unit live mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install take-keys restore-keys
+.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install take-keys restore-keys
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel and kdecoration-devel are installed (their CMake configs); without them,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -9,6 +9,9 @@ unit:
 	node --test tests/unit/*.test.js
 live: build tools $(PLUGIN_IF)
 	tests/live/run.sh
+# Plasma's stock settings, as a stranger's install has them (docs/spec-stock-mode.md).
+live-stock: build tools $(PLUGIN_IF)
+	KI3_STOCK=1 tests/live/run.sh
 test: unit live
 mutate:
 	python3 tests/unit/mutate.py

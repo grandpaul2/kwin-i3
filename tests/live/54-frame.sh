@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# focus: mouse
 # needs: plugin
 # The i3 frame: kwini3frame, a KDecoration3 plugin (plugin/frame.cpp, docs/spec-decoration.md),
 # with kwini3helper's focus-on-the-frame. The test KWin runs Breeze; this scenario selects the frame

@@ -22,13 +22,13 @@ window management, with Plasma doing the rest. The scope and its reasons:
    demand (`docs/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
    turned on (`docs/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /
    `restore-keys` (`docs/spec-taken-keys.md`), kwin-i3's own Meta+F / Meta+Shift+Q
-   (`docs/spec-own-keys.md`); (b) and (c) share one notification at load. Left:
-   - **the stock test mode**: `KI3_STOCK=1` for `testkwin.sh` (one desktop, per-output off, stock
-     shortcuts, stock focus settings; `KI3_DESKTOPS` and `KI3_PEROUTPUT` are its first pieces) and
-     a sweep of every scenario in it. Next: a spec sorting the expected failures (a two-monitor
-     scenario needs per-output on) from real findings.
-   - (e) focus follows mouse and Meta-alone: README only, in the README pass;
-   - **the README pass**: install read as a stranger on a stock Plasma, after the stock sweep.
+   (`docs/spec-own-keys.md`); (b) and (c) share one notification at load. The stock test mode
+   is done (`make live-stock`, `docs/spec-stock-mode.md`, 2026-10-24): the install as written
+   (per-output on, `make take-keys`) works on a stock Plasma with click-to-focus; no real
+   finding. Left:
+   - (e) focus follows mouse and Meta-alone: README only, in the README pass (four scenarios,
+     `# focus: mouse`, assume it);
+   - **the README pass**: install read as a stranger on a stock Plasma. Next: do it.
 6. **The desktop list changing mid-session.** kwin-i3 doesn't watch `workspace.desktopsChanged`:
    removing or reordering a desktop in System Settings renumbers KWin's desktops under the model
    (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24
@@ -45,6 +45,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
    2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
    counters: whether it measures the effect or the loaded machine.
+   And 53-hold's "deleted: on again (the old key's default)" (the effect not hearing a
+   `kwriteconfig6 --delete`) failed in 5 of 5 full runs on 2026-10-24, HEAD and stock mode alike,
+   and passed 6 of 6 alone, so `make test` is red on that check now. Next: the same counters.
    Cosmetic: some scenarios print "lib.sh: line 25: …/ki3.log: No such file or directory" after
    their tally (seen 2026-10-24): a `mark` running after teardown removed the test dir. Next:
    find which background call does it.

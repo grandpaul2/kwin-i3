@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# focus: mouse
 # The fuzzer's I4, shrunk: the monitor holding the focused workspace is unplugged. Its workspace
 # is reconciled on the remaining monitor while that still shows another one, so KWin lists the
 # window in a tile without placing it (Tile::manage only places on a current desktop); then focus

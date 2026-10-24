@@ -67,6 +67,11 @@ load_kwin_i3() {
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting loadScript ss \
         "$root/package/contents/code/main.js" kwin-i3 >/dev/null
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting start
+    # Stock mode: free kwin-i3's keys as the README does, once per scenario (a reload's second
+    # run would take nothing).
+    if [[ ${KI3_STOCK:-} == 1 && ! -e $KI3_TMP/took-keys ]]; then
+        wait_log 'kwin-i3 loaded$' && (cd "$root" && make -s take-keys >&2) && touch "$KI3_TMP/took-keys"
+    fi
 }
 
 _has_window() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(1); });" | grep -q 1; }

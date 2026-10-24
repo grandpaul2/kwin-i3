@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# stock: own
 # The keys kwin-i3 didn't get (docs/spec-taken-keys.md): a key another action holds is shown on
 # kwin-i3's action too, but only the first holder's fires. At load, one notification names the
 # taken ones; make take-keys frees them and make restore-keys gives them back.

@@ -8,6 +8,10 @@
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_DESKTOPS=<n>                     the test KWin's virtual desktops (default 10; stock is 1)
 #   KI3_PEROUTPUT=true|false             per-output desktops (default true; stock is false)
+#   KI3_STOCK=1                          Plasma's stock settings instead of the author's: stock
+#                                        shortcuts and focus (docs/spec-stock-mode.md); the caller
+#                                        sets KI3_DESKTOPS and KI3_PEROUTPUT (run.sh: 1, true)
+#   KI3_FOCUS=mouse                      with KI3_STOCK=1: focus follows mouse after all
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 #   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3helper.so and
 #                                        kwin/effects/plugins/kwini3hold.so (make plugin:
@@ -84,6 +88,16 @@ teardown() {
 }
 trap teardown EXIT
 
+# Stock mode (KI3_STOCK=1) leaves out the author's focus settings and Meta-alone line, unless the
+# scenario asks for focus follows mouse (KI3_FOCUS=mouse).
+focus="FocusPolicy=FocusFollowsMouse
+NextFocusPrefersMouse=true
+DelayFocusInterval=0" meta="[ModifierOnlyShortcuts]
+Meta="
+if [[ ${KI3_STOCK:-} == 1 ]]; then
+    meta=""
+    [[ ${KI3_FOCUS:-} == mouse ]] || focus=""
+fi
 cat > "$XDG_CONFIG_HOME/kwinrc" <<RC
 [Desktops]
 Number=${KI3_DESKTOPS:-10}
@@ -91,12 +105,9 @@ Rows=1
 
 [Windows]
 PerOutputVirtualDesktops=${KI3_PEROUTPUT:-true}
-FocusPolicy=FocusFollowsMouse
-NextFocusPrefersMouse=true
-DelayFocusInterval=0
+$focus
 
-[ModifierOnlyShortcuts]
-Meta=
+$meta
 
 [Script-kwin-i3]
 debugLog=true
@@ -111,7 +122,9 @@ fi
 # The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
 # locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). The focus settings above are that desktop's too.
-cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
+# Stock mode keeps Plasma's shortcuts and frees the keys as the README does, by make take-keys
+# (tests/live/lib.sh, load_kwin_i3).
+[[ ${KI3_STOCK:-} == 1 ]] || cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
 [kwin]
 Window Quick Tile Left=none,Meta+Left,Quick Tile Window to the Left
 Window Quick Tile Right=none,Meta+Right,Quick Tile Window to the Right

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# focus: mouse
 # Real input, part 2: the pointer moved and dragged, focus by mouse, through libei. Designed in
 # docs/input-tests-design.md, revised by its review (docs/input-tests-review-2026-10-22.md).
 source "$(dirname "$0")/lib.sh"
