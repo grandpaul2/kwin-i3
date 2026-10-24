@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# timing: alone
 # needs: plugin
 # Atomic layout changes: the kwini3hold KWin effect (plugin/hold.cpp, docs/spec-atomic-layout.md).
 # A slow test client (--resize-delay) makes the gap between windows landing long enough to
@@ -9,9 +10,10 @@ source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
 BG=0,0,0; RED=255,0,0; LIME=0,255,0; BLUE=0,0,255
-# Timing checks: strict alone; under the parallel suite (KI3_PARALLEL test KWins on one GPU) a
-# snapshot measured at 0.9 ms alone took 20 ms, so they get slack there. The strict numbers are
-# the ones that matter for the desktop.
+# Timing checks: strict alone, which is how run.sh runs this ("# timing: alone", after the
+# batch). Run inside a parallel batch by hand (KI3_PARALLEL test KWins on one GPU), a snapshot
+# measured at 0.9 ms alone took 20-112 ms, so they get slack there. The strict numbers are the
+# ones that matter for the desktop.
 slack=1; (( ${KI3_PARALLEL:-1} > 1 )) && slack=15
 
 stats() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats 2>/dev/null |

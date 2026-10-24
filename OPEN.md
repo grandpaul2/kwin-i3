@@ -36,11 +36,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    or move (as a reload does), and a README line; then a live scenario for it.
 5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
    more than one activity, and with no plugins (the fuzzer loads them whenever they are built);
-   Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. 53-hold's
-   "a snapshot takes under a frame at 240 Hz" fails under the full parallel suite (2026-10-24:
-   70-112 ms in 3 of ~15 runs; 1.2 ms alone): wall-clock time with ~30 test KWins on one GPU.
-   Next: Paul's choice of (i) `# timing: alone` scenarios run by themselves after the batch,
-   (ii) unjudged under the parallel suite, (iii) CPU thread time.
+   Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. 53-hold runs
+   by itself after the parallel batch (`# timing: alone`, 2026-10-24), so its timing checks are
+   strict in `make test`.
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
    2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
    Unverified, seen while fixing the resize drag's late answer (2026-10-24, 51-input): a drag of
