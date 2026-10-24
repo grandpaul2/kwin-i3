@@ -18,10 +18,21 @@ window management, with Plasma doing the rest. The scope and its reasons:
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
-4. **No dependence on Paul's dotfiles.** Next: list what `setup.sh` does that kwin-i3 relies on
-   (clashing Plasma keys unbound, focus follows mouse, per-output virtual desktops, border size);
-   for each, handle it, detect and report it, or document it in README's install. Then a run in
-   `testkwin.sh` with a stock Plasma config.
+4. **No dependence on Paul's dotfiles.** Inventory done 2026-10-24 (what `setup.sh` and
+   `testkwin.sh`'s config give kwin-i3 that stock Plasma doesn't); proposals made, **waiting on
+   Paul's answer**, especially on (b) report-not-set and (c)'s opt-in key script:
+   (a) 10 virtual desktops (stock: 1): create on demand up to N at Meta+N / Meta+Shift+N
+   (`workspace.createDesktop`), as i3 creates workspaces; (b) per-monitor desktops off by
+   default: read `options.perOutputVirtualDesktops`, with 2+ monitors and off, one notification
+   (KWin lets a script set it, but only until the next reconfigure); (c) 21 stock shortcut
+   defaults collide (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right, Meta+1..9, Meta+0,
+   Meta+V) plus Meta+E, Meta+L, and KWin gives a taken key away silently (`registerShortcut`
+   always returns true): at load ask kglobalaccel which keys kwin-i3 got and notify the taken
+   ones (probe the D-Bus call first), plus opt-in `tools/take-keys.sh`; (d) Meta+F / Meta+Shift+Q
+   are bound by `setup.sh`, not stock: kwin-i3 registers its own fullscreen and close;
+   (e) focus follows mouse and Meta-alone: README only. Then a `KI3_STOCK=1` mode of
+   `testkwin.sh` (stock config) with a scenario for (a)-(d) and a sweep of the existing ones.
+   Suggested order: d, a, c, b, stock tests, README.
 5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
    more than one activity, and with no plugins (the fuzzer loads them whenever they are built);
    Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. Also `53-hold.sh` is
