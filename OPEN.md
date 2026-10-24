@@ -31,9 +31,6 @@ Last reconciled: **2026-10-24**.
   focus hand-back when a window opens beside it. Next: ask Paul after his first fullscreen video
   with a terminal opened beside it; if Firefox drops out of fullscreen, the pref to look at is
   `full-screen-api.exit-on.windowRaise` (review of the change, 2026-10-24).
-- **The reload gap for floating windows** (`docs/spec-reload-keepabove.md`, 2026-10-24): after a
-  reload kwin-i3 does not record a floating window's keep-above flag as its own, so un-floating
-  leaves the window kept above (and green). Next: spec review, then the change.
 - **Capture 2026-10-23 17:43**: both monitors showed workspace 5 right after Minecraft was
   launched from Prism Launcher (its "Please wait" splash opened on the left monitor with
   workspace 5 as its desktop; activating a window on a desktop its monitor does not show switches
