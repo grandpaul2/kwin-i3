@@ -360,7 +360,10 @@ second pass kwin-i3 sometimes makes after one is covered by rule 6's quiet perio
 
 ## Decisions
 
-1. Timeout: 100 ms (Paul, 2026-10-23: "100 is plenty").
+1. Timeout: 100 ms (Paul, 2026-10-23: "100 is plenty"). **Changed to 200 ms, Sway's, on
+   2026-10-23 ~06:45 as a trial and made permanent on 2026-10-24** (Paul: not felt as slow;
+   `kset kwinrc kwin-i3-hold TimeoutMs 200` in the dotfiles' setup.sh; the plugin's own default
+   stays 100). The "100 ms" figures above describe the design at that default.
 2. Settled = frame equals requested geometry, snapped to device pixels (review 1: KWin rewrites
    the requested geometry when a client picks its own size, and the exact "configure
    acknowledged" state is private to KWin).
