@@ -20,10 +20,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
    (gaps, default 0, is the one new feature that fits), then the stock `contents/config/main.xml`
    + `contents/ui/config.ui` so it gets a Configure button in System Settings, including the keys
    that exist today.
-3. **Live: the chords dropped** (`d281403`, 2026-10-24; not live). Next, on
-   Paul's go: dotfiles `setup.sh` / `health-check.sh` / `hotkeys` (prepared, uncommitted), then
-   delete `kwinrc [kwin-i3-mouse] Meta+Shift+Left` and `[MouseBindings] CommandAll1`, KWin
-   `reconfigure`, and `make plugin-install`; Meta+drag then moves.
 4. **No dependence on Paul's dotfiles.** Next: list what `setup.sh` does that kwin-i3 relies on
    (clashing Plasma keys unbound, focus follows mouse, per-output virtual desktops, border size);
    for each, handle it, detect and report it, or document it in README's install. Then a run in
