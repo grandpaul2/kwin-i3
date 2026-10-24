@@ -5,7 +5,7 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
-- The frame paints the active floating window green (`#4c995a`), so a floating window is told
+- The frame paints the active floating window green (live 2026-10-24) (`#4c995a`), so a floating window is told
   from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
   (`[kwin-i3-frame]`, README), changed live with `--notify`. Paul's ask, 2026-10-24
   (`docs/spec-frame-colours.md`; `tests/live/54-frame.sh` section 2b).
