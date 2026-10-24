@@ -77,10 +77,8 @@ muts = [
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(new Date()", "    if (DEBUG_LOG) logRing.push(new Date()"),
  # A fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, 2026-10-24)
  (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            outOfTiles[id(w)] = true;", "        if (false) {\n            outOfTiles[id(w)] = true;"),
- (F, "src/kwin.js", "A: out-of-tiles record ignored (decided from w.tile)", "        return w && !w.minimized && !(w.fullScreen && (!w.tile || outOfTiles[c.win]));", "        return w && !w.minimized && !(w.fullScreen && !w.tile);"),
  (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),
  (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient) return null;", "        return null;"),
- (F, "src/kwin.js", "C: the hand-back also on a hidden workspace", "        if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;\n", ""),
  (F, "src/kwin.js", "C: a workspace switch focuses what KWin chose under fullscreen", "        model.activate(fs || model.descendFocused(ws));", "        model.activate(model.descendFocused(ws));"),
 ]
 ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F]
@@ -96,6 +94,17 @@ ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F]
 #   guard in place no test drops a hidden, listed window any more; untile is kept because KWin's
 #   listing without w.tile on a hidden desktop is real (KWin 6.7.5 Tile::manage), so unmanaging
 #   by w.tile alone is wrong wherever it happens (fuzzer I1, 2026-10-22).
+# - "outOfTiles ignored, visibleLeaf decides from w.tile alone" (2026-10-24): the review of
+#   spec-fullscreen-tree predicted a rebuild loop while w.tile lags the client's acknowledgement of
+#   the unmanage. Tried twice in the test KWin with the fault built: a client slow to acknowledge a
+#   size change (a fullscreen window asked for its restore size is not resized, so it answered at
+#   once) and a window on a hidden workspace (the acknowledgement still arrived); the pass counts
+#   stayed at 2 and 3. The record stays: it decides from kwin-i3's own state, not KWin's lagging one,
+#   and a browser's timing is not the test client's. 32-fullscreen-open.sh pins the pass counts.
+# - "the hand-back only on a shown workspace" (keepsFullscreenFocus, 2026-10-24): KWin's own
+#   activation of a new window on a hidden desktop switches that desktop first
+#   (SwitchToOtherDesktop), so by windowAdded the workspace is shown and the guard never fires in a
+#   test. It stays: activating the fullscreen window on a hidden workspace would switch desktops.
 # - "windows missing from stackingOrder not adopted": guards a timing race (a window too new to be
 #   in stackingOrder when kwin-i3 loads) seen twice but not reproducible on demand; one harmless line.
 

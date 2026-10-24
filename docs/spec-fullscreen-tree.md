@@ -6,8 +6,13 @@ Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by
 decided by Paul, 2026-10-24 (4: i3's, focus stays; 5: i3's, every newcomer but the fullscreen
 window's own dialog opens behind). **Built 2026-10-24** (parts A, B, C below; `32-fullscreen-open.sh`
 47 checks, `53-hold.sh` section 8 extended, a unit test; found at build time: the workspace-switch
-case, "Deviations" below). Next: the live mutants in a worktree, the full suite, a second agent's
-review of the change; then Paul decides about deployment. Not live.**
+case, "Deviations" below). Full suite green (the hold effect's snapshot-timing check flaked under load, as
+before). Live mutants in a worktree: four of six red (A floats again; B; C no hand-back; C's
+workspace switch); two are documented in `tests/live/mutate.py` as unreachable by a test, with
+the evidence (the `outOfTiles` record: KWin cleared `w.tile` before the second pass with a slow
+client and on a hidden workspace alike, so the predicted loop did not occur; the hidden-workspace
+guard of the hand-back: KWin's activation shows the desktop first). Next: a second agent's review
+of the change; then Paul decides about deployment. Not live.**
 
 Deviations and findings at code time:
 - **Meta+N onto a workspace with a fullscreen window and a newcomer sent there while hidden**

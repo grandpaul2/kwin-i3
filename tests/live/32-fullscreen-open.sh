@@ -95,9 +95,16 @@ check "p active"                            poll active_is p
 key "Workspace 3"
 client --title e
 check "e on 3"                              wait_tree 3 "H[e*]"
+m=$(mark)
 key "Move to Workspace 1"
-check "e behind p on 1"                     wait_tree 1 "H[c p! e]"
+check "e behind p on 1"                     wait_tree 1 "H[c p! e]" "$m"
 check "the monitor still shows 3"           shows Virtual-0 3
+# A hidden window never acknowledges a configure, so KWin never clears p's w.tile here; a second
+# pass deciding from w.tile would see p in its old tile, rebuild, be refused and schedule again,
+# for ever (review finding 1). kwin-i3 keeps its own record of a window out of the tiles.
+sleep 0.5
+trees_at_most() { (( $(after "$1" | grep -cE '^.{9}TREE 1 ') <= $2 )); }
+check "a few passes, no spin on the hidden workspace" trees_at_most "$m" 4
 key "Workspace 1"
 check "p active again on 1"                 poll active_is p
 check "p on top"                            top_is p
