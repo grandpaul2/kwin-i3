@@ -9,6 +9,7 @@ var KI3 = (function () {
     var wins = {};          // window id -> KWin window, for every window we manage
     var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
+    var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
     var released = false;
@@ -678,13 +679,10 @@ var KI3 = (function () {
     // still on screen and probably in use, so dropWindow alone doesn't move focus).
     function forgetWindow(w) { dropWindow(w); wantFocus(); }
 
-    // The rules' verdict per managed window, as of its adoption or last change. A caption, class
-    // or transient change re-runs the rules; they act only when their verdict changes (a
-    // floatingTitle word appearing), never because it differs from what Paul set by hand: a
-    // window floated with Meta+Shift+Space used to tile again at its next caption change, which
-    // for a browser is seconds (docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
-    var ruleKind = {};
-
+    // reclassify: the rules act when their verdict changes (ruleKind, declared at the top), never
+    // because it differs from what Paul set by hand: a window floated with Meta+Shift+Space used
+    // to tile again at its next caption change, which for a browser is seconds
+    // (docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
     function reclassify(w) {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
