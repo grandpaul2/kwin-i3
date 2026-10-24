@@ -18,25 +18,17 @@ window management, with Plasma doing the rest. The scope and its reasons:
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
-4. **No dependence on Paul's dotfiles.** Inventory done 2026-10-24 (what `setup.sh` and
-   `testkwin.sh`'s config give kwin-i3 that stock Plasma doesn't). Design agreed with Paul
-   2026-10-24; next: the stock tests, then the README pass.
-   (a) **Done, live** 2026-10-24 (`docs/spec-desktops-on-demand.md`): workspaces created on
-   demand, up to 10, never removed.
-   (b) **Done, live** 2026-10-24 (`docs/spec-per-output-desktops.md`): per-monitor desktops off
-   with 2+ monitors reported (at load, and once later), never set; turned on, each monitor gets
-   its own workspace back.
-   (c) 21 stock shortcut defaults collide (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right,
-   Meta+1..9, Meta+0, Meta+V) plus Meta+E, Meta+L, and KWin gives a taken key away silently
-   (`registerShortcut` always returns true): at load ask kglobalaccel which keys kwin-i3 got and
-   report the taken ones. **Done, live** 2026-10-24 (`docs/spec-taken-keys.md`): the check at
-   load (active holders only), one notification, `warnTakenKeys`, `make take-keys` /
-   `make restore-keys`. On Paul's desktop all 64 keys fire kwin-i3's: no notification.
-   (b) and (c) share **one notification at load** listing every problem (kwin-i3's first
-   notification; everything else stays in the journal).
-   (d) **Done** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3's own Meta+F / Meta+Shift+Q, live. (e) Focus follows mouse and Meta-alone: README only. Then a
-   `KI3_STOCK=1` mode of `testkwin.sh` (stock config) with a scenario for (a)-(d) and a sweep of
-   the existing ones.
+4. **No dependence on Paul's dotfiles.** (a)-(d) done and live 2026-10-24: workspaces created on
+   demand (`docs/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
+   turned on (`docs/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /
+   `restore-keys` (`docs/spec-taken-keys.md`), kwin-i3's own Meta+F / Meta+Shift+Q
+   (`docs/spec-own-keys.md`); (b) and (c) share one notification at load. Left:
+   - **the stock test mode**: `KI3_STOCK=1` for `testkwin.sh` (one desktop, per-output off, stock
+     shortcuts, stock focus settings; `KI3_DESKTOPS` and `KI3_PEROUTPUT` are its first pieces) and
+     a sweep of every scenario in it. Next: a spec sorting the expected failures (a two-monitor
+     scenario needs per-output on) from real findings.
+   - (e) focus follows mouse and Meta-alone: README only, in the README pass;
+   - **the README pass**: install read as a stranger on a stock Plasma, after the stock sweep.
 6. **The desktop list changing mid-session.** kwin-i3 doesn't watch `workspace.desktopsChanged`:
    removing or reordering a desktop in System Settings renumbers KWin's desktops under the model
    (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24
@@ -53,6 +45,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
    2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
    counters: whether it measures the effect or the loaded machine.
+   Cosmetic: some scenarios print "lib.sh: line 25: …/ki3.log: No such file or directory" after
+   their tally (seen 2026-10-24): a `mark` running after teardown removed the test dir. Next:
+   find which background call does it.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
