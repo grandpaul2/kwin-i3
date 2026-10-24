@@ -20,6 +20,8 @@ var Settings = (function () {
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
+        gapsInner: { type: "int", def: "0", min: 0, max: 100 },                 // px between windows
+        gapsOuter: { type: "int", def: "0", min: 0, max: 200 },                 // px more at the screen edge
     };
     var values = {};
 

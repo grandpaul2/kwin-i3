@@ -5,6 +5,8 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Settings, step 4: gaps, i3's `gaps inner` and `gaps outer`, by KWin's tile padding and an
+  inset root tile; a change applies at Meta+Shift+C, rebuilding the tiles once.
 - Settings, step 3: `workspaceOutputs`, i3's `workspace N output X` (`1=DP-4, 2=DP-6`), at
   login, for a workspace first used, and when a monitor appears; unlisted workspaces as before.
 - Settings, step 2: `resizeStep` (Meta+Ctrl+arrows, default 10 %), `defaultOrientation`

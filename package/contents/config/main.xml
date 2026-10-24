@@ -37,5 +37,15 @@
     <entry name="workspaceOutputs" type="String">
       <default></default>
     </entry>
+    <entry name="gapsInner" type="Int">
+      <default>0</default>
+      <min>0</min>
+      <max>100</max>
+    </entry>
+    <entry name="gapsOuter" type="Int">
+      <default>0</default>
+      <min>0</min>
+      <max>200</max>
+    </entry>
   </group>
 </kcfg>

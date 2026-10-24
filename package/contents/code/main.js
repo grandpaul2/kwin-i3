@@ -38,6 +38,8 @@ var Settings = (function () {
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
+        gapsInner: { type: "int", def: "0", min: 0, max: 100 },                 // px between windows
+        gapsOuter: { type: "int", def: "0", min: 0, max: 200 },                 // px more at the screen edge
     };
     var values = {};
 
@@ -1091,7 +1093,7 @@ var KI3 = (function () {
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
-    var rootPadding = {};   // "screen/ws" -> the root's padding before we set it (restored on release)
+    var touchedRoots = {};  // "screen/ws" -> true once reconciled (put back on release)
     var focusPending = null; // { from: screen } : apply model focus after the next reconcile
 
     function id(w) { return String(w.internalId); }
@@ -1308,34 +1310,83 @@ var KI3 = (function () {
         return out;
     }
 
-    // No gaps, and minimum sizes that are the windows' own. KWin gives every tile a minimum of
-    // 15% of the screen (tile.h m_minimumSize = 0.15 x 0.15, inherited by children), which would
-    // stop i3 sizes below 384 px on a 2560 px monitor. Splits get no minimum; a window's tile gets
-    // the window's minimum size, relative to the screen.
+    // ---- gaps (docs/spec-settings.md) ------------------------------------------------------
+    // i3's gaps (render.c): inner between windows, inner + outer at the screen's edge. KWin gives
+    // a tile's window P/2 towards a neighbour and P at the screen's edge, judged by the tile's
+    // relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with padding = inner on
+    // every tile and the root inset by outer + inner/2, no edge is 0 or 1, so between = inner and
+    // edge = outer + inner. All relative to the maximize area, KWin's basis for absoluteGeometry.
+    function gaps() {
+        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
+        return { inner: i, inset: Math.round(o + i / 2) };
+    }
+    function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
+    function rootRect(area) {
+        var e = gaps().inset;
+        return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
+    }
+    function sameRect(g, r) {
+        return Math.abs(g.x - r.x) <= 1e-4 && Math.abs(g.y - r.y) <= 1e-4 &&
+               Math.abs(g.width - r.width) <= 1e-4 && Math.abs(g.height - r.height) <= 1e-4;
+    }
+    // Every layout's children on its outer edges and spanning its cross axis. With gaps no edge
+    // is at the screen's border, so KWin lets a window's outer side be dragged
+    // (Tile::supportsResizeGravity), and pins that edge to the border (CustomTile::
+    // setRelativeGeometry), where no later write can move it off: only a rebuild mends it.
+    function edgesIntact(t) {
+        if (!t.tiles.length) return true;
+        var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
+        var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
+        var eq = function (a, b) { return Math.abs(a - b) < 1e-6; };
+        if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
+        return t.tiles.every(function (c) {
+            var r = c.relativeGeometry;
+            return (h ? eq(r.y, g.y) && eq(r.height, g.height) : eq(r.x, g.x) && eq(r.width, g.width)) && edgesIntact(c);
+        });
+    }
+
+    // Where KWin puts a tile's window (Tile::windowGeometry, which scripts can't read): the tile
+    // less P/2 on a side inside the screen, P on a side at its edge.
+    function windowRect(t) {
+        var a = t.absoluteGeometry, r = t.relativeGeometry, p = t.padding;
+        if (!p) return a;
+        var l = r.x > 0 ? p / 2 : p, tp = r.y > 0 ? p / 2 : p;
+        var rt = r.x + r.width < 1 ? p / 2 : p, b = r.y + r.height < 1 ? p / 2 : p;
+        return { x: a.x + l, y: a.y + tp, width: a.width - l - rt, height: a.height - tp - b };
+    }
+
+    // Padding = the inner gap, and minimum sizes that are the windows' own (plus the gap). KWin
+    // gives every tile a minimum of 15% of the screen (tile.h m_minimumSize = 0.15 x 0.15,
+    // inherited by children), which would stop i3 sizes below 384 px on a 2560 px monitor.
+    // Splits get no minimum; a window's tile gets the window's minimum size, relative to the area.
     // noMin: minimums cleared, for while setSizes moves edges one by one: a tile minimum blocks
     // KWin's in-between steps and the sizes never settle (seen 2026-10-22: 280|680|500 asked
     // 280|500|500, the last window off the screen).
-    function prepareTiles(t, screen, noMin) {
-        if (t.padding !== 0) t.padding = 0;
+    function prepareTiles(t, area, noMin) {
+        var inner = gaps().inner;
+        if (t.padding !== inner) t.padding = inner;
         var min = { width: 0, height: 0 };
         if (!noMin && !t.tiles.length && t.windows.length === 1) {
-            var fm = frameMin(t.windows[0]), g = screen.geometry;
-            min = { width: fm.w / g.width, height: fm.h / g.height };
+            var fm = frameMin(t.windows[0]);
+            min = { width: (fm.w + inner) / area.width, height: (fm.h + inner) / area.height };
         }
         var cur = t.minimumSize;
         if (Math.abs(cur.width - min.width) > 1e-6 || Math.abs(cur.height - min.height) > 1e-6)
             t.minimumSize = min;
-        t.tiles.forEach(function (c) { prepareTiles(c, screen, noMin); });
+        t.tiles.forEach(function (c) { prepareTiles(c, area, noMin); });
     }
 
     // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
     // in order can leave a stale edge behind (seen 2026-10-22: four columns, the third left at
     // 0.567 wide over the fourth). Passes repeat until every tile is where it should be.
-    function setSizesStable(root, p, screen) {
-        var g = screen.geometry;
-        snapW = g.width; snapH = g.height;
+    function setSizesStable(root, p, area) {
+        snapW = area.width; snapH = area.height;
+        // From KWin's own root rect (the gaps' inset), so the border edges written below are
+        // exactly KWin's: CustomTile::setRelativeGeometry forces a changed edge with no tile
+        // beyond it to the screen's border (0 or 1), and it compares exactly.
+        var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };
         for (var pass = 0; pass < 4; pass++)
-            if (!setSizes(root, p, { x: 0, y: 0, width: 1, height: 1 })) return;
+            if (!setSizes(root, p, r)) return;
         log("WARN sizes did not settle after 4 passes");
     }
 
@@ -1349,10 +1400,10 @@ var KI3 = (function () {
         return { w: m.width + bw, h: m.height + bh };
     }
 
-    // The smallest a projected subtree can be, in pixels: windows' minimum sizes added up along a
-    // split and the largest across it.
+    // The smallest a projected subtree can be, in pixels: windows' minimum sizes (each with the
+    // inner gap, half on each side) added up along a split and the largest across it.
     function minOf(p) {
-        if (p.win !== undefined) return frameMin(wins[p.win]);
+        if (p.win !== undefined) { var fm = frameMin(wins[p.win]), i = gaps().inner; return { w: fm.w + i, h: fm.h + i }; }
         var r = { w: 0, h: 0 };
         p.kids.forEach(function (k) {
             var m = minOf(k.p);
@@ -1398,9 +1449,11 @@ var KI3 = (function () {
             size * n);
         for (var i = 0; i < p.kids.length; i++) {
             var k = p.kids[i], child = tile.tiles[i];
-            var a = snap(pos, n);
+            // The outer edges exactly as the parent has them (see setSizesStable), the inner
+            // ones on whole pixels.
+            var a = i === 0 ? start : snap(pos, n);
             pos += px[i] / n;
-            var b = i === p.kids.length - 1 ? snap(start + size, n) : snap(pos, n);
+            var b = i === p.kids.length - 1 ? start + size : snap(pos, n);
             var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
                       : { x: rect.x, y: a, width: rect.width, height: b - a };
             var g = child.relativeGeometry;
@@ -1456,13 +1509,13 @@ var KI3 = (function () {
         t.tiles.forEach(refit);
     }
     function fits(w, t) {
-        var g = w.frameGeometry, a = t.absoluteGeometry;
+        var g = w.frameGeometry, a = windowRect(t);
         return Math.abs(g.x - a.x) <= 1 && Math.abs(g.y - a.y) <= 1 &&
                Math.abs(g.width - a.width) <= 1 && Math.abs(g.height - a.height) <= 1;
     }
     function fitToTile(w, t) {
         if (w.tile !== t || w.move || w.resize || w.fullScreen || !wins[id(w)]) return;
-        if (!fits(w, t)) w.frameGeometry = t.absoluteGeometry;
+        if (!fits(w, t)) w.frameGeometry = windowRect(t);
     }
 
     // When a monitor returns, KWin's PlacementTracker asks every window for the geometry it had in
@@ -1484,7 +1537,7 @@ var KI3 = (function () {
         if (fits(w, t)) { delete armed[key]; delete lastFit[key]; return; }
         var f = w.frameGeometry, o = w.output.geometry;
         if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) return;
-        var a = t.absoluteGeometry;
+        var a = windowRect(t);
         var seen = [f.x, f.y, f.width, f.height, a.x, a.y, a.width, a.height].join(",");
         if (lastFit[key] === seen) return;
         lastFit[key] = seen;
@@ -1502,15 +1555,20 @@ var KI3 = (function () {
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
-        var rk = screen.name + "/" + ws.num;
-        if (!(rk in rootPadding)) rootPadding[rk] = root.padding;
+        touchedRoots[screen.name + "/" + ws.num] = true;
+        var area = areaOf(screen, ws);
         relocate(ws, screen);
-        floatWhatCannotFit(ws, screen);
+        floatWhatCannotFit(ws, area);
         var p = project(ws);
         refused = false;
-        prepareTiles(root, screen);
+        // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
+        // it but forces an edge that changes with no tile beyond it back to the screen's border
+        // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
+        // its edges (probed). Then padding, then minimums (review).
+        var inset = rootRect(area), reinset = !sameRect(root.relativeGeometry, inset) || !edgesIntact(root);
+        prepareTiles(root, area);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
-        if (want !== have) {
+        if (want !== have || reinset) {
             // Different shape or different windows: rebuild this root. Unmanage first, so removing
             // tiles can't push windows around (KWin moves a removed tile's windows elsewhere).
             // From the tile that lists each window, not w.tile: on a hidden desktop a listed window
@@ -1521,21 +1579,22 @@ var KI3 = (function () {
                 t.tiles.forEach(off);
             })(root);
             clearRoot(root);
+            if (reinset) root.relativeGeometry = inset;
             if (p) {
                 build(root, p);
-                prepareTiles(root, screen);
+                prepareTiles(root, area);
             }
         }
         if (p) {
             placeWindows(root, p, workspace.currentDesktopForScreen(screen) === deskOf(ws.num));
-            prepareTiles(root, screen, true);   // sizes first, with no tile minimums in the way
-            setSizesStable(root, p, screen);
-            prepareTiles(root, screen);         // then each leaf gets its window's minimum
+            prepareTiles(root, area, true);     // sizes first, with no tile minimums in the way
+            setSizesStable(root, p, area);
+            prepareTiles(root, area);           // then each leaf gets its window's minimum
             refit(root);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
-        else checkInvariants(ws, root, p);
+        else checkInvariants(ws, root, p, area);
     }
 
 
@@ -1559,13 +1618,13 @@ var KI3 = (function () {
     // minimum hung 580 px off a 1280 px screen; a row of 12 windows broke KWin's sizing). While
     // the tiled windows' minimum sizes can't fit the screen, float the one with the largest
     // minimum along the axis that overflows.
-    function floatWhatCannotFit(ws, screen) {
-        var g = screen.geometry;
+    function floatWhatCannotFit(ws, area) {
+        var e = gaps().inset, W = area.width - 2 * e, H = area.height - 2 * e;    // the root's room
         for (var n = 0; n < 32; n++) {
             var p = project(ws);
             if (!p) return;
             var need = minOf(p);
-            var axis = need.w > g.width ? "w" : need.h > g.height ? "h" : null;
+            var axis = need.w > W ? "w" : need.h > H ? "h" : null;
             if (!axis) return;
             var worst = null, worstMin = -1;
             model.leaves(ws).forEach(function (leaf) {
@@ -1615,10 +1674,11 @@ var KI3 = (function () {
     }
 
     // Logged, never thrown: the live tests fail on any "INVARIANT" line.
-    function checkInvariants(ws, root, p) {
-        var problems = [];
+    function checkInvariants(ws, root, p, area) {
+        var problems = [], inner = gaps().inner;
+        if (!sameRect(root.relativeGeometry, rootRect(area))) problems.push("root not inset for the gaps");
         (function walk(t) {
-            if (t.padding !== 0) problems.push("padding " + t.padding);
+            if (t.padding !== inner) problems.push("padding " + t.padding + ", gaps " + inner);
             if (!t.tiles.length && t.windows.length > 1) problems.push("tile holds " + t.windows.length + " windows");
             if (!t.tiles.length && t.windows.length === 0 && p) problems.push("empty leaf tile");
             if (t.tiles.length) {
@@ -1651,12 +1711,17 @@ var KI3 = (function () {
 
     function readBack(ws) {
         // Each model node's extent is the union of its visible windows' frames; shares follow.
+        // Clipped to the root's rect: with gaps a dragged outer side can pin a tile to the
+        // screen's border (edgesIntact), and an outer edge is never a share.
+        var area = areaOf(outputOf(ws), ws), e = gaps().inset;
+        var lo = { x: area.x + e, y: area.y + e }, hi = { x: area.x + area.width - e, y: area.y + area.height - e };
         function extent(c) {
             if (c.win !== null && c.type !== "ws") {
                 var w = wins[c.win];
                 if (!w || !visibleLeaf(c)) return null;   // a fullscreen window out of the tiles has no extent
                 var g = w.tile ? w.tile.absoluteGeometry : w.frameGeometry;   // tiles: no size-step slack
-                return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };
+                return { x: Math.max(g.x, lo.x), y: Math.max(g.y, lo.y),
+                         x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };
             }
             var e = null;
             c.nodes.forEach(function (k) {
@@ -2067,11 +2132,17 @@ var KI3 = (function () {
             workspace.desktops.forEach(function (d, i) {
                 try {
                     var root = workspace.rootTile(s, d), rk = s.name + "/" + (i + 1);
-                    if (!root || !(rk in rootPadding)) return;     // only roots kwin-i3 touched
+                    if (!root) return;
+                    // Roots kwin-i3 touched, and any left inset by gaps (a reload's predecessor):
+                    // KWin's whole area and no padding again (review: the padding seen at the
+                    // first reconcile can be our own gap, after a reload).
+                    var full = { x: 0, y: 0, width: 1, height: 1 };
+                    if (!(rk in touchedRoots) && sameRect(root.relativeGeometry, full)) return;
                     var stray = tiledWindowsOf(root, []);
                     stray.forEach(function (w) { root.unmanage(w); });
                     for (var n = 0; root.tiles.length && n < 256; n++) root.tiles[root.tiles.length - 1].remove();
-                    root.padding = rootPadding[rk];
+                    root.relativeGeometry = full;
+                    root.padding = 0;
                 } catch (e) { log("ERROR in release (tiles): " + e); }
             });
         });

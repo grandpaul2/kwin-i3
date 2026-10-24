@@ -137,6 +137,19 @@ Not settings, on purpose (Scope): where a new window goes, floating windows abov
 - Fullscreen windows are out of the tiles and fill the output as now; the refit's
   "frame fills the monitor" guard compares with the output, not the tile (unchanged).
 
+**As built** (2026-10-24), three things KWin's tile code forced, read in `customtile.cpp` and
+`tile.cpp` after the first live runs:
+- `CustomTile::setRelativeGeometry` pins a changed edge with no tile beyond it to the screen's
+  border (0 or 1), and compares exactly. So the inset changes only on a **rebuild** (tiles split
+  from an inset root inherit its edges), the sizing starts from KWin's own root rect, and the
+  outer edges are written exactly as the parent has them, not snapped.
+- With gaps no tile edge is at 0 or 1, so `Tile::supportsResizeGravity` lets a window's *outer*
+  side be dragged, and the pin above then sticks that edge to the border. A reconcile checks
+  that every layout's children sit on its edges (`edgesIntact`) and rebuilds when not; the outer
+  edges are not shares, so the window goes back to its gap.
+- A dragged edge lands at the pointer plus the padding (`Tile::resizeFromGravity`), as without
+  gaps.
+
 ## Focus wrapping, in detail
 
 Ported from i3's `get_tree_next` (fact 5) into `M.focusDir(dir, wrapping)`; the four modes differ

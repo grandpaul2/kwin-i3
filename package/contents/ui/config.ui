@@ -16,6 +16,55 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="gapsGroup">
+     <property name="title">
+      <string>Gaps</string>
+     </property>
+     <layout class="QFormLayout" name="gapsLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="gapsInnerLabel">
+        <property name="text">
+         <string>Between windows:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="kcfg_gapsInner">
+        <property name="suffix">
+         <string> px</string>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="toolTip">
+         <string>i3's gaps inner: the space between two tiled windows.</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="gapsOuterLabel">
+        <property name="text">
+         <string>More at the screen edge:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="kcfg_gapsOuter">
+        <property name="suffix">
+         <string> px</string>
+        </property>
+        <property name="maximum">
+         <number>200</number>
+        </property>
+        <property name="toolTip">
+         <string>i3's gaps outer: added to the inner gap at the screen's edge (the edge gap is inner + outer).</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="layoutGroup">
      <property name="title">
       <string>Layout and focus</string>

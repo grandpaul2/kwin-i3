@@ -22,12 +22,12 @@ if live == os.path.realpath("package"):
 
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
-F, S, W = "32-fullscreen-open.sh", "25-settings.sh", "49-ws-outputs.sh"
+F, S, W, G = "32-fullscreen-open.sh", "25-settings.sh", "49-ws-outputs.sh", "26-gaps.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
  (T, "src/kwin.js", "sizes never set", "            setSizesStable(root, p, screen);", ""),
- (T, "src/kwin.js", "padding kept", "        if (t.padding !== 0) t.padding = 0;", ""),
+ (T, "src/kwin.js", "padding kept", "        if (t.padding !== inner) t.padding = inner;", ""),
  (R, "src/kwin.js", "minimized windows still tiled", "        return w && !w.minimized && !(w.fullScreen && !w.tile);", "        return !!w && !(w.fullScreen && !w.tile);"),
  (R, "src/kwin.js", "foreign untile ignored", "            var con = model.byWin[key];\n            if (!con || con.type === \"floating\" || w.fullScreen || w.minimized) return;", "            return;"),
  (R, "src/kwin.js", "no adopt from live tiles", "                var spec = root ? specOf(root, 1, d) : null;", "                var spec = null;"),
@@ -99,9 +99,24 @@ muts = [
  (W, "src/kwin.js", "a monitor that appears doesn't take its workspaces", "        names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });\n", ""),
  (W, "src/kwin.js", "a reload re-applies assignments to existing workspaces", "        log(\"SETTINGS \" + changed.join(\" \"));\n", "        log(\"SETTINGS \" + changed.join(\" \"));\n        if (changed.indexOf(\"workspaceOutputs\") >= 0) { Workspaces.numberScreens(); }\n"),
  (W, "src/kwin.js", "a returning monitor's spare workspace may be assigned elsewhere", " || (a && a !== s.name)) continue;", ") continue;"),
+ # Gaps (docs/spec-settings.md, step d)
+ (G, "src/kwin.js", "gaps: the root never inset", "            if (reinset) root.relativeGeometry = inset;\n", ""),
+ (G, "src/kwin.js", "gaps: no rebuild when the inset changes", "        if (want !== have || reinset) {", "        if (want !== have) {"),
+ (G, "src/kwin.js", "gaps: a pinned outer edge not mended", " || !edgesIntact(root);", ";"),
+ (G, "src/kwin.js", "gaps: window rect ignores the padding", "        if (!p) return a;", "        return a;"),
+ (G, "src/kwin.js", "gaps: minimums without the gap", "return { w: fm.w + i, h: fm.h + i }; }", "return { w: fm.w, h: fm.h }; }"),
+ (G, "src/kwin.js", "gaps: can't-fit judged against the whole area", "W = area.width - 2 * e, H = area.height - 2 * e;", "W = area.width, H = area.height;"),
+ (G, "src/kwin.js", "gaps: the read-back not clipped to the root", "                return { x: Math.max(g.x, lo.x), y: Math.max(g.y, lo.y),\n                         x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };", "                return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };"),
+ (G, "src/kwin.js", "gaps: release leaves the root inset", "                    root.relativeGeometry = full;\n", ""),
+ (G, "src/kwin.js", "gaps: sizes start from the whole area", "var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };", "var r = { x: 0, y: 0, width: 1, height: 1 };"),
 ]
-ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W]
-# Known equivalent fault, not listed: dropping `|| dragging` from the desktopsChanged guard. The
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G]
+# Known equivalent fault, not listed: snapping the first child's start in setSizes (gaps). The
+# start is KWin's root x, which kwin-i3 wrote as inset/width, and snap() gives back that same double
+# for any whole-pixel inset; it stays exact as a guard (CustomTile compares edges exactly). The same
+# for snapping the last child's end: setSizes writes a tile only when it is off by more than 1e-4,
+# so a last-bit difference never reaches KWin on its own (2026-10-24, both run, both green).
+# Also known equivalent, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
 # window while it is still being dragged.
