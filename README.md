@@ -104,10 +104,24 @@ To reload the script after a change: `busctl --user call org.kde.KWin /Scripting
 org.kde.kwin.Scripting unloadScript s kwin-i3`, then the `reconfigure` above. It re-tiles every
 window once.
 
+### Optional: the settings page
+
+kwin-i3's own page in System Settings > Window Management: every setting, laid out as Plasma's
+pages are, and **Keys…**, where kwin-i3's keys are rebound in one list instead of KWin's. A key
+another shortcut holds is named in its row and taken from it on Apply (`make restore-keys` gives
+it back). Apply takes effect at once, with or without the plugins.
+
+`make kcm-install` builds it (needs `kf6-kcmutils-devel` and `kf6-ki18n-devel`) and puts it in
+`~/.local/lib/kwin-i3/kcm-plugins`, with `~/.config/environment.d/kwin-i3.conf` adding that to the
+session's `QT_PLUGIN_PATH`: it shows in System Settings after the next login, once. It links no
+KWin library, so a Plasma update doesn't turn it off.
+
 ## Configuration
 
-System Settings > Window Management > KWin Scripts > kwin-i3 > Configure, or by hand in
-`~/.config/kwinrc`, all in `[Script-kwin-i3]`. With the plugins, a save applies at once
+kwin-i3's page in System Settings > Window Management (above), or System Settings > Window
+Management > KWin Scripts > kwin-i3 > Configure, or by hand in
+`~/.config/kwinrc`, all in `[Script-kwin-i3]`. On the page, Apply applies at once. In the
+Configure form, with the plugins, a save applies at once
 (`kwini3helper` watches the file and has KWin reconfigure). Without them, press **Meta+Shift+C**
 after a save, or log in again: KWin 6.7.5's generic script form saves without telling KWin, and
 the reload key asks KWin to reconfigure, as i3's reload does. Everything, the script and the

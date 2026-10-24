@@ -19,8 +19,9 @@ convenience and accessibility before the README pass).
 7. **A settings page of its own, and a tidier form** (Paul, 2026-10-24: convenience and
    accessibility before the README pass). kwin-i3's own entry in System Settings > Window
    Management, with its keys on a sub-page, and the script's form tidied to match.
-   Spec reviewed, decisions A-C taken, the form done: `docs/spec-settings-page.md`. Next:
-   the page (`sudo dnf install kf6-kcmutils-devel kf6-ki18n-devel` first).
+   Built and tested in the test KWin (`docs/spec-settings-page.md`, "The page is built"; form,
+   page, `make kcm-install`, `37-settings-page.sh`, code-reviewed). Next: install it on Paul's desktop (`make
+   kcm-install`, then a login) and his look at it.
 
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
@@ -35,7 +36,9 @@ convenience and accessibility before the README pass).
    finding. Left:
    - (e) focus follows mouse and Meta-alone: README only, in the README pass (four scenarios,
      `# focus: mouse`, assume it);
-   - **the README pass**: install read as a stranger on a stock Plasma. Next: do it.
+   - **the README pass**: install read as a stranger on a stock Plasma. Next: do it. It must
+     cover: a package linked while KWin runs can't be turned on until the next login (KPackage's
+     cache, `docs/spec-settings-page.md`).
 6. **The desktop list changing mid-session.** kwin-i3 doesn't watch `workspace.desktopsChanged`:
    removing or reordering a desktop in System Settings renumbers KWin's desktops under the model
    (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24

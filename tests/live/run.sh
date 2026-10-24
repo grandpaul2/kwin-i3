@@ -20,6 +20,10 @@ trap 'rm -rf "$out"' EXIT
 # "# needs: plugin" in a scenario: its test KWin loads plugin/ (built by make plugin). The plugins
 # are optional: with no build (no kwin-devel), those scenarios are skipped, and the summary says so.
 plugins=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
+# "# needs: kcm": the scenario runs the settings page (kcm/, make kcm, which needs
+# kf6-kcmutils-devel), with kwin-i3 installed as a package (KI3_PACKAGE, tools/testkwin.sh); with
+# no build, skipped and said so, as the plugins are.
+kcm=$(cd ../../kcm/build/bin 2>/dev/null && [[ -f plasma/kcms/systemsettings/kcm_kwin_i3.so ]] && pwd)
 skipped=()
 # "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10);
 # "# peroutput: false": with per-output desktops off (default on).
@@ -33,9 +37,12 @@ launch() {
         stock=1 desktops=1 perout=true focus=$(sed -n 's/^# focus: \([a-z]*\)$/\1/p' "$t")
     fi
     grep -q '^# needs: plugin' "$t" && plugin=$plugins
-    KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
+    local package=""; grep -q '^# needs: kcm' "$t" && package=1
+    KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
 }
-needs_missing() { grep -q '^# needs: plugin' "$1" && [[ -z $plugins ]]; }
+needs_missing() {
+    { grep -q '^# needs: plugin' "$1" && [[ -z $plugins ]]; } || { grep -q '^# needs: kcm' "$1" && [[ -z $kcm ]]; }
+}
 for t in "${batch[@]}"; do
     if needs_missing "$t"; then skipped+=("$t"); continue; fi
     launch "$t" &
@@ -57,5 +64,5 @@ for t in "${scenarios[@]}"; do
         status=1
     fi
 done
-[[ ${#skipped[@]} -gt 0 ]] && echo "SKIPPED, no plugin build (make plugin needs kwin-devel): ${skipped[*]}"
+[[ ${#skipped[@]} -gt 0 ]] && echo "SKIPPED, no plugin or page build (make plugin needs kwin-devel, make kcm kf6-kcmutils-devel): ${skipped[*]}"
 exit $status

@@ -1,4 +1,4 @@
-.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install take-keys restore-keys
+.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install take-keys restore-keys
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel and kdecoration-devel are installed (their CMake configs); without them,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -7,10 +7,12 @@ build:
 	./build.sh
 unit:
 	node --test tests/unit/*.test.js
-live: build tools $(PLUGIN_IF)
+# The settings page likewise, when kf6-kcmutils-devel is installed.
+KCM_IF := $(if $(wildcard /usr/lib*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake /usr/lib/*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake),kcm)
+live: build tools $(PLUGIN_IF) $(KCM_IF)
 	tests/live/run.sh
 # Plasma's stock settings, as a stranger's install has them (docs/spec-stock-mode.md).
-live-stock: build tools $(PLUGIN_IF)
+live-stock: build tools $(PLUGIN_IF) $(KCM_IF)
 	KI3_STOCK=1 tests/live/run.sh
 test: unit live
 mutate:
@@ -33,6 +35,12 @@ plugin:
 	cmake --build plugin/build -j8
 plugin-install: plugin
 	tools/plugin-install.sh
+# kwin-i3's System Settings page (kcm/, docs/spec-settings-page.md), against kf6-kcmutils-devel.
+kcm:
+	cmake -S kcm -B kcm/build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
+	cmake --build kcm/build -j8
+kcm-install: kcm
+	tools/kcm-install.sh
 # Free kwin-i3's keys that other shortcuts hold, and put them back (docs/spec-taken-keys.md).
 take-keys:
 	python3 -I tools/take-keys.py take

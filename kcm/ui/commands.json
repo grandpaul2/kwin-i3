@@ -1,0 +1,507 @@
+[
+ {
+  "group": "Focus",
+  "commands": [
+   {
+    "label": "Focus left",
+    "actions": [
+     [
+      "kwin-i3 Focus Left",
+      "Meta+Left"
+     ],
+     [
+      "kwin-i3 Focus Left (J)",
+      "Meta+J"
+     ]
+    ]
+   },
+   {
+    "label": "Focus down",
+    "actions": [
+     [
+      "kwin-i3 Focus Down",
+      "Meta+Down"
+     ],
+     [
+      "kwin-i3 Focus Down (K)",
+      "Meta+K"
+     ]
+    ]
+   },
+   {
+    "label": "Focus up",
+    "actions": [
+     [
+      "kwin-i3 Focus Up",
+      "Meta+Up"
+     ],
+     [
+      "kwin-i3 Focus Up (L)",
+      "Meta+L"
+     ]
+    ]
+   },
+   {
+    "label": "Focus right",
+    "actions": [
+     [
+      "kwin-i3 Focus Right",
+      "Meta+Right"
+     ],
+     [
+      "kwin-i3 Focus Right (;)",
+      "Meta+;"
+     ]
+    ]
+   },
+   {
+    "label": "Focus between tiled and floating",
+    "actions": [
+     [
+      "kwin-i3 Focus Mode Toggle",
+      "Meta+Space"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "Move",
+  "commands": [
+   {
+    "label": "Move left",
+    "actions": [
+     [
+      "kwin-i3 Move Left",
+      "Meta+Shift+Left"
+     ],
+     [
+      "kwin-i3 Move Left (J)",
+      "Meta+Shift+J"
+     ]
+    ]
+   },
+   {
+    "label": "Move down",
+    "actions": [
+     [
+      "kwin-i3 Move Down",
+      "Meta+Shift+Down"
+     ],
+     [
+      "kwin-i3 Move Down (K)",
+      "Meta+Shift+K"
+     ]
+    ]
+   },
+   {
+    "label": "Move up",
+    "actions": [
+     [
+      "kwin-i3 Move Up",
+      "Meta+Shift+Up"
+     ],
+     [
+      "kwin-i3 Move Up (L)",
+      "Meta+Shift+L"
+     ]
+    ]
+   },
+   {
+    "label": "Move right",
+    "actions": [
+     [
+      "kwin-i3 Move Right",
+      "Meta+Shift+Right"
+     ],
+     [
+      "kwin-i3 Move Right (;)",
+      "Meta+Shift+;"
+     ],
+     [
+      "kwin-i3 Move Right (:)",
+      "Meta+:"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "Resize",
+  "commands": [
+   {
+    "label": "Shrink width",
+    "actions": [
+     [
+      "kwin-i3 Shrink Width",
+      "Meta+Ctrl+Left"
+     ],
+     [
+      "kwin-i3 Shrink Width (J)",
+      "Meta+Ctrl+J"
+     ]
+    ]
+   },
+   {
+    "label": "Grow width",
+    "actions": [
+     [
+      "kwin-i3 Grow Width",
+      "Meta+Ctrl+Right"
+     ],
+     [
+      "kwin-i3 Grow Width (;)",
+      "Meta+Ctrl+;"
+     ]
+    ]
+   },
+   {
+    "label": "Shrink height",
+    "actions": [
+     [
+      "kwin-i3 Shrink Height",
+      "Meta+Ctrl+Up"
+     ],
+     [
+      "kwin-i3 Shrink Height (L)",
+      "Meta+Ctrl+L"
+     ]
+    ]
+   },
+   {
+    "label": "Grow height",
+    "actions": [
+     [
+      "kwin-i3 Grow Height",
+      "Meta+Ctrl+Down"
+     ],
+     [
+      "kwin-i3 Grow Height (K)",
+      "Meta+Ctrl+K"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "Layout",
+  "commands": [
+   {
+    "label": "Split horizontally",
+    "actions": [
+     [
+      "kwin-i3 Split H",
+      "Meta+H"
+     ]
+    ]
+   },
+   {
+    "label": "Split vertically",
+    "actions": [
+     [
+      "kwin-i3 Split V",
+      "Meta+V"
+     ]
+    ]
+   },
+   {
+    "label": "Toggle split direction",
+    "actions": [
+     [
+      "kwin-i3 Toggle Split",
+      "Meta+E"
+     ]
+    ]
+   },
+   {
+    "label": "Float or tile the window",
+    "actions": [
+     [
+      "kwin-i3 Floating Toggle",
+      "Meta+Shift+Space"
+     ]
+    ]
+   },
+   {
+    "label": "Fullscreen",
+    "actions": [
+     [
+      "kwin-i3 Fullscreen",
+      "Meta+F"
+     ]
+    ]
+   },
+   {
+    "label": "Close the window",
+    "actions": [
+     [
+      "kwin-i3 Close",
+      "Meta+Shift+Q"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "Workspaces",
+  "commands": [
+   {
+    "label": "Workspace 1",
+    "actions": [
+     [
+      "kwin-i3 Workspace 1",
+      "Meta+1"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 2",
+    "actions": [
+     [
+      "kwin-i3 Workspace 2",
+      "Meta+2"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 3",
+    "actions": [
+     [
+      "kwin-i3 Workspace 3",
+      "Meta+3"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 4",
+    "actions": [
+     [
+      "kwin-i3 Workspace 4",
+      "Meta+4"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 5",
+    "actions": [
+     [
+      "kwin-i3 Workspace 5",
+      "Meta+5"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 6",
+    "actions": [
+     [
+      "kwin-i3 Workspace 6",
+      "Meta+6"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 7",
+    "actions": [
+     [
+      "kwin-i3 Workspace 7",
+      "Meta+7"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 8",
+    "actions": [
+     [
+      "kwin-i3 Workspace 8",
+      "Meta+8"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 9",
+    "actions": [
+     [
+      "kwin-i3 Workspace 9",
+      "Meta+9"
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 10",
+    "actions": [
+     [
+      "kwin-i3 Workspace 10",
+      "Meta+0"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "Move to workspace",
+  "commands": [
+   {
+    "label": "Move to workspace 1",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 1",
+      "Meta+Shift+1"
+     ],
+     [
+      "kwin-i3 Move to Workspace 1 (symbol)",
+      "Meta+!"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 2",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 2",
+      "Meta+Shift+2"
+     ],
+     [
+      "kwin-i3 Move to Workspace 2 (symbol)",
+      "Meta+@"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 3",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 3",
+      "Meta+Shift+3"
+     ],
+     [
+      "kwin-i3 Move to Workspace 3 (symbol)",
+      "Meta+#"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 4",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 4",
+      "Meta+Shift+4"
+     ],
+     [
+      "kwin-i3 Move to Workspace 4 (symbol)",
+      "Meta+$"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 5",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 5",
+      "Meta+Shift+5"
+     ],
+     [
+      "kwin-i3 Move to Workspace 5 (symbol)",
+      "Meta+%"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 6",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 6",
+      "Meta+Shift+6"
+     ],
+     [
+      "kwin-i3 Move to Workspace 6 (symbol)",
+      "Meta+^"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 7",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 7",
+      "Meta+Shift+7"
+     ],
+     [
+      "kwin-i3 Move to Workspace 7 (symbol)",
+      "Meta+&"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 8",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 8",
+      "Meta+Shift+8"
+     ],
+     [
+      "kwin-i3 Move to Workspace 8 (symbol)",
+      "Meta+*"
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 9",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 9",
+      "Meta+Shift+9"
+     ],
+     [
+      "kwin-i3 Move to Workspace 9 (symbol)",
+      "Meta+("
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 10",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 10",
+      "Meta+Shift+0"
+     ],
+     [
+      "kwin-i3 Move to Workspace 10 (symbol)",
+      "Meta+)"
+     ]
+    ]
+   }
+  ]
+ },
+ {
+  "group": "kwin-i3",
+  "commands": [
+   {
+    "label": "Reload settings",
+    "actions": [
+     [
+      "kwin-i3 Reload Settings",
+      "Meta+Shift+C"
+     ]
+    ]
+   },
+   {
+    "label": "Release every window (safety valve)",
+    "actions": [
+     [
+      "kwin-i3 Release",
+      "Meta+Ctrl+Shift+Q"
+     ]
+    ]
+   },
+   {
+    "label": "Dump state for a bug report",
+    "actions": [
+     [
+      "kwin-i3 Dump State",
+      ""
+     ]
+    ]
+   }
+  ]
+ }
+]

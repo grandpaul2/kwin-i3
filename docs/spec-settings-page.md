@@ -20,6 +20,33 @@ screenshot of the generic KCM in the test KWin (`kcmshell6
 kwin/effects/configs/kcm_kwin4_genericscripted --args "kwin-i3 KWin/Script"` with the package
 linked into the test's `XDG_DATA_HOME`), which also settles that the form can be run headless.
 
+**The page is built** (2026-10-24): `kcm/`, `make kcm` / `kcm-install` (`tools/kcm-install.sh`),
+tested by `tests/live/37-settings-page.sh` (30 checks, `# needs: kcm`) and
+`tests/unit/kcm.test.js` (the Keys table against what the script registers). As built:
+- **Installed in its own directory**, `~/.local/lib/kwin-i3/kcm-plugins`, not the plugins'
+  (decision B said the same one): that directory goes on the whole session's `QT_PLUGIN_PATH`,
+  and the plugins' holds the frame decoration, which every app that lists decorations would then
+  load, unguarded by `tools/frame-guard.sh` (System Settings' Window Decorations page).
+- **A package linked while KWin runs isn't seen** until KWin restarts: KPackage keeps the list
+  of packages from KWin's first look, so turning such a script on (the page's Turn On, or KWin
+  Scripts' checkbox) does nothing (found by the scenario; `tools/testkwin.sh` now links the package
+  before KWin starts). For the README pass: an install made in a running session needs a login
+  before kwin-i3 can be turned on.
+- The key recording works with injected input in the test KWin (the shortcut-inhibit question in
+  the review did not arise), so the Keys checks record real key presses.
+- Turn On shows the new state one second after asking KWin, which starts scripts later and says
+  nothing when it has.
+- Keyboard: the scenario sets a value by typing, and reaches the focus choice with Tab from the
+  resize step; a full Tab walk of the page is not checked.
+- Code review (second agent, 2026-10-24), acted on: a key whose take fails (the record can't be
+  written, or kglobalaccel refuses) is not given to kwin-i3 either, and the page names it
+  (tested, watched red); a key edit updates only the rows it changed, so the edited item keeps
+  the keyboard focus; Apply reconfigures KWin only when a setting changed; the CMake guard
+  matches the filled-in tags. Left, as known limits: the colour buttons, Reset and clearing a
+  key have no automated test (by hand); a holder's other key sequences are matched by their
+  first key only; `refresh()` asks KWin over D-Bus synchronously; and like any compiled piece,
+  the page may need `make kcm-install` again after a Qt or KF6 update.
+
 ## Facts this rests on (KWin 6.7.5, KF6 6.31; read in the source unless marked)
 
 1. **A script's form is QtWidgets only.** `src/kcms/common/genericscriptedconfig.cpp` loads

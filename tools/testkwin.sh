@@ -13,6 +13,7 @@
 #                                        sets KI3_DESKTOPS and KI3_PEROUTPUT (run.sh: 1, true)
 #   KI3_FOCUS=mouse                      with KI3_STOCK=1: focus follows mouse after all
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
+#   KI3_PACKAGE=1                        kwin-i3 installed as a package (off), as KWin Scripts sees it
 #   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3helper.so and
 #                                        kwin/effects/plugins/kwini3hold.so (make plugin:
 #                                        plugin/build/bin) for the test KWin to load
@@ -152,6 +153,16 @@ export KI3_LOG=$tmp/ki3.log
 export KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1
 "$here/logsink.py" "$KI3_LOG" &
 sink=$!
+# KI3_PACKAGE=1: kwin-i3 installed as a package, where KWin Scripts finds it (off, as
+# metadata.json's EnabledByDefault has it). Before KWin starts: KPackage caches the list of
+# packages at KWin's first look, so one linked later is never seen, and turning it on does nothing
+# (found by 37-settings-page.sh, 2026-10-24). Only when asked: KWin unloads a listed package that
+# isn't turned on whenever it rescans (every kjs), and the other scenarios load main.js by
+# loadScript under the same name, without turning it on.
+if [[ ${KI3_PACKAGE:-} == 1 ]]; then
+    mkdir -p "$XDG_DATA_HOME/kwin/scripts"
+    ln -s "$(dirname "$here")/package" "$XDG_DATA_HOME/kwin/scripts/kwin-i3"
+fi
 xbefore=$(ls /tmp/.X11-unix/)
 kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count 2 \
     --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 &

@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Description": "i3's window tree, workspaces and keys",
+        "Icon": "view-split-left-right",
+        "Name": "kwin-i3"
+    },
+    "X-KDE-Keywords": "kwin-i3,i3,tiling,tile,gaps,workspace,window manager,keys,shortcuts",
+    "X-KDE-OnlyShowOnQtPlatforms": [
+        "wayland"
+    ],
+    "X-KDE-System-Settings-Parent-Category": "windowmanagement",
+    "X-KDE-Weight": 60
+}
