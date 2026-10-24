@@ -115,10 +115,6 @@
       "Meta+Shift+Right"
      ],
      [
-      "kwin-i3 Move Right (;)",
-      "Meta+Shift+;"
-     ],
-     [
       "kwin-i3 Move Right (:)",
       "Meta+:"
      ]
@@ -344,10 +340,6 @@
     "label": "Move to workspace 1",
     "actions": [
      [
-      "kwin-i3 Move to Workspace 1",
-      "Meta+Shift+1"
-     ],
-     [
       "kwin-i3 Move to Workspace 1 (symbol)",
       "Meta+!"
      ]
@@ -356,10 +348,6 @@
    {
     "label": "Move to workspace 2",
     "actions": [
-     [
-      "kwin-i3 Move to Workspace 2",
-      "Meta+Shift+2"
-     ],
      [
       "kwin-i3 Move to Workspace 2 (symbol)",
       "Meta+@"
@@ -370,10 +358,6 @@
     "label": "Move to workspace 3",
     "actions": [
      [
-      "kwin-i3 Move to Workspace 3",
-      "Meta+Shift+3"
-     ],
-     [
       "kwin-i3 Move to Workspace 3 (symbol)",
       "Meta+#"
      ]
@@ -382,10 +366,6 @@
    {
     "label": "Move to workspace 4",
     "actions": [
-     [
-      "kwin-i3 Move to Workspace 4",
-      "Meta+Shift+4"
-     ],
      [
       "kwin-i3 Move to Workspace 4 (symbol)",
       "Meta+$"
@@ -396,10 +376,6 @@
     "label": "Move to workspace 5",
     "actions": [
      [
-      "kwin-i3 Move to Workspace 5",
-      "Meta+Shift+5"
-     ],
-     [
       "kwin-i3 Move to Workspace 5 (symbol)",
       "Meta+%"
      ]
@@ -408,10 +384,6 @@
    {
     "label": "Move to workspace 6",
     "actions": [
-     [
-      "kwin-i3 Move to Workspace 6",
-      "Meta+Shift+6"
-     ],
      [
       "kwin-i3 Move to Workspace 6 (symbol)",
       "Meta+^"
@@ -422,10 +394,6 @@
     "label": "Move to workspace 7",
     "actions": [
      [
-      "kwin-i3 Move to Workspace 7",
-      "Meta+Shift+7"
-     ],
-     [
       "kwin-i3 Move to Workspace 7 (symbol)",
       "Meta+&"
      ]
@@ -434,10 +402,6 @@
    {
     "label": "Move to workspace 8",
     "actions": [
-     [
-      "kwin-i3 Move to Workspace 8",
-      "Meta+Shift+8"
-     ],
      [
       "kwin-i3 Move to Workspace 8 (symbol)",
       "Meta+*"
@@ -448,10 +412,6 @@
     "label": "Move to workspace 9",
     "actions": [
      [
-      "kwin-i3 Move to Workspace 9",
-      "Meta+Shift+9"
-     ],
-     [
       "kwin-i3 Move to Workspace 9 (symbol)",
       "Meta+("
      ]
@@ -460,10 +420,6 @@
    {
     "label": "Move to workspace 10",
     "actions": [
-     [
-      "kwin-i3 Move to Workspace 10",
-      "Meta+Shift+0"
-     ],
      [
       "kwin-i3 Move to Workspace 10 (symbol)",
       "Meta+)"

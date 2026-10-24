@@ -23,6 +23,13 @@ window management, with Plasma doing the rest. The scope and its reasons:
    2026-10-24. Next: a narrow fix, e.g. KWin's path holding only the KWin plugins and the
    decoration loaded another way; investigate, then spec.
 
+9. **Non-US keyboard layouts and the workspace move keys.** Meta+Shift+digit arrives as
+   Meta+<the symbol Shift+digit types>, and kwin-i3 registers the US symbols (Meta+!, Meta+@, ...).
+   On a German layout Shift+2 types `"`, so Meta+Shift+2 matches nothing and moving a window to
+   workspace 2 doesn't work (likewise Meta+: for Move Right). Found 2026-10-24 (the probe behind
+   `tests/live/38-retired-keys.sh`). Next: find how KWin matches a shifted key (its source), then
+   choose: read the layout's symbols, or register by key position; spec, with a scenario on a
+   German-layout test KWin.
 2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
    when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.

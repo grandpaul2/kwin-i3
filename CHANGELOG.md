@@ -5,6 +5,11 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- The dead Shift+symbol keys are gone: a Shift+key that types a symbol arrives as the symbol, so
+  Meta+Shift+; and Meta+Shift+1..0 never fired; their twins Meta+: and Meta+!..) did (probed in
+  the test KWin, 2026-10-24). Only the twins are registered now, and the old actions are
+  unregistered at load, so the settings page's Keys list shows one box per key. The keys pressed
+  are the same (`tests/live/38-retired-keys.sh`).
 - The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`): Paul's
   pick in the settings page's colour button, 2026-10-24.
 - kwin-i3's own page in System Settings > Window Management (live 2026-10-24): every setting, laid

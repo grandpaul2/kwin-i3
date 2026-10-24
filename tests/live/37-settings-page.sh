@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # needs: kcm
 # stock: own
+# timing: alone
 # kwin-i3's own settings page (docs/spec-settings-page.md), driven as a person would: injected
 # clicks and keys on kcmshell6 in the test KWin. No plugins are loaded, so what Apply does here it
 # does without them. The coordinates are the page's at 1280x720 with the window filling Virtual-0
 # (maximized while kwin-i3 is off, tiled once it is on); KI3_SHOTS=<dir> keeps every screenshot.
+# Alone, after the batch: it clicks after the page's slide animations, and in the batch (~30 test
+# KWins at once) kcmshell6 took longer than 5 s to show its window (2026-10-24).
 source "$(dirname "$0")/lib.sh"
 kga() { busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel "$@"; }
 keys_of() { kga shortcutKeys as 4 "$1" "$2" x "$2"; }
@@ -41,7 +44,8 @@ before_fake=$(keys_of fakeapp Launch)
 
 # kwin-i3 is installed where KWin Scripts finds it (tools/testkwin.sh), turned off; the page.
 QT_PLUGIN_PATH=$root/kcm/build/bin QT_QPA_PLATFORM=wayland kcmshell6 kcm_kwin_i3 >"$KI3_TMP/kcm.log" 2>&1 &
-check "the page opens"                      poll _has_window kwin-i3
+opens() { WAIT=30 poll _has_window kwin-i3; }   # a prefix assignment inside check would be run as a command
+check "the page opens"                      opens
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "kwin-i3") w.setMaximize(true, true); });' >/dev/null
 check "maximized"                           wait_geom kwin-i3 "0,0 1280x720"
 

@@ -1024,6 +1024,8 @@ var KI3 = (function () {
 
     var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
     var SHIFTED = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"];
+    // Actions registered before and dead (2026-10-24: a Shift+symbol key fires only its symbol form).
+    var RETIRED = ["kwin-i3 Move Right (;)"].concat(NAMES.map(function (k, i) { return "kwin-i3 Move to Workspace " + (i + 1); }));
 
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
@@ -1033,8 +1035,9 @@ var KI3 = (function () {
         "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
         "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
         "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"],
-        // Shift+; arrives as ":" on a US keyboard; i3ws registered both (input-test review).
-        "Move Right": ["Meta+Shift+Right", "Meta+Shift+;", "Meta+:"],
+        // Shift+; arrives as ":": only Meta+: fires, Meta+Shift+; never does (probed 2026-10-24,
+        // KWin 6.7.5; i3ws registered both). The same holds for Shift+digit below.
+        "Move Right": ["Meta+Shift+Right", "Meta+:"],
         // The old config's resize mode: Left/J shrink width, Down/K grow height,
         // Up/L shrink height, Right/; grow width.
         "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
@@ -1061,9 +1064,16 @@ var KI3 = (function () {
             var go = act("Workspace " + n, function () { gotoWorkspace(n); });
             var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(n, c); });
             registerShortcut("kwin-i3 Workspace " + n, "kwin-i3: workspace " + n, "Meta+" + k, go);
-            registerShortcut("kwin-i3 Move to Workspace " + n, "kwin-i3: move to workspace " + n, "Meta+Shift+" + k, mv);
+            // Meta+Shift+digit arrives as Meta+<symbol> (US layout: Meta+!); the Meta+Shift+digit
+            // action that stood beside this one until 2026-10-24 never fired. The id keeps its
+            // "(symbol)" so an install keeps the key it already holds.
             registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
-                             "kwin-i3: move to workspace " + n + " (Shift+digit as symbol)", "Meta+" + SHIFTED[i], mv);
+                             "kwin-i3: move to workspace " + n, "Meta+" + SHIFTED[i], mv);
+        });
+        // The retired actions leave KWin's shortcut list (and Plasma's Shortcuts page): never
+        // registered again, so this is a no-op after the first load without them.
+        RETIRED.forEach(function (a) {
+            callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "unregister", "kwin", a);
         });
         // Only with debug logging (the live tests): an action that throws, to prove the guard
         // logs it and kwin-i3 carries on. No key; never registered in normal use.

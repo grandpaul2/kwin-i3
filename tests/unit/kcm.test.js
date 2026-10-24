@@ -16,10 +16,10 @@ function registered() {
     assert.ok(fn, "registerKeys not found in src/kwin.js");
     const out = [];
     const reg = (action, friendly, key) => out.push([action, key]);
-    Function("KEYS", "NAMES", "SHIFTED", "KWIN_OWN", "registerShortcut", "act", "guard", "actions", "log",
-             "gotoWorkspace", "moveToWorkspace", "DEBUG_LOG", fn[0] + "registerKeys();")(
+    Function("KEYS", "NAMES", "SHIFTED", "RETIRED", "KWIN_OWN", "registerShortcut", "act", "guard", "actions", "log",
+             "gotoWorkspace", "moveToWorkspace", "DEBUG_LOG", "callDBus", fn[0] + "registerKeys();")(
         get(/var KEYS = (\{[\s\S]*?\n    \});/), get(/var NAMES = (\[[^\]]*\]);/), get(/var SHIFTED = (\[[^\]]*\]);/),
-        {}, reg, () => null, () => null, {}, () => {}, null, null, false);
+        [], {}, reg, () => null, () => null, {}, () => {}, null, null, false, () => {});
     // start()'s own two, outside registerKeys.
     for (const m of src.matchAll(/registerShortcut\("(kwin-i3 (?:Release|Dump State))",\s*"[^"]*",\s*"([^"]*)"/g))
         out.push([m[1], m[2]]);
@@ -30,6 +30,18 @@ test("every action the script registers has its row and default on the Keys page
     const page = table.flatMap((g) => g.commands.flatMap((c) => c.actions));
     const sort = (a) => a.map((x) => x.join(" = ")).sort();
     assert.deepStrictEqual(sort(page), sort(registered()));
+});
+
+// A Shift+key that types a symbol arrives as that symbol: Meta+Shift+; never fires, Meta+: does
+// (probed 2026-10-24, KWin 6.7.5). Letters and arrows are unaffected.
+test("no key is registered in its dead Shift+symbol form", () => {
+    for (const [action, key] of registered())
+        assert.ok(!/Shift\+([0-9;',./\[\]\\=`-])$/.test(key), `${action}: ${key} never fires`);
+});
+
+test("the retired actions are not registered", () => {
+    const names = registered().map((r) => r[0]);
+    for (const a of ["kwin-i3 Move Right (;)", "kwin-i3 Move to Workspace 1"]) assert.ok(!names.includes(a), a);
 });
 
 test("the self-test actions are not on the Keys page", () => {
