@@ -6,6 +6,7 @@
 #   KI3_XWAYLAND=1                       also start Xwayland, for X11 clients (DISPLAY is set);
 #                                        finding its display is not parallel-safe
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
+#   KI3_DESKTOPS=<n>                     the test KWin's virtual desktops (default 10; stock is 1)
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 #   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3helper.so and
 #                                        kwin/effects/plugins/kwini3hold.so (make plugin:
@@ -82,9 +83,9 @@ teardown() {
 }
 trap teardown EXIT
 
-cat > "$XDG_CONFIG_HOME/kwinrc" <<'RC'
+cat > "$XDG_CONFIG_HOME/kwinrc" <<RC
 [Desktops]
-Number=10
+Number=${KI3_DESKTOPS:-10}
 Rows=1
 
 [Windows]

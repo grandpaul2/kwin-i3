@@ -962,6 +962,7 @@ var KI3 = (function () {
     // Meta+N: show workspace N where it lives and focus it; an empty, hidden one opens on the
     // current monitor (i3ws gotoWorkspace).
     function gotoWorkspace(n) {
+        Workspaces.ensure(n);
         if (!deskOf(n)) return;
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
@@ -986,7 +987,9 @@ var KI3 = (function () {
     // Meta+Shift+N: send the window to workspace N, on N's monitor (i3ws moveToWorkspace); an
     // empty, hidden N comes to the window's monitor.
     function moveToWorkspace(n, con) {
-        if (!con || !deskOf(n)) return;
+        if (!con) return;
+        Workspaces.ensure(n);
+        if (!deskOf(n)) return;
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
@@ -1287,11 +1290,13 @@ var KI3 = (function () {
     // nothing made a returning monitor show its workspace; KWin may restore something else).
     var lastShown = {}, beforeLoss = null;
     // The lowest workspace with no windows, shown nowhere, and living on no other monitor; it
-    // becomes s's. null if all ten are taken.
+    // becomes s's, created if every existing one is taken. null if all ten are.
     function unusedWorkspace(s) {
         for (var n = 1; n <= NAMES.length; n++) {
             var m = model.workspaces[n], h = Workspaces.homes()[n];
             var a = Workspaces.assigned(n);
+            if (a && a !== s.name) continue;
+            Workspaces.ensure(n);
             if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n) || (h && h !== s.name) || (a && a !== s.name)) continue;
             Workspaces.setHome(n, s);
             return n;

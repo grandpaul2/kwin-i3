@@ -24,7 +24,7 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 
 | keys | does |
 |---|---|
-| Meta+1 … Meta+0 | show workspace N (on the monitor it lives on) |
+| Meta+1 … Meta+0 | show workspace N (on the monitor it lives on). Workspace N is virtual desktop N; one that doesn't exist yet is created, as i3 creates workspaces, and kept (KWin saves the count) |
 | Meta+Shift+1 … 0, and the shifted symbols | move the window to workspace N |
 | Meta+arrows, Meta+J/K/L/; | focus left/down/up/right, i3's tree-based focus, across monitors at the edge |
 | Meta+Shift+arrows, Meta+Shift+J/K/L/; (or Meta+:) | move the window left/down/up/right, i3's `tree_move`, to the next monitor at the edge |

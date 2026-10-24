@@ -8,6 +8,17 @@
 
 var Workspaces = (function () {
     var home = {};          // ws num -> output name
+    var MAX = 10;           // kwin-i3's keys: Meta+1..0
+
+    // i3 creates a workspace when it is first used: KWin's desktops up to num, appended so none
+    // moves, never removed (KWin saves the count; docs/spec-desktops-on-demand.md). A stock
+    // Plasma has one.
+    function ensure(num) {
+        var from = workspace.desktops.length + 1;
+        if (num > MAX || from > num) return;
+        while (workspace.desktops.length < num) workspace.createDesktop(workspace.desktops.length, "");
+        log("DESKTOPS created " + from + ".." + workspace.desktops.length);
+    }
 
     function deskOf(num) { return workspace.desktops[num - 1]; }
     function deskNum(desktop) { return workspace.desktops.indexOf(desktop) + 1; }
@@ -71,13 +82,15 @@ var Workspaces = (function () {
     // Assigned workspaces get their homes first. i3ws did this on every load, so reloading it
     // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
     // no windows (a login).
+    // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens() {
         var s = workspace.screens, n = workspace.desktops.length, taken = {};
         var a = Settings.get("workspaceOutputs");
         Object.keys(a).forEach(function (k) { if (+k <= n) home[k] = a[k]; });
         for (var i = 0; i < s.length; i++) {
-            for (var num = 1; num <= n; num++) {
+            for (var num = 1; num <= MAX; num++) {
                 if (taken[num] || (a[num] && a[num] !== s[i].name)) continue;
+                ensure(num);
                 taken[num] = true;
                 workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
                 home[num] = s[i].name;
@@ -87,7 +100,7 @@ var Workspaces = (function () {
     }
 
     return {
-        deskOf: deskOf, deskNum: deskNum, showing: showing, outputOf: outputOf,
+        deskOf: deskOf, deskNum: deskNum, ensure: ensure, showing: showing, outputOf: outputOf,
         setHome: setHome, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
         assigned: assigned, assignedScreen: assignedScreen, claimHome: claimHome, claimAssigned: claimAssigned,
         homes: function () { return home; },

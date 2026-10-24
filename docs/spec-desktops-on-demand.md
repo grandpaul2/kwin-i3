@@ -1,6 +1,6 @@
 # Spec: workspaces created on demand (OPEN.md item 4 (a))
 
-Draft 2026-10-24, waiting on Paul's go. Part of "no dependence on Paul's dotfiles".
+Paul's go 2026-10-24 (never removed, as recommended); built the same day. Part of "no dependence on Paul's dotfiles".
 
 ## The gap
 
@@ -45,7 +45,7 @@ i3 creates a workspace when it is first used. kwin-i3 does the same with KWin's 
      could go safely;
    - a desktop count that changes by itself would show in Plasma's pager and Overview;
    - KWin keeps a created desktop anyway, as any Plasma user does.
-   The created desktops stay, at most ten. **Paul's call**; the alternative, removing trailing
+   The created desktops stay, at most ten (Paul, 2026-10-24). The alternative, removing trailing
    empty ones kwin-i3 created once they're shown nowhere, is i3's behaviour, at the cost above
    and of new code at the seam the fuzzer finds bugs in (hidden desktops, unplug).
 4. Paul's desktop has ten already: nothing changes there.
@@ -55,14 +55,16 @@ i3 creates a workspace when it is first used. kwin-i3 does the same with KWin's 
 kwin-i3 doesn't watch the desktop list (`workspace.desktopsChanged`). Removing or reordering a
 desktop in System Settings mid-session renumbers KWin's desktops under kwin-i3's model: the
 windows of workspace 4 are on what is now desktop 3. Adding one at the end is harmless. Not
-caused by (a), which only appends. Proposed as its own `OPEN.md` line: on a removal or move,
+caused by (a), which only appends. Its own `OPEN.md` item (6), Paul 2026-10-24: on a removal or move,
 re-adopt every window (as a reload does) and log it, or say in the README that the count is
 changed by a reload's worth of re-tiling. To decide later.
 
 ## Tests
 
-- **`testkwin.sh`: `KI3_DESKTOPS=<n>`**, the test KWin's desktop count (default 10, as now). The
-  first piece of the planned `KI3_STOCK=1` mode.
+- **`testkwin.sh`: `KI3_DESKTOPS=<n>`**, the test KWin's desktop count (default 10, as now), and
+  `# desktops: N` in a scenario for `run.sh`. The first piece of the planned `KI3_STOCK=1` mode.
+- The monitor path (`unusedWorkspace` creating one) checked by hand once: `42-replug-home.sh`
+  run with `KI3_DESKTOPS=2` passes, its returning monitor showing a created workspace 3.
 - **New live scenario `34-desktops-on-demand.sh`**, with `KI3_DESKTOPS=1` and the two outputs:
   1. at load, there are 2 desktops; screen 0 shows workspace 1 and screen 1 shows workspace 2;
   2. Meta+5 (injected keys) on screen 0: there are 5 desktops, and screen 0 shows workspace 5;
