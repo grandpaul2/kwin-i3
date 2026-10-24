@@ -16,9 +16,10 @@ window management, with Plasma doing the rest. The scope and its reasons:
 ## Open
 
 2. **Settings** (`docs/spec-settings.md`, Paul's go 2026-10-24 for the order). Step (a), the
-   form and Meta+Shift+C, is live (hand check with Paul passed). Next: (b) resize step, default
-   orientation, focus wrapping; then (c) workspace outputs, (d) gaps, (e) frame width and the
-   plugin hooks. Each built in the `settings` worktree, live on Paul's go.
+   form and Meta+Shift+C, is live (hand check with Paul passed); (b) resize step, orientation,
+   focus wrapping and (c) workspace outputs are live too (2026-10-24; (b)'s hand check, the form's
+   new box, not reported yet). Next: (d) gaps, then (e) frame width and the plugin hooks. Each
+   built in the `settings` worktree, live on Paul's go.
 4. **No dependence on Paul's dotfiles.** Next: list what `setup.sh` does that kwin-i3 relies on
    (clashing Plasma keys unbound, focus follows mouse, per-output virtual desktops, border size);
    for each, handle it, detect and report it, or document it in README's install. Then a run in
