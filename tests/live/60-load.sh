@@ -35,16 +35,26 @@ activate a
 key "Floating Toggle"
 check "a floats by hand, kept above"        poll prop_is a keepAbove true
 check "  (in the tree as floating)"         poll floating_is a
+client --title hf --retitle "4:hf2"           # retitles after the reload below
+check "hf tiles"                            poll tiled_is hf
+key "Floating Toggle"
+check "hf floated by hand"                  poll floating_is hf
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 m=$(mark)
 load_kwin_i3
 check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
 check "a is still floating after the reload" poll floating_is a "$m"
+check "hf too"                              poll floating_is hf "$m"
+floating_win() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.keepAbove && w.tile === null); })")" == "true" ]]; }
+check "hf retitled"                         poll _has_window hf2
+sleep 0.3
+check "hf still floating after the retitle" floating_win hf2    # no tree line is logged for a no-op
 activate a
 key "Floating Toggle"
 check "un-floated: a tiles"                 poll tiled_is a "$m"
 check "and its keep-above is off"           poll prop_is a keepAbove false
-check "fixed is still floating, kept above" prop_is fixed keepAbove true
+check "fixed, floated by rule, is still floating and kept above" poll floating_is fixed "$m"
+check "  (the flag)"                        prop_is fixed keepAbove true
 key "Release"
 check "release: nothing kept above"         poll none_above
 

@@ -97,7 +97,7 @@ change did not take, write it again.
 | `[kwin-i3-frame] Active` | `#4c7899` | the frame's colour on the active tiled window |
 | `[kwin-i3-frame] Inactive` | `#333333` | on an inactive tiled window |
 | `[kwin-i3-frame] FloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
-| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window: a window you keep above yourself paints the same, and a floating window whose keep-above you clear paints as tiled |
+| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself paints the same and, if it is in no tile when kwin-i3 loads, is adopted as floating; a floating window whose keep-above you clear paints as tiled. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
 | `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
 | `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |
 

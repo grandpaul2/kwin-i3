@@ -17,6 +17,20 @@ client --title before --retitle "1:STAGE (streamed)"
 check "retitled to a floatingTitle word: floats" wait_tree 1 "H[a main] ~STAGE_(streamed)*"
 kclose "STAGE (streamed)"
 check "back to two"                         wait_tree 1 "H[a main*]"
+# A window floated by hand stays floating through a caption change: the rules act when their
+# verdict changes (a floatingTitle word appearing, above), not whenever it differs from what
+# Paul set (docs/spec-reload-keepabove.md; review finding 1: Firefox retitles in seconds).
+client --title hand --retitle "1.5:hand2"
+check "hand tiles"                          wait_tree 1 "H[a main hand*]"
+key "Floating Toggle"
+check "floated by hand"                     wait_tree 1 "H[a main] ~hand*"
+# Nothing changes, so no tree line is logged with the new name: read the window itself.
+floating_win() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.keepAbove && w.tile === null); })")" == "true" ]]; }
+check "retitled"                            poll _has_window hand2
+sleep 0.3
+check "still floating after the retitle"    floating_win hand2
+kclose hand2
+check "back to two again"                   wait_tree 1 "H[a main*]"
 
 # fullscreen keeps its tile and comes back to it
 on a 'workspace.activeWindow = w; w.fullScreen = true;'

@@ -1599,6 +1599,7 @@ var KI3 = (function () {
         // Ignored now, perhaps not later (class, transient or desktops set after it appears):
         // watch it, so reclassify can adopt it then (code review).
         if (kind === "ignore") { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
+        ruleKind[key] = kind;              // the rules' own verdict; reclassify acts when it changes
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
@@ -1631,17 +1632,28 @@ var KI3 = (function () {
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
+        delete ruleKind[key];
         schedule(ws);
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
     // still on screen and probably in use, so dropWindow alone doesn't move focus).
     function forgetWindow(w) { dropWindow(w); wantFocus(); }
 
+    // The rules' verdict per managed window, as of its adoption or last change. A caption, class
+    // or transient change re-runs the rules; they act only when their verdict changes (a
+    // floatingTitle word appearing), never because it differs from what Paul set by hand: a
+    // window floated with Meta+Shift+Space used to tile again at its next caption change, which
+    // for a browser is seconds (docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
+    var ruleKind = {};
+
     function reclassify(w) {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
         var kind = Rules.classify(w);
         if (kind === "ignore") { dropWindow(w); return; }
+        var was = ruleKind[key];
+        ruleKind[key] = kind;
+        if (kind === was) return;
         var floating = con.type === "floating";
         if ((kind === "float") !== floating) {
             model.toggleFloating(con);

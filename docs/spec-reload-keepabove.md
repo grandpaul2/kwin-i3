@@ -2,7 +2,10 @@
 
 From Paul's question, 2026-10-24 ("even when I unfloat it, it stays green"). Status: **decided by Paul, 2026-10-24
 (1: spec and change reviewed together; 2: a hand-floated window stays floating across a reload,
-by the flag). Not built, not reviewed, not live.**
+by the flag). Built 2026-10-24; reviewed (second agent,
+`docs/review-reload-keepabove-2026-10-24.md`), its must-fix applied with Paul's decision (16:
+the rules' re-tiling of a hand-floated window on a caption change, below) and its login edge
+documented (17). Not live.**
 
 Sources: `src/kwin.js` (`setFloatingLook`, `adoptWindow`, the load path, `release`, the
 "Floating Toggle" action), `tests/live/60-load.sh`.
@@ -50,6 +53,27 @@ cleared when it tiles again; Paul accepted that reading when he accepted the fra
    that KWin brings back with keep-above set would float it; no app of Paul's does that, and
    the floating toggle undoes it.
 
+## Found by the review: a hand float lasted one caption change
+
+`reclassify` ran the rules on every caption, class, transient or ready change and toggled the
+window whenever their verdict differed from its floating state. A window floated by hand (the
+rules say "tile") went back to tiled at its next retitle, reload or not; Firefox retitles within
+seconds of any navigation. Pre-existing, reproduced by the reviewer in the test KWin, and the
+reason the reload rule above would have held only for seconds. Paul, 2026-10-24: fix it here.
+
+The rule: the rules act when their **verdict changes**, not when it differs from the window's
+state. kwin-i3 keeps each managed window's verdict (`ruleKind`, set at adoption); `reclassify`
+compares the new verdict with it and toggles only on a change. A `floatingTitle` word appearing
+still floats a tiled window (`20-rules.sh`), a hand float survives a retitle (`20-rules.sh`,
+`60-load.sh` after a reload).
+
+## The login edge (review finding 3, documented, Paul: agree)
+
+KWin's session management restores keep-above on Wayland as well (sm.cpp, xdgshellwindow.cpp):
+a session-restored window that arrives after kwin-i3 loads is a fresh window, tiled by the
+rules with a flag kwin-i3 did not record, the original symptom at login. No app of Paul's is
+session-restored with the flag; left as is, noted in the README's trap row.
+
 ## The change
 
 - `src/kwin.js`, `setFloatingLook`: `if (on) { if (!w.keepAbove) w.keepAbove = true;
@@ -61,8 +85,10 @@ cleared when it tiles again; Paul accepted that reading when he accepted the fra
   again: `a` is still floating; toggle `a` back to tiled: its keep-above is off; `fixed` is
   still floating and kept above; `release`: no window is kept above. Red today at "still
   floating" and at "keep-above off" / "nothing kept above".
-- `tests/live/mutate.py`: the old `setFloatingLook` line back, and the adoption rule removed
-  (scenario `60-load.sh`).
+- `src/kwin.js`, `reclassify`: acts on a verdict change only (`ruleKind`, above).
+- `tests/live/20-rules.sh`: a window floated by hand, retitled: still floating. Red before.
+- `tests/live/mutate.py`: the old `setFloatingLook` line back, the adoption rule removed
+  (scenario `60-load.sh`), the verdict-change guard removed (`20-rules.sh`).
 - `CHANGELOG.md`.
 
 ## What stays

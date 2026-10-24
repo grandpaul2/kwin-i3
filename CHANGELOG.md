@@ -8,8 +8,11 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 - Fix: after a reload, un-floating a window left it kept above (and, since the frame colours,
   green): the new instance had not recorded the keep-above flag the old one set. A window
   kwin-i3 floats now owns its flag, set by it or not, and a window a reload finds kept above
-  and in no tile stays floating instead of being re-tiled by the rules (Paul, 2026-10-24;
-  `docs/spec-reload-keepabove.md`; `tests/live/60-load.sh`).
+  and in no tile stays floating instead of being re-tiled by the rules. Found by the review: a
+  window floated by hand went back to tiled at its next caption change (seconds, for a browser),
+  because the rules were re-applied on every change; they now act only when their verdict
+  changes (Paul, 2026-10-24; `docs/spec-reload-keepabove.md`; `tests/live/60-load.sh`,
+  `20-rules.sh`).
 - Fix (live 2026-10-24): a window opened on a workspace whose focused window was fullscreen seemed not to open.
   The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused to
   tile it again (a fullscreen window is not resizable to KWin), and kwin-i3 floated it,
