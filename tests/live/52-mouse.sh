@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # needs: plugin
-# The mouse with the kwini3mouse plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
+# The mouse with the kwini3helper plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
 # 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock: Meta+left-drag
 # moves, Meta+right-drag resizes. The plugin's mouse chords (Meta+Shift+drag moved) were dropped on
 # 2026-10-24 (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks
-plugin_loaded() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -q '"kwini3mouse"'; }
+plugin_loaded() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -q '"kwini3helper"'; }
 saw() { [[ "$(tr "\n" " " 2>/dev/null < "$clicks")" == "$1" ]]; }      # the client's clicks, in order
 saw_nothing() { [[ ! -s $clicks ]]; }
 centre() { local g; g=$(geom "$1"); local x=${g%%,*} r=${g#*,}; local y=${r%% *} s=${r#* }; echo "$((x + ${s%x*} / 2)) $((y + ${s#*x} / 2))"; }

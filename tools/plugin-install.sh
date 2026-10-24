@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# make plugin-install: put the built kwini3mouse (a plugin), kwini3hold (an effect) and
+# make plugin-install: put the built kwini3helper (a plugin), kwini3hold (an effect) and
 # kwini3frame (a decoration) into a user plugin dir and (re)load them in the running KWin, without
 # a relog (docs/mouse-plugin-design.md, "Building, installing, upkeep"; docs/spec-atomic-layout.md;
 # docs/spec-decoration.md).
@@ -7,13 +7,13 @@
 #                     through QT_PLUGIN_PATH, which a systemd drop-in gives KWin's unit only. The
 #                     drop-in is written here; it takes effect at the next login, once. Set
 #                     (tests): no drop-in.
-# Each install is a new file (kwini3mouse-<hash>.so, renamed in): KWin's plugin loader never
+# Each install is a new file (kwini3helper-<hash>.so, renamed in): KWin's plugin loader never
 # unloads a library, so loading the same path again would bring back the old code, and writing
 # over a mapped .so can crash KWin. The old file is unlinked (safe while mapped), the old id is
 # unloaded and the new one loaded (the id is the file name). KWin refuses a build for another KWin version (the IID carries major.minor.patch).
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
-built=${KI3_PLUGIN_SO:-$here/plugin/build/bin/kwin/plugins/kwini3mouse.so}   # (tests: another build)
+built=${KI3_PLUGIN_SO:-$here/plugin/build/bin/kwin/plugins/kwini3helper.so}   # (tests: another build)
 effect=${KI3_EFFECT_SO:-$here/plugin/build/bin/kwin/effects/plugins/kwini3hold.so}
 frame=${KI3_FRAME_SO:-$here/plugin/build/bin/org.kde.kdecoration3/kwini3frame.so}
 frameversion=${KI3_FRAME_VERSION:-$here/plugin/build/kdecoration.version}
@@ -38,7 +38,8 @@ place() {
     echo "installed $dir/$name" >&2
     echo "${name%.so}"
 }
-id=$(place "$built" "$dir" kwini3mouse)
+id=$(place "$built" "$dir" kwini3helper)
+rm -f "$dir"/kwini3mouse*.so          # its name until 2026-10-24
 eid=$(place "$effect" "$edir" kwini3hold)
 fid=$(place "$frame" "$fdir" kwini3frame)
 # The decoration has no version check of its own (its plugin interface carries no version), and
@@ -63,22 +64,24 @@ fi
 prop() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins "$1" 2>/dev/null; }
 busctl --user status org.kde.KWin >/dev/null 2>&1 || { echo "no KWin on this bus: installed only"; exit 0; }
 # A plugin's id is its file name (Qt ignores an "Id" in the metadata), so each build has its own.
-for old in $(prop LoadedPlugins | grep -o '"kwini3mouse[^"]*"' | tr -d '"'); do
-    [[ $old == "$id" ]] || busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins UnloadPlugin s "$old"
+# kwini3mouse: the same plugin under its name until 2026-10-24.
+for old in $(prop LoadedPlugins | grep -oE '"kwini3(helper|mouse)[^"]*"' | tr -d '"'); do
+    # not fatal: the new one must still load (review, 2026-10-24)
+    [[ $old == "$id" ]] || busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins UnloadPlugin s "$old" || true
 done
 prop LoadedPlugins | grep -q "\"$id\"" ||
     busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins LoadPlugin s "$id" >/dev/null || true
 if prop LoadedPlugins | grep -q "\"$id\""; then
     echo "loaded in KWin as $id"
 elif prop AvailablePlugins | grep -q "\"$id\""; then
-    echo "KWin sees $id but did not load it: built for another KWin version? (journalctl --user -b | grep kwini3mouse)" >&2
+    echo "KWin sees $id but did not load it: built for another KWin version? (journalctl --user -b | grep kwini3helper)" >&2
     exit 1
 else
     echo "KWin doesn't see $root yet: log out and in once (the drop-in), then it loads by itself"
 fi
 
 # The effect, through KWin's effects interface. Enabled by default (its id changes per build, so
-# KWin's own <id>Enabled key can't be set once); the kill switch is kwinrc [kwin-i3-hold] Enabled.
+# KWin's own <id>Enabled key can't be set once); the kill switch is kwinrc [Script-kwin-i3] holdEnabled.
 eff() { busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects "$@"; }
 for old in $(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"'); do
     [[ $old == "$eid" ]] || eff unloadEffect s "$old" >/dev/null

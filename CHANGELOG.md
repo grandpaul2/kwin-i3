@@ -5,6 +5,11 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- Settings, step 5: the plugins' settings move into the form (`frameWidth`, new; the frame's colours;
+  the hold's kill switch and timeout), their old groups still read. **Apply applies** with the
+  plugins: the KWin plugin, renamed `kwini3helper` (frame focus, settings apply), watches `kwinrc`
+  and has KWin reconfigure; the frame and the hold take new values on any reconfigure, so the
+  `--notify`-only rule is gone.
 - Settings, step 4: gaps, i3's `gaps inner` and `gaps outer`, by KWin's tile padding and an
   inset root tile; a change applies at Meta+Shift+C, rebuilding the tiles once.
 - Settings, step 3: `workspaceOutputs`, i3's `workspace N output X` (`1=DP-4, 2=DP-6`), at

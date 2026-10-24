@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
 # The i3 frame: kwini3frame, a KDecoration3 plugin (plugin/frame.cpp, docs/spec-decoration.md),
-# with kwini3mouse's focus-on-the-frame. The test KWin runs Breeze; this scenario selects the frame
+# with kwini3helper's focus-on-the-frame. The test KWin runs Breeze; this scenario selects the frame
 # by kwinrc library= and a reconfigure, as a live install does. Real input through inject.py.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
@@ -172,5 +172,23 @@ busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 check "and the frame again"                 poll support kwini3frame
 check "a is back at its tile"               geom_is a "0,0 1280x360"
 check "c is back at its tile"               geom_is c "0,360 1280x360"
+
+# 8. The config form's keys ([Script-kwin-i3], docs/spec-settings.md), written plainly as the form
+#    does: kwini3helper has KWin reconfigure, and the frame reads them on DecorationSettings::
+#    reconfigured. No --notify, no reload key here.
+form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
+form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; }
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "a") workspace.activeWindow = w; });' >/dev/null
+check "a active"                            poll active_is a
+form_set frameWidth 3
+frame_is() { [[ "$(frame_of "$1")" == "$2" ]]; }
+check "frameWidth 3: a's frame is 3 px each side" poll frame_is a "3,3,6,6"
+check "c's too (one shared setting)"        poll frame_is c "3,3,6,6"
+check "a keeps its tile"                    geom_is a "0,0 1280x360"
+form_set frameActive "#ff0000"
+check "frameActive: a's line is red"        poll pixel_is 1 1 255,0,0
+form_del frameActive; form_del frameWidth
+check "deleted: 1 px again"                 poll frame_is a "1,1,2,2"
+check "and the colour from [kwin-i3-frame] or the default" poll pixel_is 0 0 $ACTIVE
 check "no invariant failures or errors"     clean_log
 finish

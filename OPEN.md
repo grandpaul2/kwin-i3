@@ -29,7 +29,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. Also `53-hold.sh` is
    flaky under `run.sh` (2026-10-24: two failures in three runs, different checks: the kill
    switch's `--notify` not taking, "a hold is open"; 3 of 3 green run alone, old and new build).
-   Next: find the timing it depends on.
+   2026-10-24 again, step (e): "a hold is open" (section 13) failed ~2 in 20 solo runs with the
+   new plugin build, 0 in 9 with the old; no failure caught in a 10-run loop with the counters
+   printed. Next: find the timing it depends on (the counters at a failing run).
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.

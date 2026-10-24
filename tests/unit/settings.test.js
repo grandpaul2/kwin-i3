@@ -22,7 +22,7 @@ function loadSettings(conf) {
     return { S, logs, store, debug: ctx.DEBUG_LOG };
 }
 
-const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String" };
+const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String" };
 
 function xmlEntries() {
     const out = {};
@@ -144,4 +144,9 @@ test("workspaceOutputs: N=OUTPUT pairs; a bad entry is skipped and logged, the r
     const { S, logs } = loadSettings({ workspaceOutputs: "1=DP-4, 11=DP-6, two=DP-6, 3=, 4=DP 6" });
     assert.deepStrictEqual(S.get("workspaceOutputs"), { 1: "DP-4" });
     assert.strictEqual(logs.filter((l) => /WARN setting workspaceOutputs/.test(l)).length, 4, logs.join("\n"));
+});
+
+test("a colour: #rrggbb, else the default", () => {
+    assert.strictEqual(loadSettings({ frameActive: "#AABBCC" }).S.get("frameActive"), "#aabbcc");
+    assert.strictEqual(loadSettings({ frameActive: "blue" }).S.get("frameActive"), "#4c7899");
 });

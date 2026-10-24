@@ -4,6 +4,7 @@
 #include <effect/effecthandler.h>
 #include <scene/windowitem.h>
 #include <window.h>
+#include <workspace.h>
 
 #include <KConfigGroup>
 #include <KSharedConfig>
@@ -14,7 +15,10 @@
 
 using namespace KWin;
 
-static const QString s_group = QStringLiteral("kwin-i3-hold");
+// The config form's group (docs/spec-settings.md); the old [kwin-i3-hold] keys are still read
+// where the new ones are missing.
+static const QString s_group = QStringLiteral("Script-kwin-i3");
+static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
 static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
 
@@ -23,10 +27,13 @@ Hold::Hold()
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
     connect(m_watcher.get(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group) {
-        if (group.name() == s_group) {
+        if (group.name() == s_group || group.name() == s_oldGroup) {
             loadConfig();
         }
     });
+    // KWin's reconfigure (Meta+Shift+C, or Apply with kwini3helper) reconfigures no effect by
+    // itself: only a --notify write reaches one (effecthandler.cpp). So this hears it directly.
+    connect(workspace(), &Workspace::configChanged, this, &Hold::loadConfig);
     loadConfig();
 
     m_deadline.setSingleShot(true);
@@ -69,9 +76,10 @@ void Hold::loadConfig()
 {
     auto config = m_watcher->config();
     config->reparseConfiguration();
-    const KConfigGroup group = config->group(s_group);
-    m_enabled = group.readEntry("Enabled", true);
-    m_timeoutMs = group.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
+    const KConfigGroup group = config->group(s_group), old = config->group(s_oldGroup);
+    m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
+    m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
+                                                : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
     if (!m_enabled) {
         releaseAll();
     }

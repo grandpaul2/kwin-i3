@@ -2,9 +2,9 @@
 #include <main.h>
 #include <plugin.h>
 
-#include "framefocus.h"
+#include "helper.h"
 
-class KWIN_EXPORT FrameFocusFactory : public KWin::PluginFactory
+class KWIN_EXPORT HelperFactory : public KWin::PluginFactory
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID PluginFactory_iid FILE "metadata.json")
@@ -13,7 +13,7 @@ class KWIN_EXPORT FrameFocusFactory : public KWin::PluginFactory
 public:
     std::unique_ptr<KWin::Plugin> create() const override
     {
-        return std::make_unique<FrameFocus>();
+        return std::make_unique<Helper>();
     }
 };
 

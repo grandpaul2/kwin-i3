@@ -1,6 +1,6 @@
 {
     "KPlugin": {
-        "Name": "kwin-i3 frame focus",
+        "Name": "kwin-i3 helper: frame focus, settings apply",
         "EnabledByDefault": true
     }
 }

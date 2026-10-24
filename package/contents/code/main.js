@@ -40,6 +40,14 @@ var Settings = (function () {
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
         gapsInner: { type: "int", def: "0", min: 0, max: 100 },                 // px between windows
         gapsOuter: { type: "int", def: "0", min: 0, max: 200 },                 // px more at the screen edge
+        // Read by the plugins, not the script (kwini3frame, kwini3hold); here so the form has them.
+        frameWidth: { type: "int", def: "1", min: 1, max: 10 },
+        frameActive: { type: "colour", def: "#4c7899" },
+        frameInactive: { type: "colour", def: "#333333" },
+        frameFloatingActive: { type: "colour", def: "#4c995a" },
+        frameFloatingInactive: { type: "colour", def: "#333333" },
+        holdEnabled: { type: "bool", def: "true" },
+        holdTimeoutMs: { type: "int", def: "100", min: 10, max: 2000 },
     };
     var values = {};
 
@@ -53,6 +61,7 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
+        if (type === "colour") return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;
         // i3's "workspace N output X": { N: output name }. A malformed entry is skipped (and
         // logged), the rest still apply.
         if (type === "outputs") {

@@ -7,7 +7,7 @@
 #                                        finding its display is not parallel-safe
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
-#   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3mouse.so and
+#   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3helper.so and
 #                                        kwin/effects/plugins/kwini3hold.so (make plugin:
 #                                        plugin/build/bin) for the test KWin to load
 # Inside the command: WAYLAND_DISPLAY is the test KWin, the session bus is private (so busctl

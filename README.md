@@ -75,8 +75,8 @@ They are for locking in the i3 feel completely; kwin-i3 works fine without them.
 
 | plugin | adds | without it |
 |---|---|---|
-| `kwini3frame` (a decoration) | i3's 1 px frame, blue on the active window, green on the active floating one, and nothing from the pointer on it | Breeze (or any decoration), with title bars |
-| `kwini3mouse` (a KWin plugin) | focus on the frame: hover on the line focuses its window, a click on it activates and raises, as on i3's border | focus changes 1 px later, inside the window; a click on the line does nothing |
+| `kwini3frame` (a decoration) | i3's 1 px frame (width and colours in the settings), blue on the active window, green on the active floating one, and nothing from the pointer on it | Breeze (or any decoration), with title bars |
+| `kwini3helper` (a KWin plugin) | focus on the frame: hover on the line focuses its window, a click on it activates and raises, as on i3's border; and **Apply applies**: a save in the Configure form takes effect at once | focus changes 1 px later, inside the window; a click on the line does nothing; after Apply, press Meta+Shift+C |
 | `kwini3hold` (an effect) | atomic layout changes: windows that move together land in the same frame | on a fast monitor, a frame or two of wallpaper where a window is about to land |
 
 `make plugin-install` builds all three, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash
@@ -97,14 +97,13 @@ window once.
 ## Configuration
 
 System Settings > Window Management > KWin Scripts > kwin-i3 > Configure, or by hand in
-`~/.config/kwinrc`. The script's keys (`[Script-kwin-i3]`) apply at **Meta+Shift+C** or the next
-login: the Configure dialog saves without telling KWin (KWin 6.7.5's generic script config does
-nothing after a save), so the reload key asks KWin to reparse, as i3's reload does. The
-plugins' keys are watched: **change them with `kwriteconfig6 --notify`, and nothing else** (a
-plain write followed by KWin's `reconfigure` leaves the plugin on the old value and the watcher
-then ignores a later notification of the same value, seen 2026-10-23). Under heavy load
-`kwriteconfig6` can exit before its notification is out (1 in 100 measured, 2026-10-24): if a
-change did not take, write it again.
+`~/.config/kwinrc`, all in `[Script-kwin-i3]`. With the plugins, a save applies at once
+(`kwini3helper` watches the file and has KWin reconfigure). Without them, press **Meta+Shift+C**
+after a save, or log in again: KWin 6.7.5's generic script form saves without telling KWin, and
+the reload key asks KWin to reconfigure, as i3's reload does. Everything, the script and the
+three plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
+reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin-i3-hold]`, before
+2026-10-24) are still read where a key below is missing.
 
 | group and key | default | meaning |
 |---|---|---|
@@ -119,12 +118,13 @@ change did not take, write it again.
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |
 | `[Script-kwin-i3] debugLog` | `false` | log every action and tree over D-Bus to `tools/logsink.py` (the tests' log); off, an in-memory log feeds `Dump State` |
-| `[kwin-i3-hold] Enabled` | `true` | the atomic-layout effect's kill switch |
-| `[kwin-i3-hold] TimeoutMs` | `100` | how long the old layout may be held for a slow window (Sway: 200) |
-| `[kwin-i3-frame] Active` | `#4c7899` | the frame's colour on the active tiled window |
-| `[kwin-i3-frame] Inactive` | `#333333` | on an inactive tiled window |
-| `[kwin-i3-frame] FloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
-| `[kwin-i3-frame] FloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself paints the same and, if it is in no tile when kwin-i3 loads, is adopted as floating; a floating window whose keep-above you clear paints as tiled. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
+| `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
+| `[Script-kwin-i3] holdTimeoutMs` | `100` | how long the old layout may be held for a slow window, 10-2000 ms (Sway: 200) |
+| `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins) |
+| `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the active tiled window |
+| `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
+| `[Script-kwin-i3] frameFloatingActive` | `#4c995a` | on the active floating window (green, to tell it apart; i3 has no such colour) |
+| `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself paints the same and, if it is in no tile when kwin-i3 loads, is adopted as floating; a floating window whose keep-above you clear paints as tiled. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
 | `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
 | `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |
 

@@ -11,14 +11,6 @@ using namespace KWin;
 FrameFocus::FrameFocus()
     : InputEventFilter(InputFilterOrder::Decoration)
 {
-    input()->installInputEventFilter(this);
-}
-
-FrameFocus::~FrameFocus()
-{
-    if (input()) {
-        input()->uninstallInputEventFilter(this);
-    }
 }
 
 // The window whose decoration the pointer is on, else null. KWin updates the pointer's decoration

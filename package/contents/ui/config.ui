@@ -8,7 +8,7 @@
    <item>
     <widget class="QLabel" name="applyHint">
      <property name="text">
-      <string>Changes apply when you press Meta+Shift+C (kwin-i3's reload, as in i3), or at the next login.</string>
+      <string>With the kwin-i3 plugins installed, Apply applies at once. Without them, press Meta+Shift+C (kwin-i3's reload, as in i3) after Apply, or log in again.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -233,6 +233,127 @@
       </item>
       <item row="3" column="1">
        <widget class="QLineEdit" name="kcfg_floatingTitle"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="frameGroup">
+     <property name="title">
+      <string>Frame (needs the kwin-i3 plugins, the kwini3frame decoration selected)</string>
+     </property>
+     <layout class="QFormLayout" name="frameLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="frameWidthLabel">
+        <property name="text">
+         <string>Width:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="kcfg_frameWidth">
+        <property name="suffix">
+         <string> px</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>10</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="frameActiveLabel">
+        <property name="text">
+         <string>Active window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="kcfg_frameActive">
+        <property name="placeholderText">
+         <string>#4c7899</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="frameInactiveLabel">
+        <property name="text">
+         <string>Inactive window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="kcfg_frameInactive">
+        <property name="placeholderText">
+         <string>#333333</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="frameFloatingActiveLabel">
+        <property name="text">
+         <string>Active floating window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="kcfg_frameFloatingActive">
+        <property name="placeholderText">
+         <string>#4c995a</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="frameFloatingInactiveLabel">
+        <property name="text">
+         <string>Inactive floating window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLineEdit" name="kcfg_frameFloatingInactive">
+        <property name="placeholderText">
+         <string>#333333</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="holdGroup">
+     <property name="title">
+      <string>Atomic layout (needs the kwin-i3 plugins)</string>
+     </property>
+     <layout class="QFormLayout" name="holdLayout">
+      <item row="0" column="0" colspan="2">
+       <widget class="QCheckBox" name="kcfg_holdEnabled">
+        <property name="text">
+         <string>Hold the old layout until every moved window has its new size (no wallpaper flashing through)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="holdTimeoutMsLabel">
+        <property name="text">
+         <string>Wait at most for a slow window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
+        <property name="suffix">
+         <string> ms</string>
+        </property>
+        <property name="minimum">
+         <number>10</number>
+        </property>
+        <property name="maximum">
+         <number>2000</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
