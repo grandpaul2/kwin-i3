@@ -11,15 +11,13 @@ Last reconciled: **2026-10-24**.
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". Suggested order: 4, 5 (1, the scope fence, and 3, the script alone, are done; 2 nearly).
+`docs/plan.md`, "Scope". Suggested order: 4, 5 (1, 2 and 3 are done).
 
 ## Open
 
-2. **Settings** (`docs/spec-settings.md`): all five steps live 2026-10-24: the Configure form,
-   Meta+Shift+C, resize step, orientation, focus wrapping, workspace outputs, gaps, frame width,
-   and Apply applies with the plugins (`kwini3helper`). Open: Paul's hand check of (e) (Apply
-   without Meta+Shift+C; a frame width); later, Paul's call, the one-line KWin fix upstream
-   (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`) so Apply applies without plugins.
+2. **Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
+   when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
+   `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
 4. **No dependence on Paul's dotfiles.** Next: list what `setup.sh` does that kwin-i3 relies on
    (clashing Plasma keys unbound, focus follows mouse, per-output virtual desktops, border size);
    for each, handle it, detect and report it, or document it in README's install. Then a run in
