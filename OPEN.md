@@ -20,12 +20,12 @@ window management, with Plasma doing the rest. The scope and its reasons:
    `genericscriptedconfig.cpp`), so Apply applies without the plugins too.
 4. **No dependence on Paul's dotfiles.** Inventory done 2026-10-24 (what `setup.sh` and
    `testkwin.sh`'s config give kwin-i3 that stock Plasma doesn't). Design agreed with Paul
-   2026-10-24; build order b, stock tests, README.
+   2026-10-24; next: the stock tests, then the README pass.
    (a) **Done, live** 2026-10-24 (`docs/spec-desktops-on-demand.md`): workspaces created on
    demand, up to 10, never removed.
-   (b) Per-monitor desktops off by default: **built, not live** (2026-10-24,
-   `docs/spec-per-output-desktops.md`, `36-per-output-off.sh`): reported with 2+ monitors (at
-   load, and once later), never set; turned on, each monitor gets its own workspace back.
+   (b) **Done, live** 2026-10-24 (`docs/spec-per-output-desktops.md`): per-monitor desktops off
+   with 2+ monitors reported (at load, and once later), never set; turned on, each monitor gets
+   its own workspace back.
    (c) 21 stock shortcut defaults collide (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right,
    Meta+1..9, Meta+0, Meta+V) plus Meta+E, Meta+L, and KWin gives a taken key away silently
    (`registerShortcut` always returns true): at load ask kglobalaccel which keys kwin-i3 got and
