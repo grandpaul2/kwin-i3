@@ -1,5 +1,10 @@
 # Mouse chords — a small KWin plugin (design, reviewed and built 2026-10-22)
 
+**Dropped 2026-10-24** (Paul: one chord was ever used, and KWin's own Meta+drag does it;
+`docs/plan.md`, Scope). The plugin `kwini3mouse` stays for focus on the frame alone
+(`plugin/framefocus.cpp`, `docs/spec-decoration.md`). What follows is the chords' design, kept as
+the record; the input-filter findings in it still hold.
+
 Paul wants window move on **Meta+Shift+left-drag** instead of KWin's Meta+left-drag, to match his
 Meta+Shift keys (move left/right, move to workspace). *"Handling two keys and a mouse click is
 something a WM needs to do. I will be adding features more in the future."* Built in `plugin/`,

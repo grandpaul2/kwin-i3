@@ -29,8 +29,6 @@ click() { "$INJECT" "abs $1 $2" "wait 30" "btn left down" "wait 20" "btn left up
 no_drag() { sleep 0.3; ! after "$1" | grep -qE '^.{9}DRAG start'; }   # nothing started by then
 ACTIVE=76,120,153; INACTIVE=51,51,51
 
-kwriteconfig6 --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Left' Move
-kwriteconfig6 --file kwinrc --group MouseBindings --key CommandAll1 Nothing
 kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library kwini3frame
 busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 # 0. The switch took (a load failure falls back to Breeze silently; the reconfigure is a timer).
@@ -121,8 +119,8 @@ check "a still active"                      active_is a
 check "a double click on the line: nothing" geom_is a "0,0 640x720"
 check "no window appeared (no menu)"        wait_tree 1 "H[a* b]"
 
-# 4. The chords still work from the line: Meta+right-drag resizes (KWin's own) and reads back;
-#    Meta+Shift+drag moves (kwini3mouse), floating the window.
+# 4. KWin's own chords work from the line: Meta+right-drag resizes and reads back; Meta+drag
+#    moves, floating the window.
 m=$(mark)
 sdrag Meta right 639 360 700 360
 check "Meta+right-drag from the line: resize" wait_log '^.{9}DRAG end resize a' "$m"
@@ -134,8 +132,8 @@ m=$(mark)
 "$INJECT" "abs 639 360" "wait 30" "btn left down" "wait 20" "btn left up" "wait 20"
 check "a click on the line after it: nothing" no_drag "$m"
 m=$(mark)
-sdrag Meta+Shift left 1279 360 1100 300
-check "Meta+Shift+drag from b's line: move" wait_log '^.{9}DRAG end move b' "$m"
+sdrag Meta left 1279 360 1100 300
+check "Meta+drag from b's line: move"       wait_log '^.{9}DRAG end move b' "$m"
 check "b floats"                            wait_log '^.{9}TREE 1 .*~b' "$m"
 kclose b
 

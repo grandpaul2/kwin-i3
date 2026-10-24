@@ -1,4 +1,5 @@
-# kwini3mouse: modifier + mouse button chords for KWin (docs/mouse-plugin-design.md).
+# kwini3mouse: focus on the frame, as i3 (docs/spec-decoration.md). The name is from when it also did
+# modifier + mouse button chords (docs/mouse-plugin-design.md), dropped 2026-10-24.
 # kwini3hold: atomic layout changes, a KWin effect (docs/spec-atomic-layout.md).
 # kwini3frame: i3's 1 px frame, a KDecoration3 plugin (docs/spec-decoration.md).
 # Built against the installed kwin-devel; KWin refuses a build from another KWin version. The
@@ -22,8 +23,8 @@ find_package(KWin REQUIRED COMPONENTS kwin)
 find_package(KDecoration3 REQUIRED)
 
 kcoreaddons_add_plugin(kwini3mouse INSTALL_NAMESPACE "kwin/plugins")
-target_sources(kwini3mouse PRIVATE main.cpp mousechords.cpp)
-target_link_libraries(kwini3mouse PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)
+target_sources(kwini3mouse PRIVATE main.cpp framefocus.cpp)
+target_link_libraries(kwini3mouse PRIVATE KWin::kwin)
 
 # automoc scans for macro names, and KWin's factory macro hides the Q_OBJECT inside it.
 list(APPEND CMAKE_AUTOMOC_MACRO_NAMES "KWIN_EFFECT_FACTORY_SUPPORTED")

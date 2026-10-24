@@ -1,6 +1,6 @@
 // kwini3frame: i3's 1 px frame as a KDecoration3 plugin (docs/spec-decoration.md). The frame
 // starts nothing from the pointer: no resize cursor, no edge drag, no title-bar move, no menu.
-// Focus on the frame is kwini3mouse's job (mousechords.cpp), as the decoration API can't ask for it.
+// Focus on the frame is kwini3mouse's job (framefocus.cpp), as the decoration API can't ask for it.
 #pragma once
 
 #include <KDecoration3/Decoration>

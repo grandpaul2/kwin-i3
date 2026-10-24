@@ -1,6 +1,6 @@
 {
     "KPlugin": {
-        "Name": "kwin-i3 mouse chords",
+        "Name": "kwin-i3 frame focus",
         "EnabledByDefault": true
     }
 }

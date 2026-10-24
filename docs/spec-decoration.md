@@ -41,7 +41,8 @@ decides tiling, so a window rule is out.
 
 **The frame starts nothing from the pointer**: no resize, no move, no menu, no double-click action,
 the arrow cursor everywhere on it. Resize is Meta+right-drag (KWin's stock `CommandAll3`) and the
-Meta+Ctrl keys; move is Meta+Shift+drag (kwini3mouse) and the Meta+Shift keys. A floating window
+Meta+Ctrl keys; move is Meta+drag (KWin's stock `CommandAll1`; Meta+Shift+drag by kwini3mouse until
+2026-10-24) and the Meta+Shift keys. A floating window
 resizes only by Meta+right-drag and the keys (Paul asked; accepted). The read-back after an
 interactive resize (`readBack`, `src/kwin.js`; 51-input) stays: it serves Meta+right-drag.
 
@@ -133,12 +134,12 @@ about 80 lines, plus `frame.json` and a CMake target.
     press, in the same filter, and computes its gravity from the pointer position, not the section
     (`window.cpp:2105-2127`), so Meta+right-drag resize and Meta+left-drag (off, `CommandAll1
     Nothing`) are as before; kwini3mouse runs before this filter too (same slot, inserted first)
-    and keeps Meta+Shift+drag. The window menu's Move/Resize, keyboard moves and a client's own
+    and kept Meta+Shift+drag (chords dropped 2026-10-24; Meta+left-drag is KWin's again). The window menu's Move/Resize, keyboard moves and a client's own
     move request never read the section either (R1-3).
 - **Input region** = borders + resizeOnlyBorders (`window.cpp` `updateDecorationInputShape`): exactly
   the 1 px line. Nothing invisible.
 
-## How: focus on the frame (kwini3mouse, `plugin/mousechords.cpp`)
+## How: focus on the frame (kwini3mouse, `plugin/framefocus.cpp`; `mousechords.cpp` until 2026-10-24)
 
 KWin's `DecorationEventFilter` returns true for every pointer event over a decoration, so the
 `WindowActionInputFilter` that activates on click never runs there, and `InputDeviceHandler::
@@ -291,8 +292,8 @@ GTK4 with server-side decoration (`DecorationBridge::init` sets the default mode
    if fault A below proves it observable.
    Double left click on the line: a not maximized, unchanged. A second click on the line after a
    Meta+right-drag started on the line: starts nothing (cursor state reset).
-4. **The chords still work from the line**: Meta+Shift+drag started on a's line moves a (floats
-   it); Meta+right-drag started on it resizes and reads back (51-input's check 2, repeated here).
+4. **The chords still work from the line**: Meta+drag (Meta+Shift+drag until 2026-10-24) started
+   on a's line moves a (floats it); Meta+right-drag started on it resizes and reads back (51-input's check 2, repeated here).
 5. **Nothing invisible above a window** (the Aurorae strip), positive: two stacked windows, a left
    click 4 px above the seam, inside the upper window's client area, reaches the client (`--clicks`
    log, as 52-mouse's `press 1 release 1`).

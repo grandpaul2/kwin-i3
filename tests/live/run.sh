@@ -11,14 +11,22 @@ scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
 export KI3_PARALLEL=${#scenarios[@]}
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
+# "# needs: plugin" in a scenario: its test KWin loads plugin/ (built by make plugin). The plugins
+# are optional: with no build (no kwin-devel), those scenarios are skipped, and the summary says so.
+plugins=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
+skipped=()
 for t in "${scenarios[@]}"; do
-    # "# needs: plugin" in a scenario: its test KWin loads plugin/ (built by make plugin)
-    plugin=""; grep -q '^# needs: plugin' "$t" && plugin=$(cd ../../plugin/build/bin 2>/dev/null && pwd)
+    plugin=""
+    if grep -q '^# needs: plugin' "$t"; then
+        if [[ -z $plugins ]]; then skipped+=("$t"); continue; fi
+        plugin=$plugins
+    fi
     ( KI3_PLUGIN=$plugin timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status" ) &
 done
 wait
 status=0
 for t in "${scenarios[@]}"; do
+    [[ " ${skipped[*]} " == *" $t "* ]] && continue
     echo "$t"
     grep -vE 'Gdk-Message|Gtk-WARNING' "$out/$t.log"
     s=$(cat "$out/$t.status")
@@ -28,4 +36,5 @@ for t in "${scenarios[@]}"; do
         status=1
     fi
 done
+[[ ${#skipped[@]} -gt 0 ]] && echo "SKIPPED, no plugin build (make plugin needs kwin-devel): ${skipped[*]}"
 exit $status

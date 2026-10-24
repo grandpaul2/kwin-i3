@@ -32,10 +32,16 @@ rules that decide what is managed and what floats.
 | i3's config file and `i3-msg` IPC | settings belong in System Settings (and `kwinrc`); KWin's D-Bus is the scripting surface |
 | `assign`, `for_window` and other per-window rules beyond managed / floating | KWin's Window Rules already do them |
 | X11 | Plasma's direction is Wayland, and the plugins and tests are Wayland-only |
+| mouse chords (Meta+Shift+drag moved, 2026-10-22 to 10-24) | KWin's own Meta+drag moves and Meta+right-drag resizes; the chord plugin was kept only for focus on the frame (Paul, 2026-10-24) |
 
 **The test for anything new:** if Plasma already does it, kwin-i3 doesn't. A feature belongs
 here only if it is part of how i3 arranges windows and Plasma can't do it. A setting belongs here
-only if a user would reasonably want it different, not because a constant exists. The one
+only if a user would reasonably want it different, not because a constant exists.
+
+**The plugins are optional** (Paul, 2026-10-24: "if you want to really lock in that i3 feel
+completely, but it works fine without them"). The script alone is the product and is tested
+alone (every live scenario but 52-54 runs with no plugin and Breeze); the frame, frame focus and
+the hold effect are extras that cost a rebuild after every Plasma update. The one
 addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting that defaults to 0.
 
 ## Decisions
@@ -149,7 +155,7 @@ transient rule is what floats dialogs. Floating windows stay above tiled ones |
 | minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
 | maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
 | minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize. **Not across a reload**: KWin's tiles don't hold a minimized window's place and a script can't save state, so after a reload it comes back after the focus (found 2026-10-22) |
-| foreign untile (Meta+Shift+drag via the kwini3mouse plugin, KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
+| foreign untile (Meta+drag, KWin's own; KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
 | monitor returns, a window there was fullscreen, its workspace hidden meanwhile | **known limit, accepted (Paul, 2026-10-22; fuzzer I9, seed 214)**: KWin's `PlacementTracker` asks the window to be fullscreen again and moves it back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies nothing until it does (only a thumbnail or screencast would make it render; a JS script can do neither). Meanwhile KWin calls it not resizable, refuses the tile, and kwin-i3 floats it where it stands, on the other monitor, out of sight. (Since 2026-10-24 a window KWin reports as fullscreen is not floated on a refusal but kept in the tree, out of the tiles until fullscreen ends; this limit is the *pending* request, where KWin reports it not fullscreen yet.) Meta+Shift+N, or closing it, brings it back. The alternative, flipping its desktop for a moment so it renders, was judged not worth a workaround. Same limit, other trigger (fuzzer I9, seed 28, 2026-10-23): a hidden floating window smaller than KWin's 150 px decorated minimum gets a resize with any move KWin sends it (`checkWorkspacePosition` constrains the size), so it stays behind on a replug too. Real apps report a minimum of their own; the test client's dialog now starts at 200x160 |
 | close | leaf removed, empty splits removed upwards (no flatten), focus to the previous focus in that container |
 | focus follows mouse | KWin's `windowActivated` updates the focus stack; the last focus event wins, as in i3 |

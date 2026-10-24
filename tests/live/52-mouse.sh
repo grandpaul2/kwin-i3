@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # needs: plugin
-# Mouse chords: the kwini3mouse KWin plugin (plugin/, docs/mouse-plugin-design.md), driven by real
-# input. The author's setup: Meta+Shift+left-sdrag moves, KWin's own Meta+left-sdrag move is off, KWin's
-# Meta+right-sdrag resize stays.
+# The mouse with the kwini3mouse plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
+# 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock: Meta+left-drag
+# moves, Meta+right-drag resizes. The plugin's mouse chords (Meta+Shift+drag moved) were dropped on
+# 2026-10-24 (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks
 plugin_loaded() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -q '"kwini3mouse"'; }
@@ -30,85 +31,57 @@ sdrag() {   # sdrag <mods> <button> x1 y1 x2 y2
 pos() { local g; g=$(geom "$1"); echo "${g%% *}"; }
 size() { local g; g=$(geom "$1"); echo "${g#* }"; }
 
-kwriteconfig6 --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Left' Move
-kwriteconfig6 --file kwinrc --group MouseBindings --key CommandAll1 Nothing
+kwriteconfig6 --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Left' Move   # a leftover, ignored
 busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 check "the plugin is loaded"                plugin_loaded
 
-# 1. Meta+Shift+left-sdrag moves a window by exactly the drag, and the window never sees the click.
-#    Shift is held all through: KWin's own move would drop the window into a custom tile on
-#    release (seen 2026-10-22: a GTK window came back 636x712), and Alacritty crashed on it.
+# 1. Meta+left-drag (KWin's own) moves a window by exactly the drag; the window never sees the click.
 client --title w --size 600x400 --clicks "$clicks"
 read -r cx cy < <(centre w); p0=$(pos w); s0=$(size w)
-sdrag Meta+Shift left "$cx" "$cy" $((cx + 100)) $((cy + 60))
-check "Meta+Shift+drag moved w by (100,60)" poll moved_by w "$p0" 100 60
-check "w kept its size (no custom tile)"    [ "$(size w)" == "$s0" ]
+sdrag Meta left "$cx" "$cy" $((cx + 100)) $((cy + 60))
+check "Meta+drag moved w by (100,60)"       poll moved_by w "$p0" 100 60
+check "w kept its size"                     [ "$(size w)" == "$s0" ]
 check "w saw no click"                      saw_nothing
 
-# 2. Plain Meta+left-sdrag no longer moves (CommandAll1=Nothing); the click reaches the window.
+# 2. Meta+Shift+left-drag no longer moves, the leftover chord entry notwithstanding: the click
+#    reaches the window.
 read -r cx cy < <(centre w); p0=$(pos w)
-sdrag Meta left "$cx" "$cy" $((cx + 100)) $((cy + 60))
+sdrag Meta+Shift left "$cx" "$cy" $((cx + 100)) $((cy + 60))
 check "w saw that press and release"        poll saw "press 1 release 1 "
-check "Meta+drag did not move w"            [ "$(pos w)" == "$p0" ]
+check "Meta+Shift+drag did not move w"      [ "$(pos w)" == "$p0" ]
 
-# 3. Meta+right-sdrag still resizes (KWin's own, untouched).
+# 3. Meta+right-drag resizes (KWin's own).
 : > "$clicks"
 read -r cx cy < <(centre w); s0=$(size w)
 sdrag Meta right $((cx + 200)) "$cy" $((cx + 280)) "$cy"
 resized() { [[ "$(size w)" != "$s0" ]]; }
 check "Meta+right-drag resized w"           poll resized
 
-# 4. Chords that aren't bound pass through: Ctrl+Shift+click, and Meta+Shift+Ctrl+sdrag (extra
-#    modifiers are a different chord).
+# 4. A plain click and a Ctrl+Shift click in the client reach it (the plugin takes no press).
 : > "$clicks"
-read -r cx cy < <(centre w); p0=$(pos w)
+read -r cx cy < <(centre w)
+sdrag "" left "$cx" "$cy" "$cx" "$cy"
+check "a plain click reached w"             poll saw "press 1 release 1 "
+: > "$clicks"
 sdrag Ctrl+Shift left "$cx" "$cy" "$cx" "$cy"
 check "Ctrl+Shift+click reached w"          poll saw "press 1 release 1 "
-: > "$clicks"
-sdrag Meta+Shift+Ctrl left "$cx" "$cy" $((cx + 100)) $((cy + 60))
-check "Meta+Shift+Ctrl+drag reached w"      poll saw "press 1 release 1 "
-check "and did not move it"                 [ "$(pos w)" == "$p0" ]
 
-# 5. A sdrag that starts on the title bar (the test KWin has Breeze's) moves too.
+# 5. A Meta+drag that starts on the title bar (the test KWin has Breeze's) moves too.
 read -r cx cy < <(centre w); p0=$(pos w); ty=${p0#*,}
-sdrag Meta+Shift left "$cx" $((ty + 10)) $((cx - 50)) $((ty + 40))
-check "a title-bar Meta+Shift+drag moved w" poll moved_by w "$p0" -50 30
-
-# 6. A config change applies at once (KConfigWatcher, kwriteconfig6 --notify, no reconfigure).
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Left' --delete
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-mouse --key 'Meta+Alt+Left' Move
-: > "$clicks"
-read -r cx cy < <(centre w); p0=$(pos w)
-sleep 0.3   # the watcher is asynchronous and has nothing to poll
-sdrag Meta+Shift left "$cx" "$cy" $((cx + 40)) "$cy"
-check "unbound now: Meta+Shift+click reached w" poll saw "press 1 release 1 "
-sdrag Meta+Alt left "$cx" "$cy" $((cx + 40)) "$cy"
-check "and Meta+Alt+drag moves instead"     poll moved_by w "$p0" 40 0
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-mouse --key 'Meta+Alt+Left' --delete
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Left' Move
+sdrag Meta left "$cx" $((ty + 10)) $((cx - 50)) $((ty + 40))
+check "a title-bar Meta+drag moved w"       poll moved_by w "$p0" -50 30
 kclose w
 
-# 7. With kwin-i3: a tiled window Meta+Shift+dragged floats where it is dropped (plan, policies),
-#    and a shortcut: chord runs a kwin-i3 action on the window under the pointer, which sees
-#    neither the press nor the release.
+# 6. With kwin-i3: a tiled window Meta+dragged floats where it is dropped (plan, policies).
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 point 640 360
-client --title a --clicks "$clicks.a"; client --title b --clicks "$clicks"
+client --title a; client --title b --clicks "$clicks"
 check "a | b"                               wait_tree 1 "H[a b*]"
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-mouse --key 'Meta+Shift+Middle' 'shortcut:kwin-i3 Floating Toggle'
-sleep 0.3
 : > "$clicks"
-point 213 360
 m=$(mark)
-sdrag Meta+Shift middle 213 360 213 360
-check "Meta+Shift+middle on a floats a"     wait_log '^.{9}ACTION Floating Toggle' "$m"
-check "a is floating"                       wait_log '^.{9}TREE 1 H\[b\*?\] ~a' "$m"
-check "a saw neither press nor release"     [ ! -s "$clicks.a" ]
-check "b saw nothing"                       saw_nothing
-m=$(mark)
-sdrag Meta+Shift left 960 360 860 300
-check "Meta+Shift+drag of tiled b: a move"  wait_log '^.{9}DRAG end move b' "$m"
+sdrag Meta left 960 360 860 300
+check "Meta+drag of tiled b: a move"        wait_log '^.{9}DRAG end move b' "$m"
 check "b floats"                            wait_log '^.{9}TREE 1 .*~b' "$m"
 check "b saw nothing"                       saw_nothing
 
