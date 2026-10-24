@@ -58,11 +58,16 @@ and a click on it focus the window, as i3's border does.
    `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`.
    **Never alongside another tiling script** (Krohnkite, i3ws, …): two scripts would place the
    same windows.
-2. Plasma's own keys that collide with i3's: unbind Meta+arrows (quick tiling), Meta+Ctrl+arrows
+2. Plasma's own keys that collide with i3's: Meta+arrows (quick tiling), Meta+Ctrl+arrows
    (desktop switching), Meta+Shift+Left/Right (window to previous/next screen), Meta+E (Dolphin),
-   Meta+L (lock), Meta+0 and Meta+plus/minus (zoom), Meta+1..9 if the task manager uses them. KWin
-   loses a shortcut conflict silently. The author's dotfiles `setup.sh` does this and the rest
-   (focus follows mouse with no delay, per-output virtual desktops, border size Tiny).
+   Meta+L (lock), Meta+0 and Meta+plus/minus (zoom), Meta+1..9 if the task manager uses them. A
+   key another shortcut holds fires that one, not kwin-i3's, so at load kwin-i3 names every such
+   key in one notification (`warnTakenKeys` turns it off). **`make take-keys`** frees them: it
+   removes just that key from each holder and saves what it removed;
+   **`make restore-keys`** puts them back. Free them by hand in System Settings > Shortcuts if
+   you'd rather. The check runs at load: an app that registers a clashing key later is seen at
+   the next login. The author's dotfiles `setup.sh` does the unbinding and the rest (focus
+   follows mouse with no delay, per-output virtual desktops, border size Tiny).
 3. The author's launcher for bug captures, Meta+Shift+B running `tools/capture`, lives in the
    dotfiles too (a `.desktop` file with a `_launch` shortcut).
 
@@ -117,6 +122,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |
+| `[Script-kwin-i3] warnTakenKeys` | `true` | at load, one notification naming each of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't); `make take-keys` frees them |
 | `[Script-kwin-i3] debugLog` | `false` | log every action and tree over D-Bus to `tools/logsink.py` (the tests' log); off, an in-memory log feeds `Dump State` |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `100` | how long the old layout may be held for a slow window, 10-2000 ms (Sway: 200) |

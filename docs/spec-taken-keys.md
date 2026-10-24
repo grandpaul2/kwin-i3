@@ -1,6 +1,6 @@
 # Spec: report the keys kwin-i3 didn't get, and an opt-in to take them (OPEN.md item 4 (c))
 
-Draft 2026-10-24, waiting on Paul's go. The design was agreed earlier the same day: report, never
+Paul's go 2026-10-24; built the same day. The design was agreed earlier the same day: report, never
 take at load; the fix is opt-in, beside `plugin-install`; one notification shared with (b).
 
 ## The gap
@@ -55,9 +55,12 @@ Meta+V) plus Meta+E (Dolphin) and Meta+L (lock). Nothing says so: the key just d
 
 - It is checked at load (login, a reload). An app that registers a clashing shortcut later is
   only seen at the next load.
-- An action whose app isn't running: whether its key still blocks kwin-i3's is **not yet known**.
-  The test below presses every key, so if an inactive holder doesn't block, the report will
-  disagree with the presses and the check must skip inactive components (`Component.isActive`).
+- **An inactive holder doesn't block** (found by the scenario's press-every-key check, 2026-10-24):
+  a component registered but not active (`Component.isActive` false: its app not running, and
+  not one kglobalaccel launches itself) keeps its key on paper, but kwin-i3's action fires. So
+  the check and `take-keys` look up the holder's component (`getComponent`, then `isActive`) and
+  skip an inactive one; the check logs it as `TAKEN-INACTIVE`. `KGlobalAccel.action` doesn't
+  look at that.
 
 ## Paul's desktop
 
@@ -74,7 +77,10 @@ prints "nothing taken".
 - **New live scenario `35-taken-keys.sh`**: before kwin-i3 loads, KWin's Quick Tile Left gets
   its stock Meta+Left back, and a stand-in foreign component (`doRegister`, then
   `setForeignShortcutKeys`) holds Meta+E.
-  1. At load: exactly one notification, naming Meta+Left and Meta+E and no other key.
+  Plus an inactive stand-in (`doRegister` only) holding Meta+H; the active one is registered
+  as a running app is (`doRegister`, then `setShortcutKeys` with SetPresent).
+  1. At load: exactly one notification, naming Meta+Left and Meta+E and no other key; Meta+H
+     logged as inactive.
   2. **The claim itself**: every default key from `tests/keys.json` pressed (injected), and
      the ones that don't fire kwin-i3's action are exactly the ones reported.
   3. `make take-keys` (with the test's state dir): Meta+Left and Meta+E now fire kwin-i3's
@@ -82,8 +88,9 @@ prints "nothing taken".
      show one is kept).
   4. `make restore-keys`: the holders' keys are exactly what they were, and the file is gone.
   5. Reloaded with `warnTakenKeys=false`: no notification.
-- **Watched red**: the check reporting nothing (step 1 and 2 fail), `take-keys` taking nothing
-  (step 3), `restore-keys` restoring nothing (step 4).
+- **Watched red** (2026-10-24, in a worktree): the check reporting nothing (6 checks fail),
+  `take-keys` taking nothing (3), `restore-keys` restoring nothing (2), the active filter removed
+  (4: Meta+H reported, and the presses disagree).
 - The rest of the suite is unchanged: the test KWin's `kglobalshortcutsrc` frees every key, so
   no other scenario sees a notification. The stock-mode sweep (`OPEN.md`) later covers the stock
   set of 21 + 2.

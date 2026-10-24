@@ -1051,6 +1051,69 @@ var KI3 = (function () {
         }
     }
 
+    // ---- the load-time report (docs/spec-taken-keys.md) ---------------------------------------
+
+    // One notification per load for what the user should fix in their setup. Each check opens a
+    // part and closes it with its lines once its D-Bus replies are in; the last close sends it.
+    var report = { open: 0, parts: [] };
+    function reportOpen() { report.open++; }
+    function reportClose(title, lines) {
+        if (lines.length) report.parts.push({ title: title, lines: lines });
+        if (--report.open > 0 || !report.parts.length) return;
+        var parts = report.parts;
+        report.parts = [];
+        var summary = "kwin-i3: " + (parts.length === 1 ? parts[0].title : parts.length + " things to fix in this setup");
+        var body = parts.map(function (p) {
+            return (parts.length > 1 ? p.title + "\n" : "") + p.lines.join("\n");
+        }).join("\n\n");
+        callDBus("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
+                 "org.freedesktop.Notifications", "Notify", "kwin-i3", 0, "", summary, body, [], {}, -1);
+        log("REPORT " + summary);
+    }
+
+    // A key another action also holds is given to kwin-i3's action too (registerShortcut always
+    // returns true, and shortcutKeys shows it), but a press runs only the first holder's.
+    // KGlobalAccel.action(key) names that one (probed 2026-10-24), but a holder whose component
+    // isn't active (its app not running and not launched by kglobalaccel) doesn't block the key:
+    // kwin-i3's fires (35-taken-keys.sh). kwin-i3's current keys come from kglobalaccel, so a
+    // key the user rebound is the one checked.
+    function checkTakenKeys() {
+        if (!Settings.get("warnTakenKeys")) { log("TAKEN not checked (warnTakenKeys off)"); return; }
+        reportOpen();
+        callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component", "allShortcutInfos",
+                 guard("taken keys", function (infos) {
+            var mine = [], taken = [];
+            (infos || []).forEach(function (i) {
+                if (String(i[0]).indexOf("kwin-i3 ") === 0) (i[6] || []).forEach(function (k) { if (k) mine.push(k); });
+            });
+            var left = mine.length;
+            function done() {
+                taken.sort().forEach(function (t) { log("TAKEN " + t); });
+                log("TAKEN checked " + mine.length + " keys, " + taken.length + " taken");
+                if (taken.length) taken.push("Free them in System Settings > Shortcuts, or run `make take-keys` " +
+                                             "in kwin-i3's folder. Turn this notice off in kwin-i3's settings.");
+                reportClose((taken.length - 1) + " of its keys are taken by other shortcuts", taken);
+            }
+            if (!left) { done(); return; }
+            mine.forEach(function (k) {
+                callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "action", k,
+                         guard("taken keys", function (h) {
+                    function one() { if (--left === 0) done(); }
+                    if (!h || !h[1] || String(h[1]).indexOf("kwin-i3 ") === 0) { one(); return; }
+                    callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "getComponent", h[0],
+                             guard("taken keys", function (path) {
+                        callDBus("org.kde.kglobalaccel", String(path), "org.kde.kglobalaccel.Component", "isActive",
+                                 guard("taken keys", function (on) {
+                            if (on) taken.push(KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")");
+                            else log("TAKEN-INACTIVE " + KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")");
+                            one();
+                        }));
+                    }));
+                }));
+            });
+        }));
+    }
+
     // ---- release (the safety valve) --------------------------------------------------------
 
     // Every step on its own: the safety valve must never stop half-way (code review).
@@ -1266,6 +1329,7 @@ var KI3 = (function () {
             wantFocus();
         }));
         registerKeys();
+        checkTakenKeys();
         scheduleAll();
         rememberShown();
         log("kwin-i3 loaded");

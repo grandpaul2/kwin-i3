@@ -7,7 +7,8 @@
 //     btn left|right|middle down|up
 //     key CODE down|up  evdev key code (KEY_LEFTMETA 125, KEY_LEFTSHIFT 42, ...)
 //     wait MS           pause, still processing KWin's events
-//   Prints "ready" once the devices can be used, "ok" after each command, errors on stderr.
+//   Prints "ready" once the devices can be used, "ok" after each command once KWin has taken it
+//   (a ping round trip), errors on stderr.
 //
 // Build: make tools  (gcc, libei-devel)
 #include <errno.h>
@@ -27,6 +28,8 @@ static struct ei *ei;
 static struct ei_device *absdev, *kbd;
 static uint32_t sequence = 1;
 static bool abs_on, kbd_on;     // resumed by KWin and emulating (libei 1.6 has no state getter)
+static struct ei_ping *pending; // the round trip in flight, and whether KWin has answered it
+static bool ponged;
 
 static void handle_events(void) {
     struct ei_event *e;
@@ -51,6 +54,9 @@ static void handle_events(void) {
         case EI_EVENT_DEVICE_PAUSED:
             if (d == absdev) abs_on = false;
             if (d == kbd) kbd_on = false;
+            break;
+        case EI_EVENT_PONG:
+            if (ei_event_pong_get_ping(e) == pending) ponged = true;
             break;
         case EI_EVENT_DISCONNECT:
             fprintf(stderr, "ei-send: KWin disconnected\n");
@@ -81,6 +87,22 @@ static void pump(int ms, bool (*ready)(void)) {
 }
 
 static bool devices_ready(void) { return abs_on && kbd_on; }
+static bool synced(void) { return ponged; }
+
+// A round trip: once KWin answers, it has processed every event sent before (libei.h, ei_ping).
+// Before it, only a fixed 10 ms pump followed each command, after which inject.py's disconnect
+// could reach KWin before the events did: under the full suite's load a scenario's first key
+// was lost (2026-10-24). The pump stays as the pace: without it a drag's steps arrive at once
+// and KWin doesn't see a drag (26, 41, 51 failed).
+static void sync_kwin(void) {
+    pending = ei_new_ping(ei);
+    ponged = false;
+    ei_ping(pending);
+    pump(5000, synced);
+    if (!ponged) fprintf(stderr, "ei-send: KWin didn't answer a ping in 5 s\n");
+    ei_ping_unref(pending);
+    pending = NULL;
+}
 
 int main(int argc, char **argv) {
     if (argc != 2) { fprintf(stderr, "usage: ei-send <fd>\n"); return 2; }
@@ -114,7 +136,8 @@ int main(int argc, char **argv) {
             fprintf(stderr, "ei-send: bad command: %s", line);
             return 2;
         }
-        pump(10, NULL);          // let KWin take it before the next command
+        pump(10, NULL);          // the pace between commands (a drag's steps rely on it)
+        sync_kwin();             // and KWin has it before the next command, or the disconnect
         printf("ok\n");
         fflush(stdout);
     }

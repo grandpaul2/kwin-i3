@@ -31,10 +31,10 @@ window management, with Plasma doing the rest. The scope and its reasons:
    (c) 21 stock shortcut defaults collide (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right,
    Meta+1..9, Meta+0, Meta+V) plus Meta+E, Meta+L, and KWin gives a taken key away silently
    (`registerShortcut` always returns true): at load ask kglobalaccel which keys kwin-i3 got and
-   report the taken ones. Probed 2026-10-24: a taken key is reported on kwin-i3's action too
-   (`shortcutKeys`), but only the first holder's fires, so the check must look for other holders
-   of each key (`docs/spec-own-keys.md`). The fix is opt-in, beside
-   `plugin-install`: `make take-keys`, which saves the old bindings, and `make restore-keys`.
+   report the taken ones. **Built, not live** (2026-10-24, `docs/spec-taken-keys.md`,
+   `35-taken-keys.sh`): the check at load (active holders only), one notification,
+   `warnTakenKeys`, `make take-keys` / `make restore-keys`. Live check: no notification on
+   Paul's desktop, and `make take-keys` says nothing was taken.
    (b) and (c) share **one notification at load** listing every problem (kwin-i3's first
    notification; everything else stays in the journal).
    (d) **Done** 2026-10-24 (`docs/spec-own-keys.md`): kwin-i3's own Meta+F / Meta+Shift+Q, live. (e) Focus follows mouse and Meta-alone: README only. Then a
@@ -53,10 +53,9 @@ window management, with Plasma doing the rest. The scope and its reasons:
    2026-10-24 again, step (e): "a hold is open" (section 13) failed ~2 in 20 solo runs with the
    new plugin build, 0 in 9 with the old; no failure caught in a 10-run loop with the counters
    printed. Next: find the timing it depends on (the counters at a failing run).
-   Also `50-keys.sh`'s first key (Meta+H) fired nothing in two full `make test` runs in a row
-   (2026-10-24, 30 scenarios, Firefox busy, load ~9), 8 of 8 green with eight copies at once:
-   the first key after load under the full suite's load. Next: see what that first press
-   waits for (KWin's shortcut registration, or libei's device) rather than lengthening the wait.
+   And 53-hold's "a snapshot takes under a frame at 240 Hz" failed in 3 of 5 full runs on
+   2026-10-24 (~100 ms; 31 scenarios, Firefox busy, load ~6-9), green alone. Next, with the
+   counters: whether it measures the effect or the loaded machine.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.

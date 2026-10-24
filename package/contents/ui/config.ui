@@ -359,6 +359,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="kcfg_warnTakenKeys">
+     <property name="text">
+      <string>At login, say which of kwin-i3's keys other shortcuts have taken</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="kcfg_debugLog">
      <property name="text">
       <string>Debug log (every action, over D-Bus to tools/logsink.py; for bug reports)</string>

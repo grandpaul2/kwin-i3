@@ -16,6 +16,7 @@ var Settings = (function () {
         floatingClass: { type: "list", def: "" },
         floatingTitle: { type: "list", def: "" },
         debugLog: { type: "bool", def: "false" },
+        warnTakenKeys: { type: "bool", def: "true" },                         // the notice at load
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
