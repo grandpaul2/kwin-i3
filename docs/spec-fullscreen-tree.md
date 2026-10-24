@@ -1,8 +1,8 @@
 # Spec: a fullscreen window stays in the tree
 
-Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **draft, nothing decided.
-Not built, not reviewed, not live.** The numbered items under "Decisions" are Paul's to answer;
-the rest is the proposal.
+Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by Paul,
+2026-10-24 (1: i3's rule, 2: confirmed, 3: same change). Next: a second agent reviews this spec.
+Not built, not reviewed, not live.**
 
 A first build of parts A and B ran on Paul's desktop for a few minutes on 2026-10-23 without his
 approval and was reverted (commits a01e788, d23c445). Its diff is history to read, not a build to
@@ -60,7 +60,7 @@ reason, still tiled only because its caption had not changed while fullscreen.
 `docs/plan.md` already records this for Meta+F: "other windows on that workspace can't be focused
 while it is fullscreen".
 
-## Decisions
+## Decisions (Paul, 2026-10-24: 1(a), 2 confirmed, 3 same change)
 
 1. **The newcomer under a fullscreen window: i3's rule or KWin's?**
    KWin keeps a fullscreen window on the top layer only while it is active
