@@ -127,14 +127,13 @@ var KI3 = (function () {
     // other monitor arrives without a tile (fuzzer I9); one that had a tile loses it when the
     // tiles are rebuilt for a newcomer, and the refusal then floated it, monitor-sized, over
     // everything opened after (Paul's capture, 2026-10-23 23:25; docs/spec-fullscreen-tree.md).
-    // Both stay in the tree and join the layout when fullscreen ends. `outOfTiles` is kwin-i3's
-    // own record of the second case: w.tile lags, KWin clears it only when the client
-    // acknowledges the configure, so a decision read from it could rebuild in a loop (review).
+    // Both stay in the tree and join the layout when fullscreen ends. w.tile is KWin's
+    // *requested* tile (window.h: READ requestedTile), cleared by the unmanage itself, not on
+    // the client's acknowledgement, so it is safe to decide from (probed with a stopped client).
     // A fullscreen window still in its tile stays there: KWin puts it back when fullscreen ends.
-    var outOfTiles = {};
     function visibleLeaf(c) {
         var w = wins[c.win];
-        return w && !w.minimized && !(w.fullScreen && (!w.tile || outOfTiles[c.win]));
+        return w && !w.minimized && !(w.fullScreen && !w.tile);
     }
 
     // -> null | { win } | { dir: "h"|"v", kids: [{ node, share }] }
@@ -189,7 +188,6 @@ var KI3 = (function () {
         // leaves it out, see visibleLeaf), back in when fullscreen ends. Whatever the refusal
         // (not resizable, or not on the tile's desktop while fullscreen), the same.
         if (w.fullScreen) {
-            outOfTiles[id(w)] = true;
             log("FULLSCREEN " + w.caption + ": out of the tiles until it ends");
             return false;
         }
@@ -620,7 +618,9 @@ var KI3 = (function () {
     // there switches its monitor's desktop (activation.cpp, SwitchToOtherDesktop). A transient
     // gets no hand-back (the dialog; a dialog of another window is KWin's call, review).
     function keepsFullscreenFocus(w, ws, fresh) {
-        if (!fresh || !w.active || w.transient) return null;
+        // A newcomer that opens fullscreen itself (mpv --fs, a game) takes the workspace's
+        // fullscreen over, as in i3 (manage.c: con_toggle_fullscreen, fs = NULL): no hand-back.
+        if (!fresh || !w.active || w.transient || w.fullScreen) return null;
         var fs = model.fullscreenOn(ws);
         if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
         if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
@@ -662,7 +662,6 @@ var KI3 = (function () {
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
-        delete outOfTiles[key];
         schedule(ws);
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
@@ -699,7 +698,6 @@ var KI3 = (function () {
             if (con) schedule(Tree.wsOf(con));
         }));
         w.fullScreenChanged.connect(guard("fullscreen", function () {
-            if (!w.fullScreen) delete outOfTiles[key];   // it joins the layout again (manageInto)
             model.setFullscreen(key, w.fullScreen);
             var con = model.byWin[key];
             if (con) schedule(Tree.wsOf(con));

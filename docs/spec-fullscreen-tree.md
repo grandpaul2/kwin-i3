@@ -8,11 +8,13 @@ window's own dialog opens behind). **Built 2026-10-24** (parts A, B, C below; `3
 47 checks, `53-hold.sh` section 8 extended, a unit test; found at build time: the workspace-switch
 case, "Deviations" below). Full suite green (the hold effect's snapshot-timing check flaked under load, as
 before). Live mutants in a worktree: four of six red (A floats again; B; C no hand-back; C's
-workspace switch); two are documented in `tests/live/mutate.py` as unreachable by a test, with
-the evidence (the `outOfTiles` record: KWin cleared `w.tile` before the second pass with a slow
-client and on a hidden workspace alike, so the predicted loop did not occur; the hidden-workspace
-guard of the hand-back: KWin's activation shows the desktop first). Next: a second agent's review
-of the change; then Paul decides about deployment. Not live.**
+workspace switch); one is documented in `tests/live/mutate.py` as unreachable (the
+hidden-workspace guard of the hand-back: KWin's activation shows the desktop first) and one was
+equivalent and its code removed (the `outOfTiles` record, part A). The change reviewed (second
+agent, `docs/review-fullscreen-change-2026-10-24.md`); its three should-fix findings applied: a
+newcomer that opens fullscreen itself gets no hand-back (it takes the fullscreen over, as in i3);
+the "no spin" check reads its count once instead of polling; the stopped-client case is in the
+test. Awaiting Paul's decision about deployment. Not live.**
 
 Deviations and findings at code time:
 - **Meta+N onto a workspace with a fullscreen window and a newcomer sent there while hidden**
@@ -132,16 +134,13 @@ to say so once part C is built.
 
 **A. `kwin.js`, `manageInto`:** a refused window that is fullscreen is not floated. It is left
 out of the tiles and the model is untouched: the window keeps its place in the tree.
-- **Not by KWin's `w.tile` (R-1).** `w.tile` is cleared only when the client acknowledges the
-  configure that carries the tile (`commitTile` from `handleRoleCommit`, xdgshellwindow.cpp:849-855;
-  `Tile::unmanage` sets only the requested tile, window.cpp:3755), so after the unmanage in pass 1,
-  pass 2 may still see the old tile, keep the window in the projection, rebuild and be refused
-  again, until the ack lands or for ever if no configure goes out. So kwin-i3 keeps its own
-  record: `outOfTiles[id]`, set in `manageInto` on the refusal, cleared when `fullScreen` goes
-  false (the `fullScreenChanged` handler) and in `dropWindow`; `visibleLeaf` is "not minimized,
-  and not (fullscreen and (no tile or `outOfTiles`))". Pass 2 is then deterministic. Once set,
-  later reconciles do not try the window again (R-12: today's flow is two rebuilds for one
-  newcomer; this makes it one from the second reconcile on).
+- **By KWin's `w.tile` after all (R-1, corrected at build time).** The review predicted a loop
+  because `commitTile` runs only on the client's acknowledgement; but the scripting property
+  `tile` reads the *requested* tile (window.h:595, `READ requestedTile`), which `Tile::unmanage`
+  clears at once. A record of kwin-i3's own (`outOfTiles`) was built, found equivalent by its
+  mutant (a client stopped with SIGSTOP, answering nothing, showed `tile` null right after the
+  unmanage: two passes, no spin) and removed; the test keeps the stopped client and pins the
+  pass counts.
 - `refused` is set so the reconcile runs one more pass; a log line says so
   (`FULLSCREEN <caption>: out of the tiles until it ends`). The refusal may also be the desktop
   one (R-3: a relocate in progress, a window moved while fullscreen); it is treated the same,
@@ -149,7 +148,7 @@ out of the tiles and the model is untouched: the window keeps its place in the t
 - `unmanageFrom` already keeps a fullscreen window's frame through the unmanage (the I9 path,
   R-2), and `fullscreenGeometryRestore` is untouched, so on exit KWin first restores the frame
   the window had when fullscreen began.
-- When fullscreen ends, `fullScreenChanged` clears `outOfTiles` and schedules the workspace; the
+- When fullscreen ends, `fullScreenChanged` schedules the workspace; the
   request flag is already false then (xdgshellwindow.cpp:1737), so `Tile::manage` accepts it and
   the rebuild puts it at its tree position.
 - `floatWhatCannotFit` and `readBack` use `visibleLeaf` (R-3): a window out of the tiles is
@@ -232,8 +231,7 @@ part (the first build's version went red at A and, with B alone reverted, at B):
   opened. Expect: no `FLOAT` line; the tree `H[a b*! c]`; `b` still fills the monitor and is
   KWin's active window; the monitor's centre pixel is `b`'s colour (testclient `--color`), and
   `workspace.stackingOrder` ends with `b` (R-9: both, the pixel is what Paul sees). Exactly two
-  `TREE 1` lines after the newcomer (R-1: a spin shows as more), and `b.tile` null before the
-  geometry checks.
+  `TREE 1` lines after the newcomer (a spin shows as more), read once after a pause.
 - **Exit.** `b` leaves fullscreen. Expect `H[a b* c]` in thirds (decision 4).
 - **B.** `r` tiled beside `b`, fullscreen (wait for `H[b r*!]`), retitled while fullscreen
   (`--retitle`). Expect it still tiled and fullscreen; leaving fullscreen gives two halves. (A

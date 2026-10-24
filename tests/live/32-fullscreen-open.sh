@@ -28,16 +28,25 @@ check "two windows"                         wait_tree 1 "H[a b*]"
 on b 'w.fullScreen = true;'
 check "b is fullscreen"                     wait_tree 1 "H[a b*!]"
 check "b fills the monitor"                 geom_is b "0,0 1280x720"
+# b is stopped (SIGSTOP) while c opens, so it acknowledges nothing: KWin clears a window's tile
+# only on the client's acknowledgement (window.cpp commitTile), so w.tile stays set and a second
+# pass deciding from it would see b in its old tile, rebuild, be refused and schedule again, for
+# ever (review finding 1). kwin-i3 keeps its own record of a window out of the tiles. The count
+# is read once after a pause, not polled: a loop passes through 2 (review of the change).
+bpid=$(pgrep -f "testclient.py --title b" | head -1)
+kill -STOP "$bpid"
 m=$(mark)
 client --title c --color red
 check "c opens tiled; b stays in the tree and keeps the focus" wait_tree 1 "H[a b*! c]" "$m"
 check "nothing was floated"                 no_float "$m"
-check "b is out of the tiles"               poll no_tile b
-check "two reconcile passes, no spin"       poll trees_since "$m" 2
+sleep 0.7
+check "two reconcile passes, no spin"       trees_since "$m" 2
 check "b still fills the monitor"           geom_is b "0,0 1280x720"
 check "KWin's active window is b"           poll active_is b
 check "b is on top of c (pixel)"            poll pixel_is 640 360 0,0,255
 check "b is on top of c (stacking)"         top_is b
+kill -CONT "$bpid"
+check "b is out of the tiles (once it answers)" poll no_tile b
 # Exit: focus stays on b (i3); the tree lays out in thirds, b at its tree position.
 on b 'w.fullScreen = false;'
 check "out of fullscreen: H[a b* c]"        wait_tree 1 "H[a b* c]" "$m"
