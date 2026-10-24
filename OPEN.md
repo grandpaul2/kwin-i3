@@ -34,9 +34,13 @@ window management, with Plasma doing the rest. The scope and its reasons:
    (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24
    (`docs/spec-desktops-on-demand.md`). Next: choose between re-adopting every window on a removal
    or move (as a reload does), and a README line; then a live scenario for it.
-5. **Wider reliability.** Next: fuzz configurations for one and three monitors, mixed scaling,
-   more than one activity, and with no plugins (the fuzzer loads them whenever they are built);
-   Plasma 6.8 when it lands. Rare and deliberate, as the fuzzer is now. 53-hold runs
+5. **Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more
+   than one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1,
+   unplugs only Virtual-1, and loads the plugins whenever they are built); Plasma 6.8 when it
+   lands. Rare and deliberate, as the fuzzer is now. Next: a read-only check that
+   kactivitymanagerd can run on a test KWin's bus (if not, activities are won't-fix here, with the
+   reason), then a spec for the harness pieces (`KI3_OUTPUTS`, a scale per output, `run.py
+   --no-plugins`, the invariants' two-output assumptions), then one campaign per configuration. 53-hold runs
    by itself after the parallel batch (`# timing: alone`, 2026-10-24), so its timing checks are
    strict in `make test`.
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
