@@ -68,7 +68,7 @@ existing setup keeps working; the README documents the new keys only.
 | key | type, default | i3 | where |
 |---|---|---|---|
 | `gapsInner` | px, 5 (0 until 2026-10-25) | `gaps inner` | script: every tile's padding |
-| `gapsOuter` | px, 3 (0 until 2026-10-25) | `gaps outer` | script: the root's inset, outer + inner/2 per side |
+| `gapsOuter` | px, 3 (0 until 2026-10-25) | `gaps outer` | script: the root's inset, outer + ceil(inner/2) per side |
 | `resizeStep` | %, 10 (1-50) | `resize ... 10 ppt` | script: `model.resize` |
 | `defaultOrientation` | auto / horizontal / vertical, auto | `default_orientation` | script: `wsModel` |
 | `focusWrapping` | yes / no / force / workspace, yes | `focus_wrapping` | model: `focusDir` |
@@ -78,6 +78,8 @@ existing setup keeps working; the README documents the new keys only.
 | `frameWidth` | px, 1 (1-10) | `default_border pixel N` | kwini3frame |
 | `frameActive`, `frameInactive`, `frameFloatingActive`, `frameFloatingInactive` | as today's colours | `client.focused` ... | kwini3frame |
 | `holdEnabled`, `holdTimeoutMs` | true, 100 | (Sway's transactions) | kwini3hold |
+
+Odd inner gaps (2026-10-25, Paul's go): split as i3 does (`render.c:70`, `inner / 2` per side in integers), so 2 x floor(inner/2) between windows and inner + outer at the edges: the tiles' padding stays even and windows on whole pixels. Before, an odd padding put every window half a pixel off (KWin rounds tile edges, `tile.cpp:153`, then takes half the padding a side), and its text shifted whenever it was redrawn.
 
 Not settings, on purpose (Scope): where a new window goes, floating windows above, maximize undone.
 

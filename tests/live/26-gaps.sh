@@ -77,8 +77,14 @@ near() {   # near <caption> <x> <y> <w> <h>: each within 1 px
     local v=("${BASH_REMATCH[@]:1}") want=("$2" "$3" "$4" "$5") i
     for i in 0 1 2 3; do (( ${v[i]} - ${want[i]} <= 1 && ${want[i]} - ${v[i]} <= 1 )) || return 1; done
 }
-check "inner 5: a"                          poll near a 5 5 632 710
-check "inner 5: b"                          poll near b 643 5 632 352
+# As i3 (render.c:70: inner / 2 per side, in integers): 2 px a side between windows, so 4
+# between; 5 at the edges; and every window on whole pixels (KWin's own numbers, unrounded:
+# an odd padding put them half a pixel off, Paul, 2026-10-25).
+raw() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
+echo "    inner 5: a $(raw a)  b $(raw b)"
+check "inner 5: a, 5 from the edges"        poll eval '[[ "$(raw a)" == "5,5 633x710" ]]'
+check "inner 5: b, 4 from a"                poll eval '[[ "$(raw b)" == "642,5 633x353" ]]'
+check "inner 5: c, 4 below b"               poll eval '[[ "$(raw c)" == "642,362 633x353" ]]' || echo "    c: $(raw c)"
 
 # 6. Fullscreen fills the monitor, gaps or not; and comes back to its gapped tile.
 set_key gapsInner 10; set_key gapsOuter 20

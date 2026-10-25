@@ -290,15 +290,19 @@ var KI3 = (function () {
     }
 
     // ---- gaps (docs/spec-settings.md) ------------------------------------------------------
-    // i3's gaps (render.c): inner between windows, inner + outer at the screen's edge. KWin gives
-    // a tile's window P/2 towards a neighbour and P at the screen's edge, judged by the tile's
-    // relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with padding = inner on
-    // every tile and the root inset by outer + inner/2, no edge is 0 or 1, so between = inner and
-    // edge = outer + inner. All relative to the maximize area, KWin's basis for absoluteGeometry.
+    // i3's gaps (render.c:70): each side next to another window gets inner / 2, in integers, so
+    // an odd inner gap is one less between windows; a side at the screen's edge gets all of it,
+    // plus outer. KWin gives a tile's window P/2 towards a neighbour and P at the screen's edge,
+    // judged by the tile's relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with
+    // padding = 2 x floor(inner/2) on every tile and the root inset by outer + ceil(inner/2), no
+    // edge is 0 or 1, so between = 2 x floor(inner/2) and edge = outer + inner. The padding is
+    // even, so windows sit on whole pixels: KWin rounds tile edges to them (absoluteGeometry), and
+    // an odd padding put every window half a pixel off, its text shifting when anything redrew
+    // it (Paul, 2026-10-25, gap 5). All relative to the maximize area, absoluteGeometry's basis.
     function gaps() {
-        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
+        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), half = Math.floor(i / 2);
         // The frame's room: twice its width, so KWin's half padding leaves it on each side.
-        return { inner: i + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: Math.round(o + i / 2) };
+        return { inner: 2 * half + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: o + i - half };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area) {

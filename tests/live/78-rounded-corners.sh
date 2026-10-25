@@ -135,6 +135,15 @@ check "frame on again"                      wait_log '^.{9}FRAME on' "$(($(mark)
 sleep 1; capture
 check "  rounded again"                     rounded 1 1 $INACT $RED
 
+# Gaps 5 and 3 with the frame: the padding 2 x 2 + 2 is even, so a sits on whole pixels (an odd
+# one put every window half a pixel off; Paul, 2026-10-25), and stays rounded there.
+rawg() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
+set_key gapsInner 5; set_key gapsOuter 3
+check "gaps 5, 3: a at 9,9 on whole pixels" poll eval '[[ "$(rawg a)" == "9,9 "* && "$(rawg a)" != *.* ]]' || echo "    a: $(rawg a)"
+capture; check "  rounded there"           rounded 9 9 $INACT $RED
+set_key gapsInner 0; set_key gapsOuter 0
+check "no gaps again"                       poll eval '[[ "$(fc a)" == 1,1\ * ]]'
+
 # 125 %: the radius 6 device px (5 x 1.25, as KWin rounds it), the frame 1, still along the arc;
 # a's corner at device 1,1 (logical 1 x 1.25, rounded), so the same pixel offsets hold.
 timeout 10 kscreen-doctor output.Virtual-0.scale.1.25 >/dev/null 2>&1
