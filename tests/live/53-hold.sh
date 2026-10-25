@@ -252,7 +252,9 @@ check "empty again"                         wait_tree 1 "H[]*"
 #     resize of a slow window. One transaction, not a release between them.
 client --title p --color red; client --title q --color lime --resize-delay 0.8
 check "p | q"                               wait_tree 1 "H[p q*]"
-sleep 1.2
+# Settled at its tile first: this slow client's resizes, and its bounds asked again once its
+# border went (spec-window-modes "why" 5), take ~2.5 s; a fixed 1.2 s wait failed 4 of 4 runs.
+check "q settled at its tile"               geom_is q "641,1 638x718"
 wait_stat open False
 t=$(stat transactions)
 kjs 'var p, q; workspace.windowList().forEach(function (w) { if (w.caption === "p") p = w; if (w.caption === "q") q = w; });
