@@ -120,6 +120,17 @@ it back). Apply takes effect at once, with or without the plugins.
 session's `QT_PLUGIN_PATH`: it shows in System Settings after the next login, once. It links no
 KWin library, so a Plasma update doesn't turn it off.
 
+### Optional: the workspace widget
+
+Plasma's pager draws every desktop as all your monitors side by side, and every desktop, used or
+not; with per-monitor desktops a workspace lives on one monitor, so half of each thumbnail is
+empty. kwin-i3's widget, **kwin-i3 Workspaces**, shows every workspace in use (windows on it, or a
+monitor showing it, as i3bar does), each at its own monitor's shape with its windows, the shown
+ones marked (more strongly on the monitor with focus); a click is Meta+N, a scroll goes to the
+next or previous one. `make widget-install` (QML only: nothing to build, nothing to redo after a
+Plasma update), then on the panel: right-click the pager, *Show Alternatives*, *kwin-i3
+Workspaces* (or *Add Widgets*). Its settings: *Numbers only*, for a small panel.
+
 ## Configuration
 
 kwin-i3's page in System Settings > Window Management (above), or System Settings > Window

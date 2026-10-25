@@ -3,7 +3,10 @@
 From Paul, 2026-10-24: Plasma's pager on the panel draws every workspace "twice as large as it
 is": each desktop as both monitors side by side, so with per-monitor desktops half of every
 thumbnail is a ghost (a workspace lives on one monitor). "I want all workspaces to show on the one
-panel." Status: **draft for Paul's decisions (below); nothing built.**
+panel." Status: **decided by Paul, 2026-10-24 (the recommendations below, 1-6). Built the same
+day: `widget/`, `make widget-install`, `tests/unit/widget.test.js` (8; faults in the monitor and
+in-use rules red), `tests/live/67-workspace-widget.sh` (7: the widget in plasmawindowed in the test
+KWin reports its workspaces, a click on a thumbnail is kwin-i3's Workspace N).**
 
 Sources: Plasma 6.7.5's task manager QML module (`org.kde.taskmanager`: `VirtualDesktopInfo`,
 `TasksModel`; `/usr/lib64/qt6/qml/org/kde/taskmanager/taskmanager.qmltypes`), the stock pager

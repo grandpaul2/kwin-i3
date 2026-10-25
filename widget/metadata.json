@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "net.local.kwini3.workspaces",
+        "Name": "kwin-i3 Workspaces",
+        "Description": "Every workspace in use, each at its own monitor's shape, the shown ones marked",
+        "Icon": "virtual-desktops",
+        "Category": "Windows and Tasks",
+        "Version": "1.0.0",
+        "License": "GPL-2.0-or-later"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
