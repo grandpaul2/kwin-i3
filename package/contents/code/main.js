@@ -1334,12 +1334,20 @@ var KI3 = (function () {
     // hidden one (its desktop not shown on its monitor): a hidden window never acknowledges a new
     // size, and KWin applies no geometry to it until it does, so it froze at that old size, out
     // of sight, through every later move (fuzzer I2, a monitor unplugged and back: 2026-10-22).
+    // So does one on its way to another workspace (the model has it there, KWin not yet): it
+    // waited there at its size from before it was tiled, and showed as that small box for a
+    // moment when its workspace was next shown (Paul's capture, 2026-10-24). Putting the frame
+    // back works within the call: KWin sends the configure from a timer, with the size pending then.
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
         var hidden = w.output && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
-        var g = w.fullScreen || hidden ? w.frameGeometry : null;
+        var g = w.fullScreen || hidden || leaving(w) ? w.frameGeometry : null;
         tile.unmanage(w);
         if (g) w.frameGeometry = g;
+    }
+    function leaving(w) {
+        var con = model.byWin[id(w)], ws = con && Tree.wsOf(con);
+        return !!ws && w.desktops.indexOf(deskOf(ws.num)) < 0;
     }
 
     // Off whatever tile has it. On a hidden desktop KWin lists a window in a tile without placing
