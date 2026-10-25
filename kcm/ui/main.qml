@@ -116,8 +116,12 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
                 unit: "px"
-                from: 0; to: 100
-                value: root.settings.gapsInner
+                // Even only (docs/spec-settings.md): split across two windows, an odd gap would
+                // put them on half pixels. An odd value from kwinrc shows as the even below, as
+                // kwin-i3 uses it.
+                from: 0; to: 100; stepSize: 2
+                value: root.settings.gapsInner - root.settings.gapsInner % 2
+                valueFromText: (text) => { const v = parseInt(text); return v - v % 2; }
                 onValueModified: root.settings.gapsInner = value
                 Accessible.name: i18nc("@label:spinbox", "Gap between windows")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsInner" }

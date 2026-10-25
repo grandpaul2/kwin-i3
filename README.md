@@ -163,8 +163,8 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] ignoreRole` | `quake` | window roles never managed |
 | `[Script-kwin-i3] floatingClass` | empty | classes that float instead of tiling |
 | `[Script-kwin-i3] floatingTitle` | empty | words; a window whose caption contains one floats |
-| `[Script-kwin-i3] gapsInner` | `5` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100. As in i3, each side gets half in whole pixels, so an odd gap is one less between windows (5 gives 4) and in full at the screen's edge |
-| `[Script-kwin-i3] gapsOuter` | `3` | px added at the screen's edge (i3's `gaps outer`: the edge gap is inner + outer), 0-200 |
+| `[Script-kwin-i3] gapsInner` | `4` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
+| `[Script-kwin-i3] gapsOuter` | `2` | px added at the screen's edge (i3's `gaps outer`: the edge gap is inner + outer), 0-200 |
 | `[Script-kwin-i3] resizeStep` | `10` | % per Meta+Ctrl+arrow, 1-50 (i3's `resize ... 10 ppt`) |
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |

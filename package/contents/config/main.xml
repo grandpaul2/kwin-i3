@@ -44,12 +44,12 @@
       <default>false</default>
     </entry>
     <entry name="gapsInner" type="Int">
-      <default>5</default>
+      <default>4</default>
       <min>0</min>
       <max>100</max>
     </entry>
     <entry name="gapsOuter" type="Int">
-      <default>3</default>
+      <default>2</default>
       <min>0</min>
       <max>200</max>
     </entry>

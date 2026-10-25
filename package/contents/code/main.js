@@ -40,8 +40,8 @@ var Settings = (function () {
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
-        gapsInner: { type: "int", def: "5", min: 0, max: 100 },                 // px between windows
-        gapsOuter: { type: "int", def: "3", min: 0, max: 200 },                 // px more at the screen edge
+        gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
+        gapsOuter: { type: "int", def: "2", min: 0, max: 200 },                 // px more at the screen edge
         // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the form has them.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
@@ -1462,19 +1462,20 @@ var KI3 = (function () {
     }
 
     // ---- gaps (docs/spec-settings.md) ------------------------------------------------------
-    // i3's gaps (render.c:70): each side next to another window gets inner / 2, in integers, so
-    // an odd inner gap is one less between windows; a side at the screen's edge gets all of it,
-    // plus outer. KWin gives a tile's window P/2 towards a neighbour and P at the screen's edge,
-    // judged by the tile's relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with
-    // padding = 2 x floor(inner/2) on every tile and the root inset by outer + ceil(inner/2), no
-    // edge is 0 or 1, so between = 2 x floor(inner/2) and edge = outer + inner. The padding is
-    // even, so windows sit on whole pixels: KWin rounds tile edges to them (absoluteGeometry), and
-    // an odd padding put every window half a pixel off, its text shifting when anything redrew
-    // it (Paul, 2026-10-25, gap 5). All relative to the maximize area, absoluteGeometry's basis.
+    // i3's gaps (render.c): inner between windows, inner + outer at the screen's edge. KWin gives
+    // a tile's window P/2 towards a neighbour and P at the screen's edge, judged by the tile's
+    // relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with padding = inner on
+    // every tile and the root inset by outer + inner/2, no edge is 0 or 1, so between = inner and
+    // edge = outer + inner. All relative to the maximize area, absoluteGeometry's basis.
+    // The inner gap is even (the pickers step by 2; an odd one from kwinrc counts as the even one
+    // below): KWin rounds tile edges to whole pixels (absoluteGeometry) and takes half the padding
+    // a side, so an odd padding put every window half a pixel off, its text shifting when
+    // anything redrew it (Paul, 2026-10-25, gap 5; docs/spec-settings.md).
     function gaps() {
-        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), half = Math.floor(i / 2);
+        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
+        i -= i % 2;
         // The frame's room: twice its width, so KWin's half padding leaves it on each side.
-        return { inner: 2 * half + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: o + i - half };
+        return { inner: i + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: o + i / 2 };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area) {

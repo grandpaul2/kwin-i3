@@ -50,18 +50,18 @@ check "the root is whole again, padding 0"  poll root_is 1 "0.000,0.000,1.000,1.
 check "same tree"                           _tree_is 1 "H[a V[b c*]]" "$m"
 check "nothing added or dropped"            bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -qE '^.{9}(ADD|FLOAT) '"
 
-# 4b. The defaults (5 between, 3 more at the edge, since 2026-10-25; testkwin.sh pins 0): with
-#     the keys gone, the layout is the one 5 and 3 written out give.
-set_key gapsInner 5; set_key gapsOuter 3
+# 4b. The defaults (4 between, 2 more at the edge, since 2026-10-25; testkwin.sh pins 0): with
+#     the keys gone, the layout is the one 4 and 2 written out give.
+set_key gapsInner 4; set_key gapsOuter 2
 reload_settings
-want_a=$(geom a); want_c=$(geom c); echo "    5 and 3: a $want_a  c $want_c"
+want_a=$(geom a); want_c=$(geom c); echo "    4 and 2: a $want_a  c $want_c"
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsInner --delete
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsOuter --delete
 set_key gapsInner 0; set_key gapsOuter 0; reload_settings
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsInner --delete
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsOuter --delete
 reload_settings
-check "defaults: a as with 5 and 3 ($want_a)" geom_is a "$want_a"
+check "defaults: a as with 4 and 2 ($want_a)" geom_is a "$want_a"
 check "defaults: c likewise"                geom_is c "$want_c"
 check "  (not the no-gap layout)"           test "$want_a" != "0,0 640x720"
 set_key gapsInner 0; set_key gapsOuter 0
@@ -77,14 +77,14 @@ near() {   # near <caption> <x> <y> <w> <h>: each within 1 px
     local v=("${BASH_REMATCH[@]:1}") want=("$2" "$3" "$4" "$5") i
     for i in 0 1 2 3; do (( ${v[i]} - ${want[i]} <= 1 && ${want[i]} - ${v[i]} <= 1 )) || return 1; done
 }
-# As i3 (render.c:70: inner / 2 per side, in integers): 2 px a side between windows, so 4
-# between; 5 at the edges; and every window on whole pixels (KWin's own numbers, unrounded:
-# an odd padding put them half a pixel off, Paul, 2026-10-25).
+# An odd inner gap counts as the even one below (the pickers step by 2): 4 between and at the
+# edges, every window on whole pixels (KWin's own numbers, unrounded: an odd padding put them
+# half a pixel off, Paul, 2026-10-25).
 raw() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
 echo "    inner 5: a $(raw a)  b $(raw b)"
-check "inner 5: a, 5 from the edges"        poll eval '[[ "$(raw a)" == "5,5 633x710" ]]'
-check "inner 5: b, 4 from a"                poll eval '[[ "$(raw b)" == "642,5 633x353" ]]'
-check "inner 5: c, 4 below b"               poll eval '[[ "$(raw c)" == "642,362 633x353" ]]' || echo "    c: $(raw c)"
+check "inner 5 as 4: a, 4 from the edges"   poll eval '[[ "$(raw a)" == "4,4 634x712" ]]'
+check "inner 5 as 4: b, 4 from a"           poll eval '[[ "$(raw b)" == "642,4 634x354" ]]'
+check "inner 5 as 4: c, 4 below b"          poll eval '[[ "$(raw c)" == "642,362 634x354" ]]' || echo "    c: $(raw c)"
 
 # 6. Fullscreen fills the monitor, gaps or not; and comes back to its gapped tile.
 set_key gapsInner 10; set_key gapsOuter 20

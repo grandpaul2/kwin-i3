@@ -65,8 +65,11 @@
        <property name="maximum">
         <number>100</number>
        </property>
+       <property name="singleStep">
+        <number>2</number>
+       </property>
        <property name="toolTip">
-        <string>i3's gaps inner: the space between two tiled windows.</string>
+        <string>i3's gaps inner: the space between two tiled windows. Even: an odd number counts as the one below.</string>
        </property>
       </widget>
      </item>

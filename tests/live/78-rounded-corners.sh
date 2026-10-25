@@ -14,7 +14,14 @@ RED=255,0,0; LIME=0,255,0; ACT=76,120,153; INACT=51,51,51; FACT=77,114,84
 capture() { sleep 0.3; "$shot" capture Virtual-0 "$png"; }
 px() { "$shot" probe "$png" "$1" "$2"; }
 pix() { "$shot" same "$png" "$1" "$2" "$3" 8; }
-near() { "$shot" same "$png" "$1" "$2" "$3" 16; }     # an antialiased arc pixel
+# near <x> <y> <frame> <app>: an antialiased arc pixel, nearer the frame's colour than the app's
+# or the background's (black)
+near() {
+    python3 -c 'import sys
+p, f, a = (tuple(map(int, v.split(","))) for v in sys.argv[1:4])
+d = lambda c: sum((x - y) ** 2 for x, y in zip(p, c))
+sys.exit(0 if d(f) < min(d(a), d((0, 0, 0))) else 1)' "$(px "$1" "$2")" "$3" "$4"
+}
 notpix() { ! pix "$@" >/dev/null 2>&1; }
 # corner <x> <y>: the 8x8 pixels from x,y, one row each, for the log
 corner() { local j i l; for ((j = 0; j < 8; j++)); do l=""; for ((i = 0; i < 8; i++)); do l+="$(px $(($1 + i)) $(($2 + j))) "; done; echo "      $l"; done; }
@@ -25,7 +32,7 @@ set_key() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "$
 # window: 1 1 for a top left, -1 -1 for a bottom right) is rounded off, the frame along the arc.
 rounded() {
     local x=$1 y=$2 f=$3 a=$4 dx=${5:-1} dy=${6:-1}
-    notpix "$x" "$y" "$a" && notpix "$x" "$y" "$f" && near $((x + 2 * dx)) "$y" "$f" \
+    notpix "$x" "$y" "$a" && notpix "$x" "$y" "$f" && near $((x + 2 * dx)) "$y" "$f" "$a" \
         && pix $((x + 6 * dx)) $((y - dy)) "$f" && pix $((x + 4 * dx)) $((y + 4 * dy)) "$a"
 }
 # square <x> <y> <app> <frame>: the window's own pixel in its top-left corner, the frame's beyond
@@ -135,12 +142,16 @@ check "frame on again"                      wait_log '^.{9}FRAME on' "$(($(mark)
 sleep 1; capture
 check "  rounded again"                     rounded 1 1 $INACT $RED
 
-# Gaps 5 and 3 with the frame: the padding 2 x 2 + 2 is even, so a sits on whole pixels (an odd
-# one put every window half a pixel off; Paul, 2026-10-25), and stays rounded there.
+# Gaps 5 and 3 with the frame: 5 counts as 4, the padding 4 + 2 is even, so a sits on whole
+# pixels at 3 + 2 + 3 (an odd one put every window half a pixel off; Paul, 2026-10-25), and
+# stays rounded there.
 rawg() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
 set_key gapsInner 5; set_key gapsOuter 3
-check "gaps 5, 3: a at 9,9 on whole pixels" poll eval '[[ "$(rawg a)" == "9,9 "* && "$(rawg a)" != *.* ]]' || echo "    a: $(rawg a)"
-capture; check "  rounded there"           rounded 9 9 $INACT $RED
+check "gaps 5, 3: a at 8,8 on whole pixels" poll eval '[[ "$(rawg a)" == "8,8 "* && "$(rawg a)" != *.* ]]' || echo "    a: $(rawg a)"
+# Its bottom-left corner: Alacritty draws its unfocused (hollow) cursor in the top-left one.
+read -r _ awh <<<"$(rawg a)"; ab=$((8 + ${awh#*x} - 1))
+sleep 0.5; capture; echo "    a's bottom left, at 8,$ab:"; corner 7 $((ab - 6))
+check "  rounded there"                    rounded 8 "$ab" $INACT $RED 1 -1
 set_key gapsInner 0; set_key gapsOuter 0
 check "no gaps again"                       poll eval '[[ "$(fc a)" == 1,1\ * ]]'
 

@@ -21,6 +21,9 @@ trees_since() { [[ "$(after "$1" | grep -cE '^.{9}TREE 1 ')" == "$2" ]]; }
 shows() { [[ "$(kjs "workspace.screens.forEach(function (s) { if (s.name === \"$1\") log(workspace.desktops.indexOf(workspace.currentDesktopForScreen(s)) + 1); })")" == "$2" ]]; }
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
+# The frame's verdict (no effect here) comes a second after the load, with a pass of its own:
+# before it, or the pass counts below include it (they did, 2026-10-25, once the setup got faster).
+wait_log '^.{9}FRAME '
 
 # A + C. b fullscreen; c opens: tiled behind it, no focus; b still fills the monitor and is on top.
 client --title a; client --title b --color blue
