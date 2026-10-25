@@ -11,6 +11,7 @@
 
 #include <KConfigWatcher>
 
+#include <QObject>
 #include <QPointer>
 
 class FrameFocus : public KWin::InputEventFilter
@@ -26,6 +27,11 @@ private:
     KWin::Window *ringWindow(const QPointF &pos) const;
 
     KConfigWatcher::Ptr m_watcher;
+    // Owns this filter's subscriptions, so they end with it. Not m_watcher: KDE's config watcher
+    // is shared by everyone watching kwinrc and outlives an unloaded plugin, whose library KWin
+    // keeps; a subscription owned by it called the unloaded filter at the next config change and
+    // KWin crashed (2026-10-24, live, tests/live/64-plugin-reload.sh).
+    QObject m_context;
     int m_frameWidth = 1;
     bool m_frameOnFloating = false;
     QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any

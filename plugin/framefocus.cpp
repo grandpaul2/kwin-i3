@@ -24,8 +24,8 @@ FrameFocus::FrameFocus()
         m_frameOnFloating = group.readEntry("frameOnFloating", false);
     };
     load();
-    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, m_watcher.get(), load);
-    QObject::connect(workspace(), &Workspace::configChanged, m_watcher.get(), load);
+    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, load);
+    QObject::connect(workspace(), &Workspace::configChanged, &m_context, load);
 }
 
 // The tiled window whose frame ring is under the pointer, else null. Only where the pointer is
