@@ -173,6 +173,7 @@ void Hold::watchWindow(EffectWindow *w)
     connect(w, &EffectWindow::windowFinishUserMovedResized, this, [this](EffectWindow *w) {
         m_dragging.removeAll(w);
     });
+    updateRadius(w);    // one already tiled when it comes (a rule, a restored session)
 }
 
 void Hold::onAdded(EffectWindow *w)
@@ -637,6 +638,10 @@ void Hold::updateRadii()
 
 void Hold::resetRadii()
 {
+    if (!workspace()) {     // stackingOrder() needs it (effecthandler.cpp:975)
+        m_rounded.clear();
+        return;
+    }
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
         if (m_rounded.remove(w->internalId().toString()) && w->window() && !w->isDeleted() && !w->hasDecoration()) {
@@ -732,22 +737,31 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         }
         return;
     }
-    // Border, not UniformColor too: both declare the colour uniform (base.frag).
-    ShaderBinder binder(ShaderTrait::Border | ShaderTrait::TransformColorspace);
+    // Border, not UniformColor too: both declare the colour uniform (base.frag). The opacity by
+    // Modulate, after the colour transform from sRGB, as KWin draws a decoration's outline.
+    ShaderBinder binder(ShaderTrait::Border | ShaderTrait::TransformColorspace | ShaderTrait::Modulate);
     GLShader *shader = binder.shader();
     shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
     shader->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
     shader->setUniform(GLShader::Vec4Uniform::Box, QVector4D((ix0 + ix1) / 2, (iy0 + iy1) / 2, (ix1 - ix0) / 2, (iy1 - iy0) / 2));
     shader->setUniform(GLShader::Vec4Uniform::CornerRadius, QVector4D(radius, radius, radius, radius));
     shader->setUniform(GLShader::IntUniform::Thickness, int(std::round(m_frameWidth * scale)));
+    shader->setUniform(GLShader::ColorUniform::Color, colour);
+    shader->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     // The shader scales all four channels by coverage: premultiplied, blended always (the
-    // antialiased arc is partly transparent even at full opacity).
-    shader->setUniform(GLShader::ColorUniform::Color, QVector4D(colour.redF() * opacity, colour.greenF() * opacity, colour.blueF() * opacity, opacity));
+    // antialiased arc is partly transparent even at full opacity); the blend state put back.
+    const bool blend = glIsEnabled(GL_BLEND);
+    GLint src = GL_ONE, dst = GL_ZERO;
+    glGetIntegerv(GL_BLEND_SRC_RGB, &src);
+    glGetIntegerv(GL_BLEND_DST_RGB, &dst);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
-    glDisable(GL_BLEND);
+    glBlendFunc(src, dst);
+    if (!blend) {
+        glDisable(GL_BLEND);
+    }
 }
 
 void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)

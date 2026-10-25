@@ -43,7 +43,7 @@ didn't, in 76).
 
 **20. Rounded corners on tiled windows** (Paul, 2026-10-25: a toggle, on by default, the frame
 following, Breeze's 5 px): `docs/spec-rounded-corners.md`, draft; the radius probed in the test
-KWin; reviewed (findings in). Next: Paul's go, then the build.
+KWin; built, tested (78, fault battery), code reviewed. Next: live, on Paul's go.
 
 ## Deferred (the Stage)
 
