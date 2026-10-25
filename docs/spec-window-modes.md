@@ -9,8 +9,9 @@ implemented cleanly." Status: **decided by Paul, 2026-10-24 ("this is good": the
 recommendations below, 1-7), with one standing rule: while this is built, Paul's desktop runs the
 defaults a new user gets ("keep making my desktop look like what the default experience will look
 like ... We can add my customizations back later"): `frameOnFloating` stays off there, and his
-green floating frame comes back later by choice. Reviewed (review 1, folded in below); waiting
-on Paul for decisions 5 (revised) and 8, then piece (i)+(ii) (decision 7).** Nothing built on main; the route and its prototype are green
+green floating frame comes back later by choice. Reviewed (review 1, folded in below); Paul's
+answers on it, 2026-10-24: decision 5 (c), decision 8 Xwayland first-class ("we need to give
+xwayland good treatment. That's going to be common"). Next: piece (i)+(ii) (decision 7).** Nothing built on main; the route and its prototype are green
 (branch `proto-effect-frame`).
 
 Sources: KWin 6.7.5 (`tiles/tile.cpp` `Tile::windowGeometry`, `window.cpp` `requestTile`,
@@ -220,11 +221,16 @@ for the build below, or a decision for Paul (marked).
 do). Options: (a) the kept-above flag everywhere, as today (visible to a Plasma user as "Keep
 above others"); (c) the effect keeps the set of floating windows (it outlives a script reload)
 and kwin-i3 asks it at load; without the effect, the flag as today. Recommendation: (c), and
-Plasma windows on Plasma-mode workspaces not kept above.
+Plasma windows on Plasma-mode workspaces not kept above. **Paul: (c).**
 
-**Decision 8 (new, for Paul): Xwayland apps.** The plan says X11 is out, but Xwayland apps (games,
-Steam, older apps) still open. Recommendation: managed, best effort: framed and tiled like any
-other, without the GTK bounds trick (X11 has none); no promise beyond what the tests cover.
+**Decision 8: Xwayland apps are first-class** (Paul: "we need to give xwayland good treatment.
+That's going to be common": games, Steam, older apps). Every rule above holds for them, and the
+test plan covers them as it covers Wayland ones: an X11 client (the GTK test client under
+`GDK_BACKEND=x11` in a test KWin with `KI3_XWAYLAND=1`, and xterm-like size increments) tiled,
+framed, borderless and back, floating with its decoration, fullscreen, through a reload and a
+release, the click strip, and the pixel rows. Only the bounds request is skipped (X11 has none),
+and its own X11 cases are specced as found: size increments (a terminal that snaps short of its
+tile), Motif no-decoration hints, override-redirect windows (never managed, as now).
 
 ## Tests
 
