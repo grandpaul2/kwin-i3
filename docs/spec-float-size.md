@@ -1,6 +1,6 @@
 # Spec: a floated window comes back at its untiled size, as in i3
 
-Paul's go 2026-10-25; built the same day. Paul asked: a window brought up as a floating (Plasma) window
+Paul's go 2026-10-25; built, tested and live the same day. Paul asked: a window brought up as a floating (Plasma) window
 should have its untiled size, not its tiled one. Options weighed with a second agent's review
 (in-session record, KWin's restore set by the helper, a record that survives logout); Paul chose
 i3's way after reading what i3 does.
