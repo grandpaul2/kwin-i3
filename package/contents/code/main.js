@@ -1207,7 +1207,12 @@ var KI3 = (function () {
     var placing = {};       // window id -> true while we move it between desktops/outputs
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
     var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
-    var focusPending = null; // { from: screen } : apply model focus after the next reconcile
+    // Apply model focus after the next reconcile; from: the monitor a key action moved focus
+    // from, so the pointer follows to the new one (i3 warps only from commands: x_set_warp_to in
+    // _tree_next and workspace_show). Any other pass (a window closed, settings, monitors) moves
+    // no pointer: a panel popup closing on the other monitor sent it to the focused window
+    // although focus never moved (Paul, 2026-10-25; tests/live/72-pointer-stays.sh).
+    var focusPending = null; // { from: screen or null }
 
     function id(w) { return String(w.internalId); }
 
@@ -1318,8 +1323,9 @@ var KI3 = (function () {
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from); }
         rememberShown();
     }
-    function wantFocus() {
-        if (!focusPending) focusPending = { from: workspace.activeScreen };
+    function wantFocus(from) {
+        if (!focusPending) focusPending = { from: from || null };
+        else if (from && !focusPending.from) focusPending.from = from;
         kick();
     }
 
@@ -2248,7 +2254,7 @@ var KI3 = (function () {
             if (f) schedule(f.type === "ws" ? f : Tree.wsOf(f));
             // Every workspace a move can touch is rescheduled; reconcile is idempotent.
             scheduleAll();
-            wantFocus();
+            wantFocus(before ? outputOf(before) : workspace.activeScreen);
             log("ACTION " + name);
         });
     }
