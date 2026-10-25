@@ -103,11 +103,9 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       `borderlessMaximizedWindows`, a window added or closed in the 250 ms at load;
     - known limits written in the spec (a monitor change in those 250 ms; kept-above left from an
       earlier load without the effect; late-classified windows on a Plasma workspace);
-    - **KWin crashed live at 22:16** (the frame filter's config subscriptions outlived the helper
-      unloaded by `make plugin-install`; Firefox and OBS died with it). Fixed and tested on branch
-      `helper-lifetime` (`tests/live/64-plugin-reload.sh` red then green; 38 scenarios green), not
-      live: merge, `make plugin-install`, then a relog before any settings change (the helper it
-      unloads still has the bug). After Paul's stream, on his go.
+    - The live KWin crash of 22:16 (the frame filter's config subscriptions outlived an unloaded
+      helper) is fixed and installed 2026-10-24 (`tests/live/64-plugin-reload.sh`); Paul relogs
+      once to drop the old helper. Check after the relog: the helper loaded, no crash on Apply.
     - workspace 4's OBS was left at an odd size by the 22:0x reloads (hidden then): watch it on
       first show.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
