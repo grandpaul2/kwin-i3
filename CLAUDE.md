@@ -68,8 +68,9 @@ These are in `~/.dotfiles` (its own repo, pushed the same way). Edit them from h
 spans both, and commit there too:
 
 - the launchers: `plasma/.local/share/applications/net.local.ki3-capture.desktop` (Meta+Shift+B);
-  plus `setup.sh` (links, the shortcut keep-list), `scripts/Documents/health-check.sh` and README's
-  "Plasma" table, which describes the keys;
+- a key or setting change goes in dotfiles README's "Plasma" table (set by hand on a rebuild and
+  read back live; `setup.sh` is only the mechanical restore and changes only for a new link), and
+  dotfiles' `/health` picks up anything else;
 - `localbin/.local/bin/hotkeys`, Paul's cheat sheet: update it when a key changes.
 
 Backups need nothing from here: dotfiles' `/sessionend` copies this project's Claude memories too.

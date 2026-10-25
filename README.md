@@ -79,8 +79,7 @@ and a click on it focus the window, as i3's border does.
    removes just that key from each holder and saves what it removed;
    **`make restore-keys`** puts them back. Free them by hand in System Settings > Shortcuts if
    you'd rather. The check runs at load: an app that registers a clashing key later is seen at
-   the next login. The author's dotfiles `setup.sh` does the unbinding and the rest (focus
-   follows mouse with no delay, per-output virtual desktops, border size Tiny).
+   the next login.
 3. **With more than one monitor**: System Settings > Virtual Desktops > "Switch desktops
    independently for each screen" on (off by default). With it off, a desktop switch changes every
    monitor and windows tile on the wrong one; kwin-i3 says so in a notification at load, or when
