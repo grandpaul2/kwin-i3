@@ -9,8 +9,8 @@ implemented cleanly." Status: **decided by Paul, 2026-10-24 ("this is good": the
 recommendations below, 1-7), with one standing rule: while this is built, Paul's desktop runs the
 defaults a new user gets ("keep making my desktop look like what the default experience will look
 like ... We can add my customizations back later"): `frameOnFloating` stays off there, and his
-green floating frame comes back later by choice. Next: a second agent's review of this spec,
-then piece (i)+(ii) (decision 7).** Nothing built on main; the route and its prototype are green
+green floating frame comes back later by choice. Reviewed (review 1, folded in below); waiting
+on Paul for decisions 5 (revised) and 8, then piece (i)+(ii) (decision 7).** Nothing built on main; the route and its prototype are green
 (branch `proto-effect-frame`).
 
 Sources: KWin 6.7.5 (`tiles/tile.cpp` `Tile::windowGeometry`, `window.cpp` `requestTile`,
@@ -155,6 +155,76 @@ compares the hair separately so float noise elsewhere keeps the old tolerance).
    (ii) the GTK 4 bounds ("why" 5); (iii) `floatingWorkspaces` (R1, R3, decisions 1, 4);
    (iv) `frameOnFloating` and the marker (decisions 3, 5). Recommendation: (i)+(ii) first, live,
    lived with for a day; then (iii)+(iv).
+
+## Review 1 (2026-10-24), folded in
+
+`docs/review-window-modes-2026-10-24.md`, 17 findings. "R1-n" is finding n. Each is either a rule
+for the build below, or a decision for Paul (marked).
+
+- **R1-1 clipping.** The ring is drawn inside the paint's device region (scissor on the region's
+  rects), never outside it: a floating window above a ring is never painted over.
+- **R1-2 repaints.** The frame sets `setTransformed()` per framed window only; the screen mask
+  and `postPaintScreen`'s repaint loop stay for held layouts only. Damage is the ring's rects
+  (old and new) on a frame, activation, tile or decoration change. `Stats` gets an idle-frame
+  counter, and a test that nothing repaints while nothing changes.
+- **R1-3 scanout.** `blocksDirectScanout()` returns true only during a hold
+  (`m_open || !m_hidden.isEmpty()`): a fullscreen game or video still scans out.
+- **R1-4 the border is not only ours.** kwin-i3 reads `noBorder` back after setting it and records
+  it only if it took (a forcing window rule wins, and that window is then treated as the rule
+  says: a forced border keeps its title bar and gets no frame padding; a forced no-border on a
+  Plasma window is left alone). Tiled windows have it re-asserted on each pass (the window menu's
+  toggle, `borderlessMaximizedWindows`). A window adopted at load with `noBorder` set and no
+  record (session restore) gets its border back if its mode is Plasma's. Writing the border never
+  goes through a "remember" rule (checked in the test with such a rule).
+- **R1-5 client-side decorations.** A CSD window (`DecorationMode::Client`) is framed when tiled
+  (no server decoration to remove; the ring goes outside its window geometry) and never framed
+  when floating, `frameOnFloating` or not: its own header and shadow are its Plasma look. Tests:
+  zenity (libadwaita) tiled and floating, with the pixels around it. **Marker: decision 5 changes
+  (below).**
+- **R1-6 fractional scale.** Each ring edge runs from the window's pixel-snapped edge out to the
+  neighbour's snapped edge (or the output's), so the gap is filled whatever the rounding. Tests
+  at 1.25 and 1.5: no wallpaper pixel in any gap.
+- **R1-7 the hair on nested layouts.** After every root change, every leaf's edges are checked
+  and a lost hair is put back (or the tree rebuilt, as `edgesIntact` does for gaps). Test:
+  `H[V[a b] c]`, a root change, pixels at all four edges.
+- **R1-8 padding always > 0** changes KWin's anchors for every install: the gaps-only guards
+  now apply at the defaults. Test Meta+right-drag on an outer edge at the defaults.
+- **R1-9 the effect going away.** The effect announces itself: on load, and on unload, it calls
+  a D-Bus method kwin-i3's script exposes (as the capture's dump does in reverse), and kwin-i3
+  also asks at load and on every reconfigure. Between an unload and the next pass, tiled windows
+  are borderless and frameless for at most one event. The frame is independent of `holdEnabled`.
+  Test: unload the effect mid-session; title bars come back.
+- **R1-10 `borderGone`** is cleared after one settle check, whatever happens; never for Xwayland
+  (X11 has no bounds; a 0x0 request would be a real tiny resize). A refused `manage()` gives the
+  border back at once.
+- **R1-11 bounds elsewhere.** The same request is made when a tiled plain-GTK-4 window lands
+  short after a move to another monitor or an area change (panel, resolution). Test: a move to a
+  bigger output.
+- **R1-12 the click strip.** `kwini3helper` takes a press (and its release, and a scroll) on a
+  tiled window's ring where the pointer hovers nothing or the desktop: activate that window,
+  consume the event. A floating window over a ring keeps its clicks. Tests: left, right, middle
+  and scroll on the strip; a strip beside the panel.
+- **R1-13 "why" 4 corrected**: KWin drops the next decoration at once for policy None, so the
+  first tile configure is already undecorated; what the prototype saw short was GTK's bounds
+  (R1-11's cause), and the refit covers both. `frameMin()` is read after the border goes.
+- **R1-14 the plan.** `docs/plan.md` gets: floating above tiled except on Plasma-mode
+  workspaces (decision 5); Plasma mode as part of the WM/DE seam (it decides who arranges a
+  window, which only kwin-i3 can); Xwayland clients **(decision 8)**.
+- **R1-16 effect chain.** The ring follows transforms applied before Hold: Hold asks for a chain
+  position after slide (test: a desktop switch with slide on, the ring moves with its window).
+  Overview and window view draw thumbnails: no ring there. Whole-screen captures include it.
+- **R1-17 tests**: all of the above, plus a second output with an offset, Qt, Electron, Xwayland,
+  a desktop switch, a replug and an unload for stale rings; colour tolerance 2, not 8.
+
+**Decision 5, revised (for Paul).** The marker can't be "has its decoration" (CSD windows always
+do). Options: (a) the kept-above flag everywhere, as today (visible to a Plasma user as "Keep
+above others"); (c) the effect keeps the set of floating windows (it outlives a script reload)
+and kwin-i3 asks it at load; without the effect, the flag as today. Recommendation: (c), and
+Plasma windows on Plasma-mode workspaces not kept above.
+
+**Decision 8 (new, for Paul): Xwayland apps.** The plan says X11 is out, but Xwayland apps (games,
+Steam, older apps) still open. Recommendation: managed, best effort: framed and tiled like any
+other, without the GTK bounds trick (X11 has none); no promise beyond what the tests cover.
 
 ## Tests
 
