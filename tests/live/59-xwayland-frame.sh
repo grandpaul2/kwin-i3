@@ -29,6 +29,10 @@ check "x fills its tile, 1 px from the edges" geom_is x "1,1 638x718"
 sleep 0.3; capture
 echo "    row 360: $(px 0 360) $(px 1 360) | $(px 638 360) $(px 639 360) $(px 640 360)"
 check "x's frame and app"                   eval 'pix 0 360 $INACT && pix 1 360 $RED && pix 638 360 $RED && pix 639 360 $INACT && pix 640 360 $ACT'
+# Rounded as Wayland windows are (docs/spec-rounded-corners.md; 78 has the arithmetic): its
+# corner pixel neither app nor frame, the frame on the arc, the app 4 px in.
+echo "    x's corner: $(px 1 1) $(px 3 1) $(px 5 5)"
+check "x rounded, the frame along it"       eval '! pix 1 1 $RED && ! pix 1 1 $INACT && "$shot" same "$png" 3 1 $INACT 16 && pix 5 5 $RED'
 key "Focus Left"
 key "Floating Toggle"
 check "x floats"                            wait_tree 1 "H[y] ~x*"

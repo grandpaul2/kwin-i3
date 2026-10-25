@@ -1,6 +1,6 @@
 # Spec: rounded corners on tiled windows
 
-Draft, 2026-10-25, for Paul's go; reviewed by a second agent against KWin 6.7.5's source the
+Paul's go 2026-10-25; reviewed by a second agent against KWin 6.7.5's source the
 same day (two must-fix, both in below: the frame's corner wedge, and the reset when the effect is
 inactive). Paul asked for a toggle that rounds tiled windows' corners, the
 frame following the curve, Breeze's 5 px radius, **on by default** ("not many people like square
@@ -86,8 +86,11 @@ with Breeze's own rounded look: `setDecoration` replaced the probe's radius with
      coverage on all four channels (`base.frag:79`), so the colour is premultiplied by the
      window's opacity and drawn with blending **always on**, `GL_ONE, GL_ONE_MINUS_SRC_ALPHA`
      (today's path blends only below full opacity, `hold.cpp:656`).
-   - Radius `framed(w) ? r : 0`: floating frames stay square. With `roundedCorners` off, r is 0
-     and the ring is square, through the same path (so the existing frame tests test it).
+   - The radius is the one KWin clips the window to (`borderRadius()`, scaled and rounded as KWin
+     does), so the frame can't disagree with the window, and a floating frame (radius 0) stays
+     square. At radius 0 the frame is today's plain bars, unchanged: the border shader would
+     round the outer corner by the frame width even then (outer radius = radius + thickness),
+     seen in the first test run as an antialiased corner on every square frame.
    - During a hold or a slide (paint data scaled) the arc is not scaled with the snapshot: a few
      pixels' mismatch, for the hold's ~100 ms only. Accepted.
 4. **Settings page**, Frame section (disabled without the plugins, as the rest of it):
@@ -98,7 +101,8 @@ with Breeze's own rounded look: `setDecoration` replaced the probe's radius with
 - Where four tiles meet, and at the screen's corners, small wedges of wallpaper show between the
   rounded frames: every tile is rounded, at the screen edge too. With gaps 0 the wedges are about
   5x5 px. Normal for rounded tiles; not designed around.
-- Without the plugins: square, as now (no frame either). The page says the frame needs the
+- Without the plugins: as now, tiled windows keep their title bars (no frame) and so their
+  theme's corners. (Earlier drafts said "square": wrong, found by test 78.) The page says the frame needs the
   plugins already; this option sits under it.
 - **Paul's desktop goes rounded at deploy** (he runs the defaults, 2026-10-24).
 - A client that speaks neither decoration protocol (possibly libadwaita): its own corners and
@@ -127,7 +131,9 @@ New `tests/live/78-rounded-corners.sh` (`# needs: plugin`), pixels with `tools/s
 - An X11 window (Xwayland, beside 59): rounded.
 - Mid-hold (a slow client, as in 57): the held snapshot's corners rounded (the snapshot is drawn
   through the item renderer, so it is clipped; untested until this).
-- The effect unloaded with a window rounded: square after (radius reset, no frame).
+- The effect unloaded: kwin-i3 gives tiled windows their decoration back, whose radius
+  replaces ours, so the reset at unload can't be seen on screen (it is there for a window left
+  undecorated); 78 checks the unload and load go cleanly and rounding comes back.
 
 Existing: 54-frame's outer-corner check (`pixel_is 0 0`, `54-frame.sh:52`) assumes a square
 ring; it sets `roundedCorners=false`, as does any other scenario that reads corner pixels (58, 59,
@@ -136,7 +142,7 @@ windows' rects, not pixels): unaffected.
 
 Faults for `make mutate-live` (from a worktree), each to turn 78 red: the radius not set again
 after a decoration change; the frame drawn square with rounding on; the four bars kept (no
-wedge); the wedge not repainted; the radius left on fullscreen; the radius not reset at unload;
+wedge); the wedge not repainted; the radius left on fullscreen;
 the reset applied to decorated windows; `frameOnFloating` frames drawn rounded.
 
 Not tested: scale other than 1. The test KWin's outputs are scale 1, and adding a scale is OPEN.md

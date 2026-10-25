@@ -235,6 +235,13 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@action:button", "Frame colour of other tiled windows")
             }
         }
+        // Drawn by kwini3hold with the frame (docs/spec-rounded-corners.md), so it needs the plugins too.
+        QQC2.CheckBox {
+            text: i18nc("@option:check", "Round the corners of tiled windows")
+            checked: root.settings.roundedCorners
+            onToggled: root.settings.roundedCorners = checked
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable }
+        }
         // The floating colours only mean something with the frame on floating windows
         // (docs/spec-window-modes.md, decision 3), so they share its row.
         RowLayout {

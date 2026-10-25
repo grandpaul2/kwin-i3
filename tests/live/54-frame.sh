@@ -35,6 +35,8 @@ stat() { stats | grep "^$1=" | cut -d= -f2; }
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 
+# Square corners: these pixel checks are of the square frame (78 has the rounded one).
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key roundedCorners false
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "the effect is there: frame on"       wait_log '^.{9}FRAME on'

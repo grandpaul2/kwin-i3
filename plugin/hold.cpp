@@ -8,6 +8,7 @@
 #include <opengl/glshader.h>
 #include <opengl/glshadermanager.h>
 #include <opengl/glvertexbuffer.h>
+#include <scene/borderradius.h>
 #include <scene/windowitem.h>
 #include <window.h>
 #include <workspace.h>
@@ -27,6 +28,9 @@ static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
 static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
+// Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
+// scales and rounds a window's radius per output (itemrenderer_opengl.cpp:190).
+static const qreal s_radius = 5.0;
 
 Hold::Hold()
     : CrossFadeEffect()
@@ -80,6 +84,7 @@ Hold::~Hold()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/kwini3hold"));
     releaseAll();
+    resetRadii();
     if (workspace()) {
         QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
     }
@@ -114,6 +119,8 @@ void Hold::loadConfig()
     m_floatingActive = colour("frameFloatingActive", QColor(0x4d, 0x72, 0x54));
     m_floatingInactive = colour("frameFloatingInactive", QColor(0x33, 0x33, 0x33));
     m_frameOnFloating = group.readEntry("frameOnFloating", false);
+    m_roundedCorners = group.readEntry("roundedCorners", true);
+    updateRadii();
     effects->addRepaintFull();
     if (!m_enabled) {
         releaseAll();
@@ -134,15 +141,22 @@ void Hold::watchWindow(EffectWindow *w)
     const auto ringChanged = [this](EffectWindow *w) {
         repaintRing(w, w->frameGeometry());
     };
-    connect(w, &EffectWindow::windowDecorationChanged, this, ringChanged);
-    connect(w, &EffectWindow::windowFullScreenChanged, this, ringChanged);
-    connect(w, &EffectWindow::minimizedChanged, this, ringChanged);
+    // The radius here, not only in prePaintWindow: setDecoration has just reset it (before this
+    // signal), and the paint hooks don't run once nothing is framed (the last window fullscreen).
+    const auto radiusChanged = [this](EffectWindow *w) {
+        updateRadius(w);
+        repaintRing(w, w->frameGeometry());
+    };
+    connect(w, &EffectWindow::windowDecorationChanged, this, radiusChanged);
+    connect(w, &EffectWindow::windowFullScreenChanged, this, radiusChanged);
+    connect(w, &EffectWindow::minimizedChanged, this, radiusChanged);
     connect(w, &EffectWindow::windowDesktopsChanged, this, ringChanged);
     connect(w, &EffectWindow::windowHiddenChanged, this, ringChanged);
     if (Window *win = w->window()) {
         QPointer<EffectWindow> qp(w);
         const auto tileChanged = [this, qp] {
             if (qp) {
+                updateRadius(qp);
                 repaintRing(qp, qp->frameGeometry());
             }
         };
@@ -223,6 +237,7 @@ void Hold::onClosed(EffectWindow *w)
 void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
+    m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
     m_pendingClose.remove(w);
@@ -528,6 +543,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
     if (m_held.contains(w) || m_hidden.contains(w) || framed(w) || floatingFramed(w)) {
         data.setTransformed();
     }
+    updateRadius(w);    // any other way into a tile (the signals cover the ways out)
     effects->prePaintWindow(view, w, data);
 }
 
@@ -591,19 +607,59 @@ bool Hold::framed(EffectWindow *w) const
         || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
 }
 
-// The four bars around `frame`, in device pixels (logical x scale): each from the window's
-// rounded edge out to the rounded edge of the frame width beyond it, which is the middle of the
-// padding between two windows, so neighbours meet with no overlap and no gap at any scale
-// (review R1-6). Top and bottom span the corners.
-QList<RectF> Hold::ring(EffectWindow *, const RectF &frame, double scale) const
+// Rounded while framed and roundedCorners is on; set back to none when it stops being either,
+// only on windows this effect rounded and only without a decoration (a decorated one has its
+// theme's radius from setDecoration, which kwin-i3 never touches).
+void Hold::updateRadius(EffectWindow *w)
 {
-    const double f = m_frameWidth;
+    Window *win = w ? w->window() : nullptr;
+    if (!win || w->isDeleted()) {
+        return;
+    }
+    const QString id = w->internalId().toString();
+    if (m_roundedCorners && framed(w)) {
+        if (win->borderRadius() != BorderRadius(s_radius)) {
+            win->setBorderRadius(BorderRadius(s_radius));
+        }
+        m_rounded.insert(id);
+    } else if (m_rounded.remove(id) && !w->hasDecoration()) {
+        win->setBorderRadius(BorderRadius());
+    }
+}
+
+void Hold::updateRadii()
+{
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        updateRadius(w);
+    }
+}
+
+void Hold::resetRadii()
+{
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        if (m_rounded.remove(w->internalId().toString()) && w->window() && !w->isDeleted() && !w->hasDecoration()) {
+            w->window()->setBorderRadius(BorderRadius());
+        }
+    }
+    m_rounded.clear();
+}
+
+// The bars around `frame`, in device pixels (logical x scale): each from the window's rounded
+// edge out to the rounded edge of the frame width beyond it, which is the middle of the padding
+// between two windows, so neighbours meet with no overlap and no gap at any scale (review R1-6).
+// Top and bottom span the corners. With a radius (device px) each bar reaches that far inside
+// the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
+QList<RectF> Hold::ring(EffectWindow *, const RectF &frame, double scale, double radius) const
+{
+    const double f = m_frameWidth, r = radius;
     const double ix0 = std::round(frame.x() * scale), iy0 = std::round(frame.y() * scale);
     const double ix1 = std::round((frame.x() + frame.width()) * scale), iy1 = std::round((frame.y() + frame.height()) * scale);
     const double ox0 = std::round((frame.x() - f) * scale), oy0 = std::round((frame.y() - f) * scale);
     const double ox1 = std::round((frame.x() + frame.width() + f) * scale), oy1 = std::round((frame.y() + frame.height() + f) * scale);
-    return {RectF(ox0, oy0, ox1 - ox0, iy0 - oy0), RectF(ox0, iy1, ox1 - ox0, oy1 - iy1),
-            RectF(ox0, iy0, ix0 - ox0, iy1 - iy0), RectF(ix1, iy0, ox1 - ix1, iy1 - iy0)};
+    return {RectF(ox0, oy0, ox1 - ox0, iy0 + r - oy0), RectF(ox0, iy1 - r, ox1 - ox0, oy1 - iy1 + r),
+            RectF(ox0, iy0 + r, ix0 + r - ox0, iy1 - iy0 - 2 * r), RectF(ix1 - r, iy0 + r, ox1 - ix1 + r, iy1 - iy0 - 2 * r)};
 }
 
 void Hold::repaintRing(EffectWindow *w, const RectF &frame)
@@ -612,11 +668,12 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
         return;
     }
     const double f = m_frameWidth + 1;      // and a pixel of slack for the rounding
+    const double r = m_roundedCorners ? s_radius : 0;   // the wedges inside the corners
     const RectF outer = frame.adjusted(-f, -f, f, f);
-    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), frame.width() + 2 * f + 1, f + 1));
-    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(frame.y() + frame.height() - 1), frame.width() + 2 * f + 1, f + 2));
-    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), f + 1, frame.height() + 2 * f + 1));
-    effects->addRepaint(Rect(std::floor(frame.x() + frame.width() - 1), std::floor(outer.y()), f + 2, frame.height() + 2 * f + 1));
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), frame.width() + 2 * f + 1, f + 1 + r));
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(frame.y() + frame.height() - 1 - r), frame.width() + 2 * f + 1, f + 2 + r));
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), f + 1 + r, frame.height() + 2 * f + 1));
+    effects->addRepaint(Rect(std::floor(frame.x() + frame.width() - 1 - r), std::floor(outer.y()), f + 2 + r, frame.height() + 2 * f + 1));
 }
 
 // The ring around wherever the window is drawn: its frame moved and scaled as the paint data says
@@ -624,13 +681,20 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
 // touch, which leaves out windows above it (review R1-1), and as opaque as the window (a fade).
 // Read after effects->paintWindow has returned: the effects after this one in the chain have
 // changed the same paint data by then (Hold asks for no chain position; spec R1-16).
+// Drawn with KWin's border shader (what Breeze's outline uses, base.frag): the inner edge the
+// window's rect with the radius KWin clips the window to, so the ring follows its corners; the
+// outer edge the frame width beyond. In global device pixels, as the vertices are.
 void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
 {
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
     const QPoint origin = viewport.scaledRenderRect().topLeft();
+    const double scale = viewport.scale();
+    const double radius = std::round(w->window()->borderRadius().topLeft() * scale);   // as KWin rounds its clip
+    const double ix0 = std::round(drawn.x() * scale), iy0 = std::round(drawn.y() * scale);
+    const double ix1 = std::round((drawn.x() + drawn.width()) * scale), iy1 = std::round((drawn.y() + drawn.height()) * scale);
     QList<QVector2D> verts;
-    for (const RectF &bar : ring(w, drawn, viewport.scale())) {
+    for (const RectF &bar : ring(w, drawn, scale, radius)) {
         const Rect device(bar.x() - origin.x(), bar.y() - origin.y(), bar.width(), bar.height());
         for (const Rect &r : (deviceRegion & device).rects()) {
             const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
@@ -641,28 +705,49 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     if (verts.isEmpty()) {
         return;
     }
-    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
-    vbo->reset();
-    ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
-    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
-    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
-    const bool active = effects->activeWindow() == w;
-    QColor colour = framed(w) ? (active ? m_frameActive : m_frameInactive) : (active ? m_floatingActive : m_floatingInactive);
     const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
     if (opacity <= 0.0) {
         return;
     }
-    colour.setAlphaF(opacity);
-    if (opacity < 1.0) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    const bool active = effects->activeWindow() == w;
+    QColor colour = framed(w) ? (active ? m_frameActive : m_frameInactive) : (active ? m_floatingActive : m_floatingInactive);
+    if (radius <= 0) {
+        // Square: plain bars. The border shader would round the outer corner by the frame
+        // width even at radius 0 (base.frag: outer radius = radius + thickness).
+        ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
+        binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
+        binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+        colour.setAlphaF(opacity);
+        if (opacity < 1.0) {
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
+        vbo->setVertices(verts);
+        vbo->render(GL_TRIANGLES);
+        if (opacity < 1.0) {
+            glDisable(GL_BLEND);
+        }
+        return;
     }
-    binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
+    // Border, not UniformColor too: both declare the colour uniform (base.frag).
+    ShaderBinder binder(ShaderTrait::Border | ShaderTrait::TransformColorspace);
+    GLShader *shader = binder.shader();
+    shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
+    shader->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    shader->setUniform(GLShader::Vec4Uniform::Box, QVector4D((ix0 + ix1) / 2, (iy0 + iy1) / 2, (ix1 - ix0) / 2, (iy1 - iy0) / 2));
+    shader->setUniform(GLShader::Vec4Uniform::CornerRadius, QVector4D(radius, radius, radius, radius));
+    shader->setUniform(GLShader::IntUniform::Thickness, int(std::round(m_frameWidth * scale)));
+    // The shader scales all four channels by coverage: premultiplied, blended always (the
+    // antialiased arc is partly transparent even at full opacity).
+    shader->setUniform(GLShader::ColorUniform::Color, QVector4D(colour.redF() * opacity, colour.greenF() * opacity, colour.blueF() * opacity, opacity));
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
-    if (opacity < 1.0) {
-        glDisable(GL_BLEND);
-    }
+    glDisable(GL_BLEND);
 }
 
 void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)

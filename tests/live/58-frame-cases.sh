@@ -17,6 +17,8 @@ prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 
+# Square corners: these pixel checks are of the square frame (78 has the rounded one).
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key roundedCorners false
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "frame on"                            wait_log '^.{9}FRAME on'

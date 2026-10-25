@@ -177,6 +177,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the active tiled window |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
+| `[Script-kwin-i3] roundedCorners` | `true` | tiled windows' corners rounded 5 px, as Breeze's, the frame following them (plugins: without them tiled windows keep their title bars, and with them their theme's corners). Floating windows keep their theme's corners either way |
 | `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces of Plasma windows: `3, 7`. A window that opens there floats, with its own title bar, as in plain Plasma (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/spec-window-modes.md`) |
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the floating colours (plugins; not a window that draws its own title bar) |
 | `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | the frame on the active floating window, with `frameOnFloating` (a muted green, to tell it apart; i3 has no such colour) |
