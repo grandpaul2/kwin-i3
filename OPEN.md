@@ -51,12 +51,6 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24
    (`docs/spec-desktops-on-demand.md`). Next: choose between re-adopting every window on a removal
    or move (as a reload does), and a README line; then a live scenario for it.
-8. **Apps KWin launches see the plugins' directory**, the frame decoration included: KWin's
-   drop-in puts it on KWin's `QT_PLUGIN_PATH`, and an app on a global shortcut inherits KWin's
-   environment. A System Settings started that way could load a stale frame after a kdecoration
-   update (its Window Decorations page), which `tools/frame-guard.sh` doesn't guard. Found
-   2026-10-24. Next: a narrow fix, e.g. KWin's path holding only the KWin plugins and the
-   decoration loaded another way; investigate, then spec.
 9. **Non-US keyboard layouts and the workspace move keys.** Meta+Shift+digit arrives as
    Meta+<the symbol Shift+digit types>, and kwin-i3 registers the US symbols (Meta+!, Meta+@, ...).
    On a German layout Shift+2 types `"`, so Meta+Shift+2 matches nothing and moving a window to
@@ -103,9 +97,6 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       `borderlessMaximizedWindows`, a window added or closed in the 250 ms at load;
     - known limits written in the spec (a monitor change in those 250 ms; kept-above left from an
       earlier load without the effect; late-classified windows on a Plasma workspace);
-    - The live KWin crash of 22:16 (the frame filter's config subscriptions outlived an unloaded
-      helper) is fixed and installed 2026-10-24 (`tests/live/64-plugin-reload.sh`); Paul relogs
-      once to drop the old helper. Check after the relog: the helper loaded, no crash on Apply.
     - workspace 4's OBS was left at an odd size by the 22:0x reloads (hidden then): watch it on
       first show.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
@@ -123,6 +114,11 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       focus-follows-mouse path (6.7.5) and the bug's upstream state.
     - To watch: auto-hide, the task list and hidden workspaces.
     - Paul may drop dunst for Plasma's notifications; how and when is not decided.
+
+12. **`make plugin` leaves stale outputs.** `plugin/build/bin` keeps the files of a plugin renamed
+    or retired (`kwini3mouse.so` was still loaded by every test KWin until 2026-10-24;
+    `org.kde.kdecoration3/kwini3frame.so` is there now, harmless: nothing selects it). Next: have
+    `make plugin` remove any plugin file it didn't build; spec it like any change.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
