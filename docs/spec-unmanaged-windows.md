@@ -49,9 +49,18 @@ before the change (6 checks); each change watched red alone under a fault.
 
 ## Left (OPEN.md item 14)
 
-From the audit, not changed: unverified whether the frame's click handling can swallow the click
-that dismisses a menu during a popup grab (`framefocus.cpp`, `pointer()->hover()` during a grab);
-an unmanaged window quick-tiled into kwin-i3's tiles loses its tile (very rare).
+From the audit, not changed: an unmanaged window quick-tiled into kwin-i3's tiles loses its tile
+(very rare).
+
+Not a bug (probed 2026-10-25): the frame's click handling can't swallow the click that dismisses a
+menu during a popup grab. In KWin 6.7.5 the popup filter comes before the frame's
+(`InputFilterOrder`: `Popup` < `Decoration`, `input.h`). A press outside the popup's app cancels
+the popups and is eaten there (`popup_input_filter.cpp`), so `FrameFocus` never sees it and
+`pointer()->hover()` doesn't come into it. Probed on a test KWin with the plugins: two tiles, b
+opening a GTK 4 `MenuButton` popover (an `xdg_popup` with a grab). A click on a's frame, on b's own
+frame and in a's client area each closed it, and a frame click with no popup still activated a. The
+probe script stayed in the session's scratchpad. A popover that fills its window gets a 1 px
+configure from KWin and closes at once: the button must leave room below it.
 
 Won't-fix (Paul, 2026-10-25): the audit also found that a keep-above the user set is cleared when
 the window tiles again, and that unticking it on a floating window doesn't stick. Both are i3's
