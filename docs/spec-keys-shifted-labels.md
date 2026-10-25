@@ -2,8 +2,9 @@
 
 Paul's go 2026-10-25; built the same day. The live check is a screenshot count in
 `37-settings-page.sh` (the label beside Move right's Meta+:, none beside Focus right's Meta+;), watched
-red with the label emptied; the naming's unit tests watched red with the typed character dropped. Paul, the same day: the Keys table showing Meta+!, Meta+@ …
-for Meta+Shift+1, 2 … should look better, on kwin-i3's own page (not Plasma's System Settings
+red with the label emptied; the naming's unit tests watched red with the typed character dropped.
+
+Paul, the same day: the Keys table showing Meta+!, Meta+@ … for Meta+Shift+1, 2 … should look better, on kwin-i3's own page (not Plasma's System Settings
 page, whose drawing isn't ours, nor the `hotkeys` cheat sheet, which already says Meta+Shift+1..0).
 
 ## Why it reads Meta+!
