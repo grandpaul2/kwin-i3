@@ -69,6 +69,40 @@ no input method. The two successes were not traced, so what differed is unknown.
 "you had it working a minute ago. please do not just move on from that." The leading guess:
 which window had the focus when the menu closed (a Plasma window then, not a tile).
 
+## Second look (2026-10-25, later session; sources read, nothing run)
+
+Read for the installed versions: plasma-workspace 6.7.5 (`shell/shellcorona.cpp`, `panelview.cpp`,
+`panelconfigview.cpp`), libplasma 6.7.5, plasma-desktop 6.7.5 (the installed QML under
+`/usr/share/plasma`), kwin 6.7.5 (`workspace.cpp`, `activation.cpp`).
+
+- **Who turns edit mode on.** Nothing in `PanelView::showConfigurationInterface` does. It creates
+  the `PanelConfigView`, calls `show()`, and `showEvent` sets the containment "user configuring";
+  the panel toolbox QML (`org.kde.paneltoolbox/contents/ui/main.qml`, `onUserConfiguringChanged`)
+  then sets `corona.editMode = true`. All synchronous, inside the menu item's handler.
+- **Who turns it off.** The `PanelConfigView` hides itself on `editModeChanged(false)` and
+  `hideEvent` calls `deleteLater`. Its surface had no buffer yet, so KWin never saw a window: the
+  "never created" in the trace is this. Edit mode goes off on (a) `focusWindowChanged(nullptr)`
+  in `ShellCorona`, or (b) KWin's `showingDesktopChanged(false)`. KWin turns Show Desktop off by
+  itself only when a window that breaks it is added, on a desktop switch, or in `activateWindow`
+  of a hidden window; the trace shows none of the first two, and the third would come from a
+  pointer-driven or scripted activation, which the traces did not show. So (a), from plasmashell.
+- **Why the focus window is null, a reading of Qt's Wayland client** (6.11.2; the mechanism's
+  symbols are in `libQt6WaylandClient.so.6`: `handleWindowDeactivated`, `requestWaylandSync`,
+  `handleWaylandSync`; the source itself could not be fetched here): when a window that had the
+  keyboard is destroyed, Qt does not report "no focus window" at once. It asks the compositor for
+  a sync round trip and decides when that returns, so a leave followed by an enter in the same
+  batch is not reported as a null. The menu is destroyed *before* its action is triggered
+  (QMenu hides, then emits), so plasmashell's requests reach KWin in this order: sync, then
+  show_desktop(true). KWin answers the sync before it gives the desktop the keyboard. plasmashell
+  then sees: sync done with no active window → focus null → edit mode off → Show Desktop off; the
+  keyboard enter for the desktop arrives after. 3–28 ms is one round trip.
+- **What the reading does not explain**: the two successes, and that stock Plasma would fail the
+  same way with any application focused (no such bug on bugs.kde.org; 525792 and 527512 are
+  different mechanisms). So it is a hypothesis to test, not a diagnosis. The test that settles it
+  is the order of events on plasmashell's own socket (`WAYLAND_DEBUG=client`, which needs a
+  plasmashell restart), or the activation test below (a plasmashell window focused when the menu
+  closes should make it work every time).
+
 ## Next session
 
 1. **The activation test** (proposed, not run): make the desktop window KWin's active window with
