@@ -1,7 +1,9 @@
 # Spec: panel popups forgive a stray pointer (OPEN.md item 11, the floating panel's gap)
 
-Draft 2026-10-25, for Paul's go. Paul, the same day: the popups closing is a design problem, not
-the bug: they should forgive a pointer that strays for a second or so, without delaying every
+Paul's go 2026-10-25; built the same day (`plugin/popupgrace.cpp`, `tests/live/71-popup-grace.sh`,
+the stand-in `tools/popupclient.py`: the X11 route worked, probed first).
+
+Paul, the same day: the popups closing is a design problem, not the bug: they should forgive a pointer that strays for a second or so, without delaying every
 other focus change. Grace: **1.5 s**.
 
 ## The cause (KWin 6.7.5, read 2026-10-25)
@@ -46,7 +48,7 @@ xwayland`) with `_NET_WM_WINDOW_TYPE` `_KDE_NET_WM_WINDOW_TYPE_APPLET_POPUP`, ch
 `isAppletPopup` through the scripting API; if KWin doesn't class it so, a Wayland client setting
 the Plasma surface role (`org_kde_plasma_surface.set_role(applet_popup)`), as plasmashell does.
 
-Live, with focus follows mouse and the plugin (`tests/live/7x-popup-grace.sh`, `# needs: plugin`):
+Live, with focus follows mouse and the plugin (`tests/live/71-popup-grace.sh`, `# needs: plugin`):
 
 - the stand-in active: the pointer moves onto a tiled window; after 0.5 s the stand-in still has
   the focus; back onto the stand-in within 1.5 s: still the stand-in's, and the window never
@@ -59,3 +61,10 @@ Live, with focus follows mouse and the plugin (`tests/live/7x-popup-grace.sh`, `
 
 Watched red first: the scenario before the code (focus moves at once), then faults (never raised;
 never restored).
+
+**A trap the tests met** (KWin's, not this change's): a window that appears under a pointer that
+doesn't move isn't counted as under it. KWin keeps the pointer on the window it last entered, so
+the next move inside the old window's area is no move at all. The scenario moves the pointer once
+inside a new window before it measures. Watched red: grace never raised (step 2 and the timing
+fail), never restored, not restored on unload.
+

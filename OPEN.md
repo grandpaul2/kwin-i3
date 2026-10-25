@@ -67,15 +67,12 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 11. **The panel and notifications.** Plasma's default panel is back for good (2026-10-24; dotfiles'
     `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the pager.
     Tiles leave room for it. Notifications are Plasma's since 2026-10-25
-    (`docs/spec-notifications.md`; dunst removed). Left:
+    (`docs/spec-notifications.md`; dunst removed). Its popups forgive a stray pointer
+    (`docs/spec-popup-grace.md`, the helper, 2026-10-25). Left:
     - **The workspace widget** built and installed 2026-10-24 (`docs/spec-workspace-widget.md`,
       `widget/`, `make widget-install`; reviewed; unit + live tests); on Paul's panel in place of the
       pager, working (Paul, 2026-10-24). Left: a scroll test (tools/ei-send can't scroll), vertical
       panels and "Numbers only" untested live.
-    - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
-      pointer crossing the gap focuses the desktop and closes the popup. Not hit at the default
-      size; Paul would want it for a smaller panel. A narrow fix, not a delay: next, read KWin's
-      focus-follows-mouse path (6.7.5) and the bug's upstream state.
     - To watch: auto-hide, the task list and hidden workspaces.
     - **Plasma's notifications in place of dunst** (`docs/spec-notifications.md`, Paul's go
       2026-10-25): the dotfiles side done. Next: the live switch (spec steps 8-10: remove dunst,
