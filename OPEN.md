@@ -4,7 +4,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-24** (late).
+Last reconciled: **2026-10-24 (late)**.
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -48,8 +48,11 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    --no-plugins`, the invariants' two-output assumptions), then one campaign per configuration. 53-hold runs
    by itself after the parallel batch (`# timing: alone`, 2026-10-24), so its timing checks are
    strict in `make test`.
-   No campaign has run since 2026-10-24's key cleanup (the dead Shift+symbol actions gone, a
-   minor `src/` change): the next campaign covers it.
+   **No campaign has run since 2026-10-24's changes** (window modes, desktop changes, the key
+   cleanup), and the fuzzer needs updating first: its I4 "no hole" check must allow the frame's
+   1 px (the plugins load in its KWins, so the frame is on), a frame-pixel invariant would catch
+   lost or stale frames, and new actions: a workspace of Plasma windows, `frameOnFloating`, the
+   effect unloaded and loaded, a desktop removed or moved. Deferred with the rest (the Stage).
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
    2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
 9. **Non-US keyboard layouts and the workspace move keys.** Meta+Shift+digit arrives as
@@ -60,46 +63,15 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    choose: read the layout's symbols, or register by key position; spec, with a scenario on a
    German-layout test KWin.
 
-10. **Window modes: Plasma's or i3's, per window** (Paul, 2026-10-24: "a defining feature, so it
-    would need to be implemented cleanly"). A floating window is an ordinary Plasma window (the
-    user's own decoration: title bar, rounded corners, shadow, the theme's focus colour); a tiled one
-    has i3's frame; Meta+Shift+Space moves a window between them. A workspace can be set to open
-    new windows in either mode (instead of i3's stacked and tabbed layouts: Plasma is the DE on
-    those windows). The likely route: tiled windows get `noBorder` and a frame drawn by the effect
-    plugin, which retires the `kwini3frame` decoration (KWin has one decoration for every window).
-    Hurdles: the frame's pixel inside the tile, focus by clicking the frame, the script-only install
-    (tiled windows keep title bars), KWin's quick tiling on floating windows, the kept-above
-    floating marker. **Route chosen (Paul, 2026-10-24): the user's decoration on floating windows,
-    tiled ones borderless, the frame drawn by the effect outside the window: nothing of the app
-    covered.** Prototype done (branch `proto-effect-frame`, `tests/live/99-effect-frame.sh`, 18
-    pixel checks green): the tiles padded by twice the frame and the root inset by a hair
-    (1e-6) so KWin gives half the padding at the screen edges too, 1 px all round; the frame
-    drawn by kwini3hold where the window is drawn, so it stays with a held snapshot. Found:
-    - the border must go before the tile asks for a size, and the window be refit once the
-      client has answered (KWin keeps the decoration until then; the `armed` refit does it);
-    - plain GTK 4 windows with a server-side title bar stopped short by the title bar's height:
-      KWin sends `configure_bounds` only with a configure that has no size (in practice the
-      first, sized for the title bar then; `XdgToplevelWindow::sendRoleConfigure`, 6.7.5), and
-      GTK 4 keeps within them. Fixed in the prototype, no upstream needed (Paul, 2026-10-24:
-      work with what KWin gives): a window that lands short after its border went is asked
-      for a 0x0 frame (KWin resends the bounds; GTK keeps its size), then for its tile 5 ms
-      later. Qt, GTK 3, Alacritty and libadwaita apps never take that path;
-    - `noBorder` stays after an unload (release gives it back) and is saved by session restore.
-    Prototype shortcuts the spec must replace: the effect always active, a full repaint on
-    every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
-    **All four pieces live 2026-10-24** (`docs/spec-window-modes.md`; reviews
-    `docs/review-window-modes-*.md`; 37 scenarios, 793 checks green): the frame drawn by kwini3hold
-    outside tiled windows, tiled windows borderless, floating ones the user's decoration, the GTK 4
-    bounds, kwini3frame retired; `floatingWorkspaces` (workspaces of Plasma windows) and
-    `frameOnFloating`, the effect keeping the floating mark. Paul's desktop on the defaults (both
-    off). Left:
-    - test gaps (the spec's test section): a second output with an offset, a desktop switch with
-      slide, scroll on the frame (tools/ei-send can't scroll), a forcing window rule,
-      `borderlessMaximizedWindows`, a window added or closed in the 250 ms at load;
-    - known limits written in the spec (a monitor change in those 250 ms; kept-above left from an
-      earlier load without the effect; late-classified windows on a Plasma workspace);
-    - workspace 4's OBS was left at an odd size by the 22:0x reloads (hidden then): watch it on
-      first show.
+10. **Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame drawn
+    by kwini3hold outside tiled windows; floating windows keep the user's decoration;
+    `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame
+    retired; reviews `docs/review-window-modes-*.md`). Left (deferred with reliability, the Stage):
+    - test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
+      (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`, a window
+      added or closed in the 250 ms at load;
+    - the known limits written in the spec;
+    - workspace 4's OBS was left at an odd size by the reloads (hidden then): watch it on first show.
 11. **The panel and notifications.** Plasma's default panel is back for good (2026-10-24; dotfiles'
     `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the pager.
     Tiles leave room for it. Left:
