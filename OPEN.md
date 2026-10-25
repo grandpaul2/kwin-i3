@@ -74,8 +74,12 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     plugin, which retires the `kwini3frame` decoration (KWin has one decoration for every window).
     Hurdles: the frame's pixel inside the tile, focus by clicking the frame, the script-only install
     (tiled windows keep title bars), KWin's quick tiling on floating windows, the kept-above
-    floating marker. Next: a prototype check in a test KWin (`noBorder` from a script, per window,
-    through a reload and a release), then a spec.
+    floating marker. Probe done 2026-10-24 (test KWin, Breeze): `w.noBorder` from a script works
+    per window, tiled or floating; the frame keeps its tile and the client grows into the title
+    bar (one configure); KWin keeps it through a script unload and reload, so kwin-i3 must give it
+    back on release, as with kept-above. From KWin 6.7.5's source: it is the window's decoration
+    policy (Alt+F3's "No titlebar and frame"), a window rule forcing a border wins, and xdg session
+    restore saves it. Next: an effect prototype of the frame (worktree), then the spec.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
