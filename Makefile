@@ -43,7 +43,7 @@ kcm-install: kcm
 	tools/kcm-install.sh
 # The workspace widget (widget/, docs/spec-workspace-widget.md): QML only, nothing to build.
 widget-install:
-	kpackagetool6 -t Plasma/Applet -u widget 2>/dev/null || kpackagetool6 -t Plasma/Applet -i widget
+	kpackagetool6 -t Plasma/Applet -u widget >/dev/null 2>&1 || kpackagetool6 -t Plasma/Applet -i widget
 # Free kwin-i3's keys that other shortcuts hold, and put them back (docs/spec-taken-keys.md).
 take-keys:
 	python3 -I tools/take-keys.py take

@@ -97,17 +97,10 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
-    - **A kwin-i3 workspace widget** (i3bar's workspace buttons as a plasmoid): only the workspaces
-      in use, per monitor, the shown one marked. The stock pager shows every desktop, and KWin's
-      have no gaps, so 5 and 6 show while 7 is used whatever kwin-i3 removes (removing trailing
-      empty desktops was weighed and not chosen: reliability cost, still gaps). Paul, 2026-10-24: the
-      stock pager draws each workspace as both monitors wide (a "ghost" half: with per-monitor
-      desktops a workspace lives on one monitor), and `showOnlyCurrentScreen` only shows the
-      panel's own monitor; he wants every workspace on one panel at its own monitor's size. The
-      widget does that. Spec drafted 2026-10-24 (`docs/spec-workspace-widget.md`): Paul's decisions
-      next, then build.
-      Paul's desktop went from ten desktops to seven (8-10 removed live, `setup.sh` no longer
-      makes ten), as a stranger's would grow.
+    - **The workspace widget** built and installed 2026-10-24 (`docs/spec-workspace-widget.md`,
+      `widget/`, `make widget-install`; reviewed; unit + live tests). Paul swaps the pager for it
+      himself (Show Alternatives). Left: a scroll test (tools/ei-send can't scroll), vertical
+      panels and "Numbers only" untested live.
     - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
       pointer crossing the gap focuses the desktop and closes the popup. Not hit at the default
       size; Paul would want it for a smaller panel. A narrow fix, not a delay: next, read KWin's
