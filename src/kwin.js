@@ -30,6 +30,14 @@ var KI3 = (function () {
     // workspaces), for the monitor a workspace leaves (Move Workspace to Output).
     var shownBefore = {};
     var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];    // the workspace keys, Meta+1..0
+    // >0 while kwin-i3 itself changes what a monitor shows (showOn, an activation that may switch
+    // a desktop): currentDesktopChanged tells those from switches made outside it (the Overview,
+    // Plasma), which kwin-i3's focus follows (shownOutside; docs/spec-unmanaged-windows.md).
+    var switching = 0;
+    function showOn(desk, s) {
+        switching++;
+        try { workspace.setCurrentDesktopForScreen(desk, s); } finally { switching--; }
+    }
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -1024,9 +1032,16 @@ var KI3 = (function () {
     function applyFocus(from) {
         var f = model.focused;
         if (!f) return;
+        // A passive pass (no key action: a window closed, a reload, a monitor change) leaves an
+        // open window kwin-i3 doesn't manage with the focus: a panel popup, a dialog, KRunner.
+        // Taking it closed the tray's popups when their tooltip went (Paul, 2026-10-25). When
+        // that window closes, its own pass brings kwin-i3's focus back. The desktop and the
+        // panel hold the focus only when nothing else does, so they don't count.
+        var a = workspace.activeWindow;
+        if (!from && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock) return;
         var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
         if (workspace.currentDesktopForScreen(s) !== desk) {
-            workspace.setCurrentDesktopForScreen(desk, s);
+            showOn(desk, s);
             // KWin places a tile's windows only while its desktop is current (Tile::manage calls
             // requestTile only if isActive), and nothing in KWin catches up when it becomes so.
             // This switch comes after the reconcile, so one more pass places them (fuzzer I4:
@@ -1034,6 +1049,9 @@ var KI3 = (function () {
             schedule(ws);
         }
         if (f.type === "ws" || f.win === null) {
+            // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
+            // switchToOutput); an open popup is spared by the passive pass's check above, so this
+            // needs no guard of its own (a fault here alone changed nothing, 73-unmanaged-windows).
             if (workspace.activeScreen !== s) {
                 invoke("Switch to Screen " + workspace.screens.indexOf(s));
                 if (from && from !== s) invoke("MoveMouseToCenter");
@@ -1054,8 +1072,9 @@ var KI3 = (function () {
             // (fuzzer I2, seed 7). The window is on its way to s; nothing else changes what a
             // monitor shows.
             var o = w.output, before = o !== s ? workspace.currentDesktopForScreen(o) : null;
-            workspace.activeWindow = w;
-            if (before && workspace.currentDesktopForScreen(o) !== before) workspace.setCurrentDesktopForScreen(before, o);
+            switching++;
+            try { workspace.activeWindow = w; } finally { switching--; }
+            if (before && workspace.currentDesktopForScreen(o) !== before) showOn(before, o);
         }
         if (from && from !== s) invoke("MoveMouseToFocus");
     }
@@ -1134,7 +1153,7 @@ var KI3 = (function () {
             // An occupied workspace keeps its home even while that monitor is away, or it would
             // never go back (code review: reproduced with Meta+2 during an unplug).
             if (!occupied) Workspaces.claimHome(n, s);
-            workspace.setCurrentDesktopForScreen(deskOf(n), s);
+            showOn(deskOf(n), s);
         }
         var ws = wsModel(n);
         // The desktop switch above makes KWin activate the window it last used there, which
@@ -1229,8 +1248,8 @@ var KI3 = (function () {
             if (!back) { log("WSMOVE refused: no workspace left for " + src.name); return; }
         }
         Workspaces.setHome(n, t);
-        if (back) workspace.setCurrentDesktopForScreen(deskOf(back), src);
-        workspace.setCurrentDesktopForScreen(deskOf(n), t);
+        if (back) showOn(deskOf(back), src);
+        showOn(deskOf(n), t);
         var ws = wsModel(n), fs = model.fullscreenOn(ws);
         model.activate(fs || model.descendFocused(ws));
         // i3 shows the source's next workspace, then this one: the previous is the former.
@@ -1457,7 +1476,7 @@ var KI3 = (function () {
             for (var n = 1; n <= NAMES.length && !pick; n++)
                 if (deskOf(n) && homes[n] === s.name && !Workspaces.showing(n)) pick = n;
             if (!pick) pick = unusedWorkspace(s);
-            if (pick) workspace.setCurrentDesktopForScreen(deskOf(pick), s);
+            if (pick) showOn(deskOf(pick), s);
         });
     }
 
@@ -1721,13 +1740,14 @@ var KI3 = (function () {
     function startRest() {
         // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
         var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
-        if (login) Workspaces.numberScreens();
+        if (login) { switching++; try { Workspaces.numberScreens(); } finally { switching--; } }
         adoptTiled();
         workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
         workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
+        workspace.currentDesktopChanged.connect(guard("desktop shown", shownOutside));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
         workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
@@ -1742,7 +1762,8 @@ var KI3 = (function () {
         workspace.currentActivityChanged.connect(guard("activity", function () {
             if (renumbered) return;
             renumbered = true;
-            Workspaces.numberScreens();
+            switching++;
+            try { Workspaces.numberScreens(); } finally { switching--; }
             model.activate(model.descendFocused(wsModel(1)));
             scheduleAll();
             wantFocus();
@@ -1859,6 +1880,26 @@ var KI3 = (function () {
             lastShown[s.name] = now;
         });
     }
+    // A monitor's desktop switched outside kwin-i3 (the Overview, Plasma, an app's activation):
+    // on the monitor kwin-i3's focus is on, the focus follows to the workspace shown there, as in
+    // i3 the visible workspace of the focused monitor is the focused one. Not doing so let the
+    // next passive pass switch the monitor back (a notification closing, 73-unmanaged-windows).
+    // Not while monitors come and go: screensChanged settles those.
+    function shownOutside(previous, current, output) {
+        if (switching || rebuilding || !current || !output) return;
+        var names = workspace.screens.map(function (s) { return s.name; });
+        if (Object.keys(lastShown).some(function (n) { return names.indexOf(n) < 0; }) ||
+            names.some(function (n) { return !(n in lastShown); })) return;
+        var f = model.focused;
+        if (!f) return;
+        var fws = f.type === "ws" ? f : Tree.wsOf(f), num = deskNum(current);
+        if (num < 1 || num > NAMES.length || num === fws.num || outputOf(fws).name !== output.name) return;
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, output);
+        var ws = wsModel(num);
+        model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
+        log("SHOWN " + num + " on " + output.name + " outside kwin-i3: the focus follows");
+        rememberShown();
+    }
     function screensChanged() {
         checkPerOutput(false);
         var names = workspace.screens.map(function (s) { return s.name; });
@@ -1876,7 +1917,7 @@ var KI3 = (function () {
                 workspace.screens.forEach(function (s) {
                     var num = beforeLoss[s.name], h = num ? Workspaces.homes()[num] : null;
                     if (num && h && h !== s.name) num = unusedWorkspace(s);
-                    if (num && deskOf(num)) workspace.setCurrentDesktopForScreen(deskOf(num), s);
+                    if (num && deskOf(num)) showOn(deskOf(num), s);
                 });
                 beforeLoss = null;
             }
