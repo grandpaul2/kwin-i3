@@ -20,11 +20,17 @@ Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's 
 window management, with Plasma doing the rest. The scope and its reasons:
 `docs/plan.md`, "Scope". When the Stage ends, suggested order: 4, 5 (1, 3 and 7 are done; 7,
 kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`; 15, the panel
-configuration bug, fixed 2026-10-25: `docs/bug-panel-config.md`).
+configuration bug, fixed 2026-10-25: `docs/bug-panel-config.md`; 19 and 20, a floated window's
+size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec-rounded-corners.md`).
 
 ## Open
 
 Work for now.
+
+**Owed: a full `make test` on b935577** (live since 2026-10-25 evening). Its full run before the
+32-fullscreen-open fix passed everything but 32; after the fix, 32 passed alone three times and
+26, 37 and 78 passed; the full run itself was never finished. Next: at the start of the next
+working session, before anything else changes.
 
 **16. A tile hidden by Show Desktop activated in the first second after a load** (seen only in the
 test KWin, 2026-10-25, while fixing item 15; `docs/bug-panel-config.md`, "Left over"). With no frame
@@ -41,17 +47,14 @@ settle (`FRAME` logged) meanwhile.
 look at it; by hand, whether arrow keys move the highlight in an open dropdown (injected input
 didn't, in 76).
 
-**20. Rounded corners on tiled windows** (Paul, 2026-10-25: a toggle, on by default, the frame
-following, Breeze's 5 px): `docs/spec-rounded-corners.md`, draft; the radius probed in the test
-KWin; built, tested (78, fault battery), code reviewed. Next: live, on Paul's go.
-
 **21. Wallpaper flashes through Firefox** (Paul, 2026-10-25, twice: shown again on a workspace
 switch 4 to 2, and growing to full width when the terminal beside it closed; captures 15:44 and
 17:57). kwin-i3's side checked: the trees were right, and kwini3hold kept the closing window and
 released on Firefox's new size with no timeout (66 holds, max 69 ms). Guess, unverified: Firefox
 acknowledges a new size before it has drawn into it. Next: reproduce in the test KWin with real
 Firefox (throwaway profile), screenshots every few ms during the close and a workspace switch,
-looking for background inside Firefox's rect.
+looking for background inside Firefox's rect. Both captures are kept in
+`~/.local/state/kwin-i3/captures/` until then.
 
 ## Deferred (the Stage)
 
@@ -110,6 +113,8 @@ reviews `docs/review-window-modes-*.md`). Left:
 - test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
   (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`, a window
   added or closed in the 250 ms at load;
+  rounded corners on a libadwaita app (one that may draw its own corners and shadow, unverified;
+  `docs/spec-rounded-corners.md`);
 - the known limits written in the spec.
 
 **11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager,
