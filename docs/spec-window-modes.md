@@ -146,8 +146,8 @@ compares the hair separately so float noise elsewhere keeps the old tolerance).
    Recommendation: (b) on Plasma-mode workspaces only, (a) elsewhere: on an i3 workspace a
    floating window should still float above. Needs a look at what i3's stacking means when the
    whole workspace floats.
-6. **Retiring `kwini3frame`.** `make plugin-install` stops installing it and puts back the
-   decoration the user had before (recorded at install; Breeze if unknown), `tools/frame-guard.sh`
+6. **Retiring `kwini3frame`.** `make plugin-install` stops installing it and selects Plasma's
+   default decoration again (Breeze; nothing recorded what was before), `tools/frame-guard.sh`
    and its drop-in line go, the README's plugin table loses a row (two plugins). Paul's desktop
    goes from the frame decoration to Breeze on floating windows at the switch (all windows are
    re-decorated once). Recommendation: yes, in the same change.
@@ -211,8 +211,9 @@ for the build below, or a decision for Paul (marked).
 - **R1-14 the plan.** `docs/plan.md` gets: floating above tiled except on Plasma-mode
   workspaces (decision 5); Plasma mode as part of the WM/DE seam (it decides who arranges a
   window, which only kwin-i3 can); Xwayland clients **(decision 8)**.
-- **R1-16 effect chain.** The ring follows transforms applied before Hold: Hold asks for a chain
-  position after slide (test: a desktop switch with slide on, the ring moves with its window).
+- **R1-16 effect chain.** The ring is drawn after `effects->paintWindow` returns, so it reads the
+  paint data as every effect in the chain left it (slide's translation included); Hold asks for
+  no chain position. (Test still to come: a desktop switch with slide on.)
   Overview and window view draw thumbnails: no ring there. Whole-screen captures include it.
 - **R1-17 tests**: all of the above, plus a second output with an offset, Qt, Electron, Xwayland,
   a desktop switch, a replug and an unload for stale rings; colour tolerance 2, not 8.

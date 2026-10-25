@@ -1221,11 +1221,15 @@ var KI3 = (function () {
 
     // ---- scheduling ------------------------------------------------------------------------
 
+    // A one-off timer, kept in `timers` until it fires: a QTimer held only by a local could be
+    // collected first (review of the change, finding 4).
+    var timers = {}, timerSeq = 0;
     function later(ms, fn) {
-        var tm = new QTimer();
+        var n = ++timerSeq, tm = new QTimer();
+        timers[n] = tm;
         tm.singleShot = true;
         tm.interval = ms;
-        tm.timeout.connect(guard("later", fn));
+        tm.timeout.connect(guard("later", function () { delete timers[n]; fn(); }));
         tm.start();
     }
     function kick() {
@@ -1404,6 +1408,7 @@ var KI3 = (function () {
         if (!e && frameOn) e = HAIR * Math.max(area.width, area.height);
         return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
     }
+    // For root tiles only (the hair's tolerance would be wrong for any other tile).
     function sameRect(g, r) {
         // The hair is far below the tolerance for float noise: told apart on its own.
         var tol = (r.x > 0 && r.x < 1e-4) || (g.x > 0 && g.x < 1e-4) ? 1e-9 : 1e-4;
@@ -1418,7 +1423,7 @@ var KI3 = (function () {
         if (!t.tiles.length) return true;
         var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
         var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
-        var eq = function (a, b) { return Math.abs(a - b) < 1e-6; };
+        var eq = function (a, b) { return Math.abs(a - b) < 1e-7; };   // below the hair (1e-6)
         if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
         return t.tiles.every(function (c) {
             var r = c.relativeGeometry;
@@ -2627,22 +2632,42 @@ var KI3 = (function () {
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
     // after a load (KWin's own start-up reconfigure), with nothing changed.
     var RULE_KEYS = ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"];
-    // Is the effect there to draw the frame? Asked at load and on every reconfigure; no answer
-    // within a second is "no" (callDBus calls back only on a reply).
-    var effectAsk = 0;
+    // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
+    // asks for one when it loads or goes). Only an effect that draws the frame answers with
+    // frameWidth (an older kwini3hold answers too: review of the change, finding 1). callDBus calls
+    // back only on a reply: no answer within a second is a miss, and two misses in a row turn the
+    // frame off (one slow answer must not re-tile everything; finding 3).
+    var effectAsk = 0, frameMisses = 0, frameKnown = false;
     function checkFrame() {
         var n = ++effectAsk, answered = false;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "Stats", function (m) {
             answered = true;
-            if (n === effectAsk) setFrame(!!(m && m.supported));
+            if (n !== effectAsk) return;
+            frameMisses = 0;
+            setFrame(!!(m && m.supported && m.frameWidth !== undefined));
         });
-        later(1000, function () { if (!answered && n === effectAsk) setFrame(false); });
+        later(1000, function () {
+            if (answered || n !== effectAsk) return;
+            if (++frameMisses >= 2 || !frameOn) setFrame(false);
+            else checkFrame();
+        });
     }
     function setFrame(on) {
-        if (on === frameOn) return;
+        if (on === frameOn && frameKnown) return;
+        var first = !frameKnown;
+        frameKnown = true;
         frameOn = on;
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
-        if (!on) Object.keys(wins).forEach(function (key) { giveBorder(wins[key]); });
+        // The first answer either way, and every change: a border no frame will replace is given
+        // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled
+        // windows lose theirs again on the next pass if the frame is on.
+        Object.keys(wins).forEach(function (key) {
+            var w = wins[key], con = model.byWin[key];
+            var tiled = con && con.type !== "floating";
+            if (on && tiled) return;
+            giveBorder(w);
+            if (first && !w.deleted && w.noBorder) w.noBorder = false;
+        });
         scheduleAll();
     }
 

@@ -551,7 +551,7 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
 bool Hold::framed(EffectWindow *w) const
 {
     Window *win = w->window();
-    if (!win || w->isDeleted() || w->isFullScreen() || w->hasDecoration() || !w->isNormalWindow()) {
+    if (!win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration() || !w->isNormalWindow()) {
         return false;
     }
     return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom)
@@ -588,7 +588,9 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
 
 // The ring around wherever the window is drawn: its frame moved and scaled as the paint data says
 // (a held snapshot at its old frame, a sliding desktop), clipped to the region this paint may
-// touch, which leaves out windows above it (review R1-1).
+// touch, which leaves out windows above it (review R1-1), and as opaque as the window (a fade).
+// Read after effects->paintWindow has returned: the effects after this one in the chain have
+// changed the same paint data by then (Hold asks for no chain position; spec R1-16).
 void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
 {
     const RectF cur = w->frameGeometry();
@@ -611,9 +613,22 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
     binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
-    binder.shader()->setUniform(GLShader::ColorUniform::Color, effects->activeWindow() == w ? m_frameActive : m_frameInactive);
+    QColor colour = effects->activeWindow() == w ? m_frameActive : m_frameInactive;
+    const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
+    if (opacity <= 0.0) {
+        return;
+    }
+    colour.setAlphaF(opacity);
+    if (opacity < 1.0) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
+    if (opacity < 1.0) {
+        glDisable(GL_BLEND);
+    }
 }
 
 void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
