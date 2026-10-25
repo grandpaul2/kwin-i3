@@ -1799,10 +1799,43 @@ var KI3 = (function () {
         }
     }
 
+    // A floated window takes the geometry it opened with, as i3's con->geometry (manage.c,
+    // floating_enable; docs/spec-float-size.md): recorded once, when kwin-i3 first sees the
+    // window untiled, with the output it was on. KWin's own restore was lost by a move to a
+    // hidden workspace: recorded when that workspace is shown, from the tiled frame unmanageFrom
+    // kept. With no record (tiled already at a load), fullscreen or hidden: KWin's restore.
+    var untiled = {};
+    function recordUntiled(w) {
+        if (w.tile || w.fullScreen || !w.output) return;
+        var f = w.frameGeometry, o = w.output.geometry;
+        untiled[id(w)] = { x: f.x, y: f.y, width: f.width, height: f.height,
+                           out: { x: o.x, y: o.y, width: o.width, height: o.height } };
+    }
+    // After untile, in the same call (KWin sends the configure from a timer, unmanageFrom).
+    function floatAtRecord(w) {
+        var r = untiled[id(w)], con = model.byWin[id(w)], ws = con && Tree.wsOf(con);
+        if (!r || !ws || w.fullScreen || !w.output) return;
+        if (w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) return;
+        var o = w.output.geometry, a = areaOf(w.output, ws);
+        var g = { x: r.x, y: r.y, width: Math.min(r.width, a.width), height: Math.min(r.height, a.height) };
+        if (r.out.x !== o.x || r.out.y !== o.y || r.out.width !== o.width || r.out.height !== o.height) {
+            // Another output: the centre's fraction of the old one, on this one (i3's
+            // floating_fix_coordinates).
+            g.x = o.x + (r.x - r.out.x + r.width / 2) * o.width / r.out.width - g.width / 2;
+            g.y = o.y + (r.y - r.out.y + r.height / 2) * o.height / r.out.height - g.height / 2;
+        }
+        if (g.x < a.x || g.y < a.y || g.x + g.width > a.x + a.width || g.y + g.height > a.y + a.height) {
+            g.x = a.x + (a.width - g.width) / 2;
+            g.y = a.y + (a.height - g.height) / 2;
+        }
+        w.frameGeometry = g;
+    }
+
     function floatWindow(w, why) {
         var con = model.byWin[id(w)];
         if (!con || con.type === "floating") return;
         untile(w);
+        floatAtRecord(w);
         model.floatingEnable(con);
         setFloatingLook(w, true);
         log("FLOAT " + w.caption + ": " + why);
@@ -2045,6 +2078,7 @@ var KI3 = (function () {
         if (kind === "tile" && fresh && plasmaWs(ws)) kind = "float";
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
+        recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh);
         if (kind === "float") { model.openFloating(key, ws); setFloatingLook(w, true); }
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
@@ -2070,7 +2104,7 @@ var KI3 = (function () {
         model.close(key);
         delete told[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
-        delete ruleKind[key];
+        delete ruleKind[key]; delete untiled[key];
         schedule(ws);
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
@@ -2093,7 +2127,7 @@ var KI3 = (function () {
         if ((kind === "float") !== floating) {
             model.toggleFloating(con);
             setFloatingLook(w, kind === "float");
-            if (kind === "float") untile(w);
+            if (kind === "float") { untile(w); floatAtRecord(w); }
             schedule(Tree.wsOf(model.byWin[key]));
         }
     }
@@ -2311,7 +2345,7 @@ var KI3 = (function () {
             var n = model.toggleFloating(c), w = wins[c.win];
             if (n && w) {
                 setFloatingLook(w, n.type === "floating");
-                if (n.type === "floating") untile(w);
+                if (n.type === "floating") { untile(w); floatAtRecord(w); }
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },

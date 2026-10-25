@@ -42,8 +42,8 @@ look at it; by hand, whether arrow keys move the highlight in an open dropdown (
 didn't, in 76).
 
 **19. A floated window comes back at its untiled size, as in i3** (Paul, 2026-10-25):
-`docs/spec-float-size.md`, draft. Probed: only a move to a hidden workspace loses the untiled
-size today. Next: Paul's go on the spec, then build with `tests/live/77-float-size.sh`.
+`docs/spec-float-size.md`, built and tested. Probed: only a move to a hidden workspace lost the untiled
+size. Next: the fault battery, then live.
 
 ## Deferred (the Stage)
 

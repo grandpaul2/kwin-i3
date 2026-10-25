@@ -23,6 +23,7 @@ if live == os.path.realpath("package"):
 T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-more.sh", "40-monitors.sh", "50-keys.sh", "51-input.sh", "60-load.sh"
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
 F, S, W, G = "32-fullscreen-open.sh", "25-settings.sh", "49-ws-outputs.sh", "26-gaps.sh"
+Z = "77-float-size.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -109,8 +110,13 @@ muts = [
  (G, "src/kwin.js", "gaps: the read-back not clipped to the root", "                return { x: Math.max(g.x, lo.x), y: Math.max(g.y, lo.y),\n                         x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };", "                return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };"),
  (G, "src/kwin.js", "gaps: release leaves the root inset", "                    root.relativeGeometry = full;\n", ""),
  (G, "src/kwin.js", "gaps: sizes start from the whole area", "var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };", "var r = { x: 0, y: 0, width: 1, height: 1 };"),
+ # A floated window at the geometry it opened with (docs/spec-float-size.md)
+ (Z, "src/kwin.js", "float size: the record never applied", "        w.frameGeometry = g;\n", ""),
+ (Z, "src/kwin.js", "float size: never recorded", "        recordUntiled(w);\n", ""),
+ (Z, "src/kwin.js", "float size: not moved by i3's rule on another output", "        if (r.out.x !== o.x ||", "        if (false && r.out.x !== o.x ||"),
+ (Z, "src/kwin.js", "float size: a rule's float not at the record", "if (kind === \"float\") { untile(w); floatAtRecord(w); }", "if (kind === \"float\") { untile(w); }"),
 ]
-ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G]
+ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G, Z]
 # Known equivalent fault, not listed: snapping the first child's start in setSizes (gaps). The
 # start is KWin's root x, which kwin-i3 wrote as inset/width, and snap() gives back that same double
 # for any whole-pixel inset; it stays exact as a guard (CustomTile compares edges exactly). The same

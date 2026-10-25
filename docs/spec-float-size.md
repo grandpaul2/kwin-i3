@@ -1,6 +1,6 @@
 # Spec: a floated window comes back at its untiled size, as in i3
 
-Draft, 2026-10-25, for Paul's go. Paul asked: a window brought up as a floating (Plasma) window
+Paul's go 2026-10-25; built the same day. Paul asked: a window brought up as a floating (Plasma) window
 should have its untiled size, not its tiled one. Options weighed with a second agent's review
 (in-session record, KWin's restore set by the helper, a record that survives logout); Paul chose
 i3's way after reading what i3 does.
@@ -80,11 +80,15 @@ position where it matters):
    monitor.
 4. Resized while floating, tiled, floated again: back at 400x300 (i3's rule, checked so it's
    deliberate).
-5. A rule change (floatingClass set in the form) floats a tiled one at 400x300.
+5. A rule change (floatingClass) floats a tiled one at 400x300, after a hidden move (else KWin's
+   own restore would pass it, as it did on the first version of the test).
 6. A window already tiled at a reload: floats at KWin's restore, as now (no record).
+7. A window open before the load, set off-centre at 100,100 (recorded at the load), moved to the
+   other monitor and floated: at 1380,100, the centre's fraction on the new monitor, not centred.
 
-Watched red: case 2 on today's code; `make mutate-live` with `floatAtRecord` made a no-op turns
-2-5 red.
+Watched red on the old code: cases 2, 3 (after 2) and 4. `make mutate-live` faults
+(`tests/live/mutate.py`, "float size"): the record never applied, never recorded, no relative
+rule, a rule's float not at the record.
 
 ## Docs
 
