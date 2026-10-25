@@ -47,11 +47,11 @@ with Breeze's own rounded look: `setDecoration` replaced the probe's radius with
    `borderRadiusChanged` (`:2619`); X11 (`x11window.cpp:989,998`) and Wayland
    (`xdgshellwindow.cpp:843`) windows both go through `setDecoration`.
    - **Set**: on `windowDecorationChanged` (emitted after `setDecoration` has reset the radius,
-     `window.cpp:2628`, so it is set again before any paint: no frame of square corners), and in
-     `prePaintWindow` as the backstop for every other way into `framed()` (a tile taken, the
-     setting turned on): compare, set if different. Safe there (review): `borderRadiusChanged`
-     only updates the window's item and schedules a repaint (`windowitem.cpp:232,252`,
-     `item.cpp:605-611`); blur reads it at paint time; at most one extra frame, once.
+     `window.cpp:2628`, so it is set again before any paint: no frame of square corners), on the
+     tile signals (`tileChanged`, `requestedTileChanged`), and for every window when the setting
+     changes: compare, set if different. A `prePaintWindow` backstop was built (review: safe
+     there) and taken out: the fault battery showed it never acted, every way into `framed()`
+     having a signal.
    - **Reset** to `BorderRadius()` in the existing handlers (`hold.cpp:137-139`): fullscreen on,
      minimized; and for every rounded window when the setting goes off. **Not** through
      `prePaintWindow` or `isActive`: the effect is inactive, and its paint hooks not called, once
@@ -140,10 +140,15 @@ ring; it sets `roundedCorners=false`, as does any other scenario that reads corn
 62 to check), so they keep testing what they test. The fuzzer is geometry-based (I4 counts tiled
 windows' rects, not pixels): unaffected.
 
-Faults for `make mutate-live` (from a worktree), each to turn 78 red: the radius not set again
-after a decoration change; the frame drawn square with rounding on; the four bars kept (no
-wedge); the wedge not repainted; the radius left on fullscreen;
-the reset applied to decorated windows; `frameOnFloating` frames drawn rounded.
+Fault battery (2026-10-25, a worktree, each fault in `plugin/hold.cpp` against 78; `mutate.py`
+knows only `src/`): **red** for the signals not setting the radius (fullscreen), the frame drawn
+square, the four bars kept (no wedge), the radius never reset (setting off), the reset applied
+to decorated windows (floating Breeze corners), `frameOnFloating` frames rounded. **Green**, two:
+the `prePaintWindow` backstop removed (it never acted: taken out, above); and `repaintRing`'s
+reach into the corners removed: the corner recoloured on a focus change anyway, with Alacritty
+and the GTK 4 test client (checked at the arc's deepest pixel), so something else repaints the
+whole window on activation (the clients, or KWin; not settled). **Kept, not shown by a test**:
+four small rects, for an app that doesn't redraw on focus.
 
 Not tested: scale other than 1. The test KWin's outputs are scale 1, and adding a scale is OPEN.md
 item 5's harness work (`KI3_OUTPUTS`, a scale per output). The device-pixel arithmetic is the same

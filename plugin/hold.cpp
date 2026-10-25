@@ -141,8 +141,9 @@ void Hold::watchWindow(EffectWindow *w)
     const auto ringChanged = [this](EffectWindow *w) {
         repaintRing(w, w->frameGeometry());
     };
-    // The radius here, not only in prePaintWindow: setDecoration has just reset it (before this
+    // The radius on signals, not in a paint hook: setDecoration has just reset it (before this
     // signal), and the paint hooks don't run once nothing is framed (the last window fullscreen).
+    // These, the tile signals below and loadConfig are every way into or out of framed().
     const auto radiusChanged = [this](EffectWindow *w) {
         updateRadius(w);
         repaintRing(w, w->frameGeometry());
@@ -543,7 +544,6 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
     if (m_held.contains(w) || m_hidden.contains(w) || framed(w) || floatingFramed(w)) {
         data.setTransformed();
     }
-    updateRadius(w);    // any other way into a tile (the signals cover the ways out)
     effects->prePaintWindow(view, w, data);
 }
 
