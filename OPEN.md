@@ -25,16 +25,6 @@ kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 Work for now. An item whose remaining parts are partly deferred keeps its number in both sections.
 
-**11. The panel and notifications.** Plasma's default panel is back for good (2026-10-24;
-dotfiles' `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the
-pager (`docs/spec-workspace-widget.md`, `widget/`, `make widget-install`; working, Paul,
-2026-10-24). Tiles leave room for it. Notifications are Plasma's since 2026-10-25
-(`docs/spec-notifications.md`; dunst removed). Its popups forgive a stray pointer
-(`docs/spec-popup-grace.md`, the helper, 2026-10-25). Left:
-- to watch: auto-hide, the task list and hidden workspaces;
-- Paul's panel shows workspace names (the widget, installed 2026-10-25) from its next
-  plasmashell start (a login, or a restart he okays).
-
 **14. Unmanaged windows, left from the audit** (`docs/spec-unmanaged-windows.md`, 2026-10-25). The
 pattern (kwin-i3 overriding what you see on events that weren't its own) is fixed and tested
 (`73-unmanaged-windows.sh`). Left, each with a next step:
@@ -94,7 +84,8 @@ reviews `docs/review-window-modes-*.md`). Left:
   added or closed in the 250 ms at load;
 - the known limits written in the spec.
 
-**11. The workspace widget**, test gaps: a scroll test (tools/ei-send can't scroll), vertical
+**11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager,
+`docs/spec-workspace-widget.md`; working, Paul, 2026-10-25). The widget's test gaps: a scroll test (tools/ei-send can't scroll), vertical
 panels and "Numbers only" untested live.
 
 **13. Workspace commands** (`docs/spec-workspace-commands.md`: back-and-forth, next/prev, the
