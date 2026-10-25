@@ -76,11 +76,11 @@ KCM.SimpleKCM {
         showAlphaChannel: false
         color: root.settings[settingName]
         onAccepted: (c) => root.settings[settingName] = c.toString()
-        enabled: kcm.frameSelected
+        enabled: kcm.frameAvailable
         KCM.SettingStateBinding {
             configObject: root.settings
             settingName: parent.settingName
-            extraEnabledConditions: kcm.frameSelected
+            extraEnabledConditions: kcm.frameAvailable
         }
     }
 
@@ -182,10 +182,10 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Frame")
         }
         QQC2.Label {
-            visible: !kcm.frameSelected
+            visible: !kcm.frameAvailable
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
-            text: i18n("Needs the kwin-i3 plugins, with the kwini3frame window decoration selected.")
+            text: i18n("Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars.")
         }
         UnitSpinBox {
             Kirigami.FormData.label: i18n("Width:")
@@ -193,7 +193,7 @@ KCM.SimpleKCM {
             from: 1; to: 10
             value: root.settings.frameWidth
             onValueModified: root.settings.frameWidth = value
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameSelected }
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable }
         }
         FrameColour {
             Kirigami.FormData.label: i18n("Focused window:")
@@ -203,13 +203,17 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Other windows:")
             settingName: "frameInactive"
         }
+        // The floating colours wait for "a frame on floating windows" (docs/spec-window-modes.md,
+        // decision 3): floating windows have their own decoration until then.
         FrameColour {
             Kirigami.FormData.label: i18n("Focused floating window:")
             settingName: "frameFloatingActive"
+            enabled: false
         }
         FrameColour {
             Kirigami.FormData.label: i18n("Other floating windows:")
             settingName: "frameFloatingInactive"
+            enabled: false
         }
 
         Item {

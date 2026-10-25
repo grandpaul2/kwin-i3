@@ -9,6 +9,13 @@ var KI3 = (function () {
     var wins = {};          // window id -> KWin window, for every window we manage
     var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
+    // The frame (docs/spec-window-modes.md): with kwini3hold loaded, tiled windows have no
+    // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
+    // effect last said (asked at load and on every reconfigure; the effect asks for a
+    // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took.
+    var frameOn = false, tookBorder = {};
+    var borderGone = {};                             // the GTK 4 bounds (refitOnFrameChange)
+    var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -85,6 +92,13 @@ var KI3 = (function () {
 
     // ---- scheduling ------------------------------------------------------------------------
 
+    function later(ms, fn) {
+        var tm = new QTimer();
+        tm.singleShot = true;
+        tm.interval = ms;
+        tm.timeout.connect(guard("later", fn));
+        tm.start();
+    }
     function kick() {
         if (!timer) {
             timer = new QTimer();
@@ -184,7 +198,9 @@ var KI3 = (function () {
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
+        takeBorder(w);                      // before the tile asks for its size
         if (tile.manage(w)) return true;
+        giveBorder(w);
         expected[id(w)] = null;
         refused = true;
         // A fullscreen window stays in the tree, as in i3: out of the tiles (the next pass
@@ -248,16 +264,22 @@ var KI3 = (function () {
     // edge = outer + inner. All relative to the maximize area, KWin's basis for absoluteGeometry.
     function gaps() {
         var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
-        return { inner: i, inset: Math.round(o + i / 2) };
+        // The frame's room: twice its width, so KWin's half padding leaves it on each side.
+        return { inner: i + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: Math.round(o + i / 2) };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area) {
         var e = gaps().inset;
+        // KWin gives a tile side exactly at the screen's edge the full padding, two frames
+        // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) makes every side half.
+        if (!e && frameOn) e = HAIR * Math.max(area.width, area.height);
         return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
     }
     function sameRect(g, r) {
-        return Math.abs(g.x - r.x) <= 1e-4 && Math.abs(g.y - r.y) <= 1e-4 &&
-               Math.abs(g.width - r.width) <= 1e-4 && Math.abs(g.height - r.height) <= 1e-4;
+        // The hair is far below the tolerance for float noise: told apart on its own.
+        var tol = (r.x > 0 && r.x < 1e-4) || (g.x > 0 && g.x < 1e-4) ? 1e-9 : 1e-4;
+        return Math.abs(g.x - r.x) <= tol && Math.abs(g.y - r.y) <= tol &&
+               Math.abs(g.width - r.width) <= tol && Math.abs(g.height - r.height) <= tol;
     }
     // Every layout's children on its outer edges and spanning its cross axis. With gaps no edge
     // is at the screen's border, so KWin lets a window's outer side be dragged
@@ -325,6 +347,8 @@ var KI3 = (function () {
     // or KWin leaves it where it was (2026-10-22). The headless tests run Breeze (a 28 px title
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
+        // Its border taken: no decoration, even while the client hasn't answered yet (R1-13).
+        if (tookBorder[id(w)]) return { w: w.minSize.width, h: w.minSize.height };
         var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
         var bw = c ? Math.max(0, f.width - c.width) : 0, bh = c ? Math.max(0, f.height - c.height) : 0;
         return { w: m.width + bw, h: m.height + bh };
@@ -424,7 +448,7 @@ var KI3 = (function () {
             // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
-            else expected[id(w)] = tile;    // KWin put it there itself (see above): that is the tile it is in
+            else { expected[id(w)] = tile; takeBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
             return;
         }
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
@@ -464,6 +488,14 @@ var KI3 = (function () {
     // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
     // slow client's answer to the old one only doubled the request (53-hold, a closing window).
     var reconciling = false, armed = {}, lastFit = {};
+    // Plain GTK 4 (spec-window-modes "why" 5): KWin tells a client its largest size only in a
+    // configure with no size (sendRoleConfigure), in practice its first, with the title bar,
+    // and GTK 4 keeps within it. A window whose border just went and lands short of its tile
+    // is asked for 0x0 (KWin resends the bounds; the client keeps its size), then for its tile
+    // in a configure of its own. Decided at the first frame change after the border went, and
+    // only then (R1-10: a dropped decoration always changes the frame or the client); never for
+    // an X11 window (no bounds there; a 0x0 request would be a real resize).
+    function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
     function armRefit() { for (var key in wins) armed[key] = true; }
     function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
     function settleDragArms(ws) {
@@ -477,6 +509,16 @@ var KI3 = (function () {
     }
     function refitOnFrameChange(w) {
         var key = id(w), t = expected[key];
+        if (borderGone[key] && !reconciling && t && w.tile === t) {
+            delete borderGone[key];
+            if (!fits(w, t) && !isX11(w)) {
+                var g = w.frameGeometry;
+                log("BOUNDS " + w.caption + ": short of its tile after the border went; bounds asked again");
+                w.frameGeometry = { x: g.x, y: g.y, width: 0, height: 0 };
+                later(5, function () { if (wins[key] && w.tile === t) w.frameGeometry = windowRect(t); });
+                return;
+            }
+        }
         if (!armed[key] || reconciling || !t || w.tile !== t) return;
         if (armed[key] === "pending") return;
         if (typeof armed[key] === "string" && armed[key] !== rectKey(windowRect(t))) { delete armed[key]; return; }
@@ -698,8 +740,31 @@ var KI3 = (function () {
     // the window kept above (and green, since the frame colours) for good once un-floated
     // (docs/spec-reload-keepabove.md, 2026-10-24).
     function setFloatingLook(w, on) {
-        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }
+        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; giveBorder(w); }
         if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
+    }
+
+    // A tiled window's border, while the effect draws the frame (spec-window-modes R2). Read
+    // back: a window rule that forces a border wins (review R1-4), and that window then keeps
+    // its title bar. Re-asserted on every pass (the window menu, borderlessMaximizedWindows).
+    // A window already without one (a reload's predecessor took it, a session restore) is
+    // recorded too: kwin-i3 gives it back when the window stops being tiled.
+    function takeBorder(w) {
+        if (!frameOn || w.fullScreen) return;
+        var key = id(w);
+        if (!w.noBorder) {
+            w.noBorder = true;
+            if (!w.noBorder) return;            // a rule forces the border
+            borderGone[key] = true;
+        }
+        tookBorder[key] = true;
+    }
+    function giveBorder(w) {
+        var key = id(w);
+        delete borderGone[key];
+        if (!tookBorder[key]) return;
+        delete tookBorder[key];
+        if (!w.deleted && w.noBorder) w.noBorder = false;
     }
 
     // i3's rule for a new window under a fullscreen one (manage.c, "fs != NULL, not focusing"):
@@ -734,6 +799,9 @@ var KI3 = (function () {
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
         if (kind === "tile" && !fresh && !w.tile && w.keepAbove) kind = "float";
+        // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
+        // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
+        if (w.noBorder && !(frameOn && kind === "tile")) w.noBorder = false;
         var ws = wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         wins[key] = w;
@@ -759,9 +827,9 @@ var KI3 = (function () {
         var con = model.byWin[key];
         var ws = con ? Tree.wsOf(con) : null;
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
-        if (!w.deleted) setFloatingLook(w, false);
+        if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
         model.close(key);
-        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete ruleKind[key];
         schedule(ws);
     }
@@ -1209,6 +1277,7 @@ var KI3 = (function () {
             try {
                 untile(w);
                 if (keptAbove[key]) w.keepAbove = false;
+                giveBorder(w);
             } catch (e) { log("ERROR in release (window): " + e); }
         });
         workspace.screens.forEach(function (s) {
@@ -1398,6 +1467,7 @@ var KI3 = (function () {
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
+        checkFrame();
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
@@ -1428,7 +1498,27 @@ var KI3 = (function () {
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
     // after a load (KWin's own start-up reconfigure), with nothing changed.
     var RULE_KEYS = ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"];
+    // Is the effect there to draw the frame? Asked at load and on every reconfigure; no answer
+    // within a second is "no" (callDBus calls back only on a reply).
+    var effectAsk = 0;
+    function checkFrame() {
+        var n = ++effectAsk, answered = false;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "Stats", function (m) {
+            answered = true;
+            if (n === effectAsk) setFrame(!!(m && m.supported));
+        });
+        later(1000, function () { if (!answered && n === effectAsk) setFrame(false); });
+    }
+    function setFrame(on) {
+        if (on === frameOn) return;
+        frameOn = on;
+        log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
+        if (!on) Object.keys(wins).forEach(function (key) { giveBorder(wins[key]); });
+        scheduleAll();
+    }
+
     function settingsChanged() {
+        checkFrame();
         var changed = Settings.load();
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));

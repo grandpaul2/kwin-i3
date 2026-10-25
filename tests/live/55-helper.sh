@@ -35,7 +35,7 @@ check "kwin-i3 took it: SETTINGS resizeStep" wait_log '^.{9}SETTINGS resizeStep$
 sleep 1
 check "exactly one reconfigure"             count_is $((base + 1))
 key "Grow Width"
-check "and it acts: b is 960 wide"          geom_is b "320,0 960x720"
+check "and it acts: b is 958 wide (the frame)" geom_is b "321,1 958x718"
 
 # 2. A write to another group of kwinrc, and one that leaves kwin-i3's group as it is: nothing.
 kwriteconfig6 --file kwinrc --group kwin-i3-test --key unrelated 1

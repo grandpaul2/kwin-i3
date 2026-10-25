@@ -11,7 +11,9 @@ cd "$(dirname "$0")"
 scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
 batch=() alone=()
 for t in "${scenarios[@]}"; do
-    if grep -q '^# timing: alone$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
+    # "# needs: xwayland": its test KWin starts Xwayland (KI3_XWAYLAND), whose display search is
+    # not parallel-safe (tools/testkwin.sh): alone, like the timing scenarios.
+    if grep -qE '^# (timing: alone|needs: xwayland)$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
 done
 # How many test KWins share the GPU: timing checks (53-hold.sh) allow for it; 1 for those alone.
 export KI3_PARALLEL=${#batch[@]}
@@ -38,10 +40,12 @@ launch() {
     fi
     grep -q '^# needs: plugin' "$t" && plugin=$plugins
     local package=""; grep -q '^# needs: kcm' "$t" && package=1
-    KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
+    local xwayland=""; grep -q '^# needs: xwayland' "$t" && xwayland=1
+    KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
 }
 needs_missing() {
-    { grep -q '^# needs: plugin' "$1" && [[ -z $plugins ]]; } || { grep -q '^# needs: kcm' "$1" && [[ -z $kcm ]]; }
+    { grep -q '^# needs: plugin' "$1" && [[ -z $plugins ]]; } || { grep -q '^# needs: kcm' "$1" && [[ -z $kcm ]]; } ||
+        { grep -q '^# needs: xwayland' "$1" && ! command -v Xwayland >/dev/null; }
 }
 for t in "${batch[@]}"; do
     if needs_missing "$t"; then skipped+=("$t"); continue; fi

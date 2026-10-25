@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# make plugin-install: put the built kwini3helper (a plugin), kwini3hold (an effect) and
-# kwini3frame (a decoration) into a user plugin dir and (re)load them in the running KWin, without
-# a relog (docs/mouse-plugin-design.md, "Building, installing, upkeep"; docs/spec-atomic-layout.md;
-# docs/spec-decoration.md).
+# make plugin-install: put the built kwini3helper (a plugin) and kwini3hold (an effect, which also
+# draws the frame) into a user plugin dir and (re)load them in the running KWin, without a relog
+# (docs/mouse-plugin-design.md, "Building, installing, upkeep"; docs/spec-atomic-layout.md;
+# docs/spec-window-modes.md). The kwini3frame decoration (until 2026-10-24) is removed, and if it
+# was the selected decoration, Plasma's default (Breeze) is selected again.
 #   KI3_PLUGIN_ROOT   the Qt plugin dir (default ~/.local/lib/kwin-i3/qt6plugins); KWin finds it
 #                     through QT_PLUGIN_PATH, which a systemd drop-in gives KWin's unit only. The
 #                     drop-in is written here; it takes effect at the next login, once. Set
@@ -15,15 +16,12 @@ set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
 built=${KI3_PLUGIN_SO:-$here/plugin/build/bin/kwin/plugins/kwini3helper.so}   # (tests: another build)
 effect=${KI3_EFFECT_SO:-$here/plugin/build/bin/kwin/effects/plugins/kwini3hold.so}
-frame=${KI3_FRAME_SO:-$here/plugin/build/bin/org.kde.kdecoration3/kwini3frame.so}
-frameversion=${KI3_FRAME_VERSION:-$here/plugin/build/kdecoration.version}
 root=${KI3_PLUGIN_ROOT:-$HOME/.local/lib/kwin-i3/qt6plugins}
 dir=$root/kwin/plugins
 edir=$root/kwin/effects/plugins
 fdir=$root/org.kde.kdecoration3
 [[ -f $built ]] || { echo "plugin-install: no $built (make plugin)" >&2; exit 1; }
 [[ -f $effect ]] || { echo "plugin-install: no $effect (make plugin)" >&2; exit 1; }
-[[ -f $frame ]] || { echo "plugin-install: no $frame (make plugin)" >&2; exit 1; }
 
 # place <built .so> <dir> <base>: a new file per build, the old ones gone; prints the new id.
 place() {
@@ -41,12 +39,6 @@ place() {
 id=$(place "$built" "$dir" kwini3helper)
 rm -f "$dir"/kwini3mouse*.so          # its name until 2026-10-24
 eid=$(place "$effect" "$edir" kwini3hold)
-fid=$(place "$frame" "$fdir" kwini3frame)
-# The decoration has no version check of its own (its plugin interface carries no version), and
-# a build against another kdecoration can crash KWin at every login. The kdecoration version it
-# was built against sits next to it, for tools/frame-guard.sh (run before every KWin start, the
-# drop-in below) and for the check here.
-install -m 644 "$frameversion" "$fdir/kwini3frame.version"
 
 [[ -z ${KI3_PLUGIN_ROOT:-} ]] && "$here/tools/kwin-dropin.sh"
 
@@ -84,25 +76,14 @@ else
     echo "KWin did not load the effect $eid (not seen yet, or built for another KWin version?)" >&2
 fi
 
-# The decoration: kwinrc [org.kde.kdecoration2] library=<id>, then a reconfigure, and KWin
-# re-decorates every window at once (DecorationBridge::reconfigure). Only when the version the
-# frame was built against is the installed kdecoration (frame-guard.sh is the same check at every
-# login). The reconfigure is a 200 ms timer in KWin, so the result is polled. Not for a test root.
+# The retired decoration (kwini3frame, until 2026-10-24): if it is selected, Plasma's default
+# decoration again (the key removed: KWin's default is Breeze), and a reconfigure re-decorates
+# every window at once (DecorationBridge::reconfigure); then its files go. Not for a test root.
 [[ -n ${KI3_PLUGIN_ROOT:-} ]] && exit 0
-if ! "$here/tools/frame-guard.sh" --check "$fdir"; then
-    echo "plugin-install: the frame is installed but NOT selected (kdecoration version mismatch: rebuild)" >&2
-    exit 1
-fi
 deco() { kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library; }
-support() { busctl --user call org.kde.KWin /KWin org.kde.KWin supportInformation 2>/dev/null | grep -qF "Plugin: $1"; }
-if [[ "$(deco)" != "$fid" ]]; then
-    kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library "$fid"
+if [[ "$(deco)" == kwini3frame* ]]; then
+    kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library --delete
     busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+    echo "the kwini3frame decoration is retired: Plasma's default decoration is selected again"
 fi
-for _ in $(seq 50); do support "$fid" && break; sleep 0.1; done
-if support "$fid"; then
-    echo "decoration loaded in KWin as $fid"
-else
-    echo "KWin did not load the decoration $fid (journalctl --user -b | grep -i decoration); library= is set to it" >&2
-    exit 1
-fi
+rm -f "$fdir"/kwini3frame*.so "$fdir"/kwini3frame.version

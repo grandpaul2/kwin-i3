@@ -373,7 +373,7 @@
      <item row="14" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
-        <string>Needs the kwin-i3 plugins, with the kwini3frame decoration selected.</string>
+        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. The floating colours wait for a frame on floating windows (to come).</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignHCenter</set>

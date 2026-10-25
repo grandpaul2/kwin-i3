@@ -1,4 +1,5 @@
-// kwini3hold: atomic layout changes (docs/spec-atomic-layout.md). When tiled windows are
+// kwini3hold: atomic layout changes (docs/spec-atomic-layout.md), and i3's frame around tiled
+// windows (docs/spec-window-modes.md). When tiled windows are
 // rearranged, each one is snapshotted just before it moves and drawn at its old place until every
 // moved window has its new frame (or 100 ms), then they all switch in one frame: no wallpaper
 // between, as Sway's transactions give. A closing window is kept on screen while its neighbours
@@ -37,6 +38,7 @@ public:
     void paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
     void drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
     void postPaintScreen() override;
+    bool blocksDirectScanout() const override;
 
 public Q_SLOTS:
     // D-Bus: org.kde.KWin /kwini3hold net.local.kwini3hold Stats
@@ -69,6 +71,11 @@ private:
     void onAboutToChange(KWin::EffectWindow *w);
 
     bool tiled(KWin::EffectWindow *w) const;
+    bool holding() const;                                   // a hold, or a new window hidden
+    bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
+    QList<KWin::RectF> ring(KWin::EffectWindow *w, const KWin::RectF &frame, double scale) const;
+    void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
+    void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -87,6 +94,9 @@ private:
     KConfigWatcher::Ptr m_watcher;
     bool m_enabled = true;
     int m_timeoutMs = 100;
+    int m_frameWidth = 1;
+    QColor m_frameActive{0x4c, 0x78, 0x99}, m_frameInactive{0x33, 0x33, 0x33};
+    QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
 
     QHash<KWin::EffectWindow *, Held> m_held;
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
@@ -106,5 +116,6 @@ private:
         quint64 newHidden = 0, snapshots = 0;
         double lastMs = 0, maxMs = 0, lastHiddenMs = 0, maxHiddenMs = 0;
         double lastSnapshotMs = 0, maxSnapshotMs = 0, lastQuietWaitMs = 0;
+        quint64 frames = 0, framesHolding = 0;              // screens painted while active, and while holding
     } m_stats;
 };

@@ -3,7 +3,7 @@
 
   testclient.py --title T [--size WxH] [--min WxH] [--fixed] [--dialog]
                 [--map-delay SECONDS] [--retitle SECONDS:NEWTITLE] [--app-id ID]
-                [--color CSS] [--resize-delay SECONDS]
+                [--color CSS] [--resize-delay SECONDS] [--csd]
 
 --min       minimum size (GTK's size request), for windows bigger than their tile
 --fixed     not resizable (Krohnkite floated these; so will kwin-i3)
@@ -17,6 +17,7 @@
             "release 3"), so a test can tell which clicks KWin passed on
 --color     fill the window with this CSS colour ("red", "#00f"), so a screenshot can tell
             windows apart by a pixel
+--csd       draw its own title bar (a GTK header bar), as GNOME apps do: no server decoration
 --resize-delay  sleep this long whenever the window's size changes, like an app slow to redraw:
             its frame at the new size reaches KWin that much later (docs/spec-atomic-layout.md)
 
@@ -49,6 +50,7 @@ def main():
     p.add_argument("--clicks")
     p.add_argument("--color")
     p.add_argument("--resize-delay", type=float, default=0)
+    p.add_argument("--csd", action="store_true")
     a = p.parse_args()
 
     if a.app_id:
@@ -58,6 +60,8 @@ def main():
     def activate(app):
         win = Gtk.ApplicationWindow(application=app, title=a.title)
         win.set_default_size(*a.size)
+        if a.csd:
+            win.set_titlebar(Gtk.HeaderBar())
         win.set_child(Gtk.Label(label=a.title))
         if a.color:
             css = Gtk.CssProvider()

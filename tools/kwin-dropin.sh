@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # The systemd drop-in for KWin's unit, written by make plugin-install and make kcm-install alike:
-# QT_PLUGIN_PATH for KWin (the plugins' dir), and tools/frame-guard.sh before every KWin start.
+# QT_PLUGIN_PATH for KWin (the plugins' dir). (Until 2026-10-24 also tools/frame-guard.sh before
+# every KWin start, for the retired kwini3frame decoration.)
 # Environment= replaces the session's QT_PLUGIN_PATH for KWin, and every app KWin launches (an
 # app on a global shortcut: kglobalaccel runs in KWin) inherits KWin's, so the settings page's dir
 # goes in too when it is installed; without it, such a System Settings lacks the page
@@ -16,8 +17,7 @@ path=""
 [[ -n $path ]] || exit 0
 dropin=$HOME/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf
 want="[Service]
-Environment=QT_PLUGIN_PATH=$path
-ExecStartPre=-$here/tools/frame-guard.sh"
+Environment=QT_PLUGIN_PATH=$path"
 if [[ "$(cat "$dropin" 2>/dev/null)" != "$want" ]]; then
     mkdir -p "$(dirname "$dropin")"
     printf '%s\n' "$want" > "$dropin"

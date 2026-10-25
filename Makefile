@@ -1,8 +1,8 @@
 .PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install take-keys restore-keys
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
-# them when kwin-devel and kdecoration-devel are installed (their CMake configs); without them,
+# them when kwin-devel is installed (its CMake config); without it,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
-PLUGIN_IF := $(if $(and $(wildcard /usr/lib*/cmake/KWin/KWinConfig.cmake /usr/lib/*/cmake/KWin/KWinConfig.cmake),$(wildcard /usr/lib*/cmake/KDecoration3/KDecoration3Config.cmake /usr/lib/*/cmake/KDecoration3/KDecoration3Config.cmake)),plugin)
+PLUGIN_IF := $(if $(wildcard /usr/lib*/cmake/KWin/KWinConfig.cmake /usr/lib/*/cmake/KWin/KWinConfig.cmake),plugin)
 build:
 	./build.sh
 unit:
@@ -29,7 +29,7 @@ tools: tools/bin/ei-send
 tools/bin/ei-send: tools/ei-send.c
 	mkdir -p tools/bin && gcc -O2 -Wall -Wextra -o $@ $< $$(pkg-config --cflags --libs libei-1.0)
 
-# The three plugins (plugin/), against the installed kwin-devel and kdecoration-devel.
+# The two plugins (plugin/), against the installed kwin-devel.
 plugin:
 	cmake -S plugin -B plugin/build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
 	cmake --build plugin/build -j8

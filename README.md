@@ -2,8 +2,9 @@
 
 i3's window management as one KWin script, for Plasma 6.7+ on Wayland: i3's window tree,
 workspaces that live on a monitor, i3's keys, and the 1 px frame, inside an ordinary Plasma
-session. The script is the whole window manager; three small KWin plugins, optional, finish the
-i3 feel where a script cannot: the 1 px frame, focus on that frame, and atomic layout changes.
+session. The script is the whole window manager; two small KWin plugins, optional, finish the
+i3 feel where a script cannot: the 1 px frame around tiled windows (drawn outside them, with
+floating windows keeping your own decoration), focus on that frame, and atomic layout changes.
 
 **Status: feature complete (v1.0.0, 2026-10-23), the author's window manager since 2026-10-22.**
 Everything of i3 the author used is here; what is left out is deliberate (tabbed and stacked
@@ -46,8 +47,8 @@ and a click on it focus the window, as i3's border does.
 ## Requirements
 
 - Plasma 6.7 or later, Wayland. Tested on Fedora 44 / Plasma 6.7.5, one activity, two monitors.
-- For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`,
-  `kdecoration-devel`, a C++23 compiler.
+- For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`, a C++23
+  compiler.
 - For the tests: `libei-devel` (real input), `python3-gobject` + `gtk4` (the test client),
   `python3-dbus`, `python3-pillow` (screenshots), `node` (unit tests).
 
@@ -85,20 +86,23 @@ They are for locking in the i3 feel completely; kwin-i3 works fine without them.
 
 | plugin | adds | without it |
 |---|---|---|
-| `kwini3frame` (a decoration) | i3's 1 px frame (width and colours in the settings), blue on the active window, green on the active floating one, and nothing from the pointer on it | Breeze (or any decoration), with title bars |
-| `kwini3helper` (a KWin plugin) | focus on the frame: hover on the line focuses its window, a click on it activates and raises, as on i3's border; and **Apply applies**: a save in the Configure form takes effect at once | focus changes 1 px later, inside the window; a click on the line does nothing; after Apply, press Meta+Shift+C |
-| `kwini3hold` (an effect) | atomic layout changes: windows that move together land in the same frame | on a fast monitor, a frame or two of wallpaper where a window is about to land |
+| `kwini3hold` (an effect) | i3's 1 px frame around tiled windows (width and colours in the settings), blue on the active one: tiled windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiled windows keep their title bars; on a fast monitor, a frame or two of wallpaper where a window is about to land |
+| `kwini3helper` (a KWin plugin) | focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); and **Apply applies**: a save in the Configure form takes effect at once | after Apply, press Meta+Shift+C |
 
-`make plugin-install` builds all three, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash
-in each file name: KWin never unloads a library), loads them into the running KWin, selects the
-frame (`kwinrc [org.kde.kdecoration2] library=`), and writes a systemd drop-in for KWin's unit
-(`QT_PLUGIN_PATH`, and `ExecStartPre=tools/frame-guard.sh`). The drop-in takes effect at the next
-login, once. **Selecting the frame re-decorates every window at once.**
+`make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
+each file name: KWin never unloads a library), loads them into the running KWin, and writes a
+systemd drop-in for KWin's unit (`QT_PLUGIN_PATH`). The drop-in takes effect at the next login,
+once. Loading the effect re-tiles every window once (the frame's room). An install from before
+2026-10-24 had a third plugin, the `kwini3frame` decoration: `make plugin-install` removes it and
+selects Plasma's default decoration again (every window is re-decorated once).
 
-**The upkeep**: the two KWin plugins are refused by any KWin version other than the one they were
-built against, so after every Plasma update they are off until `make plugin-install` runs again.
-The decoration is not refused, and would load into a KWin it no longer matches, so
-`tools/frame-guard.sh` checks it before every KWin start and falls back to Breeze.
+**The upkeep**: both plugins are refused by any KWin version other than the one they were built
+against, so after every Plasma update they are off until `make plugin-install` runs again; until
+then tiled windows have their title bars.
+
+**Plain GTK 4 apps** (GTK 4 without libadwaita, with Plasma's title bar) learn their largest size
+from KWin only when they first appear, with the title bar counted; kwin-i3 asks KWin to tell them
+again once the title bar is gone, so they fill their tile.
 
 To reload the script after a change: `busctl --user call org.kde.KWin /Scripting
 org.kde.kwin.Scripting unloadScript s kwin-i3`, then the `reconfigure` above. It re-tiles every
@@ -125,7 +129,7 @@ Configure form, with the plugins, a save applies at once
 (`kwini3helper` watches the file and has KWin reconfigure). Without them, press **Meta+Shift+C**
 after a save, or log in again: KWin 6.7.5's generic script form saves without telling KWin, and
 the reload key asks KWin to reconfigure, as i3's reload does. Everything, the script and the
-three plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
+two plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
 reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin-i3-hold]`, before
 2026-10-24) are still read where a key below is missing.
 
@@ -145,13 +149,11 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] debugLog` | `false` | log every action and tree over D-Bus to `tools/logsink.py` (the tests' log); off, an in-memory log feeds `Dump State` |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `100` | how long the old layout may be held for a slow window, 10-2000 ms (Sway: 200) |
-| `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins) |
+| `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the active tiled window |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
-| `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | on the active floating window (a muted green, to tell it apart; i3 has no such colour) |
-| `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window (i3's grey by default). "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself paints the same and, if it is in no tile when kwin-i3 loads, is adopted as floating; a floating window whose keep-above you clear paints as tiled. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
-| `[org.kde.kdecoration2] library` | written by `make plugin-install` | the frame: `kwini3frame-<hash>`; `org.kde.breeze` to go back to Breeze |
-| `[org.kde.kdecoration2] BorderSize` | `Tiny` | ignored by the frame (always 1 px); keeps Breeze tolerable as the fallback |
+| `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | for a frame on floating windows, to come (`docs/spec-window-modes.md`); unused until then: floating windows have their own decoration |
+| `[Script-kwin-i3] frameFloatingInactive` | `#333333` | likewise. "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself and that is in no tile when kwin-i3 loads is adopted as floating. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
 
 Transients and modals, non-resizable windows and `skipPager` windows float; `onAllDesktops`,
 `skipTaskbar` and other activities' windows are never managed (`docs/plan.md`, policies).
@@ -161,7 +163,7 @@ Transients and modals, non-resizable windows and `skipPager` windows float; `onA
 ```
 make test        # unit tests (node) + live tests (each in its own headless KWin)
 make build       # src/ -> package/contents/code/main.js (edit src/, never the built file)
-make plugin      # the three plugins, into plugin/build
+make plugin      # the two plugins, into plugin/build
 make fuzz        # 20 min of random actions with pixel invariants (docs/fuzz-design.md)
 make mutate      # the unit tests against deliberate faults; mutate-live from a worktree
 ```

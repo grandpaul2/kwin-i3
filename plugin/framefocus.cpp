@@ -1,77 +1,111 @@
 #include "framefocus.h"
 
+#include <effect/globals.h>
 #include <input_event.h>
 #include <options.h>
 #include <pointer_input.h>
 #include <window.h>
 #include <workspace.h>
 
+#include <KConfigGroup>
+#include <KSharedConfig>
+
 using namespace KWin;
 
 FrameFocus::FrameFocus()
     : InputEventFilter(InputFilterOrder::Decoration)
+    , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
+    const auto load = [this] {
+        auto config = m_watcher->config();
+        config->reparseConfiguration();
+        m_frameWidth = std::clamp(config->group(QStringLiteral("Script-kwin-i3")).readEntry("frameWidth", 1), 1, 10);
+    };
+    load();
+    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, m_watcher.get(), load);
+    QObject::connect(workspace(), &Workspace::configChanged, m_watcher.get(), load);
 }
 
-// The window whose decoration the pointer is on, else null. KWin updates the pointer's decoration
-// and hover before the filters run (pointer_input.cpp processMotion -> update()); over a
-// decoration the pointer's focus() is null but hover() is the window.
-KWin::Window *FrameFocus::frameWindow() const
+// The tiled window whose frame ring is under the pointer, else null. Only where the pointer is
+// over no window, or over the desktop: a window above a frame (a floating one) keeps its clicks.
+// Framed as kwini3hold frames it (Hold::framed): in one of kwin-i3's tiles (custom tiling), no
+// server decoration, not fullscreen.
+KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
 {
-    if (!input()->pointer()->decoration()) {
+    Window *hover = input()->pointer()->hover();
+    if (hover && !hover->isDesktop()) {
         return nullptr;
     }
-    Window *window = input()->pointer()->hover();
-    return window && window->isClient() ? window : nullptr;
+    const auto order = workspace()->stackingOrder();
+    for (auto it = order.crbegin(); it != order.crend(); ++it) {
+        Window *w = *it;
+        if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop()
+            || w->isFullScreen() || w->decoration()) {
+            continue;
+        }
+        if (w->requestedQuickTileMode() != QuickTileMode(QuickTileFlag::Custom) && w->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+            continue;
+        }
+        const RectF frame = w->frameGeometry();
+        const double f = m_frameWidth;
+        if (frame.adjusted(-f, -f, f, f).contains(pos) && !frame.contains(pos)) {
+            return w;
+        }
+    }
+    return nullptr;
 }
 
-// Focus follows the mouse onto a frame, as into a client: the same request KWin's own
-// Window::pointerEnterEvent makes for a client area. Not pointerEnterEvent itself: KWin has just
-// stored this pointer position as the focus-mouse position, so its "has the mouse moved" check
-// would refuse (review 2, 2026-10-23). No cancel when the frame is left for another window: KWin
-// has already requested that window's focus, and cancelDelayFocus would drop it. One check of
-// pointerEnterEvent's is not made: "the window menu is open" (useractions.h is not buildable
-// from kwin-devel: it includes a generated ui_ header); the menu can't open from a frame any
-// more, and it closes on the first click anyway.
-bool FrameFocus::pointerMotion(PointerMotionEvent *)
+// Focus follows the mouse onto a frame, as into a client: the request KWin's own
+// Window::pointerEnterEvent makes. Not pointerEnterEvent itself: KWin has just stored this
+// pointer position as the focus-mouse position, so its "has the mouse moved" check would refuse
+// (review 2, 2026-10-23). No cancel when the frame is left for another window: KWin has already
+// requested that window's focus, and cancelDelayFocus would drop it.
+bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
-    Window *window = frameWindow();
-    if (window == m_frameWindow) {
+    Window *window = ringWindow(event->position);
+    if (window == m_ringWindow) {
         return false;
     }
-    m_frameWindow = window;
-    if (window) {
-        if (options->focusPolicy() != Options::ClickToFocus && !window->isDesktop() && !window->isDock()) {
-            workspace()->requestDelayFocus(window);
-        }
-    } else if (!input()->pointer()->hover()) {
-        workspace()->cancelDelayFocus();
+    m_ringWindow = window;
+    if (window && options->focusPolicy() != Options::ClickToFocus) {
+        workspace()->requestDelayFocus(window);
     }
     return false;
 }
 
-// A plain press on a window's frame: what a press in its client area does (KWin's
-// WindowActionInputFilter, which never runs over a decoration), activate and raise by the
-// [MouseBindings] CommandWindow* commands, as i3's click on a border does. The press goes on to
-// the decoration, which accepts it, so nothing moves. A press with modifiers is KWin's own
-// (Meta+drag moves, Meta+right-drag resizes).
+// A plain press on a frame: what a press in the window does (activate and raise by the
+// [MouseBindings] CommandWindow* commands, as i3's click on a border), and the press and its
+// release go no further, to the desktop beneath (review R1-12). A press with modifiers is
+// KWin's own (Meta+drag), and so is everything while a game holds the pointer or a window
+// inhibits shortcuts (input.cpp globalWindowAction skips those too).
 bool FrameFocus::pointerButton(PointerButtonEvent *event)
 {
-    if (event->state != PointerButtonState::Pressed) {
+    if (event->state == PointerButtonState::Released) {
+        if (m_taken & event->button) {
+            m_taken &= ~event->button;
+            return true;
+        }
         return false;
     }
-    // KWin's own window actions skip these too (input.cpp globalWindowAction, windowActionFor...):
-    // a game holding the pointer, or a window inhibiting shortcuts (a VM, a remote desktop).
     if (input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
         return false;
     }
     if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
         return false;
     }
-    if (Window *window = frameWindow()) {
-        if (const auto command = window->getMousePressCommand(event->button)) {
-            window->performMousePressCommand(*command, event->position);
-        }
+    Window *window = ringWindow(event->position);
+    if (!window) {
+        return false;
     }
-    return false;
+    if (const auto command = window->getMousePressCommand(event->button)) {
+        window->performMousePressCommand(*command, event->position);
+    }
+    m_taken |= event->button;
+    return true;
+}
+
+// A scroll on a frame goes nowhere (on the desktop beneath it would switch desktops).
+bool FrameFocus::pointerAxis(PointerAxisEvent *event)
+{
+    return (event->modifiers & ~Qt::KeypadModifier) == Qt::NoModifier && ringWindow(event->position);
 }

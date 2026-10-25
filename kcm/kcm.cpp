@@ -26,7 +26,7 @@ class KWinI3Kcm : public KQuickManagedConfigModule
     Q_PROPERTY(bool scriptEnabled MEMBER m_scriptEnabled NOTIFY stateChanged)
     Q_PROPERTY(bool scriptLoaded MEMBER m_scriptLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool holdLoaded MEMBER m_holdLoaded NOTIFY stateChanged)
-    Q_PROPERTY(bool frameSelected MEMBER m_frameSelected NOTIFY stateChanged)
+    Q_PROPERTY(bool frameAvailable MEMBER m_frameAvailable NOTIFY stateChanged)
 
 public:
     KWinI3Kcm(QObject *parent, const KPluginMetaData &data)
@@ -83,9 +83,6 @@ public:
         auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
         config->reparseConfiguration();
         m_scriptEnabled = KConfigGroup(config, QStringLiteral("Plugins")).readEntry("kwin-i3Enabled", false);
-        m_frameSelected = KConfigGroup(config, QStringLiteral("org.kde.kdecoration2"))
-                              .readEntry("library", QString())
-                              .startsWith(QLatin1String("kwini3frame"));
         auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Scripting"),
                                                   QStringLiteral("org.kde.kwin.Scripting"), QStringLiteral("isScriptLoaded"));
         msg << QStringLiteral("kwin-i3");
@@ -98,6 +95,7 @@ public:
         m_holdLoaded = std::any_of(effects.begin(), effects.end(), [](const QString &e) {
             return e.startsWith(QLatin1String("kwini3hold"));
         });
+        m_frameAvailable = m_holdLoaded;    // the effect draws the frame (docs/spec-window-modes.md)
         m_keys->load();
         Q_EMIT stateChanged();
         settingsChanged();
@@ -121,7 +119,7 @@ private:
     bool m_scriptEnabled = false;
     bool m_scriptLoaded = false;
     bool m_holdLoaded = false;
-    bool m_frameSelected = false;
+    bool m_frameAvailable = false;
 };
 
 K_PLUGIN_CLASS_WITH_JSON(KWinI3Kcm, "kcm_kwin_i3.json")

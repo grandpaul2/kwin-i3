@@ -190,9 +190,9 @@ for the build below, or a decision for Paul (marked).
   `H[V[a b] c]`, a root change, pixels at all four edges.
 - **R1-8 padding always > 0** changes KWin's anchors for every install: the gaps-only guards
   now apply at the defaults. Test Meta+right-drag on an outer edge at the defaults.
-- **R1-9 the effect going away.** The effect announces itself: on load, and on unload, it calls
-  a D-Bus method kwin-i3's script exposes (as the capture's dump does in reverse), and kwin-i3
-  also asks at load and on every reconfigure. Between an unload and the next pass, tiled windows
+- **R1-9 the effect going away.** The effect announces itself: on load and on unload it asks KWin
+  for a reconfigure (a script can't expose a D-Bus method), and kwin-i3 asks the effect's `Stats`
+  at load and on every reconfigure; no answer within a second is "no frame". Between an unload and the next pass, tiled windows
   are borderless and frameless for at most one event. The frame is independent of `holdEnabled`.
   Test: unload the effect mid-session; title bars come back.
 - **R1-10 `borderGone`** is cleared after one settle check, whatever happens; never for Xwayland

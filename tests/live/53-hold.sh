@@ -144,7 +144,9 @@ client --title c --color blue --resize-delay 0.8
 # 7. Sending a window to a hidden workspace (Meta+Shift+3): it is hidden at once, and its
 #    snapshot stays on screen while its slow neighbour grows (a visible ref keeps it drawn).
 check "a | c"                               wait_tree 1 "H[a c*]"
-sleep 1.2
+# Settled at its tile first: a plain GTK 4 window's bounds are asked for again once its border
+# goes (spec-window-modes "why" 5), one more of this slow client's 0.8 s resizes.
+check "c settled at its tile"               geom_is c "641,1 638x718"
 key "Focus Left"
 check "a focused"                           wait_tree 1 "H[a* c]"
 wait_stat open False
@@ -197,11 +199,11 @@ wait_tree 1 "H[c* h i]"
 wait_stat open False
 n=$(( $(stat transactions) - t ))
 check "leaving with the newcomer: restore, then the rebuild ($n transactions)"   between "$n" 1 2
-check "c is the left third again"           geom_is c "0,0 427x720"
+check "c is the left third again"           geom_is c "1,1 425x718"
 kclose i
 wait_tree 1 "H[c* h]"
 wait_stat open False
-check "c is half the screen again"          geom_is c "0,0 640x720"   # the drag below starts in c
+check "c is half the screen again"          geom_is c "1,1 638x718"   # the drag below starts in c
 t=$(stat transactions)
 m=$(mark)
 drag Meta right 600 360 500 360

@@ -2,6 +2,12 @@
 
 #include <core/output.h>
 #include <effect/effecthandler.h>
+#include <core/region.h>
+#include <core/rendertarget.h>
+#include <core/renderviewport.h>
+#include <opengl/glshader.h>
+#include <opengl/glshadermanager.h>
+#include <opengl/glvertexbuffer.h>
 #include <scene/windowitem.h>
 #include <window.h>
 #include <workspace.h>
@@ -51,15 +57,32 @@ Hold::Hold()
     connect(effects, &EffectsHandler::windowClosed, this, &Hold::onClosed);
     connect(effects, &EffectsHandler::windowDeleted, this, &Hold::onDeleted);
 
+    connect(effects, &EffectsHandler::windowActivated, this, [this](EffectWindow *w) {
+        if (m_active) {
+            repaintRing(m_active, m_active->frameGeometry());
+        }
+        m_active = w;
+        if (w) {
+            repaintRing(w, w->frameGeometry());
+        }
+    });
+    m_active = effects->activeWindow();
+
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3hold"),
                                                  QStringLiteral("net.local.kwini3hold"),
                                                  this, QDBusConnection::ExportAllSlots);
+    // kwin-i3 draws no frame of its own without this effect (spec-window-modes R5): KWin's
+    // reconfigure is how it hears that the effect came or went (it asks Stats on every one).
+    QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
 }
 
 Hold::~Hold()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/kwini3hold"));
     releaseAll();
+    if (workspace()) {
+        QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
+    }
 }
 
 bool Hold::supported()
@@ -80,6 +103,13 @@ void Hold::loadConfig()
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
                                                 : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
+    // The frame's keys (src/settings.js), shared with kwini3frame's; not affected by holdEnabled.
+    m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
+    const QColor a(group.readEntry("frameActive", QStringLiteral("#4c7899")));
+    const QColor i(group.readEntry("frameInactive", QStringLiteral("#333333")));
+    m_frameActive = a.isValid() ? QColor(a.red(), a.green(), a.blue()) : QColor(0x4c, 0x78, 0x99);
+    m_frameInactive = i.isValid() ? QColor(i.red(), i.green(), i.blue()) : QColor(0x33, 0x33, 0x33);
+    effects->addRepaintFull();
     if (!m_enabled) {
         releaseAll();
     }
@@ -91,6 +121,29 @@ void Hold::watchWindow(EffectWindow *w)
 {
     connect(w, &EffectWindow::windowFrameGeometryAboutToChange, this, &Hold::onAboutToChange);
     connect(w, &EffectWindow::windowFrameGeometryChanged, this, &Hold::queueCheck);
+    // The frame is outside the window: nothing repaints it but this (the old ring and the new).
+    connect(w, &EffectWindow::windowFrameGeometryChanged, this, [this](EffectWindow *w, const RectF &old) {
+        repaintRing(w, old);
+        repaintRing(w, w->frameGeometry());
+    });
+    const auto ringChanged = [this](EffectWindow *w) {
+        repaintRing(w, w->frameGeometry());
+    };
+    connect(w, &EffectWindow::windowDecorationChanged, this, ringChanged);
+    connect(w, &EffectWindow::windowFullScreenChanged, this, ringChanged);
+    connect(w, &EffectWindow::minimizedChanged, this, ringChanged);
+    connect(w, &EffectWindow::windowDesktopsChanged, this, ringChanged);
+    connect(w, &EffectWindow::windowHiddenChanged, this, ringChanged);
+    if (Window *win = w->window()) {
+        QPointer<EffectWindow> qp(w);
+        const auto tileChanged = [this, qp] {
+            if (qp) {
+                repaintRing(qp, qp->frameGeometry());
+            }
+        };
+        connect(win, &Window::tileChanged, this, tileChanged);
+        connect(win, &Window::requestedTileChanged, this, tileChanged);
+    }
     connect(w, &EffectWindow::minimizedChanged, this, &Hold::queueCheck);
     connect(w, &EffectWindow::windowDesktopsChanged, this, &Hold::queueCheck);
     connect(w, &EffectWindow::windowHiddenChanged, this, &Hold::queueCheck);
@@ -121,6 +174,7 @@ void Hold::onAdded(EffectWindow *w)
 void Hold::onClosed(EffectWindow *w)
 {
     m_dragging.removeAll(w);
+    repaintRing(w, w->frameGeometry());
     if (m_hidden.remove(w)) {      // never shown: nothing to keep on screen
         m_held.remove(w);
         queueCheck();
@@ -427,14 +481,35 @@ void Hold::releaseAll()
 
 // ---- painting ---------------------------------------------------------------------------------
 
-bool Hold::isActive() const
+bool Hold::holding() const
 {
     return m_open || !m_hidden.isEmpty();
 }
 
+// While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
+bool Hold::isActive() const
+{
+    if (holding()) {
+        return true;
+    }
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        if (framed(w) && shown(w)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// A fullscreen game or video scans out directly unless a hold is on (review R1-3).
+bool Hold::blocksDirectScanout() const
+{
+    return holding();
+}
+
 void Hold::prePaintScreen(ScreenPrePaintData &data)
 {
-    if (isActive()) {
+    if (holding()) {
         data.mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS;
     }
     effects->prePaintScreen(data);
@@ -442,8 +517,10 @@ void Hold::prePaintScreen(ScreenPrePaintData &data)
 
 void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData &data)
 {
-    if (m_held.contains(w) || m_hidden.contains(w)) {
-        data.setTransformed();      // no clipping to its current frame, no culling beneath it
+    // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
+    // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
+    if (m_held.contains(w) || m_hidden.contains(w) || framed(w)) {
+        data.setTransformed();
     }
     effects->prePaintWindow(view, w, data);
 }
@@ -462,6 +539,81 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+    if (framed(w) && !m_hidden.contains(w)) {
+        paintFrame(renderTarget, viewport, w, deviceRegion, data);
+    }
+}
+
+// ---- the frame --------------------------------------------------------------------------------
+
+// A window in one of kwin-i3's tiles (KWin's custom tiling; quick tiling is a Plasma window's)
+// with no server decoration: kwin-i3 took it, or the client draws its own (CSD), framed alike.
+bool Hold::framed(EffectWindow *w) const
+{
+    Window *win = w->window();
+    if (!win || w->isDeleted() || w->isFullScreen() || w->hasDecoration() || !w->isNormalWindow()) {
+        return false;
+    }
+    return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom)
+        || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+}
+
+// The four bars around `frame`, in device pixels (logical x scale): each from the window's
+// rounded edge out to the rounded edge of the frame width beyond it, which is the middle of the
+// padding between two windows, so neighbours meet with no overlap and no gap at any scale
+// (review R1-6). Top and bottom span the corners.
+QList<RectF> Hold::ring(EffectWindow *, const RectF &frame, double scale) const
+{
+    const double f = m_frameWidth;
+    const double ix0 = std::round(frame.x() * scale), iy0 = std::round(frame.y() * scale);
+    const double ix1 = std::round((frame.x() + frame.width()) * scale), iy1 = std::round((frame.y() + frame.height()) * scale);
+    const double ox0 = std::round((frame.x() - f) * scale), oy0 = std::round((frame.y() - f) * scale);
+    const double ox1 = std::round((frame.x() + frame.width() + f) * scale), oy1 = std::round((frame.y() + frame.height() + f) * scale);
+    return {RectF(ox0, oy0, ox1 - ox0, iy0 - oy0), RectF(ox0, iy1, ox1 - ox0, oy1 - iy1),
+            RectF(ox0, iy0, ix0 - ox0, iy1 - iy0), RectF(ix1, iy0, ox1 - ix1, iy1 - iy0)};
+}
+
+void Hold::repaintRing(EffectWindow *w, const RectF &frame)
+{
+    if (!w || frame.isEmpty()) {
+        return;
+    }
+    const double f = m_frameWidth + 1;      // and a pixel of slack for the rounding
+    const RectF outer = frame.adjusted(-f, -f, f, f);
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), frame.width() + 2 * f + 1, f + 1));
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(frame.y() + frame.height() - 1), frame.width() + 2 * f + 1, f + 2));
+    effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), f + 1, frame.height() + 2 * f + 1));
+    effects->addRepaint(Rect(std::floor(frame.x() + frame.width() - 1), std::floor(outer.y()), f + 2, frame.height() + 2 * f + 1));
+}
+
+// The ring around wherever the window is drawn: its frame moved and scaled as the paint data says
+// (a held snapshot at its old frame, a sliding desktop), clipped to the region this paint may
+// touch, which leaves out windows above it (review R1-1).
+void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
+{
+    const RectF cur = w->frameGeometry();
+    const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
+    const QPoint origin = viewport.scaledRenderRect().topLeft();
+    QList<QVector2D> verts;
+    for (const RectF &bar : ring(w, drawn, viewport.scale())) {
+        const Rect device(bar.x() - origin.x(), bar.y() - origin.y(), bar.width(), bar.height());
+        for (const Rect &r : (deviceRegion & device).rects()) {
+            const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
+            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
+                  << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+        }
+    }
+    if (verts.isEmpty()) {
+        return;
+    }
+    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
+    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, effects->activeWindow() == w ? m_frameActive : m_frameInactive);
+    vbo->setVertices(verts);
+    vbo->render(GL_TRIANGLES);
 }
 
 void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
@@ -480,7 +632,9 @@ void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &vi
 
 void Hold::postPaintScreen()
 {
-    if (isActive()) {
+    ++m_stats.frames;
+    if (holding()) {
+        ++m_stats.framesHolding;
         effects->addRepaintFull();
     }
     if (m_open) {
@@ -515,6 +669,9 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("snapshots")] = m_stats.snapshots;
     m[QStringLiteral("lastSnapshotMs")] = m_stats.lastSnapshotMs;
     m[QStringLiteral("maxSnapshotMs")] = m_stats.maxSnapshotMs;
+    m[QStringLiteral("frames")] = m_stats.frames;
+    m[QStringLiteral("framesHolding")] = m_stats.framesHolding;
+    m[QStringLiteral("frameWidth")] = m_frameWidth;
     return m;
 }
 

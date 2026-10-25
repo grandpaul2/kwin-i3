@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # focus: mouse
 # needs: plugin
-# The i3 frame: kwini3frame, a KDecoration3 plugin (plugin/frame.cpp, docs/spec-decoration.md),
-# with kwini3helper's focus-on-the-frame. The test KWin runs Breeze; this scenario selects the frame
-# by kwinrc library= and a reconfigure, as a live install does. Real input through inject.py.
+# The i3 frame (docs/spec-window-modes.md): tiled windows have no decoration and kwini3hold draws
+# the frame in the tiles' padding, outside the window; kwini3helper makes it part of its window for
+# focus and clicks (review R1-12). Floating windows keep Breeze. Real input through inject.py.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/frame.png
@@ -29,167 +29,92 @@ sdrag() {   # sdrag <mods> <button> x1 y1 x2 y2, 20 ms apart (as 52-mouse: GTK n
 click() { "$INJECT" "abs $1 $2" "wait 30" "btn left down" "wait 20" "btn left up" "wait 20"; }
 no_drag() { sleep 0.3; ! after "$1" | grep -qE '^.{9}DRAG start'; }   # nothing started by then
 ACTIVE=76,120,153; INACTIVE=51,51,51
-
-kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library kwini3frame
-busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-# 0. The switch took (a load failure falls back to Breeze silently; the reconfigure is a timer).
-check "the frame is KWin's decoration"      poll support kwini3frame
+stats() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats 2>/dev/null |
+    python3 -c 'import json,sys; d=json.load(sys.stdin)["data"][0]; print("\n".join("%s=%s"%(k,v["data"]) for k,v in sorted(d.items())))'; }
+stat() { stats | grep "^$1=" | cut -d= -f2; }
+prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
+prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
+check "the effect is there: frame on"       wait_log '^.{9}FRAME on'
 point 640 360
 client --title a --clicks "$clicks"; client --title b
 check "a | b"                               wait_tree 1 "H[a b*]"
-check "a is the left half"                  geom_is a "0,0 640x720"
+check "a: 1 px from the edges, borderless"  geom_is a "1,1 638x718"
+check "b likewise"                          geom_is b "641,1 638x718"
+check "a has no title bar"                  prop_is a noBorder true
 
-# 1. The frame is 1 px on each side (so frameMin in kwin.js sees 2 px).
-frame_of() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, c = w.clientGeometry; log([c.x - f.x, c.y - f.y, f.width - c.width, f.height - c.height].join(\",\")); } });"; }
-check "a's frame is 1 px each side"         [ "$(frame_of a)" == "1,1,2,2" ]
-
-# 2. Pixels: b is active (opened last); corners and a side each; then focus a and they swap.
-check "a's corners are inactive grey"       poll pixel_is 0 0 $INACTIVE
-check "  (bottom right)"                    pixel_is 639 719 $INACTIVE
-check "  (top right, left side)"            pixel_is 639 0 $INACTIVE
-check "  (left side)"                       pixel_is 0 360 $INACTIVE
-check "b's corners are active blue"         pixel_is 640 0 $ACTIVE
-check "  (bottom right)"                    pixel_is 1279 719 $ACTIVE
-check "  (bottom left)"                     pixel_is 640 719 $ACTIVE
+# 1. Pixels: b is active (opened last). The frame is outside the windows: a's at x=0 and 639,
+#    b's at 640 and 1279, top and bottom rows.
+check "a's frame: left, top, right, bottom, grey" eval 'poll pixel_is 0 360 $INACTIVE && pixel_is 300 0 $INACTIVE && pixel_is 639 360 $INACTIVE && pixel_is 300 719 $INACTIVE'
+check "b's frame, active: blue all round"   eval 'pixel_is 640 360 $ACTIVE && pixel_is 1279 360 $ACTIVE && pixel_is 900 0 $ACTIVE && pixel_is 900 719 $ACTIVE'
+check "  corners (outer)"                   eval 'pixel_is 0 0 $INACTIVE && pixel_is 1279 719 $ACTIVE'
 key "Focus Left"
-check "a active: its frame turns blue"      poll pixel_is 0 0 $ACTIVE
-check "  (bottom right)"                    pixel_is 639 719 $ACTIVE
-check "b's frame turns grey"                pixel_is 1279 719 $INACTIVE
+check "a active: its frame turns blue"      poll pixel_is 639 360 $ACTIVE
+check "b's turns grey"                      pixel_is 640 360 $INACTIVE
 
-# 2b. A floating window's frame is green while active and i3's grey while not
-#     (docs/spec-frame-colours.md); the colours are kwinrc keys in [kwin-i3-frame], changed live
-#     with --notify. The frame reads "floating" from the keep-above flag kwin-i3 sets.
-FLOAT_ACTIVE=77,114,84
-activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
-corner() { local g; g=$(geom "$1"); [[ $g =~ ^([0-9]+),([0-9]+)\ ([0-9]+)x([0-9]+)$ ]] && echo "$((BASH_REMATCH[1] + BASH_REMATCH[3] - 1)) $((BASH_REMATCH[2] + BASH_REMATCH[4] - 1))"; }
-corner_is() { local c; c=$(corner "$1"); [[ -n $c ]] && pixel_is ${c% *} ${c#* } "$2"; }
+# 2. Idle: nothing changes, nothing is painted (review R1-2).
+sleep 0.5; f0=$(stat frames); sleep 1; f1=$(stat frames)
+check "idle: no frames painted ($f0 -> $f1)" [ "$f0" == "$f1" ]
+
+# 3. A floating window is a Plasma window: its title bar back, no frame of ours.
 key "Focus Right"
-# The signal alone: keep-above set by hand on a tiled window, which moves nothing, so only the
-# keepAboveChanged repaint can show it (a floating toggle also resizes, which repaints anyway).
-# This is also the README's trap: a window kept above by hand paints as floating.
-on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { $2 } })" >/dev/null; }
-on b 'w.keepAbove = true;'
-check "keep-above by hand, no move: green"  poll pixel_is 1279 719 $FLOAT_ACTIVE
-on b 'w.keepAbove = false;'
-check "cleared: blue"                       poll pixel_is 1279 719 $ACTIVE
 key "Floating Toggle"
 check "b floats"                            wait_tree 1 "H[a] ~b*"
-check "floating b, active: green"           poll corner_is b $FLOAT_ACTIVE
-check "a, tiled and inactive: grey"         pixel_is 0 0 $INACTIVE
-activate a
-check "b unfocused: grey, as i3"            poll corner_is b $INACTIVE
-# The colour keys. The write is plain and the change signal is sent by hand (gdbus, the same
-# signal on the same path kwriteconfig6 --notify sends): kwriteconfig6 exits right after sending
-# and under load its signal is sometimes lost (1 of 100 on a private bus with 8 busy loops,
-# 2026-10-24; the full suite is 23 KWins). The watcher does not check the sender.
-notify_frame() { gdbus emit --session --object-path /kwinrc --signal org.kde.kconfig.notify.ConfigChanged "{'kwin-i3-frame': [b'$1']}"; }
-frame_set() { kwriteconfig6 --file kwinrc --group kwin-i3-frame --key "$1" "$2"; notify_frame "$1"; }
-frame_del() { kwriteconfig6 --file kwinrc --group kwin-i3-frame --key "$1" --delete; notify_frame "$1"; }
-frame_set FloatingInactive '#ff0000'
-check "FloatingInactive key, live: red"     poll corner_is b 255,0,0
-frame_del FloatingInactive
-check "key deleted: the default, grey"      poll corner_is b $INACTIVE
-frame_set FloatingInactive '#80ff0000'
-check "an alpha value: painted opaque"      poll corner_is b 255,0,0
-frame_set FloatingInactive notacolour
-check "not a colour: the default"           poll corner_is b $INACTIVE
-frame_del FloatingInactive
-activate b
+check "floating b has its title bar again"  poll prop_is b noBorder false
 key "Floating Toggle"
 check "b tiles again"                       wait_tree 1 "H[a b*]"
-check "tiled b, active: blue again"         poll pixel_is 1279 719 $ACTIVE
-key "Focus Left"
-check "a active again"                      poll active_is a
+check "and loses it again"                  poll prop_is b noBorder true
 
-# 3. Nothing from the pointer: a is active; drags from a's lines, a right click, a double click.
-m=$(mark)
-sdrag "" left 639 360 739 360
-check "a left drag on a's right line: no drag" no_drag "$m"
-check "a unchanged"                         geom_is a "0,0 640x720"
-check "b unchanged"                         geom_is b "640,0 640x720"
-sdrag "" left 320 0 320 100
-check "a drag from a's top line: no move"   no_drag "$m"
-check "a still in place"                    geom_is a "0,0 640x720"
-sdrag "" right 639 360 639 360
-check "a right click on the line: no drag"  no_drag "$m"
-check "a still active"                      active_is a
-"$INJECT" "abs 639 360" "wait 30" "btn left down" "btn left up" "wait 60" "btn left down" "btn left up" "wait 20"
-check "a double click on the line: nothing" geom_is a "0,0 640x720"
-check "no window appeared (no menu)"        wait_tree 1 "H[a* b]"
-
-# 4. KWin's own chords work from the line: Meta+right-drag resizes and reads back; Meta+drag
-#    moves, floating the window.
-m=$(mark)
-sdrag Meta right 639 360 700 360
-check "Meta+right-drag from the line: resize" wait_log '^.{9}DRAG end resize a' "$m"
-resized() { [[ "$(geom a)" != "0,0 640x720" ]]; }
-check "a resized"                           poll resized
-key "Focus Right"; key "Focus Left"            # a reconcile: the read-back keeps the size
-check "the resize is kept"                  resized
-m=$(mark)
-"$INJECT" "abs 639 360" "wait 30" "btn left down" "wait 20" "btn left up" "wait 20"
-check "a click on the line after it: nothing" no_drag "$m"
-m=$(mark)
-sdrag Meta left 1279 360 1100 300
-check "Meta+drag from b's line: move"       wait_log '^.{9}DRAG end move b' "$m"
-check "b floats"                            wait_log '^.{9}TREE 1 .*~b' "$m"
-kclose b
-
-# 5. Nothing invisible above a window (Aurorae's 8 px strip): a click 4 px above the seam of two
-#    stacked windows reaches the upper window's client.
-key "Split V"
-client --title c
-check "a over c"                            wait_tree 1 "V[a c*]"
+# 4. The frame is part of its window for the pointer (focus follows mouse here). b active; the
+#    pointer jumps onto a's left frame (x=0), never entering a: a active. A click on a's frame
+#    activates a and reaches nobody; so do a right click and a drag (the desktop would take them
+#    otherwise).
+point 900 360
+check "b active"                            poll active_is b
+point 0 180
+check "hover on a's frame focuses a"        poll active_is a
+point 900 360
+check "into b: b active"                    poll active_is b
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "b") workspace.activeWindow = w; });' >/dev/null
 : > "$clicks"
-click 320 356
-check "the click above the seam reached a"  poll saw "press 1 release 1 "
+click 639 360
+check "a click on a's right frame activates a" poll active_is a
+check "  and a's client saw nothing"        saw ""
+m=$(mark)
+sdrag "" right 639 360 639 360
+sdrag "" left 639 360 739 360
+check "right click, drag on the frame: nothing" no_drag "$m"
+check "  a unchanged"                       geom_is a "1,1 638x718"
+check "  a's client saw none of it"         saw ""
+# (A scroll on the frame is taken too, framefocus.cpp; tools/ei-send can't scroll yet: untested.)
 
-# 6. Focus follows i3 on the frame. c active (opened last); the pointer jumps straight onto a's
-#    screen-edge line, never entering a's client: a active. Then from a's line straight into c's
-#    client: c active (no cancel on leaving the frame). Then a click on the line while the pointer
-#    is parked there and the focus was moved away by a key.
-point 640 500
-check "c is active"                         poll active_is c
-point 0 180
-check "hover on a's left line focuses a"    poll active_is a
-point 640 500
-check "straight into c's client: c active"  poll active_is c
-point 0 180
-check "a active again"                      poll active_is a
-kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; });'
-check "c active by script"                  poll active_is c
-click 0 180
-check "a click on a's line activates a"     poll active_is a
-
-# 7. Re-decoration without a restart: Breeze and back, windows open.
-kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library org.kde.breeze
-busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-check "Breeze again"                        poll support org.kde.breeze
-kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library kwini3frame
-busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-check "and the frame again"                 poll support kwini3frame
-check "a is back at its tile"               geom_is a "0,0 1280x360"
-check "c is back at its tile"               geom_is c "0,360 1280x360"
-
-# 8. The config form's keys ([Script-kwin-i3], docs/spec-settings.md), written plainly as the form
-#    does: kwini3helper has KWin reconfigure, and the frame reads them on DecorationSettings::
-#    reconfigured. No --notify, no reload key here.
-form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
-form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; }
-kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "a") workspace.activeWindow = w; });' >/dev/null
-check "a active"                            poll active_is a
+# 5. The settings: frameWidth leaves room for a wider frame, colours change live.
+form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 form_set frameWidth 3
-frame_is() { [[ "$(frame_of "$1")" == "$2" ]]; }
-check "frameWidth 3: a's frame is 3 px each side" poll frame_is a "3,3,6,6"
-check "c's too (one shared setting)"        poll frame_is c "3,3,6,6"
-check "a keeps its tile"                    geom_is a "0,0 1280x360"
+check "frameWidth 3: 3 px of room"          geom_is a "3,3 634x714"
+check "  and 6 between: b"                  geom_is b "643,3 634x714"
+check "  the frame fills it"                eval 'poll pixel_is 0 360 $ACTIVE && pixel_is 2 360 $ACTIVE && pixel_is 637 360 $ACTIVE && pixel_is 640 360 $INACTIVE && pixel_is 642 360 $INACTIVE'
 form_set frameActive "#ff0000"
-check "frameActive: a's line is red"        poll pixel_is 1 1 255,0,0
+check "frameActive: red"                    poll pixel_is 0 360 255,0,0
 form_del frameActive; form_del frameWidth
-check "deleted: 1 px again"                 poll frame_is a "1,1,2,2"
-check "and the colour from [kwin-i3-frame] or the default" poll pixel_is 0 0 $ACTIVE
+check "deleted: 1 px again"                 geom_is a "1,1 638x718"
+form_set holdEnabled false
+check "holdEnabled off: the frame stays"    poll pixel_is 0 360 $ACTIVE
+form_del holdEnabled
+
+# 6. The effect goes: tiled windows get their title bars back, no padding; it comes back: frames.
+eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"')
+m=$(mark)
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s "$eid" >/dev/null
+check "effect unloaded: frame off"          wait_log '^.{9}FRAME off' "$m"
+check "  a has its title bar back"          poll prop_is a noBorder false
+check "  and the whole half again"          geom_is a "0,0 640x720"
+m=$(mark)
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s "$eid" >/dev/null
+check "loaded again: frame on"              wait_log '^.{9}FRAME on' "$m"
+check "  a borderless in its padded tile"   geom_is a "1,1 638x718"
 check "no invariant failures or errors"     clean_log
 finish
