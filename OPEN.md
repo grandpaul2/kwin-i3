@@ -6,6 +6,12 @@ action**. Phase 6 (the dotfiles side) is done.
 
 Last reconciled: **2026-10-24** (late).
 
+## Stage (Paul, 2026-10-24, late)
+
+**Development, for about 4-6 weeks**: Paul uses kwin-i3 daily and adjusts it along the way.
+Reliability work (item 5, item 10's test gaps) and release prep (item 4's README pass, item 9,
+a release) are deferred unless they inform a structural change or a larger issue turns up.
+
 ## Heading (Paul, 2026-10-24)
 
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
