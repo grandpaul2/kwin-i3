@@ -23,7 +23,15 @@ kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 ## Open
 
-Work for now. Nothing (2026-10-25): new items come from Paul's captures and requests.
+Work for now.
+
+**15. "Show Panel Configuration" does nothing** (Paul, 2026-10-25; `docs/bug-panel-config.md`,
+the whole investigation). Traced: the menu closes, the keyboard goes back to the focused tile, and
+Plasma starts edit mode, then cancels it 3–28 ms later, before the configuration window exists.
+The likely cause: plasmashell leaves edit mode when none of its windows has the focus. Ruled out
+by test: the helper, kwin-i3's script and the input method. Unexplained: two untraced tries opened
+(03:43, 03:46). Next: the activation test in the doc (the desktop made active, then Paul tries),
+then a spec. Paul: fix it next session.
 
 ## Deferred (the Stage)
 
