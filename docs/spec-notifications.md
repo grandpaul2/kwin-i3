@@ -1,6 +1,6 @@
 # Spec: Plasma's notifications in place of dunst (OPEN.md item 11)
 
-Draft 2026-10-25, for Paul's go. The change is all in `~/.dotfiles`; kwin-i3's code is untouched.
+Paul's go 2026-10-25; the dotfiles side done the same day. The live switch (8-10) waits for its own go. The change is all in `~/.dotfiles`; kwin-i3's code is untouched.
 It lives here because item 11 does.
 
 ## Why
@@ -53,13 +53,14 @@ In `~/.dotfiles`:
    with the standard route: keep the id from `notify-send --print-id` in
    `$XDG_RUNTIME_DIR/audio-toggle.id`, and pass it back with `--replace-id`. Fix the header
    comment ("dunst's" → the notification).
-6. **Meta+N**: give it to the tray's Notifications widget, so it opens the popup with history.
-   Plasma registers widget keys as `plasmashell` → `activate widget <id>` (the workspace widget is
-   already listed there as `activate widget 29`). Set it in the tray's settings (Entries) and
-   record how `setup.sh` sets it for a new install, as it does for the stock panel. **First check
-   on a test KWin** that a tray child widget takes a key and that Meta+N doesn't collide with
-   kwin-i3's keys. If it can't be bound, Meta+N goes unbound and the bell is the route; say so in
-   the README.
+6. **Meta+N** goes to the tray's Notifications widget, so it opens the popup with history. A
+   widget's key is `[Shortcuts] global` in its config group, which libplasma reads when the
+   widget loads (`applet.cpp:144`, 6.7.5), and the tray's children take keys (its `main.qml`
+   instantiates them "for correct working of shortcuts"). `setup.sh` finds the bell through
+   plasmashell's scripting (the tray's `Applets` subgroups, by plugin; applet 15 here, probed
+   read-only) and writes the key if none is set; it takes effect at the next plasmashell start.
+   Meta+N is otherwise held only by dunst's launcher, which goes. `setup.sh`'s one-time prune
+   skips `plasmashell|activate widget *`: widget keys are set on purpose, and ids differ per install.
 7. **Docs**: README's tree (`dunst/` line), the "Plasma" table (the panel row's "still dunst"
    clause; the dunst row is rewritten as "Notifications are Plasma's", with the trap kept in one
    sentence: dunst's own package claims the same name, hence removed); the Meta+F12 row ("dunst
@@ -85,7 +86,7 @@ In this repo: OPEN.md item 11's dunst line becomes done.
 - `timeout 3 notify-send test` returns at once and a popup shows above the tray. A hang means
   `plasma_waitforname` is waiting: the widget isn't up.
 - `audio-toggle` with the headphones off, pressed twice: one popup, replaced, not two.
-- Meta+N opens the widget's popup (if 6 found a route).
+- Meta+N opens the widget's popup.
 - After a kwin-i3 reload, its load notification appears (only if it has something to report; a
   clean setup reports nothing, so this is checked on a test KWin with a taken key instead).
 - `health-check.sh` is green, and red when dunst runs by hand (`dunst &`, then killed).

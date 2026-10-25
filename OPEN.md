@@ -4,7 +4,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-24 (late)**.
+Last reconciled: **2026-10-25**.
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -84,7 +84,9 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       size; Paul would want it for a smaller panel. A narrow fix, not a delay: next, read KWin's
       focus-follows-mouse path (6.7.5) and the bug's upstream state.
     - To watch: auto-hide, the task list and hidden workspaces.
-    - Paul may drop dunst for Plasma's notifications; how and when is not decided.
+    - **Plasma's notifications in place of dunst** (`docs/spec-notifications.md`, Paul's go
+      2026-10-25): the dotfiles side done. Next: the live switch (spec steps 8-10: remove dunst,
+      `setup.sh`, restart plasmashell), on its own go, then the spec's checks.
 
 12. **`make plugin` leaves stale outputs.** `plugin/build/bin` keeps the files of a plugin renamed
     or retired (`kwini3mouse.so` was still loaded by every test KWin until 2026-10-24;
