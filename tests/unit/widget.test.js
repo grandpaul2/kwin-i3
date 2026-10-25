@@ -91,3 +91,10 @@ test("names reach each workspace from Plasma's desktop names, in desktop order",
     const l = run([], { "DP-4": "d2", "DP-6": "d1" }, { names: ["Desktop 1", "mail"] });
     assert.deepStrictEqual(l.map((s) => [s.num, s.name]), [[1, "Desktop 1"], [2, "mail"]]);
 });
+
+test("lead: a task button's inset before the first workspace on a panel, along the panel; none off a panel", () => {
+    const m = { left: 4, right: 5, top: 2, bottom: 3 };
+    assert.strictEqual(W.lead(true, false, m), 9, "horizontal panel: left + right");
+    assert.strictEqual(W.lead(true, true, m), 5, "vertical panel: top + bottom");
+    assert.strictEqual(W.lead(false, false, m), 0, "a desktop or plasmawindowed");
+});

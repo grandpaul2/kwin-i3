@@ -7,6 +7,7 @@ import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 import org.kde.kirigami as Kirigami
+import org.kde.ksvg as KSvg
 import org.kde.taskmanager as TaskManager
 import org.kde.plasma.workspace.dbus as DBus
 import "workspaces.js" as Logic
@@ -93,6 +94,26 @@ PlasmoidItem {
 
         // The thumbnail's short side: the panel's thickness.
         readonly property real thickness: root.vertical ? root.width : root.height
+        readonly property real lead: Logic.lead(Plasmoid.formFactor === PlasmaCore.Types.Horizontal || root.vertical, root.vertical, taskFrame.margins)
+
+        // The task manager's own frame, read for its margins as the task manager reads it.
+        KSvg.FrameSvgItem {
+            id: taskFrame
+            visible: false
+            imagePath: "widgets/tasks"
+            prefix: [({ [PlasmaCore.Types.LeftEdge]: "west", [PlasmaCore.Types.TopEdge]: "north",
+                        [PlasmaCore.Types.RightEdge]: "east" }[Plasmoid.location] || "south") + "-normal", "normal"]
+        }
+        // For tests/live/67-workspace-widget.sh, as the workspaces line below.
+        readonly property string frameReport: [taskFrame.margins.left, taskFrame.margins.right, taskFrame.margins.top, taskFrame.margins.bottom, lead].join(" ")
+        onFrameReportChanged: console.debug("kwin-i3 workspaces frame: " + frameReport)
+        // The gap before the first workspace (Logic.lead); the grid's spacing after it makes up the
+        // rest. The panel mirrors it to the right in a right-to-left language.
+        Item {
+            visible: row.lead > row.columnSpacing
+            Layout.preferredWidth: root.vertical ? 0 : row.lead - row.columnSpacing
+            Layout.preferredHeight: root.vertical ? row.lead - row.rowSpacing : 0
+        }
 
         // One workspace per wheel notch (120), a touchpad's small deltas added up; steps taken
         // before kwin-i3's answer reaches the widget go on from the one last asked for (review, 1).

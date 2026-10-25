@@ -88,4 +88,14 @@ function label(num, name, defaultName) {
     return named(num, name, defaultName) ? num + " " + name : String(num);
 }
 
-if (typeof module !== "undefined") module.exports = { workspaces: workspaces, step: step, monitorOf: monitorOf, named: named, label: label };
+// The gap before the first workspace on a panel: an icons-only task button's inset around its
+// icon (Plasma 6.7's Task.qml and LayoutMetrics.js: (left + right) * (iconSpacing + 1) / 2 of the
+// theme's "widgets/tasks" frame, iconSpacing at its default 1). In the default panel the launcher
+// before the widget fills its cell and the task manager after it pads, so without this the widget
+// sits close to the one and far from the other. None outside a panel.
+function lead(panel, vertical, margins) {
+    if (!panel) return 0;
+    return vertical ? margins.top + margins.bottom : margins.left + margins.right;
+}
+
+if (typeof module !== "undefined") module.exports = { workspaces: workspaces, step: step, monitorOf: monitorOf, named: named, label: label, lead: lead };

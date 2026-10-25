@@ -25,6 +25,10 @@ check "the widget reports"                  poll eval '[ -n "$(spaces)" ]'
 # [num, monitor, width, height, windows, shown, focused]: 1, 3, 4, 5 (2 and 6-10 unused), each
 # one monitor's 1280x720; 3 (Virtual-0) and 5 (Virtual-1) shown, 5 focused (the widget is active).
 check "1, 3, 4, 5, each one monitor, 3 and 5 shown, 5 focused" poll spaces_are '[[1,"Virtual-0",1280,720,1,false,false],[3,"Virtual-0",1280,720,2,true,false],[4,"Virtual-1",1280,720,1,false,false],[5,"Virtual-1",1280,720,1,true,true]]' || echo "    $(spaces)"
+# The task manager's frame read from the theme (left right top bottom, then the lead): margins
+# found, and no lead outside a panel, so 1's thumbnail starts at the widget's edge.
+frame() { grep -o 'kwin-i3 workspaces frame: .*' "$KI3_TMP/pw.log" | tail -1 | cut -d' ' -f4-; }
+check "the theme's task frame has side margins; no lead off a panel" poll eval 'read -r l r t b lead <<<"$(frame)"; (( l + r > 0 )) && [[ $lead == 0 ]]' || echo "    $(frame)"
 # A click on 1's thumbnail, the first: Meta+1.
 g=$(kjs 'workspace.windowList().forEach(function (w) { if (w.resourceClass.indexOf("plasmawindowed") >= 0) { var c = w.clientGeometry; log(Math.round(c.x) + " " + Math.round(c.y) + " " + Math.round(c.height)); } });')
 read -r cx cy ch <<<"$g"
