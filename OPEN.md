@@ -4,7 +4,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-25**.
+Last reconciled: **2026-10-25** (session end).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -37,7 +37,9 @@ worktree), or won't-fix if it stays a load-time curiosity. 74-show-desktop waits
 settle (`FRAME` logged) meanwhile.
 
 **17. The settings page, reorganized and made accessible** (Paul, 2026-10-25):
-`docs/spec-settings-cleanup.md`, built and tested. Next: Paul's look at it installed.
+`docs/spec-settings-cleanup.md`, built, tested and installed (`make kcm-install`). Next: Paul's
+look at it; by hand, whether arrow keys move the highlight in an open dropdown (injected input
+didn't, in 76).
 
 ## Deferred (the Stage)
 
@@ -79,7 +81,8 @@ layout keys), and the fuzzer needs updating first: its I4 "no hole" check must a
 or stale frames, and new actions: a workspace of Plasma windows, `frameOnFloating`, the effect
 unloaded and loaded, a desktop removed or moved. 53-hold's other early failure, the kill switch's
 `--notify` not taking (seen once, early 2026-10-24), has not recurred in ~15 full runs since;
-closed unless it comes back.
+closed unless it comes back. Likewise 39-layout-notice: 5 checks failed once in a full batch
+(2026-10-25), passed alone twice and in the next full run; closed unless it comes back.
 
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
