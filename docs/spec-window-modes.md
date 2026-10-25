@@ -154,8 +154,7 @@ compares the hair separately so float noise elsewhere keeps the old tolerance).
 7. **Order of work.** The whole thing is one feature but four pieces: (i) the frame in the
    effect with tiled windows borderless (R2, R4-R8; the look changes, nothing else);
    (ii) the GTK 4 bounds ("why" 5); (iii) `floatingWorkspaces` (R1, R3, decisions 1, 4);
-   (iv) `frameOnFloating` and the marker (decisions 3, 5). Recommendation: (i)+(ii) first, live,
-   lived with for a day; then (iii)+(iv).
+   (iv) `frameOnFloating` and the marker (decisions 3, 5). (i)+(ii) first, then (iii)+(iv).
 
 ## Review 1 (2026-10-24), folded in
 

@@ -97,7 +97,7 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     tiled windows, tiled windows borderless, floating ones Breeze, the GTK 4 bounds, kwini3frame
     retired; reviews: spec and change, `docs/review-window-modes-*.md`; 35 scenarios green).
     Left: (iii) `floatingWorkspaces` and (iv) `frameOnFloating` + the effect keeping the floating
-    set (decision 5c), after Paul has lived with (i)+(ii) for a day. Test gaps still open (the
+    set (decision 5c): next, being built. Test gaps still open (the
     spec's test section): a second output with an offset, a desktop switch with slide, scroll on
     the frame (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`.
     Hidden workspaces at the go-live (1, 4) are placed on first show: watch for a flash.
