@@ -93,7 +93,14 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     Prototype shortcuts the spec must replace: the effect always active, a full repaint on
     every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
     Spec decided 2026-10-24 (`docs/spec-window-modes.md`; Paul's desktop runs the defaults while
-    this is built). Next: a second agent's review of the spec, then pieces (i)+(ii).
+    this is built). **Pieces (i)+(ii) live 2026-10-24** (the frame drawn by kwini3hold outside
+    tiled windows, tiled windows borderless, floating ones Breeze, the GTK 4 bounds, kwini3frame
+    retired; reviews: spec and change, `docs/review-window-modes-*.md`; 35 scenarios green).
+    Left: (iii) `floatingWorkspaces` and (iv) `frameOnFloating` + the effect keeping the floating
+    set (decision 5c), after Paul has lived with (i)+(ii) for a day. Test gaps still open (the
+    spec's test section): a second output with an offset, a desktop switch with slide, scroll on
+    the frame (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`.
+    Hidden workspaces at the go-live (1, 4) are placed on first show: watch for a flash.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
