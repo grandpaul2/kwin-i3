@@ -1,0 +1,179 @@
+# Spec: window modes, Plasma's or i3's, per window (OPEN.md item 10)
+
+From Paul, 2026-10-24: "what we call a floating window [should] feel more like a [Plasma] window
+... Full headers on the windows that they can click to drag around ... Then they tap
+Shift+Meta+Space and the full i3 experience takes over. Headers gone, outlines on." And: "Rather
+than using a float all or tile all option just set a workspace to automatically set it ... we let
+Plasma just be a DE on those windows. This would be a defining feature, so it would need to be
+implemented cleanly." Status: **draft for Paul's decisions (below); nothing built on main.** The
+route and its prototype are decided and green (branch `proto-effect-frame`).
+
+Sources: KWin 6.7.5 (`tiles/tile.cpp` `Tile::windowGeometry`, `window.cpp` `requestTile`,
+`setNoBorder`, `pointerEnterEvent`, `xdgshellwindow.cpp` `configureDecoration`,
+`sendRoleConfigure`, `moveResizeInternal`, `initialDecorationPolicy`), `src/kwin.js`,
+`src/rules.js`, `src/settings.js`, `plugin/hold.cpp`, `plugin/frame.cpp`, `plugin/framefocus.cpp`,
+`docs/spec-decoration.md`, `docs/spec-reload-keepabove.md`, the probes and prototype of
+2026-10-24 (`OPEN.md` item 10).
+
+## The idea
+
+Every managed window is in one of two modes:
+
+- **i3's (tiled):** in the tree, no title bar, i3's 1 px frame around it, blue when active.
+- **Plasma's (floating):** an ordinary Plasma window: the user's own decoration (Breeze or any
+  theme: title bar, buttons, rounded corners, shadow), moved by its title bar, focus shown by the
+  theme. No kwin-i3 frame unless the user asks for it (decision 3).
+
+Meta+Shift+Space moves the focused window between them, as i3's `floating toggle` does today. A
+workspace can be set to open new windows in Plasma's mode: on that workspace Plasma is the DE,
+in place of i3's stacked and tabbed layouts (out of scope, `docs/plan.md`). Everything else,
+Plasma already does.
+
+## Why it looks like this (decided, with the evidence)
+
+1. **KWin has one decoration for every window** (`kwinrc [org.kde.kdecoration2] library=`), so
+   the user's theme on Plasma windows and i3's frame on tiled ones can't both be decorations.
+   The tiled windows give up theirs: kwin-i3 sets `w.noBorder` (the window menu's "No titlebar
+   and frame", `Window::setNoBorder` -> decoration policy None). Probed: per window, tiled or
+   floating, and it holds through a script reload.
+2. **The frame is drawn by the effect, outside the window** (Paul, 2026-10-24: "we can't cover
+   the app"). The tiles leave it room: every tile's padding is the inner gap plus twice the
+   frame width, so KWin leaves the frame width on each side of a window between tiles (half the
+   padding). At a screen edge KWin gives the *full* padding (`Tile::windowGeometry`: a side at
+   relative 0 or 1), which would be twice the frame; the root tile is inset by a hair (10^-6 of
+   the area, 0.003 px on 2560) so no side is exactly at the edge, and every side gets half.
+   Measured: 1 px all round, 2 px between two windows (1 each), as in i3. With an outer gap the
+   root is inset anyway (today's gaps), and the hair isn't needed.
+3. **The effect is `kwini3hold`**, because only it knows where a window is drawn during a held
+   layout change (its snapshot at the old frame); the frame goes around wherever the window is
+   drawn (its frame moved and scaled by the paint data), so it stays with the held layout and
+   follows a sliding desktop. `kwini3frame`, the decoration, is retired (decision 6).
+4. **The border goes before the window joins its tile.** KWin sizes a window for the decoration
+   it has; the decoration leaves only once the client answers, so the tile's first request still
+   counted the title bar. kwin-i3 sets `noBorder` first and refits the window when its frame
+   next changes (the existing `armed` refit, with its own marker).
+5. **Plain GTK 4 gets its bounds again.** KWin tells a client its largest size
+   (`xdg_toplevel.configure_bounds`) only in a configure with no size, in practice its first,
+   sized for the title bar it had then, and GTK 4 keeps within them: a tiled plain GTK 4 window
+   stayed 28 px short. A window that lands short after its border went is asked for a 0x0 frame
+   (KWin resends the bounds; GTK keeps its size), then for its tile 5 ms later (a configure of
+   its own: KWin builds a configure from whatever is pending when its timer fires). Qt, GTK 3,
+   Alacritty and libadwaita apps come out right at once and never take this path. No upstream
+   change (Paul, 2026-10-24).
+6. **Hovering a frame doesn't steal focus for the desktop**: KWin's focus follows mouse ignores
+   the desktop and docks (`Window::pointerEnterEvent`), so crossing the 2 px between two windows
+   goes straight to the next one. A click there would land on the desktop: `kwini3helper` takes
+   presses on a tiled window's frame and activates that window, as it does on today's
+   decoration (`framefocus.cpp`, reworked from "the decoration under the pointer" to "a tiled
+   window's frame ring under the pointer").
+
+## The rules (to build)
+
+**R1. A window's mode.** At adoption, in order:
+1. the ignore rules (`ignoreClass`, `ignoreRole`): unmanaged, as today;
+2. the floating rules (transient, modal, fixed size, dialog/splash/utility, `floatingClass`,
+   `floatingTitle`): Plasma's, as today;
+3. the workspace it opens on: Plasma's if that workspace is listed in `floatingWorkspaces`
+   (decision 2), else i3's.
+
+Meta+Shift+Space flips it. The rules re-check on a caption or class change as today
+(`reclassify`).
+
+**R2. The look follows the mode.** Tiled: `noBorder` on (before the tile asks: "why" 4), frame
+drawn. Plasma's: `noBorder` off (the user's decoration), no frame (unless decision 3).
+kwin-i3 records which windows it took the border from (as `keptAbove` for the flag) and gives it
+back on un-tiling, on release, and when a window stops being managed. A border the user removed
+by hand on a floating window is left alone.
+
+**R3. Moving between workspaces keeps the mode**, as i3 keeps floating across `move to
+workspace`. A workspace's setting only decides for windows that open there (decision 4).
+
+**R4. Release, disable, reload.** Release (and the script's unload) gives every border back and
+the root its whole area. A reload re-adopts: a window with no border and no tile is ... (decision
+5: the durable marker of a hand-floated window).
+
+**R5. No plugins (or the effect not loaded).** No frame can be drawn, so tiled windows keep their
+decoration and the tiles no frame padding: exactly today's script-only install. kwin-i3 asks the
+effect over D-Bus at load and on every reconfigure (`/kwini3hold net.local.kwini3hold Stats`,
+already there) and switches when it appears or goes.
+
+**R6. Fullscreen**: no frame (the effect skips fullscreen windows), the border untouched, as today.
+
+**R7. The effect, properly** (the prototype's shortcuts replaced):
+- active only while a framed window is on a shown desktop, not always;
+- it repaints the frame rings that change (old and new frame, activation, a tile change, a
+  decoration change), not the whole screen;
+- frame colours and width from today's keys (`frameActive`, `frameInactive`, `frameWidth`,
+  decision 3 for the floating ones), rounded to whole device pixels at any scale.
+
+**R8. The hair.** `rootRect` gives a hair inset when the outer inset is 0, and `sameRect`
+compares exactly enough to see it (the prototype cut its tolerance to 10^-9; the spec's version
+compares the hair separately so float noise elsewhere keeps the old tolerance).
+
+## Decisions for Paul
+
+1. **The workspace setting's name and form.** Proposed: `floatingWorkspaces`, a list of
+   workspace numbers ("3, 7"), on the settings page as a row of checkboxes 1..10 labelled
+   "Open new windows as Plasma windows". Alternatives: a per-workspace choice in the same row as
+   `workspaceOutputs` ("1=DP-4"), or a name other than "floating" (the page could say "Plasma
+   windows" while the key says floating). Recommendation: the list, and "Plasma windows" on the
+   page; i3's word stays in the key and the code.
+2. **What i3's focus keys do on a Plasma-mode workspace.** i3's `focus mode_toggle` (Meta+Space)
+   moves between tiled and floating; Meta+J/K/L/; move among tiled windows only. On a workspace
+   of Plasma windows those keys do almost nothing; Alt+Tab and the mouse do it, as in Plasma.
+   Recommendation: leave i3's keys as i3 has them; nothing new.
+3. **A frame on Plasma windows**, as Paul asked ("could be a tick box to turn outlines on i3
+   like"): `frameOnFloating`, off by default. On: Plasma windows lose their decoration too and
+   get the frame in the floating colours (`frameFloatingActive`, `frameFloatingInactive`, today's
+   green), moved with Meta+drag as in i3. Recommendation: build it; it is today's look for
+   floating windows, so Paul's desktop can keep it.
+4. **A window opened elsewhere and moved onto a Plasma workspace** keeps its mode (R3), as in
+   i3. Alternative: take the workspace's mode on arrival. Recommendation: keep it (the setting is
+   about where windows open, not a property of the place).
+5. **The durable "floating" marker.** Today a floating window is kept above, which is also how a
+   reload knows a hand-floated window (`docs/spec-reload-keepabove.md`). On a Plasma-mode
+   workspace every window would be kept above, which a Plasma user sees: the window menu's "Keep
+   above others" ticked, and no way to put one Plasma window under a tiled one. Options:
+   (a) keep it: i3's layering (floating above tiled), and the marker stays;
+   (b) Plasma windows not kept above; the marker becomes "managed, no tile, has its decoration"
+   (with the plugins: a tiled window never has one), and without the plugins the flag as today.
+   Recommendation: (b) on Plasma-mode workspaces only, (a) elsewhere: on an i3 workspace a
+   floating window should still float above. Needs a look at what i3's stacking means when the
+   whole workspace floats.
+6. **Retiring `kwini3frame`.** `make plugin-install` stops installing it and puts back the
+   decoration the user had before (recorded at install; Breeze if unknown), `tools/frame-guard.sh`
+   and its drop-in line go, the README's plugin table loses a row (two plugins). Paul's desktop
+   goes from the frame decoration to Breeze on floating windows at the switch (all windows are
+   re-decorated once). Recommendation: yes, in the same change.
+7. **Order of work.** The whole thing is one feature but four pieces: (i) the frame in the
+   effect with tiled windows borderless (R2, R4-R8; the look changes, nothing else);
+   (ii) the GTK 4 bounds ("why" 5); (iii) `floatingWorkspaces` (R1, R3, decisions 1, 4);
+   (iv) `frameOnFloating` and the marker (decisions 3, 5). Recommendation: (i)+(ii) first, live,
+   lived with for a day; then (iii)+(iv).
+
+## Tests
+
+Each watched red first (`make mutate` from a worktree for the plugin and script faults).
+
+- **`tests/live/57-effect-frame.sh`** (from the prototype's `99-effect-frame.sh`, needs: plugin,
+  timing: alone): the 1 px frame at every screen edge and 2 px between windows; the app's edge
+  pixels untouched; no title bar on tiled windows; colours follow focus; no stale frame where a
+  window was; a floating window has its title bar and no frame; frames stay with a held layout
+  and move with the new one; a plain GTK 4 window fills its tile (the bounds). Alacritty in solid
+  colours for the pixel rows (GTK's own rendering is not exact at its edges).
+- gaps: `26-gaps.sh` with the frame (inner and outer gaps, the frame inside the gap).
+- fullscreen: no frame, border untouched (`32-fullscreen-open.sh`, `46-replug-fullscreen.sh`).
+- no plugins: tiled windows keep their decoration and no padding (a scenario without `needs:
+  plugin`); the effect loaded later switches it on.
+- release and reload: every border back after release; through a reload, tiled stays tiled and
+  hand-floated stays floating (decision 5).
+- `floatingWorkspaces`: a window opened there is a Plasma window; moved elsewhere it stays one;
+  Meta+Shift+Space flips it; the setting applies on Apply.
+- frame clicks: a press on the 1 px between two windows activates the window whose frame it is
+  (`55-helper.sh`).
+- monitors: unplug and replug with framed windows (`40`-`48`), a monitor at scale 1.25 (the hair
+  and the device-pixel rounding).
+- the fuzzer: one campaign after (i), with a pixel invariant for the frame ring (`docs/fuzz-design.md`).
+
+A second agent reviews this spec before building (CLAUDE.md: substantial new tests and a slow
+scenario), and the change before it goes live.
