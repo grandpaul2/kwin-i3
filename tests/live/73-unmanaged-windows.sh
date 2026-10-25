@@ -101,5 +101,27 @@ before=$(snap)
 come_and_go notification 300x100+1700+400 --no-input
 check "6. a notification came and went: the left still shows 5" unchanged "$before"
 
+# 7. Keys with a window kwin-i3 doesn't manage active (a dialog standing in for Yakuake, KRunner):
+#    one that leaves kwin-i3's focus where it was takes nothing; one that moves it does, as in i3.
+key "Workspace 1"
+check "7. back on 1 (a)"                    poll active_is a
+point 300 300; sleep 0.3
+client --title e
+check "7. a, e on 1"                        wait_tree 1 "H[a e*]"
+key "Focus Left"
+check "7. a focused"                        poll active_is a
+point 1900 600; sleep 0.3
+stand_in dlg2 dialog 300x200+400+300; dlg2=$sid
+activate dlg2
+check "7. the dialog is active"             poll active_is dlg2
+before=$(snap)
+key "Split H"; sleep 0.3
+check "7. Split H: the dialog keeps the focus" unchanged "$before"
+key "Grow Width"; sleep 0.3
+check "7. Grow Width: the dialog keeps the focus" unchanged "$before"
+key "Focus Right"
+check "7. Focus Right moves kwin-i3's focus to e: e has it" poll active_is e
+kill "$dlg2"; poll _no_window dlg2
+
 check "no invariant failures or errors"     clean_log
 finish

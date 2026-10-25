@@ -28,7 +28,15 @@ something done outside kwin-i3.
    monitor back. kwin-i3's own switches go through `showOn` (and its activations are marked), so
    they aren't taken for outside ones; nothing is followed while monitors come and go.
 
-A third change, no "Switch to Screen" from a passive pass, was dropped: with change 1 in place a
+3. **A key that leaves kwin-i3's focus where it was** (a split, a resize, a layout toggle) takes no
+   focus from an open window kwin-i3 doesn't manage (`act`): typing in Yakuake or KRunner, Meta+H
+   used to hand the focus to the tiled window. Keys that move the focus still take it, as in i3.
+   From the audit; `73` case 7, watched red under a fault.
+4. **The login-only renumbering** (the first activity event renumbers every monitor 1, 2 …) is
+   armed only at a login, not after a reload mid-session. From the audit; **untested live**: the
+   test KWins have no activity manager (OPEN.md item 5).
+
+A change, no "Switch to Screen" from a passive pass, was dropped: with change 1 in place a
 fault there changed nothing, so it would have been an untested second path.
 
 ## Tests
@@ -38,3 +46,12 @@ states (the pointer on the other monitor, a popup or a dialog active, one of kwi
 closing meanwhile, an empty workspace focused with a desktop window there, a monitor switched outside
 kwin-i3); each compares the focus, the pointer and what each monitor shows before and after. Red
 before the change (6 checks); each change watched red alone under a fault.
+
+## Left (OPEN.md item 14)
+
+From the audit, not changed: a keep-above the user set on a managed window is cleared when it tiles
+again, and unticking it on a floating window doesn't stick (kwin-i3 marks floating windows with
+it); unverified whether the frame's click handling can swallow the click that dismisses a menu
+during a popup grab (`framefocus.cpp`, `pointer()->hover()` during a grab); an unmanaged window
+quick-tiled into kwin-i3's tiles loses its tile (very rare).
+

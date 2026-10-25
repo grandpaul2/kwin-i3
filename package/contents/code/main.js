@@ -2266,14 +2266,19 @@ var KI3 = (function () {
     function act(name, fn) {
         return guard(name, function () {
             var con = focusedCon();
-            var before = con ? Tree.wsOf(con) : null;
+            var before = con ? Tree.wsOf(con) : null, focusBefore = model.focused;
             fn(con);
             var f = model.focused;
             schedule(before);
             if (f) schedule(f.type === "ws" ? f : Tree.wsOf(f));
             // Every workspace a move can touch is rescheduled; reconcile is idempotent.
             scheduleAll();
-            wantFocus(before ? outputOf(before) : workspace.activeScreen);
+            // A key that left kwin-i3's focus where it was (a split, a resize, a layout toggle)
+            // takes no focus from an open window kwin-i3 doesn't manage (Yakuake, KRunner, a
+            // dialog): only keys that move the focus do, as in i3 (docs/spec-unmanaged-windows.md).
+            var a = workspace.activeWindow;
+            var keep = model.focused === focusBefore && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock;
+            if (!keep) wantFocus(before ? outputOf(before) : workspace.activeScreen);
             log("ACTION " + name);
         });
     }
@@ -2928,7 +2933,9 @@ var KI3 = (function () {
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
         // load didn't look like a login (a session-restored window can exist already, review);
         // with one activity it never fires mid-session.
-        var renumbered = false;
+        // Armed only at a login: after a reload mid-session (windows open), the next activity
+        // switch renumbered every monitor back to 1, 2 … (audit, 2026-10-25).
+        var renumbered = !login;
         workspace.currentActivityChanged.connect(guard("activity", function () {
             if (renumbered) return;
             renumbered = true;
