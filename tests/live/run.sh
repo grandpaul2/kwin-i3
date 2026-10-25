@@ -15,8 +15,11 @@ for t in "${scenarios[@]}"; do
     # not parallel-safe (tools/testkwin.sh): alone, like the timing scenarios.
     if grep -qE '^# (timing: alone|needs: xwayland)$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
 done
+# At most KI3_JOBS test KWins at once (default: one per core), the rest queued: with all 44 at once
+# on 16 cores, some missed testkwin's 15 s start (2026-10-25: 1, then 6, all green when rerun).
+maxjobs=${KI3_JOBS:-$(nproc)}
 # How many test KWins share the GPU: timing checks (53-hold.sh) allow for it; 1 for those alone.
-export KI3_PARALLEL=${#batch[@]}
+export KI3_PARALLEL=$(( ${#batch[@]} < maxjobs ? ${#batch[@]} : maxjobs ))
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 # "# needs: plugin" in a scenario: its test KWin loads plugin/ (built by make plugin). The plugins
@@ -49,6 +52,7 @@ needs_missing() {
 }
 for t in "${batch[@]}"; do
     if needs_missing "$t"; then skipped+=("$t"); continue; fi
+    while (( $(jobs -rp | wc -l) >= maxjobs )); do wait -n; done
     launch "$t" &
 done
 wait
