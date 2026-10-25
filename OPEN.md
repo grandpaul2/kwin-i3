@@ -9,8 +9,9 @@ Last reconciled: **2026-10-25**.
 ## Stage (Paul, 2026-10-24, late)
 
 **Development, for about 4-6 weeks**: Paul uses kwin-i3 daily and adjusts it along the way.
-Reliability work (item 5, the test gaps in items 10, 13 and 14) and release prep (item 4's README
-pass, a release) are deferred unless they inform a structural change or a larger issue turns up.
+Reliability work (item 5, the test gaps in items 10, 11 and 13), release prep (item 4's README
+pass, a release) and anything upstream (item 2; Paul, 2026-10-25: more experience with Plasma
+first) are deferred unless they inform a structural change or a larger issue turns up.
 
 ## Heading (Paul, 2026-10-24)
 
@@ -23,11 +24,6 @@ kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 ## Open
 
 Work for now. An item whose remaining parts are partly deferred keeps its number in both sections.
-
-**2. Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left, Paul's call,
-when he wants it: the one-line KWin fix upstream (`ScriptingConfig::reload` in
-`genericscriptedconfig.cpp`), so the Configure form's Apply applies without the plugins too (the
-settings page's Apply already does).
 
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
@@ -57,8 +53,13 @@ pattern (kwin-i3 overriding what you see on events that weren't its own) is fixe
 
 ## Deferred (the Stage)
 
-Reliability and release prep, held for the development stage. Not open work until Paul brings
-one back or it informs a structural change.
+Reliability, release prep and anything upstream, held for the development stage (upstream: Paul
+wants more experience with Plasma before submitting anything, 2026-10-25). Not open work until
+Paul brings one back or it informs a structural change.
+
+**2. Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left: the one-line
+KWin fix upstream (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`), so the Configure
+form's Apply applies without the plugins too (the settings page's Apply already does).
 
 **4. No dependence on Paul's dotfiles.** (a)-(d) done and live 2026-10-24: workspaces created on
 demand (`docs/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
