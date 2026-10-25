@@ -4,7 +4,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-24**.
+Last reconciled: **2026-10-24** (late).
 
 ## Heading (Paul, 2026-10-24)
 
@@ -64,6 +64,23 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    `tests/live/38-retired-keys.sh`). Next: find how KWin matches a shifted key (its source), then
    choose: read the layout's symbols, or register by key position; spec, with a scenario on a
    German-layout test KWin.
+
+10. **Window modes: Plasma's or i3's, per window** (Paul, 2026-10-24: "a defining feature, so it
+    would need to be implemented cleanly"). A floating window is an ordinary Plasma window (the
+    user's own decoration: title bar, rounded corners, shadow, the theme's focus colour); a tiled one
+    has i3's frame; Meta+Shift+Space moves a window between them. A workspace can be set to open
+    new windows in either mode (instead of i3's stacked and tabbed layouts: Plasma is the DE on
+    those windows). The likely route: tiled windows get `noBorder` and a frame drawn by the effect
+    plugin, which retires the `kwini3frame` decoration (KWin has one decoration for every window).
+    Hurdles: the frame's pixel inside the tile, focus by clicking the frame, the script-only install
+    (tiled windows keep title bars), KWin's quick tiling on floating windows, the kept-above
+    floating marker. Next: a prototype check in a test KWin (`noBorder` from a script, per window,
+    through a reload and a release), then a spec.
+11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
+    (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Watch: the
+    tiles leaving room for it (floating, auto-hide), the pager with per-monitor desktops, the task
+    list and hidden workspaces, KDE bug 511162 with focus follows mouse. Paul may drop dunst for
+    Plasma's notifications; how and when is not decided.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
