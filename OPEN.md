@@ -77,10 +77,20 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     floating marker. Next: a prototype check in a test KWin (`noBorder` from a script, per window,
     through a reload and a release), then a spec.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
-    (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Watch: the
-    tiles leaving room for it (floating, auto-hide), the pager with per-monitor desktops, the task
-    list and hidden workspaces, KDE bug 511162 with focus follows mouse. Paul may drop dunst for
-    Plasma's notifications; how and when is not decided.
+    (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
+    leave room for it (Paul: above it). Left:
+    - **A kwin-i3 workspace widget** (i3bar's workspace buttons as a plasmoid): only the workspaces
+      in use, per monitor, the shown one marked. The stock pager shows every desktop, and KWin's
+      have no gaps, so 5 and 6 show while 7 is used whatever kwin-i3 removes (removing trailing
+      empty desktops was weighed and not chosen: reliability cost, still gaps). Next: a spec.
+      Paul's desktop went from ten desktops to seven (8-10 removed live, `setup.sh` no longer
+      makes ten), as a stranger's would grow.
+    - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
+      pointer crossing the gap focuses the desktop and closes the popup. Not hit at the default
+      size; Paul would want it for a smaller panel. A narrow fix, not a delay: next, read KWin's
+      focus-follows-mouse path (6.7.5) and the bug's upstream state.
+    - To watch: auto-hide, the task list and hidden workspaces.
+    - Paul may drop dunst for Plasma's notifications; how and when is not decided.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
