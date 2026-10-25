@@ -36,6 +36,9 @@ Next: a trace of KWin's `Workspace::activateWindow` callers in that second (help
 worktree), or won't-fix if it stays a load-time curiosity. 74-show-desktop waits for the load to
 settle (`FRAME` logged) meanwhile.
 
+**17. The settings page, reorganized and made accessible** (Paul, 2026-10-25):
+`docs/spec-settings-cleanup.md`, a draft with five decisions. Next: Paul's go on them, then build.
+
 ## Deferred (the Stage)
 
 Reliability, release prep and anything upstream, held for the development stage (upstream: Paul
