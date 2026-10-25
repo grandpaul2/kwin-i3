@@ -105,7 +105,11 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     - **A kwin-i3 workspace widget** (i3bar's workspace buttons as a plasmoid): only the workspaces
       in use, per monitor, the shown one marked. The stock pager shows every desktop, and KWin's
       have no gaps, so 5 and 6 show while 7 is used whatever kwin-i3 removes (removing trailing
-      empty desktops was weighed and not chosen: reliability cost, still gaps). Next: a spec.
+      empty desktops was weighed and not chosen: reliability cost, still gaps). Paul, 2026-10-24: the
+      stock pager draws each workspace as both monitors wide (a "ghost" half: with per-monitor
+      desktops a workspace lives on one monitor), and `showOnlyCurrentScreen` only shows the
+      panel's own monitor; he wants every workspace on one panel at its own monitor's size. The
+      widget does that. **Next: its spec, right after item 6** (Paul: "save it for next").
       Paul's desktop went from ten desktops to seven (8-10 removed live, `setup.sh` no longer
       makes ten), as a stranger's would grow.
     - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
