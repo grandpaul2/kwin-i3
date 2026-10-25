@@ -15,6 +15,9 @@ class KeysModel : public QAbstractListModel
     Q_PROPERTY(bool available READ available NOTIFY availableChanged)
     // Set by save() when a key couldn't be taken or set; cleared by the next save.
     Q_PROPERTY(QString error MEMBER m_error NOTIFY changed)
+    // The current keyboard layout's keys, [unshifted, shifted, typed] each, for naming a shifted
+    // symbol by its keys (ui/shifted.js, docs/spec-keys-shifted-labels.md). Read at load.
+    Q_PROPERTY(QVariantList layoutTable MEMBER m_layoutTable NOTIFY changed)
 
 public:
     enum Roles { GroupRole = Qt::UserRole + 1, LabelRole, SlotsRole };
@@ -57,4 +60,5 @@ private:
     QList<Row> m_rows;
     bool m_available = false;
     QString m_error;
+    QVariantList m_layoutTable;
 };

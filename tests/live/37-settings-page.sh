@@ -33,7 +33,7 @@ print(sum(1 for x in range(int(a[2]), int(a[4])) for y in range(int(a[3]), int(a
 }
 click() { "$INJECT" "abs $1 $2" "wait 50" "btn left down" "wait 30" "btn left up" "abs 640 700" "wait 100"; }
 EVDEV[Tab]=15
-KEY2_X=530                                  # a second key button, Keys sub-page
+KEY2_X=620                                  # a second key button, Keys sub-page
 
 # A stand-in app holds Meta+Alt+E and Meta+Alt+F, and Meta+Shift+F11 to show a holder keeps its other keys,
 # registered as a running app registers (as 35-taken-keys.sh).
@@ -63,6 +63,15 @@ check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 click 585 591
 sleep 0.5                                   # the sub-page slides in
 shot keys
+# A shifted symbol is named by its keys beside its button (docs/spec-keys-shifted-labels.md):
+# Move right's Meta+: gets "Meta+Shift+;", Focus right's Meta+; nothing.
+inked() {   # inked <shot> <x1> <y1> <x2> <y2>: pixels clearly not the white background
+    python3 -I -c 'import sys; from PIL import Image
+a = sys.argv; img = Image.open(a[1]).convert("RGB")
+print(sum(1 for x in range(int(a[2]), int(a[4])) for y in range(int(a[3]), int(a[5])) if sum(img.getpixel((x, y))) < 600))' "$KI3_TMP/$1.png" "$2" "$3" "$4" "$5"
+}
+check "Meta+: is named Meta+Shift+; beside it" test "$(inked keys 705 545 775 562)" -gt 30
+check "Meta+; has no name beside it"        test "$(inked keys 705 271 775 288)" -eq 0
 # Focus left's second key (Meta+J) becomes Meta+Alt+J, free; Focus up's second (Meta+L) becomes
 # Meta+Alt+E, which the stand-in holds: its row says so, and nothing changes before Apply.
 click $KEY2_X 135; press Meta+Alt+J; sleep 0.5

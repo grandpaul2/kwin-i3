@@ -15,6 +15,10 @@
 
 #include <optional>
 
+#include <KConfig>
+#include <KConfigGroup>
+#include <xkbcommon/xkbcommon.h>
+
 // kglobalaccel's key sequence on the bus: a struct of four combined keys, (ai).
 struct KeySeq {
     QList<int> keys;
@@ -95,6 +99,46 @@ static QString takenPath()
     return state + QStringLiteral("/kwin-i3/taken-keys.json");
 }
 
+// The current layout's keymap, built as KWin builds it (xkb.cpp loadKeymapFromConfig: kxkbrc
+// [Layout] Model, LayoutList, VariantList, Options), at the layout KWin is on (org.kde.keyboard).
+// For each key that types something: its unshifted and Shift symbols as Qt keys (a printable
+// character's Qt key is its uppercase code point), and the unshifted character as typed.
+static QVariantList layoutTable()
+{
+    const KConfigGroup g = KConfig(QStringLiteral("kxkbrc")).group(QStringLiteral("Layout"));
+    const QByteArray model = g.readEntry("Model", "pc104").toLatin1();
+    QByteArray layout = g.readEntry("LayoutList").toLatin1();
+    const QByteArray variant = g.readEntry("VariantList").toLatin1();
+    const QByteArray options = g.readEntry("Options").toLatin1();
+    if (layout.isEmpty())
+        layout = "us";
+    const xkb_rule_names names{nullptr, model.constData(), layout.constData(), variant.constData(), options.constData()};
+    xkb_context *ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    xkb_keymap *keymap = ctx ? xkb_keymap_new_from_names(ctx, &names, XKB_KEYMAP_COMPILE_NO_FLAGS) : nullptr;
+    QVariantList out;
+    if (keymap) {
+        const QDBusMessage reply = QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
+            QStringLiteral("org.kde.keyboard"), QStringLiteral("/Layouts"), QStringLiteral("org.kde.KeyboardLayouts"), QStringLiteral("getLayout")));
+        xkb_layout_index_t current = reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty() ? reply.arguments().first().toUInt() : 0;
+        if (current >= xkb_keymap_num_layouts(keymap))
+            current = 0;
+        const auto sym = [&](int evdev, int level) -> char32_t {
+            const xkb_keysym_t *syms = nullptr;
+            return xkb_keymap_key_get_syms_by_level(keymap, evdev + 8, current, level, &syms) > 0 ? xkb_keysym_to_utf32(syms[0]) : 0;
+        };
+        const auto qtKey = [](char32_t c) { return int(QChar::toUpper(c)); };
+        for (int evdev = 1; evdev < 64; ++evdev) {
+            const char32_t base = sym(evdev, 0), up = sym(evdev, 1);
+            if (base > 0x20 && up > 0x20)
+                out << QVariant(QVariantList{qtKey(base), qtKey(up), int(base)});
+        }
+        xkb_keymap_unref(keymap);
+    }
+    if (ctx)
+        xkb_context_unref(ctx);
+    return out;
+}
+
 KeysModel::KeysModel(QObject *parent)
     : QAbstractListModel(parent)
 {
@@ -126,6 +170,8 @@ QVariant KeysModel::data(const QModelIndex &index, int role) const
         QVariantList out;
         for (const Slot &s : row.entries)
             out << QVariantMap{{QStringLiteral("key"), s.pending},
+                               {QStringLiteral("keyCode"), s.pending.isEmpty() ? 0 : s.pending[0].toCombined()},
+                               {QStringLiteral("defaultCode"), s.def.isEmpty() ? 0 : s.def[0].toCombined()},
                                {QStringLiteral("keyText"), s.pending.toString(QKeySequence::NativeText)},
                                {QStringLiteral("defaultText"), s.def.toString(QKeySequence::NativeText)},
                                {QStringLiteral("holder"), s.holder.friendly}};
@@ -139,6 +185,7 @@ void KeysModel::load()
 {
     beginResetModel();
     m_rows.clear();
+    m_layoutTable = layoutTable();
     const bool was = m_available;
     m_available = scriptLoaded();
     if (m_available) {

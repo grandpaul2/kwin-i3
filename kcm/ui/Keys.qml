@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 import org.kde.kquickcontrols as KQC
+import "shifted.js" as Shifted
 
 KCM.ScrollViewKCM {
     id: page
@@ -66,8 +67,23 @@ KCM.ScrollViewKCM {
                             id: slot
                             required property int index
                             required property var modelData
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 11
+                            // The keys that type a shifted symbol: KDE's key button shows the
+                            // symbol (Meta+!), which it can't be told otherwise; this names the
+                            // keys beside it (docs/spec-keys-shifted-labels.md).
+                            readonly property string keysText: Shifted.shifted(modelData.keyCode, kcm.keys.layoutTable)
+                            readonly property string defaultKeysText: Shifted.shifted(modelData.defaultCode, kcm.keys.layoutTable)
+                            Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                             implicitHeight: item.implicitHeight
+                            QQC2.Label {
+                                anchors.left: item.right
+                                anchors.leftMargin: Kirigami.Units.smallSpacing
+                                anchors.verticalCenter: item.verticalCenter
+                                text: slot.keysText
+                                visible: text !== ""
+                                color: Kirigami.Theme.disabledTextColor
+                                font: Kirigami.Theme.smallFont
+                                Accessible.name: i18nc("the keys that type this shortcut's symbol", "typed with %1", text)
+                            }
                             KQC.KeySequenceItem {
                                 id: item
                                 keySequence: slot.modelData.key
@@ -77,7 +93,9 @@ KCM.ScrollViewKCM {
                                 modifierlessAllowed: false
                                 multiKeyShortcutsAllowed: false
                                 Accessible.name: i18nc("command: key", "%1: key %2", row.label, slot.index + 1)
-                                QQC2.ToolTip.text: slot.modelData.defaultText ? i18n("Default: %1", slot.modelData.defaultText) : i18n("No default key")
+                                QQC2.ToolTip.text: !slot.modelData.defaultText ? i18n("No default key")
+                                    : slot.defaultKeysText ? i18n("Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText)
+                                    : i18n("Default: %1", slot.modelData.defaultText)
                                 QQC2.ToolTip.visible: hovered
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
                             }
