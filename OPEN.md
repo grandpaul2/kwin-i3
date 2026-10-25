@@ -82,12 +82,17 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     drawn by kwini3hold where the window is drawn, so it stays with a held snapshot. Found:
     - the border must go before the tile asks for a size, and the window be refit once the
       client has answered (KWin keeps the decoration until then; the `armed` refit does it);
-    - the GTK 4 test client, tiled without a border, stops at 692 px of a 716 px tile, even in
-      KWin alone (Alacritty is exact): to understand before the spec (real GTK 4 apps?);
+    - plain GTK 4 windows with a server-side title bar stop short by the title bar's height:
+      KWin sends `configure_bounds` once, in the first configure, sized for the decoration
+      then (`XdgToplevelWindow::sendRoleConfigure`, 6.7.5), and GTK 4 keeps within it (seen:
+      `configure_bounds(1280, 692)`). KWin alone does it. Qt (KWrite), GTK 3 (Firefox),
+      Alacritty and libadwaita apps (zenity: own title bar) are exact. A plugin can't resend
+      the bounds (`XdgToplevelWindow` is not exported); the fix is KWin's: resend them when they
+      change (also a panel added or removed);
     - `noBorder` stays after an unload (release gives it back) and is saved by session restore.
     Prototype shortcuts the spec must replace: the effect always active, a full repaint on
     every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
-    Next: the GTK 4 question, then the spec (window modes, the per-workspace default, the frame
+    Next: Paul's call on the GTK 4 limit, then the spec (window modes, the per-workspace default, the frame
     in the effect, kwini3frame retired, clicks on the frame via kwini3helper, no plugins).
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
