@@ -37,7 +37,7 @@ worktree), or won't-fix if it stays a load-time curiosity. 74-show-desktop waits
 settle (`FRAME` logged) meanwhile.
 
 **17. The settings page, reorganized and made accessible** (Paul, 2026-10-25):
-`docs/spec-settings-cleanup.md`, a draft with five decisions. Next: Paul's go on them, then build.
+`docs/spec-settings-cleanup.md`, built and tested. Next: Paul's look at it installed.
 
 ## Deferred (the Stage)
 
@@ -98,6 +98,12 @@ panels and "Numbers only" untested live.
 output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: live tests for the
 source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
 after an unplug; the widget's names on a vertical panel.
+
+**18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
+tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
+`docs/spec-settings-cleanup.md`'s build) audited every page through `tools/a11y.py`: names, no
+duplicates, no empty headings, Tab order. Bring it back with the reliability work, as `make a11y`
+run when the page changes rather than in `make test`.
 
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.

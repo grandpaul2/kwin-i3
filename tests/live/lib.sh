@@ -147,7 +147,7 @@ finish() {
 #   point X Y                       move the pointer
 declare -A EVDEV=(
     [Meta]=125 [Shift]=42 [Ctrl]=29 [Alt]=56
-    [Left]=105 [Right]=106 [Up]=103 [Down]=108 [Space]=57 [";"]=39 [":"]=39
+    [Left]=105 [Right]=106 [Up]=103 [Down]=108 [Space]=57 [Tab]=15 [Enter]=28 [Escape]=1 [";"]=39 [":"]=39
     [Q]=16 [W]=17 [E]=18 [R]=19 [T]=20 [Y]=21 [U]=22 [I]=23 [O]=24 [P]=25
     [A]=30 [S]=31 [D]=32 [F]=33 [G]=34 [H]=35 [J]=36 [K]=37 [L]=38
     [Z]=44 [X]=45 [C]=46 [V]=47 [B]=48 [N]=49 [M]=50
@@ -178,4 +178,16 @@ drag() {   # drag <mods> <button> x1 y1 x2 y2
     cmds+=("btn $b up")
     for ((k = ${#mods[@]} - 1; k >= 0; k--)); do cmds+=("key ${EVDEV[${mods[k]}]} up"); done
     "$INJECT" "${cmds[@]}"
+}
+
+# An accessibility bus of the test's own, for tools/a11y.py (docs/spec-settings-cleanup.md): its
+# runtime directory is the test's, since the live session's bus lives in $XDG_RUNTIME_DIR/at-spi
+# and a second launcher there would sit beside it. Apps started after this register on it.
+A11Y="python3 -I $root/tools/a11y.py"
+a11y_start() {
+    mkdir -p "$KI3_TMP/run"
+    XDG_RUNTIME_DIR=$KI3_TMP/run /usr/libexec/at-spi-bus-launcher --launch-immediately >/dev/null 2>&1 &
+    poll eval 'busctl --user status org.a11y.Bus >/dev/null 2>&1' || return 1
+    /usr/libexec/at-spi2-registryd --use-gnome-session=false >/dev/null 2>&1 &
+    export QT_LINUX_ACCESSIBILITY_ALWAYS_ON=1
 }

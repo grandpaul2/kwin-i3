@@ -4,8 +4,10 @@
 # timing: alone
 # kwin-i3's own settings page (docs/spec-settings-page.md), driven as a person would: injected
 # clicks and keys on kcmshell6 in the test KWin. No plugins are loaded, so what Apply does here it
-# does without them. The coordinates are the page's at 1280x720 with the window filling Virtual-0
-# (maximized while kwin-i3 is off, tiled once it is on); KI3_SHOTS=<dir> keeps every screenshot.
+# does without them. Controls are found by their accessible names (tools/a11y.py, on the test's own
+# accessibility bus) and clicked at their on-screen box, so a relayout doesn't move the clicks
+# (docs/spec-settings-cleanup.md); the pixel checks look at the header and the Keys rows, at
+# 1280x720 with the window filling Virtual-0. KI3_SHOTS=<dir> keeps every screenshot.
 # Alone, after the batch: it clicks after the page's slide animations, and in the batch (~30 test
 # KWins at once) kcmshell6 took longer than 5 s to show its window (2026-10-24).
 source "$(dirname "$0")/lib.sh"
@@ -32,8 +34,13 @@ print(sum(1 for x in range(int(a[2]), int(a[4])) for y in range(int(a[3]), int(a
           if all(abs(c - d) <= 40 for c, d in zip(img.getpixel((x, y)), w))))' "$KI3_TMP/$1.png" "$2" "$3" "$4" "$5" "$6"
 }
 click() { "$INJECT" "abs $1 $2" "wait 50" "btn left down" "wait 30" "btn left up" "abs 640 700" "wait 100"; }
-EVDEV[Tab]=15
-KEY2_X=620                                  # a second key button, Keys sub-page
+# click_named <page> <name>: the control a screen reader calls <name> on the page titled <page>
+# ("-": anywhere, as the shell's Apply), scrolled into view and clicked.
+click_named() {
+    local xy cx cy; xy=$($A11Y box kcmshell6 "$1" "$2") || return 1
+    read -r cx cy <<<"$xy"
+    click $((wx + cx)) $((wy + cy))
+}
 
 # A stand-in app holds Meta+Alt+E and Meta+Alt+F, and Meta+Shift+F11 to show a holder keeps its other keys,
 # registered as a running app registers (as 35-taken-keys.sh).
@@ -43,24 +50,26 @@ kga setShortcutKeys 'asa(ai)u' 4 fakeapp Launch "Fake App" "Launch Fake App" 3 4
 before_fake=$(keys_of fakeapp Launch)
 
 # kwin-i3 is installed where KWin Scripts finds it (tools/testkwin.sh), turned off; the page.
+check "an accessibility bus of the test's own" a11y_start
 QT_PLUGIN_PATH=$root/kcm/build/bin QT_QPA_PLATFORM=wayland kcmshell6 kcm_kwin_i3 >"$KI3_TMP/kcm.log" 2>&1 &
 opens() { WAIT=30 poll _has_window kwin-i3; }   # a prefix assignment inside check would be run as a command
 check "the page opens"                      opens
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "kwin-i3") w.setMaximize(true, true); });' >/dev/null
 check "maximized"                           wait_geom kwin-i3 "0,0 1280x720"
+# The client area's top-left, which turns a control's window coordinates into a click.
+read -r wx wy <<<"$(kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "kwin-i3") { var c = w.clientGeometry; log(Math.round(c.x) + " " + Math.round(c.y)); } });')"
 
 # 1. Off: the warning, and its Turn On loads kwin-i3 the way KWin Scripts' checkbox does.
 WARN=240,216,196                            # Breeze's warning background, light theme
 check "the 'turned off' warning shows"      poll looks off 600 94 $WARN
-click 1232 94
+click_named kwin-i3 "Turn On"
 check "Turn On: kwin-i3 loads"              wait_log 'kwin-i3 loaded$'
 check "enabled in kwinrc"                   test "$(kreadconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled)" == true
 check "the warning goes"                    poll not_looks on 600 94 $WARN
 check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 
-# 2. Keys: the sub-page, reached by scrolling to its button.
-"$INJECT" "abs 1269 200" "wait 50" "btn left down" "wait 50" "abs 1269 500" "wait 50" "abs 1269 715" "wait 50" "btn left up" "wait 300"
-click 585 591
+# 2. Keys: the sub-page, from its button.
+click_named kwin-i3 "Configure Keys…"
 sleep 0.5                                   # the sub-page slides in
 shot keys
 # A shifted symbol is named by its keys beside its button (docs/spec-keys-shifted-labels.md):
@@ -74,15 +83,15 @@ check "Meta+: is named Meta+Shift+; beside it" test "$(inked keys 705 545 775 56
 check "Meta+; has no name beside it"        test "$(inked keys 705 271 775 288)" -eq 0
 # Focus left's second key (Meta+J) becomes Meta+Alt+J, free; Focus up's second (Meta+L) becomes
 # Meta+Alt+E, which the stand-in holds: its row says so, and nothing changes before Apply.
-click $KEY2_X 135; press Meta+Alt+J; sleep 0.5
-click $KEY2_X 231; press Meta+Alt+E; sleep 0.5
+click_named Keys "Focus left, key 2: Meta+J"; press Meta+Alt+J; sleep 0.5
+click_named Keys "Focus up, key 2: Meta+L"; press Meta+Alt+E; sleep 0.5
 shot keys-set
 NEUTRAL=246,116,0                           # Breeze's neutral text (the clash note)
 check "the clash note under Focus up"       test "$(count_near keys-set 8 252 600 272 $NEUTRAL)" -gt 100
 check "and none under Focus left"           test "$(count_near keys-set 8 150 600 168 $NEUTRAL)" -eq 0
 check "before Apply, the stand-in keeps its key" test "$(keys_of fakeapp Launch)" == "$before_fake"
 check "before Apply, Meta+J is still Focus Left's" test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
-click 1141 697                              # Apply
+click_named - Apply
 check "Apply: Focus Left (J) is Meta+Alt+J"  poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $MAJ 0 0 0"
 check "Apply: Focus Up (L) is Meta+Alt+E"    test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $MAE 0 0 0"
 check "the stand-in lost only Meta+Alt+E"    test "$(key_set fakeapp Launch)" == "$(printf '%s\n' $MAF $MSF11 | sort -n | tr '\n' ' ')"
@@ -99,8 +108,8 @@ check "make restore-keys gives it back"     test "$(keys_of fakeapp Launch)" == 
 # would hold it, and the stand-in's fires): Focus down's Meta+K to Meta+Alt+F, the record's
 # directory read-only.
 chmod 500 "$XDG_STATE_HOME/kwin-i3"
-click $KEY2_X 183; press Meta+Alt+F; sleep 0.5
-click 1141 697; sleep 1                     # Apply
+click_named Keys "Focus down, key 2: Meta+K"; press Meta+Alt+F; sleep 0.5
+click_named - Apply; sleep 1
 ERROR=218,68,83                             # Breeze's negative (error) colour
 shot keys-failed
 chmod 700 "$XDG_STATE_HOME/kwin-i3"
@@ -108,16 +117,18 @@ check "unrecorded: the stand-in keeps Meta+Alt+F" test "$(keys_of fakeapp Launch
 check "and Focus Down (K) keeps Meta+K"     test "$(keys_of kwin "kwin-i3 Focus Down (K)")" == "a(ai) 1 4 $((0x1000004B)) 0 0 0"
 check "the page says so"                    test "$(count_near keys-failed 0 76 1280 116 $ERROR)" -gt 200
 
-# 3. Back on the main page, at its top: a gap typed, and from the resize step Tab reaches the
-#    focus choice, where Down picks the next one. One Apply: both in kwinrc, one reload, and the
-#    gap on screen with no plugin loaded.
-click 22 51; sleep 0.5
-"$INJECT" "abs 1269 600" "wait 50" "btn left down" "wait 50" "abs 1269 300" "wait 50" "abs 1269 60" "wait 50" "btn left up" "wait 300"
+# 3. Back on the main page: a gap typed, and from the resize step Tab reaches the focus choice,
+#    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
+#    with no plugin loaded.
+click_named - "Navigate Back"; sleep 0.5
 shot main
-click 540 142; press Ctrl+A; press 8
-click 540 250; press Tab; press Down
+click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
+click_named kwin-i3 "Resize step"; press Tab
+# A combo box is named by its current choice (its label comes through labelled-by).
+check "Tab from the resize step reaches the focus choice" test "$($A11Y focused kcmshell6)" == "Next monitor, else wrap around"
+press Down
 shot main-set
-m=$(mark); click 1141 697                   # Apply
+m=$(mark); click_named - Apply
 check "kwinrc: gapsInner=8"                 poll conf_is gapsInner 8
 check "kwinrc: focusWrapping=no"            conf_is focusWrapping no
 check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*focusWrapping.*gapsInner|^.{9}SETTINGS .*gapsInner.*focusWrapping' "$m"
@@ -129,7 +140,7 @@ check "one reload for one Apply"            test "$(after "$m" | grep -c '^.\{9\
 #    defaults again, and the gap goes. The window is 8 px in now, so are its buttons. Last:
 #    this also clears the test KWin's debugLog, and with it kwin-i3's log.
 shot before-defaults
-click 148 689; click 1133 689               # Defaults, Apply
+click_named - Defaults; click_named - Apply
 check "gapsInner gone from kwinrc"          poll conf_is gapsInner ""
 check "focusWrapping gone"                  conf_is focusWrapping ""
 check "Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"

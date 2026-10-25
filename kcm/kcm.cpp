@@ -14,6 +14,8 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QDBusVariant>
 #include <QQmlEngine>
 #include <QTimer>
@@ -78,6 +80,32 @@ public:
         QTimer::singleShot(1000, this, &KWinI3Kcm::refresh);
     }
 
+    // A setting's default as main.xml has it: the Window Rules sub-page marks default entries.
+    Q_INVOKABLE QVariant defaultValue(const QString &key) const
+    {
+        const KConfigSkeletonItem *item = m_settings->findItem(key);
+        return item ? item->getDefault() : QVariant();
+    }
+
+    // Pick a Window (the Window Rules sub-page): KWin's interactive selection, as Window Rules'
+    // Detect Window Properties uses it (dbusinterface.cpp queryWindowInfo). The user clicks a
+    // window; its class, name, role and title come back, or nothing (Escape, or a window KWin
+    // doesn't manage).
+    Q_INVOKABLE void pickWindow()
+    {
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
+                                                  QStringLiteral("org.kde.KWin"), QStringLiteral("queryWindowInfo"));
+        auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg, -1), this);
+        connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *w) {
+            QDBusPendingReply<QVariantMap> reply = *w;
+            w->deleteLater();
+            if (reply.isError())
+                Q_EMIT windowPickFailed(reply.error().name());
+            else
+                Q_EMIT windowPicked(reply.value());
+        });
+    }
+
     Q_INVOKABLE void refresh()
     {
         auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
@@ -103,6 +131,8 @@ public:
 
 Q_SIGNALS:
     void stateChanged();
+    void windowPicked(const QVariantMap &info);
+    void windowPickFailed(const QString &error);
 
 private:
     bool isSaveNeeded() const override { return m_keys->isSaveNeeded(); }

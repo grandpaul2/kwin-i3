@@ -92,7 +92,23 @@ KCM.ScrollViewKCM {
                                 checkForConflictsAgainst: KQC.ShortcutType.None
                                 modifierlessAllowed: false
                                 multiKeyShortcutsAllowed: false
-                                Accessible.name: i18nc("command: key", "%1: key %2", row.label, slot.index + 1)
+                                // KDE's control names its own buttons by the key ("Meta+J", " None ")
+                                // and "Clear Key Sequence", alike in every row, so a screen reader
+                                // never heard the command (tests/live/75-settings-a11y.sh). Its
+                                // buttons are its children: record, clear, cancel (kdeclarative
+                                // 6.31 KeySequenceItem.qml); naming them belongs upstream.
+                                Component.onCompleted: {
+                                    const b = children;
+                                    if (b.length !== 3 || !b.every((c) => "checkable" in c)) {
+                                        console.warn("kwin-i3 keys: KeySequenceItem's buttons have changed; they keep KDE's names");
+                                        return;
+                                    }
+                                    const n = slot.index + 1;
+                                    b[0].Accessible.name = Qt.binding(() => i18nc("command, key slot, its key", "%1, key %2: %3",
+                                        row.label, n, slot.modelData.keyText || i18nc("no key set", "none")));
+                                    b[1].Accessible.name = i18nc("@action:button command, key slot", "Clear %1, key %2", row.label, n);
+                                    b[2].Accessible.name = i18nc("@action:button command, key slot", "Cancel recording %1, key %2", row.label, n);
+                                }
                                 QQC2.ToolTip.text: !slot.modelData.defaultText ? i18n("No default key")
                                     : slot.defaultKeysText ? i18n("Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText)
                                     : i18n("Default: %1", slot.modelData.defaultText)

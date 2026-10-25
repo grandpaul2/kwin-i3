@@ -2,7 +2,7 @@
 
 Requested by Paul, 2026-10-25: the page (`kcm/ui/main.qml`, `docs/spec-settings-page.md`) "a bit
 more accessible and better organized", the cleanup being general rather than a list of his own.
-Status: **draft, for Paul's go.** Nothing built.
+Status: **decisions 1-5 approved by Paul (2026-10-25), built**; see "As built" at the end.
 
 ## What it rests on
 
@@ -175,3 +175,39 @@ Units through `i18ncp` ("1 pixel" / "%1 px" as the translation needs); every str
 Cost: the page and two sub-pages in QML, the summaries and parsing in a small JS file with unit
 tests, the AT-SPI helper for the tests, and 37 rewritten. A second agent reviews the result before
 it goes live.
+
+## As built (2026-10-25)
+
+- `kcm/ui/main.qml` (sections Tiling, Workspaces, Frame, Window rules, Keys and
+  Troubleshooting), `Workspaces.qml`, `WindowRules.qml`; the string handling in `kcm/ui/settings.js`
+  (`tests/unit/kcm-settings.test.js`, main.xml's real defaults included). `kcm.cpp` gained
+  `defaultValue(key)` (default entries are marked) and `pickWindow()` (`queryWindowInfo`, no
+  D-Bus timeout: the user takes as long as they like to click).
+- **The audit's first red, on the old page**: four controls named "Color button", ten check boxes
+  named "1"-"10", five empty headings; on the Keys sub-page, 72 buttons named "Clear Key Sequence"
+  and 19 named " None ". The last two are KDE's `KeySequenceItem` naming its inner buttons by key;
+  `Keys.qml` names them per command and slot ("Focus left, key 2: Meta+J", "Clear Focus left,
+  key 2") by reaching its three child buttons, guarded (a warning and KDE's names if the structure
+  changes). The proper fix is upstream (deferred with the rest of upstream work).
+- `tools/a11y.py` and `a11y_start` (`tests/live/lib.sh`): an AT-SPI bus of the test's own, in the
+  test's runtime directory (a first probe put one in the live `$XDG_RUNTIME_DIR/at-spi/` beside
+  the session's; nothing broke, and the leftover socket was removed). Learned on the way: Qt marks
+  a control scrolled out of view as not visible, so the tool scrolls the page through its scroll
+  bar's value and counts what is visible at any point; a list view deletes rows it scrolls past,
+  so each control is recorded when first seen; Qt shows a window's tree twice (deduplicated by
+  object path); a combo box's own name is its current choice, its label coming through
+  labelled-by.
+- Tests: **75-settings-a11y** (audit and Tab walk of the main page and both new sub-pages, audit
+  of Keys, and the Keys buttons' names; passed, then removed from `make test` by Paul's call,
+  light tests in development: OPEN.md item 18), **37-settings-page** clicking by name (its pixel checks
+  stay on the header and the unchanged Keys rows), **76-settings-subpages** (monitors and Plasma
+  windows to kwinrc with an unconnected monitor kept; Pick a Window on a test client, Apply, a new
+  window of that class left alone; a default removed and brought back by Defaults).
+- In 76, an open combo box's list didn't take arrow keys from injected input, so the test steps a
+  closed combo box with Down. Whether a real keyboard has the same trouble is to be checked by hand.
+- The cog's form (`config.ui`): the page's order and wording; the "Atomic layout" and "Advanced"
+  headings are gone (Keys and Troubleshooting instead).
+- Known limits (second agent's review, 2026-10-25, not acted on: light tests in development):
+  after Remove on Window Rules the keyboard focus goes back to the page's start (the rows are
+  rebuilt from the settings); 76's Pick a Window waits a fixed second for KWin's selection to
+  start; an open combo box's list and arrow keys untested by hand.
