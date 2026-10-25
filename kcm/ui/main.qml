@@ -231,6 +231,7 @@ KCM.SimpleKCM {
         GridLayout {                            // two rows of five: the form keeps its width
             id: plasmaWorkspaces
             columns: 5
+            uniformCellWidths: true
             Kirigami.FormData.label: i18n("Workspaces:")
             // As the script parses it (src/settings.js, "workspaces"): whole numbers 1-10 only.
             readonly property var chosen: root.settings.floatingWorkspaces.split(",").map(s => s.trim()).filter(s => /^[0-9]+$/.test(s)).map(s => parseInt(s)).filter(n => n >= 1 && n <= 10)
@@ -239,7 +240,6 @@ KCM.SimpleKCM {
                 if (on) set.push(n);
                 root.settings.floatingWorkspaces = set.sort((a, b) => a - b).join(", ");
             }
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingWorkspaces" }
             Repeater {
                 model: 10
                 QQC2.CheckBox {
@@ -256,6 +256,8 @@ KCM.SimpleKCM {
             // The row's own label stays short: a long one here broke the label clicks of the
             // Layout section's fields (tests/live/37-settings-page.sh, 2026-10-24; cause not found).
             text: i18n("New windows on these workspaces open as Plasma windows: floating, with their own title bar; Meta+Shift+Space tiles one. A window keeps its mode when it moves to another workspace.")
+            // Out of the grid, which would give it a cell of its own (the first, pushing 1-4 right).
+            KCM.SettingStateBinding { target: plasmaWorkspaces; configObject: root.settings; settingName: "floatingWorkspaces" }
         }
 
         Item {
