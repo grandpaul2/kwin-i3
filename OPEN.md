@@ -25,12 +25,6 @@ kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 Work for now. An item whose remaining parts are partly deferred keeps its number in both sections.
 
-**10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
-drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
-`floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
-reviews `docs/review-window-modes-*.md`). Left: workspace 4's OBS was left at an odd size by the
-reloads (hidden then): watch it on first show. The rest is under Deferred.
-
 **11. The panel and notifications.** Plasma's default panel is back for good (2026-10-24;
 dotfiles' `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the
 pager (`docs/spec-workspace-widget.md`, `widget/`, `make widget-install`; working, Paul,
@@ -93,7 +87,10 @@ unloaded and loaded, a desktop removed or moved. 53-hold's other early failure, 
 `--notify` not taking (seen once, early 2026-10-24), has not recurred in ~15 full runs since;
 closed unless it comes back.
 
-**10. Window modes**, the rest:
+**10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
+drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
+`floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
+reviews `docs/review-window-modes-*.md`). Left:
 - test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
   (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`, a window
   added or closed in the 250 ms at load;
