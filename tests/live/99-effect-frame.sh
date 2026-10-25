@@ -57,11 +57,19 @@ client --title c --color blue --resize-delay 0.4
 check "a | c"                               wait_tree 1 "H[a c*]"
 sleep 1; capture
 echo "    before: $(row 360 638 639 640 641)"
-key "Move Left"; capture
+key "Grow Width"; capture
 echo "    mid-hold: $(row 360 638 639 640 641)"
 check "mid-hold: the old layout's frames (a's at 639, c's at 640)" eval 'pix 639 360 $INACT && pix 640 360 $ACT && pix 638 360 $RED'
 sleep 1; capture
 echo "    after: $(row 360 638 639 640 641)"
-check "after: the new layout's (c's at 639, a's at 640)" eval 'pix 639 360 $ACT && pix 640 360 $INACT && pix 641 360 $RED'
+check "after: c grown, its app where the frames were" eval 'pix 639 360 0,0,255 && pix 640 360 0,0,255'
+
+# Plain GTK 4 (the test client): KWin's bounds from its first configure, with the title bar,
+# kept it 28 px short of its tile; the bounds are asked for again once the border is gone.
+kclose c; kclose a; sleep 0.3
+client --title g --color blue
+check "g, plain GTK 4, fills its tile"      poll eval '[[ "$(fc g)" == "1,1 1278x718 client 1,1 1278x718" ]]' || echo "    g: $(fc g)"
+echo "    g now: $(fc g)"; grep -E "ADD g|BOUNDS|TRACE" "$KI3_LOG" | tail -8 | cut -c10- | cut -c1-200
+check "  (by the bounds, logged)"           wait_log '^.{9}BOUNDS g'
 check "no invariant failures or errors"     clean_log
 finish

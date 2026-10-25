@@ -85,6 +85,13 @@ var KI3 = (function () {
 
     // ---- scheduling ------------------------------------------------------------------------
 
+    function later(ms, fn) {
+        var tm = new QTimer();
+        tm.singleShot = true;
+        tm.interval = ms;
+        tm.timeout.connect(guard("later", fn));
+        tm.start();
+    }
     function kick() {
         if (!timer) {
             timer = new QTimer();
@@ -186,7 +193,7 @@ var KI3 = (function () {
         expected[id(w)] = tile;
         // The decoration goes only once the client has answered, after the tile's request, which
         // still counted it: watched until the frame shows the tile (as after a screens change).
-        if (!w.noBorder) { w.noBorder = true; armed[id(w)] = true; }
+        if (!w.noBorder) { w.noBorder = true; borderGone[id(w)] = true; }
         if (tile.manage(w)) return true;
         expected[id(w)] = null;
         refused = true;
@@ -467,6 +474,10 @@ var KI3 = (function () {
     // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
     // slow client's answer to the old one only doubled the request (53-hold, a closing window).
     var reconciling = false, armed = {}, lastFit = {};
+    // The border just went (manageInto): KWin told the client its bounds once, at its first
+    // configure, with the title bar, and GTK 4 keeps within them. A configure with no size makes
+    // KWin send them again (sendRoleConfigure); the tile's size follows in a configure of its own.
+    var borderGone = {};
     function armRefit() { for (var key in wins) armed[key] = true; }
     function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
     function settleDragArms(ws) {
@@ -480,6 +491,15 @@ var KI3 = (function () {
     }
     function refitOnFrameChange(w) {
         var key = id(w), t = expected[key];
+        if (borderGone[key] && !reconciling && t && w.tile === t) {
+            delete borderGone[key];
+            if (fits(w, t)) return;
+            var g = w.frameGeometry;
+            log("BOUNDS " + w.caption + ": short of its tile after the border went; bounds asked again");
+            w.frameGeometry = { x: g.x, y: g.y, width: 0, height: 0 };
+            later(5, function () { if (wins[key] && w.tile === t) w.frameGeometry = windowRect(t); });
+            return;
+        }
         if (!armed[key] || reconciling || !t || w.tile !== t) return;
         if (armed[key] === "pending") return;
         if (typeof armed[key] === "string" && armed[key] !== rectKey(windowRect(t))) { delete armed[key]; return; }
@@ -764,7 +784,7 @@ var KI3 = (function () {
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) setFloatingLook(w, false);
         model.close(key);
-        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete borderGone[key]; delete keptAbove[key]; delete placing[key];
         delete ruleKind[key];
         schedule(ws);
     }
