@@ -19,19 +19,22 @@ Flesh out what is there: more configurable and more reliable, so it works on a m
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
 `docs/plan.md`, "Scope". When the Stage ends, suggested order: 4, 5 (1, 3 and 7 are done; 7,
-kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
+kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`; 15, the panel
+configuration bug, fixed 2026-10-25: `docs/bug-panel-config.md`).
 
 ## Open
 
 Work for now.
 
-**15. "Show Panel Configuration" does nothing** (Paul, 2026-10-25; `docs/bug-panel-config.md`,
-the whole investigation). Traced: the menu closes, the keyboard goes back to the focused tile, and
-Plasma starts edit mode, then cancels it 3–28 ms later, before the configuration window exists.
-The likely cause: plasmashell leaves edit mode when none of its windows has the focus. Ruled out
-by test: the helper, kwin-i3's script and the input method. Unexplained: two untraced tries opened
-(03:43, 03:46). Next: the activation test in the doc (the desktop made active, then Paul tries),
-then a spec. Paul: fix it next session.
+**16. A tile hidden by Show Desktop activated in the first second after a load** (seen only in the
+test KWin, 2026-10-25, while fixing item 15; `docs/bug-panel-config.md`, "Left over"). With no frame
+effect, Show Desktop turned on within ~1 s of a kwin-i3 load goes off again: something activates
+the hidden tile. Traced far enough to rule out the passive pass (it asked KWin and stopped) and
+`setFrame`'s border work (the tile was active before the 1 s miss timer's handler ran); the
+activation had no JavaScript caller visible. Not Paul's case (live, the effect answers at once).
+Next: a trace of KWin's `Workspace::activateWindow` callers in that second (helper probe in a
+worktree), or won't-fix if it stays a load-time curiosity. 74-show-desktop waits for the load to
+settle (`FRAME` logged) meanwhile.
 
 ## Deferred (the Stage)
 

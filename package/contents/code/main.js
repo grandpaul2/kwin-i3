@@ -1220,7 +1220,7 @@ var KI3 = (function () {
     // _tree_next and workspace_show). Any other pass (a window closed, settings, monitors) moves
     // no pointer: a panel popup closing on the other monitor sent it to the focused window
     // although focus never moved (Paul, 2026-10-25; tests/live/72-pointer-stays.sh).
-    var focusPending = null; // { from: screen or null }
+    var focusPending = null; // { from: screen or null, checked: KWin said Show Desktop is off (applyFocus) }
 
     function id(w) { return String(w.internalId); }
 
@@ -1328,7 +1328,7 @@ var KI3 = (function () {
         if (ok) failures = 0; else retrySoon();
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place (i3ws learned this, 2026-10-21).
-        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from); }
+        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from, fp.checked); }
         rememberShown();
     }
     function wantFocus(from) {
@@ -2199,7 +2199,8 @@ var KI3 = (function () {
 
     // Make KWin show what the model has focused: its workspace on its monitor, the window
     // active; and the pointer follows when focus changed monitor (i3's mouse_warping output).
-    function applyFocus(from) {
+    // checked: this pass has KWin's answer that Show Desktop is off (below).
+    function applyFocus(from, checked) {
         var f = model.focused;
         if (!f) return;
         // A passive pass (no key action: a window closed, a reload, a monitor change) leaves an
@@ -2209,6 +2210,24 @@ var KI3 = (function () {
         // panel hold the focus only when nothing else does, so they don't count.
         var a = workspace.activeWindow;
         if (!from && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock) return;
+        // Except with Show Desktop on: then the desktop holds the focus on purpose (Plasma's edit
+        // mode turns it on as the panel's menu closes, and the menu closing is this pass), and
+        // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
+        // the edit mode before its window showed (docs/bug-panel-config.md). Scripts can't read
+        // the state, so a pass that finds the desktop (or the panel) active asks KWin, and a pass
+        // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
+        // window is left to focus on a monitor is also the desktop: that pass still brings the
+        // focus back (73-unmanaged-windows). The answer rides on focusPending, so it is the pass it
+        // brought that has it, however long a rebuild holds that pass (review).
+        if (!from && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
+            callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
+                     "showingDesktop", guard("showing desktop", function (showing) {
+                if (showing) return;
+                wantFocus();
+                focusPending.checked = true;
+            }));
+            return;
+        }
         var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
         if (workspace.currentDesktopForScreen(s) !== desk) {
             showOn(desk, s);
@@ -2220,7 +2239,7 @@ var KI3 = (function () {
         }
         if (f.type === "ws" || f.win === null) {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
-            // switchToOutput); an open popup is spared by the passive pass's check above, so this
+            // switchToOutput); an open popup is spared by the passive pass's first check above, so this
             // needs no guard of its own (a fault here alone changed nothing, 73-unmanaged-windows).
             if (workspace.activeScreen !== s) {
                 invoke("Switch to Screen " + workspace.screens.indexOf(s));

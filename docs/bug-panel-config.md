@@ -1,8 +1,37 @@
-# "Show Panel Configuration" does nothing (open, 2026-10-25)
+# "Show Panel Configuration" does nothing (fixed 2026-10-25)
 
 Paul, 2026-10-25: right-click the panel, choose "Show Panel Configuration", and nothing happens.
 Investigated live (read-only traces, then helper variants loaded with his OK, each try his own
-click). **Not fixed.** Next session: the activation test below, then a spec.
+click), then diagnosed from source and reproduced headlessly in a later session the same day.
+
+## Diagnosis and fix (2026-10-25, later session)
+
+**kwin-i3's passive focus pass.** Every window going away runs one (`forgetWindow` →
+`wantFocus`, a 0 ms timer; `src/kwin.js` applyFocus), the panel's context menu included. The pass
+treats an active *desktop* window as "nothing has the focus" and gives the focus back to the
+focused tile; right for KWin's last resort when no window is left to focus on a monitor
+(73-unmanaged-windows). Plasma turns Show Desktop on for its edit mode as the menu closes (below),
+and KWin focuses the desktop; the pass then activates the tile Show Desktop hid, and KWin's
+`activateWindow` turns Show Desktop off for a hidden window (`activation.cpp`). Plasma leaves edit
+mode on that, and the configuration window hides and deletes itself before it ever mapped. The
+3–28 ms is the timer plus KWin's round trips; the two successes were the pass running before
+plasmashell's request reached KWin, when the tile was still the active window and the pass did
+nothing. The Qt reading below is withdrawn.
+
+**Fix.** A passive pass that finds a desktop window active asks KWin whether Show Desktop is on
+(`org.kde.KWin` property `showingDesktop` over D-Bus; scripts can't read it) and goes on only if
+it is off. Key actions are untouched. **Test:** `tests/live/74-show-desktop.sh`, red on the old
+code in the two cases that matter (a popup closing, a tile closing, each with Show Desktop on;
+case 2 is Plasma's order ten times and passes either way, the pass winning the race in the test
+KWin). Learned on the way: KWin's D-Bus `showDesktop(bool)` lasts only while the caller stays on
+the bus (`dbusinterface.cpp` watches the service), so the test toggles the Show Desktop shortcut.
+
+**Left over (OPEN.md):** in the test KWin, Show Desktop turned on within the first second after a
+kwin-i3 load, with no frame effect, is turned off again by an activation of the tile that is not
+the pass (traced: the pass asked and stopped; the activation came with no JavaScript caller
+visible, in the same millisecond as the frame check's 1 s miss timer, before that timer's
+handler ran). The test waits for the load to settle. Not Paul's case: live, the effect answers
+at once, and a reload is a deliberate act.
 
 ## What happens (traced, three tries in a row at 03:54, all failing)
 
@@ -69,7 +98,7 @@ no input method. The two successes were not traced, so what differed is unknown.
 "you had it working a minute ago. please do not just move on from that." The leading guess:
 which window had the focus when the menu closed (a Plasma window then, not a tile).
 
-## Second look (2026-10-25, later session; sources read, nothing run)
+## Second look (2026-10-25, later session; sources read before the reproduction above)
 
 Read for the installed versions: plasma-workspace 6.7.5 (`shell/shellcorona.cpp`, `panelview.cpp`,
 `panelconfigview.cpp`), libplasma 6.7.5, plasma-desktop 6.7.5 (the installed QML under
@@ -103,7 +132,7 @@ Read for the installed versions: plasma-workspace 6.7.5 (`shell/shellcorona.cpp`
   plasmashell restart), or the activation test below (a plasmashell window focused when the menu
   closes should make it work every time).
 
-## Next session
+## Next session (as planned before the diagnosis; kept for the record, none of it needed)
 
 1. **The activation test** (proposed, not run): make the desktop window KWin's active window with
    one KWin script call (Alacritty's frame turns inactive, nothing else changes). Paul then
