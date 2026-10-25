@@ -74,8 +74,8 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     - workspace 4's OBS was left at an odd size by the reloads (hidden then): watch it on first show.
 11. **The panel and notifications.** Plasma's default panel is back for good (2026-10-24; dotfiles'
     `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the pager.
-    Notifications are Plasma's since 2026-10-25 (`docs/spec-notifications.md`; dunst removed).
-    Tiles leave room for it. Left:
+    Tiles leave room for it. Notifications are Plasma's since 2026-10-25
+    (`docs/spec-notifications.md`; dunst removed). Left:
     - **The workspace widget** built and installed 2026-10-24 (`docs/spec-workspace-widget.md`,
       `widget/`, `make widget-install`; reviewed; unit + live tests); on Paul's panel in place of the
       pager, working (Paul, 2026-10-24). Left: a scroll test (tools/ei-send can't scroll), vertical
