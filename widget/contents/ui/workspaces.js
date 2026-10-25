@@ -63,12 +63,16 @@ function workspaces(d) {
     return out;
 }
 
-// The workspace a scroll goes to (decision 5): the next or previous one in use, from the focused
-// one (else the first shown), wrapping as i3bar does. null with nothing to go to.
-function step(list, dir) {
+// The workspace a scroll goes to (decision 5): the next or previous one in use, from `from` (the
+// one a scroll asked for before the widget heard back), else the focused one, else the first
+// shown, wrapping as i3bar does. null with nothing to go to.
+// (An empty workspace on the focused monitor isn't known as focused: Plasma's task data knows
+// focus only through windows. Then the first shown one is the start.)
+function step(list, dir, from) {
     if (!list.length) return null;
     var at = -1;
-    for (var i = 0; i < list.length; i++) if (list[i].focused) at = i;
+    if (from) for (var k = 0; k < list.length; k++) if (list[k].num === from) at = k;
+    if (at < 0) for (var i = 0; i < list.length; i++) if (list[i].focused) at = i;
     if (at < 0) for (var j = 0; j < list.length; j++) if (list[j].shown) { at = j; break; }
     if (at < 0) return list[0].num;
     return list[(at + (dir > 0 ? 1 : list.length - 1)) % list.length].num;

@@ -5,6 +5,7 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     property alias cfg_numbersOnly: numbersOnly.checked
+    property bool cfg_numbersOnlyDefault: false
     Kirigami.FormLayout {
         QQC2.CheckBox {
             id: numbersOnly

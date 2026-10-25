@@ -18,6 +18,9 @@ PlasmoidItem {
     readonly property bool vertical: Plasmoid.formFactor === PlasmaCore.Types.Vertical
     readonly property bool numbersOnly: Plasmoid.configuration.numbersOnly
     property var spaces: []
+    property string spacesJson: ""
+    property int pending: 0                 // the workspace a scroll last asked for, until the next gather
+    property real wheelRest: 0              // angleDelta not yet a whole step (a touchpad's small ones)
 
     TaskManager.VirtualDesktopInfo { id: desktops }
     TaskManager.TasksModel {
@@ -39,6 +42,7 @@ PlasmoidItem {
         for (let i = 0; i < tasks.count; i++) {
             if (!role(i, R.IsWindow)) continue;
             const g = role(i, R.Geometry);
+            if (!g || g.width === undefined) continue;          // a window not placed yet
             windows.push({
                 desktops: (role(i, R.VirtualDesktops) || []).map(String),
                 onAll: !!role(i, R.IsOnAllVirtualDesktops),
@@ -48,15 +52,23 @@ PlasmoidItem {
         }
         const ids = desktops.desktopIds.map(String);
         Object.keys(shown).forEach(k => shown[k] = String(shown[k]));
-        root.spaces = Logic.workspaces({ desktops: ids, names: desktops.desktopNames, screens: screens, shown: shown, windows: windows });
+        const next = Logic.workspaces({ desktops: ids, names: desktops.desktopNames, screens: screens, shown: shown, windows: windows });
+        // Only a real change rebuilds the thumbnails (a title or icon change would recreate every
+        // delegate, and a click landing mid-rebuild would be lost: review of the widget, 2).
+        const json = JSON.stringify(next);
+        if (json === root.spacesJson) return;
+        root.spacesJson = json;
+        root.spaces = next;
+        root.pending = 0;
         // For tests/live/67-workspace-widget.sh (QT_LOGGING_RULES="qml.debug=true"); silent otherwise.
-        console.debug("kwin-i3 workspaces: " + JSON.stringify(root.spaces.map(s => [s.num, s.screen, s.width, s.height, s.windows.length, s.shown, s.focused])));
+        console.debug("kwin-i3 workspaces: " + JSON.stringify(next.map(s => [s.num, s.screen, s.width, s.height, s.windows.length, s.shown, s.focused])));
     }
     Timer { id: refresh; interval: 30; onTriggered: root.gather() }
     Connections { target: desktops; function onDesktopIdsChanged() { refresh.restart(); } function onCurrentDesktopChanged() { refresh.restart(); }
                   function onCurrentDesktopForScreenChanged() { refresh.restart(); } function onDesktopNamesChanged() { refresh.restart(); } }
     Connections { target: tasks; function onDataChanged() { refresh.restart(); } function onRowsInserted() { refresh.restart(); }
                   function onRowsRemoved() { refresh.restart(); } function onModelReset() { refresh.restart(); } }
+    Connections { target: Qt.application; function onScreensChanged() { refresh.restart(); } }
     Component.onCompleted: gather()
 
     // kwin-i3's "Workspace N" (Meta+N), so the widget and the key do the same (decision: spec).
@@ -82,10 +94,18 @@ PlasmoidItem {
         // The thumbnail's short side: the panel's thickness.
         readonly property real thickness: root.vertical ? root.width : root.height
 
+        // One workspace per wheel notch (120), a touchpad's small deltas added up; steps taken
+        // before kwin-i3's answer reaches the widget go on from the one last asked for (review, 1).
         WheelHandler {
             onWheel: (event) => {
-                const n = Logic.step(root.spaces, event.angleDelta.y < 0 || event.angleDelta.x < 0 ? 1 : -1);
-                if (n !== null) root.show(n);
+                const d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
+                root.wheelRest += d;
+                while (Math.abs(root.wheelRest) >= 120) {
+                    const dir = root.wheelRest < 0 ? 1 : -1;
+                    root.wheelRest += dir * 120;
+                    const n = Logic.step(root.spaces, dir, root.pending);
+                    if (n !== null) { root.pending = n; root.show(n); }
+                }
             }
         }
 
@@ -95,7 +115,7 @@ PlasmoidItem {
                 id: space
                 required property var modelData
                 readonly property real aspect: root.numbersOnly ? 1 : modelData.width / modelData.height
-                Layout.preferredHeight: root.vertical ? width / aspect : row.thickness
+                Layout.preferredHeight: root.vertical ? row.thickness / aspect : row.thickness
                 Layout.preferredWidth: root.vertical ? row.thickness : row.thickness * aspect
                 radius: 2
                 color: modelData.focused ? Qt.alpha(Kirigami.Theme.highlightColor, 0.55)
@@ -125,8 +145,19 @@ PlasmoidItem {
                     font.pixelSize: Math.max(8, Math.min(space.height, space.width) * 0.5)
                 }
                 MouseArea {
+                    id: area
                     anchors.fill: parent
+                    hoverEnabled: true
                     onClicked: root.show(space.modelData.num)
+                    Accessible.role: Accessible.Button
+                    Accessible.name: i18n("Workspace %1", space.modelData.num)
+                    Accessible.onPressAction: root.show(space.modelData.num)
+                }
+                PlasmaCore.ToolTipArea {
+                    anchors.fill: parent
+                    mainText: i18n("Workspace %1", space.modelData.num)
+                    subText: space.modelData.focused ? i18n("Shown, with the focus")
+                           : space.modelData.shown ? i18n("Shown on its monitor") : ""
                 }
             }
         }

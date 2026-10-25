@@ -67,4 +67,9 @@ test("scroll: next and previous in use from the focused one, wrapping", () => {
     assert.strictEqual(W.step([{ num: 2, shown: true, focused: true }, { num: 4 }], 1), 4);
     assert.strictEqual(W.step([{ num: 4, shown: false, focused: true }, { num: 9 }], 1), 9);
     assert.strictEqual(W.step([], 1), null);
+    // Steps before the answer: from the one last asked for (three quick notches: three steps).
+    assert.strictEqual(W.step(l, 1, 7), 1);
+    assert.strictEqual(W.step(l, 1, 1), 3);
+    // No window focused: from the first shown one.
+    assert.strictEqual(W.step([{ num: 2, shown: false }, { num: 5, shown: true, focused: false }, { num: 6 }], 1), 6);
 });
