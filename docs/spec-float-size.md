@@ -31,8 +31,21 @@ KWin records the frame it has, the tiled one, as the restore. The most ordinary 
 (Meta+Shift+N), so it is hit often.
 
 Not ours, and unchanged by this: an app that saved its size while tiled (KDE apps, through
-`KWindowConfig::saveWindowSize`, skip only when maximized) opens asking for that size next
-session, and that is its untiled size as far as anyone knows. i3 is the same.
+`KWindowConfig::saveWindowSize`, skip only when maximized) opens asking for that size at its next
+opening, and that is its untiled size as far as anyone knows. The record is per window, as in i3,
+so it can't carry a size from one window of an app to the next.
+
+Seen live right after this went in (Paul, 2026-10-25): System Settings opened small on a Plasma
+workspace, was opened and closed tiled on another, and then opened on the Plasma workspace at the
+tiled size: its `~/.local/state/systemsettingsstaterc` held 1278x1398 for "2 screens", written
+at the tiled close. i3 does the same; its per-app answer is a `for_window` line the user writes
+(`floating enable, resize set W H, move position center`). kwin-i3's rules cover its "floating
+enable" (`floatingClass`, `floatingTitle`); for the size, **Plasma's window rules** (Size and
+Position, "Apply Initially") are the equivalent, applied by KWin before the window shows (a
+script would get it after, and resize it visibly). Not duplicated in kwin-i3. **For the README
+pass** (OPEN.md item 4): say so, with the steps. Before it is written, check in the test KWin that
+an "Apply Initially" size rule leaves tiling alone on an i3 workspace (untested; "Force" would
+fight the tiles).
 
 ## What i3 does (`src/manage.c`, `src/floating.c`)
 

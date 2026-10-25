@@ -63,7 +63,11 @@ Left:
   `# focus: mouse`, assume it);
 - **the README pass**: install read as a stranger on a stock Plasma, the settings page
   (`make kcm-install`) included. It must cover: a package linked while KWin runs can't be turned
-  on until the next login (KPackage's cache, `docs/spec-settings-page.md`).
+  on until the next login (KPackage's cache, `docs/spec-settings-page.md`); and an app's floating
+  size: a floated window comes back at the size it opened with, but an app that last closed tiled
+  opens at that tiled size, as in i3. The fix is a Plasma window rule (Size/Position, "Apply
+  Initially"), i3's `for_window` resize done through Plasma: README steps, after a test-KWin check
+  that such a rule leaves tiling alone (`docs/spec-float-size.md`).
 
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
