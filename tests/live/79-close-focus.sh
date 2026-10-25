@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# needs: plugin
+# Closing the focused window focuses the one used before it, as i3 (con_next_focused, con.c:1651).
+# Paul, 2026-10-25 ("whenever I close a window, the focus always moves to the most left window"),
+# his capture at 17:28: H[A V[A A*]], the pointer over the left one and back (focus follows
+# mouse: both activated), Meta+Shift+Q: KWin activates the left one, the most recent in its
+# one-list focus chain (focuschain.cpp:252), and kwin-i3 followed. i3 looks in the closed
+# window's own container first: the one above.
+source "$(dirname "$0")/lib.sh"
+active() { kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")'; }
+active_is() { [[ "$(active)" == "$1" ]]; }
+term() { alacritty --title "$1" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
+load_kwin_i3
+wait_log 'kwin-i3 loaded$'
+term a; term b; term c
+check "a | b | c"                           wait_tree 1 "H[a b c*]"
+point 1100 360
+key "Close"
+check "c closed: b"                         wait_tree 1 "H[a b*]"
+key "Split V"
+term d
+check "a | V[b d]"                          wait_tree 1 "H[a V[b d*]]"
+point 960 540; sleep 0.2; point 300 360; sleep 0.3; point 960 540   # over a and back to d
+check "d focused again, a used before it"   poll active_is d
+m=$(mark); key "Close"; sleep 0.5
+echo "    after closing d: tree $(tree 1)  KWin active $(active)"; after "$m" | grep -E "CLOSE|ACTIVE" | cut -c10- | sed "s/^/      /"
+check "closing d focuses b, the one above"  wait_tree 1 "H[a V[b*]]"
+check "  and KWin agrees"                   poll active_is b
+check "no invariant failures or errors"     clean_log
+finish

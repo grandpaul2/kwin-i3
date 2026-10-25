@@ -933,17 +933,15 @@ var KI3 = (function () {
         if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
         var wasFocused = model.focused === con;
         model.close(key);
-        // The tree's focus after a close, for a capture to set beside the ACTIVE lines (Paul,
-        // 2026-10-25: focus went to the leftmost window after a close, on his desktop only).
-        // "chose": the tree picked it; "kept": KWin had activated another window first.
+        // The tree's focus after a close, for a capture to set beside the ACTIVE lines: "chose",
+        // the tree picked it; "kept", KWin had activated another window first (forgetWindow then
+        // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete ruleKind[key]; delete untiled[key];
         schedule(ws);
     }
-    // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
-    // still on screen and probably in use, so dropWindow alone doesn't move focus).
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
     function conCaption(c) {
         if (!c) return "none";
@@ -951,7 +949,31 @@ var KI3 = (function () {
         return wins[c.win] ? shortCaption(wins[c.win]) : "?";
     }
 
-    function forgetWindow(w) { dropWindow(w); wantFocus(); }
+    // i3's next focus for a focused window that is closing, recorded at its `closed` signal: KWin
+    // then activates its own choice (activateNextWindow, before windowRemoved: workspace.cpp:957),
+    // the most recent window in its one-list focus chain (focuschain.cpp:252), and the tree
+    // follows that activation. i3 looks in the closed window's own container first
+    // (con_next_focused, con.c:1663): with focus following the mouse the two differ as soon as
+    // the pointer has crossed another window (Paul, 2026-10-25, tests/live/79-close-focus.sh).
+    // Only there: a tiled window in a split with another window left. At a workspace's top level
+    // and for floating windows i3 takes the workspace's focus order, recency as KWin's chain is,
+    // and KWin's knows more (activations before kwin-i3 adopted a window, or before a reload;
+    // 20-rules and 25-settings went wrong when the tree's choice was taken there too).
+    var closingNext = {};   // window id -> con
+
+    // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
+    // still on screen and probably in use, so dropWindow alone doesn't move focus): i3's choice
+    // if one was recorded and is still there, over KWin's.
+    function forgetWindow(w) {
+        var key = id(w), next = closingNext[key];
+        delete closingNext[key];
+        dropWindow(w);
+        if (next && (next.win === null ? next.type === "ws" : model.byWin[next.win] === next) && model.focused !== next) {
+            log("CLOSE " + shortCaption(w) + " i3's choice over KWin's: " + conCaption(next));
+            model.activate(next);
+        }
+        wantFocus();
+    }
 
     // reclassify: the rules act when their verdict changes (ruleKind, declared at the top), never
     // because it differs from what Paul set by hand: a window floated with Meta+Shift+Space used
@@ -981,6 +1003,12 @@ var KI3 = (function () {
         if (connected[key]) return;
         connected[key] = true;
         var dragging = false;
+        // Before KWin activates its choice (closingNext, above).
+        w.closed.connect(guard("closed", function () {
+            var con = model.byWin[key], parent = con && con.parent;
+            if (con && model.focused === con && con.type !== "floating" && parent && parent.type !== "ws"
+                && parent.nodes.length > 1) closingNext[key] = model.nextFocused(con);
+        }));
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
         w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
