@@ -36,14 +36,19 @@ check "b c in workspace 2, side by side"    poll eval '[[ "$(tree 2 "$m")" == "H
 check "the monitors show different desktops" poll distinct
 check "windows on their workspaces' desktops" poll eval '[[ "$(on_desk)" == "b=2 c=2 f=2 " ]]'
 
-# 2. Two removals back to back (two pager clicks): both followed, nothing stale.
+# 2. Two changes back to back (two pager actions), the second while the first rebuild waits for
+#    the effect's answer (250 ms here, no plugins): the first rebuild has adopted the tiled
+#    windows by the positions after the first change. Desktop 1 removed (b c f: 2 -> 1), then one
+#    inserted at the front (b c f: 1 -> 2): a stale rebuild would leave f apart from b and c
+#    (the review's finding 2).
 m=$(mark)
-n=$(kjs 'log(workspace.desktops.length)')
-rm_desk 5; rm_desk 4
-check "two desktops fewer"                  poll eval '[[ "$(kjs "log(workspace.desktops.length)")" == $((n - 2)) ]]'
+rm_desk 1
+wait_log '^.{9}DESKTOPS removed or moved' "$m"; sleep 0.08
+kjs 'workspace.createDesktop(0, "front");' >/dev/null
 check "rebuilt"                             wait_log '^.{9}DESKTOPS adopted again' "$m"
 sleep 0.5
-check "b c f still on workspace 2's desktop" eval '[[ "$(on_desk)" == "b=2 c=2 f=2 " ]]'
+check "b c f together on workspace 2"       poll eval '[[ "$(tree 2)" == "H[b c"*"~f"* ]]'
+check "  on its desktop"                    eval '[[ "$(on_desk)" == "b=2 c=2 f=2 " ]]'
 check "the monitors show different desktops" distinct
 
 # 3. A desktop inserted in the middle (position 1): workspace 2 becomes 3, with everything.
