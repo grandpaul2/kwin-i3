@@ -11,7 +11,7 @@ Last reconciled: **2026-10-24** (late).
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". Suggested order: 4, 9, 8, 6, 5 (1, 3 and 7 are done; 7, kwin-i3's own
+`docs/plan.md`, "Scope". Suggested order: 4, 9, 5 (1, 3 and 7 are done; 7, kwin-i3's own
 settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 ## Open
@@ -46,11 +46,6 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    minor `src/` change): the next campaign covers it.
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
    2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
-6. **The desktop list changing mid-session.** kwin-i3 doesn't watch `workspace.desktopsChanged`:
-   removing or reordering a desktop in System Settings renumbers KWin's desktops under the model
-   (workspace 4's windows are on what is now desktop 3); appending is harmless. Found 2026-10-24
-   (`docs/spec-desktops-on-demand.md`). Next: choose between re-adopting every window on a removal
-   or move (as a reload does), and a README line; then a live scenario for it.
 9. **Non-US keyboard layouts and the workspace move keys.** Meta+Shift+digit arrives as
    Meta+<the symbol Shift+digit types>, and kwin-i3 registers the US symbols (Meta+!, Meta+@, ...).
    On a German layout Shift+2 types `"`, so Meta+Shift+2 matches nothing and moving a window to
