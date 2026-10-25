@@ -43,7 +43,8 @@ passed).
    (`unusedWorkspace`). Windows opened while it was off stay on the workspaces they joined.
 3. **No setting to silence it.** Unlike a key given away on purpose, there's no reason to want
    this off with two monitors, and the notice comes only when the condition holds.
-4. **The report's wording with two parts**: summary "kwin-i3: 2 things to fix in this setup",
+4. **The report's wording with two parts**: summary "kwin-i3: 2 things to fix in this setup" (since 2026-10-25 without "kwin-i3: ", and
+   with an icon: Plasma heads the popup with both),
    each part's title and lines in turn (already in `reportClose`).
 5. **README**, install step 2: the setting by its Plasma name, required with 2+ monitors, and
    kwin-i3 says so if it's off.

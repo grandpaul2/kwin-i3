@@ -7,7 +7,7 @@ dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 class N(dbus.service.Object):
     @dbus.service.method("org.freedesktop.Notifications", in_signature="susssasa{sv}i", out_signature="u")
     def Notify(self, app, rid, icon, summary, body, actions, hints, timeout):
-        print("NOTIFY", repr(str(app)), repr(str(summary)), repr(str(body)), list(map(str, actions)), dict(hints), int(timeout), flush=True)
+        print("NOTIFY", repr(str(app)), repr(str(icon)), repr(str(summary)), repr(str(body)), list(map(str, actions)), dict(hints), int(timeout), flush=True)
         return 7
     @dbus.service.method("org.freedesktop.Notifications", out_signature="as")
     def GetCapabilities(self): return ["body"]

@@ -33,6 +33,7 @@ check "one notification"                    poll notes_are 1
 taken=$(grep -E '^.{9}TAKEN [^c]' "$KI3_LOG" | cut -c16- | cut -d: -f1 | sort | tr '\n' ' ')
 check "it names Meta+E and Meta+Left: '$taken'" test "$taken" == "Meta+E Meta+Left "
 check "the notice says so"                  grep -q "Meta+Left: Quick Tile Window to the Left (KWin)" "$KI3_TMP/notify.out"
+check "app, icon, summary (Plasma shows the app name: no prefix)" grep -qE "^NOTIFY 'kwin-i3' 'view-split-left-right' '[0-9]+ keys? (is|are) taken by other shortcuts'" "$KI3_TMP/notify.out"
 check "Meta+H's holder is inactive: logged, not reported" wait_log '^.{9}TAKEN-INACTIVE Meta\+H: Launch Ghost App'
 check "the stand-in app is active"          test "$(busctl --user call org.kde.kglobalaccel /component/fakeapp org.kde.kglobalaccel.Component isActive)" == "b true"
 

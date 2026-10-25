@@ -2369,13 +2369,15 @@ var KI3 = (function () {
         if (--report.open > 0 || !report.parts.length) return;
         var parts = report.parts;
         report.parts = [];
-        var summary = "kwin-i3: " + (parts.length === 1 ? parts[0].title : parts.length + " things to fix in this setup");
-        if (parts.length > 1) parts.forEach(function (p) { p.title = p.title.charAt(0).toUpperCase() + p.title.slice(1) + ":"; });
+        // No "kwin-i3:" in the summary: Plasma heads the popup with the app name and icon.
+        function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+        var summary = parts.length === 1 ? cap(parts[0].title) : parts.length + " things to fix in this setup";
+        if (parts.length > 1) parts.forEach(function (p) { p.title = cap(p.title) + ":"; });
         var body = parts.map(function (p) {
             return (parts.length > 1 ? p.title + "\n" : "") + p.lines.join("\n");
         }).join("\n\n");
         callDBus("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
-                 "org.freedesktop.Notifications", "Notify", "kwin-i3", 0, "", summary, body, [], {}, -1);
+                 "org.freedesktop.Notifications", "Notify", "kwin-i3", 0, "view-split-left-right", summary, body, [], {}, -1);   // the settings page's icon
         log("REPORT " + summary);
     }
 
@@ -2400,7 +2402,8 @@ var KI3 = (function () {
                 log("TAKEN checked " + mine.length + " keys, " + taken.length + " taken");
                 if (taken.length) taken.push("Free them in System Settings > Shortcuts, or run `make take-keys` " +
                                              "in kwin-i3's folder. Turn this notice off in kwin-i3's settings.");
-                reportClose((taken.length - 1) + " of its keys are taken by other shortcuts", taken);
+                var n = taken.length - 1;
+                reportClose(n + (n === 1 ? " key is" : " keys are") + " taken by other shortcuts", taken);
             }
             if (!left) { done(); return; }
             mine.forEach(function (k) {
