@@ -1,6 +1,9 @@
 # Spec: Plasma's notifications in place of dunst (OPEN.md item 11)
 
-Paul's go 2026-10-25; the dotfiles side done the same day. The live switch (8-10) waits for its own go. The change is all in `~/.dotfiles`; kwin-i3's code is untouched.
+Paul's go 2026-10-25; built and switched live the same day. Checks passed: plasmashell owns the
+name (health check green), `notify-send` returns at once, `audio-toggle`'s popup is replaced by id,
+Meta+N registered as "Activate Notifications Widget". One fix on the way: the scripting loop over
+the tray's groups must copy `configGroups`, which follows `currentConfigGroup`. The change is all in `~/.dotfiles`; kwin-i3's code is untouched.
 It lives here because item 11 does.
 
 ## Why
