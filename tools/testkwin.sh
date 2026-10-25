@@ -113,7 +113,11 @@ $meta
 [Script-kwin-i3]
 debugLog=true
 floatingTitle=STAGE (streamed)
+gapsInner=0
+gapsOuter=0
 RC
+# Gaps pinned at 0, kwin-i3's default until 2026-10-25 (now 5 and 3): the scenarios' geometry is
+# written for no gaps. 26-gaps deletes the keys to check the defaults.
 # The decoration is Breeze, KWin's default; with the plugins the effect draws the frame around
 # tiled windows (docs/spec-window-modes.md).
 # The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);

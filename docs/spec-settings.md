@@ -67,8 +67,8 @@ existing setup keeps working; the README documents the new keys only.
 
 | key | type, default | i3 | where |
 |---|---|---|---|
-| `gapsInner` | px, 0 | `gaps inner` | script: every tile's padding |
-| `gapsOuter` | px, 0 | `gaps outer` | script: the root's inset, outer + inner/2 per side |
+| `gapsInner` | px, 5 (0 until 2026-10-25) | `gaps inner` | script: every tile's padding |
+| `gapsOuter` | px, 3 (0 until 2026-10-25) | `gaps outer` | script: the root's inset, outer + inner/2 per side |
 | `resizeStep` | %, 10 (1-50) | `resize ... 10 ppt` | script: `model.resize` |
 | `defaultOrientation` | auto / horizontal / vertical, auto | `default_orientation` | script: `wsModel` |
 | `focusWrapping` | yes / no / force / workspace, yes | `focus_wrapping` | model: `focusDir` |

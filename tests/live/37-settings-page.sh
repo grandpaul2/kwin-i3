@@ -145,6 +145,6 @@ check "gapsInner gone from kwinrc"          poll conf_is gapsInner ""
 check "focusWrapping gone"                  conf_is focusWrapping ""
 check "Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
 check "Focus Up (L) is Meta+L again"        test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $((0x1000004C)) 0 0 0"
-check "no gap"                              wait_geom kwin-i3 "0,0 1280x720"
+check "the default gap (5, 3 more at the edge)" wait_geom kwin-i3 "8,8 1264x704"
 check "no invariant failures or errors"     clean_log
 finish

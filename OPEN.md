@@ -89,8 +89,11 @@ layout keys), and the fuzzer needs updating first: its I4 "no hole" check must a
 or stale frames, and new actions: a workspace of Plasma windows, `frameOnFloating`, the effect
 unloaded and loaded, a desktop removed or moved. 53-hold's other early failure, the kill switch's
 `--notify` not taking (seen once, early 2026-10-24), has not recurred in ~15 full runs since;
-closed unless it comes back. Likewise 39-layout-notice: 5 checks failed once in a full batch
-(2026-10-25), passed alone twice and in the next full run; closed unless it comes back.
+closed unless it comes back. **39-layout-notice came back**: the same 5 checks ("de: logged as
+not fitted", the notification's) failed in a full batch twice on 2026-10-25, passing alone each
+time and in the runs between. A batch-load race in its notification checks, not traced. Next:
+its log around "not fitted" from a failing batch run (keep the run's output), with the
+reliability work.
 
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;

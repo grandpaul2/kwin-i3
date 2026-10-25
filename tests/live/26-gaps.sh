@@ -50,6 +50,24 @@ check "the root is whole again, padding 0"  poll root_is 1 "0.000,0.000,1.000,1.
 check "same tree"                           _tree_is 1 "H[a V[b c*]]" "$m"
 check "nothing added or dropped"            bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -qE '^.{9}(ADD|FLOAT) '"
 
+# 4b. The defaults (5 between, 3 more at the edge, since 2026-10-25; testkwin.sh pins 0): with
+#     the keys gone, the layout is the one 5 and 3 written out give.
+set_key gapsInner 5; set_key gapsOuter 3
+reload_settings
+want_a=$(geom a); want_c=$(geom c); echo "    5 and 3: a $want_a  c $want_c"
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsInner --delete
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsOuter --delete
+set_key gapsInner 0; set_key gapsOuter 0; reload_settings
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsInner --delete
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsOuter --delete
+reload_settings
+check "defaults: a as with 5 and 3 ($want_a)" geom_is a "$want_a"
+check "defaults: c likewise"                geom_is c "$want_c"
+check "  (not the no-gap layout)"           test "$want_a" != "0,0 640x720"
+set_key gapsInner 0; set_key gapsOuter 0
+reload_settings
+check "no gaps again"                       geom_is a "0,0 640x720"
+
 # 5. An odd inner gap (half pixels): within a pixel of i3's numbers. inner 5, outer 0: the edge
 #    is 5, between is 5.
 set_key gapsInner 5

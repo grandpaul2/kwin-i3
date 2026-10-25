@@ -40,8 +40,8 @@ var Settings = (function () {
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
-        gapsInner: { type: "int", def: "0", min: 0, max: 100 },                 // px between windows
-        gapsOuter: { type: "int", def: "0", min: 0, max: 200 },                 // px more at the screen edge
+        gapsInner: { type: "int", def: "5", min: 0, max: 100 },                 // px between windows
+        gapsOuter: { type: "int", def: "3", min: 0, max: 200 },                 // px more at the screen edge
         // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the form has them.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
