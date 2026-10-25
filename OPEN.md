@@ -89,11 +89,6 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       2026-10-25): the dotfiles side done. Next: the live switch (spec steps 8-10: remove dunst,
       `setup.sh`, restart plasmashell), on its own go, then the spec's checks.
 
-12. **`make plugin` leaves stale outputs.** `plugin/build/bin` keeps the files of a plugin renamed
-    or retired (`kwini3mouse.so` was still loaded by every test KWin until 2026-10-24;
-    `org.kde.kdecoration3/kwini3frame.so` is there now, harmless: nothing selects it). Next: have
-    `make plugin` remove any plugin file it didn't build; spec it like any change.
-
 13. **Workspace commands** (`docs/spec-workspace-commands.md`: back-and-forth, next/prev, the
     output moves, names in the widget), live 2026-10-25, unbound as in i3. Left (deferred with
     reliability, the Stage): live tests for the source monitor's lowest-with-windows fallback, the
