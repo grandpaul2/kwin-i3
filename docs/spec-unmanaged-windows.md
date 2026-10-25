@@ -47,10 +47,10 @@ closing meanwhile, an empty workspace focused with a desktop window there, a mon
 kwin-i3); each compares the focus, the pointer and what each monitor shows before and after. Red
 before the change (6 checks); each change watched red alone under a fault.
 
-## Left (OPEN.md item 14)
+## Left from the audit (closed 2026-10-25)
 
-From the audit, not changed: an unmanaged window quick-tiled into kwin-i3's tiles loses its tile
-(very rare).
+From the audit, won't-fix unless seen (Paul, 2026-10-25): an unmanaged window quick-tiled into
+kwin-i3's tiles loses its tile (very rare). A capture of it would reopen it.
 
 Not a bug (probed 2026-10-25): the frame's click handling can't swallow the click that dismisses a
 menu during a popup grab. In KWin 6.7.5 the popup filter comes before the frame's

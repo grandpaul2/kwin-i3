@@ -23,12 +23,7 @@ kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 ## Open
 
-Work for now. An item whose remaining parts are partly deferred keeps its number in both sections.
-
-**14. Unmanaged windows, left from the audit** (`docs/spec-unmanaged-windows.md`, 2026-10-25). The
-pattern (kwin-i3 overriding what you see on events that weren't its own) is fixed and tested
-(`73-unmanaged-windows.sh`); the popup-grab click was probed and is not a bug (the spec). Left: an
-unmanaged window quick-tiled into kwin-i3's tiles loses its tile: very rare; won't-fix unless seen.
+Work for now. Nothing (2026-10-25): new items come from Paul's captures and requests.
 
 ## Deferred (the Stage)
 
