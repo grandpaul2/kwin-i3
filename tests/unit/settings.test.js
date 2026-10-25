@@ -146,6 +146,15 @@ test("workspaceOutputs: N=OUTPUT pairs; a bad entry is skipped and logged, the r
     assert.strictEqual(logs.filter((l) => /WARN setting workspaceOutputs/.test(l)).length, 4, logs.join("\n"));
 });
 
+test("floatingWorkspaces: whole numbers 1-10; anything else skipped and logged", () => {
+    assert.deepStrictEqual(loadSettings({}).S.get("floatingWorkspaces"), {});
+    assert.deepStrictEqual(loadSettings({ floatingWorkspaces: "3, 7,10" }).S.get("floatingWorkspaces"), { 3: true, 7: true, 10: true });
+    assert.deepStrictEqual(loadSettings({ floatingWorkspaces: "3,3" }).S.get("floatingWorkspaces"), { 3: true });
+    const { S, logs } = loadSettings({ floatingWorkspaces: "0, 11, x, 3abc, 2" });
+    assert.deepStrictEqual(S.get("floatingWorkspaces"), { 2: true });
+    assert.strictEqual(logs.filter((l) => /WARN setting floatingWorkspaces/.test(l)).length, 4, logs.join("\n"));
+});
+
 test("a colour: #rrggbb, else the default", () => {
     assert.strictEqual(loadSettings({ frameActive: "#AABBCC" }).S.get("frameActive"), "#aabbcc");
     assert.strictEqual(loadSettings({ frameActive: "blue" }).S.get("frameActive"), "#4c7899");

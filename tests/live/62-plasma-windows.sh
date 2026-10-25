@@ -62,6 +62,18 @@ form_set frameOnFloating true
 check "frameOnFloating: p borderless"       poll prop_is p noBorder true
 g=$(geom p); px=${g%%,*}; r=${g#*,}; py=${r%% *}; s=${g#* }; ph=${s#*x}
 check "  its frame, green, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $FLOAT_ACT
+# A window that draws its own title bar is never framed floating (review R1-5, finding 2).
+client --title z --csd --color blue
+check "z (CSD) floats on workspace 3"       poll floating z 3
+check "  kwin-i3 left its decoration alone" prop_is z noBorder false
+g=$(geom z); zx=${g%%,*}; r=${g#*,}; zy=${r%% *}; s=${g#* }; zh=${s#*x}
+check "  no frame of ours beside it"        eval '! pixel_is $((zx - 1)) $((zy + zh / 2)) $FLOAT_ACT && ! pixel_is $((zx - 1)) $((zy + zh / 2)) 51,51,51'
+kclose z
+# The effect reloaded while the frame stays on: kwin-i3 tells it again which windows float.
+eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"')
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s "$eid" >/dev/null
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s "$eid" >/dev/null
+check "effect reloaded: it knows p floats again" poll effect_floats p
 form_set frameOnFloating false
 check "off: its title bar back"             poll prop_is p noBorder false
 check "no invariant failures or errors"     clean_log

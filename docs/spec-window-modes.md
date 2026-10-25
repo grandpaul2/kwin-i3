@@ -267,5 +267,15 @@ order, so a window above a ring is always painted over it again; the corruption 
 real output's later partial repaints. Checked by reading `Hold::paintFrame` (the ring is cut to
 the paint's device region), not by `make test`.
 
+**Pieces (iii)+(iv) built 2026-10-24 (branch `window-modes-2`)**, reviewed
+(`docs/review-window-modes-2-2026-10-24.md`: two must-fix, both fixed with tests). Known limits,
+documented rather than fixed: a monitor change inside the 250 ms before the rest of the windows
+are adopted at load can hand out a workspace whose windows aren't adopted yet; a window left kept
+above by an earlier load without the effect stays kept above on a Plasma workspace (kwin-i3 can't
+tell it from the user's own flag), and a user's own keep-above is cleared when kwin-i3 floats a
+window and then moves or un-floats it; a window classified late (a class or caption set after it
+appears) opens tiled on a Plasma workspace; release leaves the effect's marks, so a later load
+floats those windows again (intended).
+
 A second agent reviews this spec before building (CLAUDE.md: substantial new tests and a slow
 scenario), and the change before it goes live.

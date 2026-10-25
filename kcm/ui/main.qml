@@ -232,7 +232,8 @@ KCM.SimpleKCM {
             id: plasmaWorkspaces
             columns: 5
             Kirigami.FormData.label: i18n("Workspaces:")
-            readonly property var chosen: root.settings.floatingWorkspaces.split(",").map(s => parseInt(s.trim())).filter(n => n >= 1 && n <= 10)
+            // As the script parses it (src/settings.js, "workspaces"): whole numbers 1-10 only.
+            readonly property var chosen: root.settings.floatingWorkspaces.split(",").map(s => s.trim()).filter(s => /^[0-9]+$/.test(s)).map(s => parseInt(s)).filter(n => n >= 1 && n <= 10)
             function toggle(n, on) {
                 const set = chosen.filter(m => m !== n);
                 if (on) set.push(n);

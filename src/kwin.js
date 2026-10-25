@@ -20,6 +20,7 @@ var KI3 = (function () {
     // floating windows (told[key]: what it was last told), which outlives a reload of this
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
+    var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -763,16 +764,17 @@ var KI3 = (function () {
     // window moved to another workspace takes that workspace's layering.
     function lookFloating(w, ws) {
         var key = id(w);
-        var above = !(frameOn && plasmaWs(ws));
+        var above = !(frameOn && marks && plasmaWs(ws));
         if (above) { if (!w.keepAbove) w.keepAbove = true; keptAbove[key] = true; }
         else if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
         if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen) takeBorder(w);
         else giveBorder(w);
+        delete borderGone[key];         // the GTK 4 bounds are a tiled window's matter
         tellFloating(w, true);
     }
     function tellFloating(w, on) {
         var key = id(w);
-        if (!frameOn || told[key] === on) return;
+        if (!frameOn || !marks || told[key] === on) return;
         told[key] = on;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
     }
@@ -786,11 +788,19 @@ var KI3 = (function () {
         if (!frameOn || w.fullScreen) return;
         var key = id(w);
         if (!w.noBorder) {
+            // Only a border that exists: a window drawing its own title bar has frame = client,
+            // and KWin would store "no border" for it all the same (setDecorationPolicy), which
+            // the effect reads as a border taken (review of (iii)+(iv), finding 2).
+            if (!serverDecorated(w)) return;
             w.noBorder = true;
             if (!w.noBorder) return;            // a rule forces the border
             borderGone[key] = true;
         }
         tookBorder[key] = true;
+    }
+    function serverDecorated(w) {
+        var f = w.frameGeometry, c = w.clientGeometry;
+        return !!c && (Math.abs(f.width - c.width) > 0.5 || Math.abs(f.height - c.height) > 0.5);
     }
     function giveBorder(w) {
         var key = id(w);
@@ -1513,7 +1523,10 @@ var KI3 = (function () {
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
-        checkFrame(guard("adoptRest", adoptRest));
+        checkFrame(function (m) {
+            try { adoptRest(m); }
+            catch (e) { log("ERROR in adopting the rest: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
+        });
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
@@ -1556,10 +1569,21 @@ var KI3 = (function () {
         if (after) later(250, function () { finish(null); });
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "Stats", function (m) {
             answered = true;
+            if (n === effectAsk) {
+                frameMisses = 0;
+                marks = !!(m && m.floating && m.floating.length !== undefined);
+                // The frame first, so the windows adopted below see it (review of (iii)+(iv), 3).
+                setFrame(!!(m && m.supported && m.frameWidth !== undefined));
+                // An effect that lost what it was told (reloaded while the frame stayed on): tell
+                // it again (finding 1).
+                if (marks) {
+                    var has = {};
+                    for (var i = 0; i < m.floating.length; i++) has[m.floating[i]] = true;
+                    var lost = Object.keys(told).some(function (k) { return told[k] === true && !has[k]; });
+                    if (lost) { told = {}; scheduleAll(); }
+                }
+            }
             finish(m);
-            if (n !== effectAsk) return;
-            frameMisses = 0;
-            setFrame(!!(m && m.supported && m.frameWidth !== undefined));
         });
         later(1000, function () {
             if (answered || n !== effectAsk) return;

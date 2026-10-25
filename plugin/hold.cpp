@@ -556,7 +556,7 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
 bool Hold::floatingFramed(EffectWindow *w) const
 {
     Window *win = w->window();
-    if (!m_frameOnFloating || !win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration()) {
+    if (!m_frameOnFloating || !win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration() || !w->isNormalWindow()) {
         return false;
     }
     return win->noBorder() && m_floating.contains(w->internalId().toString());

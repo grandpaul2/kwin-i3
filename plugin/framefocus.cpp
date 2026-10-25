@@ -49,7 +49,7 @@ KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
         // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
         // takes the border of no floating window but its own).
         const bool tiled = w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
-        if (!tiled && !(m_frameOnFloating && w->noBorder())) {
+        if (!tiled && !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
             continue;
         }
         const RectF frame = w->frameGeometry();
