@@ -92,15 +92,19 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     - `noBorder` stays after an unload (release gives it back) and is saved by session restore.
     Prototype shortcuts the spec must replace: the effect always active, a full repaint on
     every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
-    Spec decided 2026-10-24 (`docs/spec-window-modes.md`; Paul's desktop runs the defaults while
-    this is built). **Pieces (i)+(ii) live 2026-10-24** (the frame drawn by kwini3hold outside
-    tiled windows, tiled windows borderless, floating ones Breeze, the GTK 4 bounds, kwini3frame
-    retired; reviews: spec and change, `docs/review-window-modes-*.md`; 35 scenarios green).
-    Left: (iii) `floatingWorkspaces` and (iv) `frameOnFloating` + the effect keeping the floating
-    set (decision 5c): next, being built. Test gaps still open (the
-    spec's test section): a second output with an offset, a desktop switch with slide, scroll on
-    the frame (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`.
-    Hidden workspaces at the go-live (1, 4) are placed on first show: watch for a flash.
+    **All four pieces live 2026-10-24** (`docs/spec-window-modes.md`; reviews
+    `docs/review-window-modes-*.md`; 37 scenarios, 793 checks green): the frame drawn by kwini3hold
+    outside tiled windows, tiled windows borderless, floating ones the user's decoration, the GTK 4
+    bounds, kwini3frame retired; `floatingWorkspaces` (workspaces of Plasma windows) and
+    `frameOnFloating`, the effect keeping the floating mark. Paul's desktop on the defaults (both
+    off). Left:
+    - test gaps (the spec's test section): a second output with an offset, a desktop switch with
+      slide, scroll on the frame (tools/ei-send can't scroll), a forcing window rule,
+      `borderlessMaximizedWindows`, a window added or closed in the 250 ms at load;
+    - known limits written in the spec (a monitor change in those 250 ms; kept-above left from an
+      earlier load without the effect; late-classified windows on a Plasma workspace);
+    - workspace 4's OBS was left at an odd size by the 22:0x reloads (hidden then): watch it on
+      first show.
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
