@@ -77,7 +77,12 @@ point 0 180
 check "hover on a's frame focuses a"        poll active_is a
 point 900 360
 check "into b: b active"                    poll active_is b
+# The click without a move: the pointer parked on a's frame (hover focuses a), b activated by a
+# script, then a click where the pointer already is, so only the click can activate a.
+point 639 360
+check "hover on a's right frame: a"         poll active_is a
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "b") workspace.activeWindow = w; });' >/dev/null
+check "b active by script"                  poll active_is b
 : > "$clicks"
 click 639 360
 check "a click on a's right frame activates a" poll active_is a

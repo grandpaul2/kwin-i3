@@ -256,5 +256,16 @@ Each watched red first (`make mutate` from a worktree for the plugin and script 
   and the device-pixel rounding).
 - the fuzzer: one campaign after (i), with a pixel invariant for the frame ring (`docs/fuzz-design.md`).
 
+**Built 2026-10-24 (pieces i and ii, branch `window-modes`), and the tests watched red** with six
+deliberate faults: no hair (57, 58 red), release keeping borders (58, 59), the X11 check broken
+(59, at "never the bounds request"), a fixed-width ring at 125 % (58, "no background anywhere"),
+a click on the frame not activating (54). Two first went green and the tests were fixed: the 125 %
+check scanned one row (a gap is 2 or 3 device px by phase; now the whole screen, five windows),
+and the click check moved the pointer, so hover activated first (now parked, then clicked). **Not
+testable here: the ring's clip (R1-1).** A KWin screenshot renders a fresh full frame in stacking
+order, so a window above a ring is always painted over it again; the corruption only shows on a
+real output's later partial repaints. Checked by reading `Hold::paintFrame` (the ring is cut to
+the paint's device region), not by `make test`.
+
 A second agent reviews this spec before building (CLAUDE.md: substantial new tests and a slow
 scenario), and the change before it goes live.

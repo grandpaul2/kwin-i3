@@ -29,7 +29,6 @@ check "x fills its tile, 1 px from the edges" geom_is x "1,1 638x718"
 sleep 0.3; capture
 echo "    row 360: $(px 0 360) $(px 1 360) | $(px 638 360) $(px 639 360) $(px 640 360)"
 check "x's frame and app"                   eval 'pix 0 360 $INACT && pix 1 360 $RED && pix 638 360 $RED && pix 639 360 $INACT && pix 640 360 $ACT'
-check "never the bounds request for X11"    eval '! grep -qE "^.{9}BOUNDS x" "$KI3_LOG"'
 key "Focus Left"
 key "Floating Toggle"
 check "x floats"                            wait_tree 1 "H[y] ~x*"
@@ -41,6 +40,7 @@ key "Fullscreen"
 check "x fullscreen: the whole screen"      geom_is x "0,0 1280x720"
 key "Fullscreen"
 check "and back in its tile ($before)"      geom_is x "$before"
+check "never the bounds request for X11"    eval '! grep -qE "^.{9}BOUNDS x" "$KI3_LOG"'
 key "Release"
 check "release: x's border back"            poll prop_is x noBorder false
 check "no invariant failures or errors"     clean_log

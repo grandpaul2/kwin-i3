@@ -83,17 +83,20 @@ m=$(mark); busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unl
 check "loaded once more"                    wait_log 'kwin-i3 loaded$' "$m"
 check "  borderless again"                  poll prop_is a noBorder true
 
-# 5. 125 %: the gaps between windows and at the edges are frame, never background (black).
+# 5. 125 %: the gaps between windows and at the edges are frame, never background (black),
+#    anywhere on the screen: tiled windows and their frames cover all of it. A gap rounds to 2 or
+#    3 device pixels by where its edge falls, so more windows, more edges (R1-6).
 timeout 10 kscreen-doctor output.Virtual-0.scale.1.25 >/dev/null 2>&1
 check "Virtual-0 at 125 % (1024x576 logical)" poll eval '[[ "$(kjs "log(workspace.screens[0].geometry.width)")" == 1024 ]]'
+key "Focus Right"
+client --title d --color red; client --title e --color lime
+check "five windows"                        poll eval '[[ "$(tree 1)" == *d* && "$(tree 1)" == *e* ]]'
 sleep 1; capture
 blacks() { python3 -c "
 from PIL import Image; im = Image.open('$png').convert('RGB'); w, h = im.size
-pts = [(x, $1) for x in range(w)] if '$2' == 'row' else [($1, y) for y in range(h)]
-print(sum(1 for p in pts if im.getpixel(p) == (0, 0, 0)))"; }
-row=$(blacks 200 row); col=$(blacks 0 col)
-echo "    black pixels: row 200 $row, column 0 $col"
-check "no background in row 200"            [ "$row" == 0 ]
-check "no background in column 0"           [ "$col" == 0 ]
+bad = [(x, y) for y in range(h) for x in range(w) if im.getpixel((x, y)) == (0, 0, 0)]
+print(len(bad), bad[:5])"; }
+b=$(blacks); echo "    black pixels on the screen: $b ($(tree 1))"
+check "no background anywhere"              [ "${b%% *}" == 0 ]
 check "no invariant failures or errors"     clean_log
 finish
