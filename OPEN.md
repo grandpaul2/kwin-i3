@@ -38,8 +38,6 @@ pager (`docs/spec-workspace-widget.md`, `widget/`, `make widget-install`; workin
 **14. Unmanaged windows, left from the audit** (`docs/spec-unmanaged-windows.md`, 2026-10-25). The
 pattern (kwin-i3 overriding what you see on events that weren't its own) is fixed and tested
 (`73-unmanaged-windows.sh`). Left, each with a next step:
-- a keep-above set by the user is cleared when the window tiles again, and unticking it on a
-  floating window doesn't stick: remember whose flag it was; spec it;
 - the frame's click handling during a popup grab (does `pointer()->hover()` go null, so a click
   meant to dismiss a menu is swallowed?): a probe on a test KWin first;
 - an unmanaged window quick-tiled into kwin-i3's tiles loses its tile: very rare; won't-fix

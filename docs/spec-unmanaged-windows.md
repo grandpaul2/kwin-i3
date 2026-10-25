@@ -49,9 +49,13 @@ before the change (6 checks); each change watched red alone under a fault.
 
 ## Left (OPEN.md item 14)
 
-From the audit, not changed: a keep-above the user set on a managed window is cleared when it tiles
-again, and unticking it on a floating window doesn't stick (kwin-i3 marks floating windows with
-it); unverified whether the frame's click handling can swallow the click that dismisses a menu
-during a popup grab (`framefocus.cpp`, `pointer()->hover()` during a grab); an unmanaged window
-quick-tiled into kwin-i3's tiles loses its tile (very rare).
+From the audit, not changed: unverified whether the frame's click handling can swallow the click
+that dismisses a menu during a popup grab (`framefocus.cpp`, `pointer()->hover()` during a grab);
+an unmanaged window quick-tiled into kwin-i3's tiles loses its tile (very rare).
+
+Won't-fix (Paul, 2026-10-25): the audit also found that a keep-above the user set is cleared when
+the window tiles again, and that unticking it on a floating window doesn't stick. Both are i3's
+model. Tiled windows never overlap, so the flag means nothing on one, and i3 has no such flag.
+Floating windows always sit above tiled ones, and kwin-i3 uses the flag to put them there
+(`lookFloating`), except on a workspace of Plasma windows, where the user's choice holds.
 
