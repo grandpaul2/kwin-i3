@@ -19,7 +19,9 @@ FrameFocus::FrameFocus()
     const auto load = [this] {
         auto config = m_watcher->config();
         config->reparseConfiguration();
-        m_frameWidth = std::clamp(config->group(QStringLiteral("Script-kwin-i3")).readEntry("frameWidth", 1), 1, 10);
+        const KConfigGroup group = config->group(QStringLiteral("Script-kwin-i3"));
+        m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
+        m_frameOnFloating = group.readEntry("frameOnFloating", false);
     };
     load();
     QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, m_watcher.get(), load);
@@ -28,8 +30,8 @@ FrameFocus::FrameFocus()
 
 // The tiled window whose frame ring is under the pointer, else null. Only where the pointer is
 // over no window, or over the desktop: a window above a frame (a floating one) keeps its clicks.
-// Framed as kwini3hold frames it (Hold::framed): in one of kwin-i3's tiles (custom tiling), no
-// server decoration, not fullscreen.
+// Framed as kwini3hold frames it (Hold::framed, Hold::floatingFramed): in one of kwin-i3's tiles
+// (custom tiling), or floating with frameOnFloating; no server decoration, not fullscreen.
 KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
 {
     Window *hover = input()->pointer()->hover();
@@ -43,7 +45,11 @@ KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
             || w->isFullScreen() || w->decoration()) {
             continue;
         }
-        if (w->requestedQuickTileMode() != QuickTileMode(QuickTileFlag::Custom) && w->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+        // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
+        // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
+        // takes the border of no floating window but its own).
+        const bool tiled = w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+        if (!tiled && !(m_frameOnFloating && w->noBorder())) {
             continue;
         }
         const RectF frame = w->frameGeometry();

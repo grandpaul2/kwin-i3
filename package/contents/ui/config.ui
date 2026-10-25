@@ -373,7 +373,7 @@
      <item row="14" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
-        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. The floating colours wait for a frame on floating windows (to come).</string>
+        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. The floating colours are for the frame on floating windows (below).</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignHCenter</set>
@@ -471,8 +471,35 @@
        </property>
       </widget>
      </item>
+     <item row="20" column="1">
+      <widget class="QCheckBox" name="kcfg_frameOnFloating">
+       <property name="text">
+        <string>Frame on floating windows too (in the floating colours; else they keep their decoration)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="0">
+      <widget class="QLabel" name="floatingWorkspacesLabel">
+       <property name="text">
+        <string>Plasma windows on workspaces:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingWorkspaces</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="1">
+      <widget class="QLineEdit" name="kcfg_floatingWorkspaces">
+       <property name="placeholderText">
+        <string>3, 7</string>
+       </property>
+       <property name="toolTip">
+        <string>Workspace numbers whose new windows open floating, with their own decoration, as in plain Plasma (Meta+Shift+Space tiles one).</string>
+       </property>
+      </widget>
+     </item>
      <!-- Atomic layout -->
-     <item row="20" column="0" colspan="2">
+     <item row="22" column="0" colspan="2">
       <widget class="QLabel" name="holdHeading">
        <property name="text">
         <string>Atomic layout</string>
@@ -490,7 +517,7 @@
        </property>
       </widget>
      </item>
-     <item row="21" column="0" colspan="2">
+     <item row="23" column="0" colspan="2">
       <widget class="QLabel" name="holdNote">
        <property name="text">
         <string>Needs the kwin-i3 plugins.</string>
@@ -500,7 +527,7 @@
        </property>
       </widget>
      </item>
-     <item row="22" column="0">
+     <item row="24" column="0">
       <widget class="QLabel" name="holdEnabledLabel">
        <property name="text">
         <string>Atomic layout:</string>
@@ -510,7 +537,7 @@
        </property>
       </widget>
      </item>
-     <item row="22" column="1">
+     <item row="24" column="1">
       <widget class="QCheckBox" name="kcfg_holdEnabled">
        <property name="text">
         <string>Show the new layout only once every window has its new size</string>
@@ -520,7 +547,7 @@
        </property>
       </widget>
      </item>
-     <item row="23" column="0">
+     <item row="25" column="0">
       <widget class="QLabel" name="holdTimeoutMsLabel">
        <property name="text">
         <string>Wait at most:</string>
@@ -530,7 +557,7 @@
        </property>
       </widget>
      </item>
-     <item row="23" column="1">
+     <item row="25" column="1">
       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
        <property name="suffix">
         <string> ms</string>
@@ -547,7 +574,7 @@
       </widget>
      </item>
      <!-- Advanced -->
-     <item row="24" column="0" colspan="2">
+     <item row="26" column="0" colspan="2">
       <widget class="QLabel" name="advancedHeading">
        <property name="text">
         <string>Advanced</string>
@@ -565,7 +592,7 @@
        </property>
       </widget>
      </item>
-     <item row="25" column="0">
+     <item row="27" column="0">
       <widget class="QLabel" name="warnTakenKeysLabel">
        <property name="text">
         <string>Taken keys:</string>
@@ -575,14 +602,14 @@
        </property>
       </widget>
      </item>
-     <item row="25" column="1">
+     <item row="27" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
         <string>Say at login which of kwin-i3's keys other shortcuts hold</string>
        </property>
       </widget>
      </item>
-     <item row="26" column="0">
+     <item row="28" column="0">
       <widget class="QLabel" name="debugLogLabel">
        <property name="text">
         <string>Debug log:</string>
@@ -592,7 +619,7 @@
        </property>
       </widget>
      </item>
-     <item row="26" column="1">
+     <item row="28" column="1">
       <widget class="QCheckBox" name="kcfg_debugLog">
        <property name="text">
         <string>Log every action, for bug reports</string>

@@ -67,6 +67,12 @@
     <entry name="frameFloatingInactive" type="String">
       <default>#333333</default>
     </entry>
+    <entry name="floatingWorkspaces" type="String">
+      <default></default>
+    </entry>
+    <entry name="frameOnFloating" type="Bool">
+      <default>false</default>
+    </entry>
     <entry name="holdEnabled" type="Bool">
       <default>true</default>
     </entry>

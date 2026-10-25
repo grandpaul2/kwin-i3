@@ -29,6 +29,10 @@ var Settings = (function () {
         frameInactive: { type: "colour", def: "#333333" },
         frameFloatingActive: { type: "colour", def: "#4d7254" },
         frameFloatingInactive: { type: "colour", def: "#333333" },
+        // Window modes (docs/spec-window-modes.md): workspaces whose new windows open floating, as
+        // Plasma windows; and the frame on floating windows too, in the floating colours.
+        floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
+        frameOnFloating: { type: "bool", def: "false" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "100", min: 10, max: 2000 },
     };
@@ -57,6 +61,17 @@ var Settings = (function () {
                 else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT, N 1-10)");
             });
             return out;
+        }
+        // Workspace numbers, 1-10: { N: true }. Anything else is skipped (and logged).
+        if (type === "workspaces") {
+            var set = {};
+            text.split(",").forEach(function (e) {
+                e = e.trim();
+                if (!e) return;
+                if (/^[0-9]+$/.test(e) && +e >= 1 && +e <= 10) set[+e] = true;
+                else log("WARN setting floatingWorkspaces: ignoring \"" + e + "\" (want workspace numbers 1-10)");
+            });
+            return set;
         }
         if (type === "list")
             return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });

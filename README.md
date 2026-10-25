@@ -152,8 +152,10 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the active tiled window |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
-| `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | for a frame on floating windows, to come (`docs/spec-window-modes.md`); unused until then: floating windows have their own decoration |
-| `[Script-kwin-i3] frameFloatingInactive` | `#333333` | likewise. "Floating" is KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own: a window you keep above yourself and that is in no tile when kwin-i3 loads is adopted as floating. A window KWin's session restore brings back kept above after kwin-i3 loaded is tiled with the flag on (no app here does that) |
+| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces of Plasma windows: `3, 7`. A window that opens there floats, with its own title bar, as in plain Plasma (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/spec-window-modes.md`) |
+| `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the floating colours (plugins; not a window that draws its own title bar) |
+| `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | the frame on the active floating window, with `frameOnFloating` (a muted green, to tell it apart; i3 has no such colour) |
+| `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window, likewise. How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
 Transients and modals, non-resizable windows and `skipPager` windows float; `onAllDesktops`,
 `skipTaskbar` and other activities' windows are never managed (`docs/plan.md`, policies).

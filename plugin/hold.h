@@ -15,6 +15,7 @@
 
 #include <QElapsedTimer>
 #include <QHash>
+#include <QSet>
 #include <QPointer>
 #include <QTimer>
 #include <QVariantMap>
@@ -43,6 +44,9 @@ public:
 public Q_SLOTS:
     // D-Bus: org.kde.KWin /kwini3hold net.local.kwini3hold Stats
     QVariantMap Stats() const;
+    // kwin-i3 says which windows it floats (docs/spec-window-modes.md, decision 5c): the set
+    // outlives a reload of the script, which reads it back from Stats ("floating").
+    void SetFloating(const QString &id, bool on);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -73,6 +77,7 @@ private:
     bool tiled(KWin::EffectWindow *w) const;
     bool holding() const;                                   // a hold, or a new window hidden
     bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
+    bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)
     QList<KWin::RectF> ring(KWin::EffectWindow *w, const KWin::RectF &frame, double scale) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
@@ -96,6 +101,9 @@ private:
     int m_timeoutMs = 100;
     int m_frameWidth = 1;
     QColor m_frameActive{0x4c, 0x78, 0x99}, m_frameInactive{0x33, 0x33, 0x33};
+    QColor m_floatingActive{0x4d, 0x72, 0x54}, m_floatingInactive{0x33, 0x33, 0x33};
+    bool m_frameOnFloating = false;
+    QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
 
     QHash<KWin::EffectWindow *, Held> m_held;

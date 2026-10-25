@@ -203,17 +203,55 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Other windows:")
             settingName: "frameInactive"
         }
-        // The floating colours wait for "a frame on floating windows" (docs/spec-window-modes.md,
-        // decision 3): floating windows have their own decoration until then.
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18n("Floating windows:")
+            text: i18n("Frame them too (else they keep their own title bar)")
+            checked: root.settings.frameOnFloating
+            onToggled: root.settings.frameOnFloating = checked
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
+        }
+        // The floating colours only mean something with the frame on floating windows
+        // (docs/spec-window-modes.md, decision 3).
         FrameColour {
             Kirigami.FormData.label: i18n("Focused floating window:")
             settingName: "frameFloatingActive"
-            enabled: false
+            enabled: kcm.frameAvailable && root.settings.frameOnFloating
         }
         FrameColour {
             Kirigami.FormData.label: i18n("Other floating windows:")
             settingName: "frameFloatingInactive"
-            enabled: false
+            enabled: kcm.frameAvailable && root.settings.frameOnFloating
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: i18n("Plasma windows")
+        }
+        // floatingWorkspaces, "3, 7": a box per workspace (docs/spec-window-modes.md, decision 1).
+        RowLayout {
+            id: plasmaWorkspaces
+            Kirigami.FormData.label: i18n("Open new windows as Plasma windows on:")
+            readonly property var chosen: root.settings.floatingWorkspaces.split(",").map(s => parseInt(s.trim())).filter(n => n >= 1 && n <= 10)
+            function toggle(n, on) {
+                const set = chosen.filter(m => m !== n);
+                if (on) set.push(n);
+                root.settings.floatingWorkspaces = set.sort((a, b) => a - b).join(", ");
+            }
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingWorkspaces" }
+            Repeater {
+                model: 10
+                QQC2.CheckBox {
+                    text: String(index + 1)
+                    checked: plasmaWorkspaces.chosen.indexOf(index + 1) >= 0
+                    onToggled: plasmaWorkspaces.toggle(index + 1, checked)
+                }
+            }
+        }
+        QQC2.Label {
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 22
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            text: i18n("New windows there open floating, with their own title bar, as in plain Plasma; Meta+Shift+Space tiles one. A window keeps its mode when it moves to another workspace.")
         }
 
         Item {

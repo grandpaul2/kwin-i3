@@ -105,10 +105,15 @@ void Hold::loadConfig()
                                                 : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
     // The frame's keys (src/settings.js), shared with kwini3frame's; not affected by holdEnabled.
     m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
-    const QColor a(group.readEntry("frameActive", QStringLiteral("#4c7899")));
-    const QColor i(group.readEntry("frameInactive", QStringLiteral("#333333")));
-    m_frameActive = a.isValid() ? QColor(a.red(), a.green(), a.blue()) : QColor(0x4c, 0x78, 0x99);
-    m_frameInactive = i.isValid() ? QColor(i.red(), i.green(), i.blue()) : QColor(0x33, 0x33, 0x33);
+    const auto colour = [&group](const char *key, const QColor &def) {
+        const QColor c(group.readEntry(key, def.name()));
+        return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;    // opaque whatever it says
+    };
+    m_frameActive = colour("frameActive", QColor(0x4c, 0x78, 0x99));
+    m_frameInactive = colour("frameInactive", QColor(0x33, 0x33, 0x33));
+    m_floatingActive = colour("frameFloatingActive", QColor(0x4d, 0x72, 0x54));
+    m_floatingInactive = colour("frameFloatingInactive", QColor(0x33, 0x33, 0x33));
+    m_frameOnFloating = group.readEntry("frameOnFloating", false);
     effects->addRepaintFull();
     if (!m_enabled) {
         releaseAll();
@@ -217,6 +222,7 @@ void Hold::onClosed(EffectWindow *w)
 
 void Hold::onDeleted(EffectWindow *w)
 {
+    m_floating.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
     m_pendingClose.remove(w);
@@ -494,7 +500,7 @@ bool Hold::isActive() const
     }
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
-        if (framed(w) && shown(w)) {
+        if ((framed(w) || floatingFramed(w)) && shown(w)) {
             return true;
         }
     }
@@ -519,7 +525,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
 {
     // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
     // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
-    if (m_held.contains(w) || m_hidden.contains(w) || framed(w)) {
+    if (m_held.contains(w) || m_hidden.contains(w) || framed(w) || floatingFramed(w)) {
         data.setTransformed();
     }
     effects->prePaintWindow(view, w, data);
@@ -539,8 +545,35 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
-    if (framed(w) && !m_hidden.contains(w)) {
+    if ((framed(w) || floatingFramed(w)) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
+    }
+}
+
+// A floating window kwin-i3 took the decoration of, with frameOnFloating: the frame in the
+// floating colours. Not one that draws its own title bar (its decoration policy is the client's:
+// review R1-5), not fullscreen, not minimized.
+bool Hold::floatingFramed(EffectWindow *w) const
+{
+    Window *win = w->window();
+    if (!m_frameOnFloating || !win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration()) {
+        return false;
+    }
+    return win->noBorder() && m_floating.contains(w->internalId().toString());
+}
+
+void Hold::SetFloating(const QString &id, bool on)
+{
+    if (on) {
+        m_floating.insert(id);
+    } else {
+        m_floating.remove(id);
+    }
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        if (w->internalId().toString() == id) {
+            repaintRing(w, w->frameGeometry());
+        }
     }
 }
 
@@ -613,7 +646,8 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
     binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
-    QColor colour = effects->activeWindow() == w ? m_frameActive : m_frameInactive;
+    const bool active = effects->activeWindow() == w;
+    QColor colour = framed(w) ? (active ? m_frameActive : m_frameInactive) : (active ? m_floatingActive : m_floatingInactive);
     const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
     if (opacity <= 0.0) {
         return;
@@ -687,6 +721,8 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("frames")] = m_stats.frames;
     m[QStringLiteral("framesHolding")] = m_stats.framesHolding;
     m[QStringLiteral("frameWidth")] = m_frameWidth;
+    m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
+    m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     return m;
 }
 

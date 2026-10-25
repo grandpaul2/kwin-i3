@@ -16,6 +16,10 @@ var KI3 = (function () {
     var frameOn = false, tookBorder = {};
     var borderGone = {};                             // the GTK 4 bounds (refitOnFrameChange)
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
+    // The floating mark (spec-window-modes decision 5c): with the effect, it keeps the set of
+    // floating windows (told[key]: what it was last told), which outlives a reload of this
+    // script; at load the answer says which windows were floating (atLoadFloating).
+    var told = {}, atLoadFloating = {};
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -551,6 +555,7 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + ws.num] = true;
         var area = areaOf(screen, ws);
         relocate(ws, screen);
+        ws.floating.forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
         floatWhatCannotFit(ws, area);
         var p = project(ws);
         refused = false;
@@ -745,8 +750,31 @@ var KI3 = (function () {
     // the window kept above (and green, since the frame colours) for good once un-floated
     // (docs/spec-reload-keepabove.md, 2026-10-24).
     function setFloatingLook(w, on) {
-        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; giveBorder(w); }
-        if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
+        var key = id(w);
+        if (on) { var con = model.byWin[key]; lookFloating(w, con ? Tree.wsOf(con) : null); return; }
+        if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+        tellFloating(w, false);
+    }
+    function plasmaWs(ws) { return !!(ws && Settings.get("floatingWorkspaces")[ws.num]); }
+    // A floating window's look, on its workspace (spec-window-modes R2, decisions 3 and 5):
+    // above the tiled ones as in i3, except on a workspace of Plasma windows while the effect
+    // keeps the floating mark (without it, the flag is the mark everywhere); its own decoration,
+    // or the frame in the floating colours with frameOnFloating. Again on every pass, so a
+    // window moved to another workspace takes that workspace's layering.
+    function lookFloating(w, ws) {
+        var key = id(w);
+        var above = !(frameOn && plasmaWs(ws));
+        if (above) { if (!w.keepAbove) w.keepAbove = true; keptAbove[key] = true; }
+        else if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+        if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen) takeBorder(w);
+        else giveBorder(w);
+        tellFloating(w, true);
+    }
+    function tellFloating(w, on) {
+        var key = id(w);
+        if (!frameOn || told[key] === on) return;
+        told[key] = on;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
     }
 
     // A tiled window's border, while the effect draws the frame (spec-window-modes R2). Read
@@ -803,12 +831,14 @@ var KI3 = (function () {
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
-        if (kind === "tile" && !fresh && !w.tile && w.keepAbove) kind = "float";
+        if (kind === "tile" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "float";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
         if (w.noBorder && !(frameOn && kind === "tile")) w.noBorder = false;
         var ws = wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
+        // A new window on a workspace of Plasma windows opens floating (decision 1).
+        if (kind === "tile" && fresh && plasmaWs(ws)) kind = "float";
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         var fs = keepsFullscreenFocus(w, ws, fresh);
@@ -834,6 +864,7 @@ var KI3 = (function () {
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
         model.close(key);
+        delete told[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete ruleKind[key];
         schedule(ws);
@@ -1454,17 +1485,27 @@ var KI3 = (function () {
                 });
             });
         });
-        // Then every other window, bottom of the stack first, so focus order follows stacking.
+        // Then every other window, bottom of the stack first, so focus order follows stacking,
+        // once the effect has said which were floating (decision 5c; 250 ms at most, without it).
         // stackingOrder can leave out a window that is still mapping, which then never got a
         // windowAdded either (it came before the script): windowList() supplies those (found by
         // 60-load.sh, after the live-desktop review saw a window left out).
-        var all = workspace.stackingOrder.slice();
-        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
-        all.forEach(function (w) {
-            if (!wins[id(w)]) adoptWindow(w);
-            else model.focusWin(id(w));
-        });
-        if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
+        var adoptRest = function (m) {
+            atLoadFloating = {};
+            if (m && m.floating) m.floating.forEach(function (k) { atLoadFloating[k] = true; });
+            var all = workspace.stackingOrder.slice();
+            workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
+            all.forEach(function (w) {
+                if (!wins[id(w)]) adoptWindow(w);
+                else model.focusWin(id(w));
+            });
+            atLoadFloating = {};
+            if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
+            log("ADOPTED " + (m ? "with the effect's floating set" : "without the effect"));
+            scheduleAll();
+            wantFocus();
+            log("kwin-i3 loaded");          // every window adopted (the tests and captures wait for it)
+        };
         workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
         workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
@@ -1472,7 +1513,7 @@ var KI3 = (function () {
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
-        checkFrame();
+        checkFrame(guard("adoptRest", adoptRest));
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
@@ -1497,7 +1538,6 @@ var KI3 = (function () {
         }));
         scheduleAll();
         rememberShown();
-        log("kwin-i3 loaded");
     }
 
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
@@ -1508,11 +1548,15 @@ var KI3 = (function () {
     // frameWidth (an older kwini3hold answers too: review of the change, finding 1). callDBus calls
     // back only on a reply: no answer within a second is a miss, and two misses in a row turn the
     // frame off (one slow answer must not re-tile everything; finding 3).
+    // after(m): run once with the first answer, or with null after 250 ms (the load path).
     var effectAsk = 0, frameMisses = 0, frameKnown = false;
-    function checkFrame() {
-        var n = ++effectAsk, answered = false;
+    function checkFrame(after) {
+        var n = ++effectAsk, answered = false, done = false;
+        var finish = function (m) { if (done || !after) return; done = true; after(m); };
+        if (after) later(250, function () { finish(null); });
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "Stats", function (m) {
             answered = true;
+            finish(m);
             if (n !== effectAsk) return;
             frameMisses = 0;
             setFrame(!!(m && m.supported && m.frameWidth !== undefined));
@@ -1528,6 +1572,7 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
+        told = {};                      // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled

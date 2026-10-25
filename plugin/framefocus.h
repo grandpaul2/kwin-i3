@@ -27,6 +27,7 @@ private:
 
     KConfigWatcher::Ptr m_watcher;
     int m_frameWidth = 1;
+    bool m_frameOnFloating = false;
     QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any
     Qt::MouseButtons m_taken;             // presses taken on a frame: their releases are ours too
 };
