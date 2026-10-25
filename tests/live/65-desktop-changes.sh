@@ -7,11 +7,14 @@ source "$(dirname "$0")/lib.sh"
 on_desk() { kjs "workspace.windowList().forEach(function (w) { if (w.normalWindow && !w.deleted && w.caption.length === 1) log(w.caption + '=' + (workspace.desktops.indexOf(w.desktops[0]) + 1)); });" | sort | tr '\n' ' '; }
 in_tree() { [[ "$(tree "$2" "${3:-0}")" == *"$1"* ]]; }
 desk_id() { kjs "log(workspace.desktops[$1 - 1].id)"; }
-nobody_twice() {   # each one-letter caption in exactly one workspace's last tree
-    local c n t
+# The trees logged since the last rebuild: a pass that ran between the mark and the desktop change
+# logged by the old numbers, legitimately (seen once in six runs, 2026-10-24).
+since_rebuild() { grep -nE '^.{9}DESKTOPS adopted again' "$KI3_LOG" | tail -1 | cut -d: -f1; }
+nobody_twice() {   # each one-letter caption in exactly one workspace's last tree since the rebuild
+    local c n t r; r=$(since_rebuild)
     for c in "$@"; do
         n=0
-        for t in 1 2 3 4 5 6 7 8 9 10; do [[ "$(tree $t "${m:-0}")" == *"$c"* ]] && n=$((n + 1)); done
+        for t in 1 2 3 4 5 6 7 8 9 10; do [[ "$(tree $t "${r:-0}")" == *"$c"* ]] && n=$((n + 1)); done
         [[ $n == 1 ]] || { echo "    $c is in $n trees"; return 1; }
     done
 }

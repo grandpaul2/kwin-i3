@@ -22,13 +22,17 @@ var KI3 = (function () {
     var told = {}, atLoadFloating = {};
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
+    var rebuildAgain = false, rebuiltFor = "";
+    // What each monitor showed, by name, so a monitor that comes back shows it again (review:
+    // nothing made a returning monitor show its workspace; KWin may restore something else).
+    var lastShown = {}, beforeLoss = null;
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
-    var touchedRoots = {};  // "screen/ws" -> true once reconciled (put back on release)
+    var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
     var focusPending = null; // { from: screen } : apply model focus after the next reconcile
 
     function id(w) { return String(w.internalId); }
@@ -555,7 +559,7 @@ var KI3 = (function () {
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
-        touchedRoots[screen.name + "/" + ws.num] = true;
+        touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
         ws.floating.forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
@@ -1299,6 +1303,16 @@ var KI3 = (function () {
     // is set: the lowest workspace living there and shown nowhere, else an unused one. Windows
     // opened meanwhile stay on the workspaces they joined.
     function reshowHomes() {
+        showHomes();
+        log("PEROUTPUT on: each monitor shows its own");
+        rememberShown();
+        scheduleAll();
+        wantFocus();
+    }
+    // A monitor showing a workspace whose home is another monitor shows one of its own instead
+    // (or an unused one): per-monitor desktops turned on, or a desktop removed that two monitors
+    // then showed (KWin gives every monitor that showed it the same next desktop).
+    function showHomes() {
         workspace.screens.forEach(function (s) {
             var homes = Workspaces.homes(), h = homes[deskNum(workspace.currentDesktopForScreen(s))];
             if (!h || h === s.name) return;
@@ -1308,10 +1322,6 @@ var KI3 = (function () {
             if (!pick) pick = unusedWorkspace(s);
             if (pick) workspace.setCurrentDesktopForScreen(deskOf(pick), s);
         });
-        log("PEROUTPUT on: each monitor shows its own");
-        rememberShown();
-        scheduleAll();
-        wantFocus();
     }
 
     // ---- release (the safety valve) --------------------------------------------------------
@@ -1331,7 +1341,7 @@ var KI3 = (function () {
         workspace.screens.forEach(function (s) {
             workspace.desktops.forEach(function (d, i) {
                 try {
-                    var root = workspace.rootTile(s, d), rk = s.name + "/" + (i + 1);
+                    var root = workspace.rootTile(s, d), rk = s.name + "/" + d.id;
                     if (!root) return;
                     // Roots kwin-i3 touched, and any left inset by gaps (a reload's predecessor):
                     // KWin's whole area and no padding again (review: the padding seen at the
@@ -1514,7 +1524,13 @@ var KI3 = (function () {
         atLoadFloating = {};
         if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
         log("ADOPTED " + (m ? "with the effect's floating set" : "without the effect"));
+        var wasRebuild = rebuilding;
         rebuilding = false;
+        if (wasRebuild) {
+            // A desktop change while this rebuild waited (review of the change, finding 2): again.
+            if (rebuildAgain || desktopIds().join() !== rebuiltFor) { rebuildAgain = false; startRebuild(); return; }
+            if (options.perOutputVirtualDesktops) showHomes();     // finding 3
+        }
         scheduleAll();
         wantFocus();
         log(done);
@@ -1536,18 +1552,31 @@ var KI3 = (function () {
         var now = desktopIds(), before = deskIds;
         deskIds = now;
         var appended = now.length >= before.length && before.every(function (d, i) { return now[i] === d; });
-        if (appended || rebuilding) return;
-        rebuilding = true;
+        if (appended) return;
+        if (rebuilding) { rebuildAgain = true; return; }
         log("DESKTOPS removed or moved: the model rebuilt from KWin's state");
+        startRebuild();
+    }
+    function startRebuild() {
+        rebuilding = true;
         later(0, function () {
-            deskIds = desktopIds();
-            model = Tree.create({ outputNeighbour: outputNeighbour });
-            wins = {}; expected = {}; armed = {}; lastFit = {}; ruleKind = {}; dirty = {}; placing = {};
-            borderGone = {};
-            Workspaces.reset();
-            adoptTiled();
-            adoptRestSoon("DESKTOPS adopted again");
-            rememberShown();
+            // Never left half done: a failure releases, as a failing load does (review, finding 1).
+            try {
+                deskIds = desktopIds();
+                rebuiltFor = deskIds.join();
+                model = Tree.create({ outputNeighbour: outputNeighbour });
+                wins = {}; expected = {}; armed = {}; lastFit = {}; ruleKind = {}; dirty = {}; placing = {};
+                borderGone = {};
+                beforeLoss = null;                  // numbers by the old positions
+                Workspaces.reset();
+                workspace.screens.forEach(function (s) { Workspaces.claimAssigned(s.name); });
+                adoptTiled();
+                rememberShown();
+                adoptRestSoon("DESKTOPS adopted again");
+            } catch (e) {
+                log("ERROR in rebuilding after a desktop change: " + e + (e.stack ? " " + e.stack : "") + "; releasing");
+                release();
+            }
         });
     }
 
@@ -1663,9 +1692,6 @@ var KI3 = (function () {
         wantFocus();
     }
 
-    // What each monitor showed, by name, so a monitor that comes back shows it again (review:
-    // nothing made a returning monitor show its workspace; KWin may restore something else).
-    var lastShown = {}, beforeLoss = null;
     // The lowest workspace with no windows, shown nowhere, and living on no other monitor; it
     // becomes s's, created if every existing one is taken. null if all ten are.
     function unusedWorkspace(s) {
