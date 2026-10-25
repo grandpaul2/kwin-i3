@@ -9,8 +9,8 @@ Last reconciled: **2026-10-25**.
 ## Stage (Paul, 2026-10-24, late)
 
 **Development, for about 4-6 weeks**: Paul uses kwin-i3 daily and adjusts it along the way.
-Reliability work (item 5, item 10's test gaps) and release prep (item 4's README pass, item 9,
-a release) are deferred unless they inform a structural change or a larger issue turns up.
+Reliability work (item 5, the test gaps in items 10, 13 and 14) and release prep (item 4's README
+pass, a release) are deferred unless they inform a structural change or a larger issue turns up.
 
 ## Heading (Paul, 2026-10-24)
 
@@ -49,7 +49,9 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    by itself after the parallel batch (`# timing: alone`, 2026-10-24), so its timing checks are
    strict in `make test`.
    **No campaign has run since 2026-10-24's changes** (window modes, desktop changes, the key
-   cleanup), and the fuzzer needs updating first: its I4 "no hole" check must allow the frame's
+   cleanup) nor 2026-10-25's at the KWin seam (focus passes that spare unmanaged windows, focus
+   following desktops switched outside kwin-i3, the pointer moved only by keys, the popup grace,
+   the layout keys), and the fuzzer needs updating first: its I4 "no hole" check must allow the frame's
    1 px (the plugins load in its KWins, so the frame is on), a frame-pixel invariant would catch
    lost or stale frames, and new actions: a workspace of Plasma windows, `frameOnFloating`, the
    effect unloaded and loaded, a desktop removed or moved. Deferred with the rest (the Stage).
@@ -74,9 +76,8 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       pager, working (Paul, 2026-10-24). Left: a scroll test (tools/ei-send can't scroll), vertical
       panels and "Numbers only" untested live.
     - To watch: auto-hide, the task list and hidden workspaces.
-    - **Plasma's notifications in place of dunst** (`docs/spec-notifications.md`, Paul's go
-      2026-10-25): the dotfiles side done. Next: the live switch (spec steps 8-10: remove dunst,
-      `setup.sh`, restart plasmashell), on its own go, then the spec's checks.
+    - Paul's panel shows workspace names (the widget, installed 2026-10-25) from its next
+      plasmashell start (a login, or a restart he okays).
 
 13. **Workspace commands** (`docs/spec-workspace-commands.md`: back-and-forth, next/prev, the
     output moves, names in the widget), live 2026-10-25, unbound as in i3. Left (deferred with
