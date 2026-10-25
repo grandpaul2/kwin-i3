@@ -98,8 +98,8 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
     - **The workspace widget** built and installed 2026-10-24 (`docs/spec-workspace-widget.md`,
-      `widget/`, `make widget-install`; reviewed; unit + live tests). Paul swaps the pager for it
-      himself (Show Alternatives). Left: a scroll test (tools/ei-send can't scroll), vertical
+      `widget/`, `make widget-install`; reviewed; unit + live tests); on Paul's panel in place of the
+      pager, working (Paul, 2026-10-24). Left: a scroll test (tools/ei-send can't scroll), vertical
       panels and "Numbers only" untested live.
     - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
       pointer crossing the gap focuses the desktop and closes the popup. Not hit at the default
