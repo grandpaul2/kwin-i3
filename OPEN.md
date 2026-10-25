@@ -45,6 +45,14 @@ didn't, in 76).
 following, Breeze's 5 px): `docs/spec-rounded-corners.md`, draft; the radius probed in the test
 KWin; built, tested (78, fault battery), code reviewed. Next: live, on Paul's go.
 
+**21. Wallpaper flashes through Firefox** (Paul, 2026-10-25, twice: shown again on a workspace
+switch 4 to 2, and growing to full width when the terminal beside it closed; captures 15:44 and
+17:57). kwin-i3's side checked: the trees were right, and kwini3hold kept the closing window and
+released on Firefox's new size with no timeout (66 holds, max 69 ms). Guess, unverified: Firefox
+acknowledges a new size before it has drawn into it. Next: reproduce in the test KWin with real
+Firefox (throwaway profile), screenshots every few ms during the close and a workspace switch,
+looking for background inside Firefox's rect.
+
 ## Deferred (the Stage)
 
 Reliability, release prep and anything upstream, held for the development stage (upstream: Paul
