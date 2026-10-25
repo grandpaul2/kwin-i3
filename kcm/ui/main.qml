@@ -228,9 +228,10 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18n("Plasma windows")
         }
         // floatingWorkspaces, "3, 7": a box per workspace (docs/spec-window-modes.md, decision 1).
-        RowLayout {
+        GridLayout {                            // two rows of five: the form keeps its width
             id: plasmaWorkspaces
-            Kirigami.FormData.label: i18n("Open new windows as Plasma windows on:")
+            columns: 5
+            Kirigami.FormData.label: i18n("Workspaces:")
             readonly property var chosen: root.settings.floatingWorkspaces.split(",").map(s => parseInt(s.trim())).filter(n => n >= 1 && n <= 10)
             function toggle(n, on) {
                 const set = chosen.filter(m => m !== n);
@@ -251,7 +252,9 @@ KCM.SimpleKCM {
             Layout.preferredWidth: Kirigami.Units.gridUnit * 22
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
-            text: i18n("New windows there open floating, with their own title bar, as in plain Plasma; Meta+Shift+Space tiles one. A window keeps its mode when it moves to another workspace.")
+            // The row's own label stays short: a long one here broke the label clicks of the
+            // Layout section's fields (tests/live/37-settings-page.sh, 2026-10-24; cause not found).
+            text: i18n("New windows on these workspaces open as Plasma windows: floating, with their own title bar; Meta+Shift+Space tiles one. A window keeps its mode when it moves to another workspace.")
         }
 
         Item {
