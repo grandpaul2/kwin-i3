@@ -5,8 +5,13 @@ From Paul, 2026-10-24: "what we call a floating window [should] feel more like a
 Shift+Meta+Space and the full i3 experience takes over. Headers gone, outlines on." And: "Rather
 than using a float all or tile all option just set a workspace to automatically set it ... we let
 Plasma just be a DE on those windows. This would be a defining feature, so it would need to be
-implemented cleanly." Status: **draft for Paul's decisions (below); nothing built on main.** The
-route and its prototype are decided and green (branch `proto-effect-frame`).
+implemented cleanly." Status: **decided by Paul, 2026-10-24 ("this is good": the
+recommendations below, 1-7), with one standing rule: while this is built, Paul's desktop runs the
+defaults a new user gets ("keep making my desktop look like what the default experience will look
+like ... We can add my customizations back later"): `frameOnFloating` stays off there, and his
+green floating frame comes back later by choice. Next: a second agent's review of this spec,
+then piece (i)+(ii) (decision 7).** Nothing built on main; the route and its prototype are green
+(branch `proto-effect-frame`).
 
 Sources: KWin 6.7.5 (`tiles/tile.cpp` `Tile::windowGeometry`, `window.cpp` `requestTile`,
 `setNoBorder`, `pointerEnterEvent`, `xdgshellwindow.cpp` `configureDecoration`,

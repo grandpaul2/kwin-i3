@@ -92,7 +92,8 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     - `noBorder` stays after an unload (release gives it back) and is saved by session restore.
     Prototype shortcuts the spec must replace: the effect always active, a full repaint on
     every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
-    Next: the spec (window modes, the per-workspace default, the frame
+    Spec decided 2026-10-24 (`docs/spec-window-modes.md`; Paul's desktop runs the defaults while
+    this is built). Next: a second agent's review of the spec, then pieces (i)+(ii); the spec (window modes, the per-workspace default, the frame
     in the effect, kwini3frame retired, clicks on the frame via kwini3helper, no plugins).
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
