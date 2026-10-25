@@ -37,6 +37,9 @@ A panel widget (a QML plasmoid, no C++: nothing to rebuild after a Plasma update
   action (Meta+N) invoked over D-Bus (kglobalaccel `invokeShortcut`), so the widget and the key do
   the same thing; without kwin-i3, KWin's own per-screen activation (`requestActivateOnScreen`).
   A scroll goes to the next or previous workspace in use (i3bar does).
+- **spacing** (Paul, 2026-10-25): on a panel the row leads with an icons-only task button's inset,
+  read from the theme's `widgets/tasks` frame, so the widget sits as far from the launcher before
+  it as from the task manager after it (`lead` in `workspaces.js`; mirrored right-to-left).
 
 All from Plasma's own data, which already follows per-monitor desktops: `VirtualDesktopInfo`
 (`desktopIds`, `desktopNames`, `currentDesktopByScreenName`, `currentDesktopForScreenChanged`),
