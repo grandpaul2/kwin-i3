@@ -100,9 +100,9 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       earlier load without the effect; late-classified windows on a Plasma workspace);
     - workspace 4's OBS was left at an odd size by the 22:0x reloads (hidden then): watch it on
       first show.
-11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
-    (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
-    leave room for it (Paul: above it). Left:
+11. **The panel and notifications.** Plasma's default panel is back for good (2026-10-24; dotfiles'
+    `setup.sh` adds it where there is none), with kwin-i3's workspace widget in place of the pager.
+    Tiles leave room for it. Left:
     - **The workspace widget** built and installed 2026-10-24 (`docs/spec-workspace-widget.md`,
       `widget/`, `make widget-install`; reviewed; unit + live tests); on Paul's panel in place of the
       pager, working (Paul, 2026-10-24). Left: a scroll test (tools/ei-send can't scroll), vertical
