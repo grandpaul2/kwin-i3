@@ -723,3 +723,44 @@ test("focus_wrapping: force, the next one blocked by fullscreen: no wrap either 
     assert.strictEqual(m.focusDir(RIGHT, "force"), null);
     assert.strictEqual(m.focusDir(RIGHT, "yes").win, "a", "yes: the wrap to the fullscreen a");
 });
+
+// ---- back_and_forth and workspace next/prev (workspace.c; docs/spec-workspace-commands.md) ----
+
+test("previous workspace: set when the focused workspace changes (workspace_show), not within one", () => {
+    const m = model(true); open(m, 1, "a", "b");
+    assert.strictEqual(m.previousWs, null, "focus within workspace 1 sets nothing");
+    open(m, 2, "x");
+    assert.strictEqual(m.previousWs, 1, "focus moved to 2: the previous is 1");
+    m.focusWin("a");
+    assert.strictEqual(m.previousWs, 2, "and back: the previous is 2");
+    m.focusWin("b");
+    assert.strictEqual(m.previousWs, 2, "within 1 again: unchanged");
+    m.focusDir(RIGHT, "yes");                       // across the monitor edge, to x on 2
+    assert.strictEqual(m.focused.win, "x");
+    assert.strictEqual(m.previousWs, 1, "focus crossing the monitor counts too");
+});
+
+test("previous workspace: an empty workspace focused counts, and is kept once left", () => {
+    const m = model(); open(m, 1, "a");
+    m.activate(m.ws(3));
+    assert.strictEqual(m.previousWs, 1);
+    m.focusWin("a");
+    assert.strictEqual(m.previousWs, 3, "3 kept although empty (i3 keeps the name)");
+});
+
+test("previous workspace: moving a window away keeps the focus, so nothing changes", () => {
+    const m = model(); open(m, 1, "a", "b");
+    m.moveToWorkspace(m.byWin.b, m.ws(2));
+    assert.strictEqual(m.previousWs, null, "focus stayed on workspace 1 (_con_move_to_con step 7)");
+});
+
+test("workspace_next / _prev: next higher existing number, wrapping; null with one workspace", () => {
+    const next = Tree.nextWorkspace;
+    assert.strictEqual(next([1, 2, 5], 2, 1), 5, "gaps skipped");
+    assert.strictEqual(next([1, 2, 5], 5, 1), 1, "past the highest: the lowest");
+    assert.strictEqual(next([1, 2, 5], 1, -1), 5, "prev past the lowest: the highest");
+    assert.strictEqual(next([1, 2, 5], 5, -1), 2);
+    assert.strictEqual(next([5, 1, 2], 1, 1), 2, "order of the list doesn't matter");
+    assert.strictEqual(next([3], 3, 1), null, "one workspace: nothing");
+    assert.strictEqual(next([3], 3, -1), null);
+});

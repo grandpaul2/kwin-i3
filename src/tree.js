@@ -47,6 +47,8 @@ var Tree = (function () {
         this.workspaces = {};   // num -> ws
         this.byWin = {};        // window id -> leaf or floating node
         this.focused = null;    // i3's global `focused`
+        this.previousWs = null; // i3's previous_workspace_name, as a number (back_and_forth)
+        this.focusedWsNum = null;   // the workspace focus was last set on (for previousWs)
     }
 
     var M = Model.prototype;
@@ -204,9 +206,17 @@ var Tree = (function () {
         con.parent.focus.unshift(con);
         focusUp(con.parent);
     }
+    // The global focus changes only here, so this is where i3's workspace_show notes the
+    // workspace focused before (whatever moved the focus: a key, the mouse, an activation).
+    // The workspace is the one focus was on when it was set, not the focused window's now: a
+    // move to another workspace takes the focused window away first (moveToWorkspace).
     M.activate = function (con) {
+        var to = wsOf(con), from = this.focusedWsNum;
         focusUp(con);
         this.focused = con;
+        if (!to) return;
+        if (from && from !== to.num) this.previousWs = from;   // kept if it closes, as i3 keeps the name
+        this.focusedWsNum = to.num;
     };
 
     function getFocusOrder(con) { return con.focus.slice(); }
@@ -825,9 +835,23 @@ var Tree = (function () {
         });
     };
 
+    // workspace_next / workspace_prev for numbered workspaces: among those that exist, the next
+    // higher (dir 1) or lower (dir -1) number than cur; past the end, the lowest (highest). null
+    // if that is cur itself (one workspace).
+    function nextWorkspace(nums, cur, dir) {
+        var best = null, wrap = null;
+        nums.forEach(function (n) {
+            if (dir * (n - cur) > 0 && (best === null || dir * (n - best) < 0)) best = n;
+            if (wrap === null || dir * (n - wrap) < 0) wrap = n;
+        });
+        var t = best !== null ? best : wrap;
+        return t === cur ? null : t;
+    }
+
     return {
         Model: Model,
         wsOf: wsOf,
+        nextWorkspace: nextWorkspace,
         LEFT: LEFT, RIGHT: RIGHT, UP: UP, DOWN: DOWN,
         create: function (env) { return new Model(env); }
     };

@@ -73,3 +73,21 @@ test("scroll: next and previous in use from the focused one, wrapping", () => {
     // No window focused: from the first shown one.
     assert.strictEqual(W.step([{ num: 2, shown: false }, { num: 5, shown: true, focused: false }, { num: 6 }], 1), 6);
 });
+
+// docs/spec-workspace-commands.md, 4: "2 mail" for a desktop with a name of its own; KWin's
+// default ("Desktop 2", in the user's language) is no name.
+test("label: a name of its own is shown after the number; KWin's default or none is not", () => {
+    assert.strictEqual(W.label(2, "mail", "Desktop 2"), "2 mail");
+    assert.strictEqual(W.label(2, "Desktop 2", "Desktop 2"), "2", "KWin's default name");
+    assert.strictEqual(W.label(2, "Arbeitsfläche 2", "Arbeitsfläche 2"), "2", "the default in German");
+    assert.strictEqual(W.label(2, "Desktop 2", "Arbeitsfläche 2"), "2 Desktop 2", "English text under a German default is a name");
+    assert.strictEqual(W.label(2, "2", "Desktop 2"), "2", "no names given: workspaces() fills in the number");
+    assert.strictEqual(W.label(2, "", "Desktop 2"), "2");
+    assert.strictEqual(W.named(2, "mail", "Desktop 2"), true);
+    assert.strictEqual(W.named(2, "Desktop 2", "Desktop 2"), false);
+});
+
+test("names reach each workspace from Plasma's desktop names, in desktop order", () => {
+    const l = run([], { "DP-4": "d2", "DP-6": "d1" }, { names: ["Desktop 1", "mail"] });
+    assert.deepStrictEqual(l.map((s) => [s.num, s.name]), [[1, "Desktop 1"], [2, "mail"]]);
+});

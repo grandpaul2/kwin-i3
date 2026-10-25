@@ -149,6 +149,13 @@ KCM.SimpleKCM {
             text: i18n("Connected now: %1. Unlisted workspaces start on the first free monitor.",
                        Qt.application.screens.map((s) => s.name).join(", "))
         }
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18n("Back and forth:")
+            text: i18n("The key for the workspace you are on goes back to the previous one")
+            checked: root.settings.workspaceAutoBackAndForth
+            onToggled: root.settings.workspaceAutoBackAndForth = checked
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "workspaceAutoBackAndForth" }
+        }
 
         Item {
             Kirigami.FormData.isSection: true

@@ -101,7 +101,7 @@ wait_log() { poll _logged_since "$1" "${2:-0}"; }
 key() {
     local m; m=$(mark)
     # Move to Workspace N's action is "... (symbol)": the key it holds is Meta+<symbol> (src/kwin.js).
-    local id="kwin-i3 $1"; [[ $1 == "Move to Workspace "* ]] && id+=" (symbol)"
+    local id="kwin-i3 $1"; [[ $1 =~ ^Move\ to\ Workspace\ [0-9]+$ ]] && id+=" (symbol)"
     busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "$id"
     wait_log "^.{9}ACTION $1\$" "$m" || echo "    key: \"$1\" did not run within ${WAIT}s" >&2
 }

@@ -115,8 +115,16 @@ PlasmoidItem {
                 id: space
                 required property var modelData
                 readonly property real aspect: root.numbersOnly ? 1 : modelData.width / modelData.height
+                // KWin's own default name for an unnamed desktop, in KWin's translation domain
+                // (virtualdesktops.cpp: i18n("Desktop %1")), so "Desktop 2" is no name of its own.
+                readonly property string defaultName: i18nd("kwin", "Desktop %1", modelData.num)
+                readonly property bool isNamed: Logic.named(modelData.num, modelData.name, defaultName)
+                readonly property string label: Logic.label(modelData.num, modelData.name, defaultName)
                 Layout.preferredHeight: root.vertical ? row.thickness / aspect : row.thickness
-                Layout.preferredWidth: root.vertical ? row.thickness : row.thickness * aspect
+                // Numbers only: a named workspace's button widens to fit "2 mail".
+                Layout.preferredWidth: root.vertical ? row.thickness
+                    : Math.max(row.thickness * aspect, root.numbersOnly && isNamed ? metrics.width + row.thickness * 0.4 : 0)
+                TextMetrics { id: metrics; font.pixelSize: Math.max(8, row.thickness * 0.5); font.bold: space.modelData.focused; text: space.label }
                 radius: 2
                 color: modelData.focused ? Qt.alpha(Kirigami.Theme.highlightColor, 0.55)
                      : modelData.shown ? Qt.alpha(Kirigami.Theme.highlightColor, 0.25)
@@ -138,11 +146,17 @@ PlasmoidItem {
                     }
                 }
                 Text {
-                    anchors.centerIn: parent
-                    text: space.modelData.num
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: space.label
                     color: Kirigami.Theme.textColor
                     font.bold: space.modelData.focused
                     font.pixelSize: Math.max(8, Math.min(space.height, space.width) * 0.5)
+                    fontSizeMode: Text.Fit          // a name shrinks to fit a small thumbnail
+                    minimumPixelSize: 8
+                    elide: Text.ElideRight
                 }
                 MouseArea {
                     id: area
@@ -150,12 +164,14 @@ PlasmoidItem {
                     hoverEnabled: true
                     onClicked: root.show(space.modelData.num)
                     Accessible.role: Accessible.Button
-                    Accessible.name: i18n("Workspace %1", space.modelData.num)
+                    Accessible.name: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name)
+                                                   : i18n("Workspace %1", space.modelData.num)
                     Accessible.onPressAction: root.show(space.modelData.num)
                 }
                 PlasmaCore.ToolTipArea {
                     anchors.fill: parent
-                    mainText: i18n("Workspace %1", space.modelData.num)
+                    mainText: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name)
+                                            : i18n("Workspace %1", space.modelData.num)
                     subText: space.modelData.focused ? i18n("Shown, with the focus")
                            : space.modelData.shown ? i18n("Shown on its monitor") : ""
                 }

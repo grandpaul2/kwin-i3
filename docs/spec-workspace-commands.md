@@ -1,6 +1,8 @@
 # Spec: workspace back-and-forth, next/prev, output moves, workspace names
 
-Draft 2026-10-25, for Paul's go. From the i3 feature map (`docs/i3-feature-map.md`, holes) and
+Paul's go 2026-10-25 (label "2 mail", all four directions); built the same day, reviewed
+(a second agent: the lint failure, the fallback chain, the rebuild, previous after a move, the
+weak checks; all fixed). From the i3 feature map (`docs/i3-feature-map.md`, holes) and
 Paul's answers the same day: **offer them, bind nothing** (i3 binds none of these by default),
 skip swap, names yes, more than ten no.
 
@@ -65,11 +67,13 @@ are i3's explicit forms, each with left, right, up and down (`screenToward`, i3'
 - **Move Workspace to Output** (i3 `workspace_move_to_output`): the focused workspace's home
   becomes the target monitor, which shows it, and it keeps the focus. Reconcile's `relocate`
   carries every window, floating ones included. The source monitor, if it showed the
-  workspace, shows instead the workspace it showed most recently that still lives there (i3's
-  focus stack on that output: a small per-monitor history, updated where kwin-i3 already notes
-  what each monitor shows); with none, an unused workspace (`unusedWorkspace`, as for a
-  returning monitor; i3's `create_workspace_on_output`). If all ten are taken, the move is
-  refused and logged. A workspace given an output by `workspaceOutputs` moves all the same:
+  workspace, shows instead (i3's focus stack on that output, which holds only workspaces with
+  windows: an empty hidden one is closed) the workspace with windows it showed most recently
+  that still lives there (a small per-monitor history, updated where kwin-i3 already notes what
+  each monitor shows, cleared by the model's rebuild); else the lowest hidden one with windows
+  living there; else an unused workspace (`unusedWorkspace`, as for a returning monitor; i3's
+  `create_workspace_on_output`). If all ten are taken, the move is refused and logged. The
+  previous workspace is then the one the source shows (i3 shows it, then the moved one). A workspace given an output by `workspaceOutputs` moves all the same:
   as in i3, an assignment applies when the workspace is created.
 
 **Actions**: 12, "Focus Output Left" … "Move to Output Left" … "Move Workspace to Output Left" ….
@@ -105,13 +109,18 @@ with `i18nd("kwin", "Desktop %1", n)`, KWin's own string, and treats a match as 
 - `make test`, then a second agent's read of the new scenarios before relying on them (a
   substantial new set), then live.
 
+## Known limits
+
+- **Vertical panels**: the widget's width is the panel's, so "2 mail" shrinks to fit (down to
+  8 px) and then elides, rather than widening as in a horizontal panel's Numbers-only mode.
+- **The source monitor's fallback** doesn't prefer a workspace assigned to it by
+  `workspaceOutputs` (i3 does): `unusedWorkspace` only skips ones assigned elsewhere.
+- **Untested live**: the lowest-with-windows fallback (a monitor with no history; hard to set up
+  without a reload), the history cleared by a rebuild, the previous workspace after an unplug.
+  In OPEN.md with the other test gaps (deferred with reliability, the Stage).
+
 ## Not here
 
 Swap (Paul: skip). More than ten workspaces (Paul: skip). Default keys for any of these.
 Name-based commands (`workspace mail`): they need a way to type a name; not asked for.
 
-## For Paul
-
-1. The label: "2 mail" (recommended), or i3bar's "2:mail", or the name alone.
-2. Output moves: all four directions (12 actions, recommended: monitors can be stacked), or
-   left/right only (6).

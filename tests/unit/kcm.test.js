@@ -16,10 +16,14 @@ function registered() {
     assert.ok(fn, "registerKeys not found in src/kwin.js");
     const out = [];
     const reg = (action, friendly, key) => out.push([action, key]);
-    Function("KEYS", "NAMES", "SHIFTED", "RETIRED", "KWIN_OWN", "registerShortcut", "act", "guard", "actions", "log",
+    // The actions with no default key: the UNBOUND table and the loop that adds the output moves.
+    const unbound = src.match(/(var UNBOUND = \{[\s\S]*?\n    \}\);\n)/);
+    assert.ok(unbound, "UNBOUND not found in src/kwin.js");
+    const UNBOUND = Function(unbound[1] + "return UNBOUND;")();
+    Function("KEYS", "NAMES", "SHIFTED", "RETIRED", "KWIN_OWN", "UNBOUND", "registerShortcut", "act", "guard", "actions", "log",
              "gotoWorkspace", "moveToWorkspace", "DEBUG_LOG", "callDBus", fn[0] + "registerKeys();")(
         get(/var KEYS = (\{[\s\S]*?\n    \});/), get(/var NAMES = (\[[^\]]*\]);/), get(/var SHIFTED = (\[[^\]]*\]);/),
-        [], {}, reg, () => null, () => null, {}, () => {}, null, null, false, () => {});
+        [], {}, UNBOUND, reg, () => null, () => null, {}, () => {}, null, null, false, () => {});
     // start()'s own two, outside registerKeys.
     for (const m of src.matchAll(/registerShortcut\("(kwin-i3 (?:Release|Dump State))",\s*"[^"]*",\s*"([^"]*)"/g))
         out.push([m[1], m[2]]);
@@ -42,6 +46,15 @@ test("no key is registered in its dead Shift+symbol form", () => {
 test("the retired actions are not registered", () => {
     const names = registered().map((r) => r[0]);
     for (const a of ["kwin-i3 Move Right (;)", "kwin-i3 Move to Workspace 1"]) assert.ok(!names.includes(a), a);
+});
+
+test("the workspace commands are registered with no key (docs/spec-workspace-commands.md)", () => {
+    const r = Object.fromEntries(registered());
+    const want = ["Workspace Back and Forth", "Move to Workspace Back and Forth", "Workspace Next", "Workspace Prev",
+                  "Workspace Next on Output", "Workspace Prev on Output"];
+    for (const d of ["Left", "Right", "Up", "Down"])
+        want.push("Focus Output " + d, "Move to Output " + d, "Move Workspace to Output " + d);
+    for (const a of want) assert.strictEqual(r["kwin-i3 " + a], "", a);
 });
 
 test("the self-test actions are not on the Keys page", () => {

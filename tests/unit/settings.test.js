@@ -65,6 +65,7 @@ test("defaults: lists split on commas, debugLog off", () => {
     assert.ok(S.get("ignoreClass").includes("krunner"));
     assert.strictEqual(S.get("debugLog"), false);
     assert.strictEqual(debug(), false);
+    assert.strictEqual(S.get("workspaceAutoBackAndForth"), false, "off, as i3's default");
 });
 
 test("what the form writes parses: a list with spaces, a bool as text", () => {

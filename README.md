@@ -39,6 +39,15 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
 | Meta+Ctrl+Shift+Q | **release**: hand every window back to KWin and stop, the safety valve |
 
+With no key, as in i3 (bind them in System Settings > Shortcuts > KWin, "kwin-i3: …", or on the
+settings page): **workspace back and forth** (the workspace focused before) and **move to
+workspace back and forth**; **workspace next / prev** (among those in use, wrapping) and their
+**on output** forms; and for each direction, **focus output**, **move to output** (the window to
+that monitor's visible workspace; the focus stays) and **move workspace to output** (the whole
+workspace; the monitor it leaves shows the one it showed before). The setting
+`workspaceAutoBackAndForth` makes Meta+N for the workspace you are on go back, as i3's
+`workspace_auto_back_and_forth`.
+
 Mouse, KWin's own: **Meta+left-drag** moves a window (a tiled one floats where it is dropped),
 **Meta+right-drag** resizes (the new size is kept in the tree). With the plugins, the 1 px frame
 starts nothing from the pointer (no resize cursor, no edge drag, no title-bar move), and hover
@@ -129,7 +138,9 @@ monitor showing it, as i3bar does), each at its own monitor's shape with its win
 ones marked (more strongly on the monitor with focus); a click is Meta+N, a scroll goes to the
 next or previous one. `make widget-install` (QML only: nothing to build, nothing to redo after a
 Plasma update), then on the panel: right-click the pager, *Show Alternatives*, *kwin-i3
-Workspaces* (or *Add Widgets*). Its settings: *Numbers only*, for a small panel.
+Workspaces* (or *Add Widgets*). Its settings: *Numbers only*, for a small panel. A workspace's
+name is its desktop's, set in System Settings > Virtual Desktops: a named one is labelled
+"2 mail" (kwin-i3 never renames a desktop).
 
 ## Configuration
 
@@ -156,6 +167,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |
+| `[Script-kwin-i3] workspaceAutoBackAndForth` | false | i3's `workspace_auto_back_and_forth`: Meta+N for the focused workspace shows the one focused before; Meta+Shift+N for it sends the window there |
 | `[Script-kwin-i3] warnTakenKeys` | `true` | at load, one notification naming each of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't); `make take-keys` frees them |
 | `[Script-kwin-i3] debugLog` | `false` | log every action and tree over D-Bus to `tools/logsink.py` (the tests' log); off, an in-memory log feeds `Dump State` |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |

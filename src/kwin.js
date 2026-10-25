@@ -26,6 +26,10 @@ var KI3 = (function () {
     // What each monitor showed, by name, so a monitor that comes back shows it again (review:
     // nothing made a returning monitor show its workspace; KWin may restore something else).
     var lastShown = {}, beforeLoss = null;
+    // Per monitor, the workspaces it showed, most recent first (i3's focus stack of an output's
+    // workspaces), for the monitor a workspace leaves (Move Workspace to Output).
+    var shownBefore = {};
+    var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];    // the workspace keys, Meta+1..0
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -1150,7 +1154,84 @@ var KI3 = (function () {
         model.moveToWorkspace(con, wsModel(n));
     }
 
-    var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+    // ---- workspace commands with no default key (docs/spec-workspace-commands.md) -------------
+
+    // The focused workspace's number: the focused con's, else what the active monitor shows.
+    function focusedWsNum() {
+        var f = model.focused ? Tree.wsOf(model.focused) : null;
+        return f ? f.num : deskNum(workspace.currentDesktopForScreen(workspace.activeScreen));
+    }
+    // i3's previous_workspace_name, if that desktop still exists.
+    function previousWs() {
+        var p = model.previousWs;
+        return p && p <= Math.min(workspace.desktops.length, NAMES.length) ? p : null;
+    }
+    // Meta+N and Meta+Shift+N with workspaceAutoBackAndForth (i3's maybe_back_and_forth): N is
+    // the focused workspace, so go (send the window) back instead.
+    function autoBack(n) {
+        if (!Settings.get("workspaceAutoBackAndForth") || n !== focusedWsNum()) return n;
+        return previousWs() || n;
+    }
+    // A workspace exists (i3: it has windows or is shown) and, for on-output, lives there.
+    function existingWorkspaces(screen) {
+        var out = [];
+        for (var n = 1; n <= Math.min(workspace.desktops.length, NAMES.length); n++) {
+            var m = model.workspaces[n];
+            if (!((m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n))) continue;
+            if (screen && Workspaces.outputOf(n) !== screen) continue;
+            out.push(n);
+        }
+        return out;
+    }
+    function stepWorkspace(dir, onOutput) {
+        var cur = focusedWsNum();
+        var t = Tree.nextWorkspace(existingWorkspaces(onOutput ? Workspaces.outputOf(cur) : null), cur, dir);
+        if (t) gotoWorkspace(t);
+    }
+    // The screen next to the focused workspace's, in a direction (i3's get_output_next).
+    function screenFrom(dir) { return Workspaces.screenToward(Workspaces.outputOf(focusedWsNum()), dir); }
+    // i3's cmd_focus_output: show the target's visible workspace, focusing its focused window.
+    function focusOutput(dir) {
+        var t = screenFrom(dir);
+        if (t) gotoWorkspace(deskNum(workspace.currentDesktopForScreen(t)));
+    }
+    // i3's con_move_to_output: to the target's visible workspace; focus stays behind.
+    function moveToOutput(dir, con) {
+        var ws = con ? outputNeighbour(Tree.wsOf(con), dir) : null;
+        if (ws) model.moveToWorkspace(con, ws);
+    }
+    // i3's workspace_move_to_output: the focused workspace lives on the target and is shown
+    // there, focused; the monitor it left, if it showed it, shows the one it showed most recently
+    // that still lives there, else an unused one. Reconcile's relocate carries the windows.
+    function moveWorkspaceToOutput(dir) {
+        var n = focusedWsNum(), src = Workspaces.outputOf(n), t = Workspaces.screenToward(src, dir);
+        if (!t) return;
+        var wasShown = Workspaces.showing(n) === src;
+        // i3's focus stack holds only workspaces with windows (an empty hidden one is closed):
+        // the most recently shown of those, else the lowest, else an unused one.
+        function candidate(k) {
+            var m = model.workspaces[k];
+            return k !== n && deskOf(k) && m && (m.nodes.length || m.floating.length) &&
+                   Workspaces.outputOf(k) === src && !Workspaces.showing(k);
+        }
+        var back = null;
+        if (wasShown) {
+            back = (shownBefore[src.name] || []).filter(candidate)[0] || null;
+            for (var k = 1; !back && k <= Math.min(workspace.desktops.length, NAMES.length); k++)
+                if (candidate(k)) back = k;
+            if (!back) back = unusedWorkspace(src);
+            if (!back) { log("WSMOVE refused: no workspace left for " + src.name); return; }
+        }
+        Workspaces.setHome(n, t);
+        if (back) workspace.setCurrentDesktopForScreen(deskOf(back), src);
+        workspace.setCurrentDesktopForScreen(deskOf(n), t);
+        var ws = wsModel(n), fs = model.fullscreenOn(ws);
+        model.activate(fs || model.descendFocused(ws));
+        // i3 shows the source's next workspace, then this one: the previous is the former.
+        if (back) model.previousWs = back;
+        log("WSMOVE " + n + " to " + t.name + (back ? ", " + src.name + " shows " + back : ""));
+    }
+
     var SHIFTED = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"];
     // Actions registered before and dead (2026-10-24: a Shift+symbol key fires only its symbol form).
     var RETIRED = ["kwin-i3 Move Right (;)"].concat(NAMES.map(function (k, i) { return "kwin-i3 Move to Workspace " + (i + 1); }));
@@ -1173,6 +1254,21 @@ var KI3 = (function () {
         "Reload Settings": ["Meta+Shift+C"],
     };
 
+    var UNBOUND = {
+        "Workspace Back and Forth": function () { var p = previousWs(); if (p) gotoWorkspace(p); },
+        "Move to Workspace Back and Forth": function (c) { var p = previousWs(); if (p) moveToWorkspace(p, c); },
+        "Workspace Next": function () { stepWorkspace(1, false); },
+        "Workspace Prev": function () { stepWorkspace(-1, false); },
+        "Workspace Next on Output": function () { stepWorkspace(1, true); },
+        "Workspace Prev on Output": function () { stepWorkspace(-1, true); },
+    };
+    ["left", "right", "up", "down"].forEach(function (d) {
+        var cap = d.charAt(0).toUpperCase() + d.slice(1);
+        UNBOUND["Focus Output " + cap] = function () { focusOutput(d); };
+        UNBOUND["Move to Output " + cap] = function (c) { moveToOutput(d, c); };
+        UNBOUND["Move Workspace to Output " + cap] = function () { moveWorkspaceToOutput(d); };
+    });
+
     // KWin's own actions run on KWin's active window, so not through act(): its focus request
     // would activate kwin-i3's focused window before KWin's queued action ran, and a window
     // kwin-i3 doesn't manage would lose the key to it (closed the wrong one; 33-own-keys.sh).
@@ -1189,14 +1285,19 @@ var KI3 = (function () {
         });
         NAMES.forEach(function (k, i) {
             var n = i + 1;
-            var go = act("Workspace " + n, function () { gotoWorkspace(n); });
-            var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(n, c); });
+            var go = act("Workspace " + n, function () { gotoWorkspace(autoBack(n)); });
+            var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(autoBack(n), c); });
             registerShortcut("kwin-i3 Workspace " + n, "kwin-i3: workspace " + n, "Meta+" + k, go);
             // Meta+Shift+digit arrives as Meta+<symbol> (US layout: Meta+!); the Meta+Shift+digit
             // action that stood beside this one until 2026-10-24 never fired. The id keeps its
             // "(symbol)" so an install keeps the key it already holds.
             registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
                              "kwin-i3: move to workspace " + n, "Meta+" + SHIFTED[i], mv);
+        });
+        // No default key, as in i3 (docs/spec-workspace-commands.md): bound by the user in
+        // System Settings > Shortcuts.
+        Object.keys(UNBOUND).forEach(function (name) {
+            registerShortcut("kwin-i3 " + name, "kwin-i3: " + name.toLowerCase(), "", act(name, UNBOUND[name]));
         });
         // The retired actions leave KWin's shortcut list (and Plasma's Shortcuts page): never
         // registered again, so this is a no-op after the first load without them.
@@ -1571,6 +1672,7 @@ var KI3 = (function () {
                 wins = {}; expected = {}; armed = {}; lastFit = {}; ruleKind = {}; dirty = {}; placing = {};
                 borderGone = {};
                 beforeLoss = null;                  // numbers by the old positions
+                lastShown = {}; shownBefore = {};   // likewise
                 Workspaces.reset();
                 workspace.screens.forEach(function (s) { Workspaces.claimAssigned(s.name); });
                 adoptTiled();
@@ -1710,7 +1812,15 @@ var KI3 = (function () {
         return null;
     }
     function rememberShown() {
-        workspace.screens.forEach(function (s) { lastShown[s.name] = deskNum(workspace.currentDesktopForScreen(s)); });
+        workspace.screens.forEach(function (s) {
+            var now = deskNum(workspace.currentDesktopForScreen(s)), was = lastShown[s.name];
+            if (was && was !== now) {
+                var h = (shownBefore[s.name] || []).filter(function (n) { return n !== was && n !== now; });
+                h.unshift(was);
+                shownBefore[s.name] = h.slice(0, NAMES.length);
+            }
+            lastShown[s.name] = now;
+        });
     }
     function screensChanged() {
         checkPerOutput(false);

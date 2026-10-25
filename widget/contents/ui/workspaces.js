@@ -78,4 +78,14 @@ function step(list, dir, from) {
     return list[(at + (dir > 0 ? 1 : list.length - 1)) % list.length].num;
 }
 
-if (typeof module !== "undefined") module.exports = { workspaces: workspaces, step: step, monitorOf: monitorOf };
+// A workspace's label (docs/spec-workspace-commands.md, 4): "2 mail" when its desktop has a name
+// of its own, else "2". An unnamed desktop carries KWin's default, "Desktop 2" in the user's
+// language, which the caller passes as defaultName.
+function named(num, name, defaultName) {
+    return !!name && name !== defaultName && name !== String(num);
+}
+function label(num, name, defaultName) {
+    return named(num, name, defaultName) ? num + " " + name : String(num);
+}
+
+if (typeof module !== "undefined") module.exports = { workspaces: workspaces, step: step, monitorOf: monitorOf, named: named, label: label };

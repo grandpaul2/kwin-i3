@@ -94,6 +94,12 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     `org.kde.kdecoration3/kwini3frame.so` is there now, harmless: nothing selects it). Next: have
     `make plugin` remove any plugin file it didn't build; spec it like any change.
 
+13. **Workspace commands** (`docs/spec-workspace-commands.md`: back-and-forth, next/prev, the
+    output moves, names in the widget), live 2026-10-25, unbound as in i3. Left (deferred with
+    reliability, the Stage): live tests for the source monitor's lowest-with-windows fallback, the
+    history after a rebuild, the previous workspace after an unplug; the widget's names on a
+    vertical panel.
+
 Not decided: a release and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; this is not an item until he decides.
 
