@@ -23,10 +23,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus)
 find_package(KF6 REQUIRED COMPONENTS CoreAddons Config)
 find_package(KWin REQUIRED COMPONENTS kwin)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)    # the keymap, for layoutkeys.cpp
 
 kcoreaddons_add_plugin(kwini3helper INSTALL_NAMESPACE "kwin/plugins")
-target_sources(kwini3helper PRIVATE main.cpp helper.cpp framefocus.cpp settingswatch.cpp)
-target_link_libraries(kwini3helper PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)
+target_sources(kwini3helper PRIVATE main.cpp helper.cpp framefocus.cpp settingswatch.cpp layoutkeys.cpp)
+target_link_libraries(kwini3helper PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore PkgConfig::XKBCOMMON)
 
 # automoc scans for macro names, and KWin's factory macro hides the Q_OBJECT inside it.
 list(APPEND CMAKE_AUTOMOC_MACRO_NAMES "KWIN_EFFECT_FACTORY_SUPPORTED")

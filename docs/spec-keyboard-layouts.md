@@ -1,6 +1,7 @@
 # Spec: kwin-i3's keys on non-US keyboard layouts (OPEN.md item 9)
 
-Draft 2026-10-25, for Paul's go.
+Paul's go 2026-10-25 (the helper plugin; the digit row and `;`, his call deferred to the
+recommendation). Built the same day.
 
 ## How KWin matches a key (read from the 6.7.5 sources, 2026-10-25)
 
@@ -38,20 +39,25 @@ labelled F): their meaning is the letter, and on QWERTZ and AZERTY J, K, L sit w
 US.
 
 **Where**: `kwini3helper` (the optional KWin plugin) reads the keymap KWin itself matches against
-(`Xkb::keymap()`, public): for each of those key codes and each layout in the keymap, the level-1
-and level-2 symbols (`xkb_keymap_key_get_syms_by_level`), as Qt keys (KWin's `Xkb::toQtKey`
-rule: a letter keeps Shift). It sets the matching kwin-i3 actions' keys through kglobalaccel:
+(`Xkb::keymap()`, public): for each of those key codes, the **current layout's** level-1 and
+level-2 symbols (`xkb_keymap_key_get_syms_by_level`), as KWin turns them into a shortcut
+(`Xkb::toQtKey` with Ctrl when Meta is held, `keyboard_input.cpp:312`; a letter keeps Shift). It
+sets the matching kwin-i3 actions' keys through kglobalaccel:
 
 - **when**: when the script asks, once its keys are registered (a D-Bus call from the script to
-  the helper at load), and when the keymap changes (layouts added, removed or reordered in System
-  Settings);
+  the helper at load), when the layout is switched (`KeyboardLayout::layoutChanged`), and when
+  layouts are added, removed or reordered (`layoutsReconfigured`);
 - **only keys the user hasn't changed**: an action whose current keys are kwin-i3's US default,
   or the set the helper last gave it (kept in `[Script-kwin-i3]`), is updated. One the user bound
   to something else is left alone;
-- **several layouts** (`us,de`, switched with a key): each action gets one key per layout whose
-  symbol differs, since KWin matches the current layout's symbol. When two layouts would give
-  the same key to different actions (`us,fr`: Meta+1 is Workspace 1 on US and Move to Workspace 1
-  on French), the first layout wins, and the clash goes in the load notification;
+- **several layouts** (`us,de`, switched with a key): KWin matches the current layout's symbol
+  only, so the keys follow the switch. One symbol can mean different actions in two layouts (`&`
+  is Shift+7 on US and Shift+6 on German; Meta+1 is Workspace 1 on US and Move to Workspace 1 on
+  AZERTY), so fitting every layout at once can't work: the first try did, and Meta+Shift+6 on
+  German moved to 7. One fit runs at a time (a quick us → de → us flip would otherwise leave
+  German keys on US); a key moving between two actions is held by both for the moment between
+  their sets, which kglobalaccel allows (`GlobalShortcut::setKeys`), and the burst ends with each
+  key on one action;
 - **a US layout**: nothing changes. The symbols are the defaults.
 
 **Without the plugins** (they are optional): the script can't read the keymap. At load it asks
@@ -61,26 +67,36 @@ rule: a letter keeps Shift). It sets the matching kwin-i3 actions' keys through 
 which record the symbol the key types. A part of the existing one notification at load, with
 `warnTakenKeys` turning it off as for the taken keys.
 
-**The taken-keys check** runs on the keys after the helper's change, since it reads the actions'
-current keys.
+**The taken-keys check** reads the keys at load, likely before the helper's change lands: a fitted
+key another shortcut holds is named at the next load.
 
 ## Tests
 
-- **Unit**: the mapping from (layout, key, level) symbols to the actions' keys, and the
-  multi-layout union with its clash rule, as a pure function in node, with the symbols of
-  us, de, gb and fr as data.
+- **Unit**: the plugin's table names registered actions with their registered US keys
+  (`tests/unit/kcm.test.js`). The mapping itself is KWin's own calls on the real keymap, so it is
+  tested live, not against a copy of xkb's tables.
 - **Live**, on a test KWin with `kxkbrc [Layout] LayoutList=de` (its own config dir), keys
-  injected by key code (`tools/inject.py`): Meta+Shift+2 moves to workspace 2; Meta+Shift+.
-  (the `:` position) moves right; Meta+2 still switches. The same with `fr`: Meta+(the 1 key)
-  switches to 1 and Meta+Shift+(the 1 key) moves. With `us,de`: both layouts' keys work after a
+  injected by key code (`tools/inject.py`): Meta+Shift+2 moves to workspace 2; Meta+Shift+(the
+  `;` key, ö) moves right; Meta+2 still switches. The same with `fr`: Meta+(the 1 key)
+  switches to 1 and Meta+Shift+(the 1 key) moves. With `us,de` and `us,fr`: each layout's keys work after a
   layout switch. A key the user rebound is kept. With no plugins and `de`: the notification part.
 - Watched red first: the scenario before the code (today's keys fail on `de`), then a fault.
 
-## For Paul
+## Known limits (review, 2026-10-25)
 
-1. **Which keys follow position**: the digit row and `;` (recommended: what's broken, and the
-   keys whose meaning is a position), or everything, as i3's wizard does (Meta+Shift+Q would be
-   Meta+Shift+A on AZERTY).
-2. **Where**: the helper plugin, automatic, plus a notice without it (recommended); or a one-off
-   tool (`make layout-keys`, reading the configured layouts with libxkbcommon), which works
-   without the plugins but must be re-run when the layouts change.
+- **A letter at a position**: on AZERTY the `;` position is `m`, so Focus Right is Meta+M (and
+  Meta+Ctrl+M, Meta+Shift+M); on Dvorak `s`. As i3's wizard would. If another shortcut holds it,
+  the first holder wins; the taken-keys check runs before the fit lands, so it names such a key
+  at the next load.
+- **The user's keys are recognised by value**: a key set by hand to exactly kwin-i3's US default,
+  or to what the helper last gave it, counts as kwin-i3's and follows the layout.
+- **A layout with no symbol at a position** empties that action (recorded as "none", so it is
+  refitted when a layout has one again).
+- **The plan the helper publishes** (`Plan`, for the tests) appears only once kglobalaccel has
+  confirmed every change.
+- **Not reproduced live**: the one-fit-at-a-time guard and the plan published after the keys land
+  are kept on the review's reasoning; with either removed, 69 stayed green (the test KWin's D-Bus
+  round trips finish before a second layout switch can be sent). 69's quick flip checks the
+  outcome. Every other part was watched red under a fault (fits nothing, no refit on a switch,
+  the user's key overwritten, no notice without the helper).
+

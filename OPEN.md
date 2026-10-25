@@ -17,7 +17,7 @@ a release) are deferred unless they inform a structural change or a larger issue
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". Suggested order: 4, 9, 5 (1, 3 and 7 are done; 7, kwin-i3's own
+`docs/plan.md`, "Scope". Suggested order: 4, 5 (1, 3 and 7 are done; 7, kwin-i3's own
 settings page, live 2026-10-24: `docs/spec-settings-page.md`).
 
 ## Open
@@ -55,14 +55,6 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
    effect unloaded and loaded, a desktop removed or moved. Deferred with the rest (the Stage).
    53-hold's other early failure, the kill switch's `--notify` not taking (seen once, early
    2026-10-24), has not recurred in ~15 full runs since; closed unless it comes back.
-9. **Non-US keyboard layouts and the workspace move keys.** Meta+Shift+digit arrives as
-   Meta+<the symbol Shift+digit types>, and kwin-i3 registers the US symbols (Meta+!, Meta+@, ...).
-   On a German layout Shift+2 types `"`, so Meta+Shift+2 matches nothing and moving a window to
-   workspace 2 doesn't work (likewise Meta+: for Move Right). Found 2026-10-24 (the probe behind
-   `tests/live/38-retired-keys.sh`). Next: find how KWin matches a shifted key (its source), then
-   choose: read the layout's symbols, or register by key position; spec, with a scenario on a
-   German-layout test KWin.
-
 10. **Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame drawn
     by kwini3hold outside tiled windows; floating windows keep the user's decoration;
     `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame

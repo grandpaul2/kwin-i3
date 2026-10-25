@@ -68,3 +68,14 @@ test("every command has a label and a group", () => {
         for (const c of g.commands) assert.ok(c.label && c.actions.length, JSON.stringify(c));
     }
 });
+
+// The helper plugin's table of keys that mean a position (plugin/layoutkeys.cpp,
+// docs/spec-keyboard-layouts.md): each action exists, and its US key is the one registered, so a
+// key the user hasn't changed is recognised as kwin-i3's default.
+test("the layout keys' table names registered actions with their registered US keys", () => {
+    const cpp = fs.readFileSync(path.join(root, "plugin/layoutkeys.cpp"), "utf8");
+    const slots = [...cpp.matchAll(/\{"(kwin-i3 [^"]+)", KEY_\w+, [01], [^,]+, "([^"]+)"\}/g)].map((m) => [m[1], m[2]]);
+    assert.strictEqual(slots.length, 23, "10 workspaces, 10 moves, three on the ; key");
+    const reg = Object.fromEntries(registered());
+    for (const [action, us] of slots) assert.strictEqual(reg[action], us, action);
+});

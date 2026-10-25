@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Without the plugins kwin-i3's keys stay US symbols: on another keyboard layout the load
+# notification says so (docs/spec-keyboard-layouts.md). On US, nothing; with warnTakenKeys off,
+# nothing. No "# needs: plugin": the helper is not loaded here.
+source "$(dirname "$0")/lib.sh"
+notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
+notes_are() { [[ $(notes) == "$1" ]]; }
+layout() {
+    kwriteconfig6 --file kxkbrc --group Layout --key Use true
+    kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1" --notify
+    poll eval '[[ "$(busctl --user call org.kde.keyboard /Layouts org.kde.KeyboardLayouts getLayoutsList)" == *"\"${1%%,*}\""* ]]'
+}
+reload() {
+    busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
+    local m; m=$(mark); load_kwin_i3; wait_log 'kwin-i3 loaded$' "$m"
+}
+: > "$KI3_TMP/notify.out"                  # there before the first poll reads it
+"$root/tools/fakenotify.py" > "$KI3_TMP/notify.out" 2>&1 &
+poll grep -q READY "$KI3_TMP/notify.out"
+
+# 1. US: logged, nothing to say.
+load_kwin_i3
+wait_log 'kwin-i3 loaded$'
+check "US: logged, no notice"               wait_log '^.{9}LAYOUTS us$'
+sleep 0.5
+check "no notification"                     notes_are 0
+
+# 2. German, at the next load: one notification naming the layout and the fix.
+layout de
+m=$(mark); reload
+check "de: logged as not fitted"            wait_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
+check "one notification"                    poll notes_are 1
+check "it names the layout"                 grep -q "Its keys may not fit the keyboard layout (de)" "$KI3_TMP/notify.out"
+check "and the fix"                         grep -q "make plugin-install" "$KI3_TMP/notify.out"
+
+# 3. warnTakenKeys off: no check, no notification.
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key warnTakenKeys false
+m=$(mark); reload
+sleep 1
+check "off: no LAYOUTS line"                bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -q 'LAYOUTS'"
+check "and no new notification"             notes_are 1
+
+check "no invariant failures or errors"     clean_log
+finish

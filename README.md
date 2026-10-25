@@ -39,6 +39,9 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
 | Meta+Ctrl+Shift+Q | **release**: hand every window back to KWin and stop, the safety valve |
 
+The digit row and the `;` key mean a key position, as i3's default config does: on a layout that
+isn't US they need the helper plugin (below), or setting by hand.
+
 With no key, as in i3 (bind them in System Settings > Shortcuts > KWin, "kwin-i3: …", or on the
 settings page): **workspace back and forth** (the workspace focused before) and **move to
 workspace back and forth**; **workspace next / prev** (among those in use, wrapping) and their
@@ -96,7 +99,7 @@ They are for locking in the i3 feel completely; kwin-i3 works fine without them.
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | i3's 1 px frame around tiled windows (width and colours in the settings), blue on the active one: tiled windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiled windows keep their title bars; on a fast monitor, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); and **Apply applies**: a save in the Configure form takes effect at once | after Apply, press Meta+Shift+C |
+| `kwini3helper` (a KWin plugin) | focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; on a layout that isn't US, set those keys on the settings page (the load notification says so) |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a

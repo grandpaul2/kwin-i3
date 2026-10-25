@@ -2507,6 +2507,33 @@ var KI3 = (function () {
         log("REPORT " + summary);
     }
 
+    // Without the helper plugin the keys stay US symbols: a layout that isn't US is reported
+    // (docs/spec-keyboard-layouts.md). Its part closes once, on the answer or after 3 s, so a
+    // D-Bus call that never answers can't hold back the rest of the report.
+    function checkLayoutKeys() {
+        if (!Settings.get("warnTakenKeys")) return;
+        reportOpen();
+        var closed = false;
+        function close(title, lines) {
+            if (closed) return;
+            closed = true;
+            reportClose(title, lines);
+        }
+        later(3000, function () { close("", []); });
+        callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
+                 guard("layout keys", function (loaded) {
+            if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); close("", []); return; }
+            callDBus("org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts", "getLayoutsList", guard("layout keys", function (list) {
+                var names = (list || []).map(function (l) { return String(l[0]); });
+                var other = names.filter(function (n) { return n !== "us"; });
+                log("LAYOUTS " + names.join(",") + (other.length ? ", not fitted (no helper)" : ""));
+                close("its keys may not fit the keyboard layout (" + other.join(", ") + ")", other.length ? [
+                    "Meta+Shift+1 … 0 and Meta+; are set for a US keyboard. Install kwin-i3's plugins " +
+                    "(make plugin-install) to fit them to yours, or set them on kwin-i3's settings page."] : []);
+            }));
+        }));
+    }
+
     // A key another action also holds is given to kwin-i3's action too (registerShortcut always
     // returns true, and shortcutKeys shows it), but a press runs only the first holder's.
     // KGlobalAccel.action(key) names that one (probed 2026-10-24), but a holder whose component
@@ -2885,8 +2912,12 @@ var KI3 = (function () {
             wantFocus();
         }));
         registerKeys();
-        // Both open their part of the report before either can close it: one notification.
+        // The helper plugin fits the keys that mean a key position to the keyboard layout
+        // (docs/spec-keyboard-layouts.md). No reply asked: without the plugin, nothing happens.
+        callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
+        // All open their part of the report before any can close it: one notification.
         checkTakenKeys();
+        checkLayoutKeys();
         checkPerOutput(true);
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
             checkPerOutput(false);
