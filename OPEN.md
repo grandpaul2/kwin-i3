@@ -74,12 +74,21 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
     plugin, which retires the `kwini3frame` decoration (KWin has one decoration for every window).
     Hurdles: the frame's pixel inside the tile, focus by clicking the frame, the script-only install
     (tiled windows keep title bars), KWin's quick tiling on floating windows, the kept-above
-    floating marker. Probe done 2026-10-24 (test KWin, Breeze): `w.noBorder` from a script works
-    per window, tiled or floating; the frame keeps its tile and the client grows into the title
-    bar (one configure); KWin keeps it through a script unload and reload, so kwin-i3 must give it
-    back on release, as with kept-above. From KWin 6.7.5's source: it is the window's decoration
-    policy (Alt+F3's "No titlebar and frame"), a window rule forcing a border wins, and xdg session
-    restore saves it. Next: an effect prototype of the frame (worktree), then the spec.
+    floating marker. **Route chosen (Paul, 2026-10-24): the user's decoration on floating windows,
+    tiled ones borderless, the frame drawn by the effect outside the window: nothing of the app
+    covered.** Prototype done (branch `proto-effect-frame`, `tests/live/99-effect-frame.sh`, 18
+    pixel checks green): the tiles padded by twice the frame and the root inset by a hair
+    (1e-6) so KWin gives half the padding at the screen edges too, 1 px all round; the frame
+    drawn by kwini3hold where the window is drawn, so it stays with a held snapshot. Found:
+    - the border must go before the tile asks for a size, and the window be refit once the
+      client has answered (KWin keeps the decoration until then; the `armed` refit does it);
+    - the GTK 4 test client, tiled without a border, stops at 692 px of a 716 px tile, even in
+      KWin alone (Alacritty is exact): to understand before the spec (real GTK 4 apps?);
+    - `noBorder` stays after an unload (release gives it back) and is saved by session restore.
+    Prototype shortcuts the spec must replace: the effect always active, a full repaint on
+    every change, `sameRect`'s tolerance cut to 1e-9 for the hair.
+    Next: the GTK 4 question, then the spec (window modes, the per-workspace default, the frame
+    in the effect, kwini3frame retired, clicks on the frame via kwini3helper, no plugins).
 11. **The panel and notifications.** Plasma's default panel added 2026-10-24 as a trial
     (`~/.dotfiles/setup.sh` still removes panels on a run, untouched while it is a trial). Tiles
     leave room for it (Paul: above it). Left:
