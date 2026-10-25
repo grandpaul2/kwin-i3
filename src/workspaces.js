@@ -104,5 +104,6 @@ var Workspaces = (function () {
         setHome: setHome, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
         assigned: assigned, assignedScreen: assignedScreen, claimHome: claimHome, claimAssigned: claimAssigned,
         homes: function () { return home; },
+        reset: function () { home = {}; },      // the model rebuilt (docs/spec-desktop-changes.md)
     };
 })();

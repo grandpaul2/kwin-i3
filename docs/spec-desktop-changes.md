@@ -1,7 +1,10 @@
 # Spec: desktops removed or reordered mid-session (OPEN.md item 6)
 
 From `docs/spec-desktops-on-demand.md` ("found on the way", 2026-10-24); Paul asked for this spec
-2026-10-24. Status: **draft for Paul's decisions (below).**
+2026-10-24. Status: **decided by Paul, 2026-10-24: (a), re-adopt everything ("do a"); numbered
+settings stay positions, no notification (decision 2 without its extra); a removed shown desktop
+as KWin does (3). Built the same day: `desktopListChanged` in `src/kwin.js`,
+`tests/live/65-desktop-changes.sh` (18 checks; 13 red with the handler disabled).**
 
 Sources: KWin 6.7.5 `virtualdesktops.cpp` (`removeVirtualDesktop`, `moveVirtualDesktop`),
 `workspace.cpp` (`slotDesktopRemoved`), `scripting/workspace_wrapper.h` (`desktopsChanged`);

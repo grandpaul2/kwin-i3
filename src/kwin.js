@@ -21,6 +21,7 @@ var KI3 = (function () {
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
+    var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -125,6 +126,7 @@ var KI3 = (function () {
     function scheduleAll() { for (var n in model.workspaces) schedule(model.workspaces[n]); }
 
     function flush() {
+        if (rebuilding) return;         // the model is being rebuilt (desktopListChanged)
         var nums = Object.keys(dirty), ok = true;
         dirty = {};
         // Each workspace on its own: one that fails can't stop the others.
@@ -1471,11 +1473,9 @@ var KI3 = (function () {
         catch (e) { log("ERROR in start: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
     }
 
-    function startRest() {
-        // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
-        var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
-        if (login) Workspaces.numberScreens();
-        // Windows already in KWin's tiles keep their layout (plan decision 5).
+    // Windows already in KWin's tiles keep their layout (plan decision 5): at load, and when the
+    // model is rebuilt after a desktop removal or reorder (KWin's tiles belong to desktops).
+    function adoptTiled() {
         workspace.screens.forEach(function (s) {
             workspace.desktops.forEach(function (d) {
                 var root = workspace.rootTile(s, d);
@@ -1495,27 +1495,67 @@ var KI3 = (function () {
                 });
             });
         });
-        // Then every other window, bottom of the stack first, so focus order follows stacking,
-        // once the effect has said which were floating (decision 5c; 250 ms at most, without it).
-        // stackingOrder can leave out a window that is still mapping, which then never got a
-        // windowAdded either (it came before the script): windowList() supplies those (found by
-        // 60-load.sh, after the live-desktop review saw a window left out).
-        var adoptRest = function (m) {
-            atLoadFloating = {};
-            if (m && m.floating) m.floating.forEach(function (k) { atLoadFloating[k] = true; });
-            var all = workspace.stackingOrder.slice();
-            workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
-            all.forEach(function (w) {
-                if (!wins[id(w)]) adoptWindow(w);
-                else model.focusWin(id(w));
-            });
-            atLoadFloating = {};
-            if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
-            log("ADOPTED " + (m ? "with the effect's floating set" : "without the effect"));
-            scheduleAll();
-            wantFocus();
-            log("kwin-i3 loaded");          // every window adopted (the tests and captures wait for it)
-        };
+    }
+    // Then every other window, bottom of the stack first, so focus order follows stacking,
+    // once the effect has said which were floating (decision 5c; 250 ms at most, without it).
+    // stackingOrder can leave out a window that is still mapping, which then never got a
+    // windowAdded either (it came before the script): windowList() supplies those (found by
+    // 60-load.sh, after the live-desktop review saw a window left out). `done`: the line logged
+    // when every window is adopted (the tests and captures wait for "kwin-i3 loaded").
+    function adoptRest(m, done) {
+        atLoadFloating = {};
+        if (m && m.floating) m.floating.forEach(function (k) { atLoadFloating[k] = true; });
+        var all = workspace.stackingOrder.slice();
+        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
+        all.forEach(function (w) {
+            if (!wins[id(w)]) adoptWindow(w);
+            else model.focusWin(id(w));
+        });
+        atLoadFloating = {};
+        if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
+        log("ADOPTED " + (m ? "with the effect's floating set" : "without the effect"));
+        rebuilding = false;
+        scheduleAll();
+        wantFocus();
+        log(done);
+    }
+    function adoptRestSoon(done) {
+        checkFrame(function (m) {
+            try { adoptRest(m, done); }
+            catch (e) { log("ERROR in adopting the rest: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
+        });
+    }
+
+    // A desktop removed or moved (docs/spec-desktop-changes.md, (a)): workspace N is desktop N by
+    // position, so the numbers now name other desktops. Desktops only appended: nothing. Else
+    // the model is rebuilt from KWin's state as at a load: nothing is reconciled meanwhile
+    // (`rebuilding`: a pass now would move windows to their old numbers), and the rebuild waits
+    // a turn, for KWin to finish moving the removed desktop's windows (slotDesktopRemoved).
+    function desktopIds() { return workspace.desktops.map(function (d) { return d.id; }); }
+    function desktopListChanged() {
+        var now = desktopIds(), before = deskIds;
+        deskIds = now;
+        var appended = now.length >= before.length && before.every(function (d, i) { return now[i] === d; });
+        if (appended || rebuilding) return;
+        rebuilding = true;
+        log("DESKTOPS removed or moved: the model rebuilt from KWin's state");
+        later(0, function () {
+            deskIds = desktopIds();
+            model = Tree.create({ outputNeighbour: outputNeighbour });
+            wins = {}; expected = {}; armed = {}; lastFit = {}; ruleKind = {}; dirty = {}; placing = {};
+            borderGone = {};
+            Workspaces.reset();
+            adoptTiled();
+            adoptRestSoon("DESKTOPS adopted again");
+            rememberShown();
+        });
+    }
+
+    function startRest() {
+        // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
+        var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
+        if (login) Workspaces.numberScreens();
+        adoptTiled();
         workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
         workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
@@ -1523,10 +1563,9 @@ var KI3 = (function () {
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
-        checkFrame(function (m) {
-            try { adoptRest(m); }
-            catch (e) { log("ERROR in adopting the rest: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
-        });
+        workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
+        deskIds = desktopIds();
+        adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
