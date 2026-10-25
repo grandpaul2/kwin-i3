@@ -2103,7 +2103,12 @@ var KI3 = (function () {
         var ws = con ? Tree.wsOf(con) : null;
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
+        var wasFocused = model.focused === con;
         model.close(key);
+        // The tree's focus after a close, for a capture to set beside the ACTIVE lines (Paul,
+        // 2026-10-25: focus went to the leftmost window after a close, on his desktop only).
+        // "chose": the tree picked it; "kept": KWin had activated another window first.
+        if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete ruleKind[key]; delete untiled[key];
@@ -2111,6 +2116,13 @@ var KI3 = (function () {
     }
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
     // still on screen and probably in use, so dropWindow alone doesn't move focus).
+    function shortCaption(w) { return String(w.caption).slice(0, 60); }
+    function conCaption(c) {
+        if (!c) return "none";
+        if (c.win === null) return c.type === "ws" ? "workspace " + c.num : "a split";
+        return wins[c.win] ? shortCaption(wins[c.win]) : "?";
+    }
+
     function forgetWindow(w) { dropWindow(w); wantFocus(); }
 
     // reclassify: the rules act when their verdict changes (ruleKind, declared at the top), never
@@ -2975,6 +2987,8 @@ var KI3 = (function () {
         workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
         workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
+            // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
+            log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
         workspace.currentDesktopChanged.connect(guard("desktop shown", shownOutside));

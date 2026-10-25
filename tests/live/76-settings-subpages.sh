@@ -63,7 +63,7 @@ client --title pickme2 --app-id net.local.pickme --color blue
 check "pickme2 is a window"                 poll _has_window pickme2
 # Tiled, it would be in a tree logged after it opened; give kwin-i3 a moment to place it.
 sleep 1
-check "and kwin-i3 left it alone (in no tree)" eval '! after "$m" | grep -q "pickme2"'
+check "and kwin-i3 left it alone (in no tree)" eval '! after "$m" | grep -qE "^.{9}TREE .*pickme2"'
 
 # 3. A default removed, then Defaults: it is back, and kwinrc holds none of the page's entries.
 click_named "Window Rules" "Remove Application: krunner from “Leave alone”"
