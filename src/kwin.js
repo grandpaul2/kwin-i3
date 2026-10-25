@@ -184,6 +184,9 @@ var KI3 = (function () {
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
+        // The decoration goes only once the client has answered, after the tile's request, which
+        // still counted it: watched until the frame shows the tile (as after a screens change).
+        if (!w.noBorder) { w.noBorder = true; armed[id(w)] = true; }
         if (tile.manage(w)) return true;
         expected[id(w)] = null;
         refused = true;
@@ -247,17 +250,17 @@ var KI3 = (function () {
     // every tile and the root inset by outer + inner/2, no edge is 0 or 1, so between = inner and
     // edge = outer + inner. All relative to the maximize area, KWin's basis for absoluteGeometry.
     function gaps() {
-        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
-        return { inner: i, inset: Math.round(o + i / 2) };
+        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), f = Settings.get("frameWidth");
+        return { inner: i + 2 * f, inset: Math.round(o + i / 2) };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area) {
-        var e = gaps().inset;
+        var e = gaps().inset || 1e-6 * area.width;   // a hair: KWin's half padding at the screen edges too
         return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
     }
     function sameRect(g, r) {
-        return Math.abs(g.x - r.x) <= 1e-4 && Math.abs(g.y - r.y) <= 1e-4 &&
-               Math.abs(g.width - r.width) <= 1e-4 && Math.abs(g.height - r.height) <= 1e-4;
+        return Math.abs(g.x - r.x) <= 1e-9 && Math.abs(g.y - r.y) <= 1e-9 &&
+               Math.abs(g.width - r.width) <= 1e-9 && Math.abs(g.height - r.height) <= 1e-9;
     }
     // Every layout's children on its outer edges and spanning its cross axis. With gaps no edge
     // is at the screen's border, so KWin lets a window's outer side be dragged
@@ -698,7 +701,7 @@ var KI3 = (function () {
     // the window kept above (and green, since the frame colours) for good once un-floated
     // (docs/spec-reload-keepabove.md, 2026-10-24).
     function setFloatingLook(w, on) {
-        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }
+        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; if (w.noBorder) w.noBorder = false; }
         if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
     }
 
@@ -1209,6 +1212,7 @@ var KI3 = (function () {
             try {
                 untile(w);
                 if (keptAbove[key]) w.keepAbove = false;
+                if (w.noBorder) w.noBorder = false;
             } catch (e) { log("ERROR in release (window): " + e); }
         });
         workspace.screens.forEach(function (s) {

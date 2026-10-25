@@ -3,6 +3,11 @@
 #include <core/output.h>
 #include <effect/effecthandler.h>
 #include <scene/windowitem.h>
+#include <core/rendertarget.h>
+#include <core/renderviewport.h>
+#include <opengl/glshader.h>
+#include <opengl/glshadermanager.h>
+#include <opengl/glvertexbuffer.h>
 #include <window.h>
 #include <workspace.h>
 
@@ -48,6 +53,7 @@ Hold::Hold()
         watchWindow(w);
     }
     connect(effects, &EffectsHandler::windowAdded, this, &Hold::onAdded);
+    connect(effects, &EffectsHandler::windowActivated, this, [] { effects->addRepaintFull(); });
     connect(effects, &EffectsHandler::windowClosed, this, &Hold::onClosed);
     connect(effects, &EffectsHandler::windowDeleted, this, &Hold::onDeleted);
 
@@ -80,6 +86,10 @@ void Hold::loadConfig()
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
                                                 : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
+    m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
+    m_frameActive = QColor(group.readEntry("frameActive", QStringLiteral("#4c7899")));
+    m_frameInactive = QColor(group.readEntry("frameInactive", QStringLiteral("#333333")));
+    effects->addRepaintFull();
     if (!m_enabled) {
         releaseAll();
     }
@@ -91,6 +101,13 @@ void Hold::watchWindow(EffectWindow *w)
 {
     connect(w, &EffectWindow::windowFrameGeometryAboutToChange, this, &Hold::onAboutToChange);
     connect(w, &EffectWindow::windowFrameGeometryChanged, this, &Hold::queueCheck);
+    // PROTOTYPE: the frame is outside the window, so nothing repaints it for us. Coarse: all.
+    connect(w, &EffectWindow::windowFrameGeometryChanged, this, [] { effects->addRepaintFull(); });
+    connect(w, &EffectWindow::windowDecorationChanged, this, [] { effects->addRepaintFull(); });
+    connect(w, &EffectWindow::windowFullScreenChanged, this, [] { effects->addRepaintFull(); });
+    if (Window *win = w->window()) {
+        connect(win, &Window::tileChanged, this, [] { effects->addRepaintFull(); });
+    }
     connect(w, &EffectWindow::minimizedChanged, this, &Hold::queueCheck);
     connect(w, &EffectWindow::windowDesktopsChanged, this, &Hold::queueCheck);
     connect(w, &EffectWindow::windowHiddenChanged, this, &Hold::queueCheck);
@@ -429,6 +446,7 @@ void Hold::releaseAll()
 
 bool Hold::isActive() const
 {
+    return true;    // PROTOTYPE: the frame needs the paint hooks always
     return m_open || !m_hidden.isEmpty();
 }
 
@@ -442,7 +460,7 @@ void Hold::prePaintScreen(ScreenPrePaintData &data)
 
 void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData &data)
 {
-    if (m_held.contains(w) || m_hidden.contains(w)) {
+    if (m_held.contains(w) || m_hidden.contains(w) || framed(w)) {
         data.setTransformed();      // no clipping to its current frame, no culling beneath it
     }
     effects->prePaintWindow(view, w, data);
@@ -462,6 +480,44 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+    if (framed(w) && !m_hidden.contains(w)) {
+        paintFrame(renderTarget, viewport, w, data);
+    }
+}
+
+bool Hold::framed(EffectWindow *w) const
+{
+    Window *win = w->window();
+    return win && (win->requestedTile() || win->tile()) && !w->hasDecoration() && !w->isFullScreen() && !w->isDeleted();
+}
+
+// The frame around wherever the window is drawn: its frame, moved and scaled as the paint data
+// says (a held snapshot is drawn at its old frame this way, a sliding desktop moves it).
+void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const WindowPaintData &data)
+{
+    const RectF cur = w->frameGeometry();
+    const double s = viewport.scale(), f = m_frameWidth;
+    const double x0 = std::round((cur.x() + data.xTranslation()) * s), y0 = std::round((cur.y() + data.yTranslation()) * s);
+    const double x1 = std::round((cur.x() + data.xTranslation() + cur.width() * data.xScale()) * s);
+    const double y1 = std::round((cur.y() + data.yTranslation() + cur.height() * data.yScale()) * s);
+    const double fd = std::round(f * s);
+    // four bars outside [x0,x1) x [y0,y1): top and bottom span the corners
+    const RectF bars[] = {
+        RectF(x0 - fd, y0 - fd, x1 - x0 + 2 * fd, fd), RectF(x0 - fd, y1, x1 - x0 + 2 * fd, fd),
+        RectF(x0 - fd, y0, fd, y1 - y0), RectF(x1, y0, fd, y1 - y0)};
+    QList<QVector2D> verts;
+    for (const RectF &r : bars) {
+        verts << QVector2D(r.x() + r.width(), r.y()) << QVector2D(r.x(), r.y()) << QVector2D(r.x(), r.y() + r.height())
+              << QVector2D(r.x(), r.y() + r.height()) << QVector2D(r.x() + r.width(), r.y() + r.height()) << QVector2D(r.x() + r.width(), r.y());
+    }
+    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
+    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, effects->activeWindow() == w ? m_frameActive : m_frameInactive);
+    vbo->setVertices(verts);
+    vbo->render(GL_TRIANGLES);
 }
 
 void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)

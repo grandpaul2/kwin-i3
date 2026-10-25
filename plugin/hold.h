@@ -69,6 +69,8 @@ private:
     void onAboutToChange(KWin::EffectWindow *w);
 
     bool tiled(KWin::EffectWindow *w) const;
+    bool framed(KWin::EffectWindow *w) const;     // PROTOTYPE: the frame drawn here, in the tile's padding
+    void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -87,6 +89,8 @@ private:
     KConfigWatcher::Ptr m_watcher;
     bool m_enabled = true;
     int m_timeoutMs = 100;
+    int m_frameWidth = 1;
+    QColor m_frameActive{0x4c, 0x78, 0x99}, m_frameInactive{0x33, 0x33, 0x33};
 
     QHash<KWin::EffectWindow *, Held> m_held;
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
