@@ -7,11 +7,13 @@ the plan and records Paul's decisions. `docs/spike-kwin-tiles.md`, `docs/review-
 `docs/fuzz-design.md` are why it looks the way it does. **`OPEN.md` is this repo's only list of
 unfinished work** (state, not history; the rules are in its header).
 
+If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestions and delete it.
+
 ## How to work with Paul here
 
-The shared rules in `~/.claude/CLAUDE.md` load in every session (numbering, answer questions as
-questions, no Workflow tool, clipboard). These come from `~/.dotfiles/CLAUDE.md`, which does not load
-here:
+The shared rules in `~/.claude/CLAUDE.md` load in every session (numbering, answering questions,
+messages to other sessions, outside review of slow tests, cost, push on commit, clipboard). These
+come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 
 - **Commit and push at natural intervals without asking**, and don't announce it. This overrides
   Claude Code's default of committing only when asked. Group related changes; say *why* in the
@@ -19,8 +21,8 @@ here:
 - **Ask in plain prose**, never with the multiple-choice picker. Lay out the options and a recommendation.
 - **sudo** is passwordless, gated by Claude Code's own approval prompt: propose the command and let the
   prompt ask. Never ask Paul for a password.
-- **Long work runs in the background and is polled in the turn**: a one-line status every couple of
-  minutes. Ending a turn is not a check schedule, because nothing wakes you to report.
+- **Long runs** (`make test`, `make fuzz`, a battery) go in the background with a Monitor on their
+  progress and failure lines, and a one-line status when something changes.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
   for test results.
 
@@ -33,16 +35,19 @@ here:
   Anything that builds a fault or a debug trace into it runs in a worktree
   (`git worktree add`, then `cp -r tools/bin` into it). `make mutate-live` refuses to run here.
   `make fuzz` and `make test` build `src/` as it stands, so don't leave trace lines in `src/`.
-- **Deploying a fix**: `make test` green and committed, then reload it live with `busctl --user call
-  org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3` followed by `busctl --user
-  call org.kde.KWin /KWin org.kde.KWin reconfigure`, and check with `isScriptLoaded`. The reload
-  re-tiles his windows once. That is accepted for fixes; say that you did it.
+- **Nothing goes live without Paul's go, fixes included.** A capture or a bug report asks for a
+  diagnosis (cause, proposed fix, test); then his go to change; then his go to reload. Unapproved
+  changes stay in a worktree or branch: `package/` on main is what he approved. The reload:
+  `busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3`, then
+  `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`, then `isScriptLoaded`. It
+  re-tiles his windows once.
 - **Nothing that shows a window on Paul's desktop** without telling him first.
 
 ## Finding bugs
 
 - **Paul's own finds**: Meta+Shift+B (`tools/capture`) saves state, the journal and a screenshot to
-  `~/.local/state/kwin-i3/captures/<time>/`. Each capture becomes a live test, watched red, then a fix.
+  `~/.local/state/kwin-i3/captures/<time>/`. Each one gets a diagnosis first; with Paul's go, a
+  live test watched red, then the fix.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
   Run it after a major change or a batch of minor ones, not after every fix (Paul, 2026-10-22):
   `make test` covers a small fix. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED` shrinks a
@@ -55,11 +60,10 @@ here:
 
 - Edit `src/`, then `make test`. `package/contents/code/main.js` is built; never edit it by hand,
   but commit it.
-- Testing, as defaults rather than ritual (Paul, 2026-10-22: keep room for creativity): a
-  substantial new set of tests gets a second agent's look before it's relied on — at the design
-  stage when that's cheap — especially if it's slow; behaviour that needs real input gets injected
-  input (`tools/inject.py`) rather than a manual session; and a test is trusted once a deliberate
-  fault has turned it red (`make mutate`, `make mutate-live`, from a worktree). Use judgment about scale.
+- During the Stage (`OPEN.md`), a change's check is `make test` plus a screenshot; a new test tool
+  is its own proposal. Behaviour that needs real input uses injected input (`tools/inject.py`). A
+  test is trusted once a deliberate fault has turned it red (`make mutate`, `make mutate-live`,
+  from a worktree; commit first: the battery restores files with `git checkout`).
 - i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
 
 ## Where things live outside this repo

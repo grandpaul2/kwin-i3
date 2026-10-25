@@ -1,17 +1,16 @@
 ---
-description: End a kwin-i3 session - tidy, make the live desktop match, commit and push
+description: End a kwin-i3 session - tidy, report what's owed, commit and push
 allowed-tools: Read, Write, Edit, Bash
 ---
 
-End of a kwin-i3 session. **Leave the repo clean and pushed, and Paul's desktop running what is
-committed.** Nothing is deferred to "later".
+End of a kwin-i3 session. **A wrap-up: it starts no work**, not even a short test run. Leave the
+repo clean and pushed, and everything still owed written in `OPEN.md`.
 
 ## 1. Memory
 
-If something notable came up (a KWin trap, a decision of Paul's, how he wants to work), update
-`~/.claude/projects/-home-paul-kwin-i3/memory/` now. A lesson about working with Paul in general
-belongs in the dotfiles project's memory too (`~/.claude/projects/-home-paul--dotfiles/memory/`):
-the two sets are copies. Routine fixes need no memory; the commit says what changed.
+If a fact about this repo came up (a KWin trap, a decision of Paul's), update
+`~/.claude/projects/-home-paul-kwin-i3/memory/` now. Routine fixes need no memory; the commit says
+what changed.
 
 ## 2. OPEN.md
 
@@ -30,17 +29,14 @@ finding from this session (a fuzz failure, a capture, a review comment) leaves *
 - Captures handled this session (a test exists for each) are deleted from
   `~/.local/state/kwin-i3/captures/`. Ones not reached stay, and get a line in `OPEN.md`.
 
-## 4. Tests, if `src/` changed
+## 4. Tests
 
-`make test`, green. A change with no test of its own gets one, watched red first. `make fuzz`
-only after a major change or a batch of minor ones (Paul): it takes ~20 min; poll it in the turn.
+Report which tests ran since the last change and which didn't. Anything owed (a `make test`, a
+fuzz run, a battery) goes in `OPEN.md` as "next: at the start of a working session". Start none.
 
-## 5. The live desktop runs what is committed
+## 5. The live desktop
 
-If `src/` changed since kwin-i3 was last reloaded, reload it now: `busctl --user call org.kde.KWin
-/Scripting org.kde.kwin.Scripting unloadScript s kwin-i3`, then `busctl --user call org.kde.KWin
-/KWin org.kde.KWin reconfigure`, then `isScriptLoaded`. This re-tiles his windows once; say that you
-did it.
+If `package/` differs from what KWin last loaded, say so. Reload only on Paul's go.
 
 ## 6. Commit and push
 
@@ -65,5 +61,5 @@ did it.
 
 ## 7. Report
 
-A few lines: what changed (with commit hashes), whether the desktop was reloaded, what's in
+A few lines: what changed (with commit hashes), whether the desktop runs what is committed, what's in
 `OPEN.md`, and anything waiting on Paul. Then confirm both repos are clean and pushed.

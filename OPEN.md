@@ -47,14 +47,19 @@ settle (`FRAME` logged) meanwhile.
 look at it; by hand, whether arrow keys move the highlight in an open dropdown (injected input
 didn't, in 76).
 
-**21. Wallpaper flashes through Firefox** (Paul, 2026-10-25, twice: shown again on a workspace
-switch 4 to 2, and growing to full width when the terminal beside it closed; captures 15:44 and
-17:57). kwin-i3's side checked: the trees were right, and kwini3hold kept the closing window and
-released on Firefox's new size with no timeout (66 holds, max 69 ms). Guess, unverified: Firefox
-acknowledges a new size before it has drawn into it. Next: reproduce in the test KWin with real
-Firefox (throwaway profile), screenshots every few ms during the close and a workspace switch,
-looking for background inside Firefox's rect. Both captures are kept in
-`~/.local/state/kwin-i3/captures/` until then.
+**21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
+kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first two were Firefox:
+shown again on a workspace switch 4 to 2, and growing to full width when the terminal beside it
+closed. kwin-i3's side checked for those: the trees were right, and kwini3hold kept the closing
+window and released on Firefox's new size with no timeout (66 holds, max 69 ms). **The third had no
+Firefox**: workspace 3 on DP-4, holding one Alacritty (tiled 2564,4 2552x1392, frame where it
+should be); what preceded it isn't recorded (the capture's journal is empty, `debugLog` off). So
+the guess that Firefox acknowledges a size before drawing into it no longer covers every case; a
+cause in kwini3hold, the frame effect or KWin is as likely. Next: ask Paul what the 18:51 one
+followed; then reproduce in the test KWin (Alacritty and the test client first, real Firefox with
+a throwaway profile second), screenshots every few ms during a close and a workspace switch,
+looking for background inside a window's rect. Turning on `debugLog` live until it's caught would
+give the next capture a journal (Paul's call).
 
 ## Deferred (the Stage)
 
