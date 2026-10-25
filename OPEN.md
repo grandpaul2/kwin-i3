@@ -104,7 +104,8 @@ settings page, live 2026-10-24: `docs/spec-settings-page.md`).
       stock pager draws each workspace as both monitors wide (a "ghost" half: with per-monitor
       desktops a workspace lives on one monitor), and `showOnlyCurrentScreen` only shows the
       panel's own monitor; he wants every workspace on one panel at its own monitor's size. The
-      widget does that. **Next: its spec, right after item 6** (Paul: "save it for next").
+      widget does that. Spec drafted 2026-10-24 (`docs/spec-workspace-widget.md`): Paul's decisions
+      next, then build.
       Paul's desktop went from ten desktops to seven (8-10 removed live, `setup.sh` no longer
       makes ten), as a stranger's would grow.
     - **The floating panel's gap** (KDE bug 511162): with focus follows mouse and no delay, the
