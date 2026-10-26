@@ -33,7 +33,8 @@ Stage goes in `LATER.md` instead (its header has the rules). Nothing else may ca
 ## 4. Tests
 
 Report which tests ran since the last change and which didn't. Anything owed (a `make test`, a
-fuzz run, a battery) goes in `OPEN.md` as "next: at the start of a working session". Start none.
+battery) goes in `OPEN.md` as "next: at the start of a working session". Start none. A fuzz
+campaign is never owed: it runs every week or two with Paul's go (CLAUDE.md, "Finding bugs").
 
 ## 5. The live desktop
 

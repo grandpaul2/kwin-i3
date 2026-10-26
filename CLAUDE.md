@@ -56,9 +56,12 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
   kwin-i3's log never reaches the journal, and `debugLog` does nothing live (`docs/debugging.md`).
   Each one gets a diagnosis first; with Paul's go, a live test watched red, then the fix.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
-  Run it after a major change or a batch of minor ones, not after every fix (Paul, 2026-10-22):
-  `make test` covers a small fix. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED` shrinks a
-  saved failure again.
+  **Once every week or two, not as part of development** (Paul, 2026-10-26: "something we'll pull
+  out once in a while"; a 20-minute campaign was stealing session time). No change, fix or merge
+  waits on it, and nothing in `OPEN.md` is "a fuzz run owed": `make test` is a change's check.
+  Propose a campaign only when a week or two has passed since the last (`tests/fuzz/out/REPORT.md`'s
+  date), and run it only with Paul's go. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED`
+  shrinks a saved failure again.
 - Its finds cluster at the KWin seam (hidden desktops, monitor unplug/replug, fullscreen, modal
   dialogs), not in `tree.js`. For KWin's real behaviour, read its source for the installed version
   (`rpm -q kwin`, then `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`). Don't guess.
