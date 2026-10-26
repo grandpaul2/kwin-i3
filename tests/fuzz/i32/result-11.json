@@ -1,0 +1,15 @@
+{
+ "ok": false,
+ "steps": 91,
+ "failures": [
+  [
+   "I10",
+   "w8 frame [854, 1, 425, 692] is not its tile's rect [854, 1, 425, 718]"
+  ],
+  [
+   "I4",
+   "Virtual-0: tiled windows cover 910498 of 921600 px (a hole)"
+  ]
+ ],
+ "signature": "I10 W frame [N, N, N, N] is not its tile's rect [N, N, N, N]"
+}

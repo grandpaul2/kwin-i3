@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-25** (session end, late).
+Last reconciled: **2026-10-26** (item 31 live).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -27,24 +27,17 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**31. A tiled window that resizes itself stays resized** (Paul's capture 2026-10-25 23:06,
-Firefox's session restore: two windows overlapping, one past the monitor's edge). i3 refuses a
-tiled window's own resize; kwin-i3 only refits after a screens change or a drag. Paul chose i3's
-rule (always). Built on branch `self-resize` (worktree `../kwin-i3-selfresize`): test 82 red on
-main, `make test` green, a fuzz `selfresize` action watched red, an 8-min campaign whose one
-item-31 finding (a self-resize clamped to the monitor's size was skipped, I2) is fixed. Next:
-the final `make test`, then Paul's go to merge and reload. The capture is kept until it is live.
-
 **32. A GTK 4 window stays 26 px short of its tile** (fuzzer I10, found 2026-10-26 once the
-fuzzer was repaired; 13 of 40 seeds, reproduces on main: seeds 4 and 11 of that campaign, traces
-kept in `../kwin-i3-selfresize/tests/fuzz/out/`). The test client's frame ends 26 px above its
+fuzzer was repaired; 13 of 40 seeds and 17 of 41 in a second campaign, reproduces on main: seeds 4 and 11, trace and
+result kept in `tests/fuzz/i32/`). The test client's frame ends 26 px above its
 tile's bottom (`frame [1, 1, 1278, 692]` in `[1, 1, 1278, 718]`), after kwin-i3's `BOUNDS ...
 bounds asked again` lines: the GTK 4 bounds path (spec-window-modes "why" 5) doesn't always
-recover. Next: `make fuzz-shrink FUZZ_SEEDS=4` for the shortest action list, then a diagnosis.
+recover. Next: shrink seed 4 (copy its two files to `tests/fuzz/out/4/` as `trace.json` and
+`result.json`, then `make fuzz-shrink FUZZ_SEEDS=4`), then a diagnosis.
 
 **33. The active window on a desktop its monitor isn't showing** (fuzzer I8, found 2026-10-26;
-1 of 40 seeds, reproduces on main: seed 30, `active w10 is on desktop [1], Virtual-0 shows 4`).
-Next: shrink seed 30, then a diagnosis.
+1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
+Virtual-0 shows 4`; kept in `tests/fuzz/i33/`). Next: shrink seed 30 as for 32, then a diagnosis.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the

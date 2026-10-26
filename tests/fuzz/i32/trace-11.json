@@ -1,0 +1,452 @@
+{
+ "seed": 11,
+ "actions": [
+  {
+   "op": "key",
+   "name": "Shrink Height"
+  },
+  {
+   "op": "open",
+   "name": "w1",
+   "kind": "slow",
+   "args": [
+    "--map-delay",
+    "1.0"
+   ]
+  },
+  {
+   "op": "key",
+   "name": "Grow Height"
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 360
+  },
+  {
+   "op": "key",
+   "name": "Focus Up"
+  },
+  {
+   "op": "key",
+   "name": "Shrink Height"
+  },
+  {
+   "op": "output",
+   "state": "disable"
+  },
+  {
+   "op": "drag",
+   "button": "right",
+   "from": [
+    640,
+    360
+   ],
+   "to": [
+    694,
+    362
+   ]
+  },
+  {
+   "op": "open",
+   "name": "w2",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Focus Left"
+  },
+  {
+   "op": "close",
+   "caption": "w2"
+  },
+  {
+   "op": "key",
+   "name": "Grow Width"
+  },
+  {
+   "op": "open",
+   "name": "w3",
+   "kind": "retitle",
+   "args": [
+    "--retitle",
+    "0.5:w3r"
+   ]
+  },
+  {
+   "op": "key",
+   "name": "Toggle Split"
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 180
+  },
+  {
+   "op": "drag",
+   "button": "right",
+   "from": [
+    640,
+    540
+   ],
+   "to": [
+    778,
+    457
+   ]
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 180
+  },
+  {
+   "op": "key",
+   "name": "Move to Workspace 4"
+  },
+  {
+   "op": "key",
+   "name": "Toggle Split"
+  },
+  {
+   "op": "open",
+   "name": "w4",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Workspace 3"
+  },
+  {
+   "op": "key",
+   "name": "Toggle Split"
+  },
+  {
+   "op": "point",
+   "x": 552,
+   "y": 344
+  },
+  {
+   "op": "key",
+   "name": "Focus Right"
+  },
+  {
+   "op": "key",
+   "name": "Move Up"
+  },
+  {
+   "op": "fullscreen"
+  },
+  {
+   "op": "key",
+   "name": "Focus Left"
+  },
+  {
+   "op": "kill",
+   "name": "w1"
+  },
+  {
+   "op": "key",
+   "name": "Move to Workspace 2"
+  },
+  {
+   "op": "point",
+   "x": 916,
+   "y": 521
+  },
+  {
+   "op": "key",
+   "name": "Workspace 4"
+  },
+  {
+   "op": "output",
+   "state": "enable"
+  },
+  {
+   "op": "point",
+   "x": 320,
+   "y": 360
+  },
+  {
+   "op": "point",
+   "x": 320,
+   "y": 360
+  },
+  {
+   "op": "open",
+   "name": "w5",
+   "kind": "min",
+   "args": [
+    "--min",
+    "430x400"
+   ]
+  },
+  {
+   "op": "open",
+   "name": "w6",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Move to Workspace 1"
+  },
+  {
+   "op": "kill",
+   "name": "w5"
+  },
+  {
+   "op": "key",
+   "name": "Toggle Split"
+  },
+  {
+   "op": "key",
+   "name": "Grow Width"
+  },
+  {
+   "op": "fullscreen"
+  },
+  {
+   "op": "key",
+   "name": "Move Left"
+  },
+  {
+   "op": "key",
+   "name": "Move Right"
+  },
+  {
+   "op": "key",
+   "name": "Grow Width"
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 180
+  },
+  {
+   "op": "key",
+   "name": "Focus Mode Toggle"
+  },
+  {
+   "op": "key",
+   "name": "Focus Left"
+  },
+  {
+   "op": "output",
+   "state": "disable"
+  },
+  {
+   "op": "key",
+   "name": "Close"
+  },
+  {
+   "op": "key",
+   "name": "Workspace 1"
+  },
+  {
+   "op": "open",
+   "name": "w7",
+   "kind": "fixed",
+   "args": [
+    "--fixed",
+    "--size",
+    "690x450"
+   ]
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 360
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 360
+  },
+  {
+   "op": "key",
+   "name": "Move to Workspace 3"
+  },
+  {
+   "op": "open",
+   "name": "w8",
+   "kind": "slow",
+   "args": [
+    "--map-delay",
+    "1.0"
+   ]
+  },
+  {
+   "op": "open",
+   "name": "w9",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "open",
+   "name": "w10",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Focus Down"
+  },
+  {
+   "op": "point",
+   "x": 640,
+   "y": 90
+  },
+  {
+   "op": "key",
+   "name": "Move Left"
+  },
+  {
+   "op": "close",
+   "caption": "w6"
+  },
+  {
+   "op": "key",
+   "name": "Focus Mode Toggle"
+  },
+  {
+   "op": "open",
+   "name": "w11",
+   "kind": "min",
+   "args": [
+    "--min",
+    "370x520"
+   ]
+  },
+  {
+   "op": "key",
+   "name": "Split H"
+  },
+  {
+   "op": "point",
+   "x": 1066,
+   "y": 120
+  },
+  {
+   "op": "open",
+   "name": "w12",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Focus Mode Toggle"
+  },
+  {
+   "op": "open",
+   "name": "w13",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "key",
+   "name": "Workspace 4"
+  },
+  {
+   "op": "point",
+   "x": 699,
+   "y": 360
+  },
+  {
+   "op": "key",
+   "name": "Shrink Width"
+  },
+  {
+   "op": "kill",
+   "name": "w12"
+  },
+  {
+   "op": "open",
+   "name": "w14",
+   "kind": "plain",
+   "args": []
+  },
+  {
+   "op": "close",
+   "caption": "w13"
+  },
+  {
+   "op": "close",
+   "caption": "w10"
+  },
+  {
+   "op": "key",
+   "name": "Toggle Split"
+  },
+  {
+   "op": "fullscreen"
+  },
+  {
+   "op": "open",
+   "name": "w15",
+   "kind": "dialog",
+   "args": [
+    "--dialog"
+   ]
+  },
+  {
+   "op": "point",
+   "x": 1062,
+   "y": 526
+  },
+  {
+   "op": "key",
+   "name": "Reload Settings"
+  },
+  {
+   "op": "key",
+   "name": "Split H"
+  },
+  {
+   "op": "key",
+   "name": "Workspace 3"
+  },
+  {
+   "op": "key",
+   "name": "Move to Workspace 1"
+  },
+  {
+   "op": "close",
+   "caption": "w15"
+  },
+  {
+   "op": "key",
+   "name": "Split H"
+  },
+  {
+   "op": "key",
+   "name": "Focus Mode Toggle"
+  },
+  {
+   "op": "close",
+   "caption": "w9"
+  },
+  {
+   "op": "point",
+   "x": 905,
+   "y": 510
+  },
+  {
+   "op": "open",
+   "name": "w16",
+   "kind": "min",
+   "args": [
+    "--min",
+    "520x270"
+   ]
+  },
+  {
+   "op": "fullscreen"
+  },
+  {
+   "op": "output",
+   "state": "enable"
+  }
+ ]
+}

@@ -5,6 +5,10 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
+  resize: Firefox's session restore had left one window over its neighbour and one off the
+  monitor (Paul's capture, 2026-10-25). At most once a second per window, and never mid-answer to
+  kwin-i3's own resize (`docs/spec-self-resize.md`, `tests/live/82-self-resize.sh`).
 - The dead Shift+symbol keys are gone: a Shift+key that types a symbol arrives as the symbol, so
   Meta+Shift+; and Meta+Shift+1..0 never fired; their twins Meta+: and Meta+!..) did (probed in
   the test KWin, 2026-10-24). Only the twins are registered now, and the old actions are
