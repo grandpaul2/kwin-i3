@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26** (items 32, 33 and 35's part A live; the testing policy).
+Last reconciled: **2026-10-26** (items 32, 33 and 35's part A live; part B built; testing lean for the Stage).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -49,8 +49,11 @@ Plasma feel"). Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C ans
 live 2026-10-26** (60470dd): `tiledLook` frame (default) / titlebars / bare, scenario 85. Part B,
 i3's tiling drag: the model's half on branch `tiling-drag` (0ea026b: `dropPlan`, `moveToTarget`,
 `swap`, `drop` in tree.js, 13 unit tests). Both probes passed (2026-10-26, branch `probe-titledrag`; spec
-items 7 and 9, "Probe result"): the press-taking filter, and the channel from the helper to the
-script. Next: the drag itself, on `tiling-drag` (main merged in first).
+items 7 and 9, "Probe result"). **Part B built on `tiling-drag`** (2026-10-26): the helper's
+filter, kwini3hold's indicator, kwin-i3's drop; scenario 86 green (20 checks). Next
+(`docs/testing.md` P3): the older scenarios that Meta+drag a tiled window expecting it to float
+(26, 41, 44, 51, 52, 53: decision C changes that) updated, one `make test`, then Paul's go to
+merge and reload.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the

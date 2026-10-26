@@ -14,6 +14,16 @@ Moved out of `OPEN.md` 2026-10-25 (Paul). When the Stage ends, suggested order: 
 
 ## Reliability
 
+**36. The test depth held back during the Stage** (Paul, 2026-10-26: testing that heavy "is really
+hurting my motivation"; `docs/testing.md` is lean until the Stage ends). Then, each in runs of 5
+minutes or less (never one long run): the fault battery (`make mutate-live`, `make mutate`) and
+faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz campaign; `make
+live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 36 run
+(2026-10-26: 19 caught, 16 survived, 1 broken by its own text, "the helper not turned on at a
+reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet sorted (a check to
+add, code to remove, or not visible in the test KWin). The fuller procedure that was in
+`docs/testing.md` before (git 6a58018) is the starting point for the stricter one.
+
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
 only Virtual-1, and loads the plugins whenever they are built); Plasma 6.8 when it lands. Rare and
