@@ -27,14 +27,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**24. Activating a window switches its monitor to the window's workspace** (finding 6: C4, C67).
-KWin's `ActivationDesktopPolicy` defaults to `SwitchToOtherDesktop` (`kwin.kcfg`, v6.7.5): a link
-opened in a running Firefox on a hidden workspace switches to it. i3's default
-(`focus_on_window_activation smart`) marks it urgent instead. Next: a diagnosis of what kwin-i3
-sees (an activation on a hidden desktop, KWin's switch, its own follow-up), and the options
-(set the policy to DoNothing at load as i3's `urgent`, or leave KWin's), for Paul to choose;
-finding 3 (urgency shows nowhere) goes with it if he picks urgent.
-
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
 other monitor, keys act on one monitor and the new window opens on the other. Next: confirm in the
