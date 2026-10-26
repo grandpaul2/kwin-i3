@@ -32,8 +32,10 @@ Stage goes in `LATER.md` instead (its header has the rules). Nothing else may ca
 
 ## 4. Tests
 
-Report which tests ran since the last change and which didn't. Anything owed (a `make test`, a
-fuzz run, a battery) goes in `OPEN.md` as "next: at the start of a working session". Start none.
+Report which tests ran since the last change and which didn't (CLAUDE.md, "Testing"). Owed is only
+a change's tier 1 check, or tier 3's one `make test` for something not yet live; it goes in
+`OPEN.md` as "next: at the start of a working session". Start none. Tier 4 (fuzz, the full fault
+battery, `make live-stock`) is never owed: it runs every week or two with Paul's go.
 
 ## 5. The live desktop
 

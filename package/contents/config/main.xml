@@ -81,6 +81,9 @@
     <entry name="frameOnFloating" type="Bool">
       <default>false</default>
     </entry>
+    <entry name="tiledLook" type="String">
+      <default>frame</default>
+    </entry>
     <entry name="roundedCorners" type="Bool">
       <default>true</default>
     </entry>

@@ -150,14 +150,38 @@ scenarios. New:
    `FrameFocus` is; installed later at equal weight, it runs before KWin's decoration filter
    (`input.cpp:2948`, R-4). A filter can't hold an event and replay it later (R-2), and KWin's
    title-bar press only arms a *delayed* move (`startDelayedInteractiveMoveResize`,
-   `window.cpp:1121`, `2779`). So: the title-bar press of a tiled window goes on to KWin
-   (focus, raise, the double-click timer, as now); the filter watches the motion while the button
-   is down, and past i3's threshold cancels KWin's pending move (`dontInteractiveMoveResize`, to
-   check it is reachable from a plugin) and takes the drag: every motion and the release from
-   then on are its own. **Meta+left on a tiled window** (decision C: i3's) is taken at the press,
+   `window.cpp:1121`, `2779`), started by a timer (Qt's start-drag time) as well as by motion,
+   and its cancel (`dontInteractiveMoveResize`, the delayed-move calls) is `protected` in
+   `Window` (checked 2026-10-26 in the installed `kwin/window.h`): a plugin can't stop a move
+   KWin has armed. So the filter takes the press before KWin arms one, with public calls only:
+   it sends the press to the decoration itself, as KWin's `DecorationEventFilter` does
+   (`QCoreApplication::sendEvent(decoration, QMouseEvent)` in the decoration's coordinates). If
+   the decoration accepts it, it was a button: the filter returns true (KWin's filter would
+   deliver it twice) and the release goes on to KWin and the decoration as usual. If not, it is
+   the title bar: the filter activates and raises as KWin would (`performMousePressCommand`, as
+   `FrameFocus` does) and starts i3's drag, past i3's threshold, with every motion and the
+   release its own. A title-bar double-click then does nothing (it would only maximize,
+   decision B). **The probe's first question**: does a button still click, and does nothing
+   else of KWin's (hover, the cursor) get stuck. **Meta+left on a tiled window** (decision C: i3's) is taken at the press,
    before KWin's window-action filter starts its move (that filter's order against ours, to
    check); Meta+Shift+left the same, as the swap (KWin's own Shift-on-finish quick tile, R-5,
    never sees it). A floating window's Meta+drag stays KWin's move.
+   **Probe result (2026-10-26, branch `probe-titledrag`: `plugin/titledrag.cpp`, scenario
+   `86-probe.sh`; Breeze, `titlebars`, two tiled windows): it works.** A title-bar click focuses
+   with no move; a drag and a press held past the start-drag time start no KWin move (`w.move`
+   false, the frame in place) and the filter sees every motion and the release; a double-click
+   does nothing; the minimize, maximize and close buttons click as before (the decoration
+   accepts the press, KWin's filter delivers the release). Hover isn't stuck: the close button's
+   hover shows and clears as before. One nit: the motions of a taken drag never reach the
+   decoration, so a drag released over a button shows its hover only at the next motion; the
+   build sends one `HoverMove` at the release. Which press counts as the title bar:
+   `decoration()->sectionUnderMouse() == Qt::TitleBarArea` (public in KDecoration3, which the
+   helper then links); edges and corners stay KWin's resize. Meta+left and Meta+Shift+left on a
+   tiled window's client are taken at the press, with no KWin move and the window still tiled:
+   `InputFilterOrder::Decoration` sorts before `WindowAction` (`input.h`), so no ordering trick
+   is needed. Not checkable headless: the cursor shape (KWin never arms a move, so its
+   `updateCursor` never runs; to watch live). In the test KWin, `qWarning` from a plugin
+   reaches nothing (`kwin.out` stays empty); the probe logged to `$KI3_TMP/probe.log`.
 8. **The indicator**: drawn by kwini3hold, which already paints over windows (a rectangle in
    `frameActive`, semi-transparent), from a rect the script sends (`SetDropIndicator x y w h`,
    empty to clear).
@@ -175,6 +199,20 @@ scenarios. New:
    swap modifier and whether the button is still down or Escape cancelled) until the helper says
    it ended. A pending `callDBus` answered by a delayed reply (re-armed each time, the 25 s D-Bus
    timeout) is the fallback; it orphans on a reload of the helper (R-3).
+   **Probe result (2026-10-26, branch `probe-titledrag`, scenario `87-probe-channel.sh`): the
+   proposal works as written, no fallback needed.** The helper registers `/kwini3drag`
+   (`net.local.kwini3drag`, `State()` → "phase id x y shift", phase none / drag / drop / cancel,
+   a drop or cancel reported once) and, past the threshold, calls kglobalaccel's
+   `invokeShortcut "kwin-i3 Tiling Drag"` asynchronously (KWin calling itself, as the script's
+   `callDBus` to `/kwini3hold` already does). The script's action starts a 16 ms `QTimer` with
+   one `State()` call in flight at a time and stops at drop or cancel. Measured: the poll ran
+   every ~16 ms (88 polls over a 1.4 s drag); every one of 20 motion steps 50 ms apart reached
+   the script; a fast four-step Meta+Shift drag (no waits) still gave the drop and Shift; Escape
+   mid-drag gave the cancel, and the release after it stayed the filter's. The id is
+   `internalId().toString()`, equal to the script's `String(w.internalId)`. The action shows in
+   System Settings' Shortcuts list as "kwin-i3: tiling drag (internal)"; bound to a key it does
+   nothing (`State()` says none, the poll stops at once). Without the helper there is no tiling
+   drag: a title-bar drag is KWin's move and floats the window, as today.
    *Rejected (R-6)*: KWin's own move as the drag (the script keeps the window in the tree while
    KWin moves it, and drops on `interactiveMoveResizeFinished`): no filter and no channel, but the
    window follows the pointer, and Paul chose i3's stay-put (decision A).

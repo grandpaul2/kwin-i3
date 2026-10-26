@@ -550,7 +550,7 @@ bool Hold::isActive() const
     }
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
-        if ((framed(w) || floatingFramed(w)) && shown(w)) {
+        if (ringed(w) && shown(w)) {
             return true;
         }
     }
@@ -575,7 +575,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
 {
     // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
     // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
-    if (m_held.contains(w) || m_hidden.contains(w) || framed(w) || floatingFramed(w)) {
+    if (m_held.contains(w) || m_hidden.contains(w) || ringed(w)) {
         data.setTransformed();
     }
     effects->prePaintWindow(view, w, data);
@@ -595,7 +595,7 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
-    if ((framed(w) || floatingFramed(w)) && !m_hidden.contains(w)) {
+    if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
 }
@@ -610,6 +610,21 @@ bool Hold::floatingFramed(EffectWindow *w) const
         return false;
     }
     return win->noBorder() && m_floating.contains(w->internalId().toString());
+}
+
+bool Hold::ringed(EffectWindow *w) const
+{
+    return (m_tiledRing && framed(w)) || floatingFramed(w);
+}
+
+void Hold::SetTiledRing(bool on)
+{
+    if (on == m_tiledRing) {
+        return;
+    }
+    m_tiledRing = on;
+    note(QStringLiteral("tiled ring %1").arg(on ? QStringLiteral("on") : QStringLiteral("off")));
+    effects->addRepaintFull();
 }
 
 void Hold::SetFloating(const QString &id, bool on)
@@ -870,6 +885,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("framesHolding")] = m_stats.framesHolding;
     m[QStringLiteral("frameWidth")] = m_frameWidth;
     m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
+    m[QStringLiteral("tiledRing")] = m_tiledRing;
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     return m;
 }

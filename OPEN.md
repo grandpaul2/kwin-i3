@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26** (items 32 and 33 live).
+Last reconciled: **2026-10-26** (items 32, 33 and 35's part A live; the testing policy).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -27,10 +27,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**36. A `make fuzz` run owed** (2026-10-26): items 32 and 33 went live with `make test` and their
-seeds' replays, not a campaign; `known.txt` is empty, so a campaign also proves both fixes. Next:
-at the start of a working session (~20 min, results in `tests/fuzz/out/REPORT.md`).
-
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
 First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Paul's go: (a) the
@@ -39,12 +35,22 @@ Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's disp
 millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five repeat runs
 first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 (~10 s).
 `39-layout-notice` failed 5 checks once in the batch and passed alone (2026-10-26): if it flakes
-again, it goes alone. Next: Paul's choice of (a)-(c).
+again, it goes alone. Also 2026-10-26, full runs on branch `tiled-look`: `capture-read: the press,
+last` (70 or 80) failed twice in `make mutate-live`'s baseline, and 57's "mid-hold: the old
+layout's frames" once in `run.sh` (its screenshot after the 400 ms hold had ended); each green 3
+of 3 alone. One flake per full run blocks the fault battery's baseline. Since the testing policy
+(CLAUDE.md, "Testing", 2026-10-26) the flakes come first, as they are what makes a session's one
+`make test` and the fortnightly battery expensive: (d) the three flakes above and 39, each made
+deterministic or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
+(KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
-Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
-i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C
-answered). Next: part A in a branch; then part B's channel probe.
+Plasma feel"). Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C answered). **Part A
+live 2026-10-26** (60470dd): `tiledLook` frame (default) / titlebars / bare, scenario 85. Part B,
+i3's tiling drag: the model's half on branch `tiling-drag` (0ea026b: `dropPlan`, `moveToTarget`,
+`swap`, `drop` in tree.js, 13 unit tests). Both probes passed (2026-10-26, branch `probe-titledrag`; spec
+items 7 and 9, "Probe result"): the press-taking filter, and the channel from the helper to the
+script. Next: the drag itself, on `tiling-drag` (main merged in first).
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
