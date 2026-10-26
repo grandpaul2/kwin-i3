@@ -136,7 +136,7 @@ private:
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
     KWin::RectF m_dropOutline;                              // SetDropOutline; empty when none
-    static constexpr double s_outlineWidth = 10;
+    static constexpr double s_outlineWidth = 4;
     QList<KWin::RectF> dropPieces(const KWin::RectF &drop, const KWin::RectF &outline) const;
     void setDrop(const KWin::RectF &drop, const KWin::RectF &outline);
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
