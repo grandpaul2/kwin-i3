@@ -27,13 +27,13 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**32. A GTK 4 window stays 26 px short of its tile** (fuzzer I10, found 2026-10-26 once the
-fuzzer was repaired; 13 of 40 seeds and 17 of 41 in a second campaign, reproduces on main: seeds 4 and 11, trace and
-result kept in `tests/fuzz/i32/`). The test client's frame ends 26 px above its
-tile's bottom (`frame [1, 1, 1278, 692]` in `[1, 1, 1278, 718]`), after kwin-i3's `BOUNDS ...
-bounds asked again` lines: the GTK 4 bounds path (spec-window-modes "why" 5) doesn't always
-recover. Next: shrink seed 4 (copy its two files to `tests/fuzz/out/4/` as `trace.json` and
-`result.json`, then `make fuzz-shrink FUZZ_SEEDS=4`), then a diagnosis.
+**32. A GTK 4 window stays 26 px short of its tile** (fuzzer I10, 2026-10-26; seeds 4 and 11
+in `tests/fuzz/i32/`). Cause: kwin-i3 asked a plain GTK 4 window's bounds again only at its
+first frame change after the border went; a first tile inside the stale bounds (a vertical
+split's half) fitted, and a later full-height tile stayed short. Fixed on branch `i32`
+(d6f07cf, worktree `../kwin-i3-i32`): test 83 (red on main), `make test` green, both seeds replay
+clean. Next: Paul's go to merge to main and reload; then remove `tests/fuzz/i32/` and the
+worktree.
 
 **33. The active window on a desktop its monitor isn't showing** (fuzzer I8, found 2026-10-26;
 1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
