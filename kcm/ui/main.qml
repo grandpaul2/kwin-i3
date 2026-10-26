@@ -239,32 +239,35 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@action:button", "Frame colour of other tiled windows")
             }
         }
-        // Drawn by kwini3hold with the frame (docs/spec-rounded-corners.md), so it needs the plugins too.
+        // Drawn by kwini3hold with the frame (docs/spec-rounded-corners.md), so it needs the plugins
+        // too. Under the tiled colours, unlabelled: it continues "Tiled windows:".
         QQC2.CheckBox {
-            text: i18nc("@option:check", "Round the corners of tiled windows")
+            text: i18nc("@option:check under Tiled windows", "Round the corners")
+            Accessible.name: i18nc("@option:check", "Round the corners of tiled windows")
             checked: root.settings.roundedCorners
             onToggled: root.settings.roundedCorners = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable }
         }
         // The floating colours only mean something with the frame on floating windows
-        // (docs/spec-window-modes.md, decision 3), so they share its row.
-        RowLayout {
+        // (docs/spec-window-modes.md, decision 3): the checkbox, then the colours under it, as
+        // the tiled row (docs/spec-settings-cleanup.md).
+        QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Floating windows:")
+            text: i18nc("@option:check", "Draw the frame on floating windows too")
+            checked: root.settings.frameOnFloating
+            onToggled: root.settings.frameOnFloating = checked
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
+        }
+        RowLayout {
             spacing: Kirigami.Units.smallSpacing
-            QQC2.CheckBox {
-                text: i18nc("@option:check followed by two colours", "Frame floating windows too:")
-                checked: root.settings.frameOnFloating
-                onToggled: root.settings.frameOnFloating = checked
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
-            }
-            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true }
+            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true; enabled: root.settings.frameOnFloating && kcm.frameAvailable }
             FrameColour {
                 settingName: "frameFloatingActive"
                 applies: root.settings.frameOnFloating
                 Accessible.name: i18nc("@action:button", "Frame colour of the focused floating window")
             }
             Item { implicitWidth: Kirigami.Units.largeSpacing }
-            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true }
+            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true; enabled: root.settings.frameOnFloating && kcm.frameAvailable }
             FrameColour {
                 settingName: "frameFloatingInactive"
                 applies: root.settings.frameOnFloating
@@ -302,17 +305,6 @@ KCM.SimpleKCM {
             onToggled: root.settings.warnTakenKeys = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "warnTakenKeys" }
         }
-
-        Item {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18nc("@title:group", "Troubleshooting")
-        }
-        QQC2.CheckBox {
-            Kirigami.FormData.label: i18nc("@label", "Debug log:")
-            text: i18nc("@option:check", "Log every action, for bug reports")
-            checked: root.settings.debugLog
-            onToggled: root.settings.debugLog = checked
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "debugLog" }
-        }
+        // debugLog has no control here: it only feeds the test KWin's log (docs/debugging.md).
     }
 }
