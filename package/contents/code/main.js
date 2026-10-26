@@ -1766,8 +1766,12 @@ var KI3 = (function () {
         var a = windowRect(t), f = w.frameGeometry, o = w.output.geometry;
         if (Math.abs(old.x - a.x) > 1 || Math.abs(old.y - a.y) > 1 ||
             Math.abs(old.width - a.width) > 1 || Math.abs(old.height - a.height) > 1) return;
-        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) return;
         var wait = selfFitAt[key] ? 1000 - (Date.now() - selfFitAt[key]) : 0;
+        // A frame that fills the monitor is looked at again a moment later: a window going
+        // fullscreen gets that frame before its flag (four fullscreen scenarios went red when it
+        // was refitted at once), and a window's own oversize is clamped to the monitor's size,
+        // so skipping it left those off their tiles (fuzzer, I2). The later look skips fullscreen.
+        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) wait = Math.max(wait, 150);
         if (wait <= 0) { selfRefit(w, t); return; }
         if (selfFitLater[key]) return;
         selfFitLater[key] = true;

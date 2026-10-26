@@ -54,9 +54,12 @@ ask for the tile again. That is the nearest to i3 available.
    sends no new frame, so it isn't asked again either; a minimum bigger than the tile never fits,
    so it stays as it is today.
 4. **Left alone, as today**: floating windows (both i3 and sway honour their size), a fullscreen
-   window and a maximized one (on Wayland KWin applies both flags when the client acknowledges the
-   configure, `handleStatesAcknowledged`, before the new frame lands at its commit; the untile path
-   re-tiles a maximized one), a frame that fills the monitor (a backstop, as the armed path has), one kwin-i3 is moving
+   window and a maximized one (the untile path re-tiles a maximized one; the review read KWin's
+   `handleStatesAcknowledged` as setting the flags before the frame lands, but the fullscreen
+   scenarios showed the frame first, so see the next sentence). A frame that fills the monitor is looked at again 150 ms later, not
+   skipped: a window going fullscreen gets that frame before its flag (refitted at once, four
+   fullscreen scenarios went red), while KWin clamps a window's own oversize to the monitor's size
+   (skipped, 9 of 40 fuzz seeds left such a window off its tile, I2), one kwin-i3 is moving
    (`placing`), a drag in progress, a reconcile in progress (it ends with a refit), a window outside a
    tile. The GTK 4 bounds path (`borderGone`) runs first, unchanged.
 5. **X11 windows** too: i3 is the X11 case, and KWin applies an Xwayland window's own
