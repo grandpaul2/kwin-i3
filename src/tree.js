@@ -412,11 +412,12 @@ var Tree = (function () {
 
     // ---- moving (move.c) -------------------------------------------------------------------
 
+    // null: on different workspaces, which meet only at i3's root (each is its own tree here).
     function lowestCommonAncestor(a, b) {
         for (var pa = a; pa; pa = pa.parent)
             for (var pb = b; pb; pb = pb.parent)
                 if (pa === pb) return pa;
-        throw new Error("lowestCommonAncestor: not in the same tree");
+        return null;
     }
     function childContaining(ancestor, con) {
         var child = con;
@@ -434,6 +435,24 @@ var Tree = (function () {
         var parent = target.parent, oldParent = con.parent;
         var lca = lowestCommonAncestor(con, parent);
         if (lca === con) return;
+        if (!lca) {
+            // Another workspace (a tiling drop onto the other monitor): the meeting point is i3's
+            // root, whose focus order is the workspaces'; con goes first in its new parent's if it
+            // had its workspace's focus and that workspace is the focused one. The global focus
+            // is the caller's (drop activates con).
+            var first = isFocusedDescendant(con, wsOf(con)) && !!this.focused && wsOf(this.focused) === wsOf(con);
+            detach(con);
+            fixPercent(con.parent);
+            con.parent = parent;
+            if (first) parent.focus.unshift(con);
+            else parent.focus.push(con);
+            if (position === "before") insertBefore(parent.nodes, target, con);
+            else insertAfter(parent.nodes, target, con);
+            con.percent = 0;
+            fixPercent(parent);
+            this.onRemoveChild(oldParent);
+            return;
+        }
         var conAncestor = childContaining(lca, con);
         var targetAncestor = childContaining(lca, target);
         var movesFocus = isFocusedDescendant(con, conAncestor);
