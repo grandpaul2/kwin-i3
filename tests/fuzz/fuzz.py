@@ -160,6 +160,14 @@ class Kwin:
         elif op == "key":
             busctl("call", "org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component",
                    "invokeShortcut", "s", "kwin-i3 " + a["name"])
+        elif op == "selfresize":
+            # A frame change kwin-i3 didn't ask for, as a client resizing itself (Firefox's
+            # session restore; docs/spec-self-resize.md). It is asked back at most once a second
+            # per window, so wait that out: a settle inside it would catch the refit half done.
+            self.js('workspace.windowList().forEach(function (w) { if (w.caption === %s) '
+                    'w.frameGeometry = { x: w.x, y: w.y, width: %d, height: %d }; });'
+                    % (json.dumps(a["caption"]), a["w"], a["h"]))
+            time.sleep(1.1)
         elif op == "fullscreen":
             busctl("call", "org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component",
                    "invokeShortcut", "s", "Window Fullscreen")
@@ -310,6 +318,7 @@ def generate(rng, k, d, n_open):
     alive = [n for n, p in k.clients.items() if p.poll() is None]
     choices = [("key", 40), ("point", 12), ("close", 8 if mine else 0), ("kill", 2 if alive else 0),
                ("fullscreen", 3), ("resize", 6 if tiled_vis else 0), ("move", 4 if visible else 0),
+               ("selfresize", 4 if tiled_vis else 0),
                ("output", 2), ("open", 18 if len(alive) < MAX_WINDOWS else 0)]
     op = rng.choices([c for c, _ in choices], [w for _, w in choices])[0]
     if op == "open":
@@ -338,6 +347,10 @@ def generate(rng, k, d, n_open):
         f = rng.choice(tiled_vis)["frame"]
         c = [f[0] + f[2] // 2, f[1] + f[3] // 2]
         return {"op": "drag", "button": "right", "from": c, "to": [c[0] + rng.randint(-250, 250), c[1] + rng.randint(-200, 200)]}
+    if op == "selfresize":
+        w = rng.choice(tiled_vis)
+        return {"op": "selfresize", "caption": w["caption"],
+                "w": max(100, w["frame"][2] + rng.randint(-300, 300)), "h": max(100, w["frame"][3] + rng.randint(-200, 200))}
     if op == "move":
         f = rng.choice(visible)["frame"]
         c = [f[0] + f[2] // 2, f[1] + f[3] // 2]
