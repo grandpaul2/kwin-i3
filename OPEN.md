@@ -49,6 +49,11 @@ first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 
 `39-layout-notice` failed 5 checks once in the batch and passed alone (2026-10-26): if it flakes
 again, it goes alone. Next: Paul's choice of (a)-(c).
 
+**35. A setting to drop the coloured frame from tiled windows too** (Paul, 2026-10-26). A
+checkbox on the settings page, as `frameOnFloating` is for floating windows: tiled windows
+without kwini3hold's 1 px frame. Next: discuss with Paul (what then marks the focused window,
+and the gap the frame sits in), then a spec.
+
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
 other monitor, keys act on one monitor and the new window opens on the other. Next: confirm in the
