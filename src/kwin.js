@@ -2094,15 +2094,10 @@ var KI3 = (function () {
         // or tiled by hand under an unchanged verdict stays (reclassify).
         if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; }))
             workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
-        // A new look: borders given back here, taken on the next pass, which also redoes the
-        // padding (docs/spec-tiled-look.md).
-        if (changed.indexOf("tiledLook") >= 0) {
-            Object.keys(wins).forEach(function (key) {
-                var con = model.byWin[key];
-                if (con && con.type !== "floating" && !tiledBorderless()) giveBorder(wins[key]);
-            });
-            tellRing();
-        }
+        // A new look: the effect told now; the next pass gives or takes each tiled window's
+        // border (tiledBorder) and redoes the padding. A loop giving borders back here was found
+        // redundant by the fault battery (2026-10-26).
+        if (changed.indexOf("tiledLook") >= 0) tellRing();
         scheduleAll();
         wantFocus();
     }

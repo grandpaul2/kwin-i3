@@ -118,7 +118,6 @@ muts = [
  (Z, "src/kwin.js", "float size: a rule's float not at the record", "if (kind === \"float\") { untile(w); floatAtRecord(w); }", "if (kind === \"float\") { untile(w); }"),
  (TL, "src/kwin.js", "tiled look: the ring kept in bare", "    function tiledRing() { return frameOn && Settings.get(\"tiledLook\") === \"frame\"; }", "    function tiledRing() { return frameOn && Settings.get(\"tiledLook\") !== \"titlebars\"; }"),
  (TL, "src/kwin.js", "tiled look: the frame's room kept in titlebars", "        return { inner: i + (tiledRing() ? 2", "        return { inner: i + (frameOn ? 2"),
- (TL, "src/kwin.js", "tiled look: borders not given back on a change", "                if (con && con.type !== \"floating\" && !tiledBorderless()) giveBorder(wins[key]);", ""),
  (TL, "src/kwin.js", "tiled look: the effect never told", "        if (frameOn) callDBus(\"org.kde.KWin\", \"/kwini3hold\", \"net.local.kwini3hold\", \"SetTiledRing\", tiledRing());", ""),
 ]
 ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G, Z]
