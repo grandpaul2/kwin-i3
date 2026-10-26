@@ -27,11 +27,10 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**23. Floating windows don't move or resize by key** (i3 feature map, finding 1: rows A21, A40,
+**23. Floating windows don't move or resize by key** (`docs/spec-float-keys.md`, a draft; i3 feature map, finding 1: rows A21, A40,
 A41). Meta+Shift+arrows and the resize keys return early on a floating window (`tree.js:503`);
-i3 moves it 10 px (`move left` on a floating con) and resizes it by its `resize` step. Next: a
-short spec (step sizes, whether the window stays on its monitor, what KWin's own move does), then
-Paul's go.
+i3 moves it 10 px (`move left` on a floating con) and resizes it by its `resize` step. Next: Paul's go on
+the spec (10 px steps as i3, crossing a monitor joins its workspace, no new setting).
 
 **24. Activating a window switches its monitor to the window's workspace** (finding 6: C4, C67).
 KWin's `ActivationDesktopPolicy` defaults to `SwitchToOtherDesktop` (`kwin.kcfg`, v6.7.5): a link
