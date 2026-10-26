@@ -53,7 +53,10 @@ then `cp -r tools/bin` into it): `package/` on main is what Paul's KWin loads.
    line to Paul. Results that all fail the same way early: stop the run, report.
 4. **After**: delete the timer, report the outcome.
 
-## P1. A change (src/ or plugin/)
+## P1. A change (src/, plugin/, or a test tool in tests/ or tools/)
+
+A test tool's change has one step in place of 1-5: run it once on the smallest real input that
+reaches each changed path, in a worktree, and read that each path did what it says. Then step 6.
 
 1. **The scenarios it touches**: every scenario in `tests/live/` that names a changed function,
    action, key, setting or log word (grep for each). A change to `tree.js` names its unit tests
