@@ -33,6 +33,7 @@ var Rules = (function () {
         // On Wayland a dialog is a normal window; only transient/modal mark it (phase 0).
         if (w.transient || w.modal || fixedSize(w)) return "float";
         if (w.dialog || w.splash || w.utility) return "float";
+        if (String(w.caption) === "kwin-i3 capture note") return "float";   // tools/capture's own box
         if (has(S("floatingClass"), w.resourceClass) || has(S("floatingClass"), w.resourceName) ||
             titleHas(w.caption, S("floatingTitle"))) return "float";
         return "tile";

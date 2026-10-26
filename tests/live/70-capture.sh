@@ -18,8 +18,14 @@ check "the tree, with focus"                has "TREE 1 H\[a b\*\]"
 check "tree detail: shares"                 has "^.{9}    a percent=0.5000"
 check "window facts"                        has '"b" .* managed rule=tile frame=640,0 640x720 .* desktops=1 .*ACTIVE'
 check "the in-memory log came too"          has "kwin-i3 loaded$"
+check "the log has what kwin-i3 asked (TILE)" has "^.{9}[0-9:.]{12} TILE b -> 640,0 640x720$"
+check "and what KWin did (GEOM)"            has "^.{9}[0-9:.]{12} GEOM b .* -> 640,0 640x720$"
 check "no errors in the dump"               eval '! has "ERROR in dump"'
 check "no errors.txt"                       test ! -e "$(dirname "$state")/errors.txt"
+check "no kwini3hold here: no hold.txt"   test ! -e "$(dirname "$state")/hold.txt"   # 80-capture-hold has it
+read_out=$("$root/tools/capture-read" "$(dirname "$state")")
+check "capture-read: the press, last"       eval '[[ "$(tail -1 <<<"$read_out")" == *" ---- PRESS" ]]'
+check "capture-read: kwin-i3's lines in order" eval 'grep -q " i3   TILE b -> " <<<"$read_out"'
 check "no invariant failures or errors"     clean_log
 
 # A live desktop runs with debugLog off: the in-memory log must fill all the same.

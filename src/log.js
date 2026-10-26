@@ -2,9 +2,9 @@
 // so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true (src/settings.js
 // sets DEBUG_LOG, at load and on a reload). Silent otherwise: if nothing owns the name, the call
 // fails quietly. The last LOG_KEEP lines are kept in memory either way, for "Dump State"
-// (tools/capture).
+// (tools/capture, docs/debugging.md).
 var DEBUG_LOG = false;
-var LOG_KEEP = 300;
+var LOG_KEEP = 2000;   // hours of ordinary use, GEOM and TILE lines included; a few hundred kB
 var logRing = [];
 
 function log(line) {

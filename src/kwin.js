@@ -231,6 +231,7 @@ var KI3 = (function () {
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
+        log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
         takeBorder(w);                      // before the tile asks for its size
         if (tile.manage(w)) return true;
         giveBorder(w);
@@ -537,6 +538,7 @@ var KI3 = (function () {
     function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
     function armRefit() { for (var key in wins) armed[key] = true; }
     function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
+    function rectLog(r) { return Math.round(r.x) + "," + Math.round(r.y) + " " + Math.round(r.width) + "x" + Math.round(r.height); }
     function settleDragArms(ws) {
         model.leaves(ws).forEach(function (leaf) {
             var a = armed[leaf.win], t = expected[leaf.win];
@@ -1086,7 +1088,11 @@ var KI3 = (function () {
         // monitor for any other reason, it also changes its desktop, and desktopsChanged above
         // follows it, as i3ws did. A handler here was redundant: the fault battery could not tell
         // it from nothing (2026-10-22).
-        w.frameGeometryChanged.connect(guard("frame", function () { refitOnFrameChange(w); }));
+        w.frameGeometryChanged.connect(guard("frame", function (old) {
+            // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
+            if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
+            refitOnFrameChange(w);
+        }));
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {
                 // Ours, possibly arriving late: nothing to do.
@@ -1852,7 +1858,11 @@ var KI3 = (function () {
             log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
             if (w && wins[id(w)]) model.focusWin(id(w));
         }));
-        workspace.currentDesktopChanged.connect(guard("desktop shown", shownOutside));
+        workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
+            log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
+                (current ? deskNum(current) : "-") + (switching ? " (kwin-i3)" : " (outside)"));
+            shownOutside(previous, current, output);
+        }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
         workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));

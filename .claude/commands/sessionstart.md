@@ -16,8 +16,8 @@ Starting a kwin-i3 session. Please:
      before its declaration" lines from before 2dacb58).
 4. **Paul's bug captures**: `ls -t ~/.local/state/kwin-i3/captures/`. Each is a Meta+Shift+B press,
    that is, something he saw go wrong. Say how many there are and when the newest is from, and offer
-   to diagnose them. Diagnosing one starts at its `state.txt`, `== log` section: the actions before
-   the press (`docs/debugging.md`). A fix needs Paul's go (CLAUDE.md, "Nothing goes live"). Captures already
+   to diagnose them. Diagnosing one starts with `tools/capture-read DIR`: the timeline before the
+   press, with his note (`docs/debugging.md`). A fix needs Paul's go (CLAUDE.md, "Nothing goes live"). Captures already
    worked on are deleted at the end of the session that handled them, so all of these are new,
    except those an `OPEN.md` item names as kept.
 

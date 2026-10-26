@@ -44,6 +44,9 @@ public:
 public Q_SLOTS:
     // D-Bus: org.kde.KWin /kwini3hold net.local.kwini3hold Stats
     QVariantMap Stats() const;
+    // D-Bus: the last events (holds opened and released, closes kept, snapshots, new windows
+    // hidden), stamped HH:mm:ss.zzz and with the frame count; tools/capture saves them.
+    QStringList Events() const;
     // kwin-i3 says which windows it floats (docs/spec-window-modes.md, decision 5c): the set
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
@@ -68,6 +71,7 @@ private:
     };
 
     void loadConfig();
+    void note(const QString &what);
     void watchWindow(KWin::EffectWindow *w);
     void onAdded(KWin::EffectWindow *w);
     void onClosed(KWin::EffectWindow *w);
@@ -115,6 +119,7 @@ private:
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
     QHash<KWin::EffectWindow *, QElapsedTimer> m_pendingClose; // kept, waiting for a neighbour
     QList<QPointer<KWin::EffectWindow>> m_dragging;
+    QStringList m_events;                                   // note(): the last 500, for Events
 
     bool m_open = false;
     bool m_snapshotting = false;

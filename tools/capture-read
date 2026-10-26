@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+"""Print a capture (tools/capture) as one timeline: kwin-i3's log and kwini3hold's events, merged
+by time, with Paul's press and note where they fall. Read a capture with this first
+(docs/debugging.md).
+
+Usage: capture-read DIR [SECONDS]   the SECONDS before the press (default 60; 0 for all) and the
+                                    capture's own few after it
+"""
+import os, re, sys
+
+STAMP = re.compile(r"^(\d\d):(\d\d):(\d\d)(?:\.(\d{3}))?\s(.*)$")
+
+
+def secs(m):
+    h, mi, s, ms = m.group(1), m.group(2), m.group(3), m.group(4) or "0"
+    return int(h) * 3600 + int(mi) * 60 + int(s) + int(ms) / 1000
+
+
+def fmt(t):
+    t %= 86400
+    return "%02d:%02d:%06.3f" % (t // 3600, t % 3600 // 60, t % 60)
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(__doc__.strip())
+    d = sys.argv[1].rstrip("/")
+    before = float(sys.argv[2]) if len(sys.argv) > 2 else 60
+    m = re.search(r"_(\d\d)(\d\d)(\d\d)\.(\d{3})$", d)
+    if not m:
+        sys.exit("capture-read: %s is not a capture directory (<date>_HHMMSS.mmm)" % d)
+    press = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + int(m.group(4)) / 1000
+
+    events = []   # (time, order, source, text)
+
+    def add(t, src, text):
+        if t > press + 3600:   # logged before a midnight the press came after
+            t -= 86400
+        events.append((t, len(events), src, text))
+
+    # state.txt: each line is "<sink's stamp> <dump line>"; in the "== log" section the dump line
+    # is kwin-i3's own "<stamp> <text>" (seconds only in captures before 2026-10-25's 644df66).
+    state = os.path.join(d, "state.txt")
+    in_log = False
+    if os.path.exists(state):
+        for line in open(state, errors="replace"):
+            line = line.rstrip("\n")[9:]
+            if line.startswith("== "):
+                in_log = line == "== log"
+                continue
+            if in_log and line != "DUMP END":
+                lm = STAMP.match(line)
+                if lm:
+                    add(secs(lm), "i3  ", lm.group(5))
+    else:
+        print("(no state.txt: kwin-i3 did not answer)")
+
+    hold = os.path.join(d, "hold.txt")
+    if os.path.exists(hold):
+        for line in open(hold, errors="replace"):
+            hm = STAMP.match(line.rstrip("\n"))
+            if hm:
+                add(secs(hm), "hold", hm.group(5))
+    else:
+        print("(no hold.txt: kwini3hold not loaded)")
+
+    note = ""
+    if os.path.exists(os.path.join(d, "note.txt")):
+        note = open(os.path.join(d, "note.txt"), errors="replace").read().strip()
+    add(press, "----", "PRESS" + (": " + note if note else ""))
+
+    events.sort()
+    prev = None
+    for t, _, src, text in events:
+        if before and t < press - before:
+            continue
+        gap = "" if prev is None else "+%.3f" % (t - prev)
+        prev = t
+        print("%s %9s %s %s" % (fmt(t), gap, src, text))
+
+
+main()

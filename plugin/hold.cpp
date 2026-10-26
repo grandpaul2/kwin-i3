@@ -17,6 +17,7 @@
 #include <KSharedConfig>
 
 #include <QDBusConnection>
+#include <QTime>
 
 #include <cmath>
 
@@ -31,6 +32,17 @@ static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds a
 // Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
 // scales and rounds a window's radius per output (itemrenderer_opengl.cpp:190).
 static const qreal s_radius = 5.0;
+static const int s_eventsKeep = 500;
+
+static QString name(EffectWindow *w)
+{
+    return w->caption().left(40);
+}
+
+static QString rect(const RectF &r)
+{
+    return QStringLiteral("%1,%2 %3x%4").arg(std::lround(r.x())).arg(std::lround(r.y())).arg(std::lround(r.width())).arg(std::lround(r.height()));
+}
 
 Hold::Hold()
     : CrossFadeEffect()
@@ -197,6 +209,7 @@ void Hold::onClosed(EffectWindow *w)
     m_dragging.removeAll(w);
     repaintRing(w, w->frameGeometry());
     if (m_hidden.remove(w)) {      // never shown: nothing to keep on screen
+        note(QStringLiteral("close %1: never shown").arg(name(w)));
         m_held.remove(w);
         queueCheck();
         return;
@@ -208,6 +221,7 @@ void Hold::onClosed(EffectWindow *w)
         if (!it->closed) {
             it->closed = true;             // keeps its snapshot; counts as settled
             w->refWindow();
+            note(QStringLiteral("close %1: kept, held already").arg(name(w)));
         }
         queueCheck();
         return;
@@ -221,16 +235,19 @@ void Hold::onClosed(EffectWindow *w)
         h.closed = true;
         m_held.insert(w, h);
         ++m_stats.closeHoldsKept;
+        note(QStringLiteral("close %1: kept, hold open").arg(name(w)));
         restartQuiet();
         return;
     }
     // Pending: its neighbours' aboutToChange, if any, promotes it (ensureOpen); else let it go.
+    note(QStringLiteral("close %1: kept %2 ms for a neighbour").arg(name(w)).arg(s_graceMs));
     m_pendingClose.insert(w, QElapsedTimer());
     m_pendingClose[w].start();
     QPointer<EffectWindow> qp(w);
     QTimer::singleShot(s_graceMs, this, [this, qp] {
         if (qp && m_pendingClose.remove(qp)) {
             ++m_stats.closeHoldsDropped;
+            note(QStringLiteral("close %1: dropped, no neighbour moved").arg(name(qp)));
             qp->unrefWindow();
         }
     });
@@ -262,10 +279,12 @@ void Hold::onAboutToChange(EffectWindow *w)
             Held h;
             h.joined = true;
             m_held.insert(w, h);
+            note(QStringLiteral("new %1: joined, its tile places it").arg(name(w)));
             ensureOpen();
             restartQuiet();
             queueCheck();
         } else {                            // placed by other means (floated): show it
+            note(QStringLiteral("new %1: shown, not tiled").arg(name(w)));
             unhide(w);
         }
         return;
@@ -276,6 +295,7 @@ void Hold::onAboutToChange(EffectWindow *w)
     if (!m_held.contains(w)) {
         Held h;
         h.frame = w->frameGeometry();
+        note(QStringLiteral("snapshot %1 at %2").arg(name(w), rect(h.frame)));
         snapshot(w);
         h.snapshot = true;
         m_held.insert(w, h);
@@ -349,9 +369,11 @@ void Hold::hide(EffectWindow *w)
     h.since.start();
     m_hidden.insert(w, h);
     ++m_stats.newHidden;
+    note(QStringLiteral("new %1: hidden until placed").arg(name(w)));
     QPointer<EffectWindow> qp(w);
     QTimer::singleShot(s_graceMs, this, [this, qp] {
         if (qp && m_hidden.contains(qp) && !m_held.contains(qp)) {
+            note(QStringLiteral("new %1: shown, no tile in %2 ms").arg(name(qp)).arg(s_graceMs));
             unhide(qp);
         }
     });
@@ -380,6 +402,7 @@ void Hold::ensureOpen()
     m_started.start();
     m_deadline.start(m_timeoutMs);
     ++m_stats.transactions;
+    note(QStringLiteral("open (%1 closing waited)").arg(m_pendingClose.size()));
     // Closing windows waiting for exactly this.
     const auto pending = m_pendingClose.keys();
     m_pendingClose.clear();
@@ -458,6 +481,16 @@ void Hold::release(bool timedOut)
     if (timedOut) {
         ++m_stats.timeouts;
     }
+    QStringList late;                  // the ones a timeout gave up on
+    if (timedOut) {
+        for (auto it = m_held.cbegin(); it != m_held.cend(); ++it) {
+            if (!it->closed && !it->settledHidden && !settled(it.key())) {
+                late << name(it.key()) + QStringLiteral(" at ") + rect(it.key()->frameGeometry());
+            }
+        }
+    }
+    note(QStringLiteral("release after %1 ms, %2 held%3").arg(ms, 0, 'f', 1).arg(m_held.size())
+             .arg(timedOut ? QStringLiteral(", TIMED OUT waiting for ") + late.join(QStringLiteral("; ")) : QString()));
     // On copies: unrefWindow can delete a window, and windowDeleted then edits these lists.
     // (The copies hold their own visible refs, so a hidden window stays drawn until the end.)
     const QHash<EffectWindow *, Held> held = m_held;
@@ -794,6 +827,22 @@ void Hold::postPaintScreen()
 }
 
 // ---- observability ----------------------------------------------------------------------------
+
+// Cheap enough to be always on: a few per layout change. "f" is the frame count (postPaintScreen),
+// so two events between the same frames were drawn together.
+void Hold::note(const QString &what)
+{
+    m_events.append(QTime::currentTime().toString(QStringLiteral("HH:mm:ss.zzz")) + QStringLiteral(" f")
+                    + QString::number(m_stats.frames) + QLatin1Char(' ') + what);
+    if (m_events.size() > s_eventsKeep) {
+        m_events.removeFirst();
+    }
+}
+
+QStringList Hold::Events() const
+{
+    return m_events;
+}
 
 QVariantMap Hold::Stats() const
 {

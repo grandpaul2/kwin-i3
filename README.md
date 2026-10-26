@@ -171,7 +171,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |
 | `[Script-kwin-i3] workspaceAutoBackAndForth` | false | i3's `workspace_auto_back_and_forth`: Meta+N for the focused workspace shows the one focused before; Meta+Shift+N for it sends the window there |
 | `[Script-kwin-i3] warnTakenKeys` | `true` | at load, one notification naming each of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't); `make take-keys` frees them |
-| `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 300 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
+| `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 2000 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `100` | how long the old layout may be held for a slow window, 10-2000 ms (Sway: 200) |
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
@@ -200,8 +200,8 @@ The live tests never touch the running desktop: `tools/testkwin.sh` starts a pri
 virtual 1280x720 monitors, its own D-Bus session and its own config. `tools/testclient.py` opens the
 awkward windows (fixed size, large minimum, dialog, slow to appear, retitled); `tools/inject.py`
 sends real input through libei; `tools/shot.py` reads pixels. A bug seen on the desktop becomes a
-file with `tools/capture` (state and recent log, screenshot; `docs/debugging.md`), then a live
-test, watched red, then a fix.
+file with `tools/capture` (the recent log and kwini3hold's events, the state, a screenshot, a
+note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, watched red, then a fix.
 `CLAUDE.md` has the working rules.
 
 Docs: `docs/plan.md` (decisions, behaviour, policies), the specs (`docs/spec-*.md`), the designs

@@ -50,11 +50,14 @@ at 17:57 a terminal beside Firefox, at 18:51 one of two Alacritty on workspace 3
 side checked for the Firefox ones: the trees were right, and kwini3hold kept the closing window and
 released on Firefox's new size with no timeout (66 holds, max 69 ms). With no Firefox at 18:51,
 the guess that Firefox acknowledges a size before drawing into it no longer covers every case; a
-cause in kwini3hold, the frame effect or KWin is as likely. The log is stamped to the millisecond
-from this session's change (`docs/debugging.md`), so the next capture times the close against what
-kwin-i3 did after it. Next: reproduce in the test KWin, Alacritty and the test client first: two tiled, close
-one, screenshots every few ms during the close (then a workspace switch), looking for background
-inside the survivor's rect; real Firefox with a throwaway profile second.
+cause in kwini3hold, the frame effect or KWin is as likely. From 2026-10-25 late a capture holds the
+flight recorder (`docs/debugging.md`): kwin-i3's TILE and GEOM lines and kwini3hold's hold, close
+and release events, to the millisecond, read with `tools/capture-read`. Next: the next flash's
+capture says whether it falls after kwini3hold's release (then the client or KWin drew late) or
+inside the hold (then the effect); meanwhile, reproduce in the test KWin (two tiled, close one,
+screenshots every few ms, background inside the survivor's rect), Alacritty and the test client
+first, real Firefox with a throwaway profile second. If timelines can't settle it: the screen
+replay buffer (`docs/debugging.md`, "What none of these show"), its own proposal.
 
 ## Deferred (the Stage)
 

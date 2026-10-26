@@ -1,49 +1,66 @@
-# Debugging kwin-i3: where each record lives
+# Debugging kwin-i3: the flight recorder
 
-Written 2026-10-25, after a capture's own log was overlooked: its `journal.txt` was empty and was
-read as "nothing recorded", while `state.txt` held the action that preceded the bug. Start here
-before reading any of these.
+Paul, 2026-10-25. Every bug report comes after the fact: Paul sees something, then presses
+Meta+Shift+B. So what matters is the recent past, kept cheaply all the time and saved only on the
+press: a ring in memory, in kwin-i3 and in kwini3hold, stamped to the millisecond. Nothing is
+written to disk or sent over D-Bus until the press. (Before this, a capture's empty `journal.txt`
+was read as "nothing recorded" while `state.txt` held the close that preceded the bug.)
+
+## Reading a capture: `tools/capture-read DIR [SECONDS]`
+
+One timeline, the SECONDS before the press (default 60; 0 for everything held): kwin-i3's lines
+(`i3`) and kwini3hold's (`hold`, with its frame count `fN`) merged by time, the gap to the line
+before, and the press with Paul's note last. Start every diagnosis here. The bug is in the lines
+before the press, often several seconds before it.
+
+What a layout change looks like (test KWin, a close of b beside a, 2026-10-25):
+
+```
+21:40:34.482    +0.045 i3   ACTION Close
+21:40:34.483    +0.000 i3   CLOSE b kept a
+21:40:34.483    +0.000 i3   TILE a -> 1,1 1278x718           kwin-i3 asks
+21:40:34.483    +0.000 hold f24 close b: kept 20 ms for a neighbour
+21:40:34.483    +0.000 hold f24 snapshot a at 1,1 638x718
+21:40:34.483    +0.000 hold f24 open (1 closing waited)
+21:40:34.486    +0.002 i3   GEOM a 1,1 638x718 -> 1,1 1278x718   KWin did it
+21:40:34.487    +0.001 hold f25 release after 4.0 ms, 2 held
+```
+
+A release that says `TIMED OUT waiting for ...` names the windows that never got their size.
 
 ## The records
 
-| record | what it holds | on the live desktop | in the test KWin |
-|---|---|---|---|
-| **in-memory log** (`src/log.js`) | the last 300 `log()` lines: actions, trees, adds, closes, focus, settings, stamped `HH:MM:SS.mmm` | always on | always on |
-| **Dump State** (shortcut "kwin-i3 Dump State", `src/kwin.js` `dump()`) | outputs, every workspace's tree, every window's geometry and flags, a JSON snapshot, then the in-memory log (`== log`) | sent to `net.local.kwini3.dump`, which only `tools/capture` listens on | the same |
-| **`debugLog=true`** | the same `log()` lines, each sent over D-Bus as it happens to `net.local.kwini3.log` | **does nothing**: nothing owns that name, so the lines are dropped | set by `tools/testkwin.sh`; `tools/logsink.py` writes them to `$KI3_LOG`, stamped `HH:MM:SS ` (tests match `^.{9}`) |
-| **KWin's journal** (`journalctl --user _COMM=kwin_wayland`) | KWin's own lines: script errors (`main.js`), QML warnings, the plugins' `kwini3*` lines | yes | the test KWin's lines carry `/tmp/kwin-i3-test.*` |
-| **fuzz traces** (`tests/fuzz/out*/<seed>/`, gitignored) | `trace.json` (seed, every action), `ki3.log`, the last probe, the failed invariant (`docs/fuzz-design.md`) | — | `make fuzz` |
-
-kwin-i3's own lines **never reach the journal**: KWin drops a script's `print()` on this machine
-(the `kwin_scripting` category is off, and turning it on needs a KWin restart). So the journal
-is only worth reading for errors and the plugins.
+| record | what it holds | where it goes |
+|---|---|---|
+| **kwin-i3's log** (`src/log.js`, `log()`) | the last 2000 lines, `HH:MM:SS.mmm`: actions, trees, adds, closes, activations (who made them), `TILE` (the rect kwin-i3 gave a tile), `GEOM` (every geometry change KWin reported, not each step of a drag), `SHOWN` (a desktop switch, by kwin-i3 or outside it), settings | Dump State's `== log` section |
+| **kwini3hold's events** (`plugin/hold.cpp`, `note()`) | the last 500: holds opened and released (how long, how many, a timeout and what it waited for), closes kept or dropped, snapshots, new windows hidden and shown; each with the frame count | D-Bus `Events` on `/kwini3hold` |
+| **Dump State** (shortcut "kwin-i3 Dump State", `dump()` in `src/kwin.js`) | outputs, every workspace's tree, every window's geometry and flags, a JSON snapshot (tests/fuzz read it), then the log | `net.local.kwini3.dump`, which only `tools/capture` listens on |
+| **`debugLog=true`** | each log line sent over D-Bus as it happens | the test KWin's `$KI3_LOG` (`tools/testkwin.sh` runs `tools/logsink.py`; stamped `HH:MM:SS `, which tests match as `^.{9}`). **On a desktop nothing listens**, so it does nothing there |
+| **KWin's journal** (`journalctl --user _COMM=kwin_wayland`) | KWin's own lines: script errors (`main.js`), QML warnings, the plugins' `kwini3*` messages. Never kwin-i3's log (KWin drops a script's `print()` here) | read it directly; captures don't copy it |
+| **fuzz traces** (`tests/fuzz/out*/<seed>/`, gitignored) | `trace.json`, `ki3.log`, the last probe, the failed invariant (`docs/fuzz-design.md`) | `make fuzz` |
 
 ## A capture (Meta+Shift+B, `tools/capture`)
 
-`~/.local/state/kwin-i3/captures/<time>/`, mode 700 (captions can be private):
-
-1. **`state.txt`, the `== log` section first**: what Paul did in the minutes before he pressed
-   the key (each line has two stamps: when the dump was written, then when the line was logged).
-   Then `== tree` and `== windows` for the state at the press.
-2. `screen.png`: both monitors, a second or so after the press.
-3. `kwin-journal.txt`: only there when KWin logged something in the last 10 minutes.
-4. `errors.txt`: only there when kwin-i3 didn't answer (not loaded).
-
-The press comes after the thing Paul saw, often by several seconds, so the bug is in the log's last
-lines before the press, not in the state at it. A capture is deleted at the end of the session
-that handled it (`/sessionend`), or kept with an `OPEN.md` item that names it.
+`~/.local/state/kwin-i3/captures/<date>_<HHMMSS.mmm>/` (the name is the press), mode 700 (captions
+can be private): `state.txt` (Dump State), `hold.txt` (when kwini3hold is loaded), `screen.png`
+(both monitors, a second or so after the press), `note.txt` (what Paul typed in the box that
+opens after the save; kwin-i3 floats it by its title, "kwin-i3 capture note"), `errors.txt` (only
+when kwin-i3 didn't answer). A capture is deleted at the end of the session that handled it, or
+kept with the `OPEN.md` item that names it.
 
 ## What none of these show
 
-- **Anything between two frames.** A flash, a frame drawn late, a window shown before its resize:
-  the log says what kwin-i3 asked for and when, not what got drawn. Reproduce in the test KWin and
-  read pixels (`tools/shot.py`), several times a second.
-- **KWin's side of a call**: why KWin activated or moved a window. Read KWin's source for the
-  installed version (CLAUDE.md, "Finding bugs"), or trace it from a helper probe in a worktree.
+- **What got drawn between two frames.** The log says what was asked and reported, and when; a
+  flash shows on screen only. Next step if a timeline can't settle one: a replay buffer of the last
+  ~10 s of the screen saved on the same press (`gpu-screen-recorder`'s replay mode, untested here;
+  its own proposal), or a reproduction in the test KWin read with `tools/shot.py`.
+- **KWin's reasons**: why it activated or moved a window. Read KWin's source for the installed
+  version (CLAUDE.md, "Finding bugs"), or trace it from a helper probe in a worktree.
 
-## Changing what is logged
+## Changing what is recorded
 
-A `log()` line is free when `debugLog` is off (one array push), so log decisions, not loops. A
-temporary trace line goes in a worktree, never in `src/` on main (`make test` and `make fuzz`
-build `src/` as it stands). The ring's size is `LOG_KEEP` in `src/log.js`; 2026-10-25's 18:51
-capture held 26 minutes in about 120 lines, so 300 is most of an hour of ordinary use.
+A `log()` or `note()` is one push into an array, so log decisions and KWin's answers, not loops
+or per-frame work. A temporary trace line goes in a worktree, never in `src/` on main (`make test`
+and `make fuzz` build `src/` as it stands). The sizes: `LOG_KEEP` in `src/log.js`,
+`s_eventsKeep` in `plugin/hold.cpp`. Tests: `70-capture` (the dump and the log), `80-capture-hold`
+(kwini3hold's events and the merged timeline).
