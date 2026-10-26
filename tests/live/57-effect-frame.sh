@@ -10,7 +10,7 @@ RED=255,0,0; LIME=0,255,0; ACT=76,120,153; INACT=51,51,51
 capture() { "$shot" capture Virtual-0 "$png"; }
 px() { "$shot" probe "$png" "$1" "$2"; }
 # row <y> <x...>: the colours along a row, for the log
-row() { local y=$1 out="" x; shift; for x in "$@"; do out+="$x:$(px "$x" "$y") "; done; echo "$out"; }
+row() { local y=$1 xy=() c i; shift; for i in "$@"; do xy+=("$i" "$y"); done; read -ra c < <("$shot" probe "$png" "${xy[@]}"); for i in "${!c[@]}"; do echo -n "${@:$((i + 1)):1}:${c[i]} "; done; echo; }
 pix() { "$shot" same "$png" "$1" "$2" "$3" 8; }
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, c = w.clientGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height+' client '+c.x+','+c.y+' '+c.width+'x'+c.height); } });"; }
 # Alacritty, solid colour (the GTK 4 test client stops short of a tiled height without a border).

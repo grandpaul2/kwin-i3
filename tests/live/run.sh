@@ -6,6 +6,7 @@
 # Each scenario's output is printed whole, in order, when all are done. A scenario counts as
 # passed only if it exits 0 AND printed its "N passed, 0 failed" line (review fault 6).
 set -u
+LC_NUMERIC=C        # $EPOCHREALTIME with a point, whatever the locale (the timings, below)
 cd "$(dirname "$0")"
 ../../build.sh || exit 1
 scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
@@ -44,18 +45,22 @@ launch() {
     grep -q '^# needs: plugin' "$t" && plugin=$plugins
     local package=""; grep -q '^# needs: kcm' "$t" && package=1
     local xwayland=""; grep -q '^# needs: xwayland' "$t" && xwayland=1
+    local t0=$EPOCHREALTIME
     KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
+    echo "$t0 $EPOCHREALTIME" >"$out/$t.time"
 }
 needs_missing() {
     { grep -q '^# needs: plugin' "$1" && [[ -z $plugins ]]; } || { grep -q '^# needs: kcm' "$1" && [[ -z $kcm ]]; } ||
         { grep -q '^# needs: xwayland' "$1" && ! command -v Xwayland >/dev/null; }
 }
+start=$EPOCHREALTIME
 for t in "${batch[@]}"; do
     if needs_missing "$t"; then skipped+=("$t"); continue; fi
     while (( $(jobs -rp | wc -l) >= maxjobs )); do wait -n; done
     launch "$t" &
 done
 wait
+batched=$EPOCHREALTIME
 for t in "${alone[@]}"; do
     if needs_missing "$t"; then skipped+=("$t"); continue; fi
     KI3_PARALLEL=1 launch "$t"
@@ -72,5 +77,13 @@ for t in "${scenarios[@]}"; do
         status=1
     fi
 done
+# Where the time went (docs: the alone tail usually dominates): the batch and the tail's wall
+# time, and the ten slowest scenarios (alone ones marked).
+end=$EPOCHREALTIME
+awk -v s="$start" -v b="$batched" -v e="$end" 'BEGIN { printf "TIME batch %.1f s, alone %.1f s, total %.1f s; slowest:\n", b - s, e - b, e - s }'
+for t in "${scenarios[@]}"; do
+    [[ -f $out/$t.time ]] || continue
+    awk -v t="$t" -v al="$([[ " ${alone[*]} " == *" $t "* ]] && echo "  (alone)")" '{ printf "%7.1f s  %s%s\n", $2 - $1, t, al }' "$out/$t.time"
+done | sort -rn | head -10
 [[ ${#skipped[@]} -gt 0 ]] && echo "SKIPPED, no plugin or page build (make plugin needs kwin-devel, make kcm kf6-kcmutils-devel): ${skipped[*]}"
 exit $status

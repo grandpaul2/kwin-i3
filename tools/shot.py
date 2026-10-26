@@ -2,19 +2,21 @@
 """Screenshots of a KWin output over D-Bus (org.kde.KWin.ScreenShot2), for the live tests.
 
   shot.py capture <output-name> <file.png>       e.g. Virtual-0; what KWin would show now
-  shot.py probe <file.png> <x> <y>               prints "r,g,b" of that pixel
+  shot.py probe <file.png> <x> <y> [<x> <y>...]  prints "r,g,b" of each pixel, space-separated
   shot.py same <file.png> <x> <y> <r,g,b> [tol]  exit 0 if the pixel is that colour (+-tol, default 24)
 
 KWin answers only callers it trusts; the test KWin runs with KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1
 (tools/testkwin.sh). The capture renders through the effect chain, so it shows what an effect is
 drawing (docs/spec-atomic-layout.md, test 1).
+
+A probe is a process start, two imports and a PNG decode (~45 ms): a test reading many pixels of
+one capture asks for them in one probe (78-rounded-corners read 734 one at a time, 44 s).
 """
 import os, sys
 
-import dbus
-
 
 def capture(output, path):
+    import dbus                                 # only here: a probe needs no bus
     from PIL import Image
     bus = dbus.SessionBus()
     obj = bus.get_object("org.kde.KWin", "/org/kde/KWin/ScreenShot2")
@@ -38,10 +40,15 @@ def capture(output, path):
     img.convert("RGB").save(path)
 
 
-def pixel(path, x, y):
+def pixels(path, coords):
     from PIL import Image
     with Image.open(path) as img:
-        return img.convert("RGB").getpixel((int(x), int(y)))
+        rgb = img.convert("RGB")
+        return [rgb.getpixel((int(x), int(y))) for x, y in coords]
+
+
+def pixel(path, x, y):
+    return pixels(path, [(x, y)])[0]
 
 
 def main():
@@ -51,7 +58,10 @@ def main():
     if a[0] == "capture":
         capture(a[1], a[2])
     elif a[0] == "probe":
-        print("%d,%d,%d" % pixel(a[1], a[2], a[3]))
+        xy = a[2:]
+        if not xy or len(xy) % 2:
+            sys.exit(__doc__)
+        print(" ".join("%d,%d,%d" % p for p in pixels(a[1], zip(xy[0::2], xy[1::2]))))
     elif a[0] == "same":
         got = pixel(a[1], a[2], a[3])
         want = tuple(int(v) for v in a[4].split(","))

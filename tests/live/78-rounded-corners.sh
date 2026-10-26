@@ -14,6 +14,8 @@ RED=255,0,0; LIME=0,255,0; ACT=76,120,153; INACT=51,51,51; FACT=77,114,84
 capture() { sleep 0.3; "$shot" capture Virtual-0 "$png"; }
 px() { "$shot" probe "$png" "$1" "$2"; }
 pix() { "$shot" same "$png" "$1" "$2" "$3" 8; }
+# row <y> <x...>: the colours along a row, for the log, in one probe
+row() { local y=$1 xy=() c i; shift; for i in "$@"; do xy+=("$i" "$y"); done; read -ra c < <("$shot" probe "$png" "${xy[@]}"); for i in "${!c[@]}"; do echo -n "${@:$((i + 1)):1}:${c[i]} "; done; }
 # near <x> <y> <frame> <app>: an antialiased arc pixel, nearer the frame's colour than the app's
 # or the background's (black)
 near() {
@@ -24,7 +26,13 @@ sys.exit(0 if d(f) < min(d(a), d((0, 0, 0))) else 1)' "$(px "$1" "$2")" "$3" "$4
 }
 notpix() { ! pix "$@" >/dev/null 2>&1; }
 # corner <x> <y>: the 8x8 pixels from x,y, one row each, for the log
-corner() { local j i l; for ((j = 0; j < 8; j++)); do l=""; for ((i = 0; i < 8; i++)); do l+="$(px $(($1 + i)) $(($2 + j))) "; done; echo "      $l"; done; }
+# (one probe for all 64: tools/shot.py)
+corner() {
+    local j i xy=() c
+    for ((j = 0; j < 8; j++)); do for ((i = 0; i < 8; i++)); do xy+=($(($1 + i)) $(($2 + j))); done; done
+    read -ra c < <("$shot" probe "$png" "${xy[@]}")
+    for ((j = 0; j < 8; j++)); do echo "      ${c[*]:$((j * 8)):8} "; done
+}
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height); } });"; }
 term() { alacritty --title "$1" -o "colors.primary.background=\"$2\"" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
 set_key() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5; }
@@ -106,7 +114,7 @@ set_key frameWidth 3
 term b "#00ff00"
 check "a | b, 3 px frames"                  poll eval '[[ "$(fc a)" == "3,3 634x714" ]]' || echo "    a: $(fc a)  b: $(fc b)"
 capture; echo "    a's top left, 3 px:"; corner 0 0
-echo "    row 360: $(for x in 635 636 637 638 639 640 641 642 643 644; do echo -n "$x:$(px $x 360) "; done)"
+echo "    row 360: $(row 360 635 636 637 638 639 640 641 642 643 644)"
 # 3 px: the arc's centre 8,8, inner radius 5, outer 8: 3,3 (6.4 out) is in the frame, 1,1 (9.2) not.
 check "3 px: the arc, 3 px wide"            eval 'pix 3 3 $INACT && notpix 1 1 $INACT && notpix 0 0 $INACT && pix 9 1 $INACT && pix 7 7 $RED'
 check "3 px: the neighbours meet at 640"    eval 'pix 636 360 $RED && pix 637 360 $INACT && pix 639 360 $INACT && pix 640 360 $ACT && pix 642 360 $ACT && pix 643 360 $LIME'
