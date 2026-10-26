@@ -47,7 +47,10 @@ latest `TREE` line of each workspace:
 - **I2 inside**: every tiled window shown lies inside its output.
 - **I3 no overlap**: tiled windows shown on one output overlap by zero pixels.
 - **I4 no hole**: on an output whose shown workspace has tiled windows, their areas sum to the
-  output's area (with I2 and I3, an exact cover).
+  output's area (with I2 and I3, an exact cover). Since the window modes (2026-10-24) a tiled
+  window sits inside its tile's padding (the 1 px frame), so each frame is grown back by its
+  tile's padding (tile minus `want`) first: a right frame then covers its tile, and a frame 1 px
+  short still leaves a hole (summing the tiles instead missed that: KWin keeps tiles gapless).
 - **I5 minimum size**: every tiled window's client size is at least its `minSize`.
 - **I6 none lost**: every open normal window is named in exactly one workspace's TREE (tiled or
   `~` floating), and its KWin desktop is that workspace's desktop.
@@ -117,7 +120,9 @@ The review (24 findings) changed these; the code is `tests/fuzz/fuzz.py` and `te
   window is visible.
 - **Invariants as built:** I1–I6, I8 and I9 as above, with I6 counting floating windows (`~`) and
   skipping ignored, minimized and multi-desktop windows; I7 was dropped (I6 covers it);
-  **I10 added**: a tiled window's frame is its tile, to within 1 px. I10 is the one that caught the
+  **I10 added**: a tiled window's frame is its tile, to within 1 px; since the window modes, the
+  rect kwin-i3 asks for in that tile (`want` in the state dump: `windowRect`, inside the padding).
+  Left at the tile, every seed failed at its first window for two days unnoticed (2026-10-25). I10 is the one that caught the
   minimum-size bug: KWin enforces the window's own minimum, so the window spills past its tile and
   I5 never fires.
 - **Shrinking** cuts the trace at the failing step, replays twice first (0 of 2 is `flaky`, kept,
