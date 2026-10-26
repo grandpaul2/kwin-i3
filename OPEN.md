@@ -27,6 +27,12 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
+**31. A tiled window that resizes itself stays resized** (Paul's capture 2026-10-25 23:06,
+Firefox's session restore: two windows overlapping, one past the monitor's edge). i3 refuses a
+tiled window's own resize; kwin-i3 only refits after a screens change or a drag. Paul chose i3's
+rule (always). Next: Paul's go on `docs/spec-self-resize.md`, then its test watched red, the
+fix, `make test`, `make fuzz`. The capture is kept until it is live.
+
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
 other monitor, keys act on one monitor and the new window opens on the other. Next: confirm in the
