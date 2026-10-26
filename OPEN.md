@@ -39,8 +39,8 @@ recover. Next: shrink seed 4 (copy its two files to `tests/fuzz/out/4/` as `trac
 1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
 Virtual-0 shows 4`; kept in `tests/fuzz/i33/`). Next: shrink seed 30 as for 32, then a diagnosis.
 
-**34. Test speed, the rest of the study** (2026-10-25, report in this session's scratchpad, its
-findings here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
+**34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
+findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
 First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Paul's go: (a) the
 Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's display search
 (~40-70 s; 71 may stay alone for its 1.5 s focus timing); (b) the alone scenarios without
