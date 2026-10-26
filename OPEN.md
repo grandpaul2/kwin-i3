@@ -35,12 +35,18 @@ Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's disp
 millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five repeat runs
 first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 (~10 s).
 `39-layout-notice` failed 5 checks once in the batch and passed alone (2026-10-26): if it flakes
-again, it goes alone. Next: Paul's choice of (a)-(c).
+again, it goes alone. Also 2026-10-26, full runs on branch `tiled-look`: `capture-read: the press,
+last` (70 or 80) failed twice in `make mutate-live`'s baseline, and 57's "mid-hold: the old
+layout's frames" once in `run.sh` (its screenshot after the 400 ms hold had ended); each green 3
+of 3 alone. One flake per full run blocks the fault battery's baseline. Next: Paul's choice of (a)-(c).
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
 Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
 i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C
-answered). Next: part A in a branch; then part B's channel probe.
+answered). **Part A built on branch `tiled-look`** (2026-10-26): scenario 85 (34 checks) green and
+its three faults caught; `make test` green once whole, and the other full runs each had one of the
+flakes in item 34. Next: Paul's go to merge and reload. Part B: the model's half on branch
+`tiling-drag` (tree.js, unit tests); next, the probe of the press-taking filter (spec item 7).
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
