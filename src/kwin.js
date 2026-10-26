@@ -1417,8 +1417,12 @@ var KI3 = (function () {
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
             if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
             var from = Tree.wsOf(con), plan = drag.plan, to = plan && Tree.wsOf(plan.target);
-            var dropped = model.drop(con, plan, f[4] === "1");
-            endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (f[4] === "1" ? " (swap)" : "") +
+            // A centre drop onto a window swaps the two, Shift or not (Paul, 2026-10-26: i3 moves
+            // it after the target, which without tabs is the same as the side drop; "I love swap").
+            // Onto an empty workspace it is a move: nothing there to swap with.
+            var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws";
+            var dropped = model.drop(con, plan, swap);
+            endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (swap ? " (swap)" : "") +
                               " at " + x + "," + y : "no drop at " + x + "," + y);
             if (dropped) {
                 schedule(from);

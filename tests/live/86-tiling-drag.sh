@@ -2,8 +2,8 @@
 # needs: plugin
 # i3's tiling drag (docs/spec-tiled-look.md, part B): a tiled window's title bar dragged, or
 # Meta+drag anywhere in it, drops by tiling_drag.c's zones while the window stays put: sibling
-# beside the target, parent out to the workspace's edge, center moved after it (Meta+Shift: the
-# swap), an empty workspace on the other monitor. Escape cancels; a press without movement only
+# beside the target, parent out to the workspace's edge, center swapped with it (Paul's choice
+# over i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
 # Not covered (docs/testing.md P3.5, only saves work or restores unreadable state):
 # - hold.cpp paintScreen: GL_BLEND put back as it was; nothing reads GL state.
@@ -51,9 +51,9 @@ echo "    $(dropped $m)"
 check "a to c's right side: sibling"        wait_tree 1 "H[b c a*]" "$m"
 
 m=$(mark)
-drag Meta+Shift left 1100 400 213 360
+drag Meta left 1100 400 213 360
 echo "    $(dropped $m)"
-check "Meta+Shift a onto b's centre: swapped" wait_tree 1 "H[a* c b]" "$m"
+check "Meta+drag a onto b's centre: swapped" wait_tree 1 "H[a* c b]" "$m"
 
 # Within the parent zone (title bar + 5 px: 33; 28 px from the edge) of a's bottom edge, which
 # is the workspace's too: out of the row, under everything (tree_move down). The press focused
