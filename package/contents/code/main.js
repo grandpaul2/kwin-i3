@@ -722,6 +722,153 @@ var Tree = (function () {
         this.tidy();
     };
 
+    // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
+    // docs/spec-tiled-look.md, part B. Rects come from the caller (kwin.js has the tiles):
+    // rectOf(con) gives { x, y, width, height } for a leaf, a split or a workspace.
+
+    var SIBLING = "sibling", CENTER = "center", PARENT = "parent";
+
+    // con_fullscreen_permits_focusing, i3's form: judged from the global focus's fullscreen
+    // ancestor, which the move must not leave in a bad shape (not permitsFocusing above, which
+    // asks about the fullscreen window on con's own workspace).
+    function focusPermits(model, con) {
+        var fs = model.focused;
+        while (fs && fs.type !== "ws" && !fs.fullscreen) fs = fs.parent;
+        if (!fs || fs.type === "ws" || con === fs) return true;
+        if (wsOf(con) !== wsOf(fs)) return true;               // per-output fullscreen
+        return hasParent(con, fs);
+    }
+
+    // con_on_side_of_parent: con's edge facing `dir` is its parent's edge too.
+    function onSideOfParent(con, dir) {
+        var reverse = { left: RIGHT, right: LEFT, up: DOWN, down: UP }[dir];
+        return con.parent.layout !== orientationOf(dir) || descendDirection(con.parent, reverse) === con;
+    }
+
+    function adjustRect(r, dir, t) {                          // adjust_rect
+        if (dir === LEFT) return { x: r.x, y: r.y, width: t, height: r.height };
+        if (dir === UP) return { x: r.x, y: r.y, width: r.width, height: t };
+        if (dir === RIGHT) return { x: r.x + r.width - t, y: r.y, width: t, height: r.height };
+        return { x: r.x, y: r.y + r.height - t, width: r.width, height: t };
+    }
+
+    // drag_callback: where `con`, dragged to x,y over `target` (the leaf there, the fullscreen
+    // window covering it, or a visible workspace), would drop. parentMax is i3's
+    // render_deco_height() + 5 px. Returns { target, type, dir, rect } (rect: the indicator) or
+    // null for no drop (onto itself, not as a parent drop).
+    M.dropPlan = function (con, target, x, y, rectOf, parentMax) {
+        if (!target) return null;
+        var rect = rectOf(target);
+        if (target.type === "ws") return { target: target, type: CENTER, dir: null, rect: rect };
+        var siblingSize = Math.max(2, Math.floor(0.3 * Math.min(rect.width, rect.height)));
+        var parentSize = Math.min(parentMax, siblingSize - 1);
+        var dl = x - rect.x, dt = y - rect.y, dr = rect.x + rect.width - x, db = rect.y + rect.height - y;
+        var dmin = Math.min(dl, dr, dt, db);
+        var dir = dl === dmin ? LEFT : dt === dmin ? UP : dr === dmin ? RIGHT : DOWN;
+        var type = dmin < parentSize && onSideOfParent(target, dir) ? PARENT : dmin < siblingSize ? SIBLING : CENTER;
+        if (type !== PARENT && target === con) return null;
+        if (type === PARENT) {
+            while (target.parent.type !== "ws" && onSideOfParent(target.parent, dir)) target = target.parent;
+            rect = adjustRect(rectOf(target.parent), dir, parentSize);
+        } else if (type === CENTER) {
+            rect = { x: rect.x + siblingSize, y: rect.y + siblingSize,
+                     width: rect.width - 2 * siblingSize, height: rect.height - 2 * siblingSize };
+        } else {
+            rect = adjustRect(rect, dir, siblingSize);
+        }
+        return { target: target, type: type, dir: dir, rect: rect };
+    };
+
+    // con_move_to_target -> _con_move_to_con(behind_focused false, fix_percentage), for a tiled
+    // con: after the target leaf in its parent, or onto an empty workspace. i3's focus steps,
+    // for what kwin-i3 keeps of them: the global focus stays where it was, con heads its new
+    // parents' focus stacks (the drop's caller refocuses con if it had the focus).
+    M.moveToTarget = function (con, target) {
+        if (isFloating(target)) { this.moveToWorkspace(con, wsOf(target)); return true; }
+        if (target.type === "ws" && isLeaf(target)) { this.moveToWorkspace(con, target); return true; }
+        if (isSplit(target) && !isLeaf(target)) target = target.focus[0];
+        if (con === target || hasParent(target, con)) return false;
+        if (!focusPermits(this, wsOf(target))) return false;
+        var orig = target, targetWs = wsOf(target);
+        if (target.type !== "ws") target = target.parent;
+        var fs = fullscreenOn(targetWs);
+        if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
+        var parent = con.parent, old = this.focused;
+        detach(con);
+        con.parent = target;
+        if (orig !== target) insertAfter(target.nodes, orig, con);
+        else target.nodes.push(con);
+        target.focus.push(con);
+        fixPercent(parent);
+        con.percent = 0;
+        fixPercent(target);
+        if (!fs) {
+            focusUp(con);
+            if (old && old !== con && wsOf(old) === targetWs) focusUp(old);
+        }
+        this.onRemoveChild(parent);
+        return true;
+    };
+
+    // con_swap, for two tiled leaves: each takes the other's place, share and fullscreen.
+    M.swap = function (first, second) {
+        if (first.type !== "con" || second.type !== "con" || first === second) return false;
+        if (hasParent(first, second) || hasParent(second, first)) return false;
+        var ws1 = wsOf(first), ws2 = wsOf(second), f = this.focused, restore = null;
+        if (ws1 === ws2 && f && ws1 === wsOf(f)) restore = f;
+        else if (f && (first === f || hasParent(f, first))) restore = second;
+        else if (f && (second === f || hasParent(f, second))) restore = first;
+        var p1 = first.parent, p2 = second.parent;
+        var n1 = p1.nodes.indexOf(first), n2 = p2.nodes.indexOf(second);
+        var f1 = p1.focus.indexOf(first), f2 = p2.focus.indexOf(second);
+        p1.nodes[n1] = second; p2.nodes[n2] = first;
+        p1.focus[f1] = second; p2.focus[f2] = first;
+        first.parent = p2; second.parent = p1;
+        var pc = first.percent; first.percent = second.percent; second.percent = pc;
+        if (restore) this.activate(restore);
+        var fs1 = first.fullscreen; first.fullscreen = second.fullscreen; second.fullscreen = fs1;
+        fixPercent(p1); fixPercent(p2);
+        return true;
+    };
+
+    // tiling_drag, after the release: apply a dropPlan. `swap`: the swap modifier was held at the
+    // press. Returns true if the tree changed.
+    M.drop = function (con, plan, swap) {
+        if (!plan || !plan.target || (plan.target === con && plan.type !== PARENT)) return false;
+        var target = plan.target, dir = plan.dir, o = dir ? orientationOf(dir) : null;
+        var position = dir && isBefore(dir) ? "before" : "after";
+        var setFocus = con === this.focused, setFs = con.fullscreen;
+        con.fullscreen = false;                                // con_disable_fullscreen
+        if (plan.type === CENTER) {
+            // As i3: a failed swap ends the drop with con's fullscreen already off; a move's
+            // result isn't checked.
+            if (swap) { if (!this.swap(con, target)) return setFs; }
+            else this.moveToTarget(con, target);
+        } else if (plan.type === SIBLING) {
+            if (target.parent.layout !== o) {
+                if (con.parent === target.parent && target.parent.nodes.length === 2) target.parent.layout = o;
+                else this.split(target, o);
+            }
+            this.insertConInto(con, target, position);
+        } else {
+            if (con !== target) this.insertConInto(con, target, position);
+            var old = this.focused;
+            this.move(con, dir);
+            var exists = old && (old.type === "ws" || this.byWin[old.win] === old);   // con_exists
+            if (this.focused !== old && exists) this.activate(old);
+        }
+        if (setFocus || setFs) {
+            var fs = fullscreenOn(wsOf(con));
+            if (fs && setFocus && setFs) fs.fullscreen = false;
+            else if (fs) setFs = setFocus = false;
+            else if (!setFocus) setFocus = setFs && this.focused && wsOf(this.focused) === wsOf(con);
+        }
+        if (setFs) con.fullscreen = true;
+        if (setFocus) this.activate(con);
+        this.tidy();
+        return true;
+    };
+
     // ---- floating (floating.c) -------------------------------------------------------------
 
     // floating_enable: the floating node takes its branch's place in the workspace focus stack.
@@ -990,6 +1137,7 @@ var Tree = (function () {
         wsOf: wsOf,
         nextWorkspace: nextWorkspace,
         LEFT: LEFT, RIGHT: RIGHT, UP: UP, DOWN: DOWN,
+        SIBLING: SIBLING, CENTER: CENTER, PARENT: PARENT,
         create: function (env) { return new Model(env); }
     };
 })();
@@ -2486,6 +2634,129 @@ var KI3 = (function () {
         return true;
     }
 
+    // ---- i3's tiling drag (tiling_drag.c; docs/spec-tiled-look.md, part B) ---------------------
+    // The helper takes the press (plugin/tilingdrag.cpp) and runs the hidden "Tiling Drag" action;
+    // from there kwin-i3 polls its State() until the drop or the cancel, shows the drop on
+    // kwini3hold's indicator, and drops in the tree (Tree drop). The window stays put meanwhile.
+
+    var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
+    var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
+    function tellDrag(on) { callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on); }
+
+    // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
+    function shownWorkspaces() {
+        return workspace.screens.map(function (s) {
+            var n = deskNum(workspace.currentDesktopForScreen(s));
+            return n >= 1 ? { ws: wsModel(n), screen: s } : null;
+        }).filter(function (v) { return v; });
+    }
+    // is_tiling_drop_target: a tiled window shown, not under another's fullscreen.
+    function dropTargetsOf(ws) {
+        var fs = model.fullscreenOn(ws);
+        return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && (!fs || fs === c); });
+    }
+    function hasDropTargets() {             // has_drop_targets
+        var n = 0;
+        shownWorkspaces().forEach(function (v) {
+            var k = dropTargetsOf(v.ws).length;
+            n += k ? k : v.ws.nodes.length ? 0 : 1;
+        });
+        return n > 1;
+    }
+    function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
+    // con->rect: a window's frame, a split's leaves together, a workspace's area.
+    function conRect(con) {
+        if (con.type === "ws") return areaOf(outputOf(con), con);
+        if (con.win !== null) return wins[con.win].frameGeometry;
+        var r = null;
+        model.leaves(con).forEach(function (c) {
+            if (!visibleLeaf(c)) return;
+            var g = wins[c.win].frameGeometry;
+            if (!r) { r = { x: g.x, y: g.y, width: g.width, height: g.height }; return; }
+            var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
+            r.x = Math.min(r.x, g.x); r.y = Math.min(r.y, g.y);
+            r.width = x1 - r.x; r.height = y1 - r.y;
+        });
+        return r || { x: 0, y: 0, width: 0, height: 0 };
+    }
+    function findDropTarget(x, y) {         // find_drop_target
+        var shown = shownWorkspaces();
+        for (var i = 0; i < shown.length; i++) {
+            var hit = dropTargetsOf(shown[i].ws).filter(function (c) { return inRect(conRect(c), x, y); })[0];
+            if (hit) return hit;
+        }
+        // Over no window (a gap): the shown workspace's focused tiled window, or the workspace.
+        var s = screenAt(x, y);
+        var on = shown.filter(function (v) { return v.screen === s; })[0];
+        return on ? model.descendTilingFocused(on.ws) : null;
+    }
+    // i3's parent zone: render_deco_height() + 5 px; the dragged window's title bar when it has
+    // one, else about i3's default font's.
+    function parentZone(w) {
+        var t = w.clientGeometry.y - w.frameGeometry.y;
+        return (t > 0 ? t : 20) + 5;
+    }
+    function indicate(rect) {
+        var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
+        var key = r.join(",");
+        if (!drag || key === drag.rect) return;
+        drag.rect = key;
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+    }
+    function dragState(s) {
+        if (!drag) return;
+        drag.busy = false;
+        var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
+        if (phase === "drag" || phase === "drop") {
+            var con = drag.con;
+            if (model.byWin[f[1]] !== con || con.type !== "con") { endDrag("its window is gone"); return; }
+            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
+            if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
+            var from = Tree.wsOf(con), plan = drag.plan, to = plan && Tree.wsOf(plan.target);
+            var dropped = model.drop(con, plan, f[4] === "1");
+            endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (f[4] === "1" ? " (swap)" : "") +
+                              " at " + x + "," + y : "no drop at " + x + "," + y);
+            if (dropped) {
+                schedule(from);
+                if (to && to !== from) schedule(to);
+                schedule(Tree.wsOf(con));
+                wantFocus();
+            }
+            return;
+        }
+        endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    function endDrag(why) {
+        indicate(null);
+        drag.timer.stop();
+        drag = null;
+        log("DRAG " + why);
+    }
+    function pollDrag() {
+        if (!drag || drag.busy) return;
+        drag.busy = true;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
+    }
+    // The hidden action: a drag began. Only a tiled window of kwin-i3's, and only with somewhere
+    // else to drop it (has_drop_targets); otherwise the press was a click.
+    function startDrag() {
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
+            var f = String(s).split(" "), con = model.byWin[f[1]];
+            if (f[0] !== "drag" || drag) return;
+            if (!con || con.type !== "con" || !wins[con.win] || !hasDropTargets()) {
+                log("DRAG not started: " + (con && con.type === "con" ? "nowhere to drop" : "not a tiled window"));
+                return;
+            }
+            var timer = new QTimer();
+            timer.interval = 16;            // a frame, about: the helper keeps only the last position
+            timer.timeout.connect(guard("drag poll", pollDrag));
+            drag = { con: con, timer: timer, busy: false, plan: null, rect: "" };
+            log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
+            dragState(s);
+            if (drag) timer.start();
+        }));
+    }
+
     function act(name, fn) {
         return guard(name, function () {
             var con = focusedCon();
@@ -2885,6 +3156,7 @@ var KI3 = (function () {
     function release() {
         if (released) return;
         released = true;
+        try { tellDrag(false); } catch (e) { log("ERROR in release (drag): " + e); }
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
@@ -3172,6 +3444,11 @@ var KI3 = (function () {
         options.configChanged.connect(guard("settings", settingsChanged));
         workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
         deskIds = desktopIds();
+        // The helper's action, not a key (startDrag): bound to one, it finds no drag and does
+        // nothing. Not in registerKeys, so not on the Keys page.
+        registerShortcut("kwin-i3 Tiling Drag", "kwin-i3: tiling drag (run by the mouse, no key)", "",
+                         guard("Tiling Drag", startDrag));
+        tellDrag(true);
         adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
@@ -3267,6 +3544,7 @@ var KI3 = (function () {
 
     function settingsChanged() {
         checkFrame();
+        tellDrag(true);         // every reconfigure: the helper may be new (it asks for one at load)
         var changed = Settings.load();
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));

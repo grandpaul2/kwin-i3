@@ -545,7 +545,7 @@ bool Hold::holding() const
 // While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
 bool Hold::isActive() const
 {
-    if (holding()) {
+    if (holding() || !m_drop.isEmpty()) {
         return true;
     }
     const auto windows = effects->stackingOrder();
@@ -625,6 +625,61 @@ void Hold::SetTiledRing(bool on)
     m_tiledRing = on;
     note(QStringLiteral("tiled ring %1").arg(on ? QStringLiteral("on") : QStringLiteral("off")));
     effects->addRepaintFull();
+}
+
+void Hold::SetDropIndicator(int x, int y, int width, int height)
+{
+    const RectF drop = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
+    if (drop == m_drop) {
+        return;
+    }
+    // A pixel of slack for the rounding to device pixels.
+    if (!m_drop.isEmpty()) {
+        effects->addRepaint(m_drop.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+    if (!drop.isEmpty()) {
+        effects->addRepaint(drop.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+    m_drop = drop;
+}
+
+// The drop indicator over everything, clipped to the repainted region: blended again over
+// pixels this frame didn't repaint, it would darken them frame by frame.
+void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
+{
+    effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen);
+    if (m_drop.isEmpty()) {
+        return;
+    }
+    const QPoint origin = viewport.scaledRenderRect().topLeft();
+    const double scale = viewport.scale();
+    const Rect device(std::round(m_drop.x() * scale) - origin.x(), std::round(m_drop.y() * scale) - origin.y(),
+                      std::round(m_drop.width() * scale), std::round(m_drop.height() * scale));
+    QList<QVector2D> verts;
+    for (const Rect &r : (deviceRegion & device).rects()) {
+        const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
+        verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
+              << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+    }
+    if (verts.isEmpty()) {
+        return;
+    }
+    GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
+    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    QColor colour = m_frameActive;
+    colour.setAlphaF(0.5);
+    binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
+    const bool blend = glIsEnabled(GL_BLEND);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    vbo->setVertices(verts);
+    vbo->render(GL_TRIANGLES);
+    if (!blend) {
+        glDisable(GL_BLEND);
+    }
 }
 
 void Hold::SetFloating(const QString &id, bool on)
@@ -886,6 +941,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("frameWidth")] = m_frameWidth;
     m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
     m[QStringLiteral("tiledRing")] = m_tiledRing;
+    m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     return m;
 }

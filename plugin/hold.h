@@ -35,6 +35,7 @@ public:
     void reconfigure(ReconfigureFlags flags) override;   // KWin's reconfigure, as well as the watcher
     bool isActive() const override;
     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
+    void paintScreen(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, int mask, const KWin::Region &deviceRegion, KWin::LogicalOutput *screen) override;
     void prePaintWindow(KWin::RenderView *view, KWin::EffectWindow *w, KWin::WindowPrePaintData &data) override;
     void paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
     void drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
@@ -54,6 +55,10 @@ public Q_SLOTS:
     // stay borderless and rounded without it: docs/spec-tiled-look.md). Told by the script, not
     // read from kwinrc, so the ring and the tiles' frame room change in the same pass.
     void SetTiledRing(bool on);
+    // kwin-i3's tiling drag (docs/spec-tiled-look.md, item 8): where the dragged window would
+    // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
+    // or height of 0 clears it. In logical pixels, global.
+    void SetDropIndicator(int x, int y, int width, int height);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -120,6 +125,7 @@ private:
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
+    KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
 
     QHash<KWin::EffectWindow *, Held> m_held;
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet

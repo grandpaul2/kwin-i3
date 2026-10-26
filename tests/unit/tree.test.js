@@ -764,3 +764,146 @@ test("workspace_next / _prev: next higher existing number, wrapping; null with o
     assert.strictEqual(next([3], 3, 1), null, "one workspace: nothing");
     assert.strictEqual(next([3], 3, -1), null);
 });
+
+// ---- tiling drag (tiling_drag.c drag_callback, tiling_drag; con.c con_move_to_target, con_swap)
+
+// Rects as i3 renders splits (shares along the layout, no gaps), workspace 1200x600 at 0,0.
+function rects(m, num = 1) {
+    const out = new Map();
+    (function lay(c, r) {
+        out.set(c, r);
+        let pos = c.layout === "h" ? r.x : r.y;
+        for (const k of c.nodes) {
+            const size = (c.layout === "h" ? r.width : r.height) * k.percent;
+            lay(k, c.layout === "h" ? { x: pos, y: r.y, width: size, height: r.height }
+                                    : { x: r.x, y: pos, width: r.width, height: size });
+            pos += size;
+        }
+    })(m.ws(num), { x: 0, y: 0, width: 1200, height: 600 });
+    return (c) => out.get(c);
+}
+const plan = (m, con, target, x, y) => m.dropPlan(leaf(m, con), typeof target === "string" ? leaf(m, target) : target, x, y, rects(m), 25);
+
+test("drag zones: centre, sibling (30 % of the smaller side), parent (deco + 5 px, on the parent's edge)", () => {
+    const m = model();
+    open(m, 1, "a", "b");                                     // b: 600..1200 x 0..600
+    let p = plan(m, "a", "b", 900, 300);
+    assert.strictEqual(p.type, Tree.CENTER);
+    assert.deepStrictEqual(p.rect, { x: 780, y: 180, width: 240, height: 240 }, "inset by the sibling size, 180");
+    p = plan(m, "a", "b", 610, 300);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, LEFT], "b's left edge is no edge of the workspace");
+    assert.deepStrictEqual(p.rect, { x: 600, y: 0, width: 180, height: 600 });
+    p = plan(m, "a", "b", 700, 300);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, LEFT], "within 180 px");
+    p = plan(m, "a", "b", 1190, 300);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, RIGHT], "the workspace's right edge");
+    assert.deepStrictEqual(p.rect, { x: 1175, y: 0, width: 25, height: 600 }, "the parent's edge, 25 px");
+    p = plan(m, "a", "b", 900, 5);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, UP], "across the split: always the parent's side");
+});
+
+test("drag zones: onto itself only as a parent drop", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    assert.strictEqual(plan(m, "a", "a", 300, 300), null);
+    assert.strictEqual(plan(m, "a", "a", 590, 300), null, "a sibling of itself");
+    assert.strictEqual(plan(m, "a", "a", 5, 300).type, Tree.PARENT);
+});
+
+test("drag zones: a parent drop climbs while the parent is on that side too", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");                                          // H[a V[b c*]]
+    const p = plan(m, "a", "c", 1195, 450);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, RIGHT]);
+    assert.strictEqual(p.target, leaf(m, "c"), "V's own side test descends to a leaf, never V: no climb");
+    assert.deepStrictEqual(p.rect, { x: 1175, y: 0, width: 25, height: 600 }, "on V's rect");
+});
+
+test("drop centre: after the target, focus where it was (con_move_to_target)", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1000, 300), false));
+    assert.strictEqual(d(m), "H[b c* a]");
+    assert.deepStrictEqual(pct(m, "b", "c", "a"), [0.333, 0.333, 0.333]);
+});
+
+test("drop centre with the swap modifier: the two change places (con_swap)", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.resize(leaf(m, "a"), "width", 0.1);
+    const before = pct(m, "a", "c");
+    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1050, 300), true));
+    assert.strictEqual(d(m), "H[c* b a]");
+    assert.deepStrictEqual(pct(m, "c", "a"), before, "shares swapped with the places");
+});
+
+test("drop as sibling: across a three-child split, the target is split", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");                                // b: 400..800
+    const p = plan(m, "a", "b", 600, 500);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, DOWN]);
+    m.drop(leaf(m, "a"), p, false);
+    assert.strictEqual(d(m), "H[V[b a] c*]");
+});
+
+test("drop as sibling: two children of one parent just turn it", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.drop(leaf(m, "a"), plan(m, "a", "b", 900, 500), false);
+    assert.strictEqual(d(m), "V[b* a]");
+});
+
+test("drop to parent across the split: the workspace turns, as tree_move does", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    const p = plan(m, "a", "b", 900, 590);
+    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, DOWN]);
+    m.drop(leaf(m, "a"), p, false);
+    assert.strictEqual(d(m), "V[H[b*] a]", "i3 keeps the one-child split a move leaves (tidy keeps a window's)");
+});
+
+test("drop to parent: inserted beside the target, then moved out one level (tree_move)", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");
+    m.focusWin("a");                                          // H[a* V[b c]]
+    m.drop(leaf(m, "a"), plan(m, "a", "c", 1195, 450), false);
+    assert.strictEqual(d(m), "H[V[b c] a*]");
+});
+
+test("drop onto an empty workspace: moved there, and focused if it was (tiling_drag set_focus)", () => {
+    const m = model(true);
+    open(m, 1, "a", "b");
+    assert.ok(m.drop(leaf(m, "b"), m.dropPlan(leaf(m, "b"), m.ws(2), 1500, 300, rects(m, 2), 25), false));
+    assert.strictEqual(d(m, 2), "H[b*]");
+    assert.strictEqual(d(m, 1), "H[a]");
+});
+
+test("drop of an unfocused window: the focus stays", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.drop(leaf(m, "a"), plan(m, "a", "b", 600, 300), false);
+    assert.strictEqual(d(m), "H[b a c*]");
+    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["c", "a", "b"], "a heads the stack below the focus");
+});
+
+test("drop of the focused fullscreen window: still fullscreen and focused after", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.setFullscreen("c", true);
+    m.drop(leaf(m, "c"), plan(m, "c", "a", 200, 300), false);
+    assert.strictEqual(d(m), "H[a c*! b]");
+});
+
+test("swap: not a container with its own child, not itself", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");
+    const v = leaf(m, "b").parent;
+    assert.strictEqual(m.swap(v, leaf(m, "c")), false);
+    assert.strictEqual(m.swap(leaf(m, "a"), leaf(m, "a")), false);
+});
