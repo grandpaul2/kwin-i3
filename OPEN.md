@@ -41,10 +41,10 @@ first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 
 `39-layout-notice` failed 5 checks once in the batch and passed alone (2026-10-26): if it flakes
 again, it goes alone. Next: Paul's choice of (a)-(c).
 
-**35. A setting to drop the coloured frame from tiled windows too** (Paul, 2026-10-26). A
-checkbox on the settings page, as `frameOnFloating` is for floating windows: tiled windows
-without kwini3hold's 1 px frame. Next: discuss with Paul (what then marks the focused window,
-and the gap the frame sits in), then a spec.
+**35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
+Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
+i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A
+and C answered). Next: Paul's answer to decision B (the maximize button); then part A in a branch.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
