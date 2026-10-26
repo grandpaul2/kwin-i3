@@ -2634,6 +2634,129 @@ var KI3 = (function () {
         return true;
     }
 
+    // ---- i3's tiling drag (tiling_drag.c; docs/spec-tiled-look.md, part B) ---------------------
+    // The helper takes the press (plugin/tilingdrag.cpp) and runs the hidden "Tiling Drag" action;
+    // from there kwin-i3 polls its State() until the drop or the cancel, shows the drop on
+    // kwini3hold's indicator, and drops in the tree (Tree drop). The window stays put meanwhile.
+
+    var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
+    var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
+    function tellDrag(on) { callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on); }
+
+    // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
+    function shownWorkspaces() {
+        return workspace.screens.map(function (s) {
+            var n = deskNum(workspace.currentDesktopForScreen(s));
+            return n >= 1 ? { ws: wsModel(n), screen: s } : null;
+        }).filter(function (v) { return v; });
+    }
+    // is_tiling_drop_target: a tiled window shown, not under another's fullscreen.
+    function dropTargetsOf(ws) {
+        var fs = model.fullscreenOn(ws);
+        return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && (!fs || fs === c); });
+    }
+    function hasDropTargets() {             // has_drop_targets
+        var n = 0;
+        shownWorkspaces().forEach(function (v) {
+            var k = dropTargetsOf(v.ws).length;
+            n += k ? k : v.ws.nodes.length ? 0 : 1;
+        });
+        return n > 1;
+    }
+    function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
+    // con->rect: a window's frame, a split's leaves together, a workspace's area.
+    function conRect(con) {
+        if (con.type === "ws") return areaOf(outputOf(con), con);
+        if (con.win !== null) return wins[con.win].frameGeometry;
+        var r = null;
+        model.leaves(con).forEach(function (c) {
+            if (!visibleLeaf(c)) return;
+            var g = wins[c.win].frameGeometry;
+            if (!r) { r = { x: g.x, y: g.y, width: g.width, height: g.height }; return; }
+            var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
+            r.x = Math.min(r.x, g.x); r.y = Math.min(r.y, g.y);
+            r.width = x1 - r.x; r.height = y1 - r.y;
+        });
+        return r || { x: 0, y: 0, width: 0, height: 0 };
+    }
+    function findDropTarget(x, y) {         // find_drop_target
+        var shown = shownWorkspaces();
+        for (var i = 0; i < shown.length; i++) {
+            var hit = dropTargetsOf(shown[i].ws).filter(function (c) { return inRect(conRect(c), x, y); })[0];
+            if (hit) return hit;
+        }
+        // Over no window (a gap): the shown workspace's focused tiled window, or the workspace.
+        var s = screenAt(x, y);
+        var on = shown.filter(function (v) { return v.screen === s; })[0];
+        return on ? model.descendTilingFocused(on.ws) : null;
+    }
+    // i3's parent zone: render_deco_height() + 5 px; the dragged window's title bar when it has
+    // one, else about i3's default font's.
+    function parentZone(w) {
+        var t = w.clientGeometry.y - w.frameGeometry.y;
+        return (t > 0 ? t : 20) + 5;
+    }
+    function indicate(rect) {
+        var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
+        var key = r.join(",");
+        if (!drag || key === drag.rect) return;
+        drag.rect = key;
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+    }
+    function dragState(s) {
+        if (!drag) return;
+        drag.busy = false;
+        var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
+        if (phase === "drag" || phase === "drop") {
+            var con = drag.con;
+            if (model.byWin[f[1]] !== con || con.type !== "con") { endDrag("its window is gone"); return; }
+            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
+            if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
+            var from = Tree.wsOf(con), plan = drag.plan, to = plan && Tree.wsOf(plan.target);
+            var dropped = model.drop(con, plan, f[4] === "1");
+            endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (f[4] === "1" ? " (swap)" : "") +
+                              " at " + x + "," + y : "no drop at " + x + "," + y);
+            if (dropped) {
+                schedule(from);
+                if (to && to !== from) schedule(to);
+                schedule(Tree.wsOf(con));
+                wantFocus();
+            }
+            return;
+        }
+        endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    function endDrag(why) {
+        indicate(null);
+        drag.timer.stop();
+        drag = null;
+        log("DRAG " + why);
+    }
+    function pollDrag() {
+        if (!drag || drag.busy) return;
+        drag.busy = true;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
+    }
+    // The hidden action: a drag began. Only a tiled window of kwin-i3's, and only with somewhere
+    // else to drop it (has_drop_targets); otherwise the press was a click.
+    function startDrag() {
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
+            var f = String(s).split(" "), con = model.byWin[f[1]];
+            if (f[0] !== "drag" || drag) return;
+            if (!con || con.type !== "con" || !wins[con.win] || !hasDropTargets()) {
+                log("DRAG not started: " + (con && con.type === "con" ? "nowhere to drop" : "not a tiled window"));
+                return;
+            }
+            var timer = new QTimer();
+            timer.interval = 16;            // a frame, about: the helper keeps only the last position
+            timer.timeout.connect(guard("drag poll", pollDrag));
+            drag = { con: con, timer: timer, busy: false, plan: null, rect: "" };
+            log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
+            dragState(s);
+            if (drag) timer.start();
+        }));
+    }
+
     function act(name, fn) {
         return guard(name, function () {
             var con = focusedCon();
@@ -3033,6 +3156,7 @@ var KI3 = (function () {
     function release() {
         if (released) return;
         released = true;
+        try { tellDrag(false); } catch (e) { log("ERROR in release (drag): " + e); }
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
@@ -3320,6 +3444,11 @@ var KI3 = (function () {
         options.configChanged.connect(guard("settings", settingsChanged));
         workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
         deskIds = desktopIds();
+        // The helper's action, not a key (startDrag): bound to one, it finds no drag and does
+        // nothing. Not in registerKeys, so not on the Keys page.
+        registerShortcut("kwin-i3 Tiling Drag", "kwin-i3: tiling drag (run by the mouse, no key)", "",
+                         guard("Tiling Drag", startDrag));
+        tellDrag(true);
         adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
@@ -3415,6 +3544,7 @@ var KI3 = (function () {
 
     function settingsChanged() {
         checkFrame();
+        tellDrag(true);         // every reconfigure: the helper may be new (it asks for one at load)
         var changed = Settings.load();
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));
