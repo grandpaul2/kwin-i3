@@ -5,6 +5,12 @@
 # beside the target, parent out to the workspace's edge, center moved after it (Meta+Shift: the
 # swap), an empty workspace on the other monitor. Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
+# Not covered (docs/testing.md P3.5, only saves work or restores unreadable state):
+# - hold.cpp paintScreen: GL_BLEND put back as it was; nothing reads GL state.
+# - hold.cpp paintScreen: no draw when no vertex is in the repainted region (an empty draw).
+# - hold.cpp SetDropIndicator: an unchanged rect asks no repaint.
+# - kwin.js indicate: an unchanged rect isn't sent again over D-Bus.
+# - kwin.js pollDrag: no second State() call while one is in flight.
 source "$(dirname "$0")/lib.sh"
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height); } });"; }
 term() { alacritty --title "$1" -o "colors.primary.background=\"$2\"" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
@@ -66,6 +72,7 @@ m=$(mark)
 held=$!
 check "mid-drag: the indicator on c's centre" poll eval '[[ "$(indicator)" == "108,468 1064x144" ]]' || echo "    indicator: $(indicator)"
 check "  a still in its place"              eval '[[ "$(fc a)" == "0,0 640x360" ]]'
+check "  focus stays: not to c under the pointer (focus follows mouse)" eval '[[ "$(active)" == a ]]'
 "$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
 check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 640 540 38,60,204 10'
 wait $held
