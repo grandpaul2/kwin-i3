@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26** (items 32 and 33 live).
+Last reconciled: **2026-10-26** (items 32, 33 and 35's part A live; the testing policy).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -45,12 +45,12 @@ deterministic or moved alone; (e) `make mutate-live` baselines only the scenario
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
-Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
-i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C
-answered). **Part A built on branch `tiled-look`** (2026-10-26): scenario 85 (34 checks) green and
-its three faults caught; `make test` green once whole, and the other full runs each had one of the
-flakes in item 34. Next: Paul's go to merge and reload. Part B: the model's half on branch
-`tiling-drag` (tree.js, unit tests); next, the probe of the press-taking filter (spec item 7).
+Plasma feel"). Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C answered). **Part A
+live 2026-10-26** (60470dd): `tiledLook` frame (default) / titlebars / bare, scenario 85. Part B,
+i3's tiling drag: the model's half on branch `tiling-drag` (0ea026b: `dropPlan`, `moveToTarget`,
+`swap`, `drop` in tree.js, 13 unit tests). Next: in a worktree of that branch, the probe of the
+press-taking filter (spec item 7: does a title-bar button still click, does hover or the cursor
+stick), then the channel (item 9), then the drag.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
