@@ -2642,6 +2642,11 @@ var KI3 = (function () {
     var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
     var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
     function tellDrag(on) { callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on); }
+    // i3's move cursor, from kwini3hold (SetDragCursor): renewed by every poll, so it ends by itself
+    // if kwin-i3 goes away mid-drag.
+    function dragCursor(on) {
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDragCursor", on);
+    }
 
     // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
     function shownWorkspaces() {
@@ -2728,6 +2733,7 @@ var KI3 = (function () {
     }
     function endDrag(why) {
         indicate(null);
+        dragCursor(false);
         drag.timer.stop();
         drag = null;
         log("DRAG " + why);
@@ -2735,6 +2741,7 @@ var KI3 = (function () {
     function pollDrag() {
         if (!drag || drag.busy) return;
         drag.busy = true;
+        dragCursor(true);
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
     }
     // The hidden action: a drag began. Only a tiled window of kwin-i3's, and only with somewhere
@@ -2752,6 +2759,7 @@ var KI3 = (function () {
             timer.timeout.connect(guard("drag poll", pollDrag));
             drag = { con: con, timer: timer, busy: false, plan: null, rect: "" };
             log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
+            dragCursor(true);
             dragState(s);
             if (drag) timer.start();
         }));

@@ -41,9 +41,31 @@ void TilingDragBus::SetOn(bool on)
     m_drag->setOn(on);
 }
 
+TilingDragGrab::TilingDragGrab(TilingDrag *drag)
+    : InputEventFilter(InputFilterOrder::Effects)
+    , m_drag(drag)
+{
+}
+
+bool TilingDragGrab::pointerMotion(PointerMotionEvent *event)
+{
+    return m_drag->dragging() && m_drag->pointerMotion(event);
+}
+
+bool TilingDragGrab::pointerButton(PointerButtonEvent *event)
+{
+    return m_drag->dragging() && m_drag->pointerButton(event);
+}
+
+bool TilingDragGrab::keyboardKey(KeyboardKeyEvent *event)
+{
+    return m_drag->dragging() && m_drag->keyboardKey(event);
+}
+
 TilingDrag::TilingDrag()
     : InputEventFilter(InputFilterOrder::Decoration)
     , m_bus(this)
+    , m_grab(this)
 {
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);

@@ -64,6 +64,9 @@ Hold::Hold()
     m_quiet.setTimerType(Qt::PreciseTimer);
     m_quiet.setInterval(s_quietMs);
     connect(&m_quiet, &QTimer::timeout, this, &Hold::queueCheck);
+    m_dragCursor.setSingleShot(true);
+    m_dragCursor.setInterval(500);
+    connect(&m_dragCursor, &QTimer::timeout, this, [this] { effects->stopMouseInterception(this); });
 
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
@@ -95,6 +98,7 @@ Hold::Hold()
 Hold::~Hold()
 {
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/kwini3hold"));
+    effects->stopMouseInterception(this);
     releaseAll();
     resetRadii();
     if (workspace()) {
@@ -625,6 +629,19 @@ void Hold::SetTiledRing(bool on)
     m_tiledRing = on;
     note(QStringLiteral("tiled ring %1").arg(on ? QStringLiteral("on") : QStringLiteral("off")));
     effects->addRepaintFull();
+}
+
+void Hold::SetDragCursor(bool on)
+{
+    if (!on) {
+        m_dragCursor.stop();
+        effects->stopMouseInterception(this);
+        return;
+    }
+    if (!m_dragCursor.isActive()) {
+        effects->startMouseInterception(this, Qt::SizeAllCursor);
+    }
+    m_dragCursor.start();
 }
 
 void Hold::SetDropIndicator(int x, int y, int width, int height)

@@ -38,6 +38,23 @@ private:
     TilingDrag *m_drag;
 };
 
+// A drag's input while it lasts, ahead of KWin's effects filter: kwini3hold grabs the mouse for
+// the move cursor (SetDragCursor), and KWin's effects filter would then take every pointer event
+// before TilingDrag (at the decoration filter's place) saw it. Only a drag's motions, its release,
+// another button and Escape; a new press is TilingDrag's alone.
+class TilingDragGrab : public KWin::InputEventFilter
+{
+public:
+    explicit TilingDragGrab(TilingDrag *drag);
+
+    bool pointerMotion(KWin::PointerMotionEvent *event) override;
+    bool pointerButton(KWin::PointerButtonEvent *event) override;
+    bool keyboardKey(KWin::KeyboardKeyEvent *event) override;
+
+private:
+    TilingDrag *m_drag;
+};
+
 class TilingDrag : public KWin::InputEventFilter
 {
 public:
@@ -49,6 +66,8 @@ public:
 
     QString state();
     void setOn(bool on);
+    bool dragging() const { return m_taken & Qt::LeftButton; }   // a press taken, its release not yet
+    TilingDragGrab *grab() { return &m_grab; }
 
 private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
@@ -58,6 +77,7 @@ private:
     void hoverAt(const QPointF &pos);
 
     TilingDragBus m_bus;
+    TilingDragGrab m_grab;
     bool m_on = false;
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;

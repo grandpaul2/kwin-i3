@@ -6,6 +6,7 @@ Helper::Helper()
 {
     KWin::input()->installInputEventFilter(&m_frameFocus);
     KWin::input()->installInputEventFilter(&m_tilingDrag);
+    KWin::input()->installInputEventFilter(m_tilingDrag.grab());
 }
 
 Helper::~Helper()
@@ -13,6 +14,9 @@ Helper::~Helper()
     if (KWin::input()) {
         KWin::input()->uninstallInputEventFilter(&m_frameFocus);
         KWin::input()->uninstallInputEventFilter(&m_tilingDrag);
+        KWin::input()->uninstallInputEventFilter(m_tilingDrag.grab());
+    KWin::input()->installInputEventFilter(m_tilingDrag.grab());
     KWin::input()->installInputEventFilter(&m_tilingDrag);
+    KWin::input()->installInputEventFilter(m_tilingDrag.grab());
     }
 }
