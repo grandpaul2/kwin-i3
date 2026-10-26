@@ -42,7 +42,7 @@ something done outside kwin-i3.
    as i3 does (`randr.c` `move_content`), and a millisecond later KWin activated a window of the
    workspace it replaced. Taken into the model, the next passive pass would have switched the
    monitor to that window's workspace. Now it isn't taken, and the focus goes back where the model
-   has it, so what you see stays. Test: fuzzer seed 30 (`tests/fuzz/i33/`, shrunk to 38 actions),
+   has it, so what you see stays. Test: fuzzer seed 30 (shrunk to 38 actions; in git at 1a9e32d, `tests/fuzz/i33/`),
    red on main 3 of 3, clean with the change; `84-unplug-focus.sh` guards the plain case, which
    KWin gets right by itself (the long trace's trigger was not pinned down).
 
