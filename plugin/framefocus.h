@@ -34,6 +34,7 @@ private:
     QObject m_context;
     int m_frameWidth = 1;
     bool m_frameOnFloating = false;
+    bool m_tiledRing = true;
     QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any
     Qt::MouseButtons m_taken;             // presses taken on a frame: their releases are ours too
 };

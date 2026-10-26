@@ -58,6 +58,7 @@ KCM.SimpleKCM {
     // A choice stored as i3's word ("auto", "force"), shown as words a person would say.
     component ChoiceBox: QQC2.ComboBox {
         property string settingName
+        property bool applies: true
         textRole: "text"
         valueRole: "value"
         // Not a binding on indexOfValue: it runs before the model is set and isn't re-run after.
@@ -70,6 +71,7 @@ KCM.SimpleKCM {
         KCM.SettingStateBinding {
             configObject: root.settings
             settingName: parent.settingName
+            extraEnabledConditions: parent.applies
         }
     }
 
@@ -225,6 +227,27 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Frame")
         }
+        // docs/spec-tiled-look.md: without the plugins tiled windows keep their title bars, so
+        // the choice needs them as the frame does.
+        ChoiceBox {
+            id: tiledLook
+            Kirigami.FormData.label: i18nc("@label:listbox", "Tiled windows:")
+            settingName: "tiledLook"
+            applies: kcm.frameAvailable
+            model: [
+                { text: i18nc("@item:inlistbox", "i3's frame"), value: "frame" },
+                { text: i18nc("@item:inlistbox", "Their own title bars"), value: "titlebars" },
+                { text: i18nc("@item:inlistbox", "No frame or title bar"), value: "bare" },
+            ]
+        }
+        // Nothing marks the focused window then; KWin's own effect can (spec, item 6).
+        QQC2.Label {
+            visible: root.settings.tiledLook === "bare"
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            text: i18nc("@info", "Nothing marks the focused window. The Dim Inactive desktop effect can.")
+        }
         UnitSpinBox {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Width:")
             unit: "px"
@@ -232,31 +255,33 @@ KCM.SimpleKCM {
             value: root.settings.frameWidth
             onValueModified: root.settings.frameWidth = value
             Accessible.name: i18nc("@label:spinbox", "Frame width")
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable }
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable && (root.settings.tiledLook === "frame" || root.settings.frameOnFloating) }
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Tiled windows:")
+            Kirigami.FormData.label: i18nc("@label", "Tiled frame:")
             spacing: Kirigami.Units.smallSpacing
-            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true }
+            readonly property bool applies: root.settings.tiledLook === "frame"
+            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
             FrameColour {
                 settingName: "frameActive"
+                applies: parent.applies
                 Accessible.name: i18nc("@action:button", "Frame colour of the focused tiled window")
             }
             Item { implicitWidth: Kirigami.Units.largeSpacing }
-            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true }
+            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
             FrameColour {
                 settingName: "frameInactive"
+                applies: parent.applies
                 Accessible.name: i18nc("@action:button", "Frame colour of other tiled windows")
             }
         }
-        // Drawn by kwini3hold with the frame (docs/spec-rounded-corners.md), so it needs the plugins
-        // too. Under the tiled colours, unlabelled: it continues "Tiled windows:".
+        // Drawn by kwini3hold (docs/spec-rounded-corners.md), so it needs the plugins too; a
+        // title bar brings its theme's corners. Under the tiled colours, unlabelled.
         QQC2.CheckBox {
-            text: i18nc("@option:check under Tiled windows", "Round the corners")
-            Accessible.name: i18nc("@option:check", "Round the corners of tiled windows")
+            text: i18nc("@option:check under Tiled frame", "Round the corners of tiled windows")
             checked: root.settings.roundedCorners
             onToggled: root.settings.roundedCorners = checked
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable }
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
         }
         // The floating colours only mean something with the frame on floating windows
         // (docs/spec-window-modes.md, decision 3): the checkbox, then the colours under it, as

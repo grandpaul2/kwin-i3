@@ -35,6 +35,9 @@ var Settings = (function () {
         // Plasma windows; and the frame on floating windows too, in the floating colours.
         floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
         frameOnFloating: { type: "bool", def: "false" },
+        // How tiled windows look (docs/spec-tiled-look.md): i3's frame, their own title bars, or
+        // neither. Without kwini3hold every one is "titlebars".
+        tiledLook: { type: "choice", def: "frame", choices: ["frame", "titlebars", "bare"] },
         // Tiled windows' corners, rounded by kwini3hold (docs/spec-rounded-corners.md).
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
