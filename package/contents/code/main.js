@@ -3130,7 +3130,20 @@ var KI3 = (function () {
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
             log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
-            if (w && wins[id(w)]) model.focusWin(id(w));
+            if (!w || !wins[id(w)]) return;
+            // KWin itself activating a window its monitor isn't showing: KWin switches the desktop
+            // before it activates a window elsewhere, so this is a stale choice, not a request.
+            // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
+            // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
+            // KWin activated a window of the workspace it replaced (fuzzer I8, OPEN.md item 33).
+            // Not taken into the model; the next pass puts the focus back where the model has it.
+            if (!switching && !w.onAllDesktops && w.output &&
+                w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {
+                log("ACTIVE " + shortCaption(w) + " refused: its workspace isn't shown");
+                wantFocus();
+                return;
+            }
+            model.focusWin(id(w));
         }));
         workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
             log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
