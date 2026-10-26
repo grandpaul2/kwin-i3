@@ -52,24 +52,20 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
   kwin-i3's log never reaches the journal, and `debugLog` does nothing live (`docs/debugging.md`).
   Each one gets a diagnosis first; with Paul's go, a live test watched red, then the fix.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
-  **Once every week or two, not as part of development** (Paul, 2026-10-26: "something we'll pull
-  out once in a while"; a 20-minute campaign was stealing session time). No change, fix or merge
-  waits on it, and nothing in `OPEN.md` is "a fuzz run owed" (`docs/testing.md`, P6).
-  Propose a campaign only when a week or two has passed since the last (`tests/fuzz/out/REPORT.md`'s
-  date), and run it only with Paul's go. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED`
-  shrinks a saved failure again.
+  **Not during the Stage** (Paul, 2026-10-26; `LATER.md`, "Reliability"), and when it returns, in
+  runs of 5 minutes or less. `tests/fuzz/run.py --reshrink SEED` shrinks a saved failure again.
 - Its finds cluster at the KWin seam (hidden desktops, monitor unplug/replug, fullscreen, modal
   dialogs), not in `tree.js`. For KWin's real behaviour, read its source for the installed version
   (`rpm -q kwin`, then `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`). Don't guess.
 
 ## Testing
 
-**`docs/testing.md` is the procedure: read it before any test run, and follow it exactly** (Paul,
-2026-10-26: "we DO NOT improvise when it comes to testing"). Every run is a step of one of its
-procedures (P1 a change, P2 a bug fix, P3 faults for new checks, P4 a probe, P5 before going live,
-P6 every week or two), named to Paul before it runs. A case it doesn't cover stops the work until
-the procedure is changed with Paul's go. Runs over 5 minutes go through its L, which is the global
-"Long runs" rule as it applies here.
+**`docs/testing.md`, lean for the Stage** (Paul, 2026-10-26: the code runs on his desktop and
+nowhere else; testing's one job now is not to break it catastrophically). Its runs are the only
+runs: `make unit` and the changed scenario(s) for a change, one `make test` before anything goes
+live, a probe for a KWin question. No run over 5 minutes, ever. Fault runs, fuzzing and stock runs
+wait in `LATER.md`. A case it doesn't cover: ask Paul first. **No new test of any kind without
+Paul's go, and only super justified** (its rule 5: "if you give an agent a handle, it will grab it").
 
 ## Working rules
 
