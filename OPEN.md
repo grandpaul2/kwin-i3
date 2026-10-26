@@ -27,10 +27,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**23. Floating windows move and resize by key** (`docs/spec-float-keys.md`): built and tested
-2026-10-25 (`floatingStep`, 81-float-keys), `make test` passing. Next: Paul's go to reload
-kwin-i3 and install the settings page; then done.
-
 **24. Activating a window switches its monitor to the window's workspace** (finding 6: C4, C67).
 KWin's `ActivationDesktopPolicy` defaults to `SwitchToOtherDesktop` (`kwin.kcfg`, v6.7.5): a link
 opened in a running Firefox on a hidden workspace switches to it. i3's default
