@@ -22,8 +22,14 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **Ask in plain prose**, never with the multiple-choice picker. Lay out the options and a recommendation.
 - **sudo** is passwordless, gated by Claude Code's own approval prompt: propose the command and let the
   prompt ask. Never ask Paul for a password.
-- **Long runs** (`make test`, `make fuzz`, a battery) go in the background with a Monitor on their
-  progress and failure lines, and a one-line status when something changes.
+- **Long runs** (`make test`, `make fuzz`, a battery, an agent) go in the background, and **you
+  check them yourself at least every 2 minutes** (Paul, 2026-10-25, after a 20-min fuzz run failed
+  every seed from its first minute unseen): before starting, find where the run writes its results
+  (for `make fuzz`, `tests/fuzz/out/*/result.json` and `REPORT.md`, not the console); arm a
+  1-minute recurring timer (CronCreate; never `sleep`), and at each firing read those results and
+  give Paul a one-line status; stop the timer when the run ends. A Monitor, a task notification or
+  the process's own reporting is not checking: silence is not success. A run whose results all
+  fail the same way early is stopped and reported.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
   for test results.
 
