@@ -38,7 +38,11 @@ first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 
 again, it goes alone. Also 2026-10-26, full runs on branch `tiled-look`: `capture-read: the press,
 last` (70 or 80) failed twice in `make mutate-live`'s baseline, and 57's "mid-hold: the old
 layout's frames" once in `run.sh` (its screenshot after the 400 ms hold had ended); each green 3
-of 3 alone. One flake per full run blocks the fault battery's baseline. Next: Paul's choice of (a)-(c).
+of 3 alone. One flake per full run blocks the fault battery's baseline. Since the testing policy
+(CLAUDE.md, "Testing", 2026-10-26) the flakes come first, as they are what makes a session's one
+`make test` and the fortnightly battery expensive: (d) the three flakes above and 39, each made
+deterministic or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
+(KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
 Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
