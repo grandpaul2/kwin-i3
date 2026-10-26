@@ -14,8 +14,8 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
    timer (`CronCreate`) from the moment it starts, the global "Long runs" rule: at each firing
-   read the run's result files yourself (the table in CLAUDE.md's old place: `/tmp/tmp.*/NN-*.sh.log`
-   and `.status` while `make test` runs) and give Paul one line; delete the timer when it ends and
+   read the run's result files yourself (while `make test` or a scenario runs: `/tmp/tmp.*/NN-*.sh.log`
+   and `.status`) and give Paul one line; delete the timer when it ends and
    give him the outcome. A notification or silence is not a check.
 3. **A case not covered here: ask Paul** before running anything for it.
 4. **Paul's "it works" ends it** (CLAUDE.md): drop what's left, and don't chase him for results.
