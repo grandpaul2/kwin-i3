@@ -139,7 +139,7 @@ muts = [
  (DR, 'plugin/tilingdrag.cpp', 'drag: a title press with no threshold', '        m_threshold = true;', '        m_threshold = false;'),
  (DR, 'plugin/tilingdrag.cpp', 'drag: never begins on a motion', '        begin();\n    }\n    if (m_phase == Phase::Drag) {\n        m_pos', '    }\n    if (m_phase == Phase::Drag) {\n        m_pos'),
  (DR, 'plugin/tilingdrag.cpp', 'drag: the position never follows', '    if (m_phase == Phase::Drag) {\n        m_pos = event->position;\n    }\n', ''),
- (DR, 'plugin/tilingdrag.cpp', 'drag: motions passed on', "    return true;       // focus doesn't follow", "    return false;       // focus doesn't follow"),
+ (DR, 'plugin/tilingdrag.cpp', 'drag: motions passed on', '    // focusUpdatesBlocked.)\n    return true;', '    // focusUpdatesBlocked.)\n    return false;'),
  (DR, 'plugin/tilingdrag.cpp', 'drag: Escape not taken', '    if (m_phase != Phase::Drag || event->key != Qt::Key_Escape) {', '    if (true) {'),
  (DR, 'plugin/tilingdrag.cpp', "drag: Escape doesn't cancel", '    if (event->state == KeyboardKeyState::Pressed) {\n        cancel();\n    }', ''),
  (DR, 'plugin/tilingdrag.cpp', 'drag: every release taken', '        if (!(m_taken & event->button)) {\n            return false;\n        }\n', ''),

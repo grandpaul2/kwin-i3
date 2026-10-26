@@ -116,7 +116,11 @@ bool TilingDrag::pointerMotion(PointerMotionEvent *event)
     if (m_phase == Phase::Drag) {
         m_pos = event->position;
     }
-    return true;       // focus doesn't follow the pointer during a drag, as in i3
+    // A drag's motions go nowhere, as under i3's pointer grab: not to the pressed window's title-bar
+    // buttons (KWin's decoration filter would hover them), nor its client. (Focus can't follow
+    // anyway: KWin updates no focus while a button is held, PointerInputRedirection::
+    // focusUpdatesBlocked.)
+    return true;
 }
 
 // Escape cancels, as i3's drag_pointer reverts; the button's release stays this filter's.

@@ -72,12 +72,26 @@ m=$(mark)
 held=$!
 check "mid-drag: the indicator on c's centre" poll eval '[[ "$(indicator)" == "108,468 1064x144" ]]' || echo "    indicator: $(indicator)"
 check "  a still in its place"              eval '[[ "$(fc a)" == "0,0 640x360" ]]'
-check "  focus stays: not to c under the pointer (focus follows mouse)" eval '[[ "$(active)" == a ]]'
 "$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
 check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 640 540 38,60,204 10'
 wait $held
 check "Escape: cancelled, the indicator gone" eval '[[ "$(dropped $m)" == "DRAG cancelled" && -z "$(indicator)" ]]'
 check "  the tree as it was"                eval '[[ "$(tree 1)" == "V[H[a b] c*]" ]]'
+
+# A drag's motions go nowhere: resting on c's own close button mid-drag doesn't hover it (Breeze's
+# pink circle). KWin's decoration filter would hover it: while a button is held the pointer stays
+# on the pressed decoration (input.cpp, focusUpdatesBlocked). c, not a: over a's title the parent
+# zone's indicator would cover the button. Over itself and off the workspace's edge: no drop.
+"$INJECT" "abs 640 374" "wait 30" "btn left down" "abs 700 500" "wait 40" "abs 1266 374" "wait 1200" \
+    "key 1 down" "key 1 up" "wait 40" "btn left up" &
+held=$!
+poll eval '[[ "$(kjs "log(workspace.cursorPos.x + \",\" + workspace.cursorPos.y)")" == 1266,374 ]]'
+sleep 0.2
+"$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
+echo "    c's close button's edge: $("$root/tools/shot.py" probe "$KI3_TMP/shot.png" 1259 374)"
+check "mid-drag over c's own close button: no drop shown" eval '[[ -z "$(indicator)" ]]'
+check "  and no hover"                      eval '! "$root/tools/shot.py" same "$KI3_TMP/shot.png" 1259 374 255,152,162 20'
+wait $held
 
 # Onto the other monitor, over its empty workspace: moved there (i3 keeps the one-child split).
 m=$(mark)
