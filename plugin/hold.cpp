@@ -549,7 +549,7 @@ bool Hold::holding() const
 // While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
 bool Hold::isActive() const
 {
-    if (holding() || !m_drop.isEmpty()) {
+    if (holding() || !m_drop.isEmpty() || !m_dropOutline.isEmpty()) {
         return true;
     }
     const auto windows = effects->stackingOrder();
@@ -646,18 +646,43 @@ void Hold::SetDragCursor(bool on)
 
 void Hold::SetDropIndicator(int x, int y, int width, int height)
 {
-    const RectF drop = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
-    if (drop == m_drop) {
+    setDrop(width > 0 && height > 0 ? RectF(x, y, width, height) : RectF(), m_dropOutline);
+}
+
+void Hold::SetDropOutline(int x, int y, int width, int height)
+{
+    setDrop(m_drop, width > 0 && height > 0 ? RectF(x, y, width, height) : RectF());
+}
+
+// The pieces drawn: the indicator, and the outline's four bars just inside the target's edges
+// (the frame ring is outside them: an outline can't be taken for it). Bars not overlapping, so no
+// pixel is blended twice.
+QList<RectF> Hold::dropPieces(const RectF &drop, const RectF &outline) const
+{
+    QList<RectF> out;
+    if (!drop.isEmpty()) {
+        out << drop;
+    }
+    const double t = s_outlineWidth;
+    if (outline.width() > 2 * t && outline.height() > 2 * t) {
+        const double x = outline.x(), y = outline.y(), w = outline.width(), h = outline.height();
+        out << RectF(x, y, w, t) << RectF(x, y + h - t, w, t)
+            << RectF(x, y + t, t, h - 2 * t) << RectF(x + w - t, y + t, t, h - 2 * t);
+    }
+    return out;
+}
+
+void Hold::setDrop(const RectF &drop, const RectF &outline)
+{
+    if (drop == m_drop && outline == m_dropOutline) {
         return;
     }
     // A pixel of slack for the rounding to device pixels.
-    if (!m_drop.isEmpty()) {
-        effects->addRepaint(m_drop.adjusted(-1, -1, 1, 1).toAlignedRect());
-    }
-    if (!drop.isEmpty()) {
-        effects->addRepaint(drop.adjusted(-1, -1, 1, 1).toAlignedRect());
+    for (const RectF &r : dropPieces(m_drop, m_dropOutline) + dropPieces(drop, outline)) {
+        effects->addRepaint(r.adjusted(-1, -1, 1, 1).toAlignedRect());
     }
     m_drop = drop;
+    m_dropOutline = outline;
 }
 
 // The drop indicator over everything, clipped to the repainted region: blended again over
@@ -665,18 +690,21 @@ void Hold::SetDropIndicator(int x, int y, int width, int height)
 void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
 {
     effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen);
-    if (m_drop.isEmpty()) {
+    const QList<RectF> pieces = dropPieces(m_drop, m_dropOutline);
+    if (pieces.isEmpty()) {
         return;
     }
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
-    const Rect device(std::round(m_drop.x() * scale) - origin.x(), std::round(m_drop.y() * scale) - origin.y(),
-                      std::round(m_drop.width() * scale), std::round(m_drop.height() * scale));
     QList<QVector2D> verts;
-    for (const Rect &r : (deviceRegion & device).rects()) {
-        const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
-        verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
-              << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+    for (const RectF &piece : pieces) {
+        const Rect device(std::round(piece.x() * scale) - origin.x(), std::round(piece.y() * scale) - origin.y(),
+                          std::round(piece.width() * scale), std::round(piece.height() * scale));
+        for (const Rect &r : (deviceRegion & device).rects()) {
+            const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
+            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
+                  << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+        }
     }
     if (verts.isEmpty()) {
         return;
@@ -958,6 +986,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("frameWidth")] = m_frameWidth;
     m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
     m[QStringLiteral("tiledRing")] = m_tiledRing;
+    m[QStringLiteral("dropOutline")] = m_dropOutline.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_dropOutline.x()).arg(m_dropOutline.y()).arg(m_dropOutline.width()).arg(m_dropOutline.height());
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     return m;

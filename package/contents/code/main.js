@@ -2747,12 +2747,18 @@ var KI3 = (function () {
         var t = w.clientGeometry.y - w.frameGeometry.y;
         return (t > 0 ? t : 20) + 5;
     }
-    function indicate(rect) {
-        var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
-        var key = r.join(",");
+    // The indicator, and for a centre drop onto a window the window outlined (kwini3hold draws it
+    // in the indicator's colour, unlike the frame: Paul, 2026-10-26).
+    function indicate(plan) {
+        var px = function (g) { return g ? [Math.round(g.x), Math.round(g.y), Math.round(g.width), Math.round(g.height)] : [0, 0, 0, 0]; };
+        var r = px(plan && plan.rect);
+        var o = px(plan && plan.type === Tree.CENTER && plan.target.type !== "ws" ? conRect(plan.target) : null);
+        var key = r.concat(o).join(",");
         if (!drag || key === drag.rect) return;
         drag.rect = key;
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+        if (!frameOn) return;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropOutline", o[0], o[1], o[2], o[3]);
     }
     function dragState(s) {
         if (!drag) return;
@@ -2762,7 +2768,7 @@ var KI3 = (function () {
             var con = drag.con;
             if (model.byWin[f[1]] !== con || con.type !== "con") { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
-            if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
+            if (phase === "drag") { indicate(drag.plan); return; }
             var from = Tree.wsOf(con), plan = drag.plan, to = plan && Tree.wsOf(plan.target);
             var dropped = model.drop(con, plan, f[4] === "1");
             endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (f[4] === "1" ? " (swap)" : "") +
