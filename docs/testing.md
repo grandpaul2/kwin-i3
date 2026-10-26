@@ -108,6 +108,10 @@ In a worktree. Live scenarios' faults are in `tests/live/mutate.py`; `tree.js` f
    - Visible, but not in the test KWin (it needs one monitor, a script unload, real hardware):
      the `# Not covered:` line with the reason, and the fault stays in `mutate.py` marked as
      expected to survive. It takes effect when Paul has answered step 4's report.
+   - It only saves work or restores state no check can read (GL state put back, a duplicate call
+     skipped, a call never overlapping): kept, with a `# Not covered:` line giving the reason, and
+     no fault. Known before the run, it gets no fault in step 1 either. Code that does nothing at
+     all (a call another one already makes) is not this case: it is removed.
 
 ## P4. A probe
 
