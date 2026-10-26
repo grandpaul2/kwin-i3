@@ -10,7 +10,7 @@ turns up. Rules:
 - Like `OPEN.md`, state, not history: rewrite an item as it changes.
 - New finds that can wait for the end of the Stage go here, with what would be done and why it waits.
 
-Moved out of `OPEN.md` 2026-10-25 (Paul). When the Stage ends, suggested order: 4, 5, 22.
+Moved out of `OPEN.md` 2026-10-25 (Paul). When the Stage ends, suggested order: 4, 5, 22, 26.
 
 ## Reliability
 
@@ -43,7 +43,8 @@ drawn by kwini3hold outside tiled windows; floating windows keep the user's deco
 `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
 reviews `docs/review-window-modes-*.md`). Left:
 - test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
-  (tools/ei-send can't scroll), a forcing window rule, `borderlessMaximizedWindows`, a window
+  (tools/ei-send can't scroll), a forcing window rule (desktop, maximize, size or no titlebar:
+  each may ping-pong with kwin-i3's placement or frame, i3 feature map finding 10), `borderlessMaximizedWindows`, a window
   added or closed in the 250 ms at load; rounded corners on a libadwaita app (one that may draw
   its own corners and shadow, unverified; `docs/spec-rounded-corners.md`);
 - the known limits written in the spec.
@@ -56,6 +57,18 @@ test (tools/ei-send can't scroll), vertical panels and "Numbers only" untested l
 output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: live tests for the
 source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
 after an unplug; the widget's names on a vertical panel.
+
+**26. KWin's own tile tools act on kwin-i3's tiles** (i3 feature map, finding 9: R11, R12,
+R14). Meta+T's tile editor edits the tiles kwin-i3 owns (overwritten at the next pass);
+Shift+drag drops a window into one (two windows in a leaf); drag to a screen edge quick-tiles into
+KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on Paul's
+desktop but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
+then whether to block, follow or document them (and whether `make take-keys` should free Meta+T).
+
+**27. Keep Above and Keep Below on floating windows** (finding 11: R18, R19). kwin-i3 owns Keep
+Above on floating windows (the plain script's way to keep them over tiled ones), so a user can't
+turn it off there, and Keep Below is overwritten. Next: whether the plugins' path (the effect's
+floating set) can leave both flags to the user, and the plain script document it.
 
 ## The settings page
 
@@ -83,7 +96,10 @@ turned on (`docs/spec-per-output-desktops.md`), taken keys reported with `make t
 done (`make live-stock`, `docs/spec-stock-mode.md`, 2026-10-24): the install as written
 (per-output on, `make take-keys`) works on a stock Plasma with click-to-focus; no real finding.
 Left:
-- (e) focus follows mouse and Meta-alone: README only, in the README pass (four scenarios,
+- the default keys against a stock Plasma (finding 13: R1-R7): 22 clash until `make take-keys`;
+  README says zoom clashes, but only Meta+0 does; and no Meta+Return terminal outside the
+  dotfiles (finding 14, D74): say how to bind one;
+- (e) focus follows mouse and Meta-alone (also map finding 12): README only, in the README pass (four scenarios,
   `# focus: mouse`, assume it);
 - **the README pass**: install read as a stranger on a stock Plasma, the settings page
   (`make kcm-install`) included. It must cover: a package linked while KWin runs can't be turned

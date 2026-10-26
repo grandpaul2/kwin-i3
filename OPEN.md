@@ -27,6 +27,26 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
+**23. Floating windows don't move or resize by key** (i3 feature map, finding 1: rows A21, A40,
+A41). Meta+Shift+arrows and the resize keys return early on a floating window (`tree.js:503`);
+i3 moves it 10 px (`move left` on a floating con) and resizes it by its `resize` step. Next: a
+short spec (step sizes, whether the window stays on its monitor, what KWin's own move does), then
+Paul's go.
+
+**24. Activating a window switches its monitor to the window's workspace** (finding 6: C4, C67).
+KWin's `ActivationDesktopPolicy` defaults to `SwitchToOtherDesktop` (`kwin.kcfg`, v6.7.5): a link
+opened in a running Firefox on a hidden workspace switches to it. i3's default
+(`focus_on_window_activation smart`) marks it urgent instead. Next: a diagnosis of what kwin-i3
+sees (an activation on a hidden desktop, KWin's switch, its own follow-up), and the options
+(set the policy to DoNothing at load as i3's `urgent`, or leave KWin's), for Paul to choose;
+finding 3 (urgency shows nowhere) goes with it if he picks urgent.
+
+**25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
+KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
+other monitor, keys act on one monitor and the new window opens on the other. Next: confirm in the
+test KWin (pointer on Virtual-1's empty workspace, focus on Virtual-0, open a window), then a fix
+proposal (KWin's placement option, or kwin-i3 sending a new window to the focused workspace).
+
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
 kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown
 again on a workspace switch 4 to 2. **The other two followed a close of the window beside it**:

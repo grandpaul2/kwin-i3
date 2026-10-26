@@ -105,7 +105,9 @@ addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting th
    one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity
    restore); the pointer follows focus across monitors. Only its calls into Krohnkite change.
 10. **When a monitor goes away, its workspaces move to a remaining monitor and go back when it
-    returns**, as in i3. The model keeps each workspace's home output; reconcile re-tiles everything
+    returns**. Not quite i3: i3 4.24 moves back only workspaces assigned to that output
+    (`workspace N output X`, its `randr.c`); kwin-i3 moves back every workspace that lived there, on
+    purpose (i3 feature map, row C74, 2026-10-25). The model keeps each workspace's home output; reconcile re-tiles everything
     once the screens settle. Windows KWin moves on its own during a hotplug are ignored: the model,
     not KWin's move, says where they belong. (Verified: a window KWin moves to another monitor loses
     its tile and is switched to the desktop that monitor shows.)
