@@ -59,9 +59,6 @@ public Q_SLOTS:
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
     // or height of 0 clears it. In logical pixels, global.
     void SetDropIndicator(int x, int y, int width, int height);
-    // With a centre drop, the target window outlined (s_outlineWidth px inside its edges, the
-    // indicator's colour: unlike the frame, Paul 2026-10-26); 0 width or height clears it.
-    void SetDropOutline(int x, int y, int width, int height);
     // kwin-i3's tiling drag: i3's move cursor while it lasts. KWin shows an effect's cursor only
     // while the effect holds the mouse (CursorImage::reevaluteSource), so on grabs it; the
     // helper's drag filter sits ahead of KWin's effects filter and keeps the drag's input. Renewed
@@ -135,10 +132,6 @@ private:
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
-    KWin::RectF m_dropOutline;                              // SetDropOutline; empty when none
-    static constexpr double s_outlineWidth = 4;
-    QList<KWin::RectF> dropPieces(const KWin::RectF &drop, const KWin::RectF &outline) const;
-    void setDrop(const KWin::RectF &drop, const KWin::RectF &outline);
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
 
     QHash<KWin::EffectWindow *, Held> m_held;
