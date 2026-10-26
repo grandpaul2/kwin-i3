@@ -2,7 +2,7 @@
 # needs: plugin
 # The mouse with the kwini3helper plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
 # 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock: Meta+left-drag
-# moves, Meta+right-drag resizes. The plugin's mouse chords (Meta+Shift+drag moved) were dropped on
+# moves, Meta+right-drag resizes; a tiled window's Meta+left-drag is the helper's tiling drag. The plugin's mouse chords (Meta+Shift+drag moved) were dropped on
 # 2026-10-24 (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks
@@ -72,7 +72,9 @@ sdrag Meta left "$cx" $((ty + 10)) $((cx - 50)) $((ty + 40))
 check "a title-bar Meta+drag moved w"       poll moved_by w "$p0" -50 30
 kclose w
 
-# 6. With kwin-i3: a tiled window Meta+dragged floats where it is dropped (plan, policies).
+# 6. With kwin-i3: a tiled window Meta+dragged is i3's tiling drag (decision C,
+#    docs/spec-tiled-look.md; 86-tiling-drag.sh): dropped on a's left side, it goes before a and
+#    stays tiled.
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 point 640 360
@@ -80,9 +82,9 @@ client --title a; client --title b --clicks "$clicks"
 check "a | b"                               wait_tree 1 "H[a b*]"
 : > "$clicks"
 m=$(mark)
-sdrag Meta left 960 360 860 300
-check "Meta+drag of tiled b: a move"        wait_log '^.{9}DRAG end move b' "$m"
-check "b floats"                            wait_log '^.{9}TREE 1 .*~b' "$m"
+sdrag Meta left 960 360 60 360
+check "Meta+drag of tiled b: a tiling drag" wait_log '^.{9}DRAG dropped sibling left' "$m"
+check "b before a, still tiled"             wait_tree 1 "H[b* a]" "$m"
 check "b saw nothing"                       saw_nothing
 
 check "no invariant failures or errors"     clean_log
