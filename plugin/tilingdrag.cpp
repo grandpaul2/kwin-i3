@@ -191,7 +191,15 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return false;
     }
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
-    if (mods == Qt::MetaModifier || mods == (Qt::MetaModifier | Qt::ShiftModifier)) {
+    if (mods == (Qt::MetaModifier | Qt::ShiftModifier)) {
+        // Meta+Shift: pull it out and float it (beyond i3, Paul 2026-10-26: the swap no longer
+        // needs Shift). KWin's own move, as Meta+drag was before the tiling drag: the window
+        // leaves its tile at its floating size and follows the pointer; kwin-i3 floats it where
+        // it is dropped. KWin's move takes the motions and the release from here.
+        window->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
+        return true;
+    }
+    if (mods == Qt::MetaModifier) {
         // Anywhere in the window, with no threshold (i3's floating modifier, click.c).
         window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
         m_threshold = false;
