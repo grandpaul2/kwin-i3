@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Glob, Grep
 
 Starting a kwin-i3 session. Please:
 
-1. Read `OPEN.md`, and the status line at the top of `README.md` (CLAUDE.md is already loaded).
+1. Read `OPEN.md` (and `LATER.md`'s headings: work held until the Stage ends), and the status line at the top of `README.md` (CLAUDE.md is already loaded).
 2. Check this repo: `git fetch -q`, then `git status -sb` (uncommitted changes, ahead/behind
    `origin`), and `git worktree list` (a leftover worktree from a trace or the battery).
 3. Check the live desktop, read-only:

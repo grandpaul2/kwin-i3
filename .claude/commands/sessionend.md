@@ -16,7 +16,8 @@ what changed.
 
 Rewrite `OPEN.md` to the state now: done items come out, new ones go in with a next action. Every
 finding from this session (a fuzz failure, a capture, a review comment) leaves **fixed**,
-**won't-fix with a written reason**, or **as a line there**. Nothing else may carry an open list.
+**won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
+Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
 
 ## 3. Tidy
 

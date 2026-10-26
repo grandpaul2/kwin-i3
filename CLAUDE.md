@@ -4,8 +4,9 @@ Paul's project: i3's window management as one KWin script, running his desktop (
 Fedora 44, Plasma 6.7 Wayland) since 2026-10-22. **kwin-i3 work happens in sessions started here**
 (Paul, 2026-10-22); `~/.dotfiles` keeps the system around it (below). Read `docs/plan.md` first: it is
 the plan and records Paul's decisions. `docs/spike-kwin-tiles.md`, `docs/review-2026-10-21.md` and
-`docs/fuzz-design.md` are why it looks the way it does. **`OPEN.md` is this repo's only list of
-unfinished work** (state, not history; the rules are in its header).
+`docs/fuzz-design.md` are why it looks the way it does. **`OPEN.md` is this repo's list of
+unfinished work for now, and `LATER.md` of work held until the Stage ends**: no other file carries
+an open list (state, not history; the rules are in their headers).
 
 If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestions and delete it.
 
