@@ -722,6 +722,153 @@ var Tree = (function () {
         this.tidy();
     };
 
+    // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
+    // docs/spec-tiled-look.md, part B. Rects come from the caller (kwin.js has the tiles):
+    // rectOf(con) gives { x, y, width, height } for a leaf, a split or a workspace.
+
+    var SIBLING = "sibling", CENTER = "center", PARENT = "parent";
+
+    // con_fullscreen_permits_focusing, i3's form: judged from the global focus's fullscreen
+    // ancestor, which the move must not leave in a bad shape (not permitsFocusing above, which
+    // asks about the fullscreen window on con's own workspace).
+    function focusPermits(model, con) {
+        var fs = model.focused;
+        while (fs && fs.type !== "ws" && !fs.fullscreen) fs = fs.parent;
+        if (!fs || fs.type === "ws" || con === fs) return true;
+        if (wsOf(con) !== wsOf(fs)) return true;               // per-output fullscreen
+        return hasParent(con, fs);
+    }
+
+    // con_on_side_of_parent: con's edge facing `dir` is its parent's edge too.
+    function onSideOfParent(con, dir) {
+        var reverse = { left: RIGHT, right: LEFT, up: DOWN, down: UP }[dir];
+        return con.parent.layout !== orientationOf(dir) || descendDirection(con.parent, reverse) === con;
+    }
+
+    function adjustRect(r, dir, t) {                          // adjust_rect
+        if (dir === LEFT) return { x: r.x, y: r.y, width: t, height: r.height };
+        if (dir === UP) return { x: r.x, y: r.y, width: r.width, height: t };
+        if (dir === RIGHT) return { x: r.x + r.width - t, y: r.y, width: t, height: r.height };
+        return { x: r.x, y: r.y + r.height - t, width: r.width, height: t };
+    }
+
+    // drag_callback: where `con`, dragged to x,y over `target` (the leaf there, the fullscreen
+    // window covering it, or a visible workspace), would drop. parentMax is i3's
+    // render_deco_height() + 5 px. Returns { target, type, dir, rect } (rect: the indicator) or
+    // null for no drop (onto itself, not as a parent drop).
+    M.dropPlan = function (con, target, x, y, rectOf, parentMax) {
+        if (!target) return null;
+        var rect = rectOf(target);
+        if (target.type === "ws") return { target: target, type: CENTER, dir: null, rect: rect };
+        var siblingSize = Math.max(2, Math.floor(0.3 * Math.min(rect.width, rect.height)));
+        var parentSize = Math.min(parentMax, siblingSize - 1);
+        var dl = x - rect.x, dt = y - rect.y, dr = rect.x + rect.width - x, db = rect.y + rect.height - y;
+        var dmin = Math.min(dl, dr, dt, db);
+        var dir = dl === dmin ? LEFT : dt === dmin ? UP : dr === dmin ? RIGHT : DOWN;
+        var type = dmin < parentSize && onSideOfParent(target, dir) ? PARENT : dmin < siblingSize ? SIBLING : CENTER;
+        if (type !== PARENT && target === con) return null;
+        if (type === PARENT) {
+            while (target.parent.type !== "ws" && onSideOfParent(target.parent, dir)) target = target.parent;
+            rect = adjustRect(rectOf(target.parent), dir, parentSize);
+        } else if (type === CENTER) {
+            rect = { x: rect.x + siblingSize, y: rect.y + siblingSize,
+                     width: rect.width - 2 * siblingSize, height: rect.height - 2 * siblingSize };
+        } else {
+            rect = adjustRect(rect, dir, siblingSize);
+        }
+        return { target: target, type: type, dir: dir, rect: rect };
+    };
+
+    // con_move_to_target -> _con_move_to_con(behind_focused false, fix_percentage), for a tiled
+    // con: after the target leaf in its parent, or onto an empty workspace. i3's focus steps,
+    // for what kwin-i3 keeps of them: the global focus stays where it was, con heads its new
+    // parents' focus stacks (the drop's caller refocuses con if it had the focus).
+    M.moveToTarget = function (con, target) {
+        if (isFloating(target)) { this.moveToWorkspace(con, wsOf(target)); return true; }
+        if (target.type === "ws" && isLeaf(target)) { this.moveToWorkspace(con, target); return true; }
+        if (isSplit(target) && !isLeaf(target)) target = target.focus[0];
+        if (con === target || hasParent(target, con)) return false;
+        if (!focusPermits(this, wsOf(target))) return false;
+        var orig = target, targetWs = wsOf(target);
+        if (target.type !== "ws") target = target.parent;
+        var fs = fullscreenOn(targetWs);
+        if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
+        var parent = con.parent, old = this.focused;
+        detach(con);
+        con.parent = target;
+        if (orig !== target) insertAfter(target.nodes, orig, con);
+        else target.nodes.push(con);
+        target.focus.push(con);
+        fixPercent(parent);
+        con.percent = 0;
+        fixPercent(target);
+        if (!fs) {
+            focusUp(con);
+            if (old && old !== con && wsOf(old) === targetWs) focusUp(old);
+        }
+        this.onRemoveChild(parent);
+        return true;
+    };
+
+    // con_swap, for two tiled leaves: each takes the other's place, share and fullscreen.
+    M.swap = function (first, second) {
+        if (first.type !== "con" || second.type !== "con" || first === second) return false;
+        if (hasParent(first, second) || hasParent(second, first)) return false;
+        var ws1 = wsOf(first), ws2 = wsOf(second), f = this.focused, restore = null;
+        if (ws1 === ws2 && f && ws1 === wsOf(f)) restore = f;
+        else if (f && (first === f || hasParent(f, first))) restore = second;
+        else if (f && (second === f || hasParent(f, second))) restore = first;
+        var p1 = first.parent, p2 = second.parent;
+        var n1 = p1.nodes.indexOf(first), n2 = p2.nodes.indexOf(second);
+        var f1 = p1.focus.indexOf(first), f2 = p2.focus.indexOf(second);
+        p1.nodes[n1] = second; p2.nodes[n2] = first;
+        p1.focus[f1] = second; p2.focus[f2] = first;
+        first.parent = p2; second.parent = p1;
+        var pc = first.percent; first.percent = second.percent; second.percent = pc;
+        if (restore) this.activate(restore);
+        var fs1 = first.fullscreen; first.fullscreen = second.fullscreen; second.fullscreen = fs1;
+        fixPercent(p1); fixPercent(p2);
+        return true;
+    };
+
+    // tiling_drag, after the release: apply a dropPlan. `swap`: the swap modifier was held at the
+    // press. Returns true if the tree changed.
+    M.drop = function (con, plan, swap) {
+        if (!plan || !plan.target || (plan.target === con && plan.type !== PARENT)) return false;
+        var target = plan.target, dir = plan.dir, o = dir ? orientationOf(dir) : null;
+        var position = dir && isBefore(dir) ? "before" : "after";
+        var setFocus = con === this.focused, setFs = con.fullscreen;
+        con.fullscreen = false;                                // con_disable_fullscreen
+        if (plan.type === CENTER) {
+            // As i3: a failed swap ends the drop with con's fullscreen already off; a move's
+            // result isn't checked.
+            if (swap) { if (!this.swap(con, target)) return setFs; }
+            else this.moveToTarget(con, target);
+        } else if (plan.type === SIBLING) {
+            if (target.parent.layout !== o) {
+                if (con.parent === target.parent && target.parent.nodes.length === 2) target.parent.layout = o;
+                else this.split(target, o);
+            }
+            this.insertConInto(con, target, position);
+        } else {
+            if (con !== target) this.insertConInto(con, target, position);
+            var old = this.focused;
+            this.move(con, dir);
+            var exists = old && (old.type === "ws" || this.byWin[old.win] === old);   // con_exists
+            if (this.focused !== old && exists) this.activate(old);
+        }
+        if (setFocus || setFs) {
+            var fs = fullscreenOn(wsOf(con));
+            if (fs && setFocus && setFs) fs.fullscreen = false;
+            else if (fs) setFs = setFocus = false;
+            else if (!setFocus) setFocus = setFs && this.focused && wsOf(this.focused) === wsOf(con);
+        }
+        if (setFs) con.fullscreen = true;
+        if (setFocus) this.activate(con);
+        this.tidy();
+        return true;
+    };
+
     // ---- floating (floating.c) -------------------------------------------------------------
 
     // floating_enable: the floating node takes its branch's place in the workspace focus stack.
@@ -990,6 +1137,7 @@ var Tree = (function () {
         wsOf: wsOf,
         nextWorkspace: nextWorkspace,
         LEFT: LEFT, RIGHT: RIGHT, UP: UP, DOWN: DOWN,
+        SIBLING: SIBLING, CENTER: CENTER, PARENT: PARENT,
         create: function (env) { return new Model(env); }
     };
 })();
