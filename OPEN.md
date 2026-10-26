@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-25** (session end).
+Last reconciled: **2026-10-25** (session end, late).
 
 ## Stage (Paul, 2026-10-24, late)
 
