@@ -548,7 +548,7 @@ var KI3 = (function () {
             else if (a !== r) delete armed[leaf.win];
         });
     }
-    function refitOnFrameChange(w) {
+    function refitOnFrameChange(w, old, dragging) {
         var key = id(w), t = expected[key];
         if (borderGone[key] && !reconciling && t && w.tile === t) {
             delete borderGone[key];
@@ -560,7 +560,8 @@ var KI3 = (function () {
                 return;
             }
         }
-        if (!armed[key] || reconciling || !t || w.tile !== t) return;
+        if (!armed[key]) { if (!dragging) refitSelfResize(w, old); return; }
+        if (reconciling || !t || w.tile !== t) return;
         if (armed[key] === "pending") return;
         if (typeof armed[key] === "string" && armed[key] !== rectKey(windowRect(t))) { delete armed[key]; return; }
         if (fits(w, t)) { delete armed[key]; delete lastFit[key]; return; }
@@ -570,6 +571,44 @@ var KI3 = (function () {
         var seen = [f.x, f.y, f.width, f.height, a.x, a.y, a.width, a.height].join(",");
         if (lastFit[key] === seen) return;
         lastFit[key] = seen;
+        fitToTile(w, t);
+    }
+    // A tiled window that resizes itself (Firefox's session restore: Paul's capture 2026-10-25)
+    // is asked back into its tile, as i3 refuses a tiled window's own resize (handlers.c
+    // handle_configure_request; docs/spec-self-resize.md). It had reached its tile and left it:
+    // the frame before the change fitted. A slow client answering kwin-i3's own resize in steps
+    // never starts from a fitting frame, so it isn't asked twice (53-hold). At most once a
+    // second per window, so a client that flips back each time isn't asked without end; a second
+    // resize inside that second is asked back when it ends, not dropped (review: session restore
+    // comes in bursts).
+    var selfFitAt = {}, selfFitLater = {};
+    function refitSelfResize(w, old) {   // not during a drag (the caller knows)
+        var key = id(w), t = expected[key];
+        if (!old || reconciling || placing[key] || !t || w.tile !== t || !w.output) return;
+        if (w.fullScreen || w.maximizeMode !== 0 || fits(w, t)) return;
+        var a = windowRect(t), f = w.frameGeometry, o = w.output.geometry;
+        if (Math.abs(old.x - a.x) > 1 || Math.abs(old.y - a.y) > 1 ||
+            Math.abs(old.width - a.width) > 1 || Math.abs(old.height - a.height) > 1) return;
+        var wait = selfFitAt[key] ? 1000 - (Date.now() - selfFitAt[key]) : 0;
+        // A frame that fills the monitor is looked at again a moment later: a window going
+        // fullscreen gets that frame before its flag (four fullscreen scenarios went red when it
+        // was refitted at once), and a window's own oversize is clamped to the monitor's size,
+        // so skipping it left those off their tiles (fuzzer, I2). The later look skips fullscreen.
+        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) wait = Math.max(wait, 150);
+        if (wait <= 0) { selfRefit(w, t); return; }
+        if (selfFitLater[key]) return;
+        selfFitLater[key] = true;
+        later(wait, function () {
+            delete selfFitLater[key];
+            // Still the same window in the same tile, still out of it, nothing else in hand.
+            if (!wins[key] || expected[key] !== t || w.tile !== t || reconciling || placing[key]) return;
+            if (w.fullScreen || w.maximizeMode !== 0 || w.move || w.resize || fits(w, t)) return;
+            selfRefit(w, t);
+        });
+    }
+    function selfRefit(w, t) {
+        selfFitAt[id(w)] = Date.now();
+        log("REFIT " + shortCaption(w) + ": resized itself, asked back into its tile");
         fitToTile(w, t);
     }
 
@@ -945,7 +984,7 @@ var KI3 = (function () {
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key];
-        delete wins[key]; delete expected[key]; delete armed[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete ruleKind[key]; delete untiled[key];
         schedule(ws);
     }
@@ -1084,7 +1123,7 @@ var KI3 = (function () {
         w.frameGeometryChanged.connect(guard("frame", function (old) {
             // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
             if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
-            refitOnFrameChange(w);
+            refitOnFrameChange(w, old, dragging);
         }));
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {
@@ -1876,7 +1915,7 @@ var KI3 = (function () {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
                 model = Tree.create({ outputNeighbour: outputNeighbour });
-                wins = {}; expected = {}; armed = {}; lastFit = {}; ruleKind = {}; dirty = {}; placing = {};
+                wins = {}; expected = {}; armed = {}; lastFit = {}; selfFitAt = {}; selfFitLater = {}; ruleKind = {}; dirty = {}; placing = {};
                 borderGone = {};
                 beforeLoss = null;                  // numbers by the old positions
                 lastShown = {}; shownBefore = {};   // likewise

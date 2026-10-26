@@ -262,7 +262,11 @@ kjs 'var p, q; workspace.windowList().forEach(function (w) { if (w.caption === "
      var h = q.frameGeometry; q.frameGeometry = { x: h.x, y: h.y, width: h.width - 100, height: h.height };' >/dev/null
 sleep 1.2
 wait_stat open False
-check "one transaction for both"            _stat_is transactions $((t + 1))
+# kwin-i3 puts both back (docs/spec-self-resize.md: to it, a frame changed from outside is a
+# window resizing itself): p inside the same call, q once its slow answer lands, a transaction of
+# its own. A release between p and q would make it three.
+check "one transaction for both, one for q put back" _stat_is transactions $((t + 2))
+check "and q's put-back the other"          eval '[[ "$(after 0 | grep -cE "^.{9}REFIT q:")" == 1 ]]'
 kclose p; kclose q
 check "empty once more"                     wait_tree 1 "H[]*"
 
