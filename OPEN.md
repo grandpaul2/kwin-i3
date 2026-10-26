@@ -45,15 +45,14 @@ deterministic or moved alone; (e) `make mutate-live` baselines only the scenario
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
-Plasma feel"). Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C answered). **Part A
-live 2026-10-26** (60470dd): `tiledLook` frame (default) / titlebars / bare, scenario 85. Part B,
-i3's tiling drag: the model's half on branch `tiling-drag` (0ea026b: `dropPlan`, `moveToTarget`,
-`swap`, `drop` in tree.js, 13 unit tests). Both probes passed (2026-10-26, branch `probe-titledrag`; spec
-items 7 and 9, "Probe result"). **Part B built on `tiling-drag`** (2026-10-26): the helper's
-filter, kwini3hold's indicator, kwin-i3's drop; scenario 86 green (20 checks). Next
-(`docs/testing.md` P3): the older scenarios that Meta+drag a tiled window expecting it to float
-(26, 41, 44, 51, 52, 53: decision C changes that) updated, one `make test`, then Paul's go to
-merge and reload.
+Plasma feel"). Spec: `docs/spec-tiled-look.md`. **Part A live** (60470dd): `tiledLook`. **Part B
+live 2026-10-26**: Meta+drag (and a title-bar drag in the title-bar look) is i3's tiling drag,
+with the move cursor and the drop indicator; a centre drop swaps and Meta+Shift+drag floats a
+window where it is dropped (decision D, two breaks from i3, Paul's). Fixed on the way: a drop
+beside a window on another workspace threw (0709197); a window crossing monitors could be left
+hidden (b3ce0c8); the helper's destructor left a stale filter in KWin, which crashed it once
+(591360c, P1.3 in `docs/testing.md` since). Next: Paul uses it for a couple of days; the
+title-bar drag in the title-bar look hasn't been tried live yet.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the

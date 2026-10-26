@@ -22,7 +22,9 @@ live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`
 (2026-10-26: 19 caught, 16 survived, 1 broken by its own text, "the helper not turned on at a
 reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet sorted (a check to
 add, code to remove, or not visible in the test KWin). The fuller procedure that was in
-`docs/testing.md` before (git 6a58018) is the starting point for the stricter one.
+`docs/testing.md` before (git 6a58018) is the starting point for the stricter one. Several of
+those faults' from-texts no longer match (the centre swap, the drop outline added and removed,
+Meta+Shift): rewrite them from the code before the run.
 
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
