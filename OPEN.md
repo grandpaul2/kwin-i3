@@ -27,9 +27,13 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**33. The active window on a desktop its monitor isn't showing** (fuzzer I8, found 2026-10-26;
-1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
-Virtual-0 shows 4`; kept in `tests/fuzz/i33/`). Next: replay seed 30 once (its trace as `{"actions": [...]}` to `tools/testkwin.sh tests/fuzz/fuzz.py replay`); shrink only if the log doesn't settle it; then a diagnosis.
+**33. The active window on a desktop its monitor isn't showing** (fuzzer I8, 2026-10-26; seed
+30, shrunk to 38 actions, in `tests/fuzz/i33/`). Cause: the focused monitor, showing an empty
+workspace, unplugged; kwin-i3 showed that workspace on the other monitor as i3 does, and KWin then
+activated a window of the workspace it replaced. Fixed on branch `i33` (1a9e32d, worktree
+`../kwin-i3-i33`): KWin's activation of a window its monitor isn't showing is refused. Seed 30 red
+on main 3/3, clean with the fix; `make test` green; test 84 guards the plain case. Next: Paul's go
+to merge and reload; then remove `tests/fuzz/i33/` and the worktree.
 
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
