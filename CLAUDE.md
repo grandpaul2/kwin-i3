@@ -22,11 +22,8 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **Ask in plain prose**, never with the multiple-choice picker. Lay out the options and a recommendation.
 - **sudo** is passwordless, gated by Claude Code's own approval prompt: propose the command and let the
   prompt ask. Never ask Paul for a password.
-- **Testing follows "Testing" below**, which narrows the global "Long runs" rule here. Where runs
-  write their results: `make test` prints each scenario's lines and a final `TIME` summary only
-  when it ends, so while it runs read the batch's files (`tests/live/run.sh`:
-  `/tmp/tmp.*/NN-*.sh.log`, and a `.status` each as it ends); `make fuzz` writes nothing to its
-  console: `tests/fuzz/out/<seed>/result.json` per seed and `tests/fuzz/out/REPORT.md`.
+- **Testing follows `docs/testing.md`** ("Testing" below), which applies the global "Long runs"
+  rule here; its table says where each run writes its results.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
   for test results.
 
@@ -57,7 +54,7 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
   **Once every week or two, not as part of development** (Paul, 2026-10-26: "something we'll pull
   out once in a while"; a 20-minute campaign was stealing session time). No change, fix or merge
-  waits on it, and nothing in `OPEN.md` is "a fuzz run owed" ("Testing", tier 4).
+  waits on it, and nothing in `OPEN.md` is "a fuzz run owed" (`docs/testing.md`, P6).
   Propose a campaign only when a week or two has passed since the last (`tests/fuzz/out/REPORT.md`'s
   date), and run it only with Paul's go. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED`
   shrinks a saved failure again.
@@ -67,37 +64,16 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 
 ## Testing
 
-Paul, 2026-10-26, after an audit of that session: part A of item 35 took ~10 min to code and ~45
-min of test runs, almost all of it whole-suite runs that found nothing and flakes chased in
-scenarios the change didn't touch, plus a fuzz campaign that found nothing. What found things was
-narrow and fast: unit tests, the change's own scenario, its faults against that scenario, KWin's
-source, and outside review. Testing is tiered by that:
-
-1. **Every change** (seconds to a minute): `make unit`, and only the scenario(s) covering the
-   change, alone (`tests/live/run.sh NN-name.sh`). New behaviour gets its scenario; behaviour that
-   needs real input uses injected input (`tools/inject.py`). A screenshot only for a visual change.
-   That is a change's check before its commit.
-2. **A new scenario's faults**: applied by hand against that scenario only (a few lines of Python:
-   apply, `./build.sh`, run the scenario, `git checkout` the file and `package/`), from a worktree.
-   A test is trusted once a fault has turned it red. A fault nothing catches marks code to remove
-   or a test to fix. Its lines still go in `tests/live/mutate.py` for the full battery.
-3. **Once per session, before anything goes live**: one full `make test` (~4 min, in the
-   foreground). A failure in a scenario the change doesn't touch: one rerun of that scenario alone;
-   green alone passes, with a line in `OPEN.md` item 34. Nothing more that session.
-4. **Every week or two, with Paul's go, never owed by a change**: the fuzz campaign (`make fuzz`),
-   the full fault battery (`make mutate-live`, `make mutate`; commit first: it restores with
-   `git checkout`), `make live-stock`. Results go to `OPEN.md`.
-5. **Flakes are test-speed work** (`OPEN.md` item 34), never chased mid-session: one rerun alone, a
-   note, move on.
-6. **No ceremony for known runs**: no outside review or smoke run before `make test` or a single
-   scenario; anything under ~5 min runs in the foreground. The global "Long runs" rule (review,
-   smallest version first, a 2-minute timer, reading the results yourself) is for new or
-   unfamiliar runs over a few minutes, and for tier 4.
-7. **Bug fixes**: diagnosis, a test watched red, then the fix; the red test is tier 1's scenario.
+**`docs/testing.md` is the procedure: read it before any test run, and follow it exactly** (Paul,
+2026-10-26: "we DO NOT improvise when it comes to testing"). Every run is a step of one of its
+procedures (P1 a change, P2 a bug fix, P3 faults for new checks, P4 a probe, P5 before going live,
+P6 every week or two), named to Paul before it runs. A case it doesn't cover stops the work until
+the procedure is changed with Paul's go. Runs over 5 minutes go through its L, which is the global
+"Long runs" rule as it applies here.
 
 ## Working rules
 
-- Edit `src/`, then tier 1 above. `package/contents/code/main.js` is built; never edit it by hand,
+- Edit `src/`, then `docs/testing.md` P1. `package/contents/code/main.js` is built; never edit it by hand,
   but commit it.
 - During the Stage (`OPEN.md`), a new test tool is its own proposal.
 - i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
