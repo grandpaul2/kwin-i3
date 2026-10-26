@@ -50,6 +50,10 @@ public Q_SLOTS:
     // kwin-i3 says which windows it floats (docs/spec-window-modes.md, decision 5c): the set
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
+    // kwin-i3 says whether tiled windows get the ring (tiledLook "frame"; not "bare", where they
+    // stay borderless and rounded without it: docs/spec-tiled-look.md). Told by the script, not
+    // read from kwinrc, so the ring and the tiles' frame room change in the same pass.
+    void SetTiledRing(bool on);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -82,6 +86,7 @@ private:
     bool holding() const;                                   // a hold, or a new window hidden
     bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
     bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)
+    bool ringed(KWin::EffectWindow *w) const;               // drawn with a ring: framed with the tiled ring, or floatingFramed
     void updateRadius(KWin::EffectWindow *w);               // rounded while framed (docs/spec-rounded-corners.md)
     void updateRadii();
     void resetRadii();
@@ -111,6 +116,7 @@ private:
     QColor m_floatingActive{0x4d, 0x72, 0x54}, m_floatingInactive{0x33, 0x33, 0x33};
     bool m_frameOnFloating = false;
     bool m_roundedCorners = true;
+    bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation

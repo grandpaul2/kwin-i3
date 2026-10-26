@@ -22,6 +22,8 @@ FrameFocus::FrameFocus()
         const KConfigGroup group = config->group(QStringLiteral("Script-kwin-i3"));
         m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
         m_frameOnFloating = group.readEntry("frameOnFloating", false);
+        // Tiled windows have a ring in i3's frame look only (docs/spec-tiled-look.md).
+        m_tiledRing = group.readEntry("tiledLook", QStringLiteral("frame")) == QLatin1String("frame");
     };
     load();
     QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, load);
@@ -49,7 +51,7 @@ KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
         // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
         // takes the border of no floating window but its own).
         const bool tiled = w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
-        if (!tiled && !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
+        if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
             continue;
         }
         const RectF frame = w->frameGeometry();

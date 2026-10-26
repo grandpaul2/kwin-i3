@@ -24,6 +24,7 @@ T, R, H, X, M, K, I, L = "10-tiling.sh", "20-rules.sh", "00-harness.sh", "30-mor
 U, C, P, D = "41-unplug-focus.sh", "70-capture.sh", "42-replug-home.sh", "43-hidden-moves.sh"
 F, S, W, G = "32-fullscreen-open.sh", "25-settings.sh", "49-ws-outputs.sh", "26-gaps.sh"
 Z = "77-float-size.sh"
+TL = "85-tiled-look.sh"
 muts = [
  (T, "src/kwin.js", "one-child splits kept in projection", "        if (kids.length === 1) return kids[0].p;\n", ""),
  (T, "src/kwin.js", "same-direction nesting not merged", "            if (k.p.dir === con.layout) {", "            if (false) {"),
@@ -115,6 +116,10 @@ muts = [
  (Z, "src/kwin.js", "float size: never recorded", "        recordUntiled(w);\n", ""),
  (Z, "src/kwin.js", "float size: not moved by i3's rule on another output", "        if (r.out.x !== o.x ||", "        if (false && r.out.x !== o.x ||"),
  (Z, "src/kwin.js", "float size: a rule's float not at the record", "if (kind === \"float\") { untile(w); floatAtRecord(w); }", "if (kind === \"float\") { untile(w); }"),
+ (TL, "src/kwin.js", "tiled look: the ring kept in bare", "    function tiledRing() { return frameOn && Settings.get(\"tiledLook\") === \"frame\"; }", "    function tiledRing() { return frameOn && Settings.get(\"tiledLook\") !== \"titlebars\"; }"),
+ (TL, "src/kwin.js", "tiled look: the frame's room kept in titlebars", "        return { inner: i + (tiledRing() ? 2", "        return { inner: i + (frameOn ? 2"),
+ (TL, "src/kwin.js", "tiled look: borders not given back on a change", "                if (con && con.type !== \"floating\" && !tiledBorderless()) giveBorder(wins[key]);", ""),
+ (TL, "src/kwin.js", "tiled look: the effect never told", "        if (frameOn) callDBus(\"org.kde.KWin\", \"/kwini3hold\", \"net.local.kwini3hold\", \"SetTiledRing\", tiledRing());", ""),
 ]
 ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G, Z]
 # Known equivalent fault, not listed: snapping the first child's start in setSizes (gaps). The

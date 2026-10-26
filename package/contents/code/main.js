@@ -56,6 +56,9 @@ var Settings = (function () {
         // Plasma windows; and the frame on floating windows too, in the floating colours.
         floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
         frameOnFloating: { type: "bool", def: "false" },
+        // How tiled windows look (docs/spec-tiled-look.md): i3's frame, their own title bars, or
+        // neither. Without kwini3hold every one is "titlebars".
+        tiledLook: { type: "choice", def: "frame", choices: ["frame", "titlebars", "bare"] },
         // Tiled windows' corners, rounded by kwini3hold (docs/spec-rounded-corners.md).
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
@@ -1409,7 +1412,7 @@ var KI3 = (function () {
     function manageInto(tile, w) {
         expected[id(w)] = tile;
         log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
-        takeBorder(w);                      // before the tile asks for its size
+        tiledBorder(w);                     // before the tile asks for its size
         if (tile.manage(w)) return true;
         giveBorder(w);
         expected[id(w)] = null;
@@ -1481,14 +1484,14 @@ var KI3 = (function () {
         var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
         i -= i % 2;
         // The frame's room: twice its width, so KWin's half padding leaves it on each side.
-        return { inner: i + (frameOn ? 2 * Settings.get("frameWidth") : 0), inset: o + i / 2 };
+        return { inner: i + (tiledRing() ? 2 * Settings.get("frameWidth") : 0), inset: o + i / 2 };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area) {
         var e = gaps().inset;
         // KWin gives a tile side exactly at the screen's edge the full padding, two frames
         // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) makes every side half.
-        if (!e && frameOn) e = HAIR * Math.max(area.width, area.height);
+        if (!e && tiledRing()) e = HAIR * Math.max(area.width, area.height);
         return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
     }
     // For root tiles only (the hair's tolerance would be wrong for any other tile).
@@ -1665,7 +1668,7 @@ var KI3 = (function () {
             // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
-            else { expected[id(w)] = tile; takeBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
+            else { expected[id(w)] = tile; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
             return;
         }
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
@@ -2067,6 +2070,21 @@ var KI3 = (function () {
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
     }
 
+    // How tiled windows look (docs/spec-tiled-look.md), with the effect there: without their
+    // border in "frame" and "bare", and the ring and its room in the tiles in "frame" only.
+    // Without the effect, title bars whatever tiledLook says.
+    function tiledBorderless() { return frameOn && Settings.get("tiledLook") !== "titlebars"; }
+    function tiledRing() { return frameOn && Settings.get("tiledLook") === "frame"; }
+    function tiledBorder(w) {
+        if (tiledBorderless()) takeBorder(w);
+        else giveBorder(w);
+    }
+    // The effect draws the ring as the script says, so the ring and the tiles' room for it change
+    // in the same pass (spec, item 3). An older effect without the call ignores it.
+    function tellRing() {
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetTiledRing", tiledRing());
+    }
+
     // A tiled window's border, while the effect draws the frame (spec-window-modes R2). Read
     // back: a window rule that forces a border wins (review R1-4), and that window then keeps
     // its title bar. Re-asserted on every pass (the window menu, borderlessMaximizedWindows).
@@ -2136,7 +2154,7 @@ var KI3 = (function () {
         if (kind === "tile" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "float";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
-        if (w.noBorder && !(frameOn && kind === "tile")) w.noBorder = false;
+        if (w.noBorder && !(tiledBorderless() && kind === "tile")) w.noBorder = false;
         var ws = wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         // A new window on a workspace of Plasma windows opens floating (decision 1).
@@ -3209,6 +3227,7 @@ var KI3 = (function () {
                 marks = !!(m && m.floating && m.floating.length !== undefined);
                 // The frame first, so the windows adopted below see it (review of (iii)+(iv), 3).
                 setFrame(!!(m && m.supported && m.frameWidth !== undefined));
+                tellRing();             // again on every answer: a reloaded effect starts with the ring on
                 // An effect that lost what it was told (reloaded while the frame stayed on): tell
                 // it again (finding 1).
                 if (marks) {
@@ -3239,7 +3258,7 @@ var KI3 = (function () {
         Object.keys(wins).forEach(function (key) {
             var w = wins[key], con = model.byWin[key];
             var tiled = con && con.type !== "floating";
-            if (on && tiled) return;
+            if (on && tiled && tiledBorderless()) return;
             giveBorder(w);
             if (first && !w.deleted && w.noBorder) w.noBorder = false;
         });
@@ -3255,6 +3274,15 @@ var KI3 = (function () {
         // or tiled by hand under an unchanged verdict stays (reclassify).
         if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; }))
             workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
+        // A new look: borders given back here, taken on the next pass, which also redoes the
+        // padding (docs/spec-tiled-look.md).
+        if (changed.indexOf("tiledLook") >= 0) {
+            Object.keys(wins).forEach(function (key) {
+                var con = model.byWin[key];
+                if (con && con.type !== "floating" && !tiledBorderless()) giveBorder(wins[key]);
+            });
+            tellRing();
+        }
         scheduleAll();
         wantFocus();
     }
