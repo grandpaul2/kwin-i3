@@ -9,6 +9,11 @@ Run: make mutate-live.
   others run only if that one stays green.
 - src/ and the built package are restored even on an exception or Ctrl-C.
 - KI3_ONLY="a|b": only the faults whose name contains one of those (the baseline still runs whole).
+- KI3_SCENARIO=NN-name.sh: one scenario's faults (docs/testing.md, P3): the baseline is that
+  scenario alone, and each of its faults runs against it alone, never the rest of the suite.
+- A fault in plugin/ rebuilds the plugins (make plugin) with it, and again when it is restored.
+- A sixth field "expected to survive" (docs/testing.md, P3.5: visible, but not in the test KWin):
+  reported as such when it survives, and not counted against the run.
 """
 import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -164,29 +169,45 @@ def run(scenarios, failfast):
     real = [f for f in fails if f not in ("FAIL timed out", "FAIL no checks ran") and not f.startswith("FAIL exited")]
     return ("red", real[0]) if real else ("broken", out[-400:])
 
+def build(path):
+    """The fault (or its restore) built: the script always (run.sh builds it too), the plugins for
+    a plugin fault. False if the build failed."""
+    if not path.startswith("plugin/"): return True
+    return subprocess.run(["make", "plugin"], capture_output=True).returncode == 0
+
 def main():
-    base, out = run(ALL, False)
+    one = os.environ.get("KI3_SCENARIO", "")
+    if one and not os.path.exists(os.path.join("tests/live", one)):
+        print(f"KI3_SCENARIO: no tests/live/{one}"); return 2
+    base, out = run([one] if one else ALL, False)
     if base != "green":
         print(f"baseline is {base}, not green: fix the suite before trusting any fault result\n{out}")
         return 2
     print("baseline green", flush=True)
     survivors, broken = [], []
     only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
-    for scenario, path, name, a, b in muts:
+    for scenario, path, name, a, b, *rest in muts:
+        expected = bool(rest and rest[0])
         if only and not any(o in name for o in only): continue
+        if one and scenario != one: continue
         orig = open(path).read()
         if a not in orig:
             print(f"!! pattern missing (src changed?): {name}"); survivors.append(name); continue
         try:
             open(path, "w").write(orig.replace(a, b, 1))
-            state, why = run([scenario], True)
-            if state == "green":
-                state, why = run([s for s in ALL if s != scenario], True)
+            if not build(path):
+                state, why = "broken", "the fault does not build"
+            else:
+                state, why = run([scenario], True)
+                if state == "green" and not one:
+                    state, why = run([s for s in ALL if s != scenario], True)
         finally:
             open(path, "w").write(orig)
+            build(path)
         label = {"red": "red    ", "green": "GREEN  ", "broken": "BROKEN ", "timeout": "TIMEOUT"}[state]
+        if state == "green" and expected: label = "GREEN, expected:"
         print(f"{label} {name}" + (f"   <- {why}" if state == "red" else ""), flush=True)
-        if state == "green": survivors.append(name)
+        if state == "green" and not expected: survivors.append(name)
         if state in ("broken", "timeout"): broken.append(name)
     if broken: print("not caught by a check (harness trouble): " + ", ".join(broken))
     return 1 if survivors or broken else 0
@@ -195,4 +216,5 @@ try:
     code = main()
 finally:
     subprocess.run(["./build.sh"], capture_output=True)    # never leave a mutant built
+    if any(m[1].startswith("plugin/") for m in muts): build("plugin/")
 sys.exit(code)
