@@ -22,14 +22,12 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **Ask in plain prose**, never with the multiple-choice picker. Lay out the options and a recommendation.
 - **sudo** is passwordless, gated by Claude Code's own approval prompt: propose the command and let the
   prompt ask. Never ask Paul for a password.
-- **Long runs** (`make test`, `make fuzz`, a battery, an agent) go in the background, and **you
-  check them yourself at least every 2 minutes** (Paul, 2026-10-25, after a 20-min fuzz run failed
-  every seed from its first minute unseen): before starting, find where the run writes its results
-  (for `make fuzz`, `tests/fuzz/out/*/result.json` and `REPORT.md`, not the console); arm a
-  1-minute recurring timer (CronCreate; never `sleep`), and at each firing read those results and
-  give Paul a one-line status; stop the timer when the run ends. A Monitor, a task notification or
-  the process's own reporting is not checking: silence is not success. A run whose results all
-  fail the same way early is stopped and reported.
+- **Long runs** follow "Long runs" in `~/.claude/CLAUDE.md` (review, smallest version first, a
+  2-minute timer, you read the results yourself). Where they write them here: `make test` prints
+  each scenario's lines and a final `TIME` summary only when it ends, so while it runs read the
+  batch's files (`tests/live/run.sh`: `/tmp/tmp.*/NN-*.sh.log`, and a `.status` each as it
+  ends); `make fuzz` writes nothing to its console: `tests/fuzz/out/<seed>/result.json` per seed and `tests/fuzz/out/REPORT.md`.
+  Smallest version first: one scenario (`tests/live/run.sh NN-name.sh`), one fuzz seed.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
   for test results.
 
