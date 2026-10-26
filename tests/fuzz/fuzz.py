@@ -209,6 +209,18 @@ def overlap(a, b):
     return max(w, 0) * max(h, 0), (w, h)
 
 
+MAX_PAD = 8     # the most a tile's padding takes off one side: the fuzzer's settings' gap and frame
+
+
+def grown(w):
+    """A tiled window's frame plus its tile's padding: its tile, when the frame is right."""
+    f, t, a = w["frame"], w["tile"], w.get("want")
+    if not (t and a):
+        return f
+    return [f[0] - (a[0] - t[0]), f[1] - (a[1] - t[1]),
+            f[2] + (t[2] - a[2]), f[3] + (t[3] - a[3])]
+
+
 def check(k, d, prev):
     """Invariant failures as (code, detail). prev is the earlier dump of the settle pair."""
     bad = []
@@ -238,15 +250,30 @@ def check(k, d, prev):
                 bad.append(("I2", "%s %s outside %s %s" % (w["caption"], w["frame"], o["name"], o["geom"])))
             if w["min"] == prev_min.get(w["id"]) and (w["client"][2] < w["min"][0] or w["client"][3] < w["min"][1]):
                 bad.append(("I5", "%s client %s below its minimum %s" % (w["caption"], w["client"][2:], w["min"])))
-            if w["tile"] and any(abs(a - b) > 1 for a, b in zip(w["frame"], w["tile"])):
-                bad.append(("I10", "%s frame %s is not its tile %s" % (w["caption"], w["frame"], w["tile"])))
+            # The rect kwin-i3 asks for, inside the tile's padding (the 1 px frame, the gaps: window
+            # modes, 2026-10-24). It comes from kwin-i3's own windowRect, so it is checked on its own
+            # too: inside its tile, by at most MAX_PAD a side (review: a wrong padding would move the
+            # frame and "want" together, unseen). No fallback to the tile: a missing "want" fails.
+            if w["tile"]:
+                want = w.get("want")
+                if not want:
+                    bad.append(("I10", "%s has a tile but no want in the dump" % w["caption"]))
+                elif not all(0 <= d <= MAX_PAD for d in (want[0] - w["tile"][0], want[1] - w["tile"][1],
+                                                          w["tile"][0] + w["tile"][2] - want[0] - want[2],
+                                                          w["tile"][1] + w["tile"][3] - want[1] - want[3])):
+                    bad.append(("I10", "%s want %s is not just inside its tile %s" % (w["caption"], want, w["tile"])))
+                elif any(abs(a - b) > 1 for a, b in zip(w["frame"], want)):
+                    bad.append(("I10", "%s frame %s is not its tile's rect %s" % (w["caption"], w["frame"], want)))
         for i, a in enumerate(tiled):
             for b in tiled[i + 1:]:
                 area, wh = overlap(a["frame"], b["frame"])
                 if area:
                     bad.append(("I3", "%s and %s overlap by %dx%d on %s" % (a["caption"], b["caption"], wh[0], wh[1], o["name"])))
         if tiled:
-            covered = sum(overlap(w["frame"], o["geom"])[0] for w in tiled)
+            # Each frame grown back by its tile's padding (tile minus want), so a right frame covers
+            # its tile exactly and a frame 1 px short still leaves a 1 px hole (the snap() bug this
+            # was validated on, inside I10's 1 px slack).
+            covered = sum(overlap(grown(w), o["geom"])[0] for w in tiled)
             if covered < o["geom"][2] * o["geom"][3]:
                 bad.append(("I4", "%s: tiled windows cover %d of %d px (a hole)" % (o["name"], covered, o["geom"][2] * o["geom"][3])))
         for i in ws["floating"]:

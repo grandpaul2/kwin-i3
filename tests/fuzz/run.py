@@ -11,8 +11,12 @@ the shortest action list that still fails with the same signature, replayed 3 ti
 Shrinking used to run inside the campaign: a failing seed then held a job slot for up to 20
 minutes, and most of that went to re-shrinking known bugs (review, 2026-10-23), so a "20-minute"
 run took 29 and ran 22 seeds where 50 fit.
-Results: tests/fuzz/out/REPORT.md, one section per signature; per seed, tests/fuzz/out/<seed>/.
+Results: tests/fuzz/out/REPORT.md, one section per signature; per seed, tests/fuzz/out/<seed>/,
+and one console line per seed as it ends ("seed 12 ok", "seed 13 I10 ...") for whoever watches.
 Only the first failure of each signature is confirmed and shrunk; the others are counted.
+If the first FAIL_FAST seeds to end all fail with one signature, the campaign stops: that is the
+setup (a stale invariant, a broken build), not a bug, and was once 20 minutes of every seed failing
+at its first window (2026-10-25).
 """
 import argparse, concurrent.futures as cf, json, os, shutil, subprocess, threading, time
 
@@ -26,6 +30,9 @@ PAR = 3                      # replays at once, per shrink
 lock = threading.Lock()
 SKIP = []                    # ["--skip", codes] for every inner run
 groups = {}                  # signature -> {"seeds": [...], "state": "shrinking"/"done", ...}
+FAIL_FAST = 8                # the first this many seeds failing alike stop the campaign
+ended = []                   # each finished seed's signature ("ok" for a clean one), in order
+stop = threading.Event()
 KNOWN = os.path.join(HERE, "known.txt")
 
 
@@ -196,6 +203,14 @@ def run_seed(seed, budget):
     else:
         with lock:
             groups.setdefault("ok", {"seeds": [], "state": "ok"})["seeds"].append(seed)
+    sig = r.get("signature") or ("harness: " + r["harness"] if r.get("harness") else "ok")
+    with lock:
+        ended.append(sig)
+        print("seed %d %s" % (seed, sig), flush=True)
+        first = ended[:FAIL_FAST]
+        if len(first) == FAIL_FAST and first[0] != "ok" and all(x == first[0] for x in first) and not stop.is_set():
+            stop.set()
+            print("STOPPING: the first %d seeds all failed with %s: the setup, not a bug" % (FAIL_FAST, first[0]), flush=True)
     report()
 
 
@@ -271,8 +286,8 @@ def main():
     seed = a.seed
     with cf.ThreadPoolExecutor(a.jobs) as ex:
         running = set()
-        while time.time() < end or running:
-            while time.time() < end and len(running) < a.jobs:
+        while (time.time() < end and not stop.is_set()) or running:
+            while time.time() < end and not stop.is_set() and len(running) < a.jobs:
                 running.add(ex.submit(run_seed, seed, a.budget)); seed += 1
             done, running = cf.wait(running, return_when=cf.FIRST_COMPLETED)
             for f in done:

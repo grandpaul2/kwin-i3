@@ -1771,6 +1771,8 @@ var KI3 = (function () {
                                  min: [Math.round(w.minSize.width), Math.round(w.minSize.height)],
                                  output: w.output ? w.output.name : null, desktops: w.desktops.map(deskNum),
                                  tile: w.tile ? r(w.tile.absoluteGeometry) : null, minimized: !!w.minimized,
+                                 // the rect kwin-i3 asks for in that tile: inside its padding (the frame, the gaps)
+                                 want: w.tile ? r(windowRect(w.tile)) : null,
                                  fullscreen: !!w.fullScreen, active: w === active,
                                  // a fullscreen request KWin can't apply yet: resizable by its size
                                  // limits, but KWin says not (plan, policies: monitor returns)
