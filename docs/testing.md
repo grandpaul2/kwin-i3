@@ -9,8 +9,11 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
 
 1. **Only the runs listed here.** No extra run "to be sure", no whole-suite run but P3's, no run
    to chase a flake.
-2. **No run over 5 minutes, ever.** A longer one is split into runs of 5 minutes or less, each in
-   the foreground. Nothing runs in the background, so nothing needs a timer.
+2. **No run over 5 minutes, ever.** A longer one is split into runs of 5 minutes or less.
+   **Anything over a few seconds runs in the background** (Paul, 2026-10-26: "I need you available
+   to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
+   in the background, and you stay free to talk. When it ends, read its results yourself and give
+   Paul the outcome in a line.
 3. **A case not covered here: ask Paul** before running anything for it.
 4. **Paul's "it works" ends it** (CLAUDE.md): drop what's left, and don't chase him for results.
 5. **No new test without Paul's go, and it must be super justified** (Paul, 2026-10-26: "if you
@@ -36,7 +39,7 @@ then the fix and P1. A check for the bug only under rule 5.
 
 ## P3. Before anything goes live
 
-1. One `make test` (~4 min), in the foreground, once per session.
+1. One `make test` (~4 min), in the background, once per session.
 2. A red scenario the change drives: fix it, then rerun only that scenario.
 3. A red scenario it doesn't: one run of it alone. Green: a line in `OPEN.md` item 34. Red: report
    to Paul, don't fix it.
