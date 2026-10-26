@@ -48,9 +48,9 @@ deterministic or moved alone; (e) `make mutate-live` baselines only the scenario
 Plasma feel"). Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C answered). **Part A
 live 2026-10-26** (60470dd): `tiledLook` frame (default) / titlebars / bare, scenario 85. Part B,
 i3's tiling drag: the model's half on branch `tiling-drag` (0ea026b: `dropPlan`, `moveToTarget`,
-`swap`, `drop` in tree.js, 13 unit tests). Next: in a worktree of that branch, the probe of the
-press-taking filter (spec item 7: does a title-bar button still click, does hover or the cursor
-stick), then the channel (item 9), then the drag.
+`swap`, `drop` in tree.js, 13 unit tests). The press-taking filter's probe passed (2026-10-26,
+branch `probe-titledrag`, spec item 7's "Probe result"). Next: the channel's probe (item 9), then
+the drag.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the

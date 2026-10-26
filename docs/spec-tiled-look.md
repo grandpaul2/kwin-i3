@@ -166,6 +166,22 @@ scenarios. New:
    before KWin's window-action filter starts its move (that filter's order against ours, to
    check); Meta+Shift+left the same, as the swap (KWin's own Shift-on-finish quick tile, R-5,
    never sees it). A floating window's Meta+drag stays KWin's move.
+   **Probe result (2026-10-26, branch `probe-titledrag`: `plugin/titledrag.cpp`, scenario
+   `86-probe.sh`; Breeze, `titlebars`, two tiled windows): it works.** A title-bar click focuses
+   with no move; a drag and a press held past the start-drag time start no KWin move (`w.move`
+   false, the frame in place) and the filter sees every motion and the release; a double-click
+   does nothing; the minimize, maximize and close buttons click as before (the decoration
+   accepts the press, KWin's filter delivers the release). Hover isn't stuck: the close button's
+   hover shows and clears as before. One nit: the motions of a taken drag never reach the
+   decoration, so a drag released over a button shows its hover only at the next motion; the
+   build sends one `HoverMove` at the release. Which press counts as the title bar:
+   `decoration()->sectionUnderMouse() == Qt::TitleBarArea` (public in KDecoration3, which the
+   helper then links); edges and corners stay KWin's resize. Meta+left and Meta+Shift+left on a
+   tiled window's client are taken at the press, with no KWin move and the window still tiled:
+   `InputFilterOrder::Decoration` sorts before `WindowAction` (`input.h`), so no ordering trick
+   is needed. Not checkable headless: the cursor shape (KWin never arms a move, so its
+   `updateCursor` never runs; to watch live). In the test KWin, `qWarning` from a plugin
+   reaches nothing (`kwin.out` stays empty); the probe logged to `$KI3_TMP/probe.log`.
 8. **The indicator**: drawn by kwini3hold, which already paints over windows (a rectangle in
    `frameActive`, semi-transparent), from a rect the script sends (`SetDropIndicator x y w h`,
    empty to clear).
