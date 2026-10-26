@@ -12,8 +12,11 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
 2. **No run over 5 minutes, ever.** A longer one is split into runs of 5 minutes or less.
    **Anything over a few seconds runs in the background** (Paul, 2026-10-26: "I need you available
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
-   in the background, and you stay free to talk. When it ends, read its results yourself and give
-   Paul the outcome in a line.
+   in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
+   timer (`CronCreate`) from the moment it starts, the global "Long runs" rule: at each firing
+   read the run's result files yourself (the table in CLAUDE.md's old place: `/tmp/tmp.*/NN-*.sh.log`
+   and `.status` while `make test` runs) and give Paul one line; delete the timer when it ends and
+   give him the outcome. A notification or silence is not a check.
 3. **A case not covered here: ask Paul** before running anything for it.
 4. **Paul's "it works" ends it** (CLAUDE.md): drop what's left, and don't chase him for results.
 5. **No new test without Paul's go, and it must be super justified** (Paul, 2026-10-26: "if you
