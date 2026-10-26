@@ -199,6 +199,20 @@ scenarios. New:
    swap modifier and whether the button is still down or Escape cancelled) until the helper says
    it ended. A pending `callDBus` answered by a delayed reply (re-armed each time, the 25 s D-Bus
    timeout) is the fallback; it orphans on a reload of the helper (R-3).
+   **Probe result (2026-10-26, branch `probe-titledrag`, scenario `87-probe-channel.sh`): the
+   proposal works as written, no fallback needed.** The helper registers `/kwini3drag`
+   (`net.local.kwini3drag`, `State()` → "phase id x y shift", phase none / drag / drop / cancel,
+   a drop or cancel reported once) and, past the threshold, calls kglobalaccel's
+   `invokeShortcut "kwin-i3 Tiling Drag"` asynchronously (KWin calling itself, as the script's
+   `callDBus` to `/kwini3hold` already does). The script's action starts a 16 ms `QTimer` with
+   one `State()` call in flight at a time and stops at drop or cancel. Measured: the poll ran
+   every ~16 ms (88 polls over a 1.4 s drag); every one of 20 motion steps 50 ms apart reached
+   the script; a fast four-step Meta+Shift drag (no waits) still gave the drop and Shift; Escape
+   mid-drag gave the cancel, and the release after it stayed the filter's. The id is
+   `internalId().toString()`, equal to the script's `String(w.internalId)`. The action shows in
+   System Settings' Shortcuts list as "kwin-i3: tiling drag (internal)"; bound to a key it does
+   nothing (`State()` says none, the poll stops at once). Without the helper there is no tiling
+   drag: a title-bar drag is KWin's move and floats the window, as today.
    *Rejected (R-6)*: KWin's own move as the drag (the script keeps the window in the tree while
    KWin moves it, and drops on `interactiveMoveResizeFinished`): no filter and no channel, but the
    window follows the pointer, and Paul chose i3's stay-put (decision A).
