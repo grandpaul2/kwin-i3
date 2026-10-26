@@ -27,6 +27,10 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
+**36. A `make fuzz` run owed** (2026-10-26): items 32 and 33 went live with `make test` and their
+seeds' replays, not a campaign; `known.txt` is empty, so a campaign also proves both fixes. Next:
+at the start of a working session (~20 min, results in `tests/fuzz/out/REPORT.md`).
+
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
 First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Paul's go: (a) the
