@@ -226,8 +226,13 @@ scenarios. New:
   2026-10-26).
 - **B. The maximize button in `titlebars`**: nothing, as in sway (Paul, 2026-10-26; item 5).
 - **C. Meta+left drag on a tiled window**: i3's tiling drag (Paul, 2026-10-26: "follow i3"), in
-  place of today's "it floats where dropped"; floating it stays Meta+Shift+Space. Meta+Shift+drag
-  swaps (i3's swap modifier). A floating window's Meta+drag stays a move.
+  place of today's "it floats where dropped". A floating window's Meta+drag stays a move.
+- **D. Two breaks from i3, live 2026-10-26** (Paul, after using it): **a centre drop swaps** the
+  two windows, Shift or not (i3 moves the window after its target, which without tabs is the side
+  drop again: "I love swap. its perfect. we dont need i3's behavior here"); an empty workspace's
+  centre is still a move. **Meta+Shift+drag pulls a tiled window out and floats it**: KWin's own
+  move, the window at its floating size under the pointer, floated where dropped (i3 has no mouse
+  way to float; its Shift was the swap modifier, no longer needed).
 
 ### Tests
 
