@@ -14,7 +14,7 @@ var KI3 = (function () {
     // effect last said (asked at load and on every reconfigure; the effect asks for a
     // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took.
     var frameOn = false, tookBorder = {};
-    var borderGone = {};                             // the GTK 4 bounds (refitOnFrameChange)
+    var borderGone = {};                             // window id -> its GTK 4 bounds (refitOnFrameChange)
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
     // The floating mark (spec-window-modes decision 5c): with the effect, it keeps the set of
     // floating windows (told[key]: what it was last told), which outlives a reload of this
@@ -530,11 +530,16 @@ var KI3 = (function () {
     var reconciling = false, armed = {}, lastFit = {};
     // Plain GTK 4 (spec-window-modes "why" 5): KWin tells a client its largest size only in a
     // configure with no size (sendRoleConfigure), in practice its first, with the title bar,
-    // and GTK 4 keeps within it. A window whose border just went and lands short of its tile
-    // is asked for 0x0 (KWin resends the bounds; the client keeps its size), then for its tile
-    // in a configure of its own. Decided at the first frame change after the border went, and
-    // only then (R1-10: a dropped decoration always changes the frame or the client); never for
-    // an X11 window (no bounds there; a 0x0 request would be a real resize).
+    // and GTK 4 keeps within it. borderGone holds those bounds, worked out when the border goes
+    // (takeBorder). A tiled window short of its tile at the first frame change after the border
+    // went, or later with its frame at the bounds, is asked for 0x0 (KWin resends the bounds, now
+    // without the title bar; the client keeps its size), then for its tile in a configure of its
+    // own. The later look because a first tile inside the bounds fits, and a later, bigger one (a
+    // vertical split's half, then the whole monitor) stayed 26 px short (OPEN.md item 32); only
+    // at the bounds, so a slow client answering in steps is not asked again. The first look
+    // stays: a slow client whose tile changed before it answered gets fresh bounds before it
+    // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
+    // Never for an X11 window (no bounds there; a 0x0 request would be a real resize).
     function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
     function armRefit() { for (var key in wins) armed[key] = true; }
     function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
@@ -548,12 +553,15 @@ var KI3 = (function () {
             else if (a !== r) delete armed[leaf.win];
         });
     }
+    function atBounds(have, want, bound) { return have < want - 1 && Math.abs(have - bound) <= 1; }
     function refitOnFrameChange(w, old, dragging) {
         var key = id(w), t = expected[key];
-        if (borderGone[key] && !reconciling && t && w.tile === t) {
-            delete borderGone[key];
-            if (!fits(w, t) && !isX11(w)) {
-                var g = w.frameGeometry;
+        var b = borderGone[key];
+        if (b && !reconciling && t && w.tile === t) {
+            var first = b.first, g = w.frameGeometry, r = windowRect(t);
+            b.first = false;
+            if (!fits(w, t) && (first || atBounds(g.width, r.width, b.width) || atBounds(g.height, r.height, b.height))) {
+                delete borderGone[key];
                 log("BOUNDS " + w.caption + ": short of its tile after the border went; bounds asked again");
                 w.frameGeometry = { x: g.x, y: g.y, width: 0, height: 0 };
                 later(5, function () { if (wins[key] && w.tile === t) w.frameGeometry = windowRect(t); });
@@ -895,9 +903,13 @@ var KI3 = (function () {
             // and KWin would store "no border" for it all the same (setDecorationPolicy), which
             // the effect reads as a border taken (review of (iii)+(iv), finding 2).
             if (!serverDecorated(w)) return;
+            // The bounds KWin sent with the border (refitOnFrameChange): the placement area less
+            // the border, as sendRoleConfigure has it.
+            var f = w.frameGeometry, c = w.clientGeometry, area = workspace.clientArea(KWin.PlacementArea, w);
+            var bounds = { width: area.width - (f.width - c.width), height: area.height - (f.height - c.height), first: true };
             w.noBorder = true;
             if (!w.noBorder) return;            // a rule forces the border
-            borderGone[key] = true;
+            if (!isX11(w)) borderGone[key] = bounds;
         }
         tookBorder[key] = true;
     }

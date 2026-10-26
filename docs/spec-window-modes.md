@@ -61,9 +61,13 @@ Plasma already does.
 5. **Plain GTK 4 gets its bounds again.** KWin tells a client its largest size
    (`xdg_toplevel.configure_bounds`) only in a configure with no size, in practice its first,
    sized for the title bar it had then, and GTK 4 keeps within them: a tiled plain GTK 4 window
-   stayed 28 px short. A window that lands short after its border went is asked for a 0x0 frame
-   (KWin resends the bounds; GTK keeps its size), then for its tile 5 ms later (a configure of
-   its own: KWin builds a configure from whatever is pending when its timer fires). Qt, GTK 3,
+   stayed 28 px short. kwin-i3 works those bounds out when it takes the border (the placement
+   area less the border); a tiled window short of its tile at its first frame change after
+   that, or later with its frame at the bounds, is asked for a 0x0 frame (KWin resends the
+   bounds; GTK keeps its size), then for its tile 5 ms later (a configure of its own: KWin
+   builds a configure from whatever is pending when its timer fires). The later look because a
+   first tile inside the bounds (a vertical split's half) fits, and the whole monitor later
+   stayed 26 px short (OPEN.md item 32, test 83). Qt, GTK 3,
    Alacritty and libadwaita apps come out right at once and never take this path. No upstream
    change (Paul, 2026-10-24).
 6. **Hovering a frame doesn't steal focus for the desktop**: KWin's focus follows mouse ignores
@@ -194,7 +198,9 @@ for the build below, or a decision for Paul (marked).
   at load and on every reconfigure; no answer within a second is "no frame". Between an unload and the next pass, tiled windows
   are borderless and frameless for at most one event. The frame is independent of `holdEnabled`.
   Test: unload the effect mid-session; title bars come back.
-- **R1-10 `borderGone`** is cleared after one settle check, whatever happens; never for Xwayland
+- **R1-10 `borderGone`** (the bounds) is cleared once the bounds are asked again, or when the
+  window floats or goes (until 2026-10-26: after one settle check, which missed item 32); never
+  for Xwayland
   (X11 has no bounds; a 0x0 request would be a real tiny resize). A refused `manage()` gives the
   border back at once.
 - **R1-11 bounds elsewhere.** The same request is made when a tiled plain-GTK-4 window lands
