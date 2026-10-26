@@ -27,16 +27,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**16. A tile hidden by Show Desktop activated in the first second after a load** (seen only in the
-test KWin, 2026-10-25, while fixing item 15; `docs/bug-panel-config.md`, "Left over"). With no frame
-effect, Show Desktop turned on within ~1 s of a kwin-i3 load goes off again: something activates
-the hidden tile. Traced far enough to rule out the passive pass (it asked KWin and stopped) and
-`setFrame`'s border work (the tile was active before the 1 s miss timer's handler ran); the
-activation had no JavaScript caller visible. Not Paul's case (live, the effect answers at once).
-Next: a trace of KWin's `Workspace::activateWindow` callers in that second (helper probe in a
-worktree), or won't-fix if it stays a load-time curiosity. 74-show-desktop waits for the load to
-settle (`FRAME` logged) meanwhile.
-
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
 kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown
 again on a workspace switch 4 to 2. **The other two followed a close of the window beside it**:

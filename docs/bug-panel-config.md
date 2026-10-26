@@ -26,12 +26,14 @@ case 2 is Plasma's order ten times and passes either way, the pass winning the r
 KWin). Learned on the way: KWin's D-Bus `showDesktop(bool)` lasts only while the caller stays on
 the bus (`dbusinterface.cpp` watches the service), so the test toggles the Show Desktop shortcut.
 
-**Left over (OPEN.md):** in the test KWin, Show Desktop turned on within the first second after a
+**Left over, won't-fix (Paul, 2026-10-25; was OPEN.md item 16):** in the test KWin, Show Desktop turned on within the first second after a
 kwin-i3 load, with no frame effect, is turned off again by an activation of the tile that is not
 the pass (traced: the pass asked and stopped; the activation came with no JavaScript caller
 visible, in the same millisecond as the frame check's 1 s miss timer, before that timer's
 handler ran). The test waits for the load to settle. Not Paul's case: live, the effect answers
-at once, and a reload is a deliberate act.
+at once, and a reload is a deliberate act. Won't-fix for that reason: it needs no plugins
+and a Show Desktop in the second after a load, and nobody has hit it outside a test. Reopen if it
+is seen on a desktop.
 
 ## What happens (traced, three tries in a row at 03:54, all failing)
 
