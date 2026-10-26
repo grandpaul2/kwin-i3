@@ -166,6 +166,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] gapsInner` | `4` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
 | `[Script-kwin-i3] gapsOuter` | `2` | px added at the screen's edge (i3's `gaps outer`: the edge gap is inner + outer), 0-200 |
 | `[Script-kwin-i3] resizeStep` | `10` | % per Meta+Ctrl+arrow, 1-50 (i3's `resize ... 10 ppt`) |
+| `[Script-kwin-i3] floatingStep` | `10` | px a floating window moves (Meta+Shift+arrow) or resizes (Meta+Ctrl+arrow), 1-200 (i3's `move left 10 px`) |
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output X`: `1=DP-4, 2=DP-6` (connector names, `kscreen-doctor -o`). At login each monitor shows the lowest workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor; a monitor that appears takes its workspaces. A reload moves no workspace that exists |

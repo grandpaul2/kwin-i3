@@ -1,7 +1,8 @@
 # Spec: floating windows move and resize by key, as in i3
 
-OPEN.md item 23 (the i3 feature map, finding 1: rows A21, A40, A41). Draft for Paul's go,
-2026-10-25.
+OPEN.md item 23 (the i3 feature map, finding 1: rows A21, A40, A41). Paul's go 2026-10-25,
+with the step as a setting (`floatingStep`, px, 1-200, default 10: point 4); built and tested
+(`tests/live/81-float-keys.sh`) the same day.
 
 ## Today
 
@@ -41,13 +42,13 @@ takes a tiled con (`tree.js:675`). The only way to move or size a floating windo
    Wayland has no size increments, and for an Xwayland window KWin applies them itself; a client
    that answers with a size of its own choosing (a terminal snapping to its cells) gets the size it
    picks, as with a Meta+right-drag.
-4. **The amount**: fixed 10 px, as i3's defaults, no new setting. (Option for Paul: a
-   `floatingStep` setting beside `resizeStep`, if 10 px proves slow on a 2560 px monitor.)
+4. **The amount**: `floatingStep`, 10 px by default as i3's, beside `resizeStep` on the settings
+   page and in the Configure form (Paul chose a setting over a fixed 10 px).
 5. **Plasma-window workspaces** (`floatingWorkspaces`): every window there floats, so the keys
    move and size them the same way. That is what a user of those workspaces would expect from the
    key's name; noted so it's a decision, not a surprise.
-6. **Nothing else changes**: tiled windows keep i3's tree moves and percentage resize; the keys,
-   their names and the settings page are as they are.
+6. **Nothing else changes**: tiled windows keep i3's tree moves and percentage resize; the keys
+   and their names are as they are.
 
 The model needs no change: a floating con keeps no geometry of its own (KWin's frame is the truth,
 as for Meta+drag), so this is `src/kwin.js` only, in the Move and resize actions: a floating

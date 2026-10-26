@@ -155,6 +155,16 @@ KCM.SimpleKCM {
             onValueModified: root.settings.resizeStep = value
             KCM.SettingStateBinding { configObject: root.settings; settingName: "resizeStep" }
         }
+        // Floating windows move and resize by pixels, as in i3 (docs/spec-float-keys.md).
+        UnitSpinBox {
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Floating step:")
+            unit: "px"
+            from: 1; to: 200
+            value: root.settings.floatingStep
+            onValueModified: root.settings.floatingStep = value
+            Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
+        }
         ChoiceBox {
             Kirigami.FormData.label: i18nc("@label:listbox", "Focus at an edge:")
             settingName: "focusWrapping"

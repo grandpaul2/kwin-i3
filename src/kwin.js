@@ -1072,15 +1072,8 @@ var KI3 = (function () {
                 if (armed[key] !== true) armed[key] = "pending";
                 delete lastFit[key];
             }
-            if (kind === "move" && w.output !== outputOf(ws)) {
-                // Dropped on another monitor: it joins the workspace shown there (as i3ws did),
-                // and keeps the focus, as a dragged window does in i3.
-                var to = wsModel(deskNum(workspace.currentDesktopForScreen(w.output)));
-                model.moveToWorkspace(con, to);
-                model.focusWin(key);
-                wantFocus();
-                schedule(to);
-            }
+            // Dropped on another monitor: as i3ws did, and as a dragged window does in i3.
+            if (kind === "move" && w.output !== outputOf(ws)) joinShownWorkspace(con, w, w.output);
             schedule(ws);
         }));
         // No outputChanged handler, on purpose. When a monitor goes or comes back, screensChanged
@@ -1197,6 +1190,56 @@ var KI3 = (function () {
     var DIRS = { left: Tree.LEFT, right: Tree.RIGHT, up: Tree.UP, down: Tree.DOWN };
     function step() { return Settings.get("resizeStep") / 100; }
 
+    // A floating window moves and resizes by floatingStep px, as i3's 10 px (cmd_move_direction,
+    // cmd_resize_floating; docs/spec-float-keys.md). The window, or null when the keys are the
+    // tree's: a tiled con, or a floating window KWin holds fullscreen or maximized.
+    function floatingWin(c) {
+        var w = c && c.type === "floating" ? wins[c.win] : null;
+        return w && !w.fullScreen && w.maximizeMode === 0 ? w : null;
+    }
+    function screenAt(x, y) {
+        return workspace.screens.filter(function (s) {
+            var g = s.geometry;
+            return x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height;
+        })[0] || null;
+    }
+    // Dropped (a drag) or moved by key onto another monitor: it joins the workspace shown there
+    // and keeps the focus (i3's floating_maybe_reassign_ws).
+    function joinShownWorkspace(con, w, output) {
+        var to = wsModel(deskNum(workspace.currentDesktopForScreen(output)));
+        model.moveToWorkspace(con, to);
+        model.focusWin(id(w));
+        wantFocus();
+        schedule(to);
+    }
+    // True when the key was a floating window's (done, or refused), false for the tree's.
+    function nudgeFloating(c, d) {
+        var w = floatingWin(c);
+        if (!w) return c && c.type === "floating";
+        var px = Settings.get("floatingStep"), g = w.frameGeometry;
+        var r = { x: g.x + (d === "left" ? -px : d === "right" ? px : 0),
+                  y: g.y + (d === "up" ? -px : d === "down" ? px : 0), width: g.width, height: g.height };
+        // Refused only when no part would be on a monitor (i3's floating_reposition).
+        var on = workspace.screens.some(function (s) {
+            var o = s.geometry;
+            return r.x < o.x + o.width && r.x + r.width > o.x && r.y < o.y + o.height && r.y + r.height > o.y;
+        });
+        if (!on) return true;
+        w.frameGeometry = r;
+        var s = screenAt(r.x + r.width / 2, r.y + r.height / 2), ws = Tree.wsOf(c);
+        if (s && s !== outputOf(ws)) joinShownWorkspace(c, w, s);
+        return true;
+    }
+    function growFloating(c, what, sign) {
+        var w = floatingWin(c);
+        if (!w) return c && c.type === "floating";
+        if (!w.resizeable) return true;
+        var px = sign * Settings.get("floatingStep"), g = w.frameGeometry;
+        w.frameGeometry = { x: g.x, y: g.y, width: Math.max(1, g.width + (what === "width" ? px : 0)),
+                            height: Math.max(1, g.height + (what === "height" ? px : 0)) };
+        return true;
+    }
+
     function act(name, fn) {
         return guard(name, function () {
             var con = focusedCon();
@@ -1234,11 +1277,12 @@ var KI3 = (function () {
         // not; a stock Plasma binds neither key (docs/spec-own-keys.md).
         "Fullscreen": function () { invoke("Window Fullscreen"); },
         "Close": function () { invoke("Window Close"); },
-        // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt.
-        "Shrink Width": function (c) { model.resize(c, "width", -step()); },
-        "Grow Width": function (c) { model.resize(c, "width", step()); },
-        "Shrink Height": function (c) { model.resize(c, "height", -step()); },
-        "Grow Height": function (c) { model.resize(c, "height", step()); },
+        // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
+        // or floatingStep px on a floating window.
+        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step()); },
+        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step()); },
+        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step()); },
+        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step()); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values. The config form saves without telling KWin (docs/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
@@ -1246,7 +1290,7 @@ var KI3 = (function () {
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
         actions["Focus " + cap] = function () { model.focusDir(DIRS[d], Settings.get("focusWrapping")); };
-        actions["Move " + cap] = function (c) { model.move(c, DIRS[d]); };
+        actions["Move " + cap] = function (c) { if (!nudgeFloating(c, d)) model.move(c, DIRS[d]); };
     });
 
     // Meta+N: show workspace N where it lives and focus it; an empty, hidden one opens on the

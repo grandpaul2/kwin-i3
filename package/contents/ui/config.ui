@@ -158,6 +158,32 @@
       </widget>
      </item>
      <item row="5" column="0">
+      <widget class="QLabel" name="floatingStepLabel">
+       <property name="text">
+        <string>Floating step:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingStep</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSpinBox" name="kcfg_floatingStep">
+       <property name="suffix">
+        <string> px</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>200</number>
+       </property>
+       <property name="toolTip">
+        <string>How far one press of Meta+Shift+arrow moves, or Meta+Ctrl+arrow resizes, a floating window.</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
       <widget class="QLabel" name="focusWrappingLabel">
        <property name="text">
         <string>Focus at an edge:</string>
@@ -167,7 +193,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <widget class="QComboBox" name="kcfg_focusWrapping">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -197,7 +223,7 @@
        </item>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="holdEnabledLabel">
        <property name="text">
         <string>Layout changes:</string>
@@ -207,7 +233,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QCheckBox" name="kcfg_holdEnabled">
        <property name="text">
         <string>Wait for every window to resize (needs the kwin-i3 plugins)</string>
@@ -217,7 +243,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="holdTimeoutMsLabel">
        <property name="text">
         <string>Wait at most:</string>
@@ -227,7 +253,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
        <property name="suffix">
         <string> ms</string>
@@ -243,7 +269,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0" colspan="2">
+     <item row="9" column="0" colspan="2">
       <widget class="QLabel" name="workspacesHeading">
        <property name="text">
         <string>Workspaces</string>
@@ -261,7 +287,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="workspaceAutoBackAndForthLabel">
        <property name="text">
         <string>Options:</string>
@@ -271,7 +297,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="10" column="1">
       <widget class="QCheckBox" name="kcfg_workspaceAutoBackAndForth">
        <property name="text">
         <string>Pressing the current workspace's key returns to the previous one</string>
@@ -281,7 +307,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="workspaceOutputsLabel">
        <property name="text">
         <string>Workspace monitors:</string>
@@ -291,7 +317,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="11" column="1">
       <widget class="QLineEdit" name="kcfg_workspaceOutputs">
        <property name="minimumSize">
         <size>
@@ -307,7 +333,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="floatingWorkspacesLabel">
        <property name="text">
         <string>Plasma windows on workspaces:</string>
@@ -317,7 +343,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="12" column="1">
       <widget class="QLineEdit" name="kcfg_floatingWorkspaces">
        <property name="placeholderText">
         <string>3, 7</string>
@@ -327,7 +353,7 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0" colspan="2">
+     <item row="13" column="0" colspan="2">
       <widget class="QLabel" name="frameHeading">
        <property name="text">
         <string>Frame</string>
@@ -345,7 +371,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0" colspan="2">
+     <item row="14" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
         <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. The floating colours are for the frame on floating windows (below).</string>
@@ -355,7 +381,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="frameWidthLabel">
        <property name="text">
         <string>Width:</string>
@@ -365,7 +391,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="15" column="1">
       <widget class="QSpinBox" name="kcfg_frameWidth">
        <property name="suffix">
         <string> px</string>
@@ -378,7 +404,7 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="frameActiveLabel">
        <property name="text">
         <string>Focused tiled window:</string>
@@ -388,14 +414,14 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
+     <item row="16" column="1">
       <widget class="QLineEdit" name="kcfg_frameActive">
        <property name="placeholderText">
         <string>#4c7899</string>
        </property>
       </widget>
      </item>
-     <item row="16" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="frameInactiveLabel">
        <property name="text">
         <string>Other tiled windows:</string>
@@ -405,28 +431,28 @@
        </property>
       </widget>
      </item>
-     <item row="16" column="1">
+     <item row="17" column="1">
       <widget class="QLineEdit" name="kcfg_frameInactive">
        <property name="placeholderText">
         <string>#333333</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
+     <item row="18" column="1">
       <widget class="QCheckBox" name="kcfg_roundedCorners">
        <property name="text">
         <string>Round the corners of tiled windows</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="19" column="1">
       <widget class="QCheckBox" name="kcfg_frameOnFloating">
        <property name="text">
         <string>Frame floating windows too (in the floating colours)</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="0">
+     <item row="20" column="0">
       <widget class="QLabel" name="frameFloatingActiveLabel">
        <property name="text">
         <string>Focused floating window:</string>
@@ -436,14 +462,14 @@
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
+     <item row="20" column="1">
       <widget class="QLineEdit" name="kcfg_frameFloatingActive">
        <property name="placeholderText">
         <string>#4d7254</string>
        </property>
       </widget>
      </item>
-     <item row="20" column="0">
+     <item row="21" column="0">
       <widget class="QLabel" name="frameFloatingInactiveLabel">
        <property name="text">
         <string>Other floating windows:</string>
@@ -453,14 +479,14 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="1">
+     <item row="21" column="1">
       <widget class="QLineEdit" name="kcfg_frameFloatingInactive">
        <property name="placeholderText">
         <string>#333333</string>
        </property>
       </widget>
      </item>
-     <item row="21" column="0" colspan="2">
+     <item row="22" column="0" colspan="2">
       <widget class="QLabel" name="rulesHeading">
        <property name="text">
         <string>Window rules</string>
@@ -478,7 +504,7 @@
        </property>
       </widget>
      </item>
-     <item row="22" column="0">
+     <item row="23" column="0">
       <widget class="QLabel" name="ignoreClassLabel">
        <property name="text">
         <string>Leave alone, applications:</string>
@@ -488,7 +514,7 @@
        </property>
       </widget>
      </item>
-     <item row="22" column="1">
+     <item row="23" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreClass">
        <property name="minimumSize">
         <size>
@@ -501,7 +527,7 @@
        </property>
       </widget>
      </item>
-     <item row="23" column="0">
+     <item row="24" column="0">
       <widget class="QLabel" name="ignoreRoleLabel">
        <property name="text">
         <string>Leave alone, roles:</string>
@@ -511,7 +537,7 @@
        </property>
       </widget>
      </item>
-     <item row="23" column="1">
+     <item row="24" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreRole">
        <property name="minimumSize">
         <size>
@@ -524,7 +550,7 @@
        </property>
       </widget>
      </item>
-     <item row="24" column="0">
+     <item row="25" column="0">
       <widget class="QLabel" name="floatingClassLabel">
        <property name="text">
         <string>Always float, applications:</string>
@@ -534,7 +560,7 @@
        </property>
       </widget>
      </item>
-     <item row="24" column="1">
+     <item row="25" column="1">
       <widget class="QLineEdit" name="kcfg_floatingClass">
        <property name="minimumSize">
         <size>
@@ -547,7 +573,7 @@
        </property>
       </widget>
      </item>
-     <item row="25" column="0">
+     <item row="26" column="0">
       <widget class="QLabel" name="floatingTitleLabel">
        <property name="text">
         <string>Always float, titles containing:</string>
@@ -557,7 +583,7 @@
        </property>
       </widget>
      </item>
-     <item row="25" column="1">
+     <item row="26" column="1">
       <widget class="QLineEdit" name="kcfg_floatingTitle">
        <property name="minimumSize">
         <size>
@@ -570,7 +596,7 @@
        </property>
       </widget>
      </item>
-     <item row="26" column="0" colspan="2">
+     <item row="27" column="0" colspan="2">
       <widget class="QLabel" name="keysHeading">
        <property name="text">
         <string>Keys</string>
@@ -588,7 +614,7 @@
        </property>
       </widget>
      </item>
-     <item row="27" column="0">
+     <item row="28" column="0">
       <widget class="QLabel" name="warnTakenKeysLabel">
        <property name="text">
         <string>Options:</string>
@@ -598,14 +624,14 @@
        </property>
       </widget>
      </item>
-     <item row="27" column="1">
+     <item row="28" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
         <string>Warn at login about keys other shortcuts already use</string>
        </property>
       </widget>
      </item>
-     <item row="28" column="0" colspan="2">
+     <item row="29" column="0" colspan="2">
       <widget class="QLabel" name="troubleshootingHeading">
        <property name="text">
         <string>Troubleshooting</string>
@@ -623,7 +649,7 @@
        </property>
       </widget>
      </item>
-     <item row="29" column="0">
+     <item row="30" column="0">
       <widget class="QLabel" name="debugLogLabel">
        <property name="text">
         <string>Debug log:</string>
@@ -633,7 +659,7 @@
        </property>
       </widget>
      </item>
-     <item row="29" column="1">
+     <item row="30" column="1">
       <widget class="QCheckBox" name="kcfg_debugLog">
        <property name="text">
         <string>Log every action, for bug reports</string>

@@ -117,15 +117,17 @@ check "unrecorded: the stand-in keeps Meta+Alt+F" test "$(keys_of fakeapp Launch
 check "and Focus Down (K) keeps Meta+K"     test "$(keys_of kwin "kwin-i3 Focus Down (K)")" == "a(ai) 1 4 $((0x1000004B)) 0 0 0"
 check "the page says so"                    test "$(count_near keys-failed 0 76 1280 116 $ERROR)" -gt 200
 
-# 3. Back on the main page: a gap typed, and from the resize step Tab reaches the focus choice,
+# 3. Back on the main page: a gap typed, and from the floating step Tab reaches the focus choice,
 #    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
 #    with no plugin loaded.
 click_named - "Navigate Back"; sleep 0.5
 shot main
 click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
+check "Tab from the resize step reaches the floating step" test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
+press Tab
 # A combo box is named by its current choice (its label comes through labelled-by).
-check "Tab from the resize step reaches the focus choice" test "$($A11Y focused kcmshell6)" == "Next monitor, else wrap around"
+check "then the focus choice" test "$($A11Y focused kcmshell6)" == "Next monitor, else wrap around"
 press Down
 shot main-set
 m=$(mark); click_named - Apply
