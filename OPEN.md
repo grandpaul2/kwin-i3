@@ -52,7 +52,10 @@ window where it is dropped (decision D, two breaks from i3, Paul's). Fixed on th
 beside a window on another workspace threw (0709197); a window crossing monitors could be left
 hidden (b3ce0c8); the helper's destructor left a stale filter in KWin, which crashed it once
 (591360c, P1.3 in `docs/testing.md` since). Next: Paul uses it for a couple of days; the
-title-bar drag in the title-bar look hasn't been tried live yet.
+title-bar drag in the title-bar look hasn't been tried live yet. Not run since the last
+changes: one `make test` (the session's ran before the drag cursor, the cross-monitor fix in
+relocate, the centre swap and Meta+Shift; each ran its own scenarios, plugin ones with 64).
+Next: at the start of a working session, one `make test`.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
