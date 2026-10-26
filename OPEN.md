@@ -47,6 +47,24 @@ other monitor, keys act on one monitor and the new window opens on the other. Ne
 test KWin (pointer on Virtual-1's empty workspace, focus on Virtual-0, open a window), then a fix
 proposal (KWin's placement option, or kwin-i3 sending a new window to the focused workspace).
 
+**28. No launch workspace** (finding 2: C19). An app opens on the workspace current when its
+window appears, not the one it was launched from: switch workspaces while a slow app starts and
+it lands where you are. i3 places it by the startup notification's workspace; KWin ignores the
+notification's desktop. Next: read what KWin 6.7.5 gives a script at launch (startup id / token
+on the window, `xdg-activation`), then a proposal (remember the workspace at launch, send the
+window there), or won't-fix with the reason if nothing reaches the script.
+
+**29. No "move window to next/prev workspace"** (finding 4: A27). Workspace Next/Prev (and on
+Output) exist as go-to actions (`kwin.js:1394`), the move forms don't; KWin's own "Window to Next
+Desktop" ignores which workspaces exist. Next: add the four move actions, unbound as the go-to
+ones (`docs/spec-workspace-commands.md`), with a test; Paul's go first.
+
+**30. Focus after a close, at the top level and for floating windows** (finding 8: B51, C26).
+Inside a split kwin-i3 gives focus as i3 does; at a workspace's top level and when a floating
+window closes, KWin's choice stands (`NextFocusPrefersMouse=true` here, false on a stock install),
+which can differ from i3's (the most recently focused in the workspace). Next: compare the two in
+the test KWin for both settings (three tiled, one floating, close each), then a proposal.
+
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
 kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown
 again on a workspace switch 4 to 2. **The other two followed a close of the window beside it**:
