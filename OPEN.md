@@ -43,8 +43,8 @@ again, it goes alone. Next: Paul's choice of (a)-(c).
 
 **35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
 Plasma feel"). One choice for tiled windows, i3 frame (default) / Plasma title bars / bare; then
-i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A
-and C answered). Next: Paul's answer to decision B (the maximize button); then part A in a branch.
+i3's tiling drag by the title bar. Spec: `docs/spec-tiled-look.md` (reviewed once; decisions A-C
+answered). Next: part A in a branch; then part B's channel probe.
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
