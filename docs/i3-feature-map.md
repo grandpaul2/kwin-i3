@@ -28,8 +28,8 @@ Checked by hand against code or config before writing this summary: 1 (`tree.js:
 them, with their tags.
 
 **Holes in i3's feel**
-1. **Floating windows don't move or resize by key** (A21, A40, A41): Meta+Shift+arrows and the
-   resize keys return early on a floating window (`tree.js:503`); i3 moves it 10 px, resizes it.
+1. **Floating windows don't move or resize by key** (A21, A40, A41). **Done** 2026-10-25 (OPEN.md
+   item 23, `docs/spec-float-keys.md`): they move and resize by `floatingStep` px, 10 by default.
 2. **No launch workspace** (C19): an app opens on the workspace current when its window appears,
    not the one it was launched from; KWin ignores the startup notification's desktop.
 3. **Urgency shows nowhere** (C97): i3 marks the workspace in the bar; the widget has no urgent state.

@@ -71,10 +71,10 @@ ask for the tile again. That is the nearest to i3 available.
 
 ## Test (`tests/live/82-self-resize.sh`)
 
-**No well-behaved client can resize itself in a tile.** KWin sends a tile's window the xdg tiled
-states (`XdgToplevelWindow::doSetQuickTileMode`, `xdgshellwindow.cpp:907`), and then GTK 4's
-`set_default_size` and GTK 3's `gtk_window_resize` (Firefox's call) both keep the configured
-size: tried, neither changed the frame. Firefox draws at its own size regardless. So the test
+**No well-behaved client can resize itself in a tile.** GTK 4's `set_default_size` and GTK 3's
+`gtk_window_resize` (Firefox's call) both keep the size KWin last configured: tried, neither
+changed the frame. (Not because of xdg's tiled states: a kwin-i3 tile has padding, so no anchors,
+and KWin sends none, `doSetQuickTileMode`.) Firefox draws at its own size regardless. So the test
 writes the frame from outside kwin-i3 (`frameGeometry` from a test script): to kwin-i3 that is
 the same event, a frame change it didn't ask for. That KWin accepts a client's own size is what
 the capture shows.
