@@ -107,8 +107,8 @@ float* (`floatingClass`, `floatingTitle`).
 - *Shortcuts:* `Configure Keys…`, as now.
 - *Options:* `[x] Warn at login about keys other shortcuts already use` (`warnTakenKeys`).
 
-**Troubleshooting**
-- *Debug log:* `[x] Log every action, for bug reports` (`debugLog`).
+**Troubleshooting**: removed 2026-10-25 (Paul). Its one control, *Debug log* (`debugLog`), does
+nothing on a desktop; the log is always kept in memory for captures (`docs/debugging.md`).
 
 ### Wording (HIG: sentence case, imperative, positive)
 
