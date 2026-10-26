@@ -150,11 +150,19 @@ scenarios. New:
    `FrameFocus` is; installed later at equal weight, it runs before KWin's decoration filter
    (`input.cpp:2948`, R-4). A filter can't hold an event and replay it later (R-2), and KWin's
    title-bar press only arms a *delayed* move (`startDelayedInteractiveMoveResize`,
-   `window.cpp:1121`, `2779`). So: the title-bar press of a tiled window goes on to KWin
-   (focus, raise, the double-click timer, as now); the filter watches the motion while the button
-   is down, and past i3's threshold cancels KWin's pending move (`dontInteractiveMoveResize`, to
-   check it is reachable from a plugin) and takes the drag: every motion and the release from
-   then on are its own. **Meta+left on a tiled window** (decision C: i3's) is taken at the press,
+   `window.cpp:1121`, `2779`), started by a timer (Qt's start-drag time) as well as by motion,
+   and its cancel (`dontInteractiveMoveResize`, the delayed-move calls) is `protected` in
+   `Window` (checked 2026-10-26 in the installed `kwin/window.h`): a plugin can't stop a move
+   KWin has armed. So the filter takes the press before KWin arms one, with public calls only:
+   it sends the press to the decoration itself, as KWin's `DecorationEventFilter` does
+   (`QCoreApplication::sendEvent(decoration, QMouseEvent)` in the decoration's coordinates). If
+   the decoration accepts it, it was a button: the filter returns true (KWin's filter would
+   deliver it twice) and the release goes on to KWin and the decoration as usual. If not, it is
+   the title bar: the filter activates and raises as KWin would (`performMousePressCommand`, as
+   `FrameFocus` does) and starts i3's drag, past i3's threshold, with every motion and the
+   release its own. A title-bar double-click then does nothing (it would only maximize,
+   decision B). **The probe's first question**: does a button still click, and does nothing
+   else of KWin's (hover, the cursor) get stuck. **Meta+left on a tiled window** (decision C: i3's) is taken at the press,
    before KWin's window-action filter starts its move (that filter's order against ours, to
    check); Meta+Shift+left the same, as the swap (KWin's own Shift-on-finish quick tile, R-5,
    never sees it). A floating window's Meta+drag stays KWin's move.
