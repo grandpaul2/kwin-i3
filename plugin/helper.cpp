@@ -15,8 +15,5 @@ Helper::~Helper()
         KWin::input()->uninstallInputEventFilter(&m_frameFocus);
         KWin::input()->uninstallInputEventFilter(&m_tilingDrag);
         KWin::input()->uninstallInputEventFilter(m_tilingDrag.grab());
-    KWin::input()->installInputEventFilter(m_tilingDrag.grab());
-    KWin::input()->installInputEventFilter(&m_tilingDrag);
-    KWin::input()->installInputEventFilter(m_tilingDrag.grab());
     }
 }
