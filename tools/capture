@@ -2,9 +2,14 @@
 # Meta+Shift+B on the live desktop: save kwin-i3's state the moment something looks wrong, so it
 # can become a test later without a description. Silent (no notification), takes about a second.
 #   ~/.local/state/kwin-i3/captures/<time>/state.txt   kwin-i3's "Dump State": outputs, every
-#                                                      workspace's tree, every window, its last log
-#   .../journal.txt   KWin's journal lines from the last 10 minutes
+#                                                      workspace's tree, every window, and (== log)
+#                                                      its last 300 log lines, to the millisecond.
+#                                                      Read that section first.
+#   .../kwin-journal.txt   KWin's own journal lines from the last 10 minutes (script errors, the
+#                          plugins' kwini3* lines); never kwin-i3's log, which doesn't reach the
+#                          journal. Not kept when there were none.
 #   .../screen.png    both monitors
+# docs/debugging.md has where every record lives.
 # KI3_CAPTURE_DIR overrides the parent directory (the live test uses it). Inside the test KWin
 # (KI3_INNER=1) the journal and the screenshot are skipped: they would be the live desktop's, not the test's.
 # Captions, the journal and the screenshot can be private: the directory is mode 700.
@@ -33,7 +38,8 @@ grep -q 'DUMP END$' "$state" 2>/dev/null || echo "capture: kwin-i3 did not answe
 
 if [[ ${KI3_INNER:-} != 1 ]]; then
     timeout 10 journalctl --user -b --since -10min --no-pager -o short-precise _COMM=kwin_wayland \
-        > "$dir/journal.txt" 2>&1
+        > "$dir/kwin-journal.txt" 2>&1
+    grep -qx -- '-- No entries --' "$dir/kwin-journal.txt" && rm -f "$dir/kwin-journal.txt"
     timeout 10 spectacle -b -n -f -o "$dir/screen.png" >/dev/null 2>&1
 fi
 exit 0

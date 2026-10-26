@@ -27,11 +27,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
-**Owed: a full `make test` on b935577** (live since 2026-10-25 evening). Its full run before the
-32-fullscreen-open fix passed everything but 32; after the fix, 32 passed alone three times and
-26, 37 and 78 passed; the full run itself was never finished. Next: at the start of the next
-working session, before anything else changes.
-
 **16. A tile hidden by Show Desktop activated in the first second after a load** (seen only in the
 test KWin, 2026-10-25, while fixing item 15; `docs/bug-panel-config.md`, "Left over"). With no frame
 effect, Show Desktop turned on within ~1 s of a kwin-i3 load goes off again: something activates
@@ -48,18 +43,18 @@ look at it; by hand, whether arrow keys move the highlight in an open dropdown (
 didn't, in 76).
 
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
-kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first two were Firefox:
-shown again on a workspace switch 4 to 2, and growing to full width when the terminal beside it
-closed. kwin-i3's side checked for those: the trees were right, and kwini3hold kept the closing
-window and released on Firefox's new size with no timeout (66 holds, max 69 ms). **The third had no
-Firefox**: workspace 3 on DP-4, holding one Alacritty (tiled 2564,4 2552x1392, frame where it
-should be); what preceded it isn't recorded (the capture's journal is empty, `debugLog` off). So
+kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown
+again on a workspace switch 4 to 2. **The other two followed a close of the window beside it**:
+at 17:57 a terminal beside Firefox, at 18:51 one of two Alacritty on workspace 3 (DP-4; its
+`state.txt` log: `18:51:17 ACTION Close`, `TREE 3 H[Alacritty*]`, the press 7 s later). kwin-i3's
+side checked for the Firefox ones: the trees were right, and kwini3hold kept the closing window and
+released on Firefox's new size with no timeout (66 holds, max 69 ms). With no Firefox at 18:51,
 the guess that Firefox acknowledges a size before drawing into it no longer covers every case; a
-cause in kwini3hold, the frame effect or KWin is as likely. Next: ask Paul what the 18:51 one
-followed; then reproduce in the test KWin (Alacritty and the test client first, real Firefox with
-a throwaway profile second), screenshots every few ms during a close and a workspace switch,
-looking for background inside a window's rect. Turning on `debugLog` live until it's caught would
-give the next capture a journal (Paul's call).
+cause in kwini3hold, the frame effect or KWin is as likely. The log is stamped to the millisecond
+from this session's change (`docs/debugging.md`), so the next capture times the close against what
+kwin-i3 did after it. Next: reproduce in the test KWin, Alacritty and the test client first: two tiled, close
+one, screenshots every few ms during the close (then a workspace switch), looking for background
+inside the survivor's rect; real Firefox with a throwaway profile second.
 
 ## Deferred (the Stage)
 
@@ -107,7 +102,9 @@ unloaded and loaded, a desktop removed or moved. 53-hold's other early failure, 
 `--notify` not taking (seen once, early 2026-10-24), has not recurred in ~15 full runs since;
 closed unless it comes back. **39-layout-notice came back**: the same 5 checks ("de: logged as
 not fitted", the notification's) failed in a full batch twice on 2026-10-25, passing alone each
-time and in the runs between. A batch-load race in its notification checks, not traced. Next:
+time and in the runs between. A batch-load race in its notification checks, not traced. Late
+2026-10-25 it failed again with **69-keyboard-layouts** beside it ("the helper fitted French" and
+Workspace 5's AZERTY key), both passing alone twice: likely the same layout race. Next:
 its log around "not fitted" from a failing batch run (keep the run's output), with the
 reliability work.
 

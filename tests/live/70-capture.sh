@@ -34,7 +34,7 @@ state2=$(ls -d "$KI3_CAPTURE_DIR"/*/ | tail -1)state.txt
 check "a second capture"                    test "$state2" != "$state"
 check "debugLog off: nothing went to the test log" eval '! after "$m" | grep -q "kwin-i3 loaded"'
 check "debugLog off: the dump says so"      grep -q "DUMP BEGIN released=false debugLog=false" "$state2"
-check "debugLog off: the in-memory log still has the load" grep -qE "^.{9}[0-9:]{8} kwin-i3 loaded$" "$state2"
+check "debugLog off: the in-memory log still has the load" grep -qE "^.{9}[0-9:]{8}\.[0-9]{3} kwin-i3 loaded$" "$state2"
 
 # A second press while one is running does nothing (the lock), rather than fight for the name.
 n_before=$(ls -d "$KI3_CAPTURE_DIR"/*/ | wc -l)

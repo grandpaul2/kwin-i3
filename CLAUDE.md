@@ -45,9 +45,11 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 
 ## Finding bugs
 
-- **Paul's own finds**: Meta+Shift+B (`tools/capture`) saves state, the journal and a screenshot to
-  `~/.local/state/kwin-i3/captures/<time>/`. Each one gets a diagnosis first; with Paul's go, a
-  live test watched red, then the fix.
+- **Paul's own finds**: Meta+Shift+B (`tools/capture`) saves state and a screenshot to
+  `~/.local/state/kwin-i3/captures/<time>/`. **Read `state.txt`'s `== log` section first**: it
+  holds what he did before the press, to the millisecond. kwin-i3's log never reaches the journal,
+  and `debugLog` does nothing live; `docs/debugging.md` says where every record lives. Each one
+  gets a diagnosis first; with Paul's go, a live test watched red, then the fix.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
   Run it after a major change or a batch of minor ones, not after every fix (Paul, 2026-10-22):
   `make test` covers a small fix. It takes ~20 min. `tests/fuzz/run.py --reshrink SEED` shrinks a
