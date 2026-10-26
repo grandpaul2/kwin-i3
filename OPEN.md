@@ -29,7 +29,7 @@ Work for now.
 
 **33. The active window on a desktop its monitor isn't showing** (fuzzer I8, found 2026-10-26;
 1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
-Virtual-0 shows 4`; kept in `tests/fuzz/i33/`). Next: shrink seed 30 as for 32, then a diagnosis.
+Virtual-0 shows 4`; kept in `tests/fuzz/i33/`). Next: replay seed 30 once (its trace as `{"actions": [...]}` to `tools/testkwin.sh tests/fuzz/fuzz.py replay`); shrink only if the log doesn't settle it; then a diagnosis.
 
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
