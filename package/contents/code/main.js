@@ -2113,6 +2113,12 @@ var KI3 = (function () {
             return d.modal && d.transientFor === w && (d.move || d.resize);
         });
     }
+    // A window crossing to another monitor stays on all desktops until KWin says it arrived
+    // (outputChanged, or 2 s): given its workspace's desktop at once, it is hidden on the monitor
+    // it is still on, and a hidden client may never answer the move (Electron: VS Code left on
+    // DP-6 with desktop 3, KWin waiting on it, sendToOutput a no-op from then on; Paul's capture,
+    // 2026-10-26 04:32). window id -> the desktop it gets on arrival.
+    var crossing = {};
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
         model.leaves(ws).concat(ws.floating).forEach(function (c) {
@@ -2121,14 +2127,34 @@ var KI3 = (function () {
             if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
             if (inDrag(w)) return;
             var key = id(w);
+            if (crossing[key]) { crossing[key] = desk; return; }    // still crossing: arrives below
             untile(w);
             placing[key] = true;
             relocating++;
             try {
-                if (w.output !== screen) workspace.sendClientToScreen(w, screen);
-                w.desktops = [desk];      // after the screen: KWin gives a moved window that screen's desktop
+                if (w.output !== screen) {
+                    crossing[key] = desk;
+                    w.onAllDesktops = true;
+                    workspace.sendClientToScreen(w, screen);
+                    if (w.output === screen) arrive(w);
+                    else later(2000, function () { if (crossing[key]) { log("CROSSING " + shortCaption(w) + ": no arrival in 2 s"); arrive(w); } });
+                } else {
+                    w.desktops = [desk];  // after the screen: KWin gives a moved window that screen's desktop
+                }
             } finally { delete placing[key]; relocating--; }
         });
+    }
+    // Its workspace's desktop now that it is on that monitor, then a pass to fit it.
+    function arrive(w) {
+        var key = id(w), desk = crossing[key];
+        if (!desk) return;
+        delete crossing[key];
+        if (w.deleted) return;
+        placing[key] = true;
+        relocating++;
+        try { w.desktops = [desk]; } finally { delete placing[key]; relocating--; }
+        var con = model.byWin[key];
+        if (con) schedule(Tree.wsOf(con));
     }
 
     // Logged, never thrown: the live tests fail on any "INVARIANT" line.
@@ -2489,11 +2515,12 @@ var KI3 = (function () {
             if (kind === "move" && w.output !== outputOf(ws)) joinShownWorkspace(con, w, w.output);
             schedule(ws);
         }));
-        // No outputChanged handler, on purpose. When a monitor goes or comes back, screensChanged
-        // re-places every window from the model (decision 10); when KWin moves a window to another
-        // monitor for any other reason, it also changes its desktop, and desktopsChanged above
-        // follows it, as i3ws did. A handler here was redundant: the fault battery could not tell
-        // it from nothing (2026-10-22).
+        // outputChanged only ends relocate's crossing (arrive). Otherwise nothing, on purpose: when
+        // a monitor goes or comes back, screensChanged re-places every window from the model
+        // (decision 10); when KWin moves a window to another monitor for any other reason, it
+        // also changes its desktop, and desktopsChanged above follows it, as i3ws did. A handler
+        // for those was redundant: the fault battery could not tell it from nothing (2026-10-22).
+        w.outputChanged.connect(guard("output", function () { if (crossing[key]) arrive(w); }));
         w.frameGeometryChanged.connect(guard("frame", function (old) {
             // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
             if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
