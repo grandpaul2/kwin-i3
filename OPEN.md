@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26** (item 31 live).
+Last reconciled: **2026-10-26** (item 32 live).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -26,14 +26,6 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 ## Open
 
 Work for now.
-
-**32. A GTK 4 window stays 26 px short of its tile** (fuzzer I10, 2026-10-26; seeds 4 and 11
-in `tests/fuzz/i32/`). Cause: kwin-i3 asked a plain GTK 4 window's bounds again only at its
-first frame change after the border went; a first tile inside the stale bounds (a vertical
-split's half) fitted, and a later full-height tile stayed short. Fixed on branch `i32`
-(d6f07cf, worktree `../kwin-i3-i32`): test 83 (red on main), `make test` green, both seeds replay
-clean. Next: Paul's go to merge to main and reload; then remove `tests/fuzz/i32/` and the
-worktree.
 
 **33. The active window on a desktop its monitor isn't showing** (fuzzer I8, found 2026-10-26;
 1 seed in each of two campaigns, reproduces on main: seed 30, `active w10 is on desktop [1],
