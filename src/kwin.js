@@ -383,7 +383,7 @@ var KI3 = (function () {
     }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
-    // decoration (kwini3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // decoration, when it has one (Breeze's title bar and borders). KeePassXC, minimum 800, needs an 802 px tile
     // or KWin leaves it where it was (2026-10-22). The headless tests run Breeze (a 28 px title
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
@@ -535,7 +535,7 @@ var KI3 = (function () {
     // went, or later with its frame at the bounds, is asked for 0x0 (KWin resends the bounds, now
     // without the title bar; the client keeps its size), then for its tile in a configure of its
     // own. The later look because a first tile inside the bounds fits, and a later, bigger one (a
-    // vertical split's half, then the whole monitor) stayed 26 px short (OPEN.md item 32); only
+    // vertical split's half, then the whole monitor) stayed 26 px short (fuzzer I10, seed 4, fixed 2026-10-26: c386531); only
     // at the bounds, so a slow client answering in steps is not asked again. The first look
     // stays: a slow client whose tile changed before it answered gets fresh bounds before it
     // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
@@ -1468,7 +1468,7 @@ var KI3 = (function () {
             timer.interval = 16;            // a frame, about: the helper keeps only the last position
             timer.timeout.connect(guard("drag poll", pollDrag));
             drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
-            log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
+            log("DRAG " + conCaption(con));
             dragCursor(true);
             dragState(s);
             if (drag) timer.start();
@@ -2251,7 +2251,7 @@ var KI3 = (function () {
             // before it activates a window elsewhere, so this is a stale choice, not a request.
             // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
             // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
-            // KWin activated a window of the workspace it replaced (fuzzer I8, OPEN.md item 33).
+            // KWin activated a window of the workspace it replaced (fuzzer I8, seed 30, fixed 2026-10-26: 122ffa1).
             // Not taken into the model; the next pass puts the focus back where the model has it.
             if (!switching && !w.onAllDesktops && w.output &&
                 w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {

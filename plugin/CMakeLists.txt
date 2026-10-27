@@ -1,5 +1,7 @@
 # kwini3helper: kwin-i3's KWin plugin: focus on the frame (docs/spec-decoration.md), settings
-# that apply on Apply (docs/spec-settings.md), i3's tiling drag (docs/spec-tiled-look.md). kwini3mouse until 2026-10-24.
+# that apply on Apply (docs/spec-settings.md), i3's tiling drag (docs/spec-tiled-look.md), keys
+# fitted to the keyboard layout (docs/spec-keyboard-layouts.md), panel popups' grace
+# (docs/spec-popup-grace.md). kwini3mouse until 2026-10-24.
 # kwini3hold: atomic layout changes and i3's frame around tiled windows, a KWin effect
 # (docs/spec-atomic-layout.md, docs/spec-window-modes.md).
 # Built against the installed kwin-devel; KWin refuses a build from another KWin version.

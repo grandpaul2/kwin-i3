@@ -8,7 +8,8 @@
 //   split     { type: "con", win: null, layout, nodes: [], focus: [], parent, percent }
 //   leaf      { type: "con", win: <id>, layout: "h", nodes: [], focus: [], parent, percent, fullscreen }
 //   floating  { type: "floating", win: <id>, parent: <ws>, ... }
-// `focus` is i3's focus_head: the children (tiling and floating) most recently focused first.
+// `focus` is i3's focus_head: the children most recently focused first; a workspace's also
+// holds its floating windows.
 // Differences from i3, on purpose:
 //   - A floating window is one node, not i3's floating con wrapping a leaf.
 //   - Workspaces are KWin's desktops and are never closed when empty.
@@ -392,8 +393,8 @@ var Tree = (function () {
     // i3 keeps these, and each one stops a move one level short, so after some splitting and
     // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
-    // every operation that can leave one: move (via flatten), close, float, send to workspace,
-    // adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
+    // every operation that can leave one: move (via flatten), close, float (not tile), send to
+    // workspace, drop, adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
     function tidyCon(con) {
         while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
             var parent = con.parent, child = con.nodes[0];
@@ -587,8 +588,7 @@ var Tree = (function () {
             focusNext = this.descendFocused(source);
             if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
         }
-        if (target.type !== "ws") target = target.parent;
-        if (isFloating(target)) target = target.parent;
+        if (target.type !== "ws") target = target.parent;       // a floating one's is the ws
         if (isFloating(con)) target = ws;
         var fs = fullscreenOn(ws);
         if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
@@ -770,6 +770,7 @@ var Tree = (function () {
         detach(con);
         fixPercent(parent);
         var node = newFloating(con.win);
+        node.fullscreen = con.fullscreen;          // i3 leaves fullscreen_mode as it is, both ways
         node.parent = ws;
         ws.floating.unshift(node);
         if (before) {
@@ -793,6 +794,7 @@ var Tree = (function () {
         var ws = node.parent, wasFocused = this.focused === node;
         var tilingFocused = this.descendTilingFocused(ws);
         var leaf = newCon("h", node.win);
+        leaf.fullscreen = node.fullscreen;
         // The leaf stands in for i3's floating wrapper: same place in the focus stack.
         remove(ws.floating, node);
         ws.focus[ws.focus.indexOf(node)] = leaf;
@@ -961,12 +963,14 @@ var Tree = (function () {
     };
 
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
-    // browser, then a video); two flags would block all directional focus (code review).
+    // browser, then a video); two flags would block all directional focus (code review). A
+    // floating window's flag is kept too, so it is right when the window is tiled again; only a
+    // tiled one's blocks focus (fullscreenOn).
     M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen leaf, or null
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
-        if (!con || con.type !== "con") return;
-        if (on) {
+        if (!con || (con.type !== "con" && !isFloating(con))) return;
+        if (on && con.type === "con") {
             var other;
             while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;
         }

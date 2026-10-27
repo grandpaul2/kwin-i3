@@ -96,7 +96,7 @@ QString TilingDrag::state()
 {
     m_unanswered.stop();
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
-    const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y())).arg(int(m_shift));
+    const QString s = QStringLiteral("%1 %2 %3 %4").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()));
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -251,7 +251,6 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     m_window = window;
     m_id = window->internalId().toString();
     m_start = m_pos = event->position;
-    m_shift = mods & Qt::ShiftModifier;
     m_taken |= Qt::LeftButton;
     m_button = Qt::LeftButton;
     m_resize = false;
@@ -316,7 +315,6 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
     m_window = window;
     m_id = window->internalId().toString();
     m_start = m_pos = event->position;
-    m_shift = false;
     m_threshold = false;
     m_taken |= Qt::RightButton;
     m_button = Qt::RightButton;

@@ -83,7 +83,7 @@ static bool setKeys(const QString &component, const QString &action, const QList
         == QDBusMessage::ReplyMessage;
 }
 
-static bool scriptLoaded()
+bool kwinI3Loaded()
 {
     auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Scripting"),
                                               QStringLiteral("org.kde.kwin.Scripting"), QStringLiteral("isScriptLoaded"));
@@ -187,7 +187,7 @@ void KeysModel::load()
     m_rows.clear();
     m_layoutTable = layoutTable();
     const bool was = m_available;
-    m_available = scriptLoaded();
+    m_available = kwinI3Loaded();
     if (m_available) {
         QFile f(QStringLiteral(":/kcm/kcm_kwin_i3/commands.json"));
         if (!f.open(QIODevice::ReadOnly))

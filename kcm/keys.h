@@ -62,3 +62,6 @@ private:
     QString m_error;
     QVariantList m_layoutTable;
 };
+
+// Whether KWin runs the kwin-i3 script now (the page and this model both ask).
+bool kwinI3Loaded();
