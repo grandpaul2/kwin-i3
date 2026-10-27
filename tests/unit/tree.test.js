@@ -702,6 +702,29 @@ test("floating toggle keeps fullscreen, both ways (floating_enable/disable leave
     assert.strictEqual(d(m), "H[a b*!]", "tiled again, still fullscreen");
 });
 
+test("a floating fullscreen window is the workspace's, as a tiled one (con_get_fullscreen_con walks floating_head)", () => {
+    const m = model(true);
+    open(m, 2, "x");
+    open(m, 1, "a", "b");
+    m.openFloating("g", m.ws(1));
+    m.openFloating("f", m.ws(1));
+    m.focusWin("f");
+    m.setFullscreen("f", true);
+    assert.strictEqual(m.fullscreenOn(m.ws(1)), leaf(m, "f"));
+    assert.strictEqual(m.focusDir(LEFT), null, "get_tree_next: fullscreen before floating, no output to the left");
+    assert.strictEqual(m.focusDir(RIGHT).win, "x", "straight to the neighbouring output, not the next floating g");
+    m.focusWin("f");
+    m.open("c", m.ws(1));                  // KWin's activation is handed back: no focusWin
+    assert.deepStrictEqual(m.focusOrder(m.ws(1)).slice(0, 2), ["~f", "c"], "manage.c: the newcomer second, f keeps the focus");
+    m.focusWin("c");                       // the mouse can; the keys can't reach b behind f
+    assert.strictEqual(m.focusDir(LEFT), null, "con_fullscreen_permits_focusing");
+    m.setFullscreen("a", true);
+    assert.strictEqual(leaf(m, "f").fullscreen, false, "con_enable_fullscreen: one per workspace, floating included");
+    m.setFullscreen("f", true);
+    assert.strictEqual(leaf(m, "a").fullscreen, false, "and a floating one clears a tiled one");
+    assert.strictEqual(m.fullscreenOn(m.ws(1)), leaf(m, "f"));
+});
+
 test("no fullscreen window: a new window goes to the tail of the focus stack as before", () => {
     const m = model();
     open(m, 1, "a", "b");

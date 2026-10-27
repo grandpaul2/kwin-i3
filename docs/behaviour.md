@@ -133,8 +133,8 @@ function names the i3 function it ports.
   flags; used by the tiling drag's centre drop.
 - **Float** (`floatingEnable`, i3's `floating_enable`): the leaf becomes a floating node at the top
   of the workspace's floating list, taking its branch's place in the focus stack. A fullscreen
-  window stays fullscreen, both ways, as in i3; a floating window's flag follows KWin's but only a
-  tiled one's blocks focus. **Tile** (`floatingDisable`): the window goes after the
+  window stays fullscreen, both ways, as in i3; a floating window's flag follows KWin's and counts
+  as a tiled one's does (§10). **Tile** (`floatingDisable`): the window goes after the
   workspace's focused tiled container, or to the top level of an empty workspace.
 - **Focus a direction** (`focusDir`, i3's `tree_next` with `focus_wrapping`; Meta+arrow or J K L ;).
   From a floating window: left and right cycle the workspace's floating windows, wrapping; up and
@@ -145,8 +145,8 @@ function names the i3 function it ports.
   - `no`: the next monitor, never wrap;
   - `force`: wrap inside the container, never leave it;
   - `workspace`: wrap, never leave the workspace.
-  Landing on a container descends its focus stack. A fullscreen window lets focus go only to the
-  next monitor.
+  Landing on a container descends its focus stack. A fullscreen window, tiled or floating, lets
+  focus go only to the next monitor, in all four directions.
 - **Focus mode toggle** (`focusModeToggle`; Meta+Space): between the workspace's most recent
   floating window and its most recent tiled one.
 - **Move to a workspace** (`moveToWorkspace`, i3's `con_move_to_workspace`): the window goes after
@@ -573,7 +573,9 @@ back the user's `DelayFocusInterval`, read fresh from kwinrc.
   takes it out of its tile; it is left out of the layout (its siblings fill the space) and rejoins
   when fullscreen ends. One per workspace: making one fullscreen clears the others. It keeps the
   focus (§5) and blocks focus and moves across it (§2). Floated or tiled again, it stays
-  fullscreen (§2).
+  fullscreen (§2). A floating window (a game, `mpv --fs`) is its workspace's fullscreen window
+  just as a tiled one is, as in i3 (`con_get_fullscreen_con` searches the floating windows too;
+  a tiled one at the top level wins a tie).
 - **Minimized.** Out of the layout, its share to its siblings; back where it was when restored.
   Across a reload a minimized window loses its place.
 - **Maximize.** No handler: a maximize takes the window out of its tile, the next pass puts it

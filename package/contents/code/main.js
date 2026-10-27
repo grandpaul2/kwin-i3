@@ -217,12 +217,14 @@ var Tree = (function () {
         return false;
     }
 
+    // Breadth first, floating_head too: i3 keeps a floating window in a CT_FLOATING_CON, so it is
+    // met at depth 2, after the top-level tiled ones and before the tiled ones deeper down.
     function fullscreenOn(ws) {                              // con_get_fullscreen_con(ws, CF_OUTPUT)
-        var stack = ws.nodes.slice();
-        while (stack.length) {
-            var c = stack.shift();
-            if (c.fullscreen) return c;
-            stack = stack.concat(c.nodes);
+        var level = ws.nodes;
+        for (var depth = 1; depth <= 2 || level.length; depth++) {
+            if (depth === 2) level = level.concat(ws.floating);
+            for (var i = 0; i < level.length; i++) if (level[i].fullscreen) return level[i];
+            level = [].concat.apply([], level.map(function (c) { return c.nodes; }));
         }
         return null;
     }
@@ -1050,7 +1052,8 @@ var Tree = (function () {
         if (!con) return null;
         var previous = isBefore(dir), o = orientationOf(dir), firstWrap = null, next = null;
         var fromWs = con.type === "ws";
-        if (isFloating(con)) {
+        // A fullscreen one goes on to its workspace's neighbour below: i3 checks fullscreen first.
+        if (isFloating(con) && !con.fullscreen) {
             if (o !== "h") return null;
             var fl = con.parent.floating, k = fl.indexOf(con);
             next = (previous ? fl[k - 1] : fl[k + 1]) || (previous ? fl[fl.length - 1] : fl[0]);
@@ -1100,17 +1103,15 @@ var Tree = (function () {
     };
 
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
-    // browser, then a video); two flags would block all directional focus (code review). A
-    // floating window's flag is kept too, so it is right when the window is tiled again; only a
-    // tiled one's blocks focus (fullscreenOn).
-    M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen leaf, or null
+    // browser, then a video); two flags would block all directional focus (code review). Tiled
+    // or floating alike (con_enable_fullscreen): a floating fullscreen window blocks focus too.
+    M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen window, or null
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
         if (!con || (con.type !== "con" && !isFloating(con))) return;
-        if (on && con.type === "con") {
-            var other;
-            while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;
-        }
+        con.fullscreen = false;
+        var other;
+        while (on && (other = fullscreenOn(wsOf(con)))) other.fullscreen = false;
         con.fullscreen = !!on;
     };
 
