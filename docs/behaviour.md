@@ -94,65 +94,42 @@ function names the i3 function it ports.
 - **A split left empty closes**, and so on upward (`onRemoveChild`).
 - **`flatten`** is i3's `tree_flatten`: a split whose only child is a split of the other
   direction, inside a parent of that same direction, is dissolved into the parent.
-- **`tidy`**, not i3 (`docs/spec-nested-boxes.md`): a split whose only child is a split is
+- **`tidy`** **≠** i3 (`docs/spec-nested-boxes.md`; `plan.md`'s differences table): a split whose only child is a split is
   replaced by that child, repeatedly. A one-child split holding a window stays. Run after a move
   (through `flatten`), a close, floating a window, sending one to a workspace, a drop and the
   adoption at load; not after tiling a floating window.
 
 ### Operations
 
-- **Open** (`open`, i3's `tree_open_con`). The new leaf goes after the focused container of its
-  workspace, in that container's parent; if focus is on a floating window, after the focused
-  tiled container; on an empty workspace, at the top level. It takes the average share. It goes
-  to the bottom of its parent's focus stack; KWin's activation then focuses it (§5). Under a
-  fullscreen window the newcomer goes second in the focus stack, so it gets focus when the
-  fullscreen window closes.
-- **Close** (`close`, i3's `tree_close_internal`). If the window had focus, the next focus is i3's
-  `con_next_focused`: the previous focus in the same container, descending. Whether that or
-  KWin's choice wins is §5's.
-- **Split** (`split`, i3's `tree_split`; Meta+H, Meta+V). On a workspace with fewer than two
-  children it sets the workspace's direction. Otherwise, if the window's parent has one child, the
-  parent's direction is set; else the window is wrapped in a new split of that direction (even
-  when the parent already has it, as in i3).
-- **Toggle split** (`toggleSplit`, i3's `layout toggle split`; Meta+E). The parent's direction
-  flips. On the window's own parent if that isn't the workspace; with i3's #3001 rule (a parent
-  and grandparent each holding one child are collapsed first). At a workspace's top level the
-  workspace's children are wrapped in a new split of the other direction, then flattened.
-- **Move** (`move`, i3's `tree_move`; Meta+Shift+direction). Swaps with a window beside it in the
-  same split; enters a split beside it (at the edge facing the move); climbs out of its split to
-  the nearest ancestor of that direction, creating one at the top if there is none; at the edge of
-  the workspace, moves to the workspace shown on the neighbouring monitor (`moveToOutputDirected`).
-  A fullscreen window, or a workspace's only child, moves straight to the neighbouring monitor. A
-  move that would cross a fullscreen window is refused.
-- **Resize by key** (`resize`, i3's `cmd_resize_tiling_width_height`). The nearest ancestor-or-self
-  in a split of the matching direction with more than one child grows (or shrinks) by
-  `resizeStep` percent of the split; its siblings give up (or gain) the same amount in equal
-  parts. Refused if any would go below a 0.1 % share. Grow Width is Meta+Ctrl+Right, so the
-  window's right or bottom edge moves, as in i3 (`docs/philosophy.md`).
-- **Swap** (`swap`, i3's `con_swap`): two tiled windows exchange places, shares and fullscreen
-  flags; used by the tiling drag's centre drop.
-- **Float** (`floatingEnable`, i3's `floating_enable`): the leaf becomes a floating node at the top
-  of the workspace's floating list, taking its branch's place in the focus stack. A fullscreen
-  window stays fullscreen, both ways, as in i3; a floating window's flag follows KWin's and counts
-  as a tiled one's does (§10). **Tile** (`floatingDisable`): the window goes after the
-  workspace's focused tiled container, or to the top level of an empty workspace.
-- **Focus a direction** (`focusDir`, i3's `tree_next` with `focus_wrapping`; Meta+arrow or J K L ;).
-  From a floating window: left and right cycle the workspace's floating windows, wrapping; up and
-  down do nothing. From a tiled window: the sibling in that direction in the nearest split of the
-  matching direction; at the workspace's edge, the workspace shown on the neighbouring monitor;
-  failing that, wrapping, by `focusWrapping`:
-  - `yes` (default): the next monitor first, else wrap inside the outermost container;
-  - `no`: the next monitor, never wrap;
-  - `force`: wrap inside the container, never leave it;
-  - `workspace`: wrap, never leave the workspace.
-  Landing on a container descends its focus stack. A fullscreen window, tiled or floating, lets
-  focus go only to the next monitor, in all four directions.
-- **Focus mode toggle** (`focusModeToggle`; Meta+Space): between the workspace's most recent
-  floating window and its most recent tiled one.
-- **Move to a workspace** (`moveToWorkspace`, i3's `con_move_to_workspace`): the window goes after
-  the target workspace's focused container; focus stays on the source workspace, on what i3 would
-  focus next there. A fullscreen window arriving where another is fullscreen clears the other's
-  flag.
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart. The "=" rows are
+ports: the i3 function is named, and the code follows it, edge cases included.
+
+| # | Operation | Result | i3 | Note |
+|---|---|---|---|---|
+| T1 | **Open** (`open`) | the new leaf goes after the focused container of its workspace, in that container's parent; focus on a floating window: after the focused tiled container; an empty workspace: at the top level. It takes the average share and goes to the bottom of its parent's focus stack; KWin's activation then focuses it (§5). Under a fullscreen window it goes second in the focus stack, so it gets focus when the fullscreen window closes | = | `tree_open_con`, `manage.c` |
+| T2 | **Close** (`close`) | the next focus is `con_next_focused`: the previous focus in the same container, descending | = | `tree_close_internal`. Whether it or KWin's choice wins today: §5 C6, C7 |
+| T3 | **Split** (`split`; Meta+H, Meta+V) on a window | its parent has one child: the parent takes the direction; else the window is wrapped in a new split of that direction, even when the parent already has it | = | `tree_split` |
+| T4 | Split with the workspace focused (an empty workspace) | under two children: the workspace takes the direction; else its children are wrapped first (`workspace_encapsulate`), then as T3 | = | `tree_split` |
+| T5 | Split on a floating window | nothing | = | `tree_split`: "Floating containers can't be split" |
+| T6 | **Toggle split** (`toggleSplit`; Meta+E) | the window's parent flips direction (after i3's #3001 rule: a parent and grandparent each holding one child are collapsed first); at the workspace's top level, the workspace's children are wrapped in a split of the other direction, then flattened | = | `layout toggle split`. i3's bare `layout toggle` also cycles tabbed and stacked: out of scope |
+| T7 | **Move** (`move`; Meta+Shift+direction), a leaf beside it in the same split | the two swap | = | `tree_move` |
+| T8 | Move, a split beside it | enters that split at the edge facing the move, then `flatten` | = | `tree_move` |
+| T9 | Move, no sibling that way | climbs out to the nearest ancestor of that direction, creating one at the top if none (`ws_force_orientation`) | = | `tree_move` |
+| T10 | Move at the workspace's edge; or a fullscreen window; or the workspace's only child | to the workspace shown on the neighbouring monitor, at its top level, at the near edge (first when moving right or down); it keeps focus | = | `move_to_output_directed`, `attach_to_workspace` |
+| T11 | Move that would climb out across a fullscreen window | refused | = | `tree_move` checks only the climb-out path, as here; a swap inside the fullscreen window's own split isn't checked by either |
+| T12 | **Resize by key** (`resize`; Meta+Ctrl+arrows, J K L ;) on a tiled window | the nearest ancestor-or-self in a split of that direction with more than one child grows or shrinks by `resizeStep` percent of the split; its siblings give up or gain the same in equal parts; refused if any would go below 0.1 %. Grow Width moves the right or bottom edge | = | `cmd_resize_tiling_width_height`, in ppt. i3 also takes px for tiled windows; its default config's resize mode gives "10 px or 10 ppt", which is ppt on a tiled window. Always ppt here (≠, minor: a key takes no arguments) |
+| T13 | Resize by key on a floating window | by `floatingStep` px, if KWin lets it resize | = | `cmd_resize_floating`, 10 px (§8) |
+| T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on a monitor; landing on another monitor joins the workspace shown there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws` |
+| T15 | **Swap** (`swap`) | two tiled windows exchange places, shares and fullscreen flags; the tiling drag's centre drop uses it (§9) | = | `con_swap` |
+| T16 | **Float** (`floatingEnable`; Meta+Shift+Space) | the leaf becomes a floating node at the top of the workspace's floating list, taking its branch's place in the focus stack; a fullscreen window stays fullscreen | = | `floating_enable` |
+| T17 | **Tile** (`floatingDisable`) | after the workspace's focused tiled container, or at the top level of an empty workspace; a fullscreen window stays fullscreen; no tidy afterwards | = | `floating_disable` |
+| T18 | **Focus a direction** (`focusDir`; Meta+arrows, J K L ;) from a tiled window | the sibling that way in the nearest split of that direction; at the workspace's edge, the workspace shown on the neighbouring monitor, at its **tiled** focus (its fullscreen window if it has one); else wrapping by `focusWrapping` | = | `tree_next`, `get_tree_next` |
+| T19 | `focusWrapping` | `yes` (default): the next monitor first, else wrap inside the **innermost** container of that direction; `no`: the next monitor, never wrap; `force`: wrap inside the container, never leave it; `workspace`: wrap, never leave the workspace | = | `focus_wrapping` |
+| T20 | Focus a direction from a floating window | left and right cycle the workspace's floating windows, wrapping; up and down do nothing | = | `get_tree_next`: "up/down does not change floating containers" |
+| T21 | Focus a direction with the (empty) workspace focused | the next monitor, in every `focusWrapping` mode, `force` too; nothing if there is none | = | `get_tree_next`, `handle_workspace` |
+| T22 | Focus a direction past a fullscreen window | only to the next monitor, in all four directions, tiled or floating | = | `con_fullscreen_permits_focusing` |
+| T23 | **Focus mode toggle** (`focusModeToggle`; Meta+Space) | between the workspace's most recent floating window and its most recent tiled one | = | `focus mode_toggle` |
+| T24 | **Move to a workspace** (`moveToWorkspace`) | after the target's focused container; focus stays on the source, on i3's next focus there. A fullscreen window arriving where another is fullscreen clears the other's flag; a window arriving under a fullscreen window doesn't take that workspace's focus | = | `con_move_to_workspace` |
 
 ---
 
