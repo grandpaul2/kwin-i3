@@ -27,6 +27,26 @@ size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec
 
 Work for now.
 
+**38. The rest of the standing docs against `docs/behaviour.md`** (2026-10-27). The specs were
+checked today and each given a `Now` line; so were `plan.md`'s Policies, Focus and Scope and the
+README's Configuration and widget sections. Not yet: the rest of `plan.md` (decision 9 still says
+workspaces "work as i3ws does"; Scope's "every live scenario but 52-54 runs with no plugin"; the
+phases and risks), the rest of the README, `i3-feature-map.md` (its `kwin.js:NNN` citations
+predate many edits), `fuzz-design.md`, `input-tests-design.md`, `debugging.md`, `testing.md` and
+CLAUDE.md; and one claim to check in the code, that a floating window drawing its own title bar is
+never framed (`spec-window-modes.md` R1-5). Next: a read-through like the spec audit (two agents),
+then the fixes, contradictions to Paul.
+
+**39. A floating fullscreen window, as in i3** (2026-10-27). Since today a floating window keeps
+its fullscreen flag, but only a tiled one blocks the focus keys and keeps its workspace's focus
+(`src/tree.js` `fullscreenOn` searches tiled windows only). In i3 a fullscreen window does both
+whether floating or tiled (`con_get_fullscreen_con` walks `floating_head` too; `render.c` skips
+other floating windows under it). Related known limit: focus keys over a fullscreen window are
+judged per workspace, where i3 judges from the focused window (`behaviour.md` §10). Paul's
+direction: follow i3, as an item with a test. Next: a spec (what changes for a game that runs
+floating fullscreen, the focus and move rules, KWin's own stacking), then a unit test watched red,
+the change, and a live check.
+
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
 First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Paul's go: (a) the
