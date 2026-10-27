@@ -168,47 +168,39 @@ but the first two. The i3 kind of each window that places itself, by default:
 
 ### How a window gets its kind
 
-`src/rules.js` `classify` runs on every judgement (settings are read each time), in this order:
+`src/rules.js` `classify` runs on every judgement (settings read each time), first match wins;
+then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no i3 counterpart.
 
-1. **Places itself** if KWin says it isn't a normal window, is a popup or a special window
-   (panels, the desktop, OSDs).
-2. **Places itself** if it is on all desktops or skips the taskbar.
-3. **Places itself** if its class or name is in `ignoreClass`, or its role in `ignoreRole`.
-4. **Floating** if it is transient, modal, or has a fixed size (not resizable; for a fullscreen
-   window, KWin's own test: fixed unless its minimum and maximum differ).
-5. **Floating** if it is a dialog, a splash or a utility window.
-6. **Floating** if its title is exactly `kwin-i3 capture note` (`tools/capture`'s window).
-7. **Floating** if its class or name is in `floatingClass`, or its title contains a
-   `floatingTitle` entry.
-8. Otherwise **tiled**.
-
-There is no check for activities: a window on another activity is judged like any other.
-
-Then `src/kwin.js` `adoptWindow`:
-
-- A window that **places itself** is not entered into the model. Its signals are still connected,
-  so a later change of class, title or transience can adopt it.
-- A window that isn't on exactly one desktop is not adopted until it is.
-- **After a reload**, a window the rules call tiled but that isn't in a tile and is kept above (or
-  is in the effect's floating set) comes back floating: it was floating before the reload.
-- **A new window on a workspace set to Floating** (`floatingWorkspaces`) opens floating.
-- An adopted window that is maximized is unmaximized.
+| # | When | Kind today | i3 | Note |
+|---|---|---|---|---|
+| R1 | KWin's type isn't Normal: panels, the desktop, popups, menus, tooltips, notifications, OSDs | places itself | = for each by its i3 kind (§3 above) | |
+| R2 | **An X11 dialog, utility window or splash screen** (an Xwayland app's) | **places itself** | **≠** | i3: floating (`manage.c`: dialog, utility, toolbar, splash, notification). KWin's `normalWindow` is false for these types, so R1 catches them; the rule meant for them (R7) can never match. A Wayland dialog is a Normal window and floats by R6. Found 2026-10-27 |
+| R3 | On all desktops | places itself | ≠ | i3: sticky floating (`_NET_WM_DESKTOP` all: "float it and make it sticky"). Decided, not built: §3 above (Yakuake) |
+| R4 | Skips the taskbar | places itself | ≠ | i3 ignores the hint. Plasma's convention for its own helpers (confirmed by Paul, 2026-10-27, before the kinds); each such window now gets its i3 kind (§3 above) |
+| R5 | Its class or name in `ignoreClass`, or its role in `ignoreRole` | places itself | ≠ | i3 has no such list; the default entries' i3 kinds are §3 above |
+| R6 | Transient, modal, or a fixed size (not resizable; a fullscreen window: fixed unless its minimum and maximum differ) | floating | = | `manage.c`: transient_for (or a leader that is managed), `_NET_WM_STATE_MODAL`, min = max |
+| R7 | KWin's type is dialog, splash or utility | floating | — | Never reached (R2) |
+| R8 | Its title is exactly `kwin-i3 capture note` | floating | + | `tools/capture`'s box |
+| R9 | Its class or name in `floatingClass`, or its title contains a `floatingTitle` entry | floating | ≠ | i3's `for_window [criteria] floating enable`: a criterion is a regular expression on any property. Here: class or name matched exactly and case-sensitively, title as a case-sensitive substring; no role; no "class X and title Y" |
+| R10 | Otherwise | tiling | = | |
+| R11 | A new window on a workspace set to Floating (`floatingWorkspaces`) | floating | + | Plasma windows on that workspace (decision 1) |
+| R12 | After a reload: the rules say tiling, but it is in no tile and kept above (or in the effect's floating set) | floating | + | It was floating before the reload |
+| R13 | Not on exactly one desktop | not adopted until it is | ≠ | i3: sticky floating (R3) |
+| R14 | Maximized when adopted | unmaximized | + | i3 has no maximize |
+| R15 | On another activity | judged like any other | + | Plasma's activities; no check |
+| R16 | A window that places itself | not in the model; watched for a later change of class, title or transience **only if it is a Normal window** | ≠ | i3 manages every window but docks and override-redirect ones |
 
 ### Changing kind
 
-- **Meta+Shift+Space** toggles tiled and floating (`Floating Toggle`). A window floated this way
-  comes back at its untiled size (below).
-- **A changed verdict follows.** On a change of title, class, transience or readiness to paint
-  (`reclassify`), the rules run again. If the verdict is unchanged, nothing happens: a window the
-  user floated or tiled by hand stays. If it changed, the window follows it. A window that now
-  places itself is dropped from the model.
-- **A changed rule setting** reclassifies every window the same way (§11).
-- **Made sticky** (on all desktops): dropped from the model, as a window that places itself.
-- **Meta+Shift+drag** pulls a tiled window out of its tile; it floats where it is dropped (§9).
-- **KWin refusing to tile it** (not resizable, or not on the tile's desktop) floats it, except a
-  fullscreen window, which stays in the tree out of the tiles until fullscreen ends.
-- **Too big to fit**: if the tiled windows' minimum sizes don't fit the screen, the one with the
-  largest minimum along the overflowing axis floats, repeatedly (`floatWhatCannotFit`).
+| # | When | Result | i3 | Note |
+|---|---|---|---|---|
+| X1 | Meta+Shift+Space (`Floating Toggle`) | tiling and floating swap; a window floated this way comes back at its untiled size (below) | = | `floating toggle` |
+| X2 | A change of title, class, transience or readiness to paint (`reclassify`) | the rules run again; an unchanged verdict changes nothing (a window floated or tiled by hand stays); a changed one is followed **both ways**, and a window that now places itself leaves the model | ≠ | i3 re-runs `for_window` on such changes, but each rule at most once per window, and only to apply it (`assignments.c`): a window whose title stops matching isn't tiled again |
+| X3 | A rule setting changed | every window reclassified as X2 (§11) | + | |
+| X4 | Made sticky (on all desktops) | leaves the model, as a window that places itself | ≠ | i3: becomes sticky floating. Decided, not built (R3) |
+| X5 | Meta+Shift+drag on a tiled window | out of its tile, floating where dropped (§9) | + | Paul, 2026-10-26 |
+| X6 | KWin refuses to tile it (not resizable, or not on the tile's desktop) | floating; a fullscreen window stays in the tree, out of the tiles, until fullscreen ends | ≠ | i3 tiles any window; KWin's tiles can't hold one that won't resize |
+| X7 | The tiled windows' minimum sizes don't fit the screen | the one with the largest minimum along that axis floats, repeatedly (`floatWhatCannotFit`) | ≠ | i3 ignores size hints on tiled windows (`plan.md`'s differences table) |
 
 ### A floating window's size
 
@@ -231,6 +223,12 @@ Then `src/kwin.js` `adoptWindow`:
 | look | per `tiledLook` (§7) | its own decoration; the frame instead if `frameOnFloating` | untouched |
 | kept above tiled windows | — | yes, except on a Floating workspace while the effect marks floating windows | untouched |
 | takes keyboard focus from kwin-i3 | — | — | yes, until a key moves focus (§5) |
+
+KWin's part, which kwin-i3 doesn't touch: where a new floating window opens (KWin's placement,
+"centered", a dialog over its parent; i3: the window's requested place, centred over its leader),
+and the smallest it can be (the client's minimum and KWin's decorated floor, about 150 px; i3:
+75x50). A KWin window rule that forces a size, a desktop, maximize or no title bar fights
+kwin-i3: none is handled.
 
 ---
 
