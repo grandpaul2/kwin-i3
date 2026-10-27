@@ -47,23 +47,14 @@ activity likely takes a tile on its desktop and leaves a hole there. Next: a rea
 kactivitymanagerd can run on a test KWin's bus, then that hole confirmed or not (if activities
 can't run there, they are won't-fix here, with the reason), then a spec for the harness
 pieces (`KI3_OUTPUTS`, a scale per output, `run.py --no-plugins`, the invariants' two-output
-assumptions), then one campaign per configuration. 53-hold runs by itself after the parallel batch
-(`# timing: alone`, 2026-10-24), so its timing checks are strict in `make test`.
+assumptions), then one campaign per configuration.
 **No campaign has run since 2026-10-24's changes** (window modes, desktop changes, the key
 cleanup) nor 2026-10-25's at the KWin seam (focus passes that spare unmanaged windows, focus
 following desktops switched outside kwin-i3, the pointer moved only by keys, the popup grace, the
 layout keys, the flight recorder's GEOM/TILE lines), and the fuzzer needs updating first: its I4
 "no hole" check must allow the frame's 1 px (the plugins load in its KWins, so the frame is on), a
 frame-pixel invariant would catch lost or stale frames, and new actions: a workspace of Plasma
-windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved. 53-hold's
-other early failure, the kill switch's `--notify` not taking (seen once, early 2026-10-24), has
-not recurred in ~15 full runs since; closed unless it comes back. **39-layout-notice came back**:
-the same 5 checks ("de: logged as not fitted", the notification's) failed in a full batch twice
-on 2026-10-25, passing alone each time and in the runs between. A batch-load race in its
-notification checks, not traced. Late 2026-10-25 it failed again with **69-keyboard-layouts**
-beside it ("the helper fitted French" and Workspace 5's AZERTY key), both passing alone twice:
-likely the same layout race. Next: its log around "not fitted" from a failing batch run (keep the
-run's output).
+windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved. The test flakes are `OPEN.md` item 34.
 
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
