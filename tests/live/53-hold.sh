@@ -209,7 +209,7 @@ m=$(mark)
 drag Meta right 600 360 500 360
 check "a resize drag happened"              wait_log '^.{9}RESIZE resized width' "$m"
 sleep 0.2
-# Meta+right is kwin-i3's own resize (OPEN.md item 37): the drag holds nothing, its release
+# Meta+right is kwin-i3's own resize (docs/spec-tiling-resize.md): the drag holds nothing, its release
 # re-tiles the two neighbours, which is one ordinary transaction at most.
 check "at most the drag's end re-tile was held"   between "$(( $(stat transactions) - t ))" 0 1
 

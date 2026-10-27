@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The fuzzer's I8 (seed 30, OPEN.md item 33): the focused monitor shows an empty workspace and is
+# The fuzzer's I8 (seed 30, fixed 2026-10-26: 122ffa1): the focused monitor shows an empty workspace and is
 # unplugged. As in i3 (randr.c move_content), that workspace moves to the remaining monitor, is
 # shown there and keeps the focus; KWin then activated a window of the workspace it replaced,
 # which stayed hidden: the active window on a desktop no monitor showed. This plain case KWin gets

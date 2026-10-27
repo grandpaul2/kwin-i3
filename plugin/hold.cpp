@@ -124,7 +124,7 @@ void Hold::loadConfig()
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
                                                 : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
-    // The frame's keys (src/settings.js), shared with kwini3frame's; not affected by holdEnabled.
+    // The frame's keys (src/settings.js); not affected by holdEnabled.
     m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
     const auto colour = [&group](const char *key, const QColor &def) {
         const QColor c(group.readEntry(key, def.name()));
@@ -783,7 +783,7 @@ void Hold::resetRadii()
 // between two windows, so neighbours meet with no overlap and no gap at any scale (review R1-6).
 // Top and bottom span the corners. With a radius (device px) each bar reaches that far inside
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
-QList<RectF> Hold::ring(EffectWindow *, const RectF &frame, double scale, double radius) const
+QList<RectF> Hold::ring(const RectF &frame, double scale, double radius) const
 {
     const double f = m_frameWidth, r = radius;
     const double ix0 = std::round(frame.x() * scale), iy0 = std::round(frame.y() * scale);
@@ -826,7 +826,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     const double ix0 = std::round(drawn.x() * scale), iy0 = std::round(drawn.y() * scale);
     const double ix1 = std::round((drawn.x() + drawn.width()) * scale), iy1 = std::round((drawn.y() + drawn.height()) * scale);
     QList<QVector2D> verts;
-    for (const RectF &bar : ring(w, drawn, scale, radius)) {
+    for (const RectF &bar : ring(drawn, scale, radius)) {
         const Rect device(bar.x() - origin.x(), bar.y() - origin.y(), bar.width(), bar.height());
         for (const Rect &r : (deviceRegion & device).rects()) {
             const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();

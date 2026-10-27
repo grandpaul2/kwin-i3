@@ -145,7 +145,8 @@ var Settings = (function () {
 //   split     { type: "con", win: null, layout, nodes: [], focus: [], parent, percent }
 //   leaf      { type: "con", win: <id>, layout: "h", nodes: [], focus: [], parent, percent, fullscreen }
 //   floating  { type: "floating", win: <id>, parent: <ws>, ... }
-// `focus` is i3's focus_head: the children (tiling and floating) most recently focused first.
+// `focus` is i3's focus_head: the children most recently focused first; a workspace's also
+// holds its floating windows.
 // Differences from i3, on purpose:
 //   - A floating window is one node, not i3's floating con wrapping a leaf.
 //   - Workspaces are KWin's desktops and are never closed when empty.
@@ -529,8 +530,8 @@ var Tree = (function () {
     // i3 keeps these, and each one stops a move one level short, so after some splitting and
     // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
-    // every operation that can leave one: move (via flatten), close, float, send to workspace,
-    // adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
+    // every operation that can leave one: move (via flatten), close, float (not tile), send to
+    // workspace, drop, adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
     function tidyCon(con) {
         while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
             var parent = con.parent, child = con.nodes[0];
@@ -724,8 +725,7 @@ var Tree = (function () {
             focusNext = this.descendFocused(source);
             if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
         }
-        if (target.type !== "ws") target = target.parent;
-        if (isFloating(target)) target = target.parent;
+        if (target.type !== "ws") target = target.parent;       // a floating one's is the ws
         if (isFloating(con)) target = ws;
         var fs = fullscreenOn(ws);
         if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
@@ -907,6 +907,7 @@ var Tree = (function () {
         detach(con);
         fixPercent(parent);
         var node = newFloating(con.win);
+        node.fullscreen = con.fullscreen;          // i3 leaves fullscreen_mode as it is, both ways
         node.parent = ws;
         ws.floating.unshift(node);
         if (before) {
@@ -930,6 +931,7 @@ var Tree = (function () {
         var ws = node.parent, wasFocused = this.focused === node;
         var tilingFocused = this.descendTilingFocused(ws);
         var leaf = newCon("h", node.win);
+        leaf.fullscreen = node.fullscreen;
         // The leaf stands in for i3's floating wrapper: same place in the focus stack.
         remove(ws.floating, node);
         ws.focus[ws.focus.indexOf(node)] = leaf;
@@ -1098,12 +1100,14 @@ var Tree = (function () {
     };
 
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
-    // browser, then a video); two flags would block all directional focus (code review).
+    // browser, then a video); two flags would block all directional focus (code review). A
+    // floating window's flag is kept too, so it is right when the window is tiled again; only a
+    // tiled one's blocks focus (fullscreenOn).
     M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen leaf, or null
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
-        if (!con || con.type !== "con") return;
-        if (on) {
+        if (!con || (con.type !== "con" && !isFloating(con))) return;
+        if (on && con.type === "con") {
             var other;
             while ((other = fullscreenOn(wsOf(con))) && other !== con) other.fullscreen = false;
         }
@@ -1763,7 +1767,7 @@ var KI3 = (function () {
     }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
-    // decoration (kwini3frame: 1 px each side). KeePassXC, minimum 800, needs an 802 px tile
+    // decoration, when it has one (Breeze's title bar and borders). KeePassXC, minimum 800, needs an 802 px tile
     // or KWin leaves it where it was (2026-10-22). The headless tests run Breeze (a 28 px title
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
@@ -1915,7 +1919,7 @@ var KI3 = (function () {
     // went, or later with its frame at the bounds, is asked for 0x0 (KWin resends the bounds, now
     // without the title bar; the client keeps its size), then for its tile in a configure of its
     // own. The later look because a first tile inside the bounds fits, and a later, bigger one (a
-    // vertical split's half, then the whole monitor) stayed 26 px short (OPEN.md item 32); only
+    // vertical split's half, then the whole monitor) stayed 26 px short (fuzzer I10, seed 4, fixed 2026-10-26: c386531); only
     // at the bounds, so a slow client answering in steps is not asked again. The first look
     // stays: a slow client whose tile changed before it answered gets fresh bounds before it
     // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
@@ -2848,7 +2852,7 @@ var KI3 = (function () {
             timer.interval = 16;            // a frame, about: the helper keeps only the last position
             timer.timeout.connect(guard("drag poll", pollDrag));
             drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
-            log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
+            log("DRAG " + conCaption(con));
             dragCursor(true);
             dragState(s);
             if (drag) timer.start();
@@ -3631,7 +3635,7 @@ var KI3 = (function () {
             // before it activates a window elsewhere, so this is a stale choice, not a request.
             // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
             // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
-            // KWin activated a window of the workspace it replaced (fuzzer I8, OPEN.md item 33).
+            // KWin activated a window of the workspace it replaced (fuzzer I8, seed 30, fixed 2026-10-26: 122ffa1).
             // Not taken into the model; the next pass puts the focus back where the model has it.
             if (!switching && !w.onAllDesktops && w.output &&
                 w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {

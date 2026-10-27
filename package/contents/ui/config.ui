@@ -662,7 +662,7 @@
      <item row="29" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
-        <string>Warn at login about keys other shortcuts already use</string>
+        <string>Warn when kwin-i3 starts about keys other shortcuts already use</string>
        </property>
       </widget>
      </item>

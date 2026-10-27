@@ -132,8 +132,9 @@ function names the i3 function it ports.
 - **Swap** (`swap`, i3's `con_swap`): two tiled windows exchange places, shares and fullscreen
   flags; used by the tiling drag's centre drop.
 - **Float** (`floatingEnable`, i3's `floating_enable`): the leaf becomes a floating node at the top
-  of the workspace's floating list, taking its branch's place in the focus stack. The leaf's
-  fullscreen flag is not carried over. **Tile** (`floatingDisable`): the window goes after the
+  of the workspace's floating list, taking its branch's place in the focus stack. A fullscreen
+  window stays fullscreen, both ways, as in i3; a floating window's flag follows KWin's but only a
+  tiled one's blocks focus. **Tile** (`floatingDisable`): the window goes after the
   workspace's focused tiled container, or to the top level of an empty workspace.
 - **Focus a direction** (`focusDir`, i3's `tree_next` with `focus_wrapping`; Meta+arrow or J K L ;).
   From a floating window: left and right cycle the workspace's floating windows, wrapping; up and
@@ -556,8 +557,8 @@ back the user's `DelayFocusInterval`, read fresh from kwinrc.
 - **Fullscreen.** A fullscreen window stays in the tree (`docs/spec-fullscreen-tree.md`). KWin
   takes it out of its tile; it is left out of the layout (its siblings fill the space) and rejoins
   when fullscreen ends. One per workspace: making one fullscreen clears the others. It keeps the
-  focus (§5) and blocks focus and moves across it (§2). Floating a fullscreen window drops its
-  fullscreen flag in the model.
+  focus (§5) and blocks focus and moves across it (§2). Floated or tiled again, it stays
+  fullscreen (§2).
 - **Minimized.** Out of the layout, its share to its siblings; back where it was when restored.
   Across a reload a minimized window loses its place.
 - **Maximize.** No handler: a maximize takes the window out of its tile, the next pass puts it

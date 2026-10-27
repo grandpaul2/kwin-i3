@@ -1,5 +1,5 @@
 // i3's tiling drag (docs/spec-tiled-look.md, part B): a left press on a tiled window's title bar,
-// or Meta+left (Meta+Shift+left, the swap) anywhere in it, is taken before KWin's decoration and
+// or Meta+left anywhere in it, is taken before KWin's decoration and
 // window-action filters can arm a move: the window stays put and kwin-i3 drops it where the
 // pointer is released. Meta+right on a tiled window, or in the gap beside one, is i3's resize of
 // the boundary (docs/spec-tiling-resize.md): taken the same way, kwin-i3 draws the bar and
@@ -29,9 +29,9 @@ public:
     ~TilingDragBus() override;
 
 public Q_SLOTS:
-    // "phase id x y shift": phase none, drag (a resize: "resize"), drop or cancel; id the window's internal id; x y the
-    // pointer (the release's, for a drop); shift 1 if the press held Shift (the swap). A drop or
-    // a cancel is answered once, then none.
+    // "phase id x y": phase none, drag (a resize: "resize"), drop or cancel; id the window's
+    // internal id; x y the pointer (the release's, for a drop). A drop or a cancel is answered
+    // once, then none.
     QString State();
     // kwin-i3 is there to drop (at its start), or gone (its release): presses are KWin's.
     void SetOn(bool on);
@@ -94,7 +94,6 @@ private:
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;
-    bool m_shift = false;
     bool m_resize = false;            // the drag is a Meta+right resize (m_button is the right button)
     Qt::MouseButton m_button = Qt::NoButton;   // the button of the drag taken, until its release
     int m_resizeGap = 0;

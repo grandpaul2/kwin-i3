@@ -4,7 +4,9 @@
 // moved window has its new frame (or 100 ms), then they all switch in one frame: no wallpaper
 // between, as Sway's transactions give. A closing window is kept on screen while its neighbours
 // grow into its space; a new window is hidden until its tile has placed it (or 20 ms).
-// Nothing is asked of kwin-i3: KWin says "about to change" before every geometry change.
+// For the hold nothing is asked of kwin-i3: KWin says "about to change" before every geometry
+// change. kwin-i3 tells it the rest: the floating set, the tiled ring, the drop indicator and the
+// drag cursor (the slots below).
 #pragma once
 
 #include <effect/effectwindow.h>
@@ -32,7 +34,7 @@ public:
 
     static bool supported();
 
-    void reconfigure(ReconfigureFlags flags) override;   // KWin's reconfigure, as well as the watcher
+    void reconfigure(ReconfigureFlags flags) override;   // a --notify write; KWin's own reconfigure arrives as Workspace::configChanged (hold.cpp)
     bool isActive() const override;
     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
     void paintScreen(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, int mask, const KWin::Region &deviceRegion, KWin::LogicalOutput *screen) override;
@@ -102,7 +104,7 @@ private:
     void updateRadius(KWin::EffectWindow *w);               // rounded while framed (docs/spec-rounded-corners.md)
     void updateRadii();
     void resetRadii();
-    QList<KWin::RectF> ring(KWin::EffectWindow *w, const KWin::RectF &frame, double scale, double radius) const;
+    QList<KWin::RectF> ring(const KWin::RectF &frame, double scale, double radius) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
@@ -154,7 +156,7 @@ private:
         quint64 transactions = 0, timeouts = 0, closeHoldsKept = 0, closeHoldsDropped = 0;
         quint64 newHidden = 0, snapshots = 0;
         double lastMs = 0, maxMs = 0, lastHiddenMs = 0, maxHiddenMs = 0;
-        double lastSnapshotMs = 0, maxSnapshotMs = 0, lastQuietWaitMs = 0;
+        double lastSnapshotMs = 0, maxSnapshotMs = 0;
         quint64 frames = 0, framesHolding = 0;              // screens painted while active, and while holding
     } m_stats;
 };

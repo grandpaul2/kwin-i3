@@ -111,10 +111,7 @@ public:
         auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
         config->reparseConfiguration();
         m_scriptEnabled = KConfigGroup(config, QStringLiteral("Plugins")).readEntry("kwin-i3Enabled", false);
-        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Scripting"),
-                                                  QStringLiteral("org.kde.kwin.Scripting"), QStringLiteral("isScriptLoaded"));
-        msg << QStringLiteral("kwin-i3");
-        m_scriptLoaded = QDBusConnection::sessionBus().call(msg).arguments().value(0).toBool();
+        m_scriptLoaded = kwinI3Loaded();
         // The installed effect's id carries a hash (tools/plugin-install.sh): kwini3hold-<hash>.
         auto prop = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
                                                    QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));

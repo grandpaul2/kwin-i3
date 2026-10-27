@@ -335,7 +335,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Options:")
-            text: i18nc("@option:check", "Warn at login about keys other shortcuts already use")
+            text: i18nc("@option:check", "Warn when kwin-i3 starts about keys other shortcuts already use")
             checked: root.settings.warnTakenKeys
             onToggled: root.settings.warnTakenKeys = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "warnTakenKeys" }

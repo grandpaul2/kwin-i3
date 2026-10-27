@@ -689,6 +689,19 @@ test("a window opened under a fullscreen one is second in the focus stack (manag
     assert.strictEqual(d(m), "H[a b* e c]", "leaving fullscreen moves no focus (con.c)");
 });
 
+test("floating toggle keeps fullscreen, both ways (floating_enable/disable leave fullscreen_mode)", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.setFullscreen("b", true);
+    m.toggleFloating(leaf(m, "b"));
+    assert.strictEqual(leaf(m, "b").fullscreen, true, "floated, still fullscreen as KWin's window is");
+    m.setFullscreen("b", false);
+    assert.strictEqual(leaf(m, "b").fullscreen, false, "a floating window's fullscreen follows KWin's");
+    m.setFullscreen("b", true);
+    m.toggleFloating(leaf(m, "b"));
+    assert.strictEqual(d(m), "H[a b*!]", "tiled again, still fullscreen");
+});
+
 test("no fullscreen window: a new window goes to the tail of the focus stack as before", () => {
     const m = model();
     open(m, 1, "a", "b");
