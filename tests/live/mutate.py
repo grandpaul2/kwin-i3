@@ -8,7 +8,8 @@ Run: make mutate-live.
 - Each fault names the scenario expected to catch it, which runs first with KI3_FAILFAST=1; the
   others run only if that one stays green.
 - src/ and the built package are restored even on an exception or Ctrl-C.
-- KI3_ONLY="a|b": only the faults whose name contains one of those (the baseline still runs whole).
+- KI3_ONLY="a|b": only the faults whose name contains one of those; the baseline is the
+  scenarios those faults name.
 - KI3_SCENARIO=NN-name.sh: one scenario's faults (docs/testing.md, P3): the baseline is that
   scenario alone, and each of its faults runs against it alone, never the rest of the suite.
 - A fault in plugin/ rebuilds the plugins (make plugin) with it, and again when it is restored.
@@ -239,17 +240,21 @@ def main():
     one = os.environ.get("KI3_SCENARIO", "")
     if one and not os.path.exists(os.path.join("tests/live", one)):
         print(f"KI3_SCENARIO: no tests/live/{one}"); return 2
-    base, out = run([one] if one else ALL, False)
+    only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
+    chosen = [m for m in muts if (not only or any(o in m[2] for o in only)) and (not one or m[0] == one)]
+    # KI3_ONLY: the baseline is the scenarios its faults name, not the whole suite, so a flake
+    # elsewhere doesn't block it (OPEN.md item 34 (e), Paul 2026-10-27).
+    base_set = [one] if one else sorted({m[0] for m in chosen}) if only else ALL
+    if not base_set:
+        print("KI3_ONLY: no fault matches"); return 2
+    base, out = run(base_set, False)
     if base != "green":
         print(f"baseline is {base}, not green: fix the suite before trusting any fault result\n{out}")
         return 2
-    print("baseline green", flush=True)
+    print("baseline green" + ("" if base_set is ALL else ": " + " ".join(base_set)), flush=True)
     survivors, broken = [], []
-    only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
-    for scenario, path, name, a, b, *rest in muts:
+    for scenario, path, name, a, b, *rest in chosen:
         expected = bool(rest and rest[0])
-        if only and not any(o in name for o in only): continue
-        if one and scenario != one: continue
         orig = open(path).read()
         if a not in orig:
             print(f"!! pattern missing (src changed?): {name}"); survivors.append(name); continue
