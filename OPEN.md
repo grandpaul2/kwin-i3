@@ -24,15 +24,12 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 Work for now.
 
-**39. A floating fullscreen window, as in i3** (2026-10-27). Since today a floating window keeps
-its fullscreen flag, but only a tiled one blocks the focus keys and keeps its workspace's focus
-(`src/tree.js` `fullscreenOn` searches tiled windows only). In i3 a fullscreen window does both
-whether floating or tiled (`con_get_fullscreen_con` walks `floating_head` too; `render.c` skips
-other floating windows under it). Related known limit: focus keys over a fullscreen window are
-judged per workspace, where i3 judges from the focused window (`behaviour.md` §10). Paul's
-direction: follow i3, as an item with a test. Next: a spec (what changes for a game that runs
-floating fullscreen, the focus and move rules, KWin's own stacking), then a unit test watched red,
-the change, and a live check.
+**39. A floating fullscreen window, as in i3** (2026-10-27): done and live (b731b8d), Paul's own
+check pending: a floating fullscreen game or `mpv --fs`, then Meta+arrow (to the other monitor),
+a window from a hotkey (opens behind), a workspace switch away and back (focus returns). Left as
+they are, Paul 2026-10-27: focus keys judged per workspace (`behaviour.md` §10, the known limit);
+Meta+Space under a fullscreen window keeps the flag where i3 drops it (`con_activate_unblock`),
+tiled and floating alike, its own item if it ever bites. Next: Paul's check; his "it works" closes it.
 
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
