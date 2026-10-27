@@ -351,7 +351,7 @@ and **C1** is what follows from that.
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
 | B1 | The pointer enters a window (focus follows mouse), or its ring (§9) | KWin | that window | — | = | KWin's own policy, set by Paul's setup (`FocusPolicy=FocusFollowsMouse`); stock Plasma is click to focus |
-| B2 | The pointer crosses onto another monitor over the root window or a dock (an empty workspace, a gap, a panel) | — | **unchanged**, on the old monitor; KWin's active monitor is now the new one | — | **≠** | i3 focuses that monitor's workspace (C75). **The one place focus and pointer come apart**; C1 and D2 follow from it |
+| B2 | The pointer crosses onto another monitor over the root window or a dock (an empty workspace, a gap, a panel) | — | **unchanged**, on the old monitor; KWin's active monitor is now the new one | — | **≠** | i3 focuses that monitor's workspace (C75). **The one place focus and pointer come apart**; C1 and D2 follow from it. **Decided, not built** (Paul, 2026-10-27): i3's rule: that workspace's last focus, or the empty workspace; a dock counts as root; an override-redirect window keeps the keyboard while the focus moves under it; nothing with focus follows mouse off |
 | B3 | A click on a window | KWin | that window, raised | — | = | |
 | B4 | A click on the root window or a dock | KWin, then kwin-i3 | the desktop is active for a moment; Show Desktop off: back to the model's focus on the next pass | — | ≠ | i3 focuses the clicked monitor (`click.c`, root click) |
 | B5 | The pointer still, a window grows under it (after a close, a resize) | — | unchanged | — | = | i3 ignores enter events its own re-layout caused (`add_ignore_event`); KWin acts only on motion |
