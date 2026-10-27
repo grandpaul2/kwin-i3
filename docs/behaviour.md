@@ -182,7 +182,9 @@ but the first two. The i3 kind of each window that places itself, by default:
 | the desktop | root | places itself |
 | Yakuake (on all desktops) | sticky floating | places itself: **differs** (not in the focus history) |
 | Spectacle, the password prompt (polkit), KRuler | floating | places itself: **differs** |
-| `plasmashell`'s own normal windows, the logout screen | to decide | places itself |
+| the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the same in effect |
+| `plasmashell`'s shell surfaces (panels, popups, the edit-mode toolbar) | dock / override-redirect, by type | the same in effect |
+| `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating (judged by type, not class; mind `docs/bug-panel-config.md` when built) | places itself: **differs** |
 
 ### How a window gets its kind
 
@@ -373,7 +375,7 @@ and **C1** is what follows from that.
 | C6 | A tiled window closes, in a split with others | kwin-i3 | the previous focus in that split, recorded as it closes | — | = | `con_next_focused` |
 | C7 | A window at a workspace's top level, or a floating one, closes | KWin | here the window under the pointer (`NextFocusPrefersMouse=true`); stock Plasma: KWin's most recently used | — | ≠ | i3: `con_next_focused` on the workspace (`LATER.md` item 30). **Decided, not built** (Paul, 2026-10-27): i3's rule for every close, kwin-i3 overriding KWin's choice as in C6 |
 | C8 | The last window of a workspace closes | kwin-i3 | the empty workspace; no window active | — | = | |
-| C9 | The focused window is minimized | KWin | KWin's next choice; **unchecked**: whether a later pass activates the minimized one again | — | + | i3 has no minimize |
+| C9 | The focused window is minimized | KWin | KWin's next choice; **unchecked**: whether a later pass activates the minimized one again | — | + | i3 has no minimize Decided, not built (Paul, 2026-10-27): as i3's `move scratchpad`: the window leaves the layout, focus goes to what had it before (C7); restoring it is an activation; kwin-i3 never activates a minimized window by itself |
 
 **D. Workspaces and monitors changed from outside**
 

@@ -46,11 +46,10 @@ rather than another guess. 53-hold's `--notify` kill switch: closed unless it co
 
 **40. The focus rules, complete and in i3's terms** (Paul, 2026-10-27, from the 17:05 capture:
 Prism Launcher's modal dialog opened on the pointer's monitor and KWin took Prism along; the
-capture is kept until this item ends). Rules first, no code (Paul). Done: `behaviour.md` §5 is
-one table of every way focus changes, each row against i3; §3 names every window by i3's kind
-(Paul: follow i3, down to the names; override-redirect for KRunner and popups). Decided: the
-settings page uses i3's kind names, super descriptive and explicit, plainer later. Decided, not built: B2, A2, A3-A5, B4, C1-C3, C7, D2, D3, i3's rules; C4 and D5 accepted (the rows say them). Next: go through the table's
-rows with Paul: C9 (unchecked), and the §3 rows
-"to decide"; then `plan.md` "Focus" points to §5 instead of restating it (its "accepted" list
-has B5 wrong: i3 doesn't focus a window that grows under a still pointer either). Code waits
-for the rules.
+capture is kept until this item ends). **The rules are decided**: `behaviour.md` §5 is one
+table of every way focus changes, each row against i3; §3 names every window by i3's kind
+(Paul: follow i3, down to the names). The rows marked "Decided, not built" are the work: B2,
+A2, A3-A5, B4, C1-C3, C7, C9, D2/D3, and the §3 kinds that differ (Yakuake, Spectacle, the
+password prompt, KRuler and plasmashell's ordinary windows to floating). The settings page uses
+i3's kind names, super descriptive and explicit, plainer later. Accepted ≠: C4, D5. Next: a
+build plan with Paul (order, and what each needs in tests), when he wants code.

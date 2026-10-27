@@ -165,36 +165,26 @@ Moved to `docs/behaviour.md` (2026-10-27), which says what the code does: classi
 the tiles, gaps and minimum sizes (§6), maximize, minimize, fullscreen and the known limits (§10).
 The table that was here had drifted from the code (git history, before this line).
 
-### Focus (written down 2026-10-26, from an outside review; behaviour unchanged)
+### Focus (written down 2026-10-26; the rules decided 2026-10-27, `OPEN.md` item 40)
 
-Paul: the keys feel like i3, the mouse moves focus only when he moves it, and this is good enough
-to ship. Keep it from regressing; changing it is secondary. The behaviour, rule by rule, is
-`docs/behaviour.md` §5; this is the shape and why, in `src/kwin.js` "---- focus":
+**Focus follows i3** (Paul, 2026-10-27, from a capture where a modal dialog took its parent to
+the other monitor): every window is one of i3's kinds, by i3's names (`behaviour.md` §3), and
+every way focus changes is a row of `behaviour.md` §5 set against i3. That table is the home of
+the rules; this is the why.
 
-- **The model owns focus** (`src/tree.js`: the focus stacks; `activate`/`focusUp` are the only
-  places the global focus changes). KWin's activations come in at one handler, which refuses a
-  stale one; a key re-syncs from KWin's active window first.
-- **One place sends it out**: `applyFocus`, after every pass, so a pointer warp lands on settled
-  windows. The one other activation is handing focus straight back to a fullscreen window, which
-  can't wait for a pass. The pointer moves only when a key moved focus to another monitor (i3's
-  mouse_warping output).
-- **Exceptions**, each a small rule with its reason at the code:
-  - a window that places itself (a popup, a dialog, KRunner) keeps the keyboard through passive
-    passes and keys that don't move focus (`docs/spec-windows-placing-themselves.md`), except with the
-    desktop or a panel focused and Show Desktop off;
-  - a fullscreen window keeps its workspace's focus (`docs/spec-fullscreen-tree.md`);
-  - a desktop switched outside kwin-i3 (Overview, the pager) takes the focus with it, on the
-    monitor that has it;
-  - a close: i3's choice inside a split (con_next_focused), over KWin's; at a workspace's top level
-    and for floating windows, KWin's (`NextFocusPrefersMouse=true` here, which makes it the window
-    under the pointer: the pointer/keyboard choice below; a stock install's `false` against i3's
-    own rule is `LATER.md`, item 30);
-  - panel popups forgive a stray pointer for 1.5 s (`docs/spec-popup-grace.md`, a plugin).
-- **Accepted, where the pointer and the focus disagree** (KWin's focus follows mouse acts only on
-  motion across an edge, as i3's does): after a close the window that grows under a still pointer
-  isn't focused (Paul's capture, 2026-10-26 17:23); a new window opens on the pointer's monitor,
-  not the focused one (KWin places by pointer, finding 7: C2, C75; once OPEN.md item 25). Changing either is one choice,
-  Paul's, between the pointer and the keyboard.
+- **Why i3's rules, not exceptions**: the earlier rules asked "does kwin-i3 manage it?" and grew
+  an exception for each answer; "places itself" held kinds i3 keeps apart. Asked "which of i3's
+  kinds is it?", each row has i3's answer.
+- **Why the pointer matters**: in i3 the focused monitor, the pointer's and (here) KWin's active
+  monitor, where new windows open, are one. Crossing onto a monitor focuses it (B2), and focus
+  moving to another monitor brings the pointer (A2); the rest follows.
+- **Where it stays different**, each with its reason in its row: an activation switching a
+  hidden workspace's monitor (C4, KWin's one policy); a monitor change keeping the focus (D5);
+  Show Desktop, popup grace, and the floating-only keys being Plasma's (+ rows).
+- **The shape in code** (`src/kwin.js` "---- focus"): the model owns focus (`src/tree.js`,
+  `activate`/`focusUp`); KWin's activations come in at one handler; `applyFocus` sends it out
+  after every pass, so a pointer warp lands on settled windows; handing focus back to a
+  fullscreen window is the one activation that can't wait for a pass.
 
 ## Phases — each ends green, committed, pushed
 
