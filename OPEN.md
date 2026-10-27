@@ -35,7 +35,8 @@ Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's disp
 millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five repeat runs
 first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 (~10 s).
 `39-layout-notice` failed 5 checks once in the batch and passed alone (2026-10-26): if it flakes
-again, it goes alone. Also 2026-10-26, full runs on branch `tiled-look`: `capture-read: the press,
+again, it goes alone. `69-keyboard-layouts` failed 2 checks in the batch ("the helper fitted
+French", Workspace 5's AZERTY key) and passed 48 of 48 alone (2026-10-27). Also 2026-10-26, full runs on branch `tiled-look`: `capture-read: the press,
 last` (70 or 80) failed twice in `make mutate-live`'s baseline, and 57's "mid-hold: the old
 layout's frames" once in `run.sh` (its screenshot after the 400 ms hold had ended); each green 3
 of 3 alone. One flake per full run blocks the fault battery's baseline. Since the testing policy
