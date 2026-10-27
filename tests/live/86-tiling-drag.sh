@@ -5,6 +5,9 @@
 # beside the target, parent out to the workspace's edge, center swapped with it (Paul's choice
 # over i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
+# Meta+right (docs/spec-tiling-resize.md) is i3's resize of the boundary: the bar shows mid-drag
+# and the shares change at the release only; Escape leaves it; a press in the gap takes it too;
+# a floating window's Meta+right stays KWin's resize.
 # Not covered (docs/testing.md P3.5, only saves work or restores unreadable state):
 # - hold.cpp paintScreen: GL_BLEND put back as it was; nothing reads GL state.
 # - hold.cpp paintScreen: no draw when no vertex is in the repainted region (an empty draw).
@@ -17,6 +20,7 @@ term() { alacritty --title "$1" -o "colors.primary.background=\"$2\"" -o "window
 set_key() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5; }
 active() { kjs "log(workspace.activeWindow ? workspace.activeWindow.caption : 'none')"; }
 dropped() { wait_log "^.{9}DRAG (dropped|no drop|cancelled|not started)" "$1" && after "$1" | grep -E '^.{9}DRAG ' | tail -1 | cut -c10-; }
+wid() { fc "$1" | cut -d" " -f2 | cut -dx -f1; }
 indicator() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"drop" s "[^"]*"' | cut -d'"' -f4; }
 # A title-bar drag in steps, as a hand would (past the start-drag distance).
 tdrag() {
@@ -108,12 +112,42 @@ drag Meta left 640 540 60 180
 check "frame: Meta+drag c to b's left side"  wait_tree 1 "V[H[c* b]]" "$m"
 echo "    $(dropped $m)"
 
+# i3's Meta+right resize, in the frame look (a 2 px gap between c and b). The left third of c is
+# no edge of KWin's that has a neighbour; the nearest edge with a partner is its right one.
+read -r cw bw < <(kjs 'var o = {}; workspace.windowList().forEach(function (w) { o[w.caption] = Math.round(w.frameGeometry.width); }); log(o.c + " " + o.b)')
+echo "    c ${cw}px, b ${bw}px"
+m=$(mark)
+"$INJECT" "abs 100 180" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" "abs 200 180" "wait 40" "abs $((cw + 150)) 180" "wait 1000" \
+    "key 1 down" "key 1 up" "wait 40" "abs 300 180" "wait 40" "btn right up" "key ${EVDEV[Meta]} up" &
+held=$!
+check "Meta+right mid-drag: the 2 px bar at the pointer" poll eval '[[ "$(indicator)" == $((cw + 149)),*" 2x"* ]]' || echo "    indicator: $(indicator)"
+check "  the windows not resized yet"       eval '[[ "$(wid c)" == "$cw" ]]'
+wait $held
+check "Escape: cancelled, the bar gone"      eval 'wait_log "^.{9}RESIZE cancelled" "$m" && [[ -z "$(indicator)" ]]'
+check "  c as it was"                        eval '[[ "$(wid c)" == "$cw" ]]'
+m=$(mark)
+drag Meta right 100 180 $((cw + 150)) 180
+check "Meta+right drag in c: resized at the release" wait_log "^.{9}RESIZE resized width" "$m"
+poll eval '[[ "$(wid c)" -gt $((cw + 120)) ]]'
+echo "    c $(fc c)  b $(fc b)"
+check "  c grew by about the drag"          eval 'w=$(wid c); (( w >= cw + 125 && w <= cw + 160 ))'
+m=$(mark)
+read -r gx < <(kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") { var g = w.frameGeometry; log(Math.round(g.x + g.width)); } })')
+drag Meta right $((gx + 1)) 180 $((gx - 99)) 180
+check "Meta+right in the gap: resized too"   wait_log "^.{9}RESIZE resized width" "$m"
+echo "    c $(fc c)  b $(fc b)"
+check "  c shrank"                           poll eval '[[ "$(wid c)" -lt $((cw + 100)) ]]'
+
 # A floating window's Meta+drag stays KWin's move: it goes where it is dropped, still floating.
 key "Floating Toggle"
 check "c floats"                            wait_tree 1 "V[H[b]] ~c*" 
 g0=$(fc c)
 drag Meta left 640 360 700 400
 check "  Meta+drag moved it, still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
+echo "    c $g0 -> $(fc c)"
+g0=$(fc c)
+drag Meta right 640 360 760 420
+check "  Meta+right resized it (KWin's), still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
 echo "    c $g0 -> $(fc c)"
 
 check "no invariant failures or errors"     clean_log

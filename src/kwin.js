@@ -1340,11 +1340,16 @@ var KI3 = (function () {
 
     var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
     var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
-    function tellDrag(on) { callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on); }
+    function tellDrag(on) {
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
+        // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
+        // windows, the frame's room included; spec-tiling-resize.md, B).
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
+    }
     // i3's move cursor, from kwini3hold (SetDragCursor): renewed by every poll, so it ends by itself
-    // if kwin-i3 goes away mid-drag.
-    function dragCursor(on) {
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDragCursor", on);
+    // if kwin-i3 goes away mid-drag. shape: 0 the move cursor, 1 left-right, 2 up-down (a resize).
+    function dragCursor(on, shape) {
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDragCursor", on, shape || 0);
     }
 
     // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
@@ -1410,6 +1415,7 @@ var KI3 = (function () {
     function dragState(s) {
         if (!drag) return;
         drag.busy = false;
+        if (drag.resize) { resizeState(s); return; }
         var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
         if (phase === "drag" || phase === "drop") {
             var con = drag.con;
@@ -1435,16 +1441,17 @@ var KI3 = (function () {
         endDrag(phase === "cancel" ? "cancelled" : "ended");
     }
     function endDrag(why) {
+        var tag = drag.resize ? "RESIZE " : "DRAG ";
         indicate(null);
         dragCursor(false);
         drag.timer.stop();
         drag = null;
-        log("DRAG " + why);
+        log(tag + why);
     }
     function pollDrag() {
         if (!drag || drag.busy) return;
         drag.busy = true;
-        dragCursor(true);
+        dragCursor(true, drag.shape);
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
     }
     // The hidden action: a drag began. Only a tiled window of kwin-i3's, and only with somewhere
@@ -1460,11 +1467,108 @@ var KI3 = (function () {
             var timer = new QTimer();
             timer.interval = 16;            // a frame, about: the helper keeps only the last position
             timer.timeout.connect(guard("drag poll", pollDrag));
-            drag = { con: con, timer: timer, busy: false, plan: null, rect: "" };
+            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
             log("DRAG " + conCaption(con) + (f[4] === "1" ? " (swap)" : ""));
             dragCursor(true);
             dragState(s);
             if (drag) timer.start();
+        }));
+    }
+
+    // ---- i3's mouse resize of tiled windows (click.c, resize.c; docs/spec-tiling-resize.md) ------
+    // Meta+right on a tiled window, or in the gap beside one: the helper takes the press and runs
+    // the hidden "Tiling Resize" action. As in i3, nothing changes while the pointer moves: a 2 px
+    // bar follows it along the boundary, and the shares change once at the release.
+
+    // The tiles' smallest extent along o: windows' minimums (frameMin, with the inner gap) added
+    // up along a split and the largest across it, as minOf does for a projection.
+    function minExtent(c, o) {
+        if (c.win !== null) { var fm = frameMin(wins[c.win]); return (o === "h" ? fm.w : fm.h) + gaps().inner; }
+        var vals = c.nodes.filter(function (k) { return conRect(k).width > 0; }).map(function (k) { return minExtent(k, o); });
+        return vals.reduce(function (a, b) { return c.layout === o ? a + b : Math.max(a, b); }, 0);
+    }
+    // floating_mod_on_tiled_client: the nearest of the four edges to the press, no thirds, no
+    // limit. Of the edges with something to resize against (spec A, beyond i3, which takes the
+    // nearest and does nothing if it has no neighbour); a tie does nothing. The distance is
+    // absolute: a press in the gap is outside the frame.
+    function resizeEdge(con, x, y) {
+        var r = conRect(con), d = {};
+        d[Tree.RIGHT] = r.x + r.width - x; d[Tree.LEFT] = x - r.x;
+        d[Tree.DOWN] = r.y + r.height - y; d[Tree.UP] = y - r.y;
+        var best = null, tie = false;
+        [Tree.RIGHT, Tree.LEFT, Tree.DOWN, Tree.UP].forEach(function (dir) {
+            var part = model.resizeParticipants(con, dir);
+            if (!part) return;
+            var dist = Math.abs(d[dir]);
+            if (!best || dist < best.dist) { best = { dir: dir, part: part, dist: dist }; tie = false; }
+            else if (dist === best.dist) tie = true;
+        });
+        return tie ? null : best;
+    }
+    // resize_graphical_handler's set-up: the boundary is the middle of the gap between the
+    // participants' descended-focused leaves (a split's own rect has no gaps within it).
+    function resizePlan(con, x, y) {
+        var ws = Tree.wsOf(con);
+        // i3 refuses a resize between containers of different fullscreen modes; here, while a window
+        // is fullscreen on the workspace, none.
+        if (model.fullscreenOn(ws)) return null;
+        var e = resizeEdge(con, x, y);
+        if (!e) return null;
+        var o = e.dir === Tree.LEFT || e.dir === Tree.RIGHT ? "h" : "v", part = e.part;
+        var ff = model.descendFocused(part.first), fs = model.descendFocused(part.second);
+        if (ff.win === null || fs.win === null || !wins[ff.win] || !wins[fs.win]) return null;
+        var a = conRect(ff), b = conRect(fs), f = conRect(part.first), sr = conRect(part.second), inner = gaps().inner;
+        var start = o === "h" ? b.x - Math.floor((b.x - (a.x + a.width)) / 2) : b.y - Math.floor((b.y - (a.y + a.height)) / 2);
+        // Kept inside the two participants' tiles less each one's minimum, so a release can't ask
+        // for what KWin's tiles refuse (i3 keeps the bar 25 px inside the output).
+        var lo = (o === "h" ? f.x : f.y) - inner / 2 + minExtent(part.first, o);
+        var hi = (o === "h" ? sr.x + sr.width : sr.y + sr.height) + inner / 2 - minExtent(part.second, o);
+        if (lo > hi) lo = hi = start;
+        // parent size = the two tiles' extent / their shares (con_rect_size_in_orientation(parent))
+        var n = part.first.parent.nodes.length;
+        var shares = (part.first.percent || 1 / n) + (part.second.percent || 1 / n);
+        var ext = o === "h" ? f.width + sr.width : f.height + sr.height;
+        return { o: o, part: part, start: start, lo: lo, hi: hi, second: sr, size: (ext + 2 * inner) / shares };
+    }
+    function resizePos(rz, x, y) { return Math.min(Math.max(rz.o === "h" ? x : y, rz.lo), rz.hi); }
+    // i3's helprect: along the second participant, 2 px wide.
+    function resizeBar(rz, pos) {
+        var r = rz.second;
+        return rz.o === "h" ? { x: pos - 1, y: r.y, width: 2, height: r.height } : { x: r.x, y: pos - 1, width: r.width, height: 2 };
+    }
+    function resizeState(s) {
+        var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]), rz = drag.resize;
+        if (phase === "resize" || phase === "drop") {
+            if (model.byWin[f[1]] !== drag.con) { endDrag("its window is gone"); return; }
+            var pos = resizePos(rz, x, y);
+            if (phase === "resize") { indicate(resizeBar(rz, pos)); return; }
+            var px = Math.round(pos - rz.start), part = rz.part, ws = Tree.wsOf(part.first);
+            var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
+            endDrag(px === 0 ? "no change" : done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px of " + Math.round(rz.size) :
+                                                    "refused " + px + " px");
+            if (done) schedule(ws);
+            return;
+        }
+        endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    // The hidden action: a Meta+right press. Nothing to resize against (or fullscreen): the press
+    // was nothing, and the helper holds it until the release, as a tiling drag with nowhere to drop.
+    function startResize() {
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("resize start", function (s) {
+            var f = String(s).split(" "), con = model.byWin[f[1]];
+            if (f[0] !== "resize" || drag) return;
+            var x = Number(f[2]), y = Number(f[3]), rz = con && con.type === "con" && wins[con.win] ? resizePlan(con, x, y) : null;
+            if (!rz) { log("RESIZE not started: nothing to resize against"); return; }
+            var timer = new QTimer();
+            timer.interval = 16;
+            timer.timeout.connect(guard("resize poll", pollDrag));
+            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: rz.o === "h" ? 1 : 2, resize: rz };
+            log("RESIZE " + conCaption(con) + " " + (rz.o === "h" ? "width" : "height") + " at " + rz.start);
+            // i3 warps the pointer onto the bar (spec D): along the boundary's axis only.
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "Warp", rz.o === "h" ? rz.start : x, rz.o === "h" ? y : rz.start);
+            dragCursor(true, drag.shape);
+            indicate(resizeBar(rz, rz.start));
+            timer.start();
         }));
     }
 
@@ -2159,6 +2263,8 @@ var KI3 = (function () {
         // nothing. Not in registerKeys, so not on the Keys page.
         registerShortcut("kwin-i3 Tiling Drag", "kwin-i3: tiling drag (run by the mouse, no key)", "",
                          guard("Tiling Drag", startDrag));
+        registerShortcut("kwin-i3 Tiling Resize", "kwin-i3: tiling resize (run by the mouse, no key)", "",
+                         guard("Tiling Resize", startResize));
         tellDrag(true);
         adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores

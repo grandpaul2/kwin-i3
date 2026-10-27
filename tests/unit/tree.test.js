@@ -600,6 +600,50 @@ test("resize: nothing to resize against, or someone would vanish: refused", () =
     assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
 });
 
+// ---- resize by the mouse (resize_find_tiling_participants, resize_neighboring_cons) ---------------
+
+test("resizeParticipants: the sibling on that side, in front first", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    let p = m.resizeParticipants(leaf(m, "b"), RIGHT);
+    assert.deepStrictEqual([p.first, p.second], [leaf(m, "b"), leaf(m, "c")]);
+    p = m.resizeParticipants(leaf(m, "b"), LEFT);
+    assert.deepStrictEqual([p.first, p.second], [leaf(m, "a"), leaf(m, "b")], "click.c swaps D_LEFT");
+});
+
+test("resizeParticipants: up the tree to an ancestor with a sibling, else none", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");                       // H[a V[b c]]
+    let p = m.resizeParticipants(leaf(m, "c"), LEFT);
+    assert.deepStrictEqual([p.first, p.second], [leaf(m, "a"), leaf(m, "c").parent], "the split, not c");
+    p = m.resizeParticipants(leaf(m, "b"), DOWN);
+    assert.deepStrictEqual([p.first, p.second], [leaf(m, "b"), leaf(m, "c")]);
+    assert.strictEqual(m.resizeParticipants(leaf(m, "c"), DOWN), null, "last in the column, and the row has no vertical split above");
+    assert.strictEqual(m.resizeParticipants(leaf(m, "a"), LEFT), null, "nothing to the left of the workspace's first");
+    assert.strictEqual(m.resizeParticipants(leaf(m, "a"), UP), null, "no vertical split at all");
+    assert.strictEqual(m.resizeParticipants(m.ws(1), LEFT), null);
+});
+
+test("resizeNeighbouring: pixels become a share of the parent, the second gives it up", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 120, 1200), true);
+    assert.deepStrictEqual(pct(m, "a", "b", "c"), [0.433, 0.233, 0.333]);
+    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -240, 1200), true);
+    assert.deepStrictEqual(pct(m, "a", "b", "c"), [0.233, 0.433, 0.333]);
+});
+
+test("resizeNeighbouring: refused, nothing changed, when either would vanish", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 600, 1200), false, "b to zero");
+    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -700, 1200), false, "a below zero");
+    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 10, 0), false, "no size");
+    assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
+});
+
 // ---- from the code review (2026-10-22) ------------------------------------------------------------
 
 test("fullscreen is one per workspace: a second clears the first (con_toggle_fullscreen)", () => {
