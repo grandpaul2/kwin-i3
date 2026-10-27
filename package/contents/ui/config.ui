@@ -336,7 +336,7 @@
      <item row="12" column="0">
       <widget class="QLabel" name="floatingWorkspacesLabel">
        <property name="text">
-        <string>Plasma windows on workspaces:</string>
+        <string>Workspaces where new windows float:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_floatingWorkspaces</cstring>
@@ -542,7 +542,7 @@
      <item row="24" column="0">
       <widget class="QLabel" name="ignoreClassLabel">
        <property name="text">
-        <string>Leave alone, applications:</string>
+        <string>Places itself, applications:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_ignoreClass</cstring>
@@ -558,14 +558,14 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Comma-separated window classes kwin-i3 leaves alone: they float and keep their own place. KWin's Window Rules can detect a window's class.</string>
+        <string>Comma-separated window classes that place themselves: kwin-i3 never tiles, floats, moves or resizes them. KWin's Window Rules can detect a window's class.</string>
        </property>
       </widget>
      </item>
      <item row="25" column="0">
       <widget class="QLabel" name="ignoreRoleLabel">
        <property name="text">
-        <string>Leave alone, roles:</string>
+        <string>Places itself, roles:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_ignoreRole</cstring>
@@ -581,7 +581,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Comma-separated window roles kwin-i3 leaves alone.</string>
+        <string>Comma-separated window roles that place themselves.</string>
        </property>
       </widget>
      </item>

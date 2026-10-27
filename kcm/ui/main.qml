@@ -219,7 +219,7 @@ KCM.SimpleKCM {
             readonly property var counts: Logic.workspaceCounts(root.settings.workspaceOutputs, root.settings.floatingWorkspaces)
             summary: counts.pinned === 0 && counts.plasma === 0 ? i18n("All tiled, on any monitor")
                 : [counts.pinned ? i18np("1 on a set monitor", "%1 on a set monitor", counts.pinned) : "",
-                   counts.plasma ? i18np("1 for Plasma windows", "%1 for Plasma windows", counts.plasma) : ""].filter(s => s).join(", ")
+                   counts.plasma ? i18np("1 floating", "%1 floating", counts.plasma) : ""].filter(s => s).join(", ")
             onClicked: kcm.push("Workspaces.qml")
         }
 
@@ -318,7 +318,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label", "Exceptions:")
             text: i18nc("@action:button", "Configure Window Rules…")
             readonly property var counts: Logic.ruleCounts(Logic.ruleEntries(root.settings, {}))
-            summary: i18np("1 left alone", "%1 left alone", counts.ignore) + ", "
+            summary: i18np("1 places itself", "%1 place themselves", counts.ignore) + ", "
                    + (counts.float ? i18np("1 always floats", "%1 always float", counts.float) : i18n("none always float"))
             onClicked: kcm.push("WindowRules.qml")
         }

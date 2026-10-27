@@ -49,6 +49,10 @@ nothing, do what Plasma's own pages do.
   Workspaces…", "Configure Window Rules…", "Configure Keys…".
 - **Twins are told apart by their words**, not a long parenthesis: "Move back and forth
   (previous workspace)" beside "Move to the previous workspace".
+- **Three words for a window, and only these** (Paul, 2026-10-27, `docs/spec-window-words.md`):
+  **tiled**, **floating**, **places itself**. "Plasma" describes a look ("its own title bar, as
+  a Plasma window"), never a mode. Never "leave alone", "don't manage" or "unmanaged": none is
+  true, and "not managed" sends the user looking for where it is.
 - **Every string through `i18nc`** with KDE's context tag (`@label`, `@option:check`,
   `@action:button`, `@title:group`, `@item:inlistbox`); a number with a unit through `i18ncp`.
 

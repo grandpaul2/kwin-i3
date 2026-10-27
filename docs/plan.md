@@ -35,9 +35,10 @@ rules that decide what is managed and what floats.
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace current when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
 | mouse chords (Meta+Shift+drag moved, 2026-10-22 to 10-24) | KWin's own Meta+drag moves and Meta+right-drag resizes; the chord plugin was kept only for focus on the frame (Paul, 2026-10-24) |
 
-**Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is i3's (tiled,
-framed) or Plasma's (floating, the user's own decoration), and a workspace can open new windows
-as Plasma's. It passes the test below: who arranges a window, i3's tree or Plasma, is the seam
+**Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is tiled (the
+tree places it) or floating (you place it; the user's own decoration, as a Plasma window), and a
+workspace can open new windows floating; a third kind places itself (the ignore lists). The words
+are `docs/spec-window-words.md` (2026-10-27). It passes the test below: who arranges a window, i3's tree or Plasma, is the seam
 itself, and only kwin-i3 can decide it.
 
 **The test for anything new:** if Plasma already does it, kwin-i3 doesn't. A feature belongs
@@ -158,7 +159,7 @@ Also left out: i3's restart/exit keys (exit is Plasma's own). i3's reload is in 
 | classification | decided when the window is ready (`readyForPaintingChanged` if not ready at `windowAdded`) and redone on `captionChanged`, `windowClassChanged`, `transientChanged` |
 | floats | transients and modals, `!resizeable`, `skipPager`, Krohnkite's default ignore-class list (krunner, yakuake, spectacle, plasmashell, ksplashqml, polkit agent, kruler, …) and the stage window (`STAGE (streamed)`); not `normalWindow` is never a candidate. **On Wayland a dialog *is* `normalWindow`**
 (xdg-toplevel has no window type; only `transient`/`modal` mark it, seen in phase 0), so the
-transient rule is what floats dialogs. Floating windows stay above tiled ones, except on a workspace set to open Plasma windows (`docs/spec-window-modes.md`, decision 5) |
+transient rule is what floats dialogs. Floating windows stay above tiled ones, except on a workspace whose new windows float (`docs/spec-window-modes.md`, decision 5) |
 | never managed | `onAllDesktops`, `skipTaskbar`, other activities (one activity: everything else is ignored) |
 | minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
 | maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |

@@ -162,6 +162,14 @@ name is its desktop's, set in System Settings > Virtual Desktops: a named one is
 
 ## Configuration
 
+kwin-i3 is the window manager: its workspaces, monitors and keyboard focus apply to every window.
+Each window has one arranger. **Tiled**: the tree places it. **Floating**: you place it, with its
+own title bar, as a Plasma window; kwin-i3 keeps it on its workspace and above the tiled windows,
+and moves it by key. **Places itself**: the app or Plasma places it (KRunner, panel popups,
+Yakuake); kwin-i3 never tiles, floats, moves or resizes it. i3 has no third kind (it manages every
+window but docks and popups); it exists here because KWin is the layer underneath, and some of
+Plasma's windows must place themselves.
+
 kwin-i3's page in System Settings > Window Management (above), or System Settings > Window
 Management > KWin Scripts > kwin-i3 > Configure, or by hand in
 `~/.config/kwinrc`, all in `[Script-kwin-i3]`. On the page, Apply applies at once. In the
@@ -175,8 +183,8 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 
 | group and key | default | meaning |
 |---|---|---|
-| `[Script-kwin-i3] ignoreClass` | krunner, yakuake, spectacle, plasmashell, polkit agent, kruler, … (Krohnkite's list) | window classes kwin-i3 never manages |
-| `[Script-kwin-i3] ignoreRole` | `quake` | window roles never managed |
+| `[Script-kwin-i3] ignoreClass` | krunner, yakuake, spectacle, plasmashell, polkit agent, kruler, … (Krohnkite's list) | window classes that **place themselves**: kwin-i3 never tiles, floats, moves or resizes them (they still live on a workspace) |
+| `[Script-kwin-i3] ignoreRole` | `quake` | window roles that place themselves |
 | `[Script-kwin-i3] floatingClass` | empty | classes that float instead of tiling |
 | `[Script-kwin-i3] floatingTitle` | empty | words; a window whose caption contains one floats |
 | `[Script-kwin-i3] gapsInner` | `4` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
@@ -196,7 +204,7 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] frameInactive` | `#333333` | on an inactive tiled window |
 | `[Script-kwin-i3] tiledLook` | `frame` | how tiled windows look: `frame` (i3's frame, no title bar), `titlebars` (each keeps its own title bar, as a Plasma window; the maximize button does nothing, as in sway), `bare` (neither; nothing marks the focused window, KWin's Dim Inactive effect can). Plugins: without them, `titlebars` whatever this says (`docs/spec-tiled-look.md`) |
 | `[Script-kwin-i3] roundedCorners` | `true` | tiled windows' corners rounded 5 px, as Breeze's, the frame following them, in `frame` and `bare` (plugins: without them tiled windows keep their title bars, and with them their theme's corners). Floating windows keep their theme's corners either way |
-| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces of Plasma windows: `3, 7`. A window that opens there floats, with its own title bar, as in plain Plasma (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/spec-window-modes.md`) |
+| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/spec-window-modes.md`) |
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the floating colours (plugins; not a window that draws its own title bar) |
 | `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | the frame on the active floating window, with `frameOnFloating` (a muted green, to tell it apart; i3 has no such colour) |
 | `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window, likewise. How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |

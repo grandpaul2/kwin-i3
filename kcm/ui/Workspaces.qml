@@ -1,5 +1,5 @@
 // The Workspaces sub-page (docs/spec-settings-cleanup.md): each workspace's monitor
-// (workspaceOutputs, "1=DP-4") and whether its new windows open as Plasma windows
+// (workspaceOutputs, "1=DP-4") and whether its new windows open floating
 // (floatingWorkspaces, "3, 7"), one row per workspace.
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -36,11 +36,11 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("A workspace with a monitor set starts there; the others start on the first free monitor. Plasma windows float, with their own title bar.")
+            text: i18n("A workspace with a monitor set starts there; the others start on the first free monitor. On one set to Floating, new windows float, with their own title bar, as Plasma windows do.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("Meta+Shift+Space tiles a Plasma window or floats a tiled one. A window keeps its mode when it moves to another workspace. A monitor that is set but not connected now is kept for when it comes back.")
+            toolTipText: i18n("Meta+Shift+Space tiles a floating window or floats a tiled one. A window keeps its mode when it moves to another workspace. A monitor that is set but not connected now is kept for when it comes back.")
         }
     }
 
@@ -76,7 +76,7 @@ KCM.SimpleKCM {
                 }
                 QQC2.ComboBox {
                     model: [{ value: false, text: i18nc("@item:inlistbox new windows are", "Tiled") },
-                            { value: true, text: i18nc("@item:inlistbox new windows are", "Plasma windows") }]
+                            { value: true, text: i18nc("@item:inlistbox new windows are", "Floating") }]
                     textRole: "text"
                     valueRole: "value"
                     readonly property bool stored: page.plasma.indexOf(row.num) >= 0
