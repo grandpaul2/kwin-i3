@@ -207,10 +207,10 @@ check "c is half the screen again"          geom_is c "1,1 638x718"   # the drag
 t=$(stat transactions)
 m=$(mark)
 drag Meta right 600 360 500 360
-check "a resize drag happened"              wait_log '^.{9}DRAG end resize c' "$m"
+check "a resize drag happened"              wait_log '^.{9}RESIZE resized width' "$m"
 sleep 0.2
-# The drag itself holds nothing; its end re-tiles the neighbours (kwin-i3 reads the sizes
-# back), which is one ordinary transaction at most.
+# Meta+right is kwin-i3's own resize (OPEN.md item 37): the drag holds nothing, its release
+# re-tiles the two neighbours, which is one ordinary transaction at most.
 check "at most the drag's end re-tile was held"   between "$(( $(stat transactions) - t ))" 0 1
 
 # 9. Closing the last window on a screen: kept for a moment, then let go.
