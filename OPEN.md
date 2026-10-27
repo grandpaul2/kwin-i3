@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives). Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus"; item 29 done, live and confirmed by Paul; item 30 to `LATER.md`, "Reliability").
+Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus"; item 29 done, live and confirmed by Paul; items 30 and 28 to `LATER.md`).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -43,13 +43,6 @@ of 3 alone. One flake per full run blocks the fault battery's baseline. Since th
 `make test` and the fortnightly battery expensive: (d) the three flakes above and 39, each made
 deterministic or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
-
-**28. No launch workspace** (finding 2: C19). An app opens on the workspace current when its
-window appears, not the one it was launched from: switch workspaces while a slow app starts and
-it lands where you are. i3 places it by the startup notification's workspace; KWin ignores the
-notification's desktop. Next: read what KWin 6.7.5 gives a script at launch (startup id / token
-on the window, `xdg-activation`), then a proposal (remember the workspace at launch, send the
-window there), or won't-fix with the reason if nothing reaches the script.
 
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
 kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown

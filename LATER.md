@@ -108,6 +108,19 @@ rather than in `make test`.
 
 ## Release prep
 
+**28. Launch workspace, a maybe** (finding 2: C19; from OPEN.md 2026-10-26, Paul: "park it as a
+maybe"). i3 puts a window on the workspace it was launched from only when i3 started the program
+itself (`exec`, or dmenu run by it), the window carries the matching `_NET_STARTUP_ID`, and the
+launch finished less than 30 s ago (`startup.c` 4.24). kwin-i3 puts it on the workspace current
+when the window appears. Paul uses that (start a Minecraft instance, then go to the workspace it
+should open on), and in i3 it was the same: the game's window comes from its launcher's Java
+process, which i3 didn't start, and GLFW sets no startup id. The difference is only an app started
+straight from the launcher, then a switch before its window shows. Documented as a divergence
+(`docs/plan.md`, "Scope"; README, "Keys"). Next, if a user asks for it: whether KWin 6.7.5 gives a
+script the window's xdg-activation token (Wayland) or startup id (Xwayland) and the launch's
+moment; if not, a plugin hook in KWin's activation, or won't-fix.
+
+
 **4. No dependence on Paul's dotfiles.** (a)-(d) done and live 2026-10-24: workspaces created on
 demand (`docs/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
 turned on (`docs/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /

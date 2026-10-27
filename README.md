@@ -49,7 +49,12 @@ workspace back and forth**; **workspace next / prev** (among those in use, wrapp
 that monitor's visible workspace; the focus stays) and **move workspace to output** (the whole
 workspace; the monitor it leaves shows the one it showed before). The setting
 `workspaceAutoBackAndForth` makes Meta+N for the workspace you are on go back, as i3's
-`workspace_auto_back_and_forth`.
+`workspace_auto_back_and_forth`. And **move to workspace next / prev** (and on output): the
+focused window to that workspace; the focus stays.
+
+A new window opens on the workspace you are on when it appears. i3 sends a program it started
+itself back to the workspace it was launched from; kwin-i3 doesn't (a window another program
+starts, such as a game from its launcher, opened where you were in i3 too).
 
 Mouse:
 - **Meta+left-drag on a tiled window** is i3's tiling drag (needs the helper plugin): the window

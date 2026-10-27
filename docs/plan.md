@@ -32,6 +32,7 @@ rules that decide what is managed and what floats.
 | i3's config file and `i3-msg` IPC | settings belong in System Settings (and `kwinrc`); KWin's D-Bus is the scripting surface |
 | `assign`, `for_window` and other per-window rules beyond managed / floating | KWin's Window Rules already do them |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only. **Xwayland apps in a Wayland session are in, first-class** (Paul, 2026-10-24: "that's going to be common"; `docs/spec-window-modes.md`, decision 8) |
+| the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace current when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
 | mouse chords (Meta+Shift+drag moved, 2026-10-22 to 10-24) | KWin's own Meta+drag moves and Meta+right-drag resizes; the chord plugin was kept only for focus on the frame (Paul, 2026-10-24) |
 
 **Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is i3's (tiled,
