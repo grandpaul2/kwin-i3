@@ -49,8 +49,8 @@ Prism Launcher's modal dialog opened on the pointer's monitor and KWin took Pris
 capture is kept until this item ends). Rules first, no code (Paul). Done: `behaviour.md` §5 is
 one table of every way focus changes, each row against i3; §3 names every window by i3's kind
 (Paul: follow i3, down to the names; override-redirect for KRunner and popups). Decided: the
-settings page uses i3's kind names, super descriptive and explicit, plainer later. Decided, not built: B2, A2, A3-A5, B4, C1-C3, i3's rules; C4 accepted (the rows say them). Next: go through the table's
-≠ rows with Paul: C7, D2, D3, D5, and the §3 rows
+settings page uses i3's kind names, super descriptive and explicit, plainer later. Decided, not built: B2, A2, A3-A5, B4, C1-C3, C7, D2, D3, i3's rules; C4 and D5 accepted (the rows say them). Next: go through the table's
+rows with Paul: C9 (unchecked), and the §3 rows
 "to decide"; then `plan.md` "Focus" points to §5 instead of restating it (its "accepted" list
 has B5 wrong: i3 doesn't focus a window that grows under a still pointer either). Code waits
 for the rules.

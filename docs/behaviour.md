@@ -371,7 +371,7 @@ and **C1** is what follows from that.
 | C4 | A new window on a hidden workspace (an app asking, a session restore) | KWin | the new window; its monitor switches to it | — | ≠ | i3 marks it urgent. **Accepted** (Paul, 2026-10-25, confirmed 2026-10-27): every activation (Alt+Tab, the task manager, an app, kwin-i3's own) reaches KWin through one policy a script can't tell apart; "do nothing" breaks Alt+Tab and the task manager across workspaces and leaves nothing to mark urgent (`i3-feature-map.md` finding 6, C4) |
 | C5 | A new window on a workspace with a fullscreen window | kwin-i3 | handed straight back to the fullscreen window; not if the newcomer is transient (its dialog) or opens fullscreen itself (it takes over) | — | = | `popup_during_fullscreen smart` |
 | C6 | A tiled window closes, in a split with others | kwin-i3 | the previous focus in that split, recorded as it closes | — | = | `con_next_focused` |
-| C7 | A window at a workspace's top level, or a floating one, closes | KWin | here the window under the pointer (`NextFocusPrefersMouse=true`); stock Plasma: KWin's most recently used | — | ≠ | i3: `con_next_focused` on the workspace (`LATER.md` item 30) |
+| C7 | A window at a workspace's top level, or a floating one, closes | KWin | here the window under the pointer (`NextFocusPrefersMouse=true`); stock Plasma: KWin's most recently used | — | ≠ | i3: `con_next_focused` on the workspace (`LATER.md` item 30). **Decided, not built** (Paul, 2026-10-27): i3's rule for every close, kwin-i3 overriding KWin's choice as in C6 |
 | C8 | The last window of a workspace closes | kwin-i3 | the empty workspace; no window active | — | = | |
 | C9 | The focused window is minimized | KWin | KWin's next choice; **unchecked**: whether a later pass activates the minimized one again | — | + | i3 has no minimize |
 
@@ -380,10 +380,10 @@ and **C1** is what follows from that.
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
 | D1 | KWin activates a window its monitor isn't showing, without switching (stale) | kwin-i3 | refused; the model's focus is put back | — | + | |
-| D2 | A monitor's desktop switched outside kwin-i3 (Overview, pager, an app's activation, C2, C4), **on the monitor with the focus** | KWin | follows to that workspace (`shownOutside`) | — | = | **Unwritten case**: if that workspace lives on the other monitor and is shown there, both monitors show it and focus goes to it (capture 2026-10-27 17:05: DP-4 and DP-6 both on 5). i3 can't show one workspace twice |
-| D3 | The same, **on the other monitor** | — | unchanged | — | ≠ | i3's `workspace_show` focuses it |
+| D2 | A monitor's desktop switched outside kwin-i3 (Overview, pager, an app's activation, C2, C4), **on the monitor with the focus** | KWin | follows to that workspace (`shownOutside`) | — | = | **Unwritten case**: if that workspace lives on the other monitor and is shown there, both monitors show it and focus goes to it (capture 2026-10-27 17:05: DP-4 and DP-6 both on 5). i3 can't show one workspace twice. **Decided, not built** (Paul, 2026-10-27), with D3: a desktop switched from outside is i3's `workspace N` (`workspace_show`): N shows on its monitor and focus goes there, a workspace shown on the other monitor focuses that monitor (C60), A2 brings the pointer |
+| D3 | The same, **on the other monitor** | — | unchanged | — | ≠ | i3's `workspace_show` focuses it. **Decided, not built**: as D2 |
 | D4 | A desktop switch kwin-i3 made itself | KWin, then kwin-i3 | KWin activates that desktop's last window; the model's choice replaces it on the same pass | — | = | |
-| D5 | A monitor lost, or back | kwin-i3 | the model's focus kept | — | ≠ | i3 focuses the primary monitor's workspace (C78); harmless |
+| D5 | A monitor lost, or back | kwin-i3 | the model's focus kept | — | ≠ | i3 focuses the primary monitor's workspace at the end of every output change (`randr.c`). **Accepted** (Paul, 2026-10-27): the focused workspace moves with a lost monitor, so focus never points at nothing; i3's rule would move focus and pointer on every plug |
 | D6 | Desktops removed or reordered | kwin-i3 | rebuilt from KWin's active window (§4) | — | + | |
 | D7 | A window that places itself takes the keyboard (KRunner, a popup, Yakuake) | KWin | it keeps it through passive passes, until a key moves focus (A4) or it closes; then the model's focus again | — | = for override-redirect; ≠ for the floating ones (§3) | A floating one would follow C1 and C7. Not root or a dock: those get B4 |
 
