@@ -3,8 +3,8 @@
 From Paul, 2026-10-26: "the area I have to grab to meta+rightclick the transitions is small and
 not in an obvious spot. In i3 I was able to be pretty much anywhere near that area ... I'm having
 to click several times to find the correct spot." He chose approach B the same day: kwin-i3 does
-the resize itself, as it does the tiling drag. **Status: built on branch `tiling-resize` (2026-10-26), not
-live.** Decisions A-D as recommended; tests as approved (unit, 86's checks, 64 green). Built a little
+the resize itself, as it does the tiling drag. **Status: live 2026-10-26 (f970807); Paul: "works great in every
+way".** Decisions A-D as recommended; tests as approved (unit, 86's checks, 64 green). Built a little
 differently from the Design: (1) a gap press reports the nearest tiled window's id, not `-` (the
 script then needs no second hit test); the helper finds it within `SetResizeGap(px)`, which
 kwin-i3 sets to half the inner gap + 1 at every `SetOn`. (2) `SetDragCursor(on, shape)` takes the
@@ -14,9 +14,8 @@ colour, half transparent), not i3's solid focused-border colour. (4) The parent'
 shares (the model keeps no pixels); at a monitor's edge it is a few pixels short. (5) Refused
 while a window is fullscreen on the workspace (i3 refuses mixed fullscreen modes). (6) Escape
 cancels, but with Meta still held Plasma's Meta+Esc (System Monitor) is taken before the helper:
-the test lets go of Meta first. Not covered: nothing probed on the real desktop (the warp, D). The cursor changing on hover with Meta held is a
-separate question, after this one is in use: it needs a probe (kwini3hold can show a cursor only
-while it grabs the mouse, so it would have to pass every click on), and i3 doesn't do it.
+the test lets go of Meta first. The warp (D) and the cursor, seen live by Paul. **No hover feedback** with Meta held (Paul,
+2026-10-26: "that feedback isn't needed. I just click anywhere nearby"; i3 has none either).
 
 Sources: i3 4.24 `src/click.c` (`floating_mod_on_tiled_client`, `tiling_resize_for_border`,
 `route_click`, `handle_button_press`), `src/resize.c` (`resize_find_tiling_participants`,

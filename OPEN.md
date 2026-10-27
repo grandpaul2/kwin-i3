@@ -55,13 +55,6 @@ hidden (b3ce0c8); the helper's destructor left a stale filter in KWin, which cra
 title-bar drag in the title-bar look hasn't been tried live yet. `make test` green on 363c4f2
 (2026-10-26 evening, 237 s).
 
-**37. Meta+right-drag resize, i3's** (Paul, 2026-10-26: the spot to grab is small and hard to
-find). Spec: `docs/spec-tiling-resize.md`, approach B (kwin-i3 resizes, as the tiling drag; Paul's
-choice; decisions A-D as recommended). **Live 2026-10-26** (f970807), after an outside review
-(three small fixes) and unit, 86, 64 green. Paul: "works great in every way" (the warp and the
-cursor included). Next: the resize cursor on hover with Meta held, a probe first (Paul: "yes, a
-hover cursor could be added").
-
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
 other monitor, keys act on one monitor and the new window opens on the other. Since 2026-10-26
