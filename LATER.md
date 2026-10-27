@@ -24,7 +24,12 @@ reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet 
 add, code to remove, or not visible in the test KWin). The fuller procedure that was in
 `docs/testing.md` before (git 6a58018) is the starting point for the stricter one. Several of
 those faults' from-texts no longer match (the centre swap, the drop outline added and removed,
-Meta+Shift): rewrite them from the code before the run.
+Meta+Shift): rewrite them from the code before the run. Test gaps the reviews left (2026-10-22 to 10-24, in git history;
+checked 2026-10-27): the close hold when the fullscreen window is the last on its screen; a
+vertical border dragged inside a V layout and the middle border of three columns; the ignore
+rules, Focus/Move Up and Down, and a reload with floating or minimized windows, in no scenario by
+name; the test KWin without `Autolock=false` in its `kscreenlockerrc` and no harness check that
+fails loudly on a locked KWin (a long run could lock).
 
 **30. Focus after a close on a stock install** (finding 8: B51, C26; from OPEN.md 2026-10-26).
 At a workspace's top level and when a floating window closes, KWin's choice stands (`docs/plan.md`,
@@ -59,7 +64,7 @@ windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
 `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
-reviews `docs/review-window-modes-*.md`). Left:
+the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-24.md`, `-2-`, `-change-`)). Left:
 - test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
   (tools/ei-send can't scroll), a forcing window rule (desktop, maximize, size or no titlebar:
   each may ping-pong with kwin-i3's placement or frame, i3 feature map finding 10), `borderlessMaximizedWindows`, a window

@@ -4,7 +4,7 @@ Asked by Paul, 2026-10-24: "make the outline highlight of floating windows a dif
 like green instead of blue, so they were easy to tell apart". Status: **decided by Paul, 2026-10-24
 (1: the green, unfocused stays grey; 2: keys; 3: trap accepted). Built 2026-10-24
 (`plugin/frame.cpp`, `54-frame.sh` section 2b; the three faults below each went red). Reviewed
-(second agent, `docs/review-frame-colours-2026-10-24.md`: no must-fix; its should-fix, an alpha
+(second agent, `review-frame-colours-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-frame-colours-2026-10-24.md`): no must-fix; its should-fix, an alpha
 value in a key breaking the opaque promise, is applied). **Live since 2026-10-24 (Paul: go).** An addition to `docs/spec-decoration.md`
 (kwini3frame); i3 itself has no floating colour (its `client.*` classes are focused, unfocused,
 focused-inactive, urgent, placeholder), so this is a deliberate addition, not a port.

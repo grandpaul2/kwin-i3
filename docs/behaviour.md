@@ -578,6 +578,40 @@ back the user's `DelayFocusInterval`, read fresh from kwinrc.
   floats it where it stands, out of sight. Meta+Shift+N, or closing it, brings it back. The same
   holds for a hidden floating window smaller than KWin's 150 px decorated minimum.
 
+### Known limits
+
+Accepted or not yet worked on; found by the reviews of 2026-10-22 to 10-24 (git history) and
+checked against the code 2026-10-27. None is in `OPEN.md`: each is small, and becomes an item if
+it bites.
+
+- **A desktop rebuild** (desktops removed or reordered, §4) rebuilds from KWin's tiles: a window
+  that was never in a tile (sent to a hidden workspace) loses its place in its tree, and each
+  workspace's focus history is lost. A window added in the moment before the rebuild comes back as
+  if found at load.
+- **A window adopted late** (it placed itself, or had no workspace, when it appeared, and a later
+  change of class or title adopted it) is not handed back under a fullscreen window: it shows over
+  it with the focus.
+- **Keep Above as the floating mark**: a window that placed itself at first and is adopted later
+  with Keep Above set comes in floating where the rules would tile it; at a login, a window whose
+  session restored Keep Above and that arrives after kwin-i3 loaded is tiled with the flag left
+  on (`docs/spec-reload-keepabove.md`, "The login edge").
+- **Focus keys over a fullscreen window** are judged per workspace: with a floating window focused
+  over a fullscreen app, a focus key is refused where i3 (which judges from the focused window's
+  own fullscreen ancestor) allows it.
+- **Frame focus** with `frameOnFloating` takes the clicks around any borderless normal window,
+  including one the user made borderless, as the helper can't read the effect's floating set.
+  A floating window's border taken or given back may move it by the border's height (untested).
+- **A minimum size set late** (some GTK and Electron clients after their first frame) is noticed at
+  the next pass, not when it changes (`minSizeChanged` isn't connected).
+- **Meta+drag out of a tile, without the helper**, floats the window only if KWin reports the drag
+  started before the window left its tile; in the other order it is tiled again (never seen).
+- **No monitor at all**: placing throws, retried three times, then waits for the next event.
+- **The workspace widget** on a thin panel with many workspaces in use has no overflow (each
+  button shrinks to an 8 px floor; "Numbers only" helps); shown and focused workspaces differ only
+  by their fill.
+- **Internal, harmless**: each closed window leaves a small entry in the script's signal
+  bookkeeping for the session; every key places all workspaces again (idempotent, but logged).
+
 ---
 
 ## 11. Settings

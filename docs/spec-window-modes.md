@@ -165,7 +165,7 @@ compares the hair separately so float noise elsewhere keeps the old tolerance).
 
 ## Review 1 (2026-10-24), folded in
 
-`docs/review-window-modes-2026-10-24.md`, 17 findings. "R1-n" is finding n. Each is either a rule
+`review-window-modes-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-window-modes-2026-10-24.md`), 17 findings. "R1-n" is finding n. Each is either a rule
 for the build below, or a decision for Paul (marked).
 
 - **R1-1 clipping.** The ring is drawn inside the paint's device region (scissor on the region's
@@ -277,7 +277,7 @@ real output's later partial repaints. Checked by reading `Hold::paintFrame` (the
 the paint's device region), not by `make test`.
 
 **Pieces (iii)+(iv) built 2026-10-24 (branch `window-modes-2`)**, reviewed
-(`docs/review-window-modes-2-2026-10-24.md`: two must-fix, both fixed with tests). Known limits,
+(`review-window-modes-2-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-window-modes-2-2026-10-24.md`): two must-fix, both fixed with tests). Known limits,
 documented rather than fixed: a monitor change inside the 250 ms before the rest of the windows
 are adopted at load can hand out a workspace whose windows aren't adopted yet; a window left kept
 above by an earlier load without the effect stays kept above on a Plasma workspace (kwin-i3 can't

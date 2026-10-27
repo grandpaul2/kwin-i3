@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # focus: mouse
 # Real input, part 2: the pointer moved and dragged, focus by mouse, through libei. Designed in
-# docs/input-tests-design.md, revised by its review (docs/input-tests-review-2026-10-22.md).
+# docs/input-tests-design.md, revised by its review (git history: `git show 3d98bd2:docs/input-tests-review-2026-10-22.md`).
 source "$(dirname "$0")/lib.sh"
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
 output_is() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.output.name); })")" == "$2" ]]; }

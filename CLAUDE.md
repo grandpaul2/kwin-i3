@@ -2,9 +2,10 @@
 
 Paul's project: i3's window management as one KWin script, running his desktop (`pauls-desktop`,
 Fedora 44, Plasma 6.7 Wayland) since 2026-10-22. **kwin-i3 work happens in sessions started here**
-(Paul, 2026-10-22); `~/.dotfiles` keeps the system around it (below). Read `docs/philosophy.md` and `docs/plan.md`
-first: what the project is for and who for, then the plan and Paul's decisions. `docs/spike-kwin-tiles.md`, `docs/review-2026-10-21.md` and
-`docs/fuzz-design.md` are why it looks the way it does. **`OPEN.md` is this repo's list of
+(Paul, 2026-10-22); `~/.dotfiles` keeps the system around it (below). Read `docs/philosophy.md`, `docs/plan.md` and
+`docs/behaviour.md` first: what the project is for and who for, the scope and Paul's decisions, then
+what the code does, exactly. `docs/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
+the way it does (the reviews are in git history, removed 2026-10-27). **`OPEN.md` is this repo's list of
 unfinished work for now, and `LATER.md` of work held until the Stage ends**: no other file carries
 an open list (state, not history; the rules are in their headers).
 

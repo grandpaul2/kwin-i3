@@ -3,7 +3,7 @@
 Decided by Paul, 2026-10-23. Status: **built from revision 3 on 2026-10-23 (branch `frame`:
 `plugin/frame.cpp`, kwini3mouse's two additions, `tools/frame-guard.sh`, `tests/live/54-frame.sh`,
 42 checks; all seven faults of the matrix went red where this spec says). Not live until Paul says
-go.** Reviews 1 and 2 (`docs/review-decoration-2026-10-23.md`, `docs/review-decoration-2-2026-10-23.md`)
+go.** Reviews 1 and 2 (`review-decoration-2026-10-23.md` (git history: `git show 3d98bd2:docs/review-decoration-2026-10-23.md`), `review-decoration-2-2026-10-23.md` (git history: `git show 3d98bd2:docs/review-decoration-2-2026-10-23.md`))
 are folded in below, marked "R1-n" / "R2-n".
 
 Deviations found at code time:

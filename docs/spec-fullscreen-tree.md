@@ -2,7 +2,7 @@
 
 Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by Paul, 2026-10-24
 (1: i3's rule, 2: confirmed, 3: same change); reviewed (second agent, 2026-10-24,
-`docs/review-fullscreen-2026-10-24.md`, folded in below as "R-n"); the review's two questions
+`review-fullscreen-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-fullscreen-2026-10-24.md`), folded in below as "R-n"); the review's two questions
 decided by Paul, 2026-10-24 (4: i3's, focus stays; 5: i3's, every newcomer but the fullscreen
 window's own dialog opens behind). **Built 2026-10-24** (parts A, B, C below; `32-fullscreen-open.sh`
 47 checks, `53-hold.sh` section 8 extended, a unit test; found at build time: the workspace-switch
@@ -11,7 +11,7 @@ before). Live mutants in a worktree: four of six red (A floats again; B; C no ha
 workspace switch); one is documented in `tests/live/mutate.py` as unreachable (the
 hidden-workspace guard of the hand-back: KWin's activation shows the desktop first) and one was
 equivalent and its code removed (the `outOfTiles` record, part A). The change reviewed (second
-agent, `docs/review-fullscreen-change-2026-10-24.md`); its three should-fix findings applied: a
+agent, `review-fullscreen-change-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-fullscreen-change-2026-10-24.md`)); its three should-fix findings applied: a
 newcomer that opens fullscreen itself gets no hand-back (it takes the fullscreen over, as in i3);
 the "no spin" check reads its count once instead of polling; the stopped-client case is in the
 test. **Live since 2026-10-24 01:10 (Paul: go); the first Firefox fullscreen session is the live check.**

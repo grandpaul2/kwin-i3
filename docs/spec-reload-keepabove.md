@@ -3,7 +3,7 @@
 From Paul's question, 2026-10-24 ("even when I unfloat it, it stays green"). Status: **decided by Paul, 2026-10-24
 (1: spec and change reviewed together; 2: a hand-floated window stays floating across a reload,
 by the flag). Built 2026-10-24; reviewed (second agent,
-`docs/review-reload-keepabove-2026-10-24.md`), its must-fix applied with Paul's decision (16:
+`review-reload-keepabove-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-reload-keepabove-2026-10-24.md`)), its must-fix applied with Paul's decision (16:
 the rules' re-tiling of a hand-floated window on a caption change, below) and its login edge
 documented (17). **Live since 2026-10-24 ~02:00 (Paul: go).**
 

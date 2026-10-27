@@ -1,7 +1,7 @@
 # kwin-i3 — plan
 
 Rewritten 2026-10-21 after the tile spike (`docs/spike-kwin-tiles.md`), then revised the same night
-after an independent review (`docs/review-2026-10-21.md`; each finding's disposition is at its end).
+after an independent review (`review-2026-10-21.md` (git history: `git show 3d98bd2:docs/review-2026-10-21.md`); each finding's disposition is at its end).
 The first version, a new layout inside Krohnkite, is in git history.
 
 ## Goal
@@ -224,7 +224,7 @@ to ship. Keep it from regressing; changing it is secondary. The behaviour, rule 
    off-screen; Minecraft fullscreen on 5 survives a workspace switch; the release key releases
    everything on the real desktop; a clean reload with no journal warnings. Discord skipped (Paul
    no longer uses it). Way back stays in `~/kwin-i3-WAYBACK.txt` until phase 6. With Paul present, at a logout (Krohnkite is QML). The
-   checklist is from the live-desktop review (docs/code-review-live-2026-10-22.md):
+   checklist is from the live-desktop review (`code-review-live-2026-10-22.md` (git history: `git show 3d98bd2:docs/code-review-live-2026-10-22.md`)):
    0. Pre-flight, read-only: `make test` green, both repos clean and pushed; no `[Script-kwin-i3]`
       group in kwinrc (debug log off); back up `kwinrc` and `kglobalshortcutsrc`
       (`*.pre-kwin-i3`); write the way back to `~/kwin-i3-WAYBACK.txt` (on disk: the clipboard
