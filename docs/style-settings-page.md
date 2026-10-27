@@ -47,8 +47,8 @@ nothing, do what Plasma's own pages do.
   ("focused", "others") gets the full text as its accessible name (§6).
 - **A button that opens a sub-page** ends in "…" and names what it opens: "Configure
   Workspaces…", "Configure Window Rules…", "Configure Keys…".
-- **Parentheses tell twins apart** in a list: "Move to the previous workspace (back and forth)"
-  beside "Move to the previous workspace (by number)".
+- **Twins are told apart by their words**, not a long parenthesis: "Move back and forth
+  (previous workspace)" beside "Move to the previous workspace".
 - **Every string through `i18nc`** with KDE's context tag (`@label`, `@option:check`,
   `@action:button`, `@title:group`, `@item:inlistbox`); a number with a unit through `i18ncp`.
 
@@ -113,6 +113,8 @@ nothing, do what Plasma's own pages do.
   workspace on this monitor", "Move to workspace 3"); it goes in the group for what it acts on
   (focus, move, workspaces, move to workspace, monitors, …), next to its twin form (a go-to's
   move form in "Move to workspace", in the same order).
+- **A command's label fits the label column**: about 40 characters at the default font, or it is
+  cut off with "…" (2026-10-26: seven rows were). Checked on a screenshot of the group.
 - **A shifted symbol is named by its keys** beside its button, in muted text: "Meta+! →
   Meta+Shift+1" (`docs/spec-keys-shifted-labels.md`).
 - **Clashes are shown in the row, never prompted**: "Meta+E is used by Dolphin (Launch); it will
