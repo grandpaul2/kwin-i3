@@ -33,7 +33,8 @@ them, with their tags.
 2. **No launch workspace** (C19): an app opens on the workspace current when its window appears,
    not the one it was launched from; KWin ignores the startup notification's desktop.
 3. **Urgency shows nowhere** (C97): i3 marks the workspace in the bar; the widget has no urgent state.
-4. **No `move container to workspace next/prev`** (A27): the goto forms exist, the move forms don't.
+4. **No `move container to workspace next/prev`** (A27). **Done** 2026-10-26 (OPEN.md item 29,
+   `docs/spec-workspace-commands.md`, 2): four actions with no key, as the goto forms.
 5. **Small explicit forms missing** (A10, A11, A14, A54, A56, A62): `focus next/prev sibling`,
    `focus tiling/floating`, `layout splith/splitv`, `split toggle`, `floating enable/disable`. The
    toggles reach every state, so only for completeness or key-for-key i3 configs.
@@ -147,7 +148,7 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 | A24 | `move [--no-auto-back-and-forth] [container to] workspace <name>` | send the window to a named workspace (auto back-and-forth honoured unless `--no-...`) | none for names; K for numbers | | workspaces are numbers only (desktop N = workspace N); names are Plasma's desktop names, display only (`spec-workspace-commands` §4: "Name-based commands ... not asked for") | C | By name absent; fine under "numbered workspaces" |
 | A25 | `move ... workspace number <n>` | send window to numbered workspace | K (script) | | `Move to Workspace N`, bound as Meta+Shift+N via the symbol form (Meta+! ... Meta+)), `src/kwin.js:1428` | C | US symbols only without the helper plugin (OPEN 9 / README); `workspaceAutoBackAndForth` honours `--no-auto-back-and-forth`'s counterpart. No per-call `--no-auto-back-and-forth` switch |
 | A26 | `move ... workspace number <n>` with `--no-auto-back-and-forth` | override the auto back-and-forth setting for this call | none | | the setting is global | C | Trivial |
-| A27 | `move ... workspace next` / `prev` / `next_on_output` / `prev_on_output` | send window to the adjacent workspace | none | KW `Window to Next/Previous Desktop` (unbound live; not per output, ignores kwin-i3's "exists" rule) | `UNBOUND` has only the Workspace Next/Prev (goto) actions, not move | C | The goto forms are built (A44); the move forms are not. A KWin action moving the window is followed by the tree via `desktopsChanged` (`src/kwin.js:1040`) but may land on a workspace kwin-i3 would not choose (a never-used desktop) |
+| A27 | `move ... workspace next` / `prev` / `next_on_output` / `prev_on_output` | send window to the adjacent workspace | K (script) | KW `Window to Next/Previous Desktop` (unbound live; not per output, ignores kwin-i3's "exists" rule) | `Move to Workspace Next/Prev (on Output)` in `UNBOUND` | C | Unbound by default, as the goto forms (A44, A45); `docs/spec-workspace-commands.md`, 2 |
 | A28 | `move ... workspace current` | move to the current workspace (matters with criteria) | none | | | C | Needs criteria to be meaningful |
 | A29 | `move ... workspace back_and_forth` | send window to the previously focused workspace | K (script) | | `Move to Workspace Back and Forth` in `UNBOUND` | C | Unbound by default, as in i3 |
 | A30 | `move workspace to output <name>` / `<dir>` / `primary` / `next` | move the whole workspace to another output | K (script), directional only | | `Move Workspace to Output Left/Right/Up/Down` (`moveWorkspaceToOutput`, `src/kwin.js:1340`) | C | Named/`primary`/`next` absent |

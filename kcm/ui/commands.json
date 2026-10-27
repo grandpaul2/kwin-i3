@@ -472,10 +472,46 @@
     ]
    },
    {
-    "label": "Move to the previous workspace (back and forth)",
+    "label": "Move back and forth (previous workspace)",
     "actions": [
      [
       "kwin-i3 Move to Workspace Back and Forth",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the next workspace",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Next",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the previous workspace",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Prev",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the next on this monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Next on Output",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the previous on this monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Prev on Output",
       ""
      ]
     ]
@@ -522,7 +558,7 @@
     ]
    },
    {
-    "label": "Move the window to the monitor to the left",
+    "label": "Move the window to the left monitor",
     "actions": [
      [
       "kwin-i3 Move to Output Left",
@@ -531,7 +567,7 @@
     ]
    },
    {
-    "label": "Move the window to the monitor to the right",
+    "label": "Move the window to the right monitor",
     "actions": [
      [
       "kwin-i3 Move to Output Right",
@@ -558,7 +594,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the monitor to the left",
+    "label": "Move the workspace to the left monitor",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Left",
@@ -567,7 +603,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the monitor to the right",
+    "label": "Move the workspace to the right monitor",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Right",
