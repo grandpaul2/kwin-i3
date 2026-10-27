@@ -618,6 +618,11 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
   window behind the fullscreen one, which KWin then shows above it.
 - **Focus mode toggle under a fullscreen window** (Meta+Space) focuses the other kind and leaves
   the fullscreen flag on, where i3 drops it (`con_activate_unblock`). Accepted, Paul 2026-10-27.
+- **A rare wallpaper flash** for a frame, after closing a tiled window beside another or on a
+  workspace switch (three on 2026-10-25, cause not found: kwin-i3's trees and kwini3hold's holds
+  were right). Accepted, Paul 2026-10-27: extremely rare since. If it comes back, a capture
+  (Meta+Shift+B) says whether it falls inside kwini3hold's hold or after its release; the work
+  so far is `OPEN.md` item 21 in git history.
 - **Frame focus** with `frameOnFloating` takes the clicks around any borderless normal window,
   including one the user made borderless, as the helper can't read the effect's floating set.
   A floating window's border taken or given back may move it by the border's height (untested).

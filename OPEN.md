@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, third session** (item 39 done, live and checked by Paul; the 04:35 capture was xwaylandvideobridge's invisible window, left as Fedora ships it, Paul's call).
+Last reconciled: **2026-10-27, third session** (item 39 done, live and checked by Paul; item 21 accepted as a known limit in `behaviour.md` §10, Paul: extremely rare now; the 04:35 capture was xwaylandvideobridge's invisible window, left as Fedora ships it, Paul's call).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -52,20 +52,3 @@ One flake per full run blocks the fault battery's baseline. Since the testing po
 `make test` and the fortnightly battery expensive: (d) the flakes above, each made deterministic
 or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
-
-**21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
-kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown
-again on a workspace switch 4 to 2. **The other two followed a close of the window beside it**:
-at 17:57 a terminal beside Firefox, at 18:51 one of two Alacritty on workspace 3 (DP-4; its
-`state.txt` log: `18:51:17 ACTION Close`, `TREE 3 H[Alacritty*]`, the press 7 s later). kwin-i3's
-side checked for the Firefox ones: the trees were right, and kwini3hold kept the closing window and
-released on Firefox's new size with no timeout (66 holds, max 69 ms). With no Firefox at 18:51,
-the guess that Firefox acknowledges a size before drawing into it no longer covers every case; a
-cause in kwini3hold, the frame effect or KWin is as likely. From 2026-10-25 late a capture holds the
-flight recorder (`docs/debugging.md`): kwin-i3's TILE and GEOM lines and kwini3hold's hold, close
-and release events, to the millisecond, read with `tools/capture-read`. Next: the next flash's
-capture says whether it falls after kwini3hold's release (then the client or KWin drew late) or
-inside the hold (then the effect); meanwhile, reproduce in the test KWin (two tiled, close one,
-screenshots every few ms, background inside the survivor's rect), Alacritty and the test client
-first, real Firefox with a throwaway profile second. If timelines can't settle it: the screen
-replay buffer (`docs/debugging.md`, "What none of these show"), its own proposal.
