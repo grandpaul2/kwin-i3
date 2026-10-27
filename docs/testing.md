@@ -48,7 +48,11 @@ then the fix and P1. A check for the bug only under rule 5.
 
 ## P3. Before anything goes live
 
-1. One `make test` (~4 min), in the background, once per session.
+1. **One `make test` per session, at its start** (~4 min, in the background; `/sessionstart` says
+   when one is owed). **Not again before a live install later in the session**: a change made
+   after it is covered by P1 (its scenarios, and 64 for a plugin change). (Paul, 2026-10-26: a
+   second `make test` was proposed before an install because this line read as "before going
+   live"; it never meant that.)
 2. A red scenario the change drives: fix it, then rerun only that scenario.
 3. A red scenario it doesn't: one run of it alone. Green: a line in `OPEN.md` item 34. Red: report
    to Paul, don't fix it.
