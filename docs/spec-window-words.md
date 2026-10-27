@@ -1,6 +1,10 @@
 # Spec: what kwin-i3 calls a window (tiled, floating, places itself)
 
-**Now (2026-10-27):** Built and live 2026-10-27.
+**Now (2026-10-27):** Built and live 2026-10-27. **Superseded the same evening** (Paul, reviewing
+the focus rules): the kinds follow i3, down to the names: tiling, floating, sticky floating, dock,
+root, override-redirect (`behaviour.md` §3). "Places itself" held kinds i3 keeps apart, and the
+focus rules grew exceptions for it. The settings page follows i3's names too, kept super
+descriptive and explicit; plainer wording comes later (`OPEN.md` item 40).
 
 Paul, 2026-10-27: clear up the line between i3 and Plasma in the window rules; "floated" and
 "Plasma window" have been used for nearly the same thing. Status: **Paul's go 2026-10-27, built.** The rule lists keep their explanation lines under each heading (the page's existing shape) rather than help buttons.
