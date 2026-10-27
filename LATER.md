@@ -98,7 +98,8 @@ the dev phase; it will need more attention as we end it"). Today's state: reorga
 removed (2026-10-25). Next, at the end of the Stage: a pass over the whole page with Paul,
 screenshot by screenshot, on his desktop with the plugins (the test KWin's page has none, so its
 frame section is all greyed); by hand, whether arrow keys move the highlight in an open dropdown
-(injected input didn't, in 76); then item 18.
+(injected input didn't, in 76); then item 18. Also then: plainer words on the page where the explicit ones are stiff (Paul,
+2026-10-27: "colloquialize wording later"), still true (`docs/spec-window-words.md`).
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
 tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after

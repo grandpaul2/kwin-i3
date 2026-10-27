@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives). Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus"; item 29 done, live and confirmed by Paul; items 30 and 28 to `LATER.md`).
+Last reconciled: **2026-10-27, session end** (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written).
 
 ## Stage (Paul, 2026-10-24, late)
 
