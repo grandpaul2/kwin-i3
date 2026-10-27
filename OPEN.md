@@ -51,10 +51,11 @@ notification's desktop. Next: read what KWin 6.7.5 gives a script at launch (sta
 on the window, `xdg-activation`), then a proposal (remember the workspace at launch, send the
 window there), or won't-fix with the reason if nothing reaches the script.
 
-**29. No "move window to next/prev workspace"** (finding 4: A27). Workspace Next/Prev (and on
-Output) exist as go-to actions (`kwin.js:1394`), the move forms don't; KWin's own "Window to Next
-Desktop" ignores which workspaces exist. Next: add the four move actions, unbound as the go-to
-ones (`docs/spec-workspace-commands.md`), with a test; Paul's go first.
+**29. "Move to workspace next/prev"** (finding 4: A27). Built on branch `workspace-move`
+(worktree `../kwin-i3-wsmove`): four unbound actions, i3's `cmd_move_con_to_workspace`, on the
+Keys sub-page under "Move to workspace"; with them, seven Keys labels shortened to fit their
+column and the cog's form without Troubleshooting. `make unit` and 68 green, the Keys page checked
+on screenshots. Next: Paul's go to merge, `make kcm-install`, reload.
 
 **30. Focus after a close, at the top level and for floating windows** (finding 8: B51, C26).
 Inside a split kwin-i3 gives focus as i3 does; at a workspace's top level and when a floating
