@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives). Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus"; item 29 done, live and confirmed by Paul).
+Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus"; item 29 done, live and confirmed by Paul; item 30 to `LATER.md`, "Reliability").
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -50,12 +50,6 @@ it lands where you are. i3 places it by the startup notification's workspace; KW
 notification's desktop. Next: read what KWin 6.7.5 gives a script at launch (startup id / token
 on the window, `xdg-activation`), then a proposal (remember the workspace at launch, send the
 window there), or won't-fix with the reason if nothing reaches the script.
-
-**30. Focus after a close, at the top level and for floating windows** (finding 8: B51, C26).
-Inside a split kwin-i3 gives focus as i3 does; at a workspace's top level and when a floating
-window closes, KWin's choice stands (`NextFocusPrefersMouse=true` here, false on a stock install),
-which can differ from i3's (the most recently focused in the workspace). Next: compare the two in
-the test KWin for both settings (three tiled, one floating, close each), then a proposal.
 
 **21. Wallpaper flashes** (Paul, 2026-10-25, three times; captures 15:44, 17:57 and 18:51, all
 kept in `~/.local/state/kwin-i3/captures/` until this is worked on). The first was Firefox shown

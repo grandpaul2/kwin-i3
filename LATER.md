@@ -26,6 +26,14 @@ add, code to remove, or not visible in the test KWin). The fuller procedure that
 those faults' from-texts no longer match (the centre swap, the drop outline added and removed,
 Meta+Shift): rewrite them from the code before the run.
 
+**30. Focus after a close on a stock install** (finding 8: B51, C26; from OPEN.md 2026-10-26).
+At a workspace's top level and when a floating window closes, KWin's choice stands (`docs/plan.md`,
+"Focus"). With Paul's `NextFocusPrefersMouse=true` that is the window under the pointer, the
+accepted pointer/keyboard choice; with a stock install's `false` it is KWin's most recently used,
+which should match i3's workspace focus order but may not (windows kwin-i3 doesn't manage, the
+per-monitor chain). Next: compare the two in the test KWin with `false` (three tiled, one
+floating, close each), then a proposal or a line in plan.md saying they agree.
+
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
 only Virtual-1, and loads the plugins whenever they are built); Plasma 6.8 when it lands. Rare and

@@ -195,7 +195,9 @@ to ship. Keep it from regressing; changing it is secondary. The shape, in `src/k
     (`docs/spec-unmanaged-windows.md`), except with Show Desktop on;
   - a fullscreen window keeps its workspace's focus (`docs/spec-fullscreen-tree.md`);
   - a close: i3's choice inside a split (con_next_focused), over KWin's; at a workspace's top level
-    and for floating windows, KWin's (`NextFocusPrefersMouse=true` here);
+    and for floating windows, KWin's (`NextFocusPrefersMouse=true` here, which makes it the window
+    under the pointer: the pointer/keyboard choice below; a stock install's `false` is compared in
+    `LATER.md`, item 30);
   - panel popups forgive a stray pointer for 1.5 s (`docs/spec-popup-grace.md`, a plugin).
 - **Accepted, where the pointer and the focus disagree** (KWin's focus follows mouse acts only on
   motion across an edge, as i3's does): after a close the window that grows under a still pointer
