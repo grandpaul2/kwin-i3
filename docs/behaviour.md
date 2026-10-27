@@ -288,7 +288,9 @@ behaviour.
 - **`windowActivated`**: KWin activated one of kwin-i3's windows (a click, focus follows mouse, a
   new window): the model focuses it. **Refused** when the window's workspace isn't the one shown
   on its monitor (a stale activation): focus is put back.
-- **Before every key action** the model re-syncs from KWin's active window.
+- **Before every key action** the model re-syncs from KWin's active window, without the stale
+  check: a key inside the millisecond after a monitor unplug would take a stale activation (known,
+  accepted, 2026-10-26).
 
 ### Out to KWin
 
@@ -568,6 +570,12 @@ back the user's `DelayFocusInterval`, read fresh from kwinrc.
   as a move to that workspace.
 - **A window that resizes itself** while tiled: put back (§6).
 - **A new window under a fullscreen one**: §5.
+- **Known limit, a monitor returning to a fullscreen window on a hidden workspace** (accepted,
+  Paul, 2026-10-22; fuzzer I9, seeds 214 and 28). KWin asks the window to be fullscreen again and
+  to move back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies
+  nothing until it does. Meanwhile KWin calls it not resizable and refuses the tile, so kwin-i3
+  floats it where it stands, out of sight. Meta+Shift+N, or closing it, brings it back. The same
+  holds for a hidden floating window smaller than KWin's 150 px decorated minimum.
 
 ---
 
@@ -579,7 +587,8 @@ three together); the settings page builds its config from `main.xml`. A value th
 logs a `WARN` and uses the default.
 
 **When a change applies**: the script reads its settings at load and at every KWin reconfigure.
-The settings page sends one on Apply. The Configure form doesn't; the helper's settings watch
+The settings page sends one on Apply (with the helper loaded, its settings watch sends a
+second, which finds nothing changed). The Configure form doesn't; the helper's settings watch
 does it for it (100 ms after kwinrc's group changes); without the helper, press Meta+Shift+C. The
 plugins watch kwinrc themselves. On a reconfigure with changes: the rules reclassify every window
 if a rule list changed, the ring is told if `tiledLook` changed, and every workspace is placed

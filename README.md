@@ -178,8 +178,8 @@ Configure form, with the plugins, a save applies at once
 after a save, or log in again: KWin 6.7.5's generic script form saves without telling KWin, and
 the reload key asks KWin to reconfigure, as i3's reload does. Everything, the script and the
 two plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
-reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin-i3-hold]`, before
-2026-10-24) are still read where a key below is missing.
+reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled` and `TimeoutMs`, before
+2026-10-24) is still read where `holdEnabled` or `holdTimeoutMs` is missing.
 
 | group and key | default | meaning |
 |---|---|---|
@@ -209,8 +209,10 @@ reaches the plugins directly. The plugins' old groups (`[kwin-i3-frame]`, `[kwin
 | `[Script-kwin-i3] frameFloatingActive` | `#4d7254` | the frame on the active floating window, with `frameOnFloating` (a muted green, to tell it apart; i3 has no such colour) |
 | `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window, likewise. How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
-Transients and modals, non-resizable windows and `skipPager` windows float; `onAllDesktops`,
-`skipTaskbar` and other activities' windows are never managed (`docs/plan.md`, policies).
+Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
+window on all desktops or that skips the taskbar places itself, as do the windows `ignoreClass` and `ignoreRole`
+list (`docs/behaviour.md` §3). kwin-i3 assumes one activity: windows on other activities aren't
+handled yet (`LATER.md` item 5).
 
 ## Working on it
 
@@ -230,7 +232,7 @@ file with `tools/capture` (the recent log and kwini3hold's events, the state, a 
 note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, watched red, then a fix.
 `CLAUDE.md` has the working rules.
 
-Docs: `docs/plan.md` (decisions, behaviour, policies), the specs (`docs/spec-*.md`), the designs
+Docs: `docs/behaviour.md` (what it does, exactly), `docs/plan.md` (scope and decisions), the specs (`docs/spec-*.md`), the designs
 (`docs/fuzz-design.md`, `docs/mouse-plugin-design.md`, `docs/input-tests-design.md`) and the
 reviews they went through.
 

@@ -19,8 +19,9 @@ work is making what is here **configurable and reliable**, on a machine and a se
 the author's (`OPEN.md`), not adding more of i3.
 
 **In:** i3's tree, with its focus, move, split, layout toggle and resize; workspaces that live on
-a monitor; floating and the focus-mode toggle; i3's keys; the frame; mouse move and resize; the
-rules that decide what is managed and what floats.
+a monitor; floating and the focus-mode toggle; i3's keys; the frame; i3's tiling drag and resize
+by mouse; the rules that decide which windows tile, float or place themselves. What each does,
+exactly: `docs/behaviour.md`.
 
 **Out, with the reason:**
 
@@ -33,7 +34,21 @@ rules that decide what is managed and what floats.
 | `assign`, `for_window` and other per-window rules beyond managed / floating | KWin's Window Rules already do them |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only. **Xwayland apps in a Wayland session are in, first-class** (Paul, 2026-10-24: "that's going to be common"; `docs/spec-window-modes.md`, decision 8) |
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace current when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
-| mouse chords (Meta+Shift+drag moved, 2026-10-22 to 10-24) | KWin's own Meta+drag moves and Meta+right-drag resizes; the chord plugin was kept only for focus on the frame (Paul, 2026-10-24) |
+| mouse chords beyond i3's (a chord plugin, 2026-10-22 to 10-24) | one chord was ever used; i3's own tiling drag and Meta+right-drag resize came back in the helper plugin instead (2026-10-26, `docs/spec-tiled-look.md`, `docs/spec-tiling-resize.md`) |
+
+**Different from i3, on purpose** (each with the user-facing line in the README):
+
+| here | i3 | why |
+|---|---|---|
+| a centre drop swaps the two windows | `tiling_drag`'s centre drop moves the window into the target's container | Paul, 2026-10-26: "I love swap" (`docs/spec-tiled-look.md`) |
+| Meta+Shift+drag pulls a tiled window out to float | no such chord | Paul, 2026-10-26 (`docs/spec-tiled-look.md`) |
+| a window opens on the workspace current when it appears | on its launch workspace, for programs i3 started | as above, "Out"; `LATER.md` item 28 |
+| windows that place themselves (Plasma's own, KRunner, panels, a user's list) | i3 manages every window but docks | the seam between i3 and Plasma (`docs/spec-window-words.md`) |
+| a window on all desktops places itself | a sticky window floats and follows the workspace | in Plasma, a sticky window is Plasma's to place (a widget, a picture-in-picture) |
+| a window that skips the taskbar places itself | the hint is ignored | Plasma's convention for its own helpers (Yakuake, OSDs); read from the code 2026-10-27, not a decision Paul made: his to confirm |
+| a tiled window never gets smaller than its minimum size; if the layout can't hold the minimums, the largest floats | minimum sizes apply only to floating windows (`floating_check_size`); tiled windows get what the split gives | a Wayland client can't be drawn smaller than its minimum; it would hang off its tile (2026-10-22) |
+| a split holding only another split is removed | kept | each costs a move key press; they only matter with `focus parent` and tabbed/stacked, both out (`docs/spec-nested-boxes.md`) |
+| every workspace that lived on a returning monitor goes back to it | only those assigned to it | decision 10, below |
 
 **Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is tiled (the
 tree places it) or floating (you place it; the user's own decoration, as a Plasma window), and a
@@ -48,8 +63,7 @@ only if a user would reasonably want it different, not because a constant exists
 **The plugins are optional** (Paul, 2026-10-24: "if you want to really lock in that i3 feel
 completely, but it works fine without them"). The script alone is the product and is tested
 alone (every live scenario but 52-54 runs with no plugin and Breeze); the frame, frame focus and
-the hold effect are extras that cost a rebuild after every Plasma update. The one
-addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting that defaults to 0.
+the hold effect are extras that cost a rebuild after every Plasma update.
 
 ## Decisions
 
@@ -85,7 +99,7 @@ addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting th
 7. **Our own tile events are expected, everything else is foreign.** The adapter records
    `expected[window] = tile` before each `manage`/`unmanage` and clears it when the matching
    `tileChanged` arrives (it lags for Wayland clients). A foreign `tileChanged(null)` means KWin or
-   the user untiled the window; the policy table below says what happens.
+   the user untiled the window; `docs/behaviour.md` §3 and §10 say what happens.
 8. **i3's semantics are ported from i3's source, not re-derived**: `tree_move` (src/move.c) with all
    its cases, `tree_flatten` where i3 calls it, tree-based `focus` (`tree_next`, descend by focus
    stack), insertion after the focused container, `split`, `layout toggle split`, close and
@@ -116,18 +130,9 @@ addition planned under this heading is gaps (`OPEN.md`, item 2), as a setting th
 
 ## Repo layout
 
-```
-src/tree.js        the i3 tree: containers, leaves, focus stack, every operation. No KWin calls.
-src/workspaces.js  i3ws: per-monitor workspaces, numbering, pointer warp, screen tracking
-src/kwin.js        adapter: KWin signals in, model operations, reconcile out, the tile-event protocol
-src/rules.js       which windows tile, and when that is decided
-src/keys.js        the shortcut table (it must match the dotfiles README "Plasma" table)
-build.sh           src/ -> package/contents/code/main.js, with file markers
-package/           the installable KWin script (metadata.json + built main.js)
-tests/unit/        node tests of tree.js (and workspaces.js against a fake)
-tests/live/        scenarios run in tools/testkwin.sh (headless KWin, two virtual outputs)
-tools/             testkwin.sh, logsink.py, testclient (below)
-```
+`docs/behaviour.md` §1: the script (`src/`, built into `package/`), the two plugins (`plugin/`),
+the settings page (`kcm/`) and the widget (`widget/`); tests in `tests/unit`, `tests/live`,
+`tests/fuzz`; tools in `tools/`.
 
 ## Behaviour (the spec is Paul's old i3 config, git `d3de958^` in `~/.dotfiles`)
 
@@ -153,53 +158,34 @@ Also left out: i3's restart/exit keys (exit is Plasma's own). i3's reload is in 
 
 ## Policies the adapter applies
 
-| event | policy |
-|---|---|
-| new window | tiled after the focused container **of the workspace it appeared on** (KWin chooses the monitor; the desktop is that monitor's current one, as i3ws does), classified as below |
-| classification | decided when the window is ready (`readyForPaintingChanged` if not ready at `windowAdded`) and redone on `captionChanged`, `windowClassChanged`, `transientChanged` |
-| floats | transients and modals, `!resizeable`, `skipPager`, Krohnkite's default ignore-class list (krunner, yakuake, spectacle, plasmashell, ksplashqml, polkit agent, kruler, …) and the stage window (`STAGE (streamed)`); not `normalWindow` is never a candidate. **On Wayland a dialog *is* `normalWindow`**
-(xdg-toplevel has no window type; only `transient`/`modal` mark it, seen in phase 0), so the
-transient rule is what floats dialogs. Floating windows stay above tiled ones, except on a workspace whose new windows float (`docs/spec-window-modes.md`, decision 5) |
-| never managed | `onAllDesktops`, `skipTaskbar`, other activities (one activity: everything else is ignored) |
-| minimum size | the leaf tile's `minimumSize` is the window's `minSize`, propagated up the tree; a window that can't fit floats |
-| maximize | undone, and the window re-tiled (maximize drops it from its tile, verified) |
-| minimize | the leaf stays in the tree, its tile is removed, and it comes back in place on un-minimize. **Not across a reload**: KWin's tiles don't hold a minimized window's place and a script can't save state, so after a reload it comes back after the focus (found 2026-10-22) |
-| floated by kwin-i3 (Meta+Shift+Space, a rule, can't tile) | at the geometry it had when kwin-i3 first saw it untiled, as i3's `con->geometry`: recorded once, never updated, moved by i3's relative rule onto another monitor (`docs/spec-float-size.md`). No record (tiled already at a load), fullscreen or hidden: KWin's own restore |
-| foreign untile (Meta+drag, KWin's own; KWin quick-tile) | the window floats where it was dropped; Meta+Shift+Space tiles it again. (i3's drag-to-retile, `tiling_drag`, needs title bars or a modifier drag; later, if wanted) |
-| monitor returns, a window there was fullscreen, its workspace hidden meanwhile | **known limit, accepted (Paul, 2026-10-22; fuzzer I9, seed 214)**: KWin's `PlacementTracker` asks the window to be fullscreen again and moves it back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies nothing until it does (only a thumbnail or screencast would make it render; a JS script can do neither). Meanwhile KWin calls it not resizable, refuses the tile, and kwin-i3 floats it where it stands, on the other monitor, out of sight. (Since 2026-10-24 a window KWin reports as fullscreen is not floated on a refusal but kept in the tree, out of the tiles until fullscreen ends; this limit is the *pending* request, where KWin reports it not fullscreen yet.) Meta+Shift+N, or closing it, brings it back. The alternative, flipping its desktop for a moment so it renders, was judged not worth a workaround. Same limit, other trigger (fuzzer I9, seed 28, 2026-10-23): a hidden floating window smaller than KWin's 150 px decorated minimum gets a resize with any move KWin sends it (`checkWorkspacePosition` constrains the size), so it stays behind on a replug too. Real apps report a minimum of their own; the test client's dialog now starts at 200x160 |
-| close | leaf removed, empty splits removed upwards (no flatten), focus to the previous focus in that container |
-| focus follows mouse | KWin's `windowActivated` updates the focus stack; the last focus event wins, as in i3 |
-| errors | every handler in try/catch: log over D-Bus (`tools/logsink.py` protocol, behind a config flag in production) and reconcile |
-
-An **invariant check** runs after every reconcile in the live tests and, cheaply, in production
-(logged): every tiled window is in exactly one leaf, each leaf's tile holds exactly that window, no
-tile is empty, no root has padding.
-
-Every root the script sees, including new desktops and returning outputs, gets `padding = 0`;
-`setup.sh` also sets `[Tiling] padding=0` so new roots start that way.
+Moved to `docs/behaviour.md` (2026-10-27), which says what the code does: classification (§3),
+the tiles, gaps and minimum sizes (§6), maximize, minimize, fullscreen and the known limits (§10).
+The table that was here had drifted from the code (git history, before this line).
 
 ### Focus (written down 2026-10-26, from an outside review; behaviour unchanged)
 
 Paul: the keys feel like i3, the mouse moves focus only when he moves it, and this is good enough
-to ship. Keep it from regressing; changing it is secondary. The shape, in `src/kwin.js` "---- focus":
+to ship. Keep it from regressing; changing it is secondary. The behaviour, rule by rule, is
+`docs/behaviour.md` §5; this is the shape and why, in `src/kwin.js` "---- focus":
 
 - **The model owns focus** (`src/tree.js`: the focus stacks; `activate`/`focusUp` are the only
-  places the global focus changes).
-- **In from KWin**: every activation arrives at the `windowActivated` handler (a click, focus
-  follows mouse, KWin's own choice); it updates the model, except a stale one for a workspace its
-  monitor isn't showing. A key action re-syncs from `workspace.activeWindow` first (`focusedCon`,
-  without that stale check: a key inside the millisecond after a monitor unplug would take it;
-  noted, not fixed). Adopting a window and a reload read KWin's active window too.
-- **Out to KWin**: `applyFocus` alone activates windows, after every pass. The pointer moves only
-  when focus changed monitor (i3's mouse_warping output).
+  places the global focus changes). KWin's activations come in at one handler, which refuses a
+  stale one; a key re-syncs from KWin's active window first.
+- **One place sends it out**: `applyFocus`, after every pass, so a pointer warp lands on settled
+  windows. The one other activation is handing focus straight back to a fullscreen window, which
+  can't wait for a pass. The pointer moves only when a key moved focus to another monitor (i3's
+  mouse_warping output).
 - **Exceptions**, each a small rule with its reason at the code:
-  - a passive pass (no key) leaves an unmanaged window focused: a popup, a dialog, KRunner
-    (`docs/spec-unmanaged-windows.md`), except with Show Desktop on;
+  - a window that places itself (a popup, a dialog, KRunner) keeps the keyboard through passive
+    passes and keys that don't move focus (`docs/spec-unmanaged-windows.md`), except with the
+    desktop or a panel focused and Show Desktop off;
   - a fullscreen window keeps its workspace's focus (`docs/spec-fullscreen-tree.md`);
+  - a desktop switched outside kwin-i3 (Overview, the pager) takes the focus with it, on the
+    monitor that has it;
   - a close: i3's choice inside a split (con_next_focused), over KWin's; at a workspace's top level
     and for floating windows, KWin's (`NextFocusPrefersMouse=true` here, which makes it the window
-    under the pointer: the pointer/keyboard choice below; a stock install's `false` is compared in
-    `LATER.md`, item 30);
+    under the pointer: the pointer/keyboard choice below; a stock install's `false` against i3's
+    own rule is `LATER.md`, item 30);
   - panel popups forgive a stray pointer for 1.5 s (`docs/spec-popup-grace.md`, a plugin).
 - **Accepted, where the pointer and the focus disagree** (KWin's focus follows mouse acts only on
   motion across an edge, as i3's does): after a close the window that grows under a still pointer

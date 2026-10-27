@@ -31,14 +31,21 @@ At a workspace's top level and when a floating window closes, KWin's choice stan
 "Focus"). With Paul's `NextFocusPrefersMouse=true` that is the window under the pointer, the
 accepted pointer/keyboard choice; with a stock install's `false` it is KWin's most recently used,
 which should match i3's workspace focus order but may not (windows kwin-i3 doesn't manage, the
-per-monitor chain). Next: compare the two in the test KWin with `false` (three tiled, one
-floating, close each), then a proposal or a line in plan.md saying they agree.
+per-monitor chain). i3's own rule, the yardstick (`con_next_focused`, `tree.c` `tree_close_internal`, read
+2026-10-27): closing a floating window or a top-level tiled one focuses the workspace's next most
+recently focused child, tiled or floating, descended to its focused leaf; with none left, the
+workspace. Next: compare KWin's choice with `false` against that in the test KWin (three tiled,
+one floating, close each), then a proposal or a line in `docs/behaviour.md` §5 saying they agree.
 
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
 only Virtual-1, and loads the plugins whenever they are built); Plasma 6.8 when it lands. Rare and
-deliberate, as the fuzzer is now. Next: a read-only check that kactivitymanagerd can run on a test
-KWin's bus (if not, activities are won't-fix here, with the reason), then a spec for the harness
+deliberate, as the fuzzer is now. **Activities are unhandled today**: nothing in the code checks a window's activity
+(2026-10-27, `docs/behaviour.md` §3), though the README once said other activities' windows were
+never managed; KWin's tiles are per monitor and desktop, not per activity, so a window on another
+activity likely takes a tile on its desktop and leaves a hole there. Next: a read-only check that
+kactivitymanagerd can run on a test KWin's bus, then that hole confirmed or not (if activities
+can't run there, they are won't-fix here, with the reason), then a spec for the harness
 pieces (`KI3_OUTPUTS`, a scale per output, `run.py --no-plugins`, the invariants' two-output
 assumptions), then one campaign per configuration. 53-hold runs by itself after the parallel batch
 (`# timing: alone`, 2026-10-24), so its timing checks are strict in `make test`.
@@ -98,7 +105,12 @@ the dev phase; it will need more attention as we end it"). Today's state: reorga
 removed (2026-10-25). Next, at the end of the Stage: a pass over the whole page with Paul,
 screenshot by screenshot, on his desktop with the plugins (the test KWin's page has none, so its
 frame section is all greyed); by hand, whether arrow keys move the highlight in an open dropdown
-(injected input didn't, in 76); then item 18. Also then: plainer words on the page where the explicit ones are stiff (Paul,
+(injected input didn't, in 76); then item 18. Two gaps found reading the code (2026-10-27, Paul's go to fix then): the page
+checks only for the effect, so it can't say the helper is missing (no tiling drag, frame focus,
+layout keys, or Apply on the Configure form): a banner naming whichever plugin is missing and what
+that costs; and Defaults then Apply on a non-US layout writes the US keys until the next layout
+change or load: the page calls the helper's `FitKeys` after Apply, as i3's `bindsym` follows the
+keymap at once. Also then: plainer words on the page where the explicit ones are stiff (Paul,
 2026-10-27: "colloquialize wording later"), still true (`docs/spec-window-words.md`).
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
