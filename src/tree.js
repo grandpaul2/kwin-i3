@@ -863,6 +863,39 @@ var Tree = (function () {
         return true;
     };
 
+    // resize_find_tiling_participants(..., both_sides = false), then click.c's swap that puts the
+    // container in front first: up from con to the first ancestor whose parent splits along dir's
+    // orientation and has a sibling on dir's side. -> { first, second } | null (none up to the
+    // workspace). The model has no stacked or tabbed layouts, so no skipping of those.
+    M.resizeParticipants = function (con, dir) {
+        if (!con || con.type === "ws" || con.type === "floating") return null;
+        var o = orientationOf(dir), backwards = isBefore(dir), first = con, second = null;
+        while (first.type !== "ws" && first.type !== "floating" && !second) {
+            if (first.parent.layout !== o) { first = first.parent; continue; }
+            var i = first.parent.nodes.indexOf(first);
+            second = first.parent.nodes[backwards ? i - 1 : i + 1] || null;
+            if (!second) first = first.parent;
+        }
+        if (!second) return null;
+        return backwards ? { first: second, second: first } : { first: first, second: second };
+    };
+
+    // resize_neighboring_cons(first, second, px, 0): px of the parent's `size` (con_rect_size_in_
+    // orientation) go from second to first (negative: the other way). False, and nothing changed,
+    // if either would drop below the floor (i3: 1 px; the model has no pixels, so MIN_SHARE as
+    // M.resize). Shares not yet set get the average first, as M.resize does.
+    M.resizeNeighbouring = function (first, second, px, size) {
+        var parent = first.parent;
+        if (!(size > 0) || !parent || second.parent !== parent) return false;
+        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / parent.nodes.length; });
+        var pct = px / size, a = first.percent + pct, b = second.percent - pct;
+        if (a < MIN_SHARE || b < MIN_SHARE) return false;
+        first.percent = a;
+        second.percent = b;
+        fixPercent(parent);
+        return true;
+    };
+
     // ---- focus (tree.c get_tree_next / tree_next) ------------------------------------------
 
     // Directional focus, with i3's focus_wrapping (get_tree_next, 4.24): "yes" (the default)

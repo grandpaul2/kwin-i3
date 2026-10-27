@@ -3,8 +3,18 @@
 From Paul, 2026-10-26: "the area I have to grab to meta+rightclick the transitions is small and
 not in an obvious spot. In i3 I was able to be pretty much anywhere near that area ... I'm having
 to click several times to find the correct spot." He chose approach B the same day: kwin-i3 does
-the resize itself, as it does the tiling drag. **Status: draft, for Paul's answers to decisions
-A-D and his go on the tests. Nothing built.** The cursor changing on hover with Meta held is a
+the resize itself, as it does the tiling drag. **Status: built on branch `tiling-resize` (2026-10-26), not
+live.** Decisions A-D as recommended; tests as approved (unit, 86's checks, 64 green). Built a little
+differently from the Design: (1) a gap press reports the nearest tiled window's id, not `-` (the
+script then needs no second hit test); the helper finds it within `SetResizeGap(px)`, which
+kwin-i3 sets to half the inner gap + 1 at every `SetOn`. (2) `SetDragCursor(on, shape)` takes the
+shape as an int (0 move, 1 left-right, 2 up-down). (3) The bar is kwini3hold's indicator (frame
+colour, half transparent), not i3's solid focused-border colour. (4) The parent's size for
+`Tree.resizeNeighbouring` is worked out from the two participants' frames, their gaps and their
+shares (the model keeps no pixels); at a monitor's edge it is a few pixels short. (5) Refused
+while a window is fullscreen on the workspace (i3 refuses mixed fullscreen modes). (6) Escape
+cancels, but with Meta still held Plasma's Meta+Esc (System Monitor) is taken before the helper:
+the test lets go of Meta first. Not covered: nothing probed on the real desktop (the warp, D). The cursor changing on hover with Meta held is a
 separate question, after this one is in use: it needs a probe (kwini3hold can show a cursor only
 while it grabs the mouse, so it would have to pass every click on), and i3 doesn't do it.
 

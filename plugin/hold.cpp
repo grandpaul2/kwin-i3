@@ -631,16 +631,23 @@ void Hold::SetTiledRing(bool on)
     effects->addRepaintFull();
 }
 
-void Hold::SetDragCursor(bool on)
+void Hold::SetDragCursor(bool on, int shape)
 {
     if (!on) {
         m_dragCursor.stop();
         effects->stopMouseInterception(this);
         return;
     }
+    // 1: left-right and 2: up-down, the tiling resize's (i3's XCURSOR_CURSOR_RESIZE_*); else the move's.
+    const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor : shape == 2 ? Qt::SizeVerCursor : Qt::SizeAllCursor;
+    // A second startMouseInterception while grabbing is ignored (the effect is already grabbing):
+    // a new shape mid-grab goes through defineCursor.
     if (!m_dragCursor.isActive()) {
-        effects->startMouseInterception(this, Qt::SizeAllCursor);
+        effects->startMouseInterception(this, cursor);
+    } else if (cursor != m_dragShape) {
+        effects->defineCursor(cursor);
     }
+    m_dragShape = cursor;
     m_dragCursor.start();
 }
 

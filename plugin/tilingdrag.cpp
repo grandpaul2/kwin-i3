@@ -18,6 +18,8 @@
 #include <QMouseEvent>
 #include <QStyleHints>
 
+#include <algorithm>
+
 using namespace KWin;
 
 TilingDragBus::TilingDragBus(TilingDrag *drag)
@@ -39,6 +41,16 @@ QString TilingDragBus::State()
 void TilingDragBus::SetOn(bool on)
 {
     m_drag->setOn(on);
+}
+
+void TilingDragBus::SetResizeGap(int px)
+{
+    m_drag->setResizeGap(px);
+}
+
+void TilingDragBus::Warp(int x, int y)
+{
+    m_drag->warp(x, y);
 }
 
 TilingDragGrab::TilingDragGrab(TilingDrag *drag)
@@ -83,7 +95,7 @@ TilingDrag::TilingDrag()
 QString TilingDrag::state()
 {
     m_unanswered.stop();
-    const char *phase = m_phase == Phase::Drag ? "drag" : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
+    const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
     const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y())).arg(int(m_shift));
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
@@ -97,13 +109,24 @@ void TilingDrag::setOn(bool on)
     m_on = on;
 }
 
+// Only for a resize in progress (a stray call must not move the pointer); the position State()
+// reports is the warp's, since PointerInputRedirection::warp sends this filter no motion.
+void TilingDrag::warp(int x, int y)
+{
+    if (m_phase != Phase::Drag || !m_resize) {
+        return;
+    }
+    m_pos = QPointF(x, y);
+    input()->pointer()->warp(m_pos);
+}
+
 // Tell kwin-i3 through its hidden action (KWin calling itself: never wait for it).
 void TilingDrag::begin()
 {
     m_phase = Phase::Drag;
     auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
                                               QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
-    msg << QStringLiteral("kwin-i3 Tiling Drag");
+    msg << (m_resize ? QStringLiteral("kwin-i3 Tiling Resize") : QStringLiteral("kwin-i3 Tiling Drag"));
     QDBusConnection::sessionBus().asyncCall(msg);
     m_unanswered.start();
 }
@@ -128,7 +151,7 @@ void TilingDrag::hoverAt(const QPointF &pos)
 
 bool TilingDrag::pointerMotion(PointerMotionEvent *event)
 {
-    if (!(m_taken & Qt::LeftButton)) {
+    if (!dragging()) {
         return false;
     }
     if (m_phase == Phase::Pressed && m_window
@@ -164,7 +187,8 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return false;
         }
         m_taken &= ~event->button;
-        if (event->button == Qt::LeftButton) {
+        if (event->button == m_button) {
+            m_button = Qt::NoButton;
             if (m_phase == Phase::Drag) {
                 m_phase = Phase::Drop;
                 m_pos = event->position;
@@ -177,14 +201,18 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return true;
     }
     // Another button during a drag ends it, as in i3; its press and release go nowhere.
-    if (m_taken & Qt::LeftButton) {
+    if (dragging()) {
         cancel();
         m_taken |= event->button;
         return true;
     }
     m_taken &= ~event->button;      // a press starts afresh (FrameFocus::pointerButton, finding 5)
-    if (!m_on || event->button != Qt::LeftButton || input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+    if (!m_on || (event->button != Qt::LeftButton && event->button != Qt::RightButton) || input()->pointer()->isConstrained()
+        || workspace()->globalShortcutsDisabled()) {
         return false;
+    }
+    if (event->button == Qt::RightButton) {
+        return pressResize(event);
     }
     Window *window = input()->pointer()->hover();
     if (!window || window->isDeleted() || window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
@@ -225,9 +253,75 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     m_start = m_pos = event->position;
     m_shift = mods & Qt::ShiftModifier;
     m_taken |= Qt::LeftButton;
+    m_button = Qt::LeftButton;
+    m_resize = false;
     m_phase = Phase::Pressed;
     if (!m_threshold) {
         begin();
     }
+    return true;
+}
+
+// The tiled window nearest the pointer within the gap kwin-i3 passed, else null: for a press over
+// no window or the desktop, in the gap or on a frame ring. Found from the stacking order as
+// FrameFocus::ringWindow does; tiled windows only (a floating one's neighbourhood stays KWin's).
+Window *TilingDrag::gapWindow(const QPointF &pos) const
+{
+    Window *best = nullptr;
+    double bestDistance = m_resizeGap + 1;
+    const auto order = workspace()->stackingOrder();
+    for (auto it = order.crbegin(); it != order.crend(); ++it) {
+        Window *w = *it;
+        if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop() || w->isFullScreen()
+            || w->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+            continue;
+        }
+        const RectF frame = w->frameGeometry();
+        const double dx = std::max({frame.left() - pos.x(), 0.0, pos.x() - frame.right()});
+        const double dy = std::max({frame.top() - pos.y(), 0.0, pos.y() - frame.bottom()});
+        const double distance = std::max(dx, dy);
+        if (distance < bestDistance) {
+            best = w;
+            bestDistance = distance;
+        }
+    }
+    return best;
+}
+
+// Meta+right (i3's floating modifier on a tiled client, click.c): on a tiled window anywhere, or
+// in the gap beside one (beyond i3, whose gap press only focuses the output). Taken like the
+// Meta+left press, so KWin's window-action filter never arms its own resize, which would take
+// the window out of its tile; floating windows and every other chord stay KWin's. kwin-i3 does
+// the rest from the hidden "Tiling Resize" action; the window id reported is the pressed
+// window's, or the nearest tiled one for a gap.
+bool TilingDrag::pressResize(PointerButtonEvent *event)
+{
+    if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::MetaModifier) {
+        return false;
+    }
+    Window *window = input()->pointer()->hover();
+    if (window && !window->isDeleted() && !window->isDesktop()) {
+        if (window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+            return false;
+        }
+    } else if (m_resizeGap > 0) {
+        window = gapWindow(event->position);
+    } else {
+        window = nullptr;
+    }
+    if (!window) {
+        return false;
+    }
+    window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+    m_window = window;
+    m_id = window->internalId().toString();
+    m_start = m_pos = event->position;
+    m_shift = false;
+    m_threshold = false;
+    m_taken |= Qt::RightButton;
+    m_button = Qt::RightButton;
+    m_resize = true;
+    m_phase = Phase::Pressed;
+    begin();
     return true;
 }

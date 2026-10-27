@@ -63,8 +63,9 @@ public Q_SLOTS:
     // while the effect holds the mouse (CursorImage::reevaluteSource), so on grabs it; the
     // helper's drag filter sits ahead of KWin's effects filter and keeps the drag's input. Renewed
     // by every poll of kwin-i3's: unrenewed for 500 ms (kwin-i3 gone), the grab ends by itself,
-    // never leaving the pointer dead.
-    void SetDragCursor(bool on);
+    // never leaving the pointer dead. `shape`: 0 the move cursor, 1 left-right and 2 up-down for
+    // the tiling resize (docs/spec-tiling-resize.md).
+    void SetDragCursor(bool on, int shape);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -132,6 +133,7 @@ private:
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
+    Qt::CursorShape m_dragShape = Qt::SizeAllCursor;        // the shape it grabs with now
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
 
     QHash<KWin::EffectWindow *, Held> m_held;
