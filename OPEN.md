@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26** (items 32, 33 and 35's part A live; part B built; testing lean for the Stage).
+Last reconciled: **2026-10-26, evening** (item 35 tested; item 37, the Meta+right resize, live and done; focus written down in `docs/plan.md`, item 25 accepted there).
 
 ## Stage (Paul, 2026-10-24, late)
 
