@@ -18,7 +18,7 @@ with the settings page's finishing; it is added to as we go.
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope". When the Stage ends: `LATER.md`, in its suggested order (1, 3 and 7 are done; 7,
+`docs/plan.md`, "Scope"; the audience and the lines drawn: `docs/philosophy.md`. When the Stage ends: `LATER.md`, in its suggested order (1, 3 and 7 are done; 7,
 kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`; 15, the panel
 configuration bug, fixed 2026-10-25: `docs/bug-panel-config.md`; 19 and 20, a floated window's
 size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec-rounded-corners.md`).
