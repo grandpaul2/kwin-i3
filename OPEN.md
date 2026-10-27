@@ -54,6 +54,7 @@ password prompt, KRuler and plasmashell's ordinary windows to floating). The set
 i3's kind names, super descriptive and explicit, plainer later. Accepted ≠: C4, D5. C3 revised: the dialog opens on its parent's workspace (KWin ties them). Build plan agreed in
 outline (new windows with D2/D3 first, then pointer, kinds, keys, clicks/closes, sticky last);
 **held** (Paul): the rest of `behaviour.md` gets the same treatment first, and a gap check.
+Done that way: §5; §4 drafted as tables (W, A, M rows), its ≠ rows with Paul next.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

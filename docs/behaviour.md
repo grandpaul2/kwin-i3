@@ -258,57 +258,53 @@ Then `src/kwin.js` `adoptWindow`:
 
 `src/workspaces.js`, with the actions in `src/kwin.js`.
 
-- **Workspace N is virtual desktop N**, 1 to 10 (Meta+1 … Meta+0). Desktops are created on demand
-  up to the one asked for (`ensure`: Meta+7 on a stock Plasma's one desktop makes 2 to 7) and never
-  removed; KWin saves the count, so they are there at the next login. A monitor plugged in when
-  every workspace is in use gets a new one (`docs/spec-desktops-on-demand.md`).
-- **Per-monitor workspaces** need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
-  reports when it is off with two or more monitors, and never sets it (§13).
-- **A workspace's home** is the monitor it lives on, kept by name. It is the home monitor if
-  connected, else the monitor showing it, else the first. A home whose monitor is gone is kept for
-  its return.
-- **Assignment** (`workspaceOutputs`, i3's `workspace N output X`): an assigned workspace's home is
-  its monitor, even while that monitor is away; when the monitor appears, its assigned workspaces
-  go home.
-- **At login** (no normal windows open): the assigned workspaces get their homes, then each monitor
-  in KWin's order (primary first) shows the lowest unassigned free workspace (i3's
-  `create_workspace_on_output`). A reload doesn't renumber.
-- **New workspace direction** (`defaultOrientation`): set when a workspace is first made; `auto` is
-  side by side unless its monitor is taller than wide.
+**A workspace is a virtual desktop**, 1 to 10, and lives on one monitor, its **home**, kept by
+the monitor's name. i3's workspaces live on outputs the same way; the differences are in the rows.
+Per-monitor workspaces need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
+reports when it is off with two or more monitors and never sets it (§13).
 
-### Actions
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
-- **Show workspace N** (Meta+N, `gotoWorkspace`). An occupied workspace shows on its home monitor,
-  even one that is away; an empty one shows on its assigned monitor, else the active one, and
-  makes that its home. Focus goes to its fullscreen window, else its last focus. With
-  `workspaceAutoBackAndForth`, pressing the shown workspace's key goes to the previous workspace.
-- **Move to workspace N** (Meta+Shift+N): the window goes to N on N's monitor; focus stays behind.
-  An empty hidden N takes the window's current monitor as its home. Auto back-and-forth applies.
-- **Unbound by default, as in i3** (`docs/spec-workspace-commands.md`): back-and-forth and move to
-  back-and-forth (the previous workspace, if it still exists); next and previous, overall or on
-  this monitor, and moving a window there (over workspaces with windows or shown, wrapping); focus
-  the monitor in a direction; move a window to the monitor in a direction (to its shown
-  workspace, focus stays); move the workspace to the monitor in a direction (the source monitor
-  then shows its last shown workspace that is free, else its lowest occupied one, else an unused
-  one, else the move is refused; an assigned workspace moves too; afterwards the previous
-  workspace, for back-and-forth, is the one the source monitor now shows).
-- **The neighbouring monitor** in a direction is the nearest by edge distance (i3's
-  `get_output_next`, closest); a diagonal monitor can qualify.
+**W. What a workspace is**
 
-### Desktops and monitors changing
+| # | Rule | i3 | Note |
+|---|---|---|---|
+| W1 | Workspace N is desktop N, numbers only; Plasma's desktop names are display only | ≠ | i3 has named workspaces; out of scope (`plan.md`, Scope) |
+| W2 | Desktops are created on demand up to the one asked for (Meta+7 on one desktop makes 2 to 7), never removed; KWin saves the count (`docs/spec-desktops-on-demand.md`) | + | i3 creates a workspace when asked and closes it when empty and hidden; here the desktop stays, and W4 gives the same effect |
+| W3 | **A workspace with windows** keeps its home, even while that monitor is away: the home monitor if connected, else the monitor showing it, else the first | ≠ | i3 moves a lost output's workspaces to another and forgets where they were (M3) |
+| W4 | **An empty workspace** has no lasting home: it takes the monitor it is next shown on (A3) | = | i3 closes an empty workspace when it is hidden, and makes it again where asked |
+| W5 | **Assignment** (`workspaceOutputs`, i3's `workspace N output X`): the assigned monitor is the home, even while away; when it appears, its workspaces go home. One monitor per number, and a monitor name can't contain a space | ≠ | i3 takes a list of outputs, the first connected one wins |
+| W6 | A new workspace's direction (`defaultOrientation`): `auto` is side by side unless its monitor is taller than wide | = | `default_orientation` |
 
-- **A desktop switched outside kwin-i3** (Overview, the pager, an app) on the monitor that has
-  kwin-i3's focus: focus follows to that workspace (`shownOutside`).
-- **Desktops removed or reordered** (`desktopListChanged`): appending changes nothing; anything else
-  rebuilds the model from KWin's tiles and windows, as at load (`docs/spec-desktop-changes.md`).
-  While it rebuilds, nothing is placed. A removed desktop's windows join the workspace KWin moved
-  them to. The numbered settings (`workspaceOutputs`, `floatingWorkspaces`) stay positions: after
-  a removal, "3" names whatever is now workspace 3.
-- **A monitor lost**: its workspaces keep their homes. **All back**: each monitor shows what it
-  showed before the loss, unless that workspace now lives elsewhere (then an unused one). After any
-  monitor change every window is re-fitted to its tile as its geometry settles (`armRefit`).
-- **Per-output desktops turned on**: each monitor showing another's workspace switches to one of
-  its own (`showHomes`).
+**A. Actions**
+
+| # | When | Result | i3 | Note |
+|---|---|---|---|---|
+| A1 | Meta+N, N shown on the focused monitor | nothing; with `workspaceAutoBackAndForth`, the previous workspace | = | |
+| A2 | Meta+N, N shown on the other monitor | focus goes to that monitor (§5 A2 for the pointer) | = | |
+| A3 | Meta+N, N hidden, with windows | N shows on its home monitor; focus to its fullscreen window, else its last focus | = | |
+| A4 | Meta+N, N hidden and empty | N shows on its assigned monitor, else **KWin's active monitor**, which becomes its home | ≠ | i3: the focused monitor. KWin's active monitor follows the pointer: the same root as §5 C1, and the same once §5 B2 is built (focus follows mouse on) |
+| A5 | Meta+Shift+N | the window goes to N on N's monitor; focus stays behind, on i3's next focus there. An empty hidden N takes the window's monitor as its home. Auto back-and-forth applies | = | `workspaceAutoBackAndForth` is one setting for all; i3 also has a per-command `--no-auto-back-and-forth` (≠, minor) |
+| A6 | Back-and-forth, and moving a window there (unbound) | the previous workspace, if it still exists | = | Unbound by default, as in i3 (`docs/spec-workspace-commands.md`) |
+| A7 | Next and previous, overall or on this monitor, and moving a window there (unbound) | over workspaces with windows or shown, wrapping | = | |
+| A8 | Focus the monitor in a direction (unbound) | its shown workspace, at its last focus | = | By direction only; i3 also takes a name, `primary`, `next` (≠, minor) |
+| A9 | Move a window to the monitor in a direction (unbound) | to the workspace shown there; focus stays | = | By direction only, as A8 |
+| A10 | Move the workspace to the monitor in a direction (unbound) | it shows there, with the focus; the source shows its last shown workspace **with windows**, else its lowest with windows, else an unused one; none left (all ten in use): refused. An assigned workspace moves too. The previous workspace (back-and-forth) is then the one the source shows | = | i3's has no "refused": it makes a new workspace; here there are ten |
+| A11 | Which monitor is "in a direction" | the nearest by edge distance; a diagonal one can qualify | = | `get_output_next`, closest |
+
+**M. Monitors and desktops changing**
+
+| # | When | Result | i3 | Note |
+|---|---|---|---|---|
+| M1 | Login (no normal windows) | the assigned workspaces get their homes; then each monitor in KWin's order (primary first) shows the lowest unassigned free workspace | = | `create_workspace_on_output` |
+| M2 | A reload | nothing renumbered; homes come back from which monitor's tiles hold the windows | + | |
+| M3 | A monitor lost | its workspaces keep their homes (W3) and show on the remaining monitor; focus kept (§5 D5) | ≠ | i3 moves them to the first output for good, closes the empty ones, and focuses the primary output |
+| M4 | **The lost monitor back** (all back) | each monitor shows again what it showed before; a workspace that moved meanwhile (a window sent to it while hidden) stays, and the monitor gets an unused one | **≠** | i3 4.24 sends back only the **assigned** workspaces (`randr.c` `init_ws_for_output`), then shows the first of them, else a new one. `plan.md` decision 10 says "as in i3": wrong |
+| M5 | **A monitor never seen before** | its assigned workspaces go home; **what it shows is KWin's choice** (the desktop that monitor last showed in the activity, else desktop 1), and kwin-i3 doesn't step in. That can be a workspace another monitor shows (from KWin's source; not checked live) | **≠** | i3: its first assigned workspace, else the first free one (`init_ws_for_output`) |
+| M6 | After any monitor change | every window is re-fitted to its tile as its geometry settles (`armRefit`) | + | |
+| M7 | A desktop switched outside kwin-i3 (the Overview, a pager, KWin's own desktop keys, an activation) | §5 D2/D3 | | |
+| M8 | Desktops removed or reordered (`desktopListChanged`) | appending changes nothing; anything else rebuilds the model from KWin's tiles and windows, as at load, and with per-output desktops each monitor showing another's workspace switches to one of its own (`docs/spec-desktop-changes.md`). Nothing is placed while it rebuilds. A removed desktop's windows join the workspace KWin moved them to. The numbered settings stay positions: after a removal, "3" names whatever is now workspace 3 | + | |
+| M9 | Per-output desktops turned on | each monitor showing another's workspace switches to one of its own (`showHomes`): the lowest living there and shown nowhere, else an unused one | + | |
 
 ---
 
