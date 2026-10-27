@@ -3,9 +3,9 @@
 **State, not history**: rewrite it as things change, never append. If it isn't here or in
 `LATER.md` (work held until the Stage ends), it isn't open.
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
-action**. Phase 6 (the dotfiles side) is done.
+action** ("none" is not one: an accepted item goes, its reason kept where the decision lives). Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`).
+Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`; item 25 removed, accepted in `docs/plan.md`, "Focus").
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -43,13 +43,6 @@ of 3 alone. One flake per full run blocks the fault battery's baseline. Since th
 `make test` and the fortnightly battery expensive: (d) the three flakes above and 39, each made
 deterministic or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
-
-**25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
-KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
-other monitor, keys act on one monitor and the new window opens on the other. Since 2026-10-26
-listed as accepted in `docs/plan.md`, "Focus" (with the close case of Paul's 17:23 capture, the
-same question): Paul is happy with focus as it is, and changing it is his choice between the
-pointer and the keyboard. Next: none unless he makes it.
 
 **28. No launch workspace** (finding 2: C19). An app opens on the workspace current when its
 window appears, not the one it was launched from: switch workspaces while a slow app starts and

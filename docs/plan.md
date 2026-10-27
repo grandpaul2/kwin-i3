@@ -200,7 +200,7 @@ to ship. Keep it from regressing; changing it is secondary. The shape, in `src/k
 - **Accepted, where the pointer and the focus disagree** (KWin's focus follows mouse acts only on
   motion across an edge, as i3's does): after a close the window that grows under a still pointer
   isn't focused (Paul's capture, 2026-10-26 17:23); a new window opens on the pointer's monitor,
-  not the focused one (KWin places by pointer, OPEN.md item 25). Changing either is one choice,
+  not the focused one (KWin places by pointer, finding 7: C2, C75; once OPEN.md item 25). Changing either is one choice,
   Paul's, between the pointer and the keyboard.
 
 ## Phases — each ends green, committed, pushed
