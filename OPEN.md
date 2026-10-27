@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, session end** (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written). Since then, 2026-10-27: item 38 done (the standing docs against `docs/behaviour.md`); 39 added.
+Last reconciled: **2026-10-27, second session end** (the docs session: `docs/behaviour.md` written from the code, every spec and standing doc checked against it, the reviews to git history, `docs/README.md` the map; done: item 38 and the fullscreen-margin capture of 03:45, fixed and live; added: 39; the test flakes gathered in 34).
 
 ## Stage (Paul, 2026-10-24, late)
 
