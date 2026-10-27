@@ -3,8 +3,7 @@
 Paul, 2026-10-25. Every bug report comes after the fact: Paul sees something, then presses
 Meta+Shift+B. So what matters is the recent past, kept cheaply all the time and saved only on the
 press: a ring in memory, in kwin-i3 and in kwini3hold, stamped to the millisecond. Nothing is
-written to disk or sent over D-Bus until the press. (Before this, a capture's empty `journal.txt`
-was read as "nothing recorded" while `state.txt` held the close that preceded the bug.)
+written to disk or sent over D-Bus until the press.
 
 ## Reading a capture: `tools/capture-read DIR [SECONDS]`
 

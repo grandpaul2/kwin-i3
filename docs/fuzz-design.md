@@ -1,4 +1,10 @@
-# Fuzzer and capture key — design (2026-10-22)
+# The fuzzer and the capture key: design and as built
+
+**Now (2026-10-27):** both built 2026-10-22. **The fuzzer is not run during the Stage** (Paul,
+2026-10-26; `LATER.md` item 36), then in runs of 5 minutes or less; before its next campaign it
+needs the updates listed in `LATER.md` item 5 (I4's allowance for the frame, a frame-pixel
+invariant, new actions). The capture key is how Paul reports bugs: `docs/debugging.md`. The design
+below is kept for its reasons; "As built" at the end is what the code does where they differ.
 
 Paul has been finding bugs one at a time in daily use. Two tools to find them faster:
 
@@ -18,7 +24,7 @@ The fuzzer checks what is on screen, read from KWin: each window's `frameGeometr
 
 Python, run inside `tools/testkwin.sh` (two virtual 1280x720 outputs, Paul's focus settings).
 One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in parallel
-(`FUZZ_JOBS`, default 4) for `FUZZ_MINUTES` (default 20), each seed in its own test KWin.
+(`FUZZ_JOBS`, default 6) for `FUZZ_MINUTES` (default 5), each seed in its own test KWin.
 
 **Actions** (weighted, chosen from the seed's RNG; every argument recorded in the trace):
 
@@ -30,7 +36,8 @@ One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in para
 | a kwin-i3 action | `invokeShortcut`, any name in `tests/keys.json`, plus Workspace / Move to Workspace 1–4 | high |
 | focus by pointer | `inject.py abs` to the centre of a random window (focus follows mouse) | medium |
 | resize by drag | drag the shared edge of two adjacent tiled windows by a random amount (as 51-input.sh does) | low |
-| move by drag | Meta+drag a tiled window onto another | low |
+| move by drag | Meta+drag a tiled window onto another (with the helper loaded, as in the fuzzer's KWins, that is the tiling drag) | low |
+| a window resizing itself | a tiled test client asks for another size (`docs/spec-self-resize.md`) | low |
 | monitor unplug / replug | `kscreen-doctor output.Virtual-1.disable/enable` (as 40-monitors.sh) | rare |
 
 Real key presses are covered by 51-input.sh; the fuzzer uses `invokeShortcut` for speed and
@@ -71,7 +78,7 @@ last probe, and which invariant failed, under `tests/fuzz/out/<seed>/`. Then:
 2. **Shrink** (delta debugging over the action list, a fresh KWin per try, at most 40 tries):
    keep the shortest trace that fails *the same invariant*. Window names stay as recorded; an
    action whose window no longer exists in the shorter trace is skipped.
-3. Write `repro.sh`, a `tests/live`-style scenario from the shrunk trace, ready to become a test.
+3. (Designed, not built: a `repro.sh` scenario written from the shrunk trace.)
 
 Failures are grouped by invariant + first log line so 20 seeds hitting one bug are one report.
 
@@ -79,12 +86,14 @@ Failures are grouped by invariant + first log line so 20 seeds hitting one bug a
 historical bugs it was built for. Run it against `ae6867f^` (the 1 px hole) and `c0d6183^`
 (minimum sizes) in a worktree; both must fail on I4 / I5 within the default budget. Plus
 `make mutate` style faults for I3 (overlap), I6 (lose a window), I8 (focus to a hidden desktop).
+(As built, only I4 and I10 were validated this way: "Validated", at the end.)
 
 ## 2. The capture key (Meta+Shift+B)
 
-On the live desktop `debugLog` is off, so nothing is logged anywhere today.
+What a capture holds now, and how to read one: `docs/debugging.md` (the flight recorder, since
+2026-10-25). The design, for its reasons:
 
-- **kwin-i3 keeps a ring of its last 300 log lines in memory**, always: `log()` pushes to the
+- **kwin-i3 keeps a ring of its last log lines in memory** (2000 now), always: `log()` pushes to the
   ring before the `DEBUG_LOG` check. The TREE strings are already built either way.
 - **A new action, "Dump State"** (no key of its own), sends over D-Bus to
   `net.local.kwini3.dump` (a different name from the test log sink, so the two never mix): a
@@ -115,8 +124,8 @@ The review (24 findings) changed these; the code is `tests/fuzz/fuzz.py` and `te
   modifier and button is released.
 - **Keys** come from `tests/keys.json` plus Workspace / Move to Workspace 1–4, never from the
   registered list (Selftest Throw, Selftest Break Reconcile and Release are excluded). Fullscreen is
-  KWin's own "Window Fullscreen", so the fullscreen exclusion is exercised. A Meta+left drag is a
-  move-drag (it floats the window, as in 51-input.sh), and a resize drag is only drawn when a tiled
+  KWin's own "Window Fullscreen", so the fullscreen exclusion is exercised. A Meta+left drag was a
+  move-drag that floated the window; with the helper loaded it is now the tiling drag. A resize drag is only drawn when a tiled
   window is visible.
 - **Invariants as built:** I1–I6, I8 and I9 as above, with I6 counting floating windows (`~`) and
   skipping ignored, minimized and multi-desktop windows; I7 was dropped (I6 covers it);

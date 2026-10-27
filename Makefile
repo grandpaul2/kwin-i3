@@ -17,8 +17,9 @@ live-stock: build tools $(PLUGIN_IF) $(KCM_IF)
 test: unit live
 mutate:
 	python3 tests/unit/mutate.py
+# Held during the Stage (LATER.md item 36); then in runs of 5 minutes or less.
 fuzz: build tools $(PLUGIN_IF)
-	python3 tests/fuzz/run.py --minutes $(or $(FUZZ_MINUTES),20) --jobs $(or $(FUZZ_JOBS),6) $(if $(FUZZ_SKIP),--skip $(FUZZ_SKIP))
+	python3 tests/fuzz/run.py --minutes $(or $(FUZZ_MINUTES),5) --jobs $(or $(FUZZ_JOBS),6) $(if $(FUZZ_SKIP),--skip $(FUZZ_SKIP))
 # Shrink the new failures a campaign saved (FUZZ_SEEDS=214,215 for particular ones).
 fuzz-shrink: build tools $(PLUGIN_IF)
 	python3 tests/fuzz/run.py --reshrink $(or $(FUZZ_SEEDS),all)

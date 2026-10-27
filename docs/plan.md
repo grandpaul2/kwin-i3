@@ -29,14 +29,15 @@ exactly: `docs/behaviour.md`.
 |---|---|
 | tabbed and stacked layouts, `focus parent`, urgency | Paul's decisions, 2026-10-21 (Behaviour, below) |
 | marks, the scratchpad | where the line is drawn: features the author never used are not built (Paul, 2026-10-24) |
+| i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
 | a bar, launcher, notifications, lock, session control | Plasma's panel, KRunner, notifications, screen locker and logout |
 | i3's config file and `i3-msg` IPC | settings belong in System Settings (and `kwinrc`); KWin's D-Bus is the scripting surface |
-| `assign`, `for_window` and other per-window rules beyond managed / floating | KWin's Window Rules already do them |
+| `assign`, `for_window` and other per-window rules beyond tiled / floating / places itself | KWin's Window Rules already do them |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only. **Xwayland apps in a Wayland session are in, first-class** (Paul, 2026-10-24: "that's going to be common"; `docs/spec-window-modes.md`, decision 8) |
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace current when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
 | mouse chords beyond i3's (a chord plugin, 2026-10-22 to 10-24) | one chord was ever used; i3's own tiling drag and Meta+right-drag resize came back in the helper plugin instead (2026-10-26, `docs/spec-tiled-look.md`, `docs/spec-tiling-resize.md`) |
 
-**Different from i3, on purpose** (each with the user-facing line in the README):
+**Different from i3, on purpose:**
 
 | here | i3 | why |
 |---|---|---|
@@ -50,6 +51,7 @@ exactly: `docs/behaviour.md`.
 | Meta+right-drag resizes the nearest edge that has a neighbour, and works from the gap beside a window | the nearest edge, nothing if it has no neighbour; the press must be on a window | Paul, 2026-10-26: the area to grab was too small (`docs/spec-tiling-resize.md`) |
 | a split holding only another split is removed | kept | each costs a move key press; they only matter with `focus parent` and tabbed/stacked, both out (`docs/spec-nested-boxes.md`) |
 | every workspace that lived on a returning monitor goes back to it | only those assigned to it | decision 10, below |
+| a window KWin activates on a hidden workspace (a window rule, a session restore, a link opened in a running browser) switches its monitor to that workspace; kwin-i3 follows | the workspace is marked urgent, never switched to | KWin's activation policy; won't-fix (Paul, 2026-10-25; i3 feature map, finding 6, rows C4, C67) |
 
 **Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is tiled (the
 tree places it) or floating (you place it; the user's own decoration, as a Plasma window), and a
@@ -63,7 +65,7 @@ only if a user would reasonably want it different, not because a constant exists
 
 **The plugins are optional** (Paul, 2026-10-24: "if you want to really lock in that i3 feel
 completely, but it works fine without them"). The script alone is the product and is tested
-alone (every live scenario but 52-54 runs with no plugin and Breeze); the frame, frame focus and
+alone (every scenario not marked `# needs: plugin` runs with no plugin and Breeze, `tests/live/run.sh`); the frame, frame focus and
 the hold effect are extras that cost a rebuild after every Plasma update.
 
 ## Decisions
@@ -117,10 +119,10 @@ the hold effect are extras that cost a rebuild after every Plasma update.
    **Atomic layout changes (Paul, 2026-10-23)**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
    holds the old layout on screen until every moved window has its new frame, as Sway's
    transactions do; i3 on X11 never had the gap. `docs/spec-atomic-layout.md`.
-9. **Workspaces work as i3ws does today**, and i3ws's code stays as its own source file
-   (`src/workspaces.js`) with tests added around it, not rewritten: desktop N is workspace N; it lives on
-   one monitor; login numbering (1 on the primary, 2 on the next, re-applied after Plasma's activity
-   restore); the pointer follows focus across monitors. Only its calls into Krohnkite change.
+9. **Workspaces are KWin's virtual desktops** (`src/workspaces.js`, begun as i3ws's code): desktop N
+   is workspace N, made on demand and never removed; a workspace lives on one monitor, kept by name;
+   assignment, login numbering, the pointer following focus across monitors. What it does:
+   `docs/behaviour.md` §4.
 10. **When a monitor goes away, its workspaces move to a remaining monitor and go back when it
     returns**. Not quite i3: i3 4.24 moves back only workspaces assigned to that output
     (`workspace N output X`, its `randr.c`); kwin-i3 moves back every workspace that lived there, on
@@ -139,18 +141,18 @@ the settings page (`kcm/`) and the widget (`widget/`); tests in `tests/unit`, `t
 
 | keys | i3 | notes |
 |---|---|---|
-| Meta+1…0 | workspace N | i3ws behaviour, unchanged |
+| Meta+1…0 | workspace N | on its own monitor (decision 9) |
 | Meta+Shift+1…0 (and the symbols) | move container to workspace N | lands after the focus there; a hidden workspace is fine (KWin places it when shown, verified) |
-| Meta+arrows, Meta+J/K/L/; | focus dir | **i3's tree-based focus**, across monitors at the edge (i3 picks the most recently focused leaf of the neighbouring branch, not the geometrically nearest; i3ws's was geometric) |
+| Meta+arrows, Meta+J/K/L/; | focus dir | **i3's tree-based focus**, across monitors at the edge (i3 picks the most recently focused leaf of the neighbouring branch, not the geometrically nearest) |
 | Meta+Shift+ same | move dir | i3 `tree_move`, all cases incl. `ws_force_orientation`; at the workspace edge, to the visible workspace of the neighbouring monitor (i3ws's `screenToward`), landing on the side it came from |
 | Meta+H / Meta+V | split h / split v | new |
 | Meta+E | layout toggle split | new |
 | Meta+Shift+Space | floating toggle | new (Paul: yes, 2026-10-21) |
 | Meta+Space | focus mode_toggle | new (Paul: yes, 2026-10-21) |
-| Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of 10 % as in the old config |
-| Meta+F | fullscreen | kwin-i3's key, running KWin's own action (since 2026-10-24; `docs/spec-own-keys.md`); the window returns to its tile (verified). As in i3 (per-output fullscreen): focus and move from a fullscreen window go to the neighbouring monitor; other windows on that workspace can't be focused while it is fullscreen: the keys don't, a new window opens behind it without focus (KWin's activation is handed back; its own dialog excepted) and Meta+N onto that workspace focuses it. The mouse is not blocked. A window opened or sent there while it is fullscreen is in the tree and joins the tiles when fullscreen ends (`docs/spec-fullscreen-tree.md`, 2026-10-24) |
+| Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize | **not a mode**: a script cannot register keys that exist only inside a mode, so i3's Meta+R mode is not buildable (review S3-9). Steps of `resizeStep`, default 10 % as in the old config |
+| Meta+F | fullscreen | kwin-i3's key, running KWin's own action (since 2026-10-24; `docs/spec-own-keys.md`); the window returns to its tile (verified). As in i3 (per-output fullscreen; the mouse is not blocked): `docs/behaviour.md` §5, §10 |
 | Meta+Shift+Q | kill | kwin-i3's key, running KWin's own action (since 2026-10-24) |
-| Meta+Ctrl+Shift+Q | **release** | safety valve: unmanage every window, restore KWin's default tiles, stop acting until reload |
+| Meta+Ctrl+Shift+Q | **release** | safety valve: every window out of its tile, the tiles kwin-i3 touched reset to the full screen, nothing more until a reload (`docs/behaviour.md` §12) |
 
 **Left out, Paul's decisions (2026-10-21):** tabbed and stacked ("I don't use tabbed"),
 `focus parent` ("never used this"), urgent windows (i3 showed them in its bar; there is no bar here).
@@ -205,12 +207,12 @@ to ship. Keep it from regressing; changing it is secondary. The behaviour, rule 
    fail with a deliberate fault before it counts.
 2. **Adapter, one monitor. Done 2026-10-22** (`src/kwin.js`, `src/rules.js`; live scenarios
    10-tiling, 20-rules, 30-more, 80 checks in 6 s; `make mutate-live`, 19 faults, all caught).
-   **Adapter, one monitor.** Reconcile, the tile-event protocol, start-up from live tiles, rules,
+   Reconcile, the tile-event protocol, start-up from live tiles, rules,
    min sizes, the policies above, the release action. Live tests drive keys with `invokeShortcut`
    and read geometry back; the invariant check runs after each step.
 3. **Workspaces and monitors. Done 2026-10-22** (`src/workspaces.js`; live scenario
    40-monitors with a real unplug/replug through `kscreen-doctor`; battery: 26 faults, all caught,
-   3 min). **Workspaces and monitors.** `src/workspaces.js` from i3ws, cross-monitor focus and move,
+   3 min). `src/workspaces.js` from i3ws, cross-monitor focus and move,
    numbering, the hotplug policy. Live tests on both virtual outputs. Hotplug: the virtual backend *can*
    unplug an output (`kscreen-doctor output.Virtual-1.disable`). If it couldn't, reconcile is driven from a synthetic "windows lost their tiles and
    the screen set changed" state, which is what a hotplug leaves behind. Not by hand on Paul's desktop.
@@ -268,7 +270,8 @@ place the same windows.
   a `dnf upgrade` says whether it still holds.
 - **Reconcile churn**: windows jumping or resizing twice. The diff keeps it to what changed; the live
   tests count geometry changes per operation.
-- **What Krohnkite solved that we haven't met yet** (Steam, Minecraft, Electron apps that re-parent,
+- **Apps not met yet** (what Krohnkite handled: Steam, Minecraft, Electron apps that re-parent,
   apps opening several windows at once). Each one met becomes a live test with the test client.
-- **Untestable headless**: input-driven behaviour. Phase 4 exists for it.
+- **Input** is tested through libei in the headless KWin (`tools/inject.py`; scenarios 50, 51, 52,
+  86); what it can't send (scroll) is listed in `LATER.md` items 10 and 11.
 - **kwinrc churn**: KWin rewrites `[Tiling]` on every tile change. Harmless; kwinrc is not captured.

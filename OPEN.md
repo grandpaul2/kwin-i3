@@ -3,9 +3,9 @@
 **State, not history**: rewrite it as things change, never append. If it isn't here or in
 `LATER.md` (work held until the Stage ends), it isn't open.
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
-action** ("none" is not one: an accepted item goes, its reason kept where the decision lives). Phase 6 (the dotfiles side) is done.
+action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, session end** (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written).
+Last reconciled: **2026-10-27, session end**; since then item 38 done (the standing docs against `docs/behaviour.md`) (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -18,24 +18,11 @@ with the settings page's finishing; it is added to as we go.
 Flesh out what is there: more configurable and more reliable, so it works on a machine that is not
 Paul's, set up by someone who is not Paul. **Not** more of i3: the goal is i3's feel and basic
 window management, with Plasma doing the rest. The scope and its reasons:
-`docs/plan.md`, "Scope"; the audience and the lines drawn: `docs/philosophy.md`. When the Stage ends: `LATER.md`, in its suggested order (1, 3 and 7 are done; 7,
-kwin-i3's own settings page, live 2026-10-24: `docs/spec-settings-page.md`; 15, the panel
-configuration bug, fixed 2026-10-25: `docs/bug-panel-config.md`; 19 and 20, a floated window's
-size and rounded corners, live 2026-10-25: `docs/spec-float-size.md`, `docs/spec-rounded-corners.md`).
+`docs/plan.md`, "Scope"; the audience and the lines drawn: `docs/philosophy.md`. When the Stage ends: `LATER.md`, in the order its header suggests.
 
 ## Open
 
 Work for now.
-
-**38. The rest of the standing docs against `docs/behaviour.md`** (2026-10-27). The specs were
-checked today and each given a `Now` line; so were `plan.md`'s Policies, Focus and Scope and the
-README's Configuration and widget sections. Not yet: the rest of `plan.md` (decision 9 still says
-workspaces "work as i3ws does"; Scope's "every live scenario but 52-54 runs with no plugin"; the
-phases and risks), the rest of the README, `i3-feature-map.md` (its `kwin.js:NNN` citations
-predate many edits), `fuzz-design.md`, `input-tests-design.md`, `debugging.md`, `testing.md` and
-CLAUDE.md; and one claim to check in the code, that a floating window drawing its own title bar is
-never framed (`spec-window-modes.md` R1-5). Next: a read-through like the spec audit (two agents),
-then the fixes, contradictions to Paul.
 
 **39. A floating fullscreen window, as in i3** (2026-10-27). Since today a floating window keeps
 its fullscreen flag, but only a tiled one blocks the focus keys and keeps its workspace's focus

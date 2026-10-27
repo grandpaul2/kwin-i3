@@ -4,7 +4,7 @@ Paul's project: i3's window management as one KWin script, running his desktop (
 Fedora 44, Plasma 6.7 Wayland) since 2026-10-22. **kwin-i3 work happens in sessions started here**
 (Paul, 2026-10-22); `~/.dotfiles` keeps the system around it (below). Read `docs/philosophy.md`, `docs/plan.md` and
 `docs/behaviour.md` first: what the project is for and who for, the scope and Paul's decisions, then
-what the code does, exactly. `docs/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
+what the code does, exactly; `docs/README.md` says which doc is the home of which fact. `docs/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
 the way it does (the reviews are in git history, removed 2026-10-27). **`OPEN.md` is this repo's list of
 unfinished work for now, and `LATER.md` of work held until the Stage ends**: no other file carries
 an open list (state, not history; the rules are in their headers).
@@ -24,7 +24,7 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **sudo** is passwordless, gated by Claude Code's own approval prompt: propose the command and let the
   prompt ask. Never ask Paul for a password.
 - **Testing follows `docs/testing.md`** ("Testing" below), which applies the global "Long runs"
-  rule here; its table says where each run writes its results.
+  rule here; its rule 2 says where each run writes its results.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
   for test results.
 
@@ -42,7 +42,9 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
   changes stay in a worktree or branch: `package/` on main is what he approved. The reload:
   `busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3`, then
   `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`, then `isScriptLoaded`. It
-  re-tiles his windows once.
+  re-tiles his windows once. Other actions that reach the live desktop, each with his go:
+  `make plugin-install` (loads into the running KWin), `make kcm-install`, `make widget-install`,
+  `make take-keys` and `make restore-keys`.
 - **Nothing that shows a window on Paul's desktop** without telling him first.
 
 ## Finding bugs
@@ -71,11 +73,12 @@ Paul's go, and only super justified** (its rule 5: "if you give an agent a handl
 
 ## Working rules
 
-- Edit `src/`, then `docs/testing.md` P1. `package/contents/code/main.js` is built; never edit it by hand,
+- Edit `src/`, then `docs/testing.md` P1; a behaviour change updates `docs/behaviour.md` in the
+  same commit. `make build` (`build.sh`) writes `package/contents/code/main.js`; never edit it by hand,
   but commit it.
 - During the Stage (`OPEN.md`), a new test tool is its own proposal.
 - The settings page (`kcm/ui/`) and the cog's form follow `docs/style-settings-page.md`.
-- i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
+- i3 behaviour is ported from i3's source (i3's `src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
 
 ## Where things live outside this repo
 

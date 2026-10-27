@@ -14,7 +14,7 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
    timer (`CronCreate`) from the moment it starts, the global "Long runs" rule: at each firing
-   read the run's result files yourself (while `make test` or a scenario runs: `/tmp/tmp.*/NN-*.sh.log`
+   read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset)
    and `.status`) and give Paul one line; delete the timer when it ends and
    give him the outcome. A notification or silence is not a check.
 3. **A case not covered here: ask Paul** before running anything for it.
@@ -34,12 +34,13 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
    whose expectation the change alters on purpose (a decision of Paul's) is updated in the change.
    None drives it: nothing to run here; P3's `make test` is the guard.
 3. **A change under `plugin/`: `64-plugin-reload.sh` too, before every live install** (alone,
-   with step 2's scenarios). A plugin bug takes down Paul's whole desktop, and 64 unloads and
+   with step 2's scenarios; it needs `make plugin` first, or `run.sh` skips it). A plugin bug takes down Paul's whole desktop, and 64 unloads and
    reloads the plugins, then uses the mouse: the only kind of break that is catastrophic here
    (Paul, 2026-10-26, after a crash: a destructor that reinstalled its filters left a stale one
    in KWin, which crashed on a mouse move after the next plugin install; 64 would have caught it,
    but the session's one `make test` had run before that change).
-4. Commit (on a branch if it isn't live yet). No new checks for the new behaviour (rule 5).
+4. Update `docs/behaviour.md` in the same commit. Commit (on a branch if it isn't live yet). No
+   new checks for the new behaviour (rule 5).
 
 ## P2. A bug fix
 

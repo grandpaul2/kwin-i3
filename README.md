@@ -59,15 +59,17 @@ starts, such as a game from its launcher, opened where you were in i3 too).
 Mouse:
 - **Meta+left-drag on a tiled window** is i3's tiling drag (needs the helper plugin): the window
   stays put while a highlight shows where it would land, under a move cursor. Near another
-  window's edge it goes beside that window; at the very edge it moves out to that side of the
-  whole layout; in the middle **the two swap**, unlike i3, which moves it after the target.
-  Escape or another button cancels. With "Plasma title bars", dragging a tiled window's title
+  window's edge it goes beside that window; in the thin strip at an edge it goes beside the whole
+  row or column that shares that edge; in the middle **the two swap**, unlike i3, which moves it after the target.
+  Escape or another button cancels. With tiled windows showing their own title bars (`tiledLook`), dragging a tiled window's title
   bar does the same.
 - **Meta+Shift+left-drag on a tiled window** pulls it out at its floating size and floats it where
   it is dropped, the mouse twin of Meta+Shift+Space (also beyond i3, which has no mouse way to
   float). Without the helper plugin, Meta+left-drag does this.
-- **Meta+left-drag on a floating window** moves it, and **Meta+right-drag** resizes any window
-  (a tiled one's new size is kept in the tree): KWin's own.
+- **Meta+right-drag on a tiled window**, or in the gap beside one, is i3's tiling resize (helper
+  plugin): the pointer jumps onto the nearest edge that has a neighbour, a bar follows it, and the
+  two sizes change on release. Without the helper it is KWin's own resize, kept in the tree.
+- **Meta+left-drag and Meta+right-drag on a floating window** move and resize it: KWin's own.
 
 With the plugins, the 1 px frame starts nothing from the pointer (no resize cursor, no edge drag,
 no title-bar move), and hover and a click on it focus the window, as i3's border does.
@@ -83,8 +85,9 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
 ## Install
 
 1. Link the script and enable it: `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`,
-   then `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true` and a logout, or
-   `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`.
+   then `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`, then log out and
+   in (KWin reads the scripts' packages at login: one linked while it runs can't be turned on
+   before that).
    **Never alongside another tiling script** (Krohnkite, i3ws, …): two scripts would place the
    same windows.
 2. Plasma's own keys that collide with i3's: Meta+arrows (quick tiling), Meta+Ctrl+arrows
@@ -101,8 +104,15 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
    monitor and windows tile on the wrong one; kwin-i3 says so in a notification at load, or when
    a second monitor arrives. Turned on, it takes effect at once: each monitor shows its own
    workspace again.
-4. The author's launcher for bug captures, Meta+Shift+B running `tools/capture`, lives in the
-   dotfiles too (a `.desktop` file with a `_launch` shortcut).
+4. Bug captures: bind a key to `tools/capture` (System Settings > Shortcuts, a command); it saves
+   what kwin-i3 saw just before (`docs/debugging.md`). The author's is Meta+Shift+B, from his
+   dotfiles.
+
+**To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again; to remove
+it, `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled false`, log out, and delete
+the link. The optional pieces below leave `~/.local/lib/kwin-i3/`, the drop-in
+`~/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf` and
+`~/.config/environment.d/kwin-i3.conf`; `make restore-keys` gives back keys `make take-keys` took.
 
 That is all kwin-i3 needs. Windows keep Plasma's decoration (Breeze, title bars and all), and
 everything above works.
@@ -114,14 +124,12 @@ They are for locking in the i3 feel completely; kwin-i3 works fine without them.
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | the tiling drag's highlight and move cursor; i3's 1 px frame around tiled windows (width and colours in the settings), blue on the active one: tiled windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiled windows keep their title bars; on a fast monitor, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | **the tiling drag** (Meta+drag, Meta+Shift+drag, a title-bar drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page (the load notification says so) |
+| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page (the load notification says so) |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
 systemd drop-in for KWin's unit (`QT_PLUGIN_PATH`). The drop-in takes effect at the next login,
-once. Loading the effect re-tiles every window once (the frame's room). An install from before
-2026-10-24 had a third plugin, the `kwini3frame` decoration: `make plugin-install` removes it and
-selects Plasma's default decoration again (every window is re-decorated once).
+once. Loading the effect re-tiles every window once (the frame's room).
 
 **The upkeep**: both plugins are refused by any KWin version other than the one they were built
 against, so after every Plasma update they are off until `make plugin-install` runs again; until
@@ -221,7 +229,7 @@ handled yet (`LATER.md` item 5).
 make test        # unit tests (node) + live tests (each in its own headless KWin)
 make build       # src/ -> package/contents/code/main.js (edit src/, never the built file)
 make plugin      # the two plugins, into plugin/build
-make fuzz        # 20 min of random actions with pixel invariants (docs/fuzz-design.md)
+make fuzz        # 5 min of random actions with pixel invariants (docs/fuzz-design.md; held during the Stage)
 make mutate      # the unit tests against deliberate faults; mutate-live from a worktree
 ```
 
@@ -233,9 +241,9 @@ file with `tools/capture` (the recent log and kwini3hold's events, the state, a 
 note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, watched red, then a fix.
 `CLAUDE.md` has the working rules.
 
-Docs: `docs/behaviour.md` (what it does, exactly), `docs/plan.md` (scope and decisions), the specs (`docs/spec-*.md`), the designs
-(`docs/fuzz-design.md`, `docs/mouse-plugin-design.md`, `docs/input-tests-design.md`) and the
-reviews they went through.
+Docs: `docs/README.md` is the map. `docs/philosophy.md` (what it is for), `docs/plan.md` (scope
+and decisions), `docs/behaviour.md` (what it does, exactly), the specs (`docs/spec-*.md`, one
+decision each) and the test tools' designs (`docs/fuzz-design.md`, `docs/input-tests-design.md`).
 
 ## License
 

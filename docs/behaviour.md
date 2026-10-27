@@ -433,7 +433,9 @@ given back. It reasserts this every pass (the window menu, `borderlessMaximizedW
 ### Floating windows
 
 - Keep their own decoration. With `frameOnFloating`, their border is taken and the effect draws
-  the ring in `frameFloatingActive` / `frameFloatingInactive`.
+  the ring in `frameFloatingActive` / `frameFloatingInactive`, except on a window that draws its
+  own title bar: no border is taken, so no ring and no frame focus (`takeBorder`,
+  `floatingFramed`).
 - Are **kept above** tiled windows (kwin-i3 owns their Keep Above flag, including one left by a
   previous instance; `docs/spec-reload-keepabove.md`), except on a Floating workspace while the
   effect marks floating windows. Keep Below is overwritten (`LATER.md` item 27).
@@ -590,9 +592,9 @@ back the user's `DelayFocusInterval`, read fresh from kwinrc.
 
 ### Known limits
 
-Accepted or not yet worked on; found by the reviews of 2026-10-22 to 10-24 (git history) and
-checked against the code 2026-10-27. None is in `OPEN.md`: each is small, and becomes an item if
-it bites.
+Accepted, as the code stands (Paul, 2026-10-27): facts about the behaviour, not a list of work.
+One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found by the reviews of
+2026-10-22 to 10-24 (git history) and checked against the code 2026-10-27.
 
 - **A desktop rebuild** (desktops removed or reordered, §4) rebuilds from KWin's tiles: a window
   that was never in a tile (sent to a hidden workspace) loses its place in its tree, and each

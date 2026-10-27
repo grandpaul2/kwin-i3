@@ -87,6 +87,8 @@ Shift+drag drops a window into one (two windows in a leaf); drag to a screen edg
 KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on Paul's
 desktop but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
 then whether to block, follow or document them (and whether `make take-keys` should free Meta+T).
+The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
+floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
 
 **27. Keep Above and Keep Below on floating windows** (finding 11: R18, R19). kwin-i3 owns Keep
 Above on floating windows (the plain script's way to keep them over tiled ones), so a user can't
