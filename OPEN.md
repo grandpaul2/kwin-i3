@@ -26,12 +26,14 @@ Work for now.
 
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
-First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Paul's go: (a) the
-Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's display search
-(~40-70 s; 71 may stay alone for its 1.5 s focus timing); (b) the alone scenarios without
-millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five repeat runs
-first); (c) polls in place of the fixed sleeps before screenshots in 78 and 58 (57's done in (d)).
-Next: Paul's choice among (a)-(c), none urgent (a full run is ~4 min, inside the 5-minute rule).
+First timings: batch 46 s, alone tail 176 s, total 222 s. (a) done 2026-10-27: 72, 73, 74 run in
+the batch, testkwin.sh finding each Xwayland's display under a lock; 71 stays alone for its 1 s
+focus checks (the five green together; ~36 s off the alone tail). Left: (b) the alone scenarios
+without millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five
+repeat runs first, ~20 min); held until a few sessions' `make test` show the flake fixes below
+holding, as it puts the screenshot scenarios back under load. (c) dropped: the fixed sleeps in
+78 and 58 add up to ~11 s, a few seconds to gain for new races. Next: (b), when the flakes have
+stayed away for a few sessions.
 
 **Done 2026-10-27** (Paul's go): (e) `make mutate-live` with `KI3_ONLY` baselines only its faults'
 scenarios; (d) the flakes, by causes read from the code (no failing run's log was kept, so not

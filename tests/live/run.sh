@@ -12,9 +12,8 @@ cd "$(dirname "$0")"
 scenarios=("$@"); [[ ${#scenarios[@]} -gt 0 ]] || scenarios=([0-9][0-9]-*.sh)
 batch=() alone=()
 for t in "${scenarios[@]}"; do
-    # "# needs: xwayland": its test KWin starts Xwayland (KI3_XWAYLAND), whose display search is
-    # not parallel-safe (tools/testkwin.sh): alone, like the timing scenarios.
-    if grep -qE '^# (timing: alone|needs: xwayland)$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
+    # "# needs: xwayland" runs in the batch: testkwin.sh finds each Xwayland's display under a lock.
+    if grep -qE '^# timing: alone$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
 done
 # At most KI3_JOBS test KWins at once (default: one per core), the rest queued: with all 44 at once
 # on 16 cores, some missed testkwin's 15 s start (2026-10-25: 1, then 6, all green when rerun).

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # needs: xwayland
+# timing: alone
+# (its focus checks allow 1 s: in the batch, ~30 KWins share the GPU)
 # needs: plugin
 # Panel popups forgive a stray pointer (docs/spec-popup-grace.md): with focus follows mouse and no
 # delay (the author's settings, as the test KWin has them), kwini3helper raises KWin's focus delay

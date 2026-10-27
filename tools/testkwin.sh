@@ -4,7 +4,7 @@
 # reads the live config. Several can run at once (tests/live/run.sh runs scenarios in parallel).
 #   tools/testkwin.sh <command...>       runs the command inside it, then tears it all down
 #   KI3_XWAYLAND=1                       also start Xwayland, for X11 clients (DISPLAY is set);
-#                                        finding its display is not parallel-safe
+#                                        its display search runs under a lock, one at a time
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_DESKTOPS=<n>                     the test KWin's virtual desktops (default 10; stock is 1)
 #   KI3_PEROUTPUT=true|false             per-output desktops (default true; stock is false)
@@ -163,9 +163,16 @@ if [[ ${KI3_PACKAGE:-} == 1 ]]; then
     mkdir -p "$XDG_DATA_HOME/kwin/scripts"
     ln -s "$(dirname "$here")/package" "$XDG_DATA_HOME/kwin/scripts/kwin-i3"
 fi
+# The display is found as the X socket that appears while this KWin starts (below), so two test
+# KWins with Xwayland starting at once could each take the other's: one at a time, from the list
+# before to the socket found. The lock goes with this shell's fd 9 (OPEN.md item 34 (a)).
+if [[ -n "${KI3_XWAYLAND:-}" ]]; then
+    exec 9>/tmp/kwin-i3-test-xwayland.lock
+    flock 9
+fi
 xbefore=$(ls /tmp/.X11-unix/)
 kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count 2 \
-    --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 &
+    --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
 kwin=$!
 up=""
 # Up to 15 s: with every live scenario starting a KWin at once (15 since 2026-10-22), 5 s was
@@ -186,6 +193,7 @@ if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     done
     [[ -n "$new" ]] || { echo "testkwin: no Xwayland socket appeared" >&2; exit 1; }
     export DISPLAY=:${new#X}
+    exec 9>&-
 fi
 status=0
 "$@" || status=$?
