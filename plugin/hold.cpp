@@ -640,10 +640,14 @@ void Hold::SetDragCursor(bool on, int shape)
     }
     // 1: left-right and 2: up-down, the tiling resize's (i3's XCURSOR_CURSOR_RESIZE_*); else the move's.
     const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor : shape == 2 ? Qt::SizeVerCursor : Qt::SizeAllCursor;
-    if (!m_dragCursor.isActive() || cursor != m_dragShape) {
+    // A second startMouseInterception while grabbing is ignored (the effect is already grabbing):
+    // a new shape mid-grab goes through defineCursor.
+    if (!m_dragCursor.isActive()) {
         effects->startMouseInterception(this, cursor);
-        m_dragShape = cursor;
+    } else if (cursor != m_dragShape) {
+        effects->defineCursor(cursor);
     }
+    m_dragShape = cursor;
     m_dragCursor.start();
 }
 

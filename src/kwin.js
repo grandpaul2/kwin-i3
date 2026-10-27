@@ -1528,7 +1528,7 @@ var KI3 = (function () {
         var n = part.first.parent.nodes.length;
         var shares = (part.first.percent || 1 / n) + (part.second.percent || 1 / n);
         var ext = o === "h" ? f.width + sr.width : f.height + sr.height;
-        return { o: o, part: part, start: start, lo: lo, hi: hi, second: sr, size: (ext + 2 * inner) / shares };
+        return { o: o, dir: e.dir, part: part, start: Math.round(start), lo: lo, hi: hi, second: sr, size: (ext + 2 * inner) / shares };
     }
     function resizePos(rz, x, y) { return Math.min(Math.max(rz.o === "h" ? x : y, rz.lo), rz.hi); }
     // i3's helprect: along the second participant, 2 px wide.
@@ -1543,6 +1543,10 @@ var KI3 = (function () {
             var pos = resizePos(rz, x, y);
             if (phase === "resize") { indicate(resizeBar(rz, pos)); return; }
             var px = Math.round(pos - rz.start), part = rz.part, ws = Tree.wsOf(part.first);
+            // The tree changed under the drag (a participant closed, a window opened between):
+            // the two found at the press are no longer the boundary's.
+            var now = model.resizeParticipants(drag.con, rz.dir);
+            if (!now || now.first !== part.first || now.second !== part.second) { endDrag("the layout changed, no resize"); return; }
             var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
             endDrag(px === 0 ? "no change" : done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px of " + Math.round(rz.size) :
                                                     "refused " + px + " px");
@@ -1565,7 +1569,7 @@ var KI3 = (function () {
             drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: rz.o === "h" ? 1 : 2, resize: rz };
             log("RESIZE " + conCaption(con) + " " + (rz.o === "h" ? "width" : "height") + " at " + rz.start);
             // i3 warps the pointer onto the bar (spec D): along the boundary's axis only.
-            callDBus(DRAG[0], DRAG[1], DRAG[2], "Warp", rz.o === "h" ? rz.start : x, rz.o === "h" ? y : rz.start);
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "Warp", Math.round(rz.o === "h" ? rz.start : x), Math.round(rz.o === "h" ? y : rz.start));
             dragCursor(true, drag.shape);
             indicate(resizeBar(rz, rz.start));
             timer.start();
