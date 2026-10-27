@@ -73,6 +73,7 @@ Paul's go, and only super justified** (its rule 5: "if you give an agent a handl
 - Edit `src/`, then `docs/testing.md` P1. `package/contents/code/main.js` is built; never edit it by hand,
   but commit it.
 - During the Stage (`OPEN.md`), a new test tool is its own proposal.
+- The settings page (`kcm/ui/`) and the cog's form follow `docs/style-settings-page.md`.
 - i3 behaviour is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
 
 ## Where things live outside this repo
