@@ -58,7 +58,10 @@ Done that way: §5; §4 as tables (W, S, M rows): S4 and M5 decided as i3 (not b
 S5, S8, S9 accepted. M3/M4 decided as i3 (plan.md decision 10
 rewritten): lost workspaces move for good, a returning monitor gets its assigned ones. §2 drafted as table T
 (24 rows, all ports of i3; checked against i3's source where the gap check doubted them); tidy
-kept with its cost written down, ppt-only resize accepted. §3 next.
+kept with its cost written down, ppt-only resize accepted. §3 drafted (tables R, X): R2 (X11
+dialogs float) decided. **Paul's rule from here** (2026-10-27): ride i3 hard; a difference, minor
+or not, needs a specific and explicit reason; "places itself" leaves the vocabulary. So the
+"accepted, minor" rows of §2/§4 (W5, S5, S8, S9, T12) are reviewed again against that rule.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

@@ -174,7 +174,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | # | When | Kind today | i3 | Note |
 |---|---|---|---|---|
 | R1 | KWin's type isn't Normal: panels, the desktop, popups, menus, tooltips, notifications, OSDs | places itself | = for each by its i3 kind (§3 above) | |
-| R2 | **An X11 dialog, utility window or splash screen** (an Xwayland app's) | **places itself** | **≠** | i3: floating (`manage.c`: dialog, utility, toolbar, splash, notification). KWin's `normalWindow` is false for these types, so R1 catches them; the rule meant for them (R7) can never match. A Wayland dialog is a Normal window and floats by R6. Found 2026-10-27 |
+| R2 | **An X11 dialog, utility window or splash screen** (an Xwayland app's) | **places itself** | **≠** | i3: floating (`manage.c`: dialog, utility, toolbar, splash, notification). KWin's `normalWindow` is false for these types, so R1 catches them; the rule meant for them (R7) can never match. A Wayland dialog is a Normal window and floats by R6. Found 2026-10-27. **Decided, not built** (Paul, 2026-10-27): floating, as i3 |
 | R3 | On all desktops | places itself | ≠ | i3: sticky floating (`_NET_WM_DESKTOP` all: "float it and make it sticky"). Decided, not built: §3 above (Yakuake) |
 | R4 | Skips the taskbar | places itself | ≠ | i3 ignores the hint. Plasma's convention for its own helpers (confirmed by Paul, 2026-10-27, before the kinds); each such window now gets its i3 kind (§3 above) |
 | R5 | Its class or name in `ignoreClass`, or its role in `ignoreRole` | places itself | ≠ | i3 has no such list; the default entries' i3 kinds are §3 above |
