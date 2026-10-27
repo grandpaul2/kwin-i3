@@ -1,5 +1,7 @@
 # Spec: how tiled windows look, and i3's title-bar drag (OPEN.md item 35)
 
+**Now (2026-10-27):** Built and live 2026-10-26 (part A `tiledLook`, part B the tiling drag); decision D (the centre drop swaps, Meta+Shift+drag floats) supersedes C's Shift swap; the effect's call is `SetTiledRing`. What it does: `behaviour.md` §7, §9.
+
 From Paul, 2026-10-26: "I'm trying to get back a little typical Plasma feel for those who like
 that ... see what we could toggle in addition to the borders as well, as far as normal decorations
 go." Agreed the same day: one choice for tiled windows (i3 frame / Plasma title bars / bare), the

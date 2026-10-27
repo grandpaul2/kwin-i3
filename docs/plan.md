@@ -47,6 +47,7 @@ exactly: `docs/behaviour.md`.
 | a window on all desktops places itself | a sticky window floats and follows the workspace | in Plasma, a sticky window is Plasma's to place (a widget, a picture-in-picture) |
 | a window that skips the taskbar places itself | the hint is ignored | Plasma's convention for its own helpers (Yakuake, OSDs); read from the code 2026-10-27, not a decision Paul made: his to confirm |
 | a tiled window never gets smaller than its minimum size; if the layout can't hold the minimums, the largest floats | minimum sizes apply only to floating windows (`floating_check_size`); tiled windows get what the split gives | a Wayland client can't be drawn smaller than its minimum; it would hang off its tile (2026-10-22) |
+| Meta+right-drag resizes the nearest edge that has a neighbour, and works from the gap beside a window | the nearest edge, nothing if it has no neighbour; the press must be on a window | Paul, 2026-10-26: the area to grab was too small (`docs/spec-tiling-resize.md`) |
 | a split holding only another split is removed | kept | each costs a move key press; they only matter with `focus parent` and tabbed/stacked, both out (`docs/spec-nested-boxes.md`) |
 | every workspace that lived on a returning monitor goes back to it | only those assigned to it | decision 10, below |
 

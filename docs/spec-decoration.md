@@ -1,5 +1,7 @@
 # Spec: kwini3frame, the i3 frame as a KDecoration3 plugin
 
+**Now (2026-10-27):** **Superseded** 2026-10-24: kwini3frame was live 2026-10-23, then retired; the ring is drawn by the kwini3hold effect and tiled windows are borderless (`spec-window-modes.md`, `behaviour.md` §7). Frame focus lives on in `plugin/framefocus.cpp` (`behaviour.md` §9).
+
 Decided by Paul, 2026-10-23. Status: **built from revision 3 on 2026-10-23 (branch `frame`:
 `plugin/frame.cpp`, kwini3mouse's two additions, `tools/frame-guard.sh`, `tests/live/54-frame.sh`,
 42 checks; all seven faults of the matrix went red where this spec says). Not live until Paul says

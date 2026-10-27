@@ -1,5 +1,7 @@
 # Spec: remove boxes that hold only a box (a deliberate break from i3)
 
+**Now (2026-10-27):** Built and live (`tidy`, `src/tree.js`); listed in `plan.md`'s divergences. What it does: `behaviour.md` §2, "Tidying". (Its "one user" reasoning predates `philosophy.md`; the decision stands on the move-key cost.)
+
 Decided by Paul, 2026-10-23. Status: **reviewed** (second agent, 2026-10-23; findings and answers below). Not live until Paul says go.
 
 ## The problem

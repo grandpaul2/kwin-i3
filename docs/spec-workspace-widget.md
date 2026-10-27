@@ -1,5 +1,7 @@
 # Spec: the workspace widget (OPEN.md item 11)
 
+**Now (2026-10-27):** Built and live 2026-10-24; without kwin-i3 a click does nothing (the fallback below was not built). What it does: `behaviour.md` §11, "The workspace widget".
+
 From Paul, 2026-10-24: Plasma's pager on the panel draws every workspace "twice as large as it
 is": each desktop as both monitors side by side, so with per-monitor desktops half of every
 thumbnail is a ghost (a workspace lives on one monitor). "I want all workspaces to show on the one

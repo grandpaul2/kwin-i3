@@ -1,5 +1,7 @@
 # Spec: atomic layout changes (no wallpaper flash when windows move)
 
+**Now (2026-10-27):** Built and live (kwini3hold, `plugin/hold.cpp`); the effect also draws the frame since `spec-window-modes.md`. What it does: `behaviour.md` §7, "The hold".
+
 Requested by Paul, 2026-10-23. Status: **implemented and code-reviewed on branch `atomic-layout` (plugin/hold.cpp, tests/live/53-hold.sh); not live.**
 
 ## The problem, measured

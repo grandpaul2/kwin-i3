@@ -1,5 +1,7 @@
 # Spec: window modes, Plasma's or i3's, per window (OPEN.md item 10)
 
+**Now (2026-10-27):** All four pieces built and live 2026-10-24/25; kwini3frame retired; the "nothing built" line below is history. What it does: `behaviour.md` §3, §6, §7.
+
 **Words superseded** (2026-10-27): a "Plasma window" is now a **floating** window, and the
 ignore list's windows **place themselves** (`docs/spec-window-words.md`).
 

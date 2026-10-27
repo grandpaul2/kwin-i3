@@ -1,5 +1,7 @@
 # Spec: kwin-i3's own fullscreen and close keys (OPEN.md item 4 (d))
 
+**Now (2026-10-27):** Built and live 2026-10-24. What it does: `behaviour.md` §5, "Key actions", and §8.
+
 Paul's go 2026-10-24; built the same day. Part of "no dependence on Paul's dotfiles".
 
 ## The gap

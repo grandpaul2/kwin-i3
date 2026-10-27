@@ -1,5 +1,7 @@
 # Spec: rounded corners on tiled windows
 
+**Now (2026-10-27):** Built and live 2026-10-25. What it does: `behaviour.md` §7, "Tiled windows".
+
 Paul's go 2026-10-25; reviewed by a second agent against KWin 6.7.5's source the
 same day (two must-fix, both in below: the frame's corner wedge, and the reset when the effect is
 inactive). Paul asked for a toggle that rounds tiled windows' corners, the

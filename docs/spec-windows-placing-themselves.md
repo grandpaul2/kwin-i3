@@ -1,5 +1,7 @@
 # Spec: windows that place themselves change nothing you can see
 
+**Now (2026-10-27):** Built and live 2026-10-25/26; renamed from `spec-unmanaged-windows.md` 2026-10-27. What it does: `behaviour.md` §5 and §3.
+
 (Renamed 2026-10-27 from `spec-unmanaged-windows.md`, for the words in `docs/spec-window-words.md`.)
 
 Paul's go 2026-10-25, after two focus bugs in five minutes (the start menu sending the pointer to

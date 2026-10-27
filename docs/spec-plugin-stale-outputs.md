@@ -1,5 +1,7 @@
 # Spec: `make plugin` leaves no stale outputs (OPEN.md item 12)
 
+**Now (2026-10-27):** Done 2026-10-25 (build hygiene; no behaviour).
+
 Paul's go 2026-10-25; done the same day (checked: a stray `.so` and the retired `kwini3frame.so`
 gone after one `make plugin`, 0.7 s; 55-helper and 57-effect-frame green).
 

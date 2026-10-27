@@ -65,7 +65,7 @@ nothing, do what Plasma's own pages do.
   don't feel deceived"): the gap between windows steps by 2 because an odd one would be drawn as
   the even one below.
 - **Numbers show their unit** ("4 px", "100 ms", "5%"), through `UnitSpinBox`.
-- **Choices show plain words, store the script's words** ("Tiled" / "Plasma windows"; "auto" /
+- **Choices show plain words, store the script's words** ("Tiled" / "Floating"; "auto" /
   "force"), through `ChoiceBox`. Up to 10 choices in a ComboBox.
 - **Colours** are `ColorButton`s (`org.kde.kquickcontrols`).
 
@@ -73,8 +73,8 @@ nothing, do what Plasma's own pages do.
 
 - **Rarely needed or long settings go behind a sub-page named for what it holds** (HIG,
   progressive disclosure), opened by a button that pushes it (`kcm.push`).
-- **A sub-page button shows a one-line summary** beside it in grey ("2 on a set monitor, 1 for
-  Plasma windows"), through `SubPageButton`; a screen reader reads it as the button's
+- **A sub-page button shows a one-line summary** beside it in grey ("2 on a set monitor, 1
+  floating"), through `SubPageButton`; a screen reader reads it as the button's
   description.
 - **One row per item** with its settings side by side (Workspaces: monitor and new windows per
   workspace). Each row's controls name their row (§6).

@@ -1,5 +1,7 @@
 # Spec: panel popups forgive a stray pointer (OPEN.md item 11, the floating panel's gap)
 
+**Now (2026-10-27):** Built and live 2026-10-25. What it does: `behaviour.md` §9, "Popup grace".
+
 Paul's go 2026-10-25; built the same day (`plugin/popupgrace.cpp`, `tests/live/71-popup-grace.sh`,
 the stand-in `tools/popupclient.py`: the X11 route worked, probed first).
 

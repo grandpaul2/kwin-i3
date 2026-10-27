@@ -1,5 +1,7 @@
 # Spec: workspaces created on demand (OPEN.md item 4 (a))
 
+**Now (2026-10-27):** Built and live 2026-10-24; its "found on the way" is `spec-desktop-changes.md`. What it does: `behaviour.md` §4.
+
 Paul's go 2026-10-24 (never removed, as recommended); built the same day. Part of "no dependence on Paul's dotfiles".
 
 ## The gap

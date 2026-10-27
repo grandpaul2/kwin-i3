@@ -1,5 +1,7 @@
 # Spec: the settings page names a shifted symbol by its keys ("Meta+Shift+1", not only "Meta+!")
 
+**Now (2026-10-27):** Built and live 2026-10-25. What it does: `behaviour.md` §11, the Keys sub-page.
+
 Paul's go 2026-10-25; built the same day. The live check is a screenshot count in
 `37-settings-page.sh` (the label beside Move right's Meta+:, none beside Focus right's Meta+;), watched
 red with the label emptied; the naming's unit tests watched red with the typed character dropped.

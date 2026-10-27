@@ -1,5 +1,7 @@
 # Spec: settings (OPEN.md item 2)
 
+**Now (2026-10-27):** Built and live 2026-10-24. Its frame keys moved into the effect (`spec-window-modes.md`) and its form into the settings page (`spec-settings-page.md`, `style-settings-page.md`). What it does: `behaviour.md` §11.
+
 Requested by Paul, 2026-10-24 (the heading: configurable and reliable, `docs/plan.md` Scope).
 Status: **spec, reviewed (second agent, 2026-10-24: findings folded in, marked *review*), for
 Paul's go.** Nothing built.

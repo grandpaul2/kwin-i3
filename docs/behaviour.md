@@ -231,7 +231,9 @@ Then `src/kwin.js` `adoptWindow`:
 `src/workspaces.js`, with the actions in `src/kwin.js`.
 
 - **Workspace N is virtual desktop N**, 1 to 10 (Meta+1 … Meta+0). Desktops are created on demand
-  up to the one asked for (`ensure`) and never removed (`docs/spec-desktops-on-demand.md`).
+  up to the one asked for (`ensure`: Meta+7 on a stock Plasma's one desktop makes 2 to 7) and never
+  removed; KWin saves the count, so they are there at the next login. A monitor plugged in when
+  every workspace is in use gets a new one (`docs/spec-desktops-on-demand.md`).
 - **Per-monitor workspaces** need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
   reports when it is off with two or more monitors, and never sets it (§13).
 - **A workspace's home** is the monitor it lives on, kept by name. It is the home monitor if
@@ -260,7 +262,8 @@ Then `src/kwin.js` `adoptWindow`:
   the monitor in a direction; move a window to the monitor in a direction (to its shown
   workspace, focus stays); move the workspace to the monitor in a direction (the source monitor
   then shows its last shown workspace that is free, else its lowest occupied one, else an unused
-  one, else the move is refused).
+  one, else the move is refused; an assigned workspace moves too; afterwards the previous
+  workspace, for back-and-forth, is the one the source monitor now shows).
 - **The neighbouring monitor** in a direction is the nearest by edge distance (i3's
   `get_output_next`, closest); a diagonal monitor can qualify.
 
@@ -270,7 +273,9 @@ Then `src/kwin.js` `adoptWindow`:
   kwin-i3's focus: focus follows to that workspace (`shownOutside`).
 - **Desktops removed or reordered** (`desktopListChanged`): appending changes nothing; anything else
   rebuilds the model from KWin's tiles and windows, as at load (`docs/spec-desktop-changes.md`).
-  While it rebuilds, nothing is placed.
+  While it rebuilds, nothing is placed. A removed desktop's windows join the workspace KWin moved
+  them to. The numbered settings (`workspaceOutputs`, `floatingWorkspaces`) stay positions: after
+  a removal, "3" names whatever is now workspace 3.
 - **A monitor lost**: its workspaces keep their homes. **All back**: each monitor shows what it
   showed before the loss, unless that workspace now lives elsewhere (then an unused one). After any
   monitor change every window is re-fitted to its tile as its geometry settles (`armRefit`).
@@ -409,9 +414,12 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
 - `frame` (default): no title bar; the effect draws a ring `frameWidth` px outside the window, in
   `frameActive` for the focused window and `frameInactive` for others, and the tiles leave room
   for it;
-- `titlebars`: the window's own decoration;
+- `titlebars`: the window's own decoration; its maximize button and a title-bar double-click do
+  nothing, as in sway (decided, `docs/spec-tiled-look.md` B: the tree places it);
 - `bare`: no title bar and no ring (nothing marks the focused window; the page suggests Dim
   Inactive).
+
+The ring is drawn at the screen's edges too (i3's `hide_edge_borders none`).
 
 **Without the effect**, every tiled window keeps its title bar. **Rounded corners**
 (`roundedCorners`, default on): the effect gives tiled framed windows Breeze's 5 px radius, in
@@ -487,7 +495,9 @@ position keys (Workspace 1-10, Move to Workspace 1-10, Focus Right (;), Grow Wid
 Right (:)) are refitted to the current layout at load, on every layout change and on the
 script's `FitKeys`. A key is changed only if it still holds the US default or what the helper set
 last (recorded in `~/.config/kwini3helperrc`, `[LayoutKeys]`); a key the user bound is theirs. A
-key with no symbol on the layout is emptied (`docs/spec-keyboard-layouts.md`).
+key with no symbol on the layout is emptied, and a letter at the position (Meta+M for 0 on some
+layouts) is a known limit. A key set by hand to the US default counts as kwin-i3's. One fit runs
+at a time; a change during one queues another (`docs/spec-keyboard-layouts.md`).
 
 ### Taken keys
 
@@ -524,9 +534,9 @@ applies to floating windows, which KWin moves and resizes as usual.
 ### Tiling resize (Meta+right-drag)
 
 - **Starts** with Meta+right on a tiled window, or in the gap within half the inner gap plus 1 px
-  of one. The nearest of the window's edges that has a neighbour is the one resized; a tie
+  of one (both beyond i3, `docs/plan.md`'s divergences). The nearest of the window's edges that has a neighbour is the one resized; a tie
   resizes nothing.
-- The pointer jumps onto the boundary; the cursor shows its direction; a 2 px bar follows the
+- The pointer jumps onto the boundary (from a press deep inside a window, up to half its width); the cursor shows its direction; a 2 px bar follows the
   pointer, kept within both windows' minimum sizes. Nothing moves until release.
 - **Refused** while any window on the workspace is fullscreen.
 - **On release** the two neighbours' shares change by the distance (i3's `resize_neighboring_cons`);
@@ -609,6 +619,18 @@ it bites.
 - **The workspace widget** on a thin panel with many workspaces in use has no overflow (each
   button shrinks to an 8 px floor; "Numbers only" helps); shown and focused workspaces differ only
   by their fill.
+- **A window adopted late on a Floating workspace** (as above) opens tiled: only a window new to
+  kwin-i3 takes the workspace's floating.
+- **Keep Above is kwin-i3's on its windows**: a user's own Keep Above is cleared when the window is
+  tiled, and unticking it on a floating window doesn't stick (won't-fix, i3 has no such flag;
+  `docs/spec-windows-placing-themselves.md`, `LATER.md` item 27).
+- **Release leaves the effect's floating marks**: after a release and a reload, the windows that
+  were floating come back floating.
+- **After a reload a fullscreen window comes back at the end of its row** (accepted, pinned by a
+  test; `docs/spec-fullscreen-tree.md`). A fullscreen request not yet applied reads as a fixed
+  size, so such a window opens floating.
+- **A window that places itself, quick-tiled by KWin into one of kwin-i3's tiles**, loses that
+  tile at the next pass.
 - **Internal, harmless**: each closed window leaves a small entry in the script's signal
   bookkeeping for the session; every key places all workspaces again (idempotent, but logged).
 
@@ -679,8 +701,9 @@ kept by the forms, not by the effect. The effect still reads `[kwin-i3-hold] Ena
   key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
   shifted symbol is shown with the keys that type it on the current layout. Not shown while
   kwin-i3 isn't running.
-- **Apply** writes kwinrc and the keys, and reconfigures if a setting changed. **Defaults** resets
-  both to `main.xml`'s and the US keys.
+- **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
+  default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and
+  the US keys. A key whose holder can't be recorded or freed isn't given to kwin-i3 either.
 
 ### The workspace widget
 

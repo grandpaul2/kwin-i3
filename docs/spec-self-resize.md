@@ -1,5 +1,7 @@
 # Spec: a tiled window that resizes itself is put back in its tile, as in i3
 
+**Now (2026-10-27):** Built and live 2026-10-26 (`refitSelfResize`). What it does: `behaviour.md` §6, "Keeping windows in their tiles".
+
 Paul's capture 2026-10-25 23:06 (Firefox restarted after a reboot). Paul chose i3's rule (always,
 not only after a window opens) and gave the go to build the same day; built and tested
 (`tests/live/82-self-resize.sh`, the fuzzer's `selfresize`), live 2026-10-26.

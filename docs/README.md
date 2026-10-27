@@ -39,7 +39,9 @@ Frozen once built: **only their status line changes**, saying what happened and 
 current truth is (`behaviour.md`, or the spec that superseded it). Read one for the reasons, the
 alternatives weighed, the probes, Paul's words; not for what the code does now.
 
-- **`spec-*.md`**: one decision each, with Paul's go. The name says the subject.
+- **`spec-*.md`**: one decision each, with Paul's go. The name says the subject. Its `**Now:**` line, under
+  the title, is the status. Item numbers inside are `OPEN.md`'s of the day: the item may since
+  have moved to `LATER.md` (same number) or closed.
 - **`spike-kwin-tiles.md`**: the 2026-10-21 probe that chose KWin's tiles.
 - **`bug-*.md`**: an investigation too long for a commit message.
 - **`mouse-plugin-design.md`**: the chord plugin, dropped 2026-10-24.

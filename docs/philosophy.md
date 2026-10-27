@@ -61,7 +61,7 @@ the settings page says what each word means).
   like a gap was i3 itself (the resize keys move the bottom-right corner; a launcher-started game
   opened where you were in i3 too).
 - **Diverge on purpose, and write it down**: in the README for a user, in `docs/plan.md` "Scope"
-  for the reason. Today's: the centre drop swaps, Meta+Shift+drag floats, the launch workspace,
+  for the reason; the list is `docs/plan.md`'s table. Among them: the centre drop swaps, Meta+Shift+drag floats, the launch workspace,
   windows that place themselves, and what is left out (tabbed and stacked, marks, the scratchpad).
 
 ## Defaults

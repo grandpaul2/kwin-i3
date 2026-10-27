@@ -1,5 +1,7 @@
 # Spec: the settings page, reorganized and made accessible
 
+**Now (2026-10-27):** Built and live 2026-10-25; its words superseded 2026-10-27 by `spec-window-words.md` ("Floating", "Places itself"). What it does: `behaviour.md` §11.
+
 **Superseded in part** (2026-10-26): the page as it stands is `kcm/ui/`, and how it looks and reads is
 `docs/style-settings-page.md`. This spec is the history of the 2026-10-25 reorganization; where they differ (the frame section's wording and shape, `tiledLook` and `floatingStep` since added, no column headings on the Workspaces sub-page, no Troubleshooting section),
 the guide and the code win.

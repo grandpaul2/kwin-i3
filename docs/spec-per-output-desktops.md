@@ -1,5 +1,7 @@
 # Spec: report per-monitor desktops being off (OPEN.md item 4 (b))
 
+**Now (2026-10-27):** Built and live 2026-10-24. What it does: `behaviour.md` §4 and §13.
+
 Paul's go 2026-10-24; built the same day. The design was agreed earlier the same day: **report,
 never set**. It's Plasma's setting; a value set by a script lasts only to the next reconfigure,
 which kwin-i3 itself triggers; and kwin-i3 gives back what it borrows. The notice goes in the

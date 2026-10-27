@@ -1,5 +1,7 @@
 # Spec: kwin-i3's own settings page, and a tidier form (OPEN.md item 7)
 
+**Now (2026-10-27):** Built and live 2026-10-24, then reorganized (`spec-settings-cleanup.md`); the page is `kcm/ui/`, its look and words `style-settings-page.md`. Its layout lists and its "nothing built" line below are history. What it does: `behaviour.md` §11.
+
 **Superseded in part** (2026-10-26): the page as it stands is `kcm/ui/`, and how it looks and reads is
 `docs/style-settings-page.md`. This spec is the history of how the page was first built; where they differ (the "Atomic layout" and "Advanced" sections, `debugLog` on the page),
 the guide and the code win.

@@ -1,5 +1,7 @@
 # Spec: what kwin-i3 calls a window (tiled, floating, places itself)
 
+**Now (2026-10-27):** Built and live 2026-10-27.
+
 Paul, 2026-10-27: clear up the line between i3 and Plasma in the window rules; "floated" and
 "Plasma window" have been used for nearly the same thing. Status: **Paul's go 2026-10-27, built.** The rule lists keep their explanation lines under each heading (the page's existing shape) rather than help buttons.
 Wording only: no behaviour, no `kwinrc` key and no action changes.

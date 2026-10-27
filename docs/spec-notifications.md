@@ -1,5 +1,7 @@
 # Spec: Plasma's notifications in place of dunst (OPEN.md item 11)
 
+**Now (2026-10-27):** Built and live 2026-10-25, all in `~/.dotfiles`. kwin-i3's own notice: `behaviour.md` §13.
+
 Paul's go 2026-10-25; built and switched live the same day. Checks passed: plasmashell owns the
 name (health check green), `notify-send` returns at once, `audio-toggle`'s popup is replaced by id,
 Meta+N registered as "Activate Notifications Widget". One fix on the way: the scripting loop over

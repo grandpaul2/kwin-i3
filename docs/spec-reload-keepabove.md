@@ -1,5 +1,7 @@
 # Spec: a reload keeps owning the floating windows' keep-above flags
 
+**Now (2026-10-27):** Built and live 2026-10-24; window modes later spared the flag on a Floating workspace while the effect marks floating windows. What it does: `behaviour.md` §3, §7, §10.
+
 From Paul's question, 2026-10-24 ("even when I unfloat it, it stays green"). Status: **decided by Paul, 2026-10-24
 (1: spec and change reviewed together; 2: a hand-floated window stays floating across a reload,
 by the flag). Built 2026-10-24; reviewed (second agent,

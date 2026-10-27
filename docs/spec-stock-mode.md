@@ -1,5 +1,7 @@
 # Spec: the stock test mode (OPEN.md item 4)
 
+**Now (2026-10-27):** Harness built 2026-10-24 (`make live-stock`); the sweep is held until the Stage ends (`LATER.md` item 36, `docs/testing.md`).
+
 Paul's go 2026-10-24, (i)-(v) below. The question: does kwin-i3 work on a stock Plasma, installed
 by someone who is not Paul? `testkwin.sh` has always run Paul's desktop settings (ten desktops,
 per-output desktops on, focus follows mouse, Plasma's clashing shortcuts unbound), so the suite

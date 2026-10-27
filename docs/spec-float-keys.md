@@ -1,5 +1,7 @@
 # Spec: floating windows move and resize by key, as in i3
 
+**Now (2026-10-27):** Built and live 2026-10-25. What it does: `behaviour.md` §8, "Floating windows by key".
+
 OPEN.md item 23 (the i3 feature map, finding 1: rows A21, A40, A41). Paul's go 2026-10-25,
 with the step as a setting (`floatingStep`, px, 1-200, default 10: point 4); built, tested
 (`tests/live/81-float-keys.sh`) and live the same day.

@@ -1,5 +1,7 @@
 # Spec: report the keys kwin-i3 didn't get, and an opt-in to take them (OPEN.md item 4 (c))
 
+**Now (2026-10-27):** Built and live 2026-10-24; the settings page's Keys sub-page takes keys too, into the same record. What it does: `behaviour.md` §8, "Taken keys", and §13.
+
 Paul's go 2026-10-24; built the same day. The design was agreed earlier the same day: report, never
 take at load; the fix is opt-in, beside `plugin-install`; one notification shared with (b).
 

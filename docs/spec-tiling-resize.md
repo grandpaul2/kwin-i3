@@ -1,5 +1,7 @@
 # Spec: i3's Meta+right-drag resize of tiled windows (OPEN.md item 37)
 
+**Now (2026-10-27):** Built and live 2026-10-26. What it does: `behaviour.md` §9, "Tiling resize"; its breaks from i3 are in `plan.md`'s divergences.
+
 From Paul, 2026-10-26: "the area I have to grab to meta+rightclick the transitions is small and
 not in an obvious spot. In i3 I was able to be pretty much anywhere near that area ... I'm having
 to click several times to find the correct spot." He chose approach B the same day: kwin-i3 does

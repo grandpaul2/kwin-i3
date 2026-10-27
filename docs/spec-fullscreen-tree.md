@@ -1,5 +1,7 @@
 # Spec: a fullscreen window stays in the tree
 
+**Now (2026-10-27):** Built and live 2026-10-24; since 2026-10-27 a fullscreen window also stays fullscreen when floated or tiled, as in i3. What it does: `behaviour.md` §5, §10.
+
 Drafted 2026-10-24 from Paul's capture of 2026-10-23 23:25. Status: **decided by Paul, 2026-10-24
 (1: i3's rule, 2: confirmed, 3: same change); reviewed (second agent, 2026-10-24,
 `review-fullscreen-2026-10-24.md` (git history: `git show 3d98bd2:docs/review-fullscreen-2026-10-24.md`), folded in below as "R-n"); the review's two questions

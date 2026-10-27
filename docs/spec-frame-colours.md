@@ -1,5 +1,7 @@
 # Spec: a different frame colour for floating windows
 
+**Now (2026-10-27):** **Superseded** 2026-10-24 by `spec-window-modes.md`: the floating colours are `frameFloatingActive`/`frameFloatingInactive` (default `#4d7254`), drawn by the effect only with `frameOnFloating`. What it does: `behaviour.md` §7, §11.
+
 Asked by Paul, 2026-10-24: "make the outline highlight of floating windows a different colour,
 like green instead of blue, so they were easy to tell apart". Status: **decided by Paul, 2026-10-24
 (1: the green, unfocused stays grey; 2: keys; 3: trap accepted). Built 2026-10-24

@@ -1,5 +1,7 @@
 # Spec: workspace back-and-forth, next/prev, output moves, workspace names
 
+**Now (2026-10-27):** Built and live 2026-10-25/26. What it does: `behaviour.md` §4 and §11's widget.
+
 Paul's go 2026-10-25 (label "2 mail", all four directions); built the same day, reviewed
 (a second agent: the lint failure, the fallback chain, the rebuild, previous after a move, the
 weak checks; all fixed). From the i3 feature map (`docs/i3-feature-map.md`, holes) and
