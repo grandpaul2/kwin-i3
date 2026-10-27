@@ -1892,8 +1892,21 @@ var KI3 = (function () {
                Math.abs(g.width - a.width) <= 1 && Math.abs(g.height - a.height) <= 1;
     }
     function fitToTile(w, t) {
-        if (w.tile !== t || w.move || w.resize || w.fullScreen || !wins[id(w)]) return;
+        if (w.tile !== t || w.move || w.resize || !wins[id(w)]) return;
+        if (w.fullScreen) { fitFullscreen(w); return; }
         if (!fits(w, t)) w.frameGeometry = windowRect(t);
+    }
+    // A fullscreen window KWin keeps in its tile (none rebuilt since) is resized to the tile by
+    // KWin whenever the tile's padding or geometry is written (Tile::setPadding and
+    // setRelativeGeometry moveResize every window in it, fullscreen or not): a reload's first
+    // pass, a gap or frame-width change. Put back on its monitor (Paul's capture 2026-10-27 03:45).
+    function fitFullscreen(w) {
+        if (!w.output) return;
+        var g = w.frameGeometry, a = workspace.clientArea(KWin.FullScreenArea, w);
+        if (g.x !== a.x || g.y !== a.y || g.width !== a.width || g.height !== a.height) {
+            log("REFIT " + shortCaption(w) + ": fullscreen, back on its monitor");
+            w.frameGeometry = a;
+        }
     }
 
     // When a monitor returns, KWin's PlacementTracker asks every window for the geometry it had in
