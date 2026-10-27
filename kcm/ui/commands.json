@@ -479,6 +479,42 @@
       ""
      ]
     ]
+   },
+   {
+    "label": "Move to the next workspace (by number)",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Next",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the previous workspace (by number)",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Prev",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the next workspace on this monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Next on Output",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to the previous workspace on this monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace Prev on Output",
+      ""
+     ]
+    ]
    }
   ]
  },

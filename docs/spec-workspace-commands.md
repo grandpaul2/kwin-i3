@@ -50,6 +50,12 @@ On-output: the workspaces whose home is the focused workspace's monitor (`output
 **Actions**: "Workspace Next", "Workspace Prev", "Workspace Next on Output", "Workspace Prev on
 Output". The choice of target is a pure function, unit-tested in node.
 
+**The move forms** (OPEN.md item 29, Paul's go 2026-10-26; i3 `cmd_move_con_to_workspace`
+with `next`, `prev`, `next_on_output`, `prev_on_output`, which calls `con_move_to_workspace` as
+`move container to workspace N` does): the same target, and the focused window goes there with
+`moveToWorkspace`, focus staying behind, as Meta+Shift+N. **Actions**: "Move to Workspace Next",
+"… Prev", "… Next on Output", "… Prev on Output"; no window, or one workspace, does nothing.
+
 ## 3. Output moves
 
 Directional focus and move already cross monitors at the edge (`tree.js:481`, `:733`). These

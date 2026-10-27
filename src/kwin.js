@@ -1697,10 +1697,13 @@ var KI3 = (function () {
         }
         return out;
     }
-    function stepWorkspace(dir, onOutput) {
+    // With con, i3's "move container to workspace next" (cmd_move_con_to_workspace): the window
+    // goes there and focus stays behind, as for Meta+Shift+N.
+    function stepWorkspace(dir, onOutput, con) {
         var cur = focusedWsNum();
         var t = Tree.nextWorkspace(existingWorkspaces(onOutput ? Workspaces.outputOf(cur) : null), cur, dir);
-        if (t) gotoWorkspace(t);
+        if (!t) return;
+        if (con) moveToWorkspace(t, con); else gotoWorkspace(t);
     }
     // The screen next to the focused workspace's, in a direction (i3's get_output_next).
     function screenFrom(dir) { return Workspaces.screenToward(Workspaces.outputOf(focusedWsNum()), dir); }
@@ -1775,6 +1778,10 @@ var KI3 = (function () {
         "Workspace Prev": function () { stepWorkspace(-1, false); },
         "Workspace Next on Output": function () { stepWorkspace(1, true); },
         "Workspace Prev on Output": function () { stepWorkspace(-1, true); },
+        "Move to Workspace Next": function (c) { if (c) stepWorkspace(1, false, c); },
+        "Move to Workspace Prev": function (c) { if (c) stepWorkspace(-1, false, c); },
+        "Move to Workspace Next on Output": function (c) { if (c) stepWorkspace(1, true, c); },
+        "Move to Workspace Prev on Output": function (c) { if (c) stepWorkspace(-1, true, c); },
     };
     ["left", "right", "up", "down"].forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);

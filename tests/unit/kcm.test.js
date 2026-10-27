@@ -51,7 +51,8 @@ test("the retired actions are not registered", () => {
 test("the workspace commands are registered with no key (docs/spec-workspace-commands.md)", () => {
     const r = Object.fromEntries(registered());
     const want = ["Workspace Back and Forth", "Move to Workspace Back and Forth", "Workspace Next", "Workspace Prev",
-                  "Workspace Next on Output", "Workspace Prev on Output"];
+                  "Workspace Next on Output", "Workspace Prev on Output", "Move to Workspace Next", "Move to Workspace Prev",
+                  "Move to Workspace Next on Output", "Move to Workspace Prev on Output"];
     for (const d of ["Left", "Right", "Up", "Down"])
         want.push("Focus Output " + d, "Move to Output " + d, "Move Workspace to Output " + d);
     for (const a of want) assert.strictEqual(r["kwin-i3 " + a], "", a);
