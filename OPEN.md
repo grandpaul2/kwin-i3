@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, session end**; since then item 38 done (the standing docs against `docs/behaviour.md`) (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written).
+Last reconciled: **2026-10-27, session end** (done: items 35, 29; to `LATER.md`: 30, 28; removed: 25, accepted in `docs/plan.md`; the window words and `docs/philosophy.md` written). Since then, 2026-10-27: item 38 done (the standing docs against `docs/behaviour.md`); 39 added.
 
 ## Stage (Paul, 2026-10-24, late)
 
