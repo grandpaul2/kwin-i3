@@ -114,20 +114,23 @@ echo "    $(dropped $m)"
 
 # i3's Meta+right resize, in the frame look (a 2 px gap between c and b). The left third of c is
 # no edge of KWin's that has a neighbour; the nearest edge with a partner is its right one.
+# (Escape after Meta is let go: Meta+Esc is Plasma's System Monitor key, taken before the helper.)
 read -r cw bw < <(kjs 'var o = {}; workspace.windowList().forEach(function (w) { o[w.caption] = Math.round(w.frameGeometry.width); }); log(o.c + " " + o.b)')
 echo "    c ${cw}px, b ${bw}px"
 m=$(mark)
 "$INJECT" "abs 100 180" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" "abs 200 180" "wait 40" "abs $((cw + 150)) 180" "wait 1000" \
-    "key 1 down" "key 1 up" "wait 40" "abs 300 180" "wait 40" "btn right up" "key ${EVDEV[Meta]} up" &
+    "key ${EVDEV[Meta]} up" "wait 40" "key 1 down" "key 1 up" "wait 40" "abs 300 180" "wait 40" "btn right up" &
 held=$!
 check "Meta+right mid-drag: the 2 px bar at the pointer" poll eval '[[ "$(indicator)" == $((cw + 149)),*" 2x"* ]]' || echo "    indicator: $(indicator)"
 check "  the windows not resized yet"       eval '[[ "$(wid c)" == "$cw" ]]'
 wait $held
+echo "    $(after $m | grep -E '^.{9}(RESIZE|ERROR|WARN|INVARIANT)' | cut -c10- | tr '\n' '|')"
 check "Escape: cancelled, the bar gone"      eval 'wait_log "^.{9}RESIZE cancelled" "$m" && [[ -z "$(indicator)" ]]'
 check "  c as it was"                        eval '[[ "$(wid c)" == "$cw" ]]'
 m=$(mark)
 drag Meta right 100 180 $((cw + 150)) 180
 check "Meta+right drag in c: resized at the release" wait_log "^.{9}RESIZE resized width" "$m"
+echo "    $(after $m | grep -E '^.{9}(RESIZE|ERROR|WARN|INVARIANT)' | cut -c10- | tr '\n' '|')"
 poll eval '[[ "$(wid c)" -gt $((cw + 120)) ]]'
 echo "    c $(fc c)  b $(fc b)"
 check "  c grew by about the drag"          eval 'w=$(wid c); (( w >= cw + 125 && w <= cw + 160 ))'
