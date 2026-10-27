@@ -51,5 +51,6 @@ table of every way focus changes, each row against i3; §3 names every window by
 (Paul: follow i3, down to the names). The rows marked "Decided, not built" are the work: B2,
 A2, A3-A5, B4, C1-C3, C7, C9, D2/D3, and the §3 kinds that differ (Yakuake, Spectacle, the
 password prompt, KRuler and plasmashell's ordinary windows to floating). The settings page uses
-i3's kind names, super descriptive and explicit, plainer later. Accepted ≠: C4, D5. Next: a
-build plan with Paul (order, and what each needs in tests), when he wants code.
+i3's kind names, super descriptive and explicit, plainer later. Accepted ≠: C4, D5. C3 revised: the dialog opens on its parent's workspace (KWin ties them). Build plan agreed in
+outline (new windows with D2/D3 first, then pointer, kinds, keys, clicks/closes, sticky last);
+**held** (Paul): the rest of `behaviour.md` gets the same treatment first, and a gap check.
