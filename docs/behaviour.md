@@ -400,6 +400,9 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
   the monitor waits 150 ms in case it is going fullscreen (`docs/spec-self-resize.md`).
 - **After a monitor change or a resize drag**, a window whose geometry lands on its old place is
   fitted again (KWin's placement tracker and slow clients answer late).
+- **A fullscreen window KWin keeps in its tile** (no rebuild since it went fullscreen) is resized
+  to the tile by KWin whenever the tile's padding or geometry is written (a reload's first pass,
+  a gap or frame-width change); each pass puts it back on its whole monitor.
 - **A GTK 4 window short of its tile** after its border was taken is asked for 0 × 0, then its tile,
   so KWin resends its bounds.
 

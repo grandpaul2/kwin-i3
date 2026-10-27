@@ -133,5 +133,28 @@ check "after the reload z is still active"  active_is z
 # of the row (still in the tree, still fullscreen; it joins the tiles there when it ends).
 check "1 is as it was, p last"              wait_tree 1 "H[c e p!]"
 
+# A fullscreen window KWin keeps in its tile (no rebuild since, as Firefox alone on its
+# workspace) and a padding change: KWin's Tile::setPadding resizes every window in the tile,
+# fullscreen or not, and the refit skipped fullscreen windows, so it stayed fullscreen at its
+# tile's size, the wallpaper around it (Paul's capture 2026-10-27 03:45, after a reload: the new
+# instance wrote padding 4, then 6 once the effect answered). A gap or frame-width change that
+# keeps the inset does the same.
+fills_output() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, o = w.output.geometry; log(f.x === o.x && f.y === o.y && f.width === o.width && f.height === o.height); } })")" == "true" ]]; }
+in_tile() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.tile !== null); })")" == "true" ]]; }
+key "Workspace 4"
+client --title f1; client --title f2
+check "two windows on 4"                    wait_tree 4 "H[f1 f2*]"
+on f2 'w.fullScreen = true;'
+check "f2 is fullscreen"                    wait_tree 4 "H[f1 f2*!]"
+check "f2 fills its monitor"                poll fills_output f2
+check "f2 is still in its tile"             in_tile f2
+# What the reloaded instance did: another padding on the tiles (it wrote 4 over 6, KWin resizing
+# every window in them), then a pass of kwin-i3's that writes its own back.
+kjs 'var r = workspace.rootTile(workspace.screens[1], workspace.desktops[3]); r.padding = 10;' >/dev/null
+m=$(mark); key "Focus Mode Toggle"; wait_log '^.{9}TREE 4 ' "$m"; sleep 0.5
+check "kwin-i3's padding back: f2 still fills its monitor" fills_output f2
+on f2 'w.fullScreen = false;'
+check "out of fullscreen: two halves again" wait_tree 4 "H[f1 f2*]"
+
 check "no invariant failures or errors"     clean_log
 finish
