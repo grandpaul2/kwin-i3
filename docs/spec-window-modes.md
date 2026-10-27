@@ -1,5 +1,8 @@
 # Spec: window modes, Plasma's or i3's, per window (OPEN.md item 10)
 
+**Words superseded** (2026-10-27): a "Plasma window" is now a **floating** window, and the
+ignore list's windows **place themselves** (`docs/spec-window-words.md`).
+
 From Paul, 2026-10-24: "what we call a floating window [should] feel more like a [Plasma] window
 ... Full headers on the windows that they can click to drag around ... Then they tap
 Shift+Meta+Space and the full i3 experience takes over. Headers gone, outlines on." And: "Rather

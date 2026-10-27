@@ -72,7 +72,7 @@ function kindsFor(list) {
 }
 
 // The Workspaces button's summary, as counts the page words: how many workspaces have a monitor
-// set, how many open Plasma windows.
+// set, how many open new windows floating.
 function workspaceCounts(outputsText, floatingText) {
     return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
 }

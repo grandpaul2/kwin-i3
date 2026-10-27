@@ -43,17 +43,17 @@ check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*(floatingW
 click_named - "Navigate Back"; sleep 0.5
 check "the main page sums it up"            named kwin-i3 "Configure Workspaces…"
 
-# 2. Window Rules: Pick a Window on a test client adds its class to "Leave alone"; after Apply a
-#    new window of that class is left alone (never in the tree).
+# 2. Window Rules: Pick a Window on a test client adds its class to "Places itself"; after Apply a
+#    new window of that class places itself (never in the tree).
 client --title pickme --app-id net.local.pickme --color red
 check "pickme tiles beside the page"        poll eval '[[ "$(tree 1)" == *pickme* ]]'
 read -r px py pw ph <<<"$(geom pickme | tr ',x' '  ')"
 click_named kwin-i3 "Configure Window Rules…"; sleep 0.5
 # KWin starts its window selection when the D-Bus call arrives; a click before that only focuses
 # the window, and nothing says when it has started.
-click_named "Window Rules" "Pick a window for “Leave alone”"; sleep 1
+click_named "Window Rules" "Pick a window for “Places itself”"; sleep 1
 click $((px + pw / 2)) $((py + ph / 2))
-check "the picked class is listed"          poll named "Window Rules" "Remove Application: net.local.pickme from “Leave alone”"
+check "the picked class is listed"          poll named "Window Rules" "Remove Application: net.local.pickme from “Places itself”"
 check "and nothing is written before Apply" conf_is ignoreClass ""
 m=$(mark); click_named - Apply
 check "kwinrc: ignoreClass ends with it"    poll eval '[[ $(conf ignoreClass) == *,net.local.pickme ]]'
@@ -66,11 +66,11 @@ sleep 1
 check "and kwin-i3 left it alone (in no tree)" eval '! after "$m" | grep -qE "^.{9}TREE .*pickme2"'
 
 # 3. A default removed, then Defaults: it is back, and kwinrc holds none of the page's entries.
-click_named "Window Rules" "Remove Application: krunner from “Leave alone”"
-check "krunner is gone from the list"       poll eval '! named "Window Rules" "Remove Application: krunner from “Leave alone”"'
+click_named "Window Rules" "Remove Application: krunner from “Places itself”"
+check "krunner is gone from the list"       poll eval '! named "Window Rules" "Remove Application: krunner from “Places itself”"'
 click_named - Defaults
-check "Defaults: krunner is back"           poll named "Window Rules" "Remove Application: krunner from “Leave alone”"
-check "and the picked class is gone"        eval '! named "Window Rules" "Remove Application: net.local.pickme from “Leave alone”"'
+check "Defaults: krunner is back"           poll named "Window Rules" "Remove Application: krunner from “Places itself”"
+check "and the picked class is gone"        eval '! named "Window Rules" "Remove Application: net.local.pickme from “Places itself”"'
 click_named - Apply
 check "kwinrc: no ignoreClass (the default)" poll conf_is ignoreClass ""
 check "no workspaceOutputs"                 conf_is workspaceOutputs ""

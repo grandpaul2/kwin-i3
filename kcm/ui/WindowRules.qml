@@ -1,4 +1,4 @@
-// The Window Rules sub-page (docs/spec-settings-cleanup.md): the windows kwin-i3 leaves alone
+// The Window Rules sub-page (docs/spec-settings-cleanup.md, docs/spec-window-words.md): the windows that place themselves
 // (ignoreClass, ignoreRole) and the ones it always floats (floatingClass, floatingTitle), as two
 // lists. An entry is added by picking a window (KWin's queryWindowInfo, as Window Rules' Detect
 // Window Properties) or typed with its kind; settings.js turns the lists back into the strings.
@@ -26,7 +26,7 @@ KCM.SimpleKCM {
              : i18nc("@item:inlistbox what a rule matches", "Title contains")
     }
     function listText(list) {
-        return list === "ignore" ? i18nc("@title:group", "Leave alone") : i18nc("@title:group", "Always float")
+        return list === "ignore" ? i18nc("@title:group", "Places itself") : i18nc("@title:group", "Always float")
     }
     function write(list) {
         const s = Logic.ruleSettings(list);
@@ -67,7 +67,7 @@ KCM.SimpleKCM {
         function onWindowPickFailed(error) {
             if (page.pickingFor)
                 page.report(Kirigami.MessageType.Information, error === "org.kde.KWin.Error.InvalidWindow"
-                    ? i18n("That window isn't one KWin manages, so kwin-i3 leaves it alone already.")
+                    ? i18n("That window isn't one KWin manages: it places itself already.")
                     : i18n("No window picked."));
             page.pickingFor = "";
         }
@@ -196,11 +196,11 @@ KCM.SimpleKCM {
         spacing: Kirigami.Units.largeSpacing * 2
         RuleList {
             list: "ignore"
-            explanation: i18n("kwin-i3 doesn't place these windows at all: they stay where they open. Plasma's own windows are here by default.")
+            explanation: i18n("The app or Plasma places these windows: kwin-i3 never tiles, floats, moves or resizes them. They still live on a workspace, and a focus key takes the keyboard from them. Plasma's own windows are here by default.")
         }
         RuleList {
             list: "float"
-            explanation: i18n("These windows open floating, with their own title bar. Meta+Shift+Space tiles one.")
+            explanation: i18n("These windows open floating, with their own title bar: you place them, and kwin-i3 keeps them on their workspace and above the tiled windows. Meta+Shift+Space tiles one.")
         }
     }
     }
