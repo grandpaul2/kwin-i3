@@ -1,5 +1,9 @@
 # Spec: kwin-i3's own settings page, and a tidier form (OPEN.md item 7)
 
+**Superseded in part** (2026-10-26): the page as it stands is `kcm/ui/`, and how it looks and reads is
+`docs/style-settings-page.md`. This spec is the history of how the page was first built; where they differ (the "Atomic layout" and "Advanced" sections, `debugLog` on the page),
+the guide and the code win.
+
 Requested by Paul, 2026-10-24: convenience and accessibility before the README pass. The script's
 Configure form doesn't look like Plasma's own pages, and its keys sit in KWin's long list under
 Shortcuts > Window Management, apart from the rest of its settings.
