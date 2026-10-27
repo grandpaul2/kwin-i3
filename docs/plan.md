@@ -176,6 +176,33 @@ tile is empty, no root has padding.
 Every root the script sees, including new desktops and returning outputs, gets `padding = 0`;
 `setup.sh` also sets `[Tiling] padding=0` so new roots start that way.
 
+### Focus (written down 2026-10-26, from an outside review; behaviour unchanged)
+
+Paul: the keys feel like i3, the mouse moves focus only when he moves it, and this is good enough
+to ship. Keep it from regressing; changing it is secondary. The shape, in `src/kwin.js` "---- focus":
+
+- **The model owns focus** (`src/tree.js`: the focus stacks; `activate`/`focusUp` are the only
+  places the global focus changes).
+- **In from KWin**: every activation arrives at the `windowActivated` handler (a click, focus
+  follows mouse, KWin's own choice); it updates the model, except a stale one for a workspace its
+  monitor isn't showing. A key action re-syncs from `workspace.activeWindow` first (`focusedCon`,
+  without that stale check: a key inside the millisecond after a monitor unplug would take it;
+  noted, not fixed). Adopting a window and a reload read KWin's active window too.
+- **Out to KWin**: `applyFocus` alone activates windows, after every pass. The pointer moves only
+  when focus changed monitor (i3's mouse_warping output).
+- **Exceptions**, each a small rule with its reason at the code:
+  - a passive pass (no key) leaves an unmanaged window focused: a popup, a dialog, KRunner
+    (`docs/spec-unmanaged-windows.md`), except with Show Desktop on;
+  - a fullscreen window keeps its workspace's focus (`docs/spec-fullscreen-tree.md`);
+  - a close: i3's choice inside a split (con_next_focused), over KWin's; at a workspace's top level
+    and for floating windows, KWin's (`NextFocusPrefersMouse=true` here);
+  - panel popups forgive a stray pointer for 1.5 s (`docs/spec-popup-grace.md`, a plugin).
+- **Accepted, where the pointer and the focus disagree** (KWin's focus follows mouse acts only on
+  motion across an edge, as i3's does): after a close the window that grows under a still pointer
+  isn't focused (Paul's capture, 2026-10-26 17:23); a new window opens on the pointer's monitor,
+  not the focused one (KWin places by pointer, OPEN.md item 25). Changing either is one choice,
+  Paul's, between the pointer and the keyboard.
+
 ## Phases — each ends green, committed, pushed
 
 0. **Scaffold.** Layout, `build.sh`, `make test` (unit + live). A small test client for the

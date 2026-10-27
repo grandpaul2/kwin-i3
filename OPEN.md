@@ -57,9 +57,10 @@ title-bar drag in the title-bar look hasn't been tried live yet. `make test` gre
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
-other monitor, keys act on one monitor and the new window opens on the other. Next: confirm in the
-test KWin (pointer on Virtual-1's empty workspace, focus on Virtual-0, open a window), then a fix
-proposal (KWin's placement option, or kwin-i3 sending a new window to the focused workspace).
+other monitor, keys act on one monitor and the new window opens on the other. Since 2026-10-26
+listed as accepted in `docs/plan.md`, "Focus" (with the close case of Paul's 17:23 capture, the
+same question): Paul is happy with focus as it is, and changing it is his choice between the
+pointer and the keyboard. Next: none unless he makes it.
 
 **28. No launch workspace** (finding 2: C19). An app opens on the workspace current when its
 window appears, not the one it was launched from: switch workspaces while a slow app starts and
