@@ -16,7 +16,7 @@ check "it is complete (BEGIN .. END)"       eval 'has "DUMP BEGIN" && has "DUMP 
 check "both outputs, one active"            eval 'has "Virtual-0 0,0 1280x720 shows 1" && has "Virtual-1 .* shows 2" && has " active$"'
 check "the tree, with focus"                has "TREE 1 H\[a b\*\]"
 check "tree detail: shares"                 has "^.{9}    a percent=0.5000"
-check "window facts"                        has '"b" .* managed rule=tile frame=640,0 640x720 .* desktops=1 .*ACTIVE'
+check "window facts"                        has '"b" .* tiled rule=tile frame=640,0 640x720 .* desktops=1 .*ACTIVE'
 check "the in-memory log came too"          has "kwin-i3 loaded$"
 check "the log has what kwin-i3 asked (TILE)" has "^.{9}[0-9:.]{12} TILE b -> 640,0 640x720$"
 check "and what KWin did (GEOM)"            has "^.{9}[0-9:.]{12} GEOM b .* -> 640,0 640x720$"

@@ -177,7 +177,7 @@ to ship. Keep it from regressing; changing it is secondary. The behaviour, rule 
   mouse_warping output).
 - **Exceptions**, each a small rule with its reason at the code:
   - a window that places itself (a popup, a dialog, KRunner) keeps the keyboard through passive
-    passes and keys that don't move focus (`docs/spec-unmanaged-windows.md`), except with the
+    passes and keys that don't move focus (`docs/spec-windows-placing-themselves.md`), except with the
     desktop or a panel focused and Show Desktop off;
   - a fullscreen window keeps its workspace's focus (`docs/spec-fullscreen-tree.md`);
   - a desktop switched outside kwin-i3 (Overview, the pager) takes the focus with it, on the

@@ -1,11 +1,13 @@
-# Spec: windows kwin-i3 doesn't manage change nothing you can see
+# Spec: windows that place themselves change nothing you can see
+
+(Renamed 2026-10-27 from `spec-unmanaged-windows.md`, for the words in `docs/spec-window-words.md`.)
 
 Paul's go 2026-10-25, after two focus bugs in five minutes (the start menu sending the pointer to
 the other monitor, fixed first: only key actions move the pointer; tray popups closing at once) and
 a sweep for the pattern: **kwin-i3 reacting to a KWin event that wasn't about anything it manages,
 then overriding something visible from KWin's global state.** The sweep was a code audit, an
 independent second agent's audit (same findings, and more: below), and a battery of stand-in
-windows (`tests/live/73-unmanaged-windows.sh`).
+windows (`tests/live/73-places-itself.sh`).
 
 ## The rule
 
@@ -51,7 +53,7 @@ fault there changed nothing, so it would have been an untested second path.
 
 ## Tests
 
-`73-unmanaged-windows.sh`: tooltips, notifications, OSDs, popups and dialogs coming and going in six
+`73-places-itself.sh`: tooltips, notifications, OSDs, popups and dialogs coming and going in six
 states (the pointer on the other monitor, a popup or a dialog active, one of kwin-i3's windows
 closing meanwhile, an empty workspace focused with a desktop window there, a monitor switched outside
 kwin-i3); each compares the focus, the pointer and what each monitor shows before and after. Red

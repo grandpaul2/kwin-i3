@@ -1416,7 +1416,7 @@ var KI3 = (function () {
     var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];    // the workspace keys, Meta+1..0
     // >0 while kwin-i3 itself changes what a monitor shows (showOn, an activation that may switch
     // a desktop): currentDesktopChanged tells those from switches made outside it (the Overview,
-    // Plasma), which kwin-i3's focus follows (shownOutside; docs/spec-unmanaged-windows.md).
+    // Plasma), which kwin-i3's focus follows (shownOutside; docs/spec-windows-placing-themselves.md).
     var switching = 0;
     function showOn(desk, s) {
         switching++;
@@ -2602,7 +2602,7 @@ var KI3 = (function () {
         // the state, so a pass that finds the desktop (or the panel) active asks KWin, and a pass
         // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
         // window is left to focus on a monitor is also the desktop: that pass still brings the
-        // focus back (73-unmanaged-windows). The answer rides on focusPending, so it is the pass it
+        // focus back (73-places-itself). The answer rides on focusPending, so it is the pass it
         // brought that has it, however long a rebuild holds that pass (review).
         if (!from && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
             callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
@@ -2625,7 +2625,7 @@ var KI3 = (function () {
         if (f.type === "ws" || f.win === null) {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
-            // needs no guard of its own (a fault here alone changed nothing, 73-unmanaged-windows).
+            // needs no guard of its own (a fault here alone changed nothing, 73-places-itself).
             if (workspace.activeScreen !== s) {
                 invoke("Switch to Screen " + workspace.screens.indexOf(s));
                 if (from && from !== s) invoke("MoveMouseToCenter");
@@ -2972,7 +2972,7 @@ var KI3 = (function () {
             scheduleAll();
             // A key that left kwin-i3's focus where it was (a split, a resize, a layout toggle)
             // takes no focus from an open window kwin-i3 doesn't manage (Yakuake, KRunner, a
-            // dialog): only keys that move the focus do, as in i3 (docs/spec-unmanaged-windows.md).
+            // dialog): only keys that move the focus do, as in i3 (docs/spec-windows-placing-themselves.md).
             var a = workspace.activeWindow;
             var keep = model.focused === focusBefore && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock;
             if (!keep) wantFocus(before ? outputOf(before) : workspace.activeScreen);
@@ -3438,7 +3438,8 @@ var KI3 = (function () {
             workspace.windowList().forEach(function (w) {
                 var m = w.minSize;
                 out([JSON.stringify(String(w.caption)), "class=" + w.resourceClass, "id=" + id(w),
-                     wins[id(w)] ? "managed" : "unmanaged", "rule=" + Rules.classify(w),
+                     !wins[id(w)] ? "not-in-tree" : model.byWin[id(w)] && model.byWin[id(w)].type === "floating" ? "floating" : "tiled",
+                     "rule=" + Rules.classify(w),
                      "frame=" + rect(w.frameGeometry), "client=" + rect(w.clientGeometry),
                      "min=" + Math.round(m.width) + "x" + Math.round(m.height),
                      "output=" + (w.output ? w.output.name : "-"),
@@ -3800,7 +3801,7 @@ var KI3 = (function () {
     // A monitor's desktop switched outside kwin-i3 (the Overview, Plasma, an app's activation):
     // on the monitor kwin-i3's focus is on, the focus follows to the workspace shown there, as in
     // i3 the visible workspace of the focused monitor is the focused one. Not doing so let the
-    // next passive pass switch the monitor back (a notification closing, 73-unmanaged-windows).
+    // next passive pass switch the monitor back (a notification closing, 73-places-itself).
     // Not while monitors come and go: screensChanged settles those.
     function shownOutside(previous, current, output) {
         if (switching || rebuilding || !current || !output) return;

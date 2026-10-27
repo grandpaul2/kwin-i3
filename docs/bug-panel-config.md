@@ -10,7 +10,7 @@ click), then diagnosed from source and reproduced headlessly in a later session 
 `wantFocus`, a 0 ms timer; `src/kwin.js` applyFocus), the panel's context menu included. The pass
 treats an active *desktop* window as "nothing has the focus" and gives the focus back to the
 focused tile; right for KWin's last resort when no window is left to focus on a monitor
-(73-unmanaged-windows). Plasma turns Show Desktop on for its edit mode as the menu closes (below),
+(73-places-itself). Plasma turns Show Desktop on for its edit mode as the menu closes (below),
 and KWin focuses the desktop; the pass then activates the tile Show Desktop hid, and KWin's
 `activateWindow` turns Show Desktop off for a hidden window (`activation.cpp`). Plasma leaves edit
 mode on that, and the configuration window hides and deletes itself before it ever mapped. The
