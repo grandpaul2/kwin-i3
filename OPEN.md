@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action**. Phase 6 (the dotfiles side) is done.
 
-Last reconciled: **2026-10-26, evening** (item 35 tested; item 37, the Meta+right resize, live and done; focus written down in `docs/plan.md`, item 25 accepted there).
+Last reconciled: **2026-10-26, late** (item 35 done: Paul tested both parts live, "everything works really nice"; spec `docs/spec-tiled-look.md`).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -43,17 +43,6 @@ of 3 alone. One flake per full run blocks the fault battery's baseline. Since th
 `make test` and the fortnightly battery expensive: (d) the three flakes above and 39, each made
 deterministic or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
 (KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
-
-**35. How tiled windows look, and i3's title-bar drag** (Paul, 2026-10-26: "a little typical
-Plasma feel"). Spec: `docs/spec-tiled-look.md`. **Part A live** (60470dd): `tiledLook`. **Part B
-live 2026-10-26**: Meta+drag (and a title-bar drag in the title-bar look) is i3's tiling drag,
-with the move cursor and the drop indicator; a centre drop swaps and Meta+Shift+drag floats a
-window where it is dropped (decision D, two breaks from i3, Paul's). Fixed on the way: a drop
-beside a window on another workspace threw (0709197); a window crossing monitors could be left
-hidden (b3ce0c8); the helper's destructor left a stale filter in KWin, which crashed it once
-(591360c, P1.3 in `docs/testing.md` since). Next: Paul uses it for a couple of days; the
-title-bar drag in the title-bar look hasn't been tried live yet. `make test` green on 363c4f2
-(2026-10-26 evening, 237 s).
 
 **25. A new window opens on the pointer's monitor, not the focused one** (finding 7: C2, C75).
 KWin places by the pointer; i3 by keyboard focus. With the pointer over an empty workspace on the
