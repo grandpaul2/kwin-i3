@@ -51,18 +51,22 @@ check "floating b has its title bar back"   eval 'f=$(fc b); [[ ${f%% client*} !
 
 # Mid-hold: a slow client keeps the old layout on screen (kwini3hold); its frames stay with it.
 kclose b; sleep 0.3
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key TimeoutMs 400; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key TimeoutMs 2000; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 sleep 0.5
-client --title c --color blue --resize-delay 0.4
+# 2 s, not 0.4: the screenshot after the key must land inside the hold, under load too (item 34).
+client --title c --color blue --resize-delay 2
 check "a | c"                               wait_tree 1 "H[a c*]"
-sleep 1; capture
+# c on screen in its tile (its own resizes take 2 s each): the frames where the hold will keep them.
+settled() { capture && pix 639 360 $INACT && pix 640 360 $ACT && pix 638 360 $RED; }
+WAIT=20 poll settled
 echo "    before: $(row 360 638 639 640 641)"
 key "Grow Width"; capture
 echo "    mid-hold: $(row 360 638 639 640 641)"
 check "mid-hold: the old layout's frames (a's at 639, c's at 640)" eval 'pix 639 360 $INACT && pix 640 360 $ACT && pix 638 360 $RED'
-sleep 1; capture
+grown() { capture && pix 639 360 0,0,255 && pix 640 360 0,0,255; }
+slow_poll() { WAIT=20 poll "$@"; }        # a prefix assignment inside check would be run as a command
+check "after: c grown, its app where the frames were" slow_poll grown
 echo "    after: $(row 360 638 639 640 641)"
-check "after: c grown, its app where the frames were" eval 'pix 639 360 0,0,255 && pix 640 360 0,0,255'
 
 # Plain GTK 4 (the test client): KWin's bounds from its first configure, with the title bar,
 # kept it 28 px short of its tile; the bounds are asked for again once the border is gone.

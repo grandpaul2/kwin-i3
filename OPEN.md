@@ -30,25 +30,14 @@ First timings: batch 46 s, alone tail 176 s, total 222 s. Proposed, each for Pau
 Xwayland scenarios (71-74) into the batch, with a lock around testkwin.sh's display search
 (~40-70 s; 71 may stay alone for its 1.5 s focus timing); (b) the alone scenarios without
 millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five repeat runs
-first); (c) polls in place of the fixed sleeps before screenshots in 78, 57, 58 (~10 s).
+first); (c) polls in place of the fixed sleeps before screenshots in 78 and 58 (57's done in (d)).
+Next: Paul's choice among (a)-(c), none urgent (a full run is ~4 min, inside the 5-minute rule).
 
-**The flakes**, each passing alone every time it was rerun:
-- **39-layout-notice and 69-keyboard-layouts, likely one layout race.** 39's same 5 checks ("de:
-  logged as not fitted", the notification's) failed in a full batch twice on 2026-10-25 and once
-  on 2026-10-26; late 2026-10-25 69 failed beside it ("the helper fitted French", Workspace 5's
-  AZERTY key), and 69 failed again in the batch on 2026-10-27 (48 of 48 alone). A batch-load
-  race in the layout checks, not traced. Next: the log around "not fitted" from a failing batch
-  run (keep the run's output), or both moved alone.
-- **70 or 80, `capture-read: the press, last`**: failed twice in `make mutate-live`'s baseline
-  (2026-10-26, branch `tiled-look`); green 3 of 3 alone.
-- **57, "mid-hold: the old layout's frames"**: failed once in `run.sh` (2026-10-26), its screenshot
-  taken after the 400 ms hold had ended; green 3 of 3 alone.
-- Watched, closed unless it comes back: 53-hold's kill switch, its `--notify` not taking (once,
-  early 2026-10-24; not in ~15 full runs since). 53 runs alone after the batch (`# timing: alone`)
-  so its timing checks are strict.
-
-One flake per full run blocks the fault battery's baseline. Since the testing policy
-(CLAUDE.md, "Testing", 2026-10-26) the flakes come first, as they are what makes a session's one
-`make test` and the fortnightly battery expensive: (d) the flakes above, each made deterministic
-or moved alone; (e) `make mutate-live` baselines only the scenarios its faults name
-(KI3_ONLY), not the whole suite. Next: Paul's choice among (a)-(e); (d) and (e) recommended first.
+**Done 2026-10-27** (Paul's go): (e) `make mutate-live` with `KI3_ONLY` baselines only its faults'
+scenarios; (d) the flakes, by causes read from the code (no failing run's log was kept, so not
+proven): 39 and 69 waited 5 s for a layout change to reach the keyboard daemon and the helper
+(now 20 s); 57's screenshot had to land inside a 400 ms hold (now 2 s, and polls in place of its
+sleeps); 70 and 80 expected nothing after the press, which `capture-read` prints by design (now:
+the press is there and the timeline in time order). All five green alone after the change.
+**Watched**: if one of these fails again in a full run, it moves alone (`# timing: alone`)
+rather than another guess. 53-hold's `--notify` kill switch: closed unless it comes back.

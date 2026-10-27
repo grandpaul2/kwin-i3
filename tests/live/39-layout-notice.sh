@@ -8,7 +8,8 @@ notes_are() { [[ $(notes) == "$1" ]]; }
 layout() {
     kwriteconfig6 --file kxkbrc --group Layout --key Use true
     kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1" --notify
-    poll eval '[[ "$(busctl --user call org.kde.keyboard /Layouts org.kde.KeyboardLayouts getLayoutsList)" == *"\"${1%%,*}\""* ]]'
+    # 20 s, not 5: under the batch's load the layout reaches the keyboard daemon late (item 34).
+    WAIT=20 poll eval '[[ "$(busctl --user call org.kde.keyboard /Layouts org.kde.KeyboardLayouts getLayoutsList)" == *"\"${1%%,*}\""* ]]'
 }
 reload() {
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
@@ -28,7 +29,8 @@ check "no notification"                     notes_are 0
 # 2. German, at the next load: one notification naming the layout and the fix.
 layout de
 m=$(mark); reload
-check "de: logged as not fitted"            wait_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
+slow_log() { WAIT=20 wait_log "$@"; }   # a prefix assignment inside check would be run as a command
+check "de: logged as not fitted"            slow_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
 check "one notification"                    poll notes_are 1
 check "it names the layout"                 grep -q "Its keys may not fit the keyboard layout (de)" "$KI3_TMP/notify.out"
 check "and the fix"                         grep -q "make plugin-install" "$KI3_TMP/notify.out"

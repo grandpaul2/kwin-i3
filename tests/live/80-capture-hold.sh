@@ -24,7 +24,9 @@ check "a snapshotted as it grew (the frame: 1 px in)"            ev "snapshot a 
 check "a release, not timed out"            eval 'ev "release after [0-9.]+ ms, [0-9]+ held$"'
 out=$("$root/tools/capture-read" "$dir")
 check "capture-read: both sources"          eval 'grep -qE " hold f[0-9]+ close b: kept" <<<"$out" && grep -q " i3   CLOSE b kept a" <<<"$out"'
-check "capture-read: the press, last"       eval '[[ "$(tail -1 <<<"$out")" == *" ---- PRESS" ]]'
+# Not "last": capture-read prints the few lines logged after the press too, and under load
+# one lands there (item 34). The press is in the timeline, and the timeline is in time order.
+check "capture-read: the press, in time order" eval 'grep -q " ---- PRESS" <<<"$out" && grep -E "^[0-9]{2}:" <<<"$out" | cut -c1-12 | sort -c'
 check "capture-read: a's GEOM after its snapshot" eval 'grep -E " (hold f[0-9]+ snapshot a|i3   GEOM a 1,1 638x718 -> 1,1 1278x718)" <<<"$out" | head -1 | grep -q snapshot'
 check "no invariant failures or errors"     clean_log
 finish

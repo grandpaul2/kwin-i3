@@ -24,7 +24,9 @@ check "no errors in the dump"               eval '! has "ERROR in dump"'
 check "no errors.txt"                       test ! -e "$(dirname "$state")/errors.txt"
 check "no kwini3hold here: no hold.txt"   test ! -e "$(dirname "$state")/hold.txt"   # 80-capture-hold has it
 read_out=$("$root/tools/capture-read" "$(dirname "$state")")
-check "capture-read: the press, last"       eval '[[ "$(tail -1 <<<"$read_out")" == *" ---- PRESS" ]]'
+# Not "last": capture-read prints the few lines logged after the press too, and under load
+# one lands there (item 34). The press is in the timeline, and the timeline is in time order.
+check "capture-read: the press, in time order" eval 'grep -q " ---- PRESS" <<<"$read_out" && grep -E "^[0-9]{2}:" <<<"$read_out" | cut -c1-12 | sort -c'
 check "capture-read: kwin-i3's lines in order" eval 'grep -q " i3   TILE b -> " <<<"$read_out"'
 check "no invariant failures or errors"     clean_log
 
