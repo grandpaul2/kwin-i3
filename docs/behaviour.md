@@ -102,7 +102,10 @@ function names the i3 function it ports.
 ### Operations
 
 **=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart. The "=" rows are
-ports: the i3 function is named, and the code follows it, edge cases included.
+ports: the i3 function is named, and the code follows it, edge cases included, **on the tidied
+tree**: after the first `tidy` the tree is no longer the one i3 would have, so a long sequence of
+moves can end differently from i3's, and a replay in real i3 matches only with that allowed for
+(kept, Paul, 2026-10-27, knowing this).
 
 | # | Operation | Result | i3 | Note |
 |---|---|---|---|---|
@@ -117,7 +120,7 @@ ports: the i3 function is named, and the code follows it, edge cases included.
 | T9 | Move, no sibling that way | climbs out to the nearest ancestor of that direction, creating one at the top if none (`ws_force_orientation`) | = | `tree_move` |
 | T10 | Move at the workspace's edge; or a fullscreen window; or the workspace's only child | to the workspace shown on the neighbouring monitor, at its top level, at the near edge (first when moving right or down); it keeps focus | = | `move_to_output_directed`, `attach_to_workspace` |
 | T11 | Move that would climb out across a fullscreen window | refused | = | `tree_move` checks only the climb-out path, as here; a swap inside the fullscreen window's own split isn't checked by either |
-| T12 | **Resize by key** (`resize`; Meta+Ctrl+arrows, J K L ;) on a tiled window | the nearest ancestor-or-self in a split of that direction with more than one child grows or shrinks by `resizeStep` percent of the split; its siblings give up or gain the same in equal parts; refused if any would go below 0.1 %. Grow Width moves the right or bottom edge | = | `cmd_resize_tiling_width_height`, in ppt. i3 also takes px for tiled windows; its default config's resize mode gives "10 px or 10 ppt", which is ppt on a tiled window. Always ppt here (≠, minor: a key takes no arguments) |
+| T12 | **Resize by key** (`resize`; Meta+Ctrl+arrows, J K L ;) on a tiled window | the nearest ancestor-or-self in a split of that direction with more than one child grows or shrinks by `resizeStep` percent of the split; its siblings give up or gain the same in equal parts; refused if any would go below 0.1 %. Grow Width moves the right or bottom edge | = | `cmd_resize_tiling_width_height`, in ppt. i3 also takes px for tiled windows; its default config's resize mode gives "10 px or 10 ppt", which is ppt on a tiled window. Always ppt here (≠, accepted, Paul 2026-10-27: a key takes no arguments) |
 | T13 | Resize by key on a floating window | by `floatingStep` px, if KWin lets it resize | = | `cmd_resize_floating`, 10 px (§8) |
 | T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on a monitor; landing on another monitor joins the workspace shown there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws` |
 | T15 | **Swap** (`swap`) | two tiled windows exchange places, shares and fullscreen flags; the tiling drag's centre drop uses it (§9) | = | `con_swap` |

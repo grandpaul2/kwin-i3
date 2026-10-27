@@ -57,7 +57,8 @@ outline (new windows with D2/D3 first, then pointer, kinds, keys, clicks/closes,
 Done that way: §5; §4 as tables (W, S, M rows): S4 and M5 decided as i3 (not built); W1, W5,
 S5, S8, S9 accepted. M3/M4 decided as i3 (plan.md decision 10
 rewritten): lost workspaces move for good, a returning monitor gets its assigned ones. §2 drafted as table T
-(24 rows, all ports of i3; checked against i3's source where the gap check doubted them).
+(24 rows, all ports of i3; checked against i3's source where the gap check doubted them); tidy
+kept with its cost written down, ppt-only resize accepted. §3 next.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
