@@ -158,7 +158,8 @@ next or previous one. `make widget-install` (QML only: nothing to build, nothing
 Plasma update), then on the panel: right-click the pager, *Show Alternatives*, *kwin-i3
 Workspaces* (or *Add Widgets*). Its settings: *Numbers only*, for a small panel. A workspace's
 name is its desktop's, set in System Settings > Virtual Desktops: a named one is labelled
-"2 mail" (kwin-i3 never renames a desktop).
+"2 mail" (kwin-i3 never renames a desktop). The widget is kwin-i3's: without kwin-i3 running, a
+click does nothing (use Plasma's pager there).
 
 ## Configuration
 

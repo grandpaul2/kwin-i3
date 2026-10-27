@@ -710,8 +710,9 @@ kept by the forms, not by the effect. The effect still reads `[kwin-i3-hold] Ena
 `widget/`: a button for each workspace in use (with windows, or shown), drawn at its monitor's
 shape with its windows as rectangles; the focused workspace bold, the shown ones highlighted; a
 named desktop shows "N name". A click runs `kwin-i3 Workspace N` (as Meta+N); the wheel steps
-through workspaces in use, wrapping. One setting, "Numbers only". Without kwin-i3 it draws, and a
-click does nothing.
+through workspaces in use, wrapping. One setting, "Numbers only". The widget is kwin-i3's (Paul, 2026-10-27):
+without kwin-i3 it draws, and a click does nothing; the spec's fallback to KWin's own switch was
+not built, as the pager is the tool there.
 
 ---
 
