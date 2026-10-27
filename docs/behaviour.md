@@ -614,7 +614,10 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
   on (`docs/spec-reload-keepabove.md`, "The login edge").
 - **Focus keys over a fullscreen window** are judged per workspace: with a floating window focused
   over a fullscreen app, a focus key is refused where i3 (which judges from the focused window's
-  own fullscreen ancestor) allows it.
+  own fullscreen ancestor) allows it. Kept, Paul 2026-10-27: i3's form would let a key focus a
+  window behind the fullscreen one, which KWin then shows above it.
+- **Focus mode toggle under a fullscreen window** (Meta+Space) focuses the other kind and leaves
+  the fullscreen flag on, where i3 drops it (`con_activate_unblock`). Accepted, Paul 2026-10-27.
 - **Frame focus** with `frameOnFloating` takes the clicks around any borderless normal window,
   including one the user made borderless, as the helper can't read the effect's floating set.
   A floating window's border taken or given back may move it by the border's height (untested).

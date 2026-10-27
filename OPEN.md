@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, second session end** (the docs session: `docs/behaviour.md` written from the code, every spec and standing doc checked against it, the reviews to git history, `docs/README.md` the map; done: item 38 and the fullscreen-margin capture of 03:45, fixed and live; added: 39; the test flakes gathered in 34).
+Last reconciled: **2026-10-27, third session** (item 39 done, live and checked by Paul; the 04:35 capture was xwaylandvideobridge's invisible window, left as Fedora ships it, Paul's call).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -23,13 +23,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
 ## Open
 
 Work for now.
-
-**39. A floating fullscreen window, as in i3** (2026-10-27): done and live (b731b8d), Paul's own
-check pending: a floating fullscreen game or `mpv --fs`, then Meta+arrow (to the other monitor),
-a window from a hotkey (opens behind), a workspace switch away and back (focus returns). Left as
-they are, Paul 2026-10-27: focus keys judged per workspace (`behaviour.md` §10, the known limit);
-Meta+Space under a fullscreen window keeps the flag where i3 drops it (`con_activate_unblock`),
-tiled and floating alike, its own item if it ever bites. Next: Paul's check; his "it works" closes it.
 
 **34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
 findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
