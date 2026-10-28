@@ -68,6 +68,11 @@ public Q_SLOTS:
     // never leaving the pointer dead. `shape`: 0 the move cursor, 1 left-right and 2 up-down for
     // the tiling resize (docs/spec-tiling-resize.md).
     void SetDragCursor(bool on, int shape);
+    // kwin-i3 moves a new window to another output or desktop (docs/spec-redo-1-new-windows.md,
+    // A): keep it hidden until its tile places it, or `ms` at most, instead of the 20 ms a new
+    // window gets by itself; a geometry change that isn't its tile's leaves it hidden meanwhile.
+    // ms 0: kwin-i3 has placed it (a floating window); shown now unless its tile holds it.
+    void HoldNew(const QString &id, int ms);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -86,6 +91,8 @@ private:
     {
         std::shared_ptr<KWin::ItemEffect> effect;        // keeps it off hardware planes
         QElapsedTimer since;
+        int limitMs = 0;                                 // shown after this long without a tile
+        bool named = false;                              // kwin-i3 moves it (HoldNew): other moves keep it hidden
     };
 
     void loadConfig();
@@ -113,7 +120,8 @@ private:
     bool outputDragged(KWin::EffectWindow *w) const;
 
     void snapshot(KWin::EffectWindow *w);
-    void hide(KWin::EffectWindow *w);
+    void hide(KWin::EffectWindow *w, int limitMs);
+    void armHidden(KWin::EffectWindow *w, int ms);
     void unhide(KWin::EffectWindow *w);
     void ensureOpen();
     void restartQuiet();

@@ -204,7 +204,7 @@ void Hold::onAdded(EffectWindow *w)
     Window *win = w->window();
     const bool transient = w->isDialog() || w->isModal() || (win && win->transientFor());
     if (w->isNormalWindow() && !transient && shown(w) && !w->isFullScreen() && !w->isDeleted()) {
-        hide(w);
+        hide(w, s_graceMs);
     }
 }
 
@@ -273,7 +273,7 @@ void Hold::onAboutToChange(EffectWindow *w)
     if (!m_enabled || !supported()) {
         return;
     }
-    if (m_hidden.contains(w)) {
+    if (auto hidden = m_hidden.find(w); hidden != m_hidden.end()) {
         if (m_held.contains(w)) {           // already joined
             restartQuiet();
             queueCheck();
@@ -287,6 +287,8 @@ void Hold::onAboutToChange(EffectWindow *w)
             ensureOpen();
             restartQuiet();
             queueCheck();
+        } else if (hidden->named) {         // kwin-i3 moving it to its output or desktop: not placed yet
+            note(QStringLiteral("new %1: moved, still hidden").arg(name(w)));
         } else {                            // placed by other means (floated): show it
             note(QStringLiteral("new %1: shown, not tiled").arg(name(w)));
             unhide(w);
@@ -366,22 +368,75 @@ void Hold::snapshot(EffectWindow *w)
     m_stats.maxSnapshotMs = std::max(m_stats.maxSnapshotMs, ms);
 }
 
-void Hold::hide(EffectWindow *w)
+void Hold::hide(EffectWindow *w, int limitMs)
 {
     Hidden h;
     h.effect = std::make_shared<ItemEffect>(w->windowItem());
     h.since.start();
+    h.limitMs = limitMs;
     m_hidden.insert(w, h);
     ++m_stats.newHidden;
     note(QStringLiteral("new %1: hidden until placed").arg(name(w)));
-    QPointer<EffectWindow> qp(w);
-    QTimer::singleShot(s_graceMs, this, [this, qp] {
-        if (qp && m_hidden.contains(qp) && !m_held.contains(qp)) {
-            note(QStringLiteral("new %1: shown, no tile in %2 ms").arg(name(qp)).arg(s_graceMs));
-            unhide(qp);
-        }
-    });
+    armHidden(w, limitMs);
     effects->addRepaintFull();
+}
+
+// Shown when its limit runs out without a tile; a limit raised meanwhile (HoldNew) waits on.
+void Hold::armHidden(EffectWindow *w, int ms)
+{
+    QPointer<EffectWindow> qp(w);
+    QTimer::singleShot(ms, this, [this, qp] {
+        if (!qp) {
+            return;
+        }
+        auto it = m_hidden.find(qp);
+        if (it == m_hidden.end() || m_held.contains(qp)) {
+            return;
+        }
+        const int left = it->limitMs - int(it->since.elapsed());
+        if (left > 0) {
+            armHidden(qp, left);
+            return;
+        }
+        note(QStringLiteral("new %1: shown, no tile in %2 ms").arg(name(qp)).arg(it->limitMs));
+        unhide(qp);
+    });
+}
+
+void Hold::HoldNew(const QString &id, int ms)
+{
+    EffectWindow *w = nullptr;
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *x : windows) {
+        if (x->internalId().toString() == id) {
+            w = x;
+        }
+    }
+    if (!w || w->isDeleted()) {
+        return;
+    }
+    auto it = m_hidden.find(w);
+    if (ms <= 0) {                          // placed: shown now, unless its tile has it (the release shows it)
+        if (it != m_hidden.end() && !m_held.contains(w)) {
+            note(QStringLiteral("new %1: shown, placed by kwin-i3").arg(name(w)));
+            unhide(w);
+        }
+        return;
+    }
+    if (!m_enabled || !supported()) {
+        return;
+    }
+    if (it != m_hidden.end()) {
+        it->limitMs = std::max(it->limitMs, ms);
+        it->named = true;
+        note(QStringLiteral("new %1: hidden up to %2 ms, kwin-i3 moves it").arg(name(w)).arg(it->limitMs));
+        return;
+    }
+    if (m_held.contains(w) || !shown(w) || w->isFullScreen()) {
+        return;
+    }
+    hide(w, ms);
+    m_hidden[w].named = true;
 }
 
 void Hold::unhide(EffectWindow *w)

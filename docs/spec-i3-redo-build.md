@@ -1,9 +1,8 @@
 # Spec: building the i3 redo (OPEN.md item 40)
 
-**Now (2026-10-28):** The order and calls 31-33 agreed (Paul). **Next: every stage fully specced
-first, then a review and adjust pass over all ten, and only then any building** (Paul, 2026-10-28).
+**Now (2026-10-28):** The order and calls 31-33 agreed (Paul); every stage specced and reviewed.
 Each stage's spec is its own file, `spec-redo-N-<subject>.md`, listed under its stage below.
-Nothing built.
+**Stage 1 built** on branch `redo-1` (its spec's "Now"), waiting for Paul's go to merge and reload.
 
 The rows are the spec: each says today's behaviour (its Result) and the change (its note). This
 file only orders them and says how each stage is built and checked. When a stage goes live, its

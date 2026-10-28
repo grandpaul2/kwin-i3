@@ -1,7 +1,9 @@
 # Spec: redo stage 1, where new windows open and outside desktop switches (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-1` as designed below (`src/placement.js`, `placeNew`,
+`shownOutside`, `holdNew` in `src/kwin.js`; `HoldNew` in `plugin/hold.cpp`; scenario 87); `make unit`
+and the scenarios green; `behaviour.md`'s rows rewritten. Waiting for Paul's go to merge and reload,
+then his live check below.
 
 **The rows**: `behaviour.md` §5 C1, C2, C3, C5, D2, D3 and §4 S4, all decided (Paul, 2026-10-27/28).
 This stage is the 17:05 capture's (`~/.local/state/kwin-i3/captures/2026-10-27_170539.003`, kept
@@ -148,7 +150,11 @@ parent at all** within half a second: KWin's tie didn't fire at the dialog's ope
   test) on output A to a workspace living on B: A shows what it did, B shows it, focus there
   (D2); the same on the unfocused output (D3). (4) Another app's dialog over a fullscreen window:
   the fullscreen window keeps the focus (C5). Justified: the capture's bug has no test, and
-  nothing else drives B's claim. About 40 s, alone (two outputs).
+  nothing else drives B's claim. About 5 s, alone (two outputs; measured 2026-10-28). Built as
+  specced, with the pointer parked over empty workspaces (the test KWin's focus follows the
+  mouse), and (4) opening the other app with its modal dialog at once: KWin activates a new
+  window's modal dialog in its place (`activation.cpp` `findModal`), which the hand-back now
+  allows for (`activatedNow`).
 
 ## Live check (Paul)
 
