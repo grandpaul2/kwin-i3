@@ -83,6 +83,13 @@ org.kde.LogoutPrompt.promptLogout`, Plasma's own dialog, its confirmation as `i3
   default Meta+D, where it is set, is reported as a taken key (§8 "Taken keys": it wins until
   freed, its serial being older).
 
+**Taken keys** (call 63): the load-time check (§8 "Taken keys") skips a holder that launches the
+same thing as the kwin-i3 action: KRunner's `_launch` for Launcher, the default terminal's
+`_launch` for Terminal. Paul's own Meta+Return (`Alacritty.desktop`) and Meta+D
+(`org.kde.krunner.desktop`) keep the keys and nothing is reported; a new user gets both from
+kwin-i3. Paul's default terminal is Alacritty (2026-10-28, dotfiles' Plasma table), so the two
+agree.
+
 ### D. The extra workspace and output actions (S5, S8, S9)
 
 Unbound, as i3's config leaves them: **Workspace N (no back-and-forth)** and **Move to Workspace N
@@ -118,10 +125,15 @@ the app's own systemd scope (the test bus has no systemd); KIO's launcher does t
 ## Live check (Paul)
 
 Meta+R, then J/L/arrows resize, any other key types into the window, Escape leaves; Meta+Shift+E
-asks to log out; Meta+Return opens the default terminal (set it to Alacritty first); Meta+D opens
+asks to log out; Meta+Return opens the default terminal (Alacritty, set 2026-10-28); Meta+D opens
 KRunner.
 
 ## Done when
 
 Live and Paul's "it works": K4, K17, K18, S5, S8, S9 rewritten as built; `localbin/.local/bin/
 hotkeys` and dotfiles' Plasma table updated (CLAUDE.md: a key change).
+
+## Paul's review (2026-10-28)
+
+63. The taken-key check skips a holder that launches the same thing (C).
+64. Paul set Default Applications ▸ Terminal to Alacritty; recorded in the dotfiles' Plasma table.
