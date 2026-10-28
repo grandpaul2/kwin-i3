@@ -65,6 +65,25 @@ The press log tells the rest on a real press: the probe's filter sits first in t
 `VirtualTerminal`), so a `press` line with no `FrameFocus` line after it was taken by one of the
 filters in step 4.
 
+Plasma's resize in a tile has its own entry points, none through kwin-i3's press filter: once a
+KWin interactive resize starts on a window in a KWin tile, KWin resizes the **tile** live
+(`window.cpp:1155`, `m_tile->resizeFromGravity`). It starts from an app's own resize border
+(`xdgshellwindow.cpp:1060`, `handleResizeRequested`: the press went to the app, which asked), a
+server decoration's border, a window action (Meta+right; `TilingDrag` takes it on a tiled
+window), the task manager's Resize (`window.cpp:1778`), or Alt+F8. The probe logs every start
+(`KWin resize started on ..., edge, pointer, in a KWin tile`) and finish.
+
 ## The live gaps
 
-(The first live map, and what it settles, go here.)
+First map, 2026-10-28, Paul's desktop (gapsInner 4, frame 1; Firefox alone on monitor 1,
+Alacritty | VS Code on monitor 2). `pointer-map gaps 4`:
+
+- **Alacritty | VS Code** (x 3833-3846): the 6 px gap is all kwin-i3's resize: the ring column of
+  each, then two gap columns each side. KWin gives **every** gap pixel to VS Code (its input region
+  reaches 10 px past its frame, its buffer 16), so the gap there is `overTiledMargin`'s, not the
+  desktop's.
+- **Below VS Code** (y 1398 and down, the outer gap): inside VS Code's buffer (to y 1425) and past
+  the gap reach: `margin`, a press taken and nothing done.
+- **Firefox | Alacritty**, across the monitor edge (x 2553-2566): two outer gaps, not siblings;
+  4 px each side are the resize, the 4 px in the middle pass to the desktop.
+- Firefox's and Alacritty's buffers are their frames: neither takes the pointer outside itself.
