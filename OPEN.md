@@ -5,7 +5,9 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-27, third session** (item 39 done, live and checked by Paul; item 21 accepted as a known limit in `behaviour.md` §10, Paul: extremely rare now; the 04:35 capture was xwaylandvideobridge's invisible window, left as Fedora ships it, Paul's call).
+Last reconciled: **2026-10-27, fourth session** (docs only: Paul's 17:05 capture diagnosed and kept;
+item 40 opened, the focus, workspace, tree and kinds rules redone against i3, `docs/definitions.md`
+added; nothing built, nothing live changed).
 
 ## Stage (Paul, 2026-10-24, late)
 
