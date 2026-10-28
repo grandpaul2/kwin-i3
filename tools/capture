@@ -5,6 +5,7 @@
 #                                                      workspace's tree, every window, and (== log)
 #                                                      its last 2000 log lines, to the millisecond
 #   .../hold.txt      kwini3hold's last 500 events (holds, closes kept, snapshots), when it's loaded
+#   .../pointer.txt   kwini3helper's last 1000 presses and pointer crossings (pointerprobe.h)
 #   .../screen.png    both monitors, a second or so after the press
 #   .../note.txt      what Paul typed in the box that opens after the save (empty or missing: none)
 # tools/capture-read DIR prints the two logs as one timeline around the press: read that first.
@@ -38,6 +39,9 @@ grep -q 'DUMP END$' "$state" 2>/dev/null || echo "capture: kwin-i3 did not answe
 timeout 5 busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Events 2>/dev/null |
     python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["data"][0]))' > "$dir/hold.txt" 2>/dev/null ||
     rm -f "$dir/hold.txt"
+timeout 5 busctl --user --json=short call org.kde.KWin /kwini3helper/pointer net.local.kwini3helper.Pointer Events 2>/dev/null |
+    python3 -c 'import json, sys; print("\n".join(json.load(sys.stdin)["data"][0]))' > "$dir/pointer.txt" 2>/dev/null ||
+    rm -f "$dir/pointer.txt"
 
 if [[ ${KI3_INNER:-} != 1 ]]; then
     timeout 10 spectacle -b -n -f -o "$dir/screen.png" >/dev/null 2>&1

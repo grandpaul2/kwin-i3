@@ -14,6 +14,7 @@
 #include <QObject>
 #include <QPointer>
 
+class PointerProbe;
 class TilingDrag;
 
 class FrameFocus : public KWin::InputEventFilter
@@ -25,11 +26,33 @@ public:
     bool pointerButton(KWin::PointerButtonEvent *event) override;
     bool pointerAxis(KWin::PointerAxisEvent *event) override;
 
+    // What a plain press of `button` at `pos` does here, with `hover` the window KWin gives the
+    // pointer there: the one decision pointerButton acts on and the pointer probe reports
+    // (pointerprobe.h), so the probe can't say other than what a press does.
+    struct Decision {
+        enum Kind {
+            Pass,       // not this filter's: on to KWin's filters and the window under the pointer
+            Ring,       // on a frame ring: activate and raise, the press and its release taken
+            RingResize, // on a tiled window's ring: i3's resize on `side` (TilingDrag::pressRing)
+            GapResize,  // in the gap: i3's resize of the nearest tiled window on `side`
+            Margin,     // over a tiled window's margin, no tiled window in reach: taken, nothing
+        };
+        Kind kind = Pass;
+        KWin::Window *window = nullptr;
+        QString side;
+        QString describe() const;
+    };
+    Decision decide(const QPointF &pos, KWin::Window *hover, Qt::MouseButton button) const;
+    void setProbe(PointerProbe *probe) { m_probe = probe; }
+    // `w` has a frame ring and `pos` is on it (what kwini3hold draws there; ringWindow's test).
+    bool onRing(const KWin::Window *w, const QPointF &pos) const;
+
 private:
-    KWin::Window *ringWindow(const QPointF &pos) const;
-    bool overTiledMargin(const QPointF &pos) const;
+    KWin::Window *ringWindow(const QPointF &pos, KWin::Window *hover) const;
+    bool overTiledMargin(const QPointF &pos, KWin::Window *hover) const;
 
     TilingDrag *m_drag;                   // a ring press is its resize on that side (§9 Z3)
+    PointerProbe *m_probe = nullptr;      // records each press's decision
     KConfigWatcher::Ptr m_watcher;
     // Owns this filter's subscriptions, so they end with it. Not m_watcher: KDE's config watcher
     // is shared by everyone watching kwinrc and outlives an unloaded plugin, whose library KWin

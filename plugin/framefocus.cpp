@@ -1,4 +1,5 @@
 #include "framefocus.h"
+#include "pointerprobe.h"
 #include "tilingdrag.h"
 
 #include <effect/globals.h>
@@ -51,9 +52,8 @@ static bool customTiled(const Window *w)
 // since KWin reports no tiled edges for a tile with padding (tile.cpp Tile::anchors), and kwin-i3's
 // tiles always have padding. A press there would be the app's resize, KWin's live tile resize
 // (OPEN.md item 43): the ring and the gap stay kwin-i3's, as beside any other window.
-bool FrameFocus::overTiledMargin(const QPointF &pos) const
+bool FrameFocus::overTiledMargin(const QPointF &pos, Window *hover) const
 {
-    Window *hover = input()->pointer()->hover();
     return hover && hover->isClient() && customTiled(hover) && !hover->frameGeometry().contains(pos);
 }
 
@@ -62,33 +62,36 @@ bool FrameFocus::overTiledMargin(const QPointF &pos) const
 // frame (a floating one) keeps its clicks.
 // Framed as kwini3hold frames it (Hold::framed, Hold::floatingFramed): in one of kwin-i3's tiles
 // (custom tiling), or floating with frameOnFloating; no server decoration, not fullscreen.
-KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
+KWin::Window *FrameFocus::ringWindow(const QPointF &pos, Window *hover) const
 {
-    Window *hover = input()->pointer()->hover();
-    if (hover && !hover->isDesktop() && !overTiledMargin(pos)) {
+    if (hover && !hover->isDesktop() && !overTiledMargin(pos, hover)) {
         return nullptr;
     }
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
-        Window *w = *it;
-        if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop()
-            || w->isFullScreen() || w->decoration()) {
-            continue;
-        }
-        // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
-        // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
-        // takes the border of no floating window but its own).
-        const bool tiled = customTiled(w);
-        if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
-            continue;
-        }
-        const RectF frame = w->frameGeometry();
-        const double f = m_frameWidth;
-        if (frame.adjusted(-f, -f, f, f).contains(pos) && !frame.contains(pos)) {
-            return w;
+        if (onRing(*it, pos)) {
+            return *it;
         }
     }
     return nullptr;
+}
+
+bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
+{
+    if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop()
+        || w->isFullScreen() || w->decoration()) {
+        return false;
+    }
+    // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
+    // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
+    // takes the border of no floating window but its own).
+    const bool tiled = customTiled(w);
+    if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
+        return false;
+    }
+    const RectF frame = w->frameGeometry();
+    const double f = m_frameWidth;
+    return frame.adjusted(-f, -f, f, f).contains(pos) && !frame.contains(pos);
 }
 
 // Focus follows the mouse onto a frame, as into a client: the request KWin's own
@@ -98,7 +101,7 @@ KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
 // requested that window's focus, and cancelDelayFocus would drop it.
 bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
-    Window *window = ringWindow(event->position);
+    Window *window = ringWindow(event->position, input()->pointer()->hover());
     if (window == m_ringWindow) {
         return false;
     }
@@ -128,48 +131,83 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     // button anywhere (review of the change, finding 5).
     m_taken &= ~event->button;
     if (input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+        if (m_probe) {
+            m_probe->note(QStringLiteral("FrameFocus pass (pointer constrained or shortcuts inhibited)"));
+        }
         return false;
     }
     if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
+        if (m_probe) {
+            m_probe->note(QStringLiteral("FrameFocus pass (modifiers)"));
+        }
         return false;
     }
-    Window *window = ringWindow(event->position);
+    const Decision d = decide(event->position, input()->pointer()->hover(), event->button);
+    if (m_probe) {
+        m_probe->note(QStringLiteral("FrameFocus ") + d.describe());
+    }
+    switch (d.kind) {
+    case Decision::Pass:
+        return false;
+    case Decision::Ring:
+    case Decision::RingResize:
+    case Decision::GapResize:
+        if (const auto command = d.window->getMousePressCommand(event->button)) {
+            d.window->performMousePressCommand(*command, event->position);
+        }
+        if (d.kind != Decision::Ring) {
+            m_drag->pressRing(d.window, d.side, event);
+            return true;
+        }
+        break;
+    case Decision::Margin:
+        break;
+    }
+    m_taken |= event->button;
+    return true;
+}
+
+FrameFocus::Decision FrameFocus::decide(const QPointF &pos, Window *hover, Qt::MouseButton button) const
+{
+    const bool resizeButton = m_drag && m_drag->on() && (button == Qt::LeftButton || button == Qt::RightButton);
+    Window *window = ringWindow(pos, hover);
     if (!window) {
         // A plain left or right press in the gap (over the desktop, or a tiled window's margin):
         // as on the ring of the nearest tiled window (TilingDrag::gapWindow, Z2's reach), on its
         // side facing the press. The gap is a handle, not a sliver of desktop: i3 shows none
         // between windows (Paul, 2026-10-28, OPEN.md item 43).
-        Window *hover = input()->pointer()->hover();
-        const bool gap = !hover || hover->isDesktop() || overTiledMargin(event->position);
-        if (gap && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
-            if (Window *near = m_drag->gapWindow(event->position)) {
-                if (const auto command = near->getMousePressCommand(event->button)) {
-                    near->performMousePressCommand(*command, event->position);
-                }
-                m_drag->pressRing(near, sideOf(near, event->position), event);
-                return true;
+        const bool gap = !hover || hover->isDesktop() || overTiledMargin(pos, hover);
+        if (gap && resizeButton) {
+            if (Window *near = m_drag->gapWindow(pos)) {
+                return {Decision::GapResize, near, sideOf(near, pos)};
             }
         }
         // Over a margin with no tiled window in reach: nothing, and not the app's resize.
-        if (overTiledMargin(event->position)) {
-            m_taken |= event->button;
-            return true;
+        if (overTiledMargin(pos, hover)) {
+            return {Decision::Margin, hover, QString()};
         }
-        return false;
-    }
-    if (const auto command = window->getMousePressCommand(event->button)) {
-        window->performMousePressCommand(*command, event->position);
+        return {};
     }
     // A left or right press on a tiled window's ring is i3's resize on that side (tiling_resize,
     // CLICK_BORDER: top, then left, right, bottom at a corner; §9 Z3): the drag filter takes the
     // press from here, kwin-i3 resizes at the release. The release is then its.
-    const bool tiled = customTiled(window);
-    if (tiled && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
-        m_drag->pressRing(window, sideOf(window, event->position), event);
-        return true;
+    if (customTiled(window) && resizeButton) {
+        return {Decision::RingResize, window, sideOf(window, pos)};
     }
-    m_taken |= event->button;
-    return true;
+    return {Decision::Ring, window, QString()};
+}
+
+QString FrameFocus::Decision::describe() const
+{
+    static const char *const names[] = {"pass", "ring", "ring-resize", "gap-resize", "margin"};
+    QString text = QString::fromLatin1(names[kind]);
+    if (window) {
+        text += QLatin1Char(' ') + PointerProbe::name(window);
+    }
+    if (!side.isEmpty()) {
+        text += QLatin1Char(' ') + side;
+    }
+    return text;
 }
 
 // A scroll on a frame focuses the window, as i3's step 3 does on a border (§9 F4), and goes no
@@ -179,7 +217,7 @@ bool FrameFocus::pointerAxis(PointerAxisEvent *event)
     if ((event->modifiers & ~Qt::KeypadModifier) != Qt::NoModifier) {
         return false;
     }
-    Window *window = ringWindow(event->position);
+    Window *window = ringWindow(event->position, input()->pointer()->hover());
     if (!window) {
         return false;
     }

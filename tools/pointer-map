@@ -1,0 +1,142 @@
+#!/usr/bin/env python3
+"""Ask kwini3helper's pointer probe what is at a point, or at every pixel of a strip
+(plugin/pointerprobe.h, OPEN.md item 43). Read-only: it moves nothing and presses nothing.
+
+Usage: pointer-map windows                 every window on screen, top first
+       pointer-map probe X Y [--json]      one point: the windows over it, KWin's toplevel, the press
+       pointer-map map X Y W H             every pixel of a rectangle, as grids (below)
+       pointer-map gaps [PAD]              map each gap between two tiled windows, PAD px (default 3)
+                                           into each window
+       pointer-map events                  the last presses and crossings
+
+A map prints five grids side by side, one character a pixel, a column per x: what shows there
+(buffer: the topmost window whose buffer covers it; frame: the topmost window's frame; ring:
+kwini3hold's frame ring), who gets the pointer (toplevel: KWin's findToplevel, its hover), and
+what a plain left press does (press). Windows are A, B, ...; presses a, b, ...; "." is none.
+Rows the same as the one above are folded into one line with their count.
+On the test KWin's bus when DBUS_SESSION_BUS_ADDRESS points there, as busctl does.
+"""
+import json, subprocess, sys
+
+DEST, PATH, IFACE = "org.kde.KWin", "/kwini3helper/pointer", "net.local.kwini3helper.Pointer"
+
+
+def call(method, sig="", *args):
+    cmd = ["busctl", "--user", "--json=short", "call", DEST, PATH, IFACE, method]
+    if sig:
+        cmd += [sig] + [str(a) for a in args]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    if out.returncode:
+        sys.exit("pointer-map: %s failed: %s (is kwini3helper loaded, with the probe?)" % (method, out.stderr.strip()))
+    return json.loads(out.stdout)["data"][0]
+
+
+def letter(i, base):
+    return "." if i < 0 else chr(ord(base) + i) if i < 26 else "#"
+
+
+def show_map(m):
+    x0, y0 = m["origin"]
+    rows = m["rows"]
+    fields = m["cell"]
+    width = len(rows[0])
+    head = "  ".join(f.ljust(width) for f in fields)
+    print("x from %d, %d px wide; y from %d" % (x0, width, y0))
+    print("      y  " + head)
+    prev, count, start = None, 0, 0
+
+    def flush():
+        if prev is not None:
+            label = "%7d" % (y0 + start) if count == 1 else "%7d+%d" % (y0 + start, count - 1)
+            print("%-9s%s" % (label, prev))
+
+    for j, row in enumerate(rows):
+        line = "  ".join("".join(letter(c[k], "a" if k == len(fields) - 1 else "A") for c in row) for k in range(len(fields)))
+        if line == prev:
+            count += 1
+            continue
+        flush()
+        prev, count, start = line, 1, j
+    flush()
+    print()
+    for i, w in enumerate(m["windows"]):
+        print("  %s  %s  frame %s buffer %s  %s" % (letter(i, "A"), w["name"], fmt(w["frame"]), fmt(w["buffer"]), w["caption"][:50]))
+    for i, p in enumerate(m["presses"]):
+        print("  %s  %s" % (letter(i, "a"), p))
+
+
+def fmt(r):
+    return "%g,%g %gx%g" % tuple(r)
+
+
+def gaps(pad):
+    tiled = [w for w in json.loads(call("Windows")) if w["tiled"]]
+    found = []
+    for a in tiled:
+        ax, ay, aw, ah = a["frame"]
+        for b in tiled:
+            if a is b:
+                continue
+            bx, by, bw, bh = b["frame"]
+            # b right of a, facing edges at most 40 px apart, overlapping in y
+            if 0 <= bx - (ax + aw) <= 40 and min(ay + ah, by + bh) > max(ay, by):
+                top, bottom = max(ay, by), min(ay + ah, by + bh)
+                found.append((a, b, int(ax + aw - pad), int(top), int(bx - (ax + aw) + 2 * pad), int(bottom - top)))
+            # b below a
+            if 0 <= by - (ay + ah) <= 40 and min(ax + aw, bx + bw) > max(ax, bx):
+                left, right = max(ax, bx), min(ax + aw, bx + bw)
+                found.append((a, b, int(left), int(ay + ah - pad), int(right - left), int(by - (ay + ah) + 2 * pad)))
+    if not found:
+        print("no gap between two tiled windows on screen")
+    for a, b, x, y, w, h in found:
+        print("== gap between %s and %s: %d,%d %dx%d" % (a["name"], b["name"], x, y, w, h))
+        if w * h > 100000:
+            h = 100000 // w
+            print("   (first %d rows)" % h)
+        if h > w:
+            show_map(json.loads(call("Map", "iiii", x, y, w, h)))
+        else:
+            show_transposed(json.loads(call("Map", "iiii", x, y, w, h)))
+        print()
+
+
+def show_transposed(m):
+    """A horizontal gap printed on its side: one line a column, so it folds like a vertical one."""
+    x0, y0 = m["origin"]
+    rows = m["rows"]
+    cols = [[rows[j][i] for j in range(len(rows))] for i in range(len(rows[0]))]
+    print("(on its side: a line is a column x, characters run down y)")
+    show_map({**m, "origin": [y0, x0], "rows": cols})
+
+
+def main():
+    a = sys.argv[1:]
+    if not a:
+        sys.exit(__doc__.strip())
+    if a[0] == "windows":
+        for w in json.loads(call("Windows")):
+            print("%-34s frame %-22s buffer %-22s%s%s  %s" % (w["name"], fmt(w["frame"]), fmt(w["buffer"]),
+                  " tiled" if w["tiled"] else "", " deco" if w["decoration"] else "", w["caption"][:40]))
+    elif a[0] == "probe" and len(a) in (3, 4):
+        p = json.loads(call("Probe", "dd", float(a[1]), float(a[2])))
+        if a[3:] == ["--json"]:
+            print(json.dumps(p, indent=1))
+            return
+        print("at %g,%g: KWin gives the pointer to %s; a left press: %s" % (*p["pos"], p["toplevel"], p["press"]))
+        print("windows over it, top first:")
+        for w in p["windows"]:
+            flags = [k for k in ("shown", "inFrame", "inBuffer", "inVisible", "onRing", "hitTest", "decoration") if w[k]]
+            print("  %-34s frame %-20s buffer %-20s %s  %s" % (w["name"], fmt(w["frame"]), fmt(w["buffer"]), " ".join(flags), w["caption"][:40]))
+        n = p["pointerNow"]
+        print("the pointer now: %g,%g, hover %s, focus %s" % (*n["pos"], n["hover"], n["focus"]))
+    elif a[0] == "map" and len(a) == 5:
+        show_map(json.loads(call("Map", "iiii", *map(int, a[1:]))))
+    elif a[0] == "gaps":
+        gaps(int(a[1]) if len(a) > 1 else 3)
+    elif a[0] == "events":
+        print("\n".join(call("Events")))
+    else:
+        sys.exit(__doc__.strip())
+
+
+main()

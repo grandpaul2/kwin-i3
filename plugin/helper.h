@@ -2,7 +2,7 @@
 // Focus on the frame (framefocus.h), settings that apply on Apply (settingswatch.h), the keys
 // that mean a key position fitted to the keyboard layout (layoutkeys.h), panel popups that
 // forgive a stray pointer (popupgrace.h), i3's tiling drag (tilingdrag.h), and i3's resize mode
-// with the terminal launch (resizemode.h). One plugin for
+// with the terminal launch (resizemode.h), and the pointer probe (pointerprobe.h). One plugin for
 // all: each Plasma update needs a rebuild of every version-locked plugin, so there are no more
 // of them than KWin's plugin kinds require.
 // (Named kwini3mouse until 2026-10-24, when it also did mouse chords.)
@@ -10,6 +10,7 @@
 
 #include "framefocus.h"
 #include "layoutkeys.h"
+#include "pointerprobe.h"
 #include "popupgrace.h"
 #include "resizemode.h"
 #include "settingswatch.h"
@@ -27,6 +28,7 @@ public:
 private:
     TilingDrag m_tilingDrag;        // before FrameFocus, which takes a pointer to it
     FrameFocus m_frameFocus;
+    PointerProbe m_pointerProbe;    // after FrameFocus, which it reads (and is told by)
     SettingsWatch m_settingsWatch;
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;
