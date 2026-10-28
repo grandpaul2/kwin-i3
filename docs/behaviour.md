@@ -680,31 +680,30 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 
 ## 10. Edge cases
 
-- **Fullscreen.** A fullscreen window stays in the tree (`docs/spec-fullscreen-tree.md`). KWin
-  takes it out of its tile; it is left out of the layout (its siblings fill the space) and rejoins
-  when fullscreen ends. One per workspace: making one fullscreen clears the others. It keeps the
-  focus (§5) and blocks focus and moves across it (§2). Floated or tiled again, it stays
-  fullscreen (§2). A floating window (a game, `mpv --fs`) is its workspace's fullscreen window
-  just as a tiling one is, as in i3 (`con_get_fullscreen_con` searches the floating windows too;
-  a tiling one at the top level wins a tie).
-- **Minimized.** Out of the layout, its share to its siblings; back where it was when restored.
-  Across a reload a minimized window loses its place.
-- **Maximize.** No handler: a maximize takes the window out of its tile, the next pass puts it
-  back, and that clears the maximize.
-- **KWin's quick-tile and tile editor.** A quick-tiling window is pulled back into its tile. Meta+T's
-  editor edits tiles kwin-i3 overwrites on the next pass (`LATER.md` item 26).
-- **Modal dialogs.** Float (§3). KWin moves a modal dialog with its parent; kwin-i3 waits while
-  either is dragged, and ignores the moment they have two desktops.
-- **A window moved to another desktop by someone else** (Overview, a window rule): kwin-i3 follows,
-  as a move to that workspace.
-- **A tiling window that resizes itself**: put back (§6).
-- **A new window under a fullscreen one**: §5.
-- **Known limit, an output returning to a fullscreen window on a hidden workspace** (accepted,
-  Paul, 2026-10-22; fuzzer I9, seeds 214 and 28). KWin asks the window to be fullscreen again and
-  to move back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies
-  nothing until it does. Meanwhile KWin calls it not resizable and refuses the tile, so kwin-i3
-  floats it where it stands, out of sight. Meta+Shift+N, or closing it, brings it back. The same
-  holds for a hidden floating window smaller than KWin's 150 px decorated minimum.
+Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_con`) and
+`handlers.c` (client messages: fullscreen, desktop, iconic).
+
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
+**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+
+**V. Fullscreen, minimize, maximize, KWin's own tools**
+
+| # | When | Result | i3 | Note |
+|---|---|---|---|---|
+| V1 | A window goes fullscreen (Meta+F is KWin's, or the app asks) | it stays in the tree (`docs/spec-fullscreen-tree.md`) and covers its output, panels too; KWin takes it out of its tile, its siblings fill the space; it gets the focus; it rejoins when fullscreen ends. No ring, no gaps | = | i3's `fullscreen` (`CF_OUTPUT`): the container keeps its place, covers the output and the bar, gets the focus (`con_enable_fullscreen`), no border |
+| V2 | A second window goes fullscreen on the same workspace | the first one's fullscreen ends | = | "disable any fullscreen container that would conflict". KWin itself allows several |
+| V3 | Fullscreen across all outputs (i3's `fullscreen enable global`) | none | ≠ | kept: KWin's fullscreen is one output's area |
+| V4 | A floating window fullscreen (a game, `mpv --fs`) | its workspace's fullscreen window, as a tiling one; a tiling one at the top level wins a tie | = | `con_get_fullscreen_con` searches the floating windows too |
+| V5 | A fullscreen window floated or tiled again, or moved | it stays fullscreen; focus and moves across it are blocked (§2, §5) | = | |
+| V6 | A new window on a workspace with a fullscreen window | §5 C5 (`popup_during_fullscreen smart`) | ≠ | i3's other values, `ignore`, `leave_fullscreen`, `all`, have no setting. **For Paul (29)**: i3's setting, default `smart` |
+| V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored. Across a reload a minimized window loses its place | ≠ | i3 refuses minimize (`handlers.c`, iconic state rejected). Decided (§5 C9): as i3's `move scratchpad` |
+| V8 | Maximize | no handler: it leaves its tile, the next pass puts it back, and that clears the maximize | = | i3 has no maximize and ignores the request |
+| V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
+| V10 | A window on all desktops, or on two (outside kwin-i3's own relocate) | made sticky floating | = | i3 floats a window asking for all desktops and makes it sticky |
+| V11 | A tiling window resizes itself | put back (§6) | = | i3 ignores a tiled window's size requests |
+| V12 | KWin's quick tile; Meta+T's tile editor; a Shift-drag into KWin's tiles | pulled back into its tile; the editor's tiles are overwritten on the next pass (`LATER.md` item 26); the Shift-drag puts two windows in one tile until the next pass | + | |
+| V13 | A modal dialog | floats (§3); KWin moves it with its parent; kwin-i3 waits while either is dragged | + | |
+| V14 | **An output returning to a fullscreen window on a hidden workspace** (known limit, accepted, Paul 2026-10-22; fuzzer I9, seeds 214 and 28) | KWin asks the window to be fullscreen again and to move back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies nothing until it does. Meanwhile KWin calls it not resizable and refuses the tile, so kwin-i3 floats it where it stands, out of sight. Meta+Shift+N, or closing it, brings it back. The same holds for a hidden floating window smaller than KWin's 150 px decorated minimum | + | |
 
 ### Known limits
 
