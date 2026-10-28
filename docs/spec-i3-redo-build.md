@@ -41,7 +41,7 @@ the desktop window), A2 (warp to the focused window's centre, an empty workspace
 A3-A5 (an override-redirect window keeps the keyboard while focus moves under it), §12 P2 / §5 E1
 (login focus on the output under the pointer). Unknown: how a crossing is seen (KWin's
 `cursorPos`, or the helper's pointer filter); a probe first. With `mouse_warping` (§11 N7) as its
-setting.
+setting. Spec: `spec-redo-2-pointer.md`.
 
 **3. Kinds and rules** (L). §3: the kinds that differ (Yakuake, Spectacle, the password prompt,
 KRuler, plasmashell's ordinary windows to floating), R2 (X11 dialogs float), R4 (the taskbar hint
