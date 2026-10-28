@@ -28,6 +28,7 @@ class KWinI3Kcm : public KQuickManagedConfigModule
     Q_PROPERTY(bool scriptEnabled MEMBER m_scriptEnabled NOTIFY stateChanged)
     Q_PROPERTY(bool scriptLoaded MEMBER m_scriptLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool holdLoaded MEMBER m_holdLoaded NOTIFY stateChanged)
+    Q_PROPERTY(bool helperLoaded MEMBER m_helperLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool frameAvailable MEMBER m_frameAvailable NOTIFY stateChanged)
 
 public:
@@ -121,6 +122,13 @@ public:
             return e.startsWith(QLatin1String("kwini3hold"));
         });
         m_frameAvailable = m_holdLoaded;    // the effect draws the frame (docs/spec-window-modes.md)
+        // The helper (kwini3helper, a KWin plugin): the tiling drag and resize, frame focus, the
+        // resize mode, the layout keys, the Configure form's Apply (redo stage 10, call 40).
+        auto plugins = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Plugins"),
+                                                      QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
+        plugins << QStringLiteral("org.kde.KWin.Plugins") << QStringLiteral("LoadedPlugins");
+        const QStringList loaded = QDBusConnection::sessionBus().call(plugins).arguments().value(0).value<QDBusVariant>().variant().toStringList();
+        m_helperLoaded = loaded.contains(QLatin1String("kwini3helper"));
         m_keys->load();
         Q_EMIT stateChanged();
         settingsChanged();
@@ -146,6 +154,7 @@ private:
     bool m_scriptEnabled = false;
     bool m_scriptLoaded = false;
     bool m_holdLoaded = false;
+    bool m_helperLoaded = false;
     bool m_frameAvailable = false;
 };
 

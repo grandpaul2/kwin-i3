@@ -15,8 +15,20 @@ click_named() {   # click_named <page title, or - for anywhere> <accessible name
     click $((wx + cx)) $((wy + cy))
 }
 named() { $A11Y names kcmshell6 "$1" | grep -qxF "$2"; }
-# A workspace set to a monitor that isn't connected, from before: the page keeps it.
+# open_named <page> <button>: a sub-page button pressed by keyboard (focus, then Space): a click
+# at its box can land under the footer when the page scrolls it to the bottom edge, or on a test
+# window floating over it (redo stage 10, the main page grew).
+open_named() { $A11Y focus kcmshell6 "$1" "$2"; press Space; sleep 0.7; }
+n_shot=0
+shot() {   # a screenshot kept with KI3_SHOTS=<dir>, for the style guide's screenshot pass
+    [[ -n ${KI3_SHOTS:-} ]] || return 0
+    python3 "$root/tools/shot.py" capture Virtual-0 "$KI3_SHOTS/76-$((++n_shot))-$1.png"
+}
+# A workspace set to a monitor that isn't connected, from before: the page keeps it. And the old
+# floatingTitle list (Paul's two titles): the page reads it as rules and its first Apply writes
+# them and takes the key out (redo stage 10, item 68).
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "4=DP-9"
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key floatingTitle "Picture-in-Picture, Firefox — Sharing Indicator"
 
 check "an accessibility bus of the test's own" a11y_start
 QT_PLUGIN_PATH=$root/kcm/build/bin QT_QPA_PLATFORM=wayland kcmshell6 kcm_kwin_i3 >"$KI3_TMP/kcm.log" 2>&1 &
@@ -31,15 +43,18 @@ check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 
 # 1. Workspaces: 2 on Virtual-1 (Any monitor, Virtual-0, Virtual-1: two down), 3 for Plasma
 #    windows, by keyboard: a closed combo box steps its choice with Down (its open list didn't
-#    take arrow keys from injected input). One Apply writes both strings, and 4's unconnected
-#    DP-9 is kept.
-click_named kwin-i3 "Configure Workspaces…"; sleep 0.5
+#    take arrow keys from injected input). One Apply writes both strings (the floating workspace
+#    as a rule in forWindow since redo stage 10), and 4's unconnected DP-9 is kept.
+open_named kwin-i3 "Configure Workspaces…"
 $A11Y focus kcmshell6 Workspaces "Workspace 2 monitor"; press Down; press Down; sleep 0.3
+shot workspaces
 $A11Y focus kcmshell6 Workspaces "Workspace 3 new windows"; press Down; sleep 0.3
 m=$(mark); click_named - Apply
 check "kwinrc: workspaceOutputs=2=Virtual-1, 4=DP-9" poll conf_is workspaceOutputs "2=Virtual-1, 4=DP-9"
-check "kwinrc: floatingWorkspaces=3"        conf_is floatingWorkspaces 3
-check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*(floatingWorkspaces.*workspaceOutputs|workspaceOutputs.*floatingWorkspaces)' "$m"
+check "kwinrc: forWindow has workspace 3's floating rule" poll eval '[[ $(conf forWindow) == *\[workspace=\"^3\$\"\]\ floating\ enable* ]]'
+check "  and the two old titles as rules (migrated)" eval '[[ $(conf forWindow) == *\[title=\"Picture-in-Picture\"\]\ floating\ enable* && $(conf forWindow) == *\[title=\"Firefox\ —\ Sharing\ Indicator\"\]\ floating\ enable* ]]'
+check "  the old floatingTitle key is gone"  conf_is floatingTitle ""
+check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*(forWindow.*workspaceOutputs|workspaceOutputs.*forWindow)' "$m"
 click_named - "Navigate Back"; sleep 0.5
 check "the main page sums it up"            named kwin-i3 "Configure Workspaces…"
 
@@ -48,19 +63,37 @@ check "the main page sums it up"            named kwin-i3 "Configure Workspaces�
 client --title pickme --app-id net.local.pickme --color red
 check "pickme tiles beside the page"        poll eval '[[ "$(tree 1)" == *pickme* ]]'
 read -r px py pw ph <<<"$(geom pickme | tr ',x' '  ')"
-click_named kwin-i3 "Configure Window Rules…"; sleep 0.5
-check "the rules are there to edit"         named "Window Rules" "Floating and tiling rules"
+# The page gets the keyboard back from the test client first (a click at the button's box missed
+# it: the page is half as wide now, and the box's scroll left the button out of view).
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "kwin-i3") workspace.activeWindow = w; });' >/dev/null; sleep 0.3
+open_named kwin-i3 "Configure Window Rules…"
+shot window-rules
+check "the rules are there to edit, one row each" eval 'named "Window Rules" "Rule 1: application pattern" && named "Window Rules" "Add a rule"'
+check "  the shipped rules marked default"  eval '$A11Y dump kcmshell6 | grep -q "default"'
 # KWin starts its window selection when the D-Bus call arrives; a click before that only focuses
 # the window, and nothing says when it has started.
-click_named "Window Rules" "Pick a window: add a floating rule for its application"; sleep 1
+click_named "Window Rules" "Pick a window: add a rule for its application"; sleep 1
 click $((px + pw / 2)) $((py + ph / 2))
 check "the page says the rule was added"    poll eval '$A11Y dump kcmshell6 | grep -q "net.local.pickme float"'
-check "and nothing is written before Apply" conf_is forWindow ""
+check "and nothing is written before Apply" eval '[[ $(conf forWindow) != *pickme* ]]'
 m=$(mark); click_named - Apply
 check "kwinrc: forWindow ends with the rule" poll eval '[[ $(conf forWindow) == *\[class=\"^net\\.local\\.pickme\$\"\]\ floating\ enable ]]'
 check "kwin-i3 re-read it"                  wait_log '^.{9}SETTINGS .*forWindow' "$m"
 client --title pickme2 --app-id net.local.pickme --color blue
 check "pickme2 floats by the rule"          poll eval '[[ "$(tree 1)" == *"~pickme2"* ]]'
+
+# 2b. Gaps (redo stage 10, item 68): workspace 2's own gap between windows, two steps up on the
+#     sub-page, reaches workspaceGaps on Apply. The test clients go first: the floating one sat
+#     over the page, and they held the keyboard.
+kclose pickme2; kclose pickme; sleep 0.3
+click_named - "Navigate Back"; sleep 0.5
+open_named kwin-i3 "Configure Gaps…"
+check "the Gaps page: each workspace's row" named Gaps "Workspace 2 gap between windows"
+$A11Y focus kcmshell6 Gaps "Workspace 2 gap between windows"; press Up; press Up; sleep 0.3
+shot gaps
+m=$(mark); click_named - Apply
+check "kwinrc: workspaceGaps=2 gaps inner 2" poll conf_is workspaceGaps "2 gaps inner 2"
+check "kwin-i3 re-read it"                  wait_log '^.{9}SETTINGS .*workspaceGaps' "$m"
 
 # 3. Defaults: the rule is gone, and kwinrc holds none of the page's keys.
 click_named - Defaults
@@ -68,5 +101,6 @@ click_named - Apply
 check "kwinrc: no forWindow (the default)"  poll conf_is forWindow ""
 check "no workspaceOutputs"                 conf_is workspaceOutputs ""
 check "no floatingWorkspaces"               conf_is floatingWorkspaces ""
+check "no workspaceGaps"                    conf_is workspaceGaps ""
 check "no invariant failures or errors"     clean_log
 finish

@@ -1,7 +1,18 @@
 # Spec: redo stage 10, the settings page for the new settings (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-10` (on `redo-9`) as designed, with these
+differences. The old keys' migration happens when the page **reads** them (`main.qml`
+`migrateOld`, the translation in `settings.js` `oldRules` as `src/rules.js` reads them): the
+rows show the rules at once, and the first Apply writes them and takes the old keys out of
+kwinrc, as specced; a page opened with old keys set shows as changed until that Apply.
+`frameFloatingActive` and `frameFloatingInactive` left `main.xml` with stage 7, so the page can't
+remove them: the script's load report names them to a user who set them. The Workspaces
+sub-page's monitor list is two boxes (the first monitor, and a second used when it isn't
+connected); a longer list in kwinrc keeps its tail. The Window Rules rows show application,
+title, role and type; a rule with other criteria is a text row. The page's new logic
+(`parseRules`, `formatRules`, `parseWorkspaceGaps`, `oldRules`, …) is driven by 76's checks; a
+unit test for it is a proposal (testing.md rule 5). **Screenshots**: 37 and 76 keep theirs with
+`KI3_SHOTS`; Paul's pass is the stage's "done when".
 
 **Why** (Paul, 2026-10-27, call 21): the stages add settings that clash with what the page has;
 this stage makes them usable, with i3's kind names, super descriptive and explicit. It is inside
@@ -53,8 +64,8 @@ keys, Apply on the Configure form).
   workspace ("Monitors, the first connected one used"), and its "New windows: tiling / floating"
   stays as a control that writes and reads that workspace's `[workspace="^N$"] floating enable`
   rule.
-- **Frame**: look, width; the colours as a grid of three rows (focused; focused, on a monitor or
-  split without the focus; others), two `ColorButton`s each (frame, split indicator), side labels
+- **Frame**: look, width; the colours as a grid of two rows (focused; others: i3's
+  `focused_inactive` left out with stage 7b), two `ColorButton`s each (frame, split indicator), side labels
   `Accessible.ignored` as now; "Hide frame sides:" none / at the screen's left and right / top and
   bottom / all edges / when a workspace has one window / the same, with no outer gaps
   (`hideEdgeBorders`); rounded corners; "Draw the frame on floating windows too".

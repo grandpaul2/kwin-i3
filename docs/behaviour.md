@@ -885,17 +885,31 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 `kcm/`, `docs/style-settings-page.md` for how it looks and reads.
 
 - **Banners**: kwin-i3 off (with Turn On, which enables it and reconfigures); on but not running
-  (pointing at the journal); running without the effect (the frame and the hold need the plugins).
-  It checks for the effect, not the helper.
-- **Main page**: Tiling (gaps, the new-workspace direction, both steps, focus at an edge, the
-  hold), Workspaces (auto back-and-forth, and the Workspaces sub-page), Frame (`tiledLook`, width,
-  colours, corners, frame on floating windows; greyed without the effect), Window Rules, Keys (the
-  sub-page, and `warnTakenKeys`).
-- **Workspaces sub-page**: for each of the ten, an output (any, or a connected one, or a stored one
-  listed as not connected) and new windows tiling or floating.
-- **Window Rules sub-page**: the two lists, Places itself (application or role) and Always float
-  (application or title contains); defaults marked; Pick a Window… (KWin's window picker; a window
-  KWin keeps out of the tree is reported as already kept out, in the page's words "places itself", a phrase the rework replaces); no commas, no duplicates.
+  (pointing at the journal); running without the effect (the frame and the hold need the
+  plugins); running without the helper (the mouse drag and resize, frame focus, the resize mode,
+  the layout keys, the Configure form's Apply; redo stage 10).
+- **Main page**: Tiling (gaps, with **Configure Gaps…**: a sub-page with the outer gap per
+  screen edge, `smartGaps`, and each workspace's own inner and outer gap; the new-workspace
+  direction, both steps, focus at an edge, the hold), Mouse and focus (`mouseWarping` as a
+  checkbox, `tilingDrag`, `popupDuringFullscreen`), Workspaces (auto back-and-forth, and the
+  Workspaces sub-page), Frame (`tiledLook`, width; the two colour classes (§7 L3), a row each with the
+  frame's colour and the next-window side's, the latter "same as the frame" when empty;
+  `hideEdgeBorders`; corners; frame on floating windows; greyed without the effect), Window
+  Rules, Keys (the sub-page, and `warnTakenKeys`).
+- **Workspaces sub-page**: for each of the ten, its monitors in order (the first, and a second
+  used when the first isn't connected; any, a connected one, or a stored one listed as not
+  connected; a longer list in kwinrc keeps its tail) and new windows tiling or floating (the
+  rule `[workspace="^N$"] floating enable` in `forWindow`).
+- **Window Rules sub-page**: one row per rule of `forWindow` and `assign`, in the order the
+  script runs them: what it matches (application, title, role: a pattern each; the window type)
+  and what it does (floats, tiles, opens on workspace N, opens on monitor X); the shipped rules
+  listed like any other, marked "default"; a rule with other criteria shown as text and edited
+  there; Add Rule and Pick a Window… (KWin's window picker: a row with the clicked window's
+  class, matched whole). Below, the floating sizes (`floatingMinimumSize`,
+  `floatingMaximumSize`). **The old list settings** (`ignoreClass`, `ignoreRole`,
+  `floatingClass`, `floatingTitle`, `floatingWorkspaces`) become rules when the page reads them,
+  as the script reads them (§3 R5, R9, R11), so the rows show them and the first Apply writes
+  the rules and takes the old keys out of kwinrc.
 - **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
   shifted symbol appears with the keys that type it on the current layout. Not visible while
