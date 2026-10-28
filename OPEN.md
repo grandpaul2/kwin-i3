@@ -89,3 +89,9 @@ during the fifth session, note: "Another wallpaper flash involving ff"; not yet 
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
 inside kwini3hold's hold or after its release. Next: `tools/capture-read` on it at the start of a
 session, a diagnosis for Paul (no fix without his go); the capture stays until then.
+
+**42. The resize mode's banner: clean up its look a bit** (Paul, 2026-10-28, after stage 5 went
+live and worked). The banner is the effect's `paintBanner` (`plugin/hold.cpp`): a textured quad of
+QPainter text, since KWin 6.7's `OffscreenQuickView` gives an effect no texture access (stage 5's
+spec, "Now"). Next: Paul says what bothers him (or a screenshot of it), then a proposal; a change
+is a plugin change, so `make plugin-install` with his go.
