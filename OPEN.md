@@ -66,14 +66,13 @@ scenario to the decided behaviour**: 26 and 54 were red on `redo-6` from stages 
 replugged monitor's workspace stays, a press on the ring resizes); 62 from stage 7 (the floating
 frame in the tiled colours); KWin's own: a window's modal dialog takes the focus whatever
 `popupDuringFullscreen` says (`activation.cpp findModal`, §5 C5), and a desktops change puts a
-window first in KWin's focus chain (40). **Stages 1-3 and 5 done 2026-10-28: merged, live, and Paul's
+window first in KWin's focus chain (40). **Stages 1-3, 5 and 6 done 2026-10-28: merged, live, and Paul's
 "it works" (stage 3's Window Rules page waits for stage 10's `make kcm-install`; stage 5's keys
-are in `hotkeys` and dotfiles' Plasma table; its banner's look is item 42). Stage 4 merged and live
-the same day, **its live check deferred by Paul (not set up for it that night), still owed**: stage
-4's spec (the unplug, an assignment, and the morning capture after a night with the monitors
-asleep). `redo-6` merged into main and live 2026-10-28 (Paul's go; `make unit` and its ten
-scenarios, 64 included, green on main; plugin installed, script reloaded). Next: Paul's live check
-(stage 6's spec); then the rest the same way (each
+are in `hotkeys` and dotfiles' Plasma table; its banner's look is item 42; stage 6's two resizes
+are item 43). Stage 4 merged and live the same day, **its live check deferred by Paul (not set up
+for it that night), still owed**: stage 4's spec (the unplug, an assignment, and the morning
+capture after a night with the monitors asleep). Next: Paul's go to merge `redo-7` (plugin-install
+again, the effect's `SetRing`); then the rest the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's
@@ -95,3 +94,12 @@ live and worked). The banner is the effect's `paintBanner` (`plugin/hold.cpp`): 
 QPainter text, since KWin 6.7's `OffscreenQuickView` gives an effect no texture access (stage 5's
 spec, "Now"). Next: Paul says what bothers him (or a screenshot of it), then a proposal; a change
 is a plugin change, so `make plugin-install` with his go.
+
+**43. Two tiling resizes that look different** (Paul, 2026-10-28, on stage 6's live check, which
+otherwise passed). A plain drag on the ring or in the gap moves the windows live, as a KWin/Plasma
+resize; Meta+right-drag shows i3's blue bar and resizes at the release (`behaviour.md` §7 Z5, Z7).
+Stage 6 decided the ring drag is i3's `tiling_resize` too (Z3: "at the release as Z5-Z7"), so the
+live-moving one is not the decided behaviour. Not yet diagnosed: which press reaches the helper's
+`pressRing` and which KWin takes instead (a 1 px ring at the default width; a plain press in the gap
+is no Z row at all, likely KWin's own tile resize, Z8's kind). Next: a diagnosis for Paul from the
+code and KWin's source (no change without his go), then whether the gap drag should be Z3's too.

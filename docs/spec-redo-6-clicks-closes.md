@@ -14,7 +14,7 @@ the side, `resizePlan`'s `side`), E (`FrameFocus::pointerAxis` activates). Tests
 58's ring-scroll check (F4): `tools/ei-send` sends no scroll, so it isn't driven; a scroll verb
 for it is a tool proposal. 86's G1/G7 checks park the pointer on the window first: with focus
 follows mouse, the motion onto it would focus it, and then the drop rightly keeps that focus.
-Waiting for Paul's go, after stages 1-5.
+**Done 2026-10-28**: merged, live, and Paul's "it works" on the live check below; the ring or gap drag moving windows live, unlike Meta+right's bar, is `OPEN.md` item 43.
 
 **The rows**: `behaviour.md` §5 C7 (i3's next focus for every close), C9 (minimize as `move
 scratchpad`), §9 G1, G3, G4, G7/Z7, Z1, Z3, F4, all decided (Paul, 2026-10-27).
