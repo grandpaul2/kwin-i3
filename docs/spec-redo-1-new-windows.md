@@ -61,8 +61,7 @@ first that applies (stage 3 adds `assign` before 1, as i3 checks it first):
 
 A window already on T is adopted as today. Otherwise kwin-i3 gives it T's virtual desktop and
 output (`relocate`'s path, which moves through sticky so a hidden client still answers); for case
-1 that is the dialog's own `setDesktops`, which KWin's tie applies to the parent too, putting it
-back.
+1, the parent's virtual desktop set on the dialog directly, as above.
 
 **Known limit, written into §5 C1 when built**: a window that asks for exactly the virtual desktop
 KWin would have given it anyway can't be told from one that didn't ask (KWin tells a script
