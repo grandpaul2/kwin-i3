@@ -1,7 +1,17 @@
 # Spec: redo stage 8, `popup_during_fullscreen` (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-8` (on `redo-7`) as designed: `popupDuringFullscreen`
+read in `keepsFullscreenFocus` (with the newcomer's kind for `all`; `leave_fullscreen` sets the
+fullscreen window's `fullScreen` false, its `fullScreenChanged` clearing the tree's flag), the
+cog's form has it, the settings page gets it with stage 10. 32's new checks: four values, each
+with another window's dialog and the fullscreen window's own. **Found**: under `ignore` the
+fullscreen window's own modal dialog takes the focus all the same: KWin activates a window's
+modal dialog in its place (`activation.cpp:373`, `findModal`, read for 6.7.5); kept as ≠ in C5
+and V6 (i3 has no modal dialogs; a non-modal transient behaves as i3's). And under `leave_fullscreen`, once the fullscreen has ended, a GTK dialog's own
+activation request (xdg-activation, sent as GTK presents it) is honoured by KWin (`mayActivate`,
+`allowWindowActivation`: nothing fullscreen protects the focus any more), as i3's default
+`focus_on_window_activation smart` would honour a `_NET_ACTIVE_WINDOW` on the visible workspace:
+the dialog ends up focused after kwin-i3's hand-back. 32 expects that.
 
 **The row**: `behaviour.md` §10 V6 (i3's setting, default `smart`), decided (Paul, 2026-10-28).
 Stage 1 makes `smart` exact (§5 C5); this stage adds the other three values.

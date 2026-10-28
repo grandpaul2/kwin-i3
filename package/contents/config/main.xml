@@ -57,6 +57,9 @@
     <entry name="mouseWarping" type="String">
       <default>output</default>
     </entry>
+    <entry name="popupDuringFullscreen" type="String">
+      <default>smart</default>
+    </entry>
     <entry name="tilingDrag" type="String">
       <default>modifier titlebar</default>
     </entry>
