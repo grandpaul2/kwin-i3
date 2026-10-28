@@ -33,6 +33,15 @@ check "b's app untouched at its edges"      eval 'pix 641 360 $LIME && pix 1278 
 key "Focus Left"
 echo "    a: $(fc a)   b: $(fc b)"; kjs "var s = workspace.screens[0], r = workspace.rootTile(s, workspace.currentDesktopForScreen(s)); log(JSON.stringify(r.relativeGeometry) + \" pad \" + r.padding + \" kids \" + r.tiles.map(function (t) { return JSON.stringify(t.relativeGeometry) + \" p\" + t.padding; }).join(\" \"))"; sleep 0.3; capture
 check "focus moved: a active, b inactive"   eval 'pix 0 360 $ACT && pix 639 360 $ACT && pix 640 360 $INACT && pix 1279 360 $INACT'
+# A focus change kwin-i3 didn't make (focus follows mouse, a click, Alt+Tab): no pass follows,
+# the ring follows all the same (Paul's capture 2026-10-28_060215).
+kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"b\") workspace.activeWindow = w; });"
+# No pass follows, so no TREE line: KWin's activation, as logged.
+check "b activated from outside"            wait_log '^.{9}ACTIVE b \(KWin\)$'
+sleep 0.3; capture
+check "the ring follows: b active, a inactive" eval 'pix 640 360 $ACT && pix 1279 360 $ACT && pix 0 360 $INACT && pix 639 360 $INACT'
+key "Focus Left"
+check "a again by key"                      wait_tree 1 "H[a* b]"
 
 kclose b; sleep 0.3
 check "b closed: a fills the screen"        poll eval '[[ "$(fc a)" == "1,1 1278x718 client 1,1 1278x718" ]]'

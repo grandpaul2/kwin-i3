@@ -2786,6 +2786,9 @@ var KI3 = (function () {
                 focusedOutput = w.output.name;
                 if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
             }
+            // No pass follows KWin's own activation (focus follows mouse, a click, Alt+Tab): the
+            // rings are told here; kwin-i3's own are told at the end of its pass.
+            if (!switching) tellRings();
         }));
         workspace.cursorPosChanged.connect(guard("pointer", pointerMoved));
         seedPointer();
