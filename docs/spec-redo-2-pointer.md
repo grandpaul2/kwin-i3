@@ -7,7 +7,7 @@
 crossing rule. One addition the design didn't name: KWin's own next-window activation after a
 window outside the tree closes (`closingOutside`, D7) is set aside, or the crossing's focus on an
 empty workspace would snap back to the window KWin picks, and the pointer with it (72, case 1).
-`make unit` and the scenarios green. Waiting for Paul's go (after stage 1's) to merge and reload.
+`make unit` and the scenarios green. **Done 2026-10-28**: merged, live, and Paul's "it works" on the live check below.
 Not testable with focus follows mouse: a key moving the focus to the output the pointer is already
 on (D's pointer test), since the crossing has already moved the focus there; an activation with
 the pointer there is checked instead (72, case 4).
