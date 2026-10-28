@@ -699,7 +699,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 | V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored. Across a reload a minimized window loses its place | ≠ | i3 refuses minimize (`handlers.c`, iconic state rejected). Decided (§5 C9): as i3's `move scratchpad` |
 | V8 | Maximize | no handler: it leaves its tile, the next pass puts it back, and that clears the maximize | = | i3 has no maximize and ignores the request |
 | V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
-| V10 | A window on all desktops, or on two (outside kwin-i3's own relocate) | made sticky floating | = | i3 floats a window asking for all desktops and makes it sticky |
+| V10 | A window put on all desktops, or on two (outside kwin-i3's own relocate) | leaves the tree, as a window kept out of it | ≠ | i3 floats it and makes it sticky. Decided, not built (§3 R3, X4): sticky floating |
 | V11 | A tiling window resizes itself | put back (§6) | = | i3 ignores a tiled window's size requests |
 | V12 | KWin's quick tile; Meta+T's tile editor; a Shift-drag into KWin's tiles | pulled back into its tile; the editor's tiles are overwritten on the next pass (`LATER.md` item 26); the Shift-drag puts two windows in one tile until the next pass | + | |
 | V13 | A modal dialog | floats (§3); KWin moves it with its parent; kwin-i3 waits while either is dragged | + | |
