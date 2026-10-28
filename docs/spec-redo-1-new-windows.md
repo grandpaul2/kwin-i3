@@ -63,6 +63,12 @@ A window already on T is adopted as today. Otherwise kwin-i3 gives it T's virtua
 output (`relocate`'s path, which moves through sticky so a hidden client still answers); for case
 1, the parent's virtual desktop set on the dialog directly, as above.
 
+**A newcomer being moved stays hidden until it arrives** (Paul, 2026-10-28, call 57): the hold
+already hides a new normal window for up to 20 ms; a newcomer `relocate` sends to another output
+or virtual desktop stays hidden until its frame is in its tile (or its floating place), at most
+200 ms, so it never flashes on the pointer's monitor first. The effect's existing hide, given a
+longer limit for windows the script names (`HoldNew(id, ms)`).
+
 **Known limit, written into §5 C1 when built**: a window that asks for exactly the virtual desktop
 KWin would have given it anyway can't be told from one that didn't ask (KWin tells a script
 neither), so it goes to the focused workspace. Only when the pointer's output and the focused one
@@ -103,6 +109,9 @@ manager):
 - otherwise N is X's (claimed, as now) and focus goes to N on X: its fullscreen window, else its
   last focus;
 - on **any** output, not only the focused one (D3);
+- the Overview included: picking N on X when N lives on Y shows it on Y with the focus, X back to
+  what it showed (Paul, 2026-10-28, call 58: i3's rule, the one place this stage looks unlike
+  Plasma);
 - not while kwin-i3 switches (`switching`), rebuilds, or outputs come and go (as now).
 
 An activation that switched (Alt+Tab to a window on a hidden workspace) is then followed by
@@ -152,3 +161,8 @@ focus goes there.
 
 Live and Paul's "it works": the rows' Result columns rewritten (C1 with its known limit, C2, C3,
 C5, D2, D3, S4), their "Decided, not built" notes gone; the 17:05 capture deleted.
+
+## Paul's review (2026-10-28)
+
+57. A moved newcomer stays hidden until it arrives (A).
+58. The Overview follows D, as i3.
