@@ -848,7 +848,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N12 | `assign [criteria] → workspace N \| output X` | none | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's: windows sent to a workspace or output by the same criteria as §3 R9 |
 | N13 | `for_window [criteria] floating enable \| disable` | `floatingClass`, `floatingTitle`; `floatingWorkspaces` | ≠ | decided as i3 (§3 R9); `floatingWorkspaces` is then `for_window [workspace=N] floating enable` |
 | N14 | (no i3 option) the ignore lists | `ignoreClass`, `ignoreRole` | ≠ | decided: they go (§3 R5) |
-| N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; the output) | none: KWin's floor (~150 px), the output | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's settings, as limits on a window floated |
+| N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | none: KWin's floor (~150 px), the output | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's settings, as limits on a window floated |
 | N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7) |
 | N17 | `tiling_drag`, `swap_modifier` | none | ≠ | `tiling_drag` decided (§9 G3); no swap modifier (G11) |
 | N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`, the colours | ≠ | §7 L1-L11, decided |

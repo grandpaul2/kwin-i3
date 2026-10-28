@@ -50,7 +50,7 @@ decides nothing), R5 (no user ignore list; Plasma's system windows built in), R9
 output, the same criteria), N13 (`floatingWorkspaces` as a criterion), N15 (floating minimum and
 maximum size). The biggest stage in `src/rules.js`; the settings move from lists to criteria, so
 the settings page's Window Rules sub-page is broken until stage 10: it gets a minimal fix here
-(the new keys read and written), not its redesign.
+(the new keys read and written), not its redesign. Spec: `spec-redo-3-kinds-rules.md`.
 
 **4. Workspaces and outputs** (M). §4 W3/M3 (a lost output's workspaces move for good), M4 (a
 returning output gets its assigned workspaces), M5 (a new output: its first assigned, else the

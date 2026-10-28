@@ -117,7 +117,8 @@ empty workspace, a window and a panel. Under a minute.
   window of an ignored class, changes** where that class is override-redirect: the key does
   nothing; with a floating-kind class it still closes), 41 and 84 (unplug focus), 40 (login
   numbering), 60.
-- **Unit**: `i3Kind` against §3's table (`tests/unit/`, beside the rules' tests).
+- **Unit, for Paul's go** (`docs/testing.md` rule 5; there is no `rules.test.js` yet): `i3Kind`
+  against §3's table.
 - **New checks in existing scenarios, for Paul's go** (`docs/testing.md` rule 5; no new
   scenario): 74, a click on its stand-in desktop window with Show Desktop off gives the focus to
   the output's workspace (B4; nothing checks a desktop click today); 40, after the login

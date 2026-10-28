@@ -44,7 +44,7 @@ own output and focuses it (`workspace_show`).
 ### A. Which workspace a new window gets (C1, C3, and C4 kept)
 
 At `adoptWindow` for a window that just appeared (`fresh`), the **target workspace** T is the
-first that applies:
+first that applies (stage 3 adds `assign` before 1, as i3 checks it first):
 
 1. **A modal dialog whose parent is in the tree**: the parent's workspace **as it was before the
    dialog appeared** (C3, ≠ i3, decided: KWin ties the two). kwin-i3 keeps each tree window's
@@ -130,7 +130,7 @@ modal dialog on another output's workspace): log the parent's `desktopsChanged`,
   line 48's "Meta+4 … opens on the current, first monitor" becomes the focused output, the same
   monitor there), 44 (dialog drag), 56, 72, 73 (popups and windows kept out of the tree change
   nothing: B's claim must not take their switches), 79 (close focus).
-- **Unit** (`tests/unit/`): A's choice of T and B's claim are pure functions of recorded state,
+- **Unit, for Paul's go** (`docs/testing.md` rule 5): A's choice of T and B's claim are pure functions of recorded state,
   so they go in a small module (`src/placement.js`, as `tree.js` and `rules.js` are), unit-tested;
   `src/kwin.js` itself is not unit-testable (its tests only read its text).
 - **New scenario, for Paul's go** (`docs/testing.md` rule 5): `87-new-window-placement.sh`, two
