@@ -128,7 +128,10 @@ public:
                                                       QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
         plugins << QStringLiteral("org.kde.KWin.Plugins") << QStringLiteral("LoadedPlugins");
         const QStringList loaded = QDBusConnection::sessionBus().call(plugins).arguments().value(0).value<QDBusVariant>().variant().toStringList();
-        m_helperLoaded = loaded.contains(QLatin1String("kwini3helper"));
+        // Installed, its id carries a hash too (kwini3helper-<hash>); the test KWin's has none.
+        m_helperLoaded = std::any_of(loaded.begin(), loaded.end(), [](const QString &p) {
+            return p.startsWith(QLatin1String("kwini3helper"));
+        });
         m_keys->load();
         Q_EMIT stateChanged();
         settingsChanged();
