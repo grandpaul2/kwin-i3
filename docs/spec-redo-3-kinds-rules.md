@@ -13,7 +13,7 @@ desktop view's QML, no window of its own. So `plasmashell` left the built-in lis
 ordinary windows float by the default rule. **Rules are separated by line breaks or `;` outside
 quotes**: the default must be one line in `main.xml` (a newline inside a kcfg default is not safe
 through kconfig_compiler), and the Window Rules page shows the text as it is until stage 10.
-Waiting for Paul's go, after stages 1 and 2.
+**Done 2026-10-28**: merged, live, and Paul's "it works" on the live check below.
 
 **The rows**: `behaviour.md` §3's kinds that differ (Spectacle, the password prompt, KRuler,
 plasmashell's ordinary windows to floating), R2, R4, R5, R9, X2, and §11 N12 (`assign`), N13
