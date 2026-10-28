@@ -1320,7 +1320,7 @@ var KI3 = (function () {
     // and the focus commands, never from a close (the start menu closing sent the pointer across,
     // Paul, 2026-10-25; 72-pointer-stays). checked: this pass has KWin's answer that Show Desktop
     // is off (below).
-    var focusOutput = null;     // the output the focus was last applied or taken on, by name
+    var focusedOutput = null;   // the output the focus was last applied or taken on, by name (not focusOutput, the action below)
     function pointerOn() { var p = workspace.cursorPos; return screenAt(p.x, p.y); }
     function warps() { return Settings.get("mouseWarping") !== "none"; }
     function applyFocus(byKey, checked) {
@@ -1352,8 +1352,8 @@ var KI3 = (function () {
             return;
         }
         var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
-        var crossed = focusOutput !== null && focusOutput !== s.name;
-        focusOutput = s.name;
+        var crossed = focusedOutput !== null && focusedOutput !== s.name;
+        focusedOutput = s.name;
         var warp = byKey && crossed && warps() && pointerOn() !== s;
         if (workspace.currentDesktopForScreen(s) !== desk) {
             showOn(desk, s);
@@ -2496,8 +2496,8 @@ var KI3 = (function () {
             // app's request; i3's focus_on_window_activation ends in workspace_show), unless it
             // is there already (§5 A2); kwin-i3's own activations warp from applyFocus.
             if (w.output) {
-                var crossed = focusOutput !== null && focusOutput !== w.output.name;
-                focusOutput = w.output.name;
+                var crossed = focusedOutput !== null && focusedOutput !== w.output.name;
+                focusedOutput = w.output.name;
                 if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
             }
         }));
