@@ -140,11 +140,22 @@ The Window Rules sub-page reads and writes `forWindow` and `assign` as plain tex
 line, with i3's syntax shown under it, and keeps its window picker (it fills in a
 `[class="^…$"]`). Its two lists and "Places itself" go. The redesign is stage 10's.
 
+## Read so far (2026-10-28, read-only, KWin's `/WindowsRunner` `Match` for the ids, then `getWindowInfo`)
+
+Every window open on Paul's desktop: VS Code, Firefox (2), Prism Launcher, KeePassXC, Alacritty,
+OBS, the stream stage (Xephyr, `STAGE (streamed)`: Paul's `floatingTitle` keeps it floating) are
+Normal (type 0) and don't skip the taskbar, so R4's end changes none of them. The only Normal one
+that skips the taskbar is `xwaylandvideobridge`, on A4's built-in list.
+
 ## Unknown, settled before building
 
-**Which windows on Paul's desktop the new rules move** (R4's "check first"): every Normal window
-that skips the taskbar or is on today's ignore lists changes kind with this stage. **A live read,
-read-only, with Paul's go**: Paul opens Spectacle, KRunner, a password prompt (`pkexec true`),
+**The Plasma tools not open on Paul's desktop** (R4's "check first", the rest): Spectacle, KRuler,
+the password prompt and Yakuake (shown, hidden, shown, for stage 9), **in the test KWin**
+(`docs/testing.md` P4, for Paul's go: each started on the headless session's display, the same
+`getWindowInfo` read on its bus, Yakuake toggled through its own D-Bus; nothing on Paul's screen).
+plasmashell's panel configuration and edit-mode windows are hard to run headless: read from
+plasmashell's source, or left on the built-in list (B's default rule waits for them). The earlier
+plan, a live read with Paul at the desk, was: Paul opens Spectacle, KRunner, a password prompt (`pkexec true`),
 KRuler, a widget's settings, a panel's configuration and Plasma's edit mode, and Yakuake (shown,
 hidden, shown, for stage 9), and presses Meta+Shift+B; for each window id in the
 capture's JSON, `busctl --user call org.kde.KWin /KWin org.kde.KWin getWindowInfo s <id>` gives
