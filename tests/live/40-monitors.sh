@@ -62,8 +62,10 @@ check "Meta+5 from the second monitor opens there" poll shows Virtual-1 5
 key "Workspace 2"
 key "Focus Left"
 
-# The monitor-wake bug of 2026-10-21: a monitor drops out and comes back. Its windows must
-# come back with it, on their own workspaces.
+# A monitor drops out and comes back (the monitor-wake bug of 2026-10-21, 2026-10-28's i3 rule,
+# redo stage 4): its workspaces move to the first monitor for good; the returning monitor shows a
+# free workspace, not the one it showed; an assignment (workspaceOutputs) is what brings a workspace
+# back. The focus goes to the first monitor's workspace after either change (§5 D5).
 key "Workspace 1"
 client --title c
 check "c on workspace 1"                    wait_tree 1 "H[c*]"
@@ -73,20 +75,32 @@ check "the second monitor is gone"          poll one_screen
 check "b keeps its workspace"               wait_tree 2 "H[b]"
 output_of() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.output.name); })"; }
 on_output() { [[ "$(output_of "$1")" == "$2" ]]; }
-check "meanwhile b is on the remaining monitor (so the replug test means something)" poll on_output b Virtual-0
+check "b is on the remaining monitor"       poll on_output b Virtual-0
+check "the first monitor keeps showing 1, with the focus" poll active_is c
+m=$(mark)
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
 two_screens() { [[ "$(kjs 'log(workspace.screens.length)')" == 2 ]]; }
 check "it is back"                          poll two_screens
-check "b goes back to it by itself, before any key is pressed" poll on_output b Virtual-1
+check "the returning monitor shows a free workspace (4), not 2" poll shows Virtual-1 4
+# After kwin-i3 has reconciled: KWin itself briefly puts b back on its old monitor.
+check "reconciled after the replug"         wait_log '^.{9}TREE 2 ' "$m"
+check "b stays on the first monitor (its workspace moved for good)" poll on_output b Virtual-0
+sleep 0.3
+check "still there"                         on_output b Virtual-0
+check "the focus is on the first monitor's workspace (c)" poll active_is c
 key "Workspace 2"
-check "workspace 2 is on the second monitor again" poll shows Virtual-1 2
-check "b is back on the second monitor"     geom_is b "1280,0 1280x720"
-check "c stayed on the first"               geom_is c "0,0 1280x720"
-check "and workspace 1 still holds only c"  wait_tree 1 "H[c]"
+check "Meta+2 shows 2 on the first monitor, where it lives now" poll shows Virtual-0 2
+check "b fills the first monitor"           geom_is b "0,0 1280x720"
 
-# The code review's reproduction: pressing Meta+2 while 2's monitor is away must not move its
-# home; when the monitor returns, b goes back, and each monitor shows its own workspace again.
-press_key_fallback() { key "Workspace 2"; }
+# Assigned, a workspace goes back: 2=Virtual-1, the monitor away and back; meanwhile Meta+2 shows 2
+# on the remaining monitor, which then shows the workspace it showed before (1, c).
+set_key() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
+m=$(mark)
+set_key workspaceOutputs "2=Virtual-1"
+key "Reload Settings"
+check "reload: 2 assigned to the second monitor" wait_log '^.{9}SETTINGS workspaceOutputs$' "$m"
+key "Workspace 1"
+check "Meta+1: c has the focus"             poll active_is c
 timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
 check "unplugged again"                     poll one_screen
 key "Workspace 2"
@@ -97,16 +111,19 @@ check "replugged"                           poll two_screens
 # After kwin-i3 has reconciled, not the first moment: KWin itself briefly puts b back on its old
 # monitor, and a wrong home moves it away again a moment later (fault battery, 2026-10-22).
 check "reconciled after the replug"         wait_log '^.{9}TREE 2 ' "$m"
-check "b goes home all the same, and stays: it fills the second monitor" geom_is b "1280,0 1280x720"
+check "b goes home to its assigned monitor, and stays: it fills the second monitor" geom_is b "1280,0 1280x720"
 sleep 0.3
 check "still there"                         geom_is b "1280,0 1280x720"
 check "its monitor shows 2 again"           poll shows Virtual-1 2
-check "and the first monitor shows 1, not 2 as well" poll shows Virtual-0 1
+check "and the first monitor shows 1 again, not 2 as well" poll shows Virtual-0 1
+check "the focus is on the first monitor (c)" poll active_is c
+check "and the pointer came with it"        poll cursor_on Virtual-0
+set_key workspaceOutputs --delete
+key "Reload Settings"
 
 # The fuzzer's first find (I8, shrunk to 2 steps): moving the only window away leaves its
 # workspace empty and focused, as in i3. KWin kept the moved window active, hidden on the other
 # workspace, so typing went into a window nobody could see.
-key "Focus Left"
 check "c is active"                         poll active_is c
 key "Move to Workspace 6"
 check "c went to workspace 6"               wait_tree 6 "H[c]"

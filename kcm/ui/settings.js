@@ -2,13 +2,20 @@
 // (docs/spec-settings-cleanup.md): the page edits rows and lists, kwinrc keeps the strings the
 // script parses (src/settings.js). Pure functions, unit-tested in tests/unit/kcm-settings.test.js.
 
-// "1=DP-4, 2=DP-6" -> { 1: "DP-4", 2: "DP-6" }; as the script: N 1-10, entries it can't read dropped.
-function parseOutputs(text) {
+// "1=DP-4 HDMI-A-1, 2=DP-6" -> { 1: "DP-4 HDMI-A-1", 2: "DP-6" }: each workspace's list of outputs
+// as the script reads it (the first connected one wins; redo stage 4), N 1-10, entries it can't
+// read dropped. parseOutputs gives the first output of each list, what the page's monitor box shows.
+function parseOutputLists(text) {
     const out = {};
     String(text || "").split(",").forEach((e) => {
-        const m = /^\s*([0-9]+)\s*=\s*(\S+)\s*$/.exec(e);
-        if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2];
+        const m = /^\s*([0-9]+)\s*=\s*(\S+(?:\s+\S+)*)\s*$/.exec(e);
+        if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2].replace(/\s+/g, " ");
     });
+    return out;
+}
+function parseOutputs(text) {
+    const lists = parseOutputLists(text), out = {};
+    Object.keys(lists).forEach((n) => { out[n] = lists[n].split(" ")[0]; });
     return out;
 }
 function formatOutputs(map) {
@@ -66,6 +73,6 @@ function workspaceCounts(outputsText, floatingText) {
 }
 
 if (typeof module !== "undefined") module.exports = {
-    parseOutputs, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
+    parseOutputs, parseOutputLists, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
     workspaceCounts, ruleCounts,
 };

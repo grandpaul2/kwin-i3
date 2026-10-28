@@ -1,7 +1,13 @@
 # Spec: redo stage 4, workspaces and outputs (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-4` (on `redo-3`) as designed below: `src/outputs.js`
+(B's and C's choices as pure functions, unit-tested), `workspaceOutputs` as a list per number
+(`Settings`, `Workspaces.assigned` the first connected), `screensChanged` rewritten on the
+snapshot (B, C, D; `beforeLoss` and the name memory gone), the settings page's monitor box keeping
+a typed list whose first monitor it shows; 40's replug part rewritten to the i3 rule (with the
+assignment case), 45-48 set up with `2=Virtual-1` as proposed, 49's §6 reworded (a returning
+monitor shows its lowest workspace, i3) and the approved checks added (a two-output list; an
+unassigned workspace staying on the first monitor). Waiting for Paul's go, after stages 1-3.
 
 **The rows**: `behaviour.md` §4 W3, W5, M3, M4, M5, and §5 D5, all decided (Paul, 2026-10-27;
 `plan.md` decision 10 rewritten the same day). Together: a workspace lives on an output that is
