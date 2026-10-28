@@ -27,6 +27,7 @@ public:
 
 private:
     KWin::Window *ringWindow(const QPointF &pos) const;
+    bool overTiledMargin(const QPointF &pos) const;
 
     TilingDrag *m_drag;                   // a ring press is its resize on that side (§9 Z3)
     KConfigWatcher::Ptr m_watcher;

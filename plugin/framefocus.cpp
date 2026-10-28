@@ -32,14 +32,31 @@ FrameFocus::FrameFocus(TilingDrag *drag)
     QObject::connect(workspace(), &Workspace::configChanged, &m_context, load);
 }
 
+static bool customTiled(const Window *w)
+{
+    return w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+}
+
+// The pointer over a tiled window's own input area outside its frame: an app that draws its own
+// frame keeps an invisible resize border there (VS Code, Chromium's frame; a GTK header bar),
+// since KWin reports no tiled edges for a tile with padding (tile.cpp Tile::anchors), and kwin-i3's
+// tiles always have padding. A press there would be the app's resize, KWin's live tile resize
+// (OPEN.md item 43): the ring and the gap stay kwin-i3's, as beside any other window.
+bool FrameFocus::overTiledMargin(const QPointF &pos) const
+{
+    Window *hover = input()->pointer()->hover();
+    return hover && hover->isClient() && customTiled(hover) && !hover->frameGeometry().contains(pos);
+}
+
 // The tiled window whose frame ring is under the pointer, else null. Only where the pointer is
-// over no window, or over the desktop: a window above a frame (a floating one) keeps its clicks.
+// over no window, the desktop, or a tiled window's margin (overTiledMargin): a window above a
+// frame (a floating one) keeps its clicks.
 // Framed as kwini3hold frames it (Hold::framed, Hold::floatingFramed): in one of kwin-i3's tiles
 // (custom tiling), or floating with frameOnFloating; no server decoration, not fullscreen.
 KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
 {
     Window *hover = input()->pointer()->hover();
-    if (hover && !hover->isDesktop()) {
+    if (hover && !hover->isDesktop() && !overTiledMargin(pos)) {
         return nullptr;
     }
     const auto order = workspace()->stackingOrder();
@@ -52,7 +69,7 @@ KWin::Window *FrameFocus::ringWindow(const QPointF &pos) const
         // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
         // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
         // takes the border of no floating window but its own).
-        const bool tiled = w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+        const bool tiled = customTiled(w);
         if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
             continue;
         }
@@ -109,6 +126,12 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     }
     Window *window = ringWindow(event->position);
     if (!window) {
+        // In the gap over a tiled window's margin: as a press on the bare gap, nothing; the app
+        // doesn't get it, so it starts no resize of its own (OPEN.md item 43).
+        if (overTiledMargin(event->position)) {
+            m_taken |= event->button;
+            return true;
+        }
         return false;
     }
     if (const auto command = window->getMousePressCommand(event->button)) {
@@ -117,7 +140,7 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     // A left or right press on a tiled window's ring is i3's resize on that side (tiling_resize,
     // CLICK_BORDER: top, then left, right, bottom at a corner; §9 Z3): the drag filter takes the
     // press from here, kwin-i3 resizes at the release. The release is then its.
-    const bool tiled = window->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+    const bool tiled = customTiled(window);
     if (tiled && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
         const RectF frame = window->frameGeometry();
         const QPointF pos = event->position;

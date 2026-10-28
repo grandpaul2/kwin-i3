@@ -187,5 +187,26 @@ drag Meta right 640 360 760 420
 check "  Meta+right resized it (KWin's), still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
 echo "    c $g0 -> $(fc c)"
 
+# An app that draws its own frame keeps an invisible resize border past it (a GTK header bar here,
+# VS Code live), as KWin reports no tiled edges for a padded tile: a plain press there stays
+# kwin-i3's (OPEN.md item 43), in the gap nothing, on the ring i3's resize (Z3), never the app's
+# own resize, which KWin ran as its live tile resize.
+kclose c; kclose b
+set_key gapsInner 16
+client --title L --csd
+check "L, drawing its own frame"            poll eval '[[ "$(tree 1)" == *L* ]]'
+key "Split H"; client --title R
+check "L | R"                               poll eval '[[ "$(tree 1)" == *"L R*"* ]]'
+sleep 1
+lw=$(wid L); g=$(fc L); edge=$(( ${g%%,*} + lw ))   # the first x past L's frame: its right ring
+echo "    L $(fc L)  R $(fc R)  ring at x $edge"
+m=$(mark)
+"$INJECT" "abs $((edge + 4)) 360" "wait 60" "btn left down" "wait 60" "abs $((edge + 60)) 360" "wait 100" "btn left up" "wait 400"
+check "a plain drag in the gap over L's margin: no resize of the app's" eval '! after "$m" | grep -qE "^.{9}DRAG start resize"'
+check "  nothing changed"                   eval '[[ "$(wid L)" == "$lw" ]]'
+"$INJECT" "abs $edge 360" "wait 60" "btn left down" "wait 60" "abs $((edge + 50)) 360" "wait 60" "abs $((edge + 100)) 360" "wait 60" "btn left up"
+check "a plain drag on L's ring over its margin: i3's resize, L wider" poll eval 'w=$(wid L); (( w >= lw + 70 && w <= lw + 130 ))' || echo "    L was $lw wide, is $(wid L)"
+check "  not the app's resize"              eval '! after "$m" | grep -qE "^.{9}DRAG start resize"'
+
 check "no invariant failures or errors"     clean_log
 finish
