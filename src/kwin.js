@@ -1291,9 +1291,15 @@ var KI3 = (function () {
         // whose modal dialog KWin activated in its place (activatedNow) takes its place in the
         // focus order right behind the dialog, as i3 focuses a window at its opening before its
         // dialog: without it, a close beside them went to an older window (redo stage 6, step A).
+        var visibleHere = workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num);
         var takes = !placed || placed.why === "asked" ||
-            Placement.takesFocus(workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num),
-                                 !fws || outputOf(ws) === outputOf(fws), !!fws);
+            Placement.takesFocus(visibleHere, !fws || outputOf(ws) === outputOf(fws), !!fws);
+        // popup_during_fullscreen all: a floating newcomer under its workspace's fullscreen window
+        // takes the focus wherever that workspace is visible, any output (manage.c:520); i3's
+        // invisible-workspace rule still holds (manage.c:609). Review 2026-10-28.
+        var fsHere = model.fullscreenOn(ws);
+        if (!takes && visibleHere && kind !== "tiling" && fsHere && fsHere.win !== key &&
+            Settings.get("popupDuringFullscreen") === "all") takes = true;
         var active = workspace.activeWindow, viaModal = !w.active && activatedNow(w) && active ? active : null;
         if (activatedNow(w) && !fs) {
             if (takes) {
@@ -2287,7 +2293,7 @@ var KI3 = (function () {
             back = (shownBefore[src.name] || []).filter(candidate)[0] || null;
             for (var k = 1; !back && k <= Math.min(workspace.desktops.length, NAMES.length); k++)
                 if (candidate(k)) back = k;
-            if (!back) back = unusedWorkspace(src);
+            if (!back) back = unusedWorkspace(src, true);
             if (!back) { log("WSMOVE refused: no workspace left for " + src.name); return; }
         }
         Workspaces.setHome(n, t);
@@ -3092,7 +3098,19 @@ var KI3 = (function () {
     // (i3's create_workspace_on_output; §4 M1, W4: an empty hidden workspace has no lasting output,
     // whatever home it last had); it becomes s's, created if every existing one is taken. null if
     // all ten are.
-    function unusedWorkspace(s) {
+    // preferAssigned: Move Workspace to Output replacing an output's last workspace first takes one
+    // assigned to that output and not yet in use, as i3 (workspace_move_to_output); else, as
+    // i3's create_workspace_on_output, the lowest not assigned elsewhere.
+    function unusedWorkspace(s, preferAssigned) {
+        if (preferAssigned) {
+            for (var k = 1; k <= NAMES.length; k++) {
+                if (Workspaces.assigned(k) !== s.name || model.workspaces[k] || Workspaces.showing(k)) continue;
+                Workspaces.ensure(k);
+                if (!deskOf(k)) continue;
+                Workspaces.setHome(k, s);
+                return k;
+            }
+        }
         for (var n = 1; n <= NAMES.length; n++) {
             var m = model.workspaces[n], a = Workspaces.assigned(n);
             if (a && a !== s.name) continue;

@@ -278,10 +278,12 @@ var Rules = (function () {
     // `assign` for a window that just appeared (N12): { workspace: N } or { output: name }, the
     // first rule that matches, else null. The window's kind before rules is what `floating` and
     // `tiling` criteria see (i3 runs assign at manage, before for_window).
+    // No kind yet: i3 reads assignments before the con exists (manage.c), so a `floating` or
+    // `tiling` criterion never matches in an assign (match.c, window_mode; review 2026-10-28).
     function assignFor(w) {
-        var rules = current().assign, kind = floatsByDefault(w) ? "floating" : "tiling";
+        var rules = current().assign;
         for (var i = 0; i < rules.length; i++)
-            if (matches(rules[i].crit, w, { ws: null, kind: kind }))
+            if (matches(rules[i].crit, w, { ws: null, kind: null }))
                 return rules[i].workspace ? { workspace: rules[i].workspace } : { output: rules[i].output };
         return null;
     }

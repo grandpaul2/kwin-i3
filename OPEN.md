@@ -111,9 +111,9 @@ suspected or minor, none seen live:
   unanchored; Pick a Window duplicates; a blank row lost silently; `isDefault` badge
   order-dependent; `75 x 50` with spaces rejected; output names exact (no `primary`); one assign
   per window (i3 allows a workspace and an output one); `Workspaces.qml` monitor slot 0 "Any".
-- **i3 differences not yet decided by a doc** (decide from `philosophy.md` and precedent when
-  reached, `feedback_decide_from_docs`): `all` popup_during_fullscreen and where the newcomer
-  opens; `unusedWorkspace` not preferring one assigned to the source; assigns matching
-  `[floating]`/`[tiling]` (never in i3); a launch-workspace step (`startup_ws`); kept-out windows
-  that switch desktops handled as outside switches.
-Next: the i3 differences, decided from the docs; then the hardening and the page's quirks as one batch.
+- **The i3 differences, decided 2026-10-28** (from i3's source and `philosophy.md`, written in
+  `behaviour.md` C1, C5, D2, R19, S10): followed: `all` focuses on either output, the replacement
+  workspace prefers one assigned to the source, `[floating]`/`[tiling]` never match in an assign;
+  kept ≠: the launch workspace (KWin shows a script no launch's desktop), a kept-out window's
+  desktop switch (undoing it hides Plasma's window).
+Next: the hardening and the page's quirks, as one batch.
