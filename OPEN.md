@@ -58,9 +58,13 @@ stages, one live at a time (new windows, pointer, kinds and rules, outputs, keys
 closes, look, fullscreen, sticky, settings page), each with its spec `docs/spec-redo-N-*.md`:
 reviewed by a separate agent and by Paul (each spec's "Paul's calls" / "Paul's review"), every new
 check, unit test and scenario approved, probes 90-93 run (branch `probe-redo`, never merged,
-results in the specs). **Next: build stage 1** (`docs/spec-redo-1-new-windows.md`), as the
-build plan's "How each stage goes": a branch, `make unit` and its scenarios, Paul's go to merge
-and to reload. Left from the 2026-10-27 gap check, checked when its stage is built: §7 the hold's
+results in the specs). **Stage 1 built** (2026-10-28, sixth session) on branch `redo-1`
+(`docs/spec-redo-1-new-windows.md`, "Now"): `src/placement.js` with its unit test, `placeNew`,
+`shownOutside` and `holdNew` in `src/kwin.js`, `HoldNew` in `plugin/hold.cpp`, scenario 87; `make
+unit`, scenarios 32, 40, 44, 56, 64, 72, 73, 79 and 87 green. **Next: Paul's go to merge, then
+to reload (and `make plugin-install` for the effect's `HoldNew`), then his live check** (the
+spec's "Live check"); his "it works" ends the stage and the 17:05 capture goes. Then stage 2.
+Left from the 2026-10-27 gap check, checked when its stage is built: §7 the hold's
 exceptions (an output being dragged on, fullscreen windows, untiled closes; stage 7); §9's helper
 details (stage 6); §11's settings-page details (stage 10).
 

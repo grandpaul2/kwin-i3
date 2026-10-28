@@ -38,6 +38,14 @@ var KI3 = (function () {
         switching++;
         try { workspace.setCurrentDesktopForScreen(desk, s); } finally { switching--; }
     }
+    // Desktop switches made outside kwin-i3, recorded as they come and handled a turn later
+    // (docs/spec-redo-1-new-windows.md, B and D): KWin emits windowAdded in the same call as the
+    // activation that switched an output to the new window's desktop (workspace.cpp
+    // addWaylandWindow), so adoptWindow runs first and claims that switch (Placement.claim); what
+    // is left is i3's `workspace N` on that output (shownOutside).
+    var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
+    // Newcomers the effect hides until kwin-i3 has moved them (holdNew): window id -> true.
+    var holdNamed = {};
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -159,6 +167,7 @@ var KI3 = (function () {
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place (i3ws learned this, 2026-10-21).
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from, fp.checked); }
+        showHeld();
         rememberShown();
     }
     function wantFocus(from) {
@@ -979,22 +988,73 @@ var KI3 = (function () {
         if (!w.deleted && w.noBorder) w.noBorder = false;
     }
 
+    // The focused workspace, or null (no focus yet).
+    function focusedWs() {
+        var f = model.focused;
+        return f ? (f.type === "ws" ? f : Tree.wsOf(f)) : null;
+    }
+    // The workspace a window that just appeared gets (docs/spec-redo-1-new-windows.md, A and B;
+    // the rules in Placement.target): a modal dialog goes with its parent (C3), one that asked for
+    // a hidden desktop keeps it (C4), any other opens on the focused workspace (C1), wherever
+    // KWin's active output put it. The switch KWin made to activate it is undone (C2), unless it
+    // asked. A modal dialog is given its parent's desktop directly, never relocate's move via all
+    // desktops, which would take the parent along (probe 90: KWin ties the two in setDesktops).
+    // -> { ws, why } or null (not on one desktop, as wsForWindow).
+    function placeNew(w) {
+        if (w.desktops.length !== 1 || !w.output) return null;
+        var desk = deskNum(w.desktops[0]);
+        if (desk < 1) return null;
+        var parent = w.modal && w.transientFor && !w.transientFor.deleted ? model.byWin[id(w.transientFor)] : null;
+        var fws = focusedWs();
+        var outputs = workspace.screens.map(function (s) {
+            return { name: s.name, shows: deskNum(workspace.currentDesktopForScreen(s)) };
+        });
+        var t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
+                                 Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
+        var e = Placement.claim(pendingShown, w.output.name, desk);
+        if (e && t.why !== "asked" && e.previous >= 1 && deskOf(e.previous)) {
+            showOn(deskOf(e.previous), w.output);
+            log("SHOWN " + w.output.name + " " + e.previous + " again: a new window's switch, undone");
+        }
+        if (!Workspaces.hasHome(t.ws)) Workspaces.claimHome(t.ws, w.output);
+        var ws = wsModel(t.ws);
+        if (t.why === "parent" && w.desktops[0] !== deskOf(t.ws)) {
+            var key = id(w);
+            placing[key] = true;
+            relocating++;
+            try { w.desktops = [deskOf(t.ws)]; } finally { delete placing[key]; relocating--; }
+        }
+        return { ws: ws, why: t.why };
+    }
+
     // i3's rule for a new window under a fullscreen one (manage.c, "fs != NULL, not focusing"):
-    // it opens behind and gets no focus, unless it is the fullscreen window's own dialog
-    // (popup_during_fullscreen smart). KWin activated it before windowAdded (workspace.cpp
-    // addWaylandWindow), and a fullscreen window is on top only while active
-    // (Window::isActiveFullScreen), so the focus is handed straight back from the handler: one
-    // event-loop turn, nothing painted in between. Only for a window that just appeared
-    // (`fresh`): adoptWindow also runs from reclassify, desktopsChanged and a reload, where it
-    // must not pull focus from a window in use. Not on a hidden workspace: activating a window
-    // there switches its monitor's desktop (activation.cpp, SwitchToOtherDesktop). A transient
-    // gets no hand-back (the dialog; a dialog of another window is KWin's call, review).
+    // it opens behind and gets no focus, unless it is the fullscreen window's own transient
+    // (popup_during_fullscreen smart, con_find_transient_for_window: the transientFor chain
+    // reaches it). KWin activated it before windowAdded (workspace.cpp addWaylandWindow), and a
+    // fullscreen window is on top only while active (Window::isActiveFullScreen), so the focus is
+    // handed straight back from the handler: one event-loop turn, nothing painted in between.
+    // Only for a window that just appeared (`fresh`): adoptWindow also runs from reclassify,
+    // desktopsChanged and a reload, where it must not pull focus from a window in use. Not on a
+    // hidden workspace: activating a window there switches its monitor's desktop (activation.cpp,
+    // SwitchToOtherDesktop). Another app's dialog opens behind too (§5 C5, Paul, 2026-10-28).
+    function transientOf(w, main) {
+        for (var t = w.transientFor, n = 0; t && n < 16; t = t.transientFor, n++) if (t === main) return true;
+        return false;
+    }
+    // KWin activates a new window's modal dialog in its place (activation.cpp, findModal): the
+    // newcomer counts as activated when its modal child is (87-new-window-placement, part 4).
+    function activatedNow(w) {
+        if (w.active) return true;
+        var a = workspace.activeWindow;
+        return !!(a && a.modal && transientOf(a, w));
+    }
     function keepsFullscreenFocus(w, ws, fresh) {
         // A newcomer that opens fullscreen itself (mpv --fs, a game) takes the workspace's
         // fullscreen over, as in i3 (manage.c: con_toggle_fullscreen, fs = NULL): no hand-back.
-        if (!fresh || !w.active || w.transient || w.fullScreen) return null;
+        if (!fresh || !activatedNow(w) || w.fullScreen) return null;
         var fs = model.fullscreenOn(ws);
         if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
+        if (transientOf(w, wins[fs.win])) return null;
         if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
         return wins[fs.win];
     }
@@ -1014,7 +1074,8 @@ var KI3 = (function () {
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
         if (w.noBorder && !(tiledBorderless() && kind === "tile")) w.noBorder = false;
-        var ws = wsForWindow(w);
+        var fws = focusedWs(), placed = fresh ? placeNew(w) : null;
+        var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         // A new window on a workspace of Plasma windows opens floating (decision 1).
         if (kind === "tile" && fresh && plasmaWs(ws)) kind = "float";
@@ -1026,13 +1087,47 @@ var KI3 = (function () {
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);
         connectWindow(w);
-        if (w.active && !fs) model.focusWin(key);
-        log("ADD " + w.caption + " " + kind + " ws " + ws.num);
+        // i3's manage.c:437: a newcomer takes the focus only on the focused output's visible
+        // workspace (§5 C1, C3); one that asked for its desktop takes it there (C4). Otherwise
+        // the focus goes back to what had it (KWin activated the window already).
+        var takes = !placed || placed.why === "asked" ||
+            Placement.takesFocus(workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num),
+                                 !fws || outputOf(ws) === outputOf(fws), !!fws);
+        if (w.active && !fs) {
+            if (takes) model.focusWin(key);
+            else wantFocus();
+        }
+        log("ADD " + w.caption + " " + kind + " ws " + ws.num + (placed ? " (" + placed.why + (takes ? "" : ", no focus") + ")" : ""));
         if (fs) {
             workspace.activeWindow = fs;   // windowActivated then tells the model, as for any activation
             log("FULLSCREEN " + fs.caption + ": keeps the focus over " + w.caption);
         }
-        schedule(ws);
+        // A newcomer on its way to another output or desktop stays hidden until it is placed
+        // (Paul, 2026-10-28, call 57): the pass that moves it waits for the effect to have it.
+        var moving = placed && (w.output !== outputOf(ws) || w.desktops[0] !== deskOf(ws.num));
+        if (moving && frameOn) holdNew(w, 200, function () { schedule(ws); });
+        else schedule(ws);
+    }
+
+    // The effect hides a new window for 20 ms by itself, until its tile places it (hold.cpp
+    // onAdded). A newcomer kwin-i3 moves to another output or desktop would show at KWin's spot
+    // first: the effect is told to keep it hidden up to `ms` (HoldNew), and `then` (the pass
+    // that moves it) runs once the effect has that, or after 50 ms with no answer (an effect
+    // without the method). After the pass, HoldNew(id, 0) shows one no tile placed (a floating
+    // window); a tiled one joined the hold and shows at its release (flush).
+    function holdNew(w, ms, then) {
+        var key = id(w), done = false;
+        var go = function () { if (!done) { done = true; then(); } };
+        holdNamed[key] = true;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "HoldNew", key, ms, guard("held", go));
+        later(50, go);
+    }
+    function showHeld() {
+        Object.keys(holdNamed).forEach(function (key) {
+            if (crossing[key]) return;      // not there yet: the pass after its arrival
+            delete holdNamed[key];
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "HoldNew", key, 0);
+        });
     }
 
     // No longer ours: closed, made sticky, or now on the ignore list.
@@ -1143,6 +1238,7 @@ var KI3 = (function () {
             // A parent KWin moves along with its modal dialog is still followed (below).
             if (relocating && w.desktops.length !== 1) return;
             var con = model.byWin[key];
+            if (!con && placing[key]) return;       // placeNew giving a dialog its parent's desktop
             if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }
             if (w.desktops.length !== 1) {
                 // Now on all desktops (sticky): no longer ours, as if it had never been (rules).
@@ -1643,15 +1739,15 @@ var KI3 = (function () {
     });
 
     // Meta+N: show workspace N where it lives and focus it; an empty, hidden one opens on the
-    // current monitor (i3ws gotoWorkspace).
+    // focused output, as i3's workspace_show (§4 S4); with nothing focused, KWin's active output.
     function gotoWorkspace(n) {
         Workspaces.ensure(n);
         if (!deskOf(n)) return;
         if (!Workspaces.showing(n)) {
-            var m = model.workspaces[n];
+            var m = model.workspaces[n], fws = focusedWs();
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
-            // An empty one opens on its assigned monitor if that is here, else the current one.
-            var s = occupied ? Workspaces.outputOf(n) : Workspaces.assignedScreen(n) || workspace.activeScreen;
+            // An empty one opens on its assigned monitor if that is here, else the focused one.
+            var s = occupied ? Workspaces.outputOf(n) : Workspaces.assignedScreen(n) || (fws ? outputOf(fws) : workspace.activeScreen);
             // An occupied workspace keeps its home even while that monitor is away, or it would
             // never go back (code review: reproduced with Meta+2 during an unplug).
             if (!occupied) Workspaces.claimHome(n, s);
@@ -2278,7 +2374,7 @@ var KI3 = (function () {
         workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
             log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
                 (current ? deskNum(current) : "-") + (switching ? " (kwin-i3)" : " (outside)"));
-            shownOutside(previous, current, output);
+            recordShown(previous, current, output);
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
         options.configChanged.connect(guard("settings", settingsChanged));
@@ -2427,24 +2523,53 @@ var KI3 = (function () {
             lastShown[s.name] = now;
         });
     }
-    // A monitor's desktop switched outside kwin-i3 (the Overview, Plasma, an app's activation):
-    // on the monitor kwin-i3's focus is on, the focus follows to the workspace shown there, as in
-    // i3 the visible workspace of the focused monitor is the focused one. Not doing so let the
-    // next passive pass switch the monitor back (a notification closing, 73-places-itself).
-    // Not while monitors come and go: screensChanged settles those.
-    function shownOutside(previous, current, output) {
+    // A monitor's desktop switched outside kwin-i3 (the Overview, a pager, KWin's own desktop
+    // keys, an activation by Alt+Tab or the task manager, a new window's activation): recorded,
+    // and handled a turn later, once adoptWindow has claimed the switches new windows caused
+    // (pendingShown, above). Not while kwin-i3 switches, or the model is rebuilt.
+    function recordShown(previous, current, output) {
         if (switching || rebuilding || !current || !output) return;
+        pendingShown.push({ output: output.name, previous: previous ? deskNum(previous) : 0, current: deskNum(current) });
+        if (pendingTimer) return;
+        pendingTimer = true;
+        later(0, function () {
+            pendingTimer = false;
+            var list = pendingShown;
+            pendingShown = [];
+            list.forEach(shownOutside);
+        });
+    }
+    // What is left unclaimed is i3's `workspace N` on that output (workspace_show; §5 D2, D3): N
+    // shows on its own output and the focus goes to it, on any output, not only the focused one.
+    // N living on another output (windows there, that output here): the switched output shows
+    // what it did again and N shows on its own, so two outputs never show one workspace (the
+    // 17:05 capture: DP-4 and DP-6 both on 5; the Overview included, Paul's call 58). Else N is
+    // that output's. Not while monitors come and go: screensChanged settles those. A focus change
+    // across outputs brings the pointer, as a key does (§5 A2).
+    function shownOutside(e) {
+        if (rebuilding) return;
         var names = workspace.screens.map(function (s) { return s.name; });
         if (Object.keys(lastShown).some(function (n) { return names.indexOf(n) < 0; }) ||
             names.some(function (n) { return !(n in lastShown); })) return;
-        var f = model.focused;
-        if (!f) return;
-        var fws = f.type === "ws" ? f : Tree.wsOf(f), num = deskNum(current);
-        if (num < 1 || num > NAMES.length || num === fws.num || outputOf(fws).name !== output.name) return;
-        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, output);
+        var num = e.current, output = null;
+        workspace.screens.forEach(function (s) { if (s.name === e.output) output = s; });
+        if (!output || num < 1 || num > NAMES.length || !deskOf(num)) return;
+        if (workspace.currentDesktopForScreen(output) !== deskOf(num)) return;    // switched again since
+        var m = model.workspaces[num];
+        var occupied = !!(m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(num));
+        var where = occupied ? Workspaces.outputOf(num) : Workspaces.assignedScreen(num) || output;
+        var fws = focusedWs(), from = fws ? outputOf(fws) : null;
+        if (where !== output) {
+            if (e.previous >= 1 && deskOf(e.previous)) showOn(deskOf(e.previous), output);
+            if (workspace.currentDesktopForScreen(where) !== deskOf(num)) showOn(deskOf(num), where);
+            log("SHOWN " + num + " on " + output.name + " outside kwin-i3: it lives on " + where.name + ", shown there; the focus follows");
+        } else {
+            if (!occupied) Workspaces.claimHome(num, output);
+            log("SHOWN " + num + " on " + output.name + " outside kwin-i3: the focus follows");
+        }
         var ws = wsModel(num);
         model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
-        log("SHOWN " + num + " on " + output.name + " outside kwin-i3: the focus follows");
+        wantFocus(from && from !== where ? from : null);
         rememberShown();
     }
     function screensChanged() {

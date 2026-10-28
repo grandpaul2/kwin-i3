@@ -45,7 +45,7 @@ check "Meta+2: back to b, same monitor"     poll shows Virtual-1 2
 check "the first monitor still shows 1"     poll shows Virtual-0 1
 key "Focus Left"
 key "Workspace 4"
-check "Meta+4 (empty, hidden) opens on the current, first monitor" poll shows Virtual-0 4
+check "Meta+4 (empty, hidden) opens on the focused, first monitor" poll shows Virtual-0 4
 check "and the second keeps 2"              poll shows Virtual-1 2
 key "Workspace 2"
 key "Workspace 5"
