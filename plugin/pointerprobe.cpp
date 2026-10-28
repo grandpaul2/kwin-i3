@@ -221,7 +221,9 @@ QString PointerProbe::Probe(double x, double y) const
             {QStringLiteral("inBuffer"), inBuffer},
             {QStringLiteral("inVisible"), inVisible},
             {QStringLiteral("onRing"), ring},
-            {QStringLiteral("hitTest"), w->hitTest(pos)},
+            // A closed window can't be asked: an internal one has lost its QWindow and crashes in
+            // hitTest (2026-10-28, the test KWin). findToplevel skips them too.
+            {QStringLiteral("hitTest"), !w->isDeleted() && w->hitTest(pos)},
             {QStringLiteral("decoration"), w->decoration() != nullptr},
             {QStringLiteral("acceptsInput"), w->wantsInput()},
         });
