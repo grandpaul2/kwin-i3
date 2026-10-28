@@ -1,5 +1,7 @@
 #include "hold.h"
 
+#include <utility>
+
 #include <core/output.h>
 #include <effect/effecthandler.h>
 #include <core/region.h>
@@ -580,10 +582,10 @@ void Hold::release(bool timedOut)
     }
     note(QStringLiteral("release after %1 ms, %2 held%3").arg(ms, 0, 'f', 1).arg(m_held.size())
              .arg(timedOut ? QStringLiteral(", TIMED OUT waiting for ") + late.join(QStringLiteral("; ")) : QString()));
-    // On copies: unrefWindow can delete a window, and windowDeleted then edits these lists.
-    // (The copies hold their own visible refs, so a hidden window stays drawn until the end.)
-    const QHash<EffectWindow *, Held> held = m_held;
-    m_held.clear();
+    // Taken out whole: unrefWindow can delete a window, and windowDeleted then edits these lists.
+    // One container only: a second copy would detach, and its visible refs (reset below) would
+    // not be these, which then outlived the window (review 2026-10-28: a use after free).
+    QHash<EffectWindow *, Held> held = std::exchange(m_held, {});
     for (auto it = held.cbegin(); it != held.cend(); ++it) {
         if (it->snapshot) {
             unredirect(it.key());
@@ -597,11 +599,10 @@ void Hold::release(bool timedOut)
     // Visible refs before the closed windows' refs: unrefWindow can delete the window and its
     // item, and a visible ref dying later would touch it (a window sent away, then closed, in
     // one hold).
-    QHash<EffectWindow *, Held> mutableHeld = held;
-    for (auto it = mutableHeld.begin(); it != mutableHeld.end(); ++it) {
+    for (auto it = held.begin(); it != held.end(); ++it) {
         it->visible.reset();
     }
-    for (auto it = mutableHeld.begin(); it != mutableHeld.end(); ++it) {
+    for (auto it = held.cbegin(); it != held.cend(); ++it) {
         if (it->closed) {
             it.key()->unrefWindow();
         }
@@ -794,7 +795,7 @@ Hold::Ring Hold::ringOf(EffectWindow *w) const
         return *it;
     }
     Ring r;
-    r.cls = effects->activeWindow() == w ? 0 : 2;
+    r.cls = effects->activeWindow() == w ? 0 : 1;
     return r;
 }
 

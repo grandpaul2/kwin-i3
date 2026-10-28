@@ -30,10 +30,15 @@ ResizeMode::~ResizeMode()
     QDBusConnection::sessionBus().unregisterObject(QStringLiteral("/kwini3mode"));
 }
 
+// Always told back, even when nothing changes: a helper loaded fresh (make plugin-install) while
+// the script still thought the mode on would otherwise never answer the script's "leave", and
+// kwin-i3's keys stayed ignored (review 2026-10-28).
 void ResizeMode::SetMode(const QString &mode)
 {
     if (mode == QStringLiteral("resize")) {
         enter();
+    } else if (m_mode.isEmpty()) {
+        tell();
     } else {
         leave();
     }
@@ -95,7 +100,9 @@ bool ResizeMode::keyboardKey(KeyboardKeyEvent *event)
     const bool held = press || event->state == KeyboardKeyState::Repeated;
     const quint32 code = event->nativeScanCode;
     const Qt::KeyboardModifiers mods = event->modifiers & (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
-    if (code == KEY_R && (mods & Qt::MetaModifier)) {
+    // Meta+R exactly, as i3 matches a binding's modifiers exactly (bindings.c, mods_match):
+    // Meta+Shift+R and the like go on, as in i3 to the window (here to KWin's shortcuts).
+    if (code == KEY_R && mods == Qt::MetaModifier) {
         if (press) {
             leave();
         }

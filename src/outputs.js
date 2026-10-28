@@ -17,15 +17,17 @@ var Outputs = (function () {
     function nums(obj) { return Object.keys(obj).map(Number).sort(function (a, b) { return a - b; }); }
 
     // B. An output lost (move_content): where each workspace that lived on it goes, for good.
-    // With windows, or the focused one: its first connected assigned output, else the first
-    // output; an empty unfocused one has no lasting output (i3 closes it): null.
+    // With windows, or the focused one: the first output (i3's move_content, randr.c: every
+    // workspace of a lost output to get_first_output(), the primary, assignments not read; they
+    // bring it back when its output returns, movingTo); an empty unfocused one has no lasting
+    // output (i3 closes it): null. (Until 2026-10-28 its next assigned output; Paul: follow i3.)
     // -> { num: new home or null } for every workspace whose home was the lost output.
     function homesAfterLoss(lost, st) {
         var out = {};
         nums(st.homes).forEach(function (n) {
             if (st.homes[n] !== lost) return;
             if (!st.occupied[n] && st.focused !== n) { out[n] = null; return; }
-            out[n] = firstAssigned(n, st) || st.outputs[0] || null;
+            out[n] = st.outputs[0] || null;
         });
         return out;
     }

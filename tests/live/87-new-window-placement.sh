@@ -38,7 +38,9 @@ key "Workspace 2"
 check "Meta+2: the empty 2 on the right has the focus" poll screen_is Virtual-1
 sleep 0.3
 check "the pointer stayed on the left (mouseWarping none)" cursor_on Virtual-0
-point 600 300
+# No pointer motion here: over the left's bare root with the focus on the right, a motion would
+# pull the focus to the left's workspace, as i3's check_crossing_screen_boundary (§5 B2; Paul,
+# 2026-10-28: follow i3). The pointer is already on the left, so KWin opens a there.
 m=$(mark)
 client --title a
 check "a opens on the focused workspace 2"  wait_tree 2 "H[a*]"

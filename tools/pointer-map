@@ -31,6 +31,36 @@ def call(method, sig="", *args):
     return json.loads(out.stdout)["data"][0]
 
 
+def map_rect(x, y, w, h):
+    """Map in slices of rows the probe accepts (10000 px), joined: KWin answers between them."""
+    rows_per = max(1, 10000 // max(1, w))
+    out = None
+    for y0 in range(y, y + h, rows_per):
+        part = json.loads(call("Map", "iiii", x, y0, w, min(rows_per, y + h - y0)))
+        if "error" in part:
+            sys.exit("pointer-map: " + part["error"])
+        if out is None:
+            out = part
+            continue
+        # renumber this slice's windows and presses into the first slice's tables
+        wmap = []
+        for wnd in part["windows"]:
+            names = [o["name"] for o in out["windows"]]
+            if wnd["name"] not in names:
+                out["windows"].append(wnd)
+                names.append(wnd["name"])
+            wmap.append(names.index(wnd["name"]))
+        pmap = []
+        for p in part["presses"]:
+            if p not in out["presses"]:
+                out["presses"].append(p)
+            pmap.append(out["presses"].index(p))
+        for row in part["rows"]:
+            out["rows"].append([[wmap[c[0]] if c[0] >= 0 else -1, wmap[c[1]] if c[1] >= 0 else -1,
+                                 wmap[c[2]] if c[2] >= 0 else -1, wmap[c[3]] if c[3] >= 0 else -1, pmap[c[4]]] for c in row])
+    return out
+
+
 def letter(i, base):
     return "." if i < 0 else chr(ord(base) + i) if i < 26 else "#"
 
@@ -90,13 +120,10 @@ def gaps(pad):
         print("no gap between two tiled windows on screen")
     for a, b, x, y, w, h in found:
         print("== gap between %s and %s: %d,%d %dx%d" % (a["name"], b["name"], x, y, w, h))
-        if w * h > 100000:
-            h = 100000 // w
-            print("   (first %d rows)" % h)
         if h > w:
-            show_map(json.loads(call("Map", "iiii", x, y, w, h)))
+            show_map(map_rect(x, y, w, h))
         else:
-            show_transposed(json.loads(call("Map", "iiii", x, y, w, h)))
+            show_transposed(map_rect(x, y, w, h))
         print()
 
 
@@ -130,7 +157,7 @@ def main():
         n = p["pointerNow"]
         print("the pointer now: %g,%g, hover %s, focus %s, cursor %s" % (*n["pos"], n["hover"], n["focus"], n["cursor"]))
     elif a[0] == "map" and len(a) == 5:
-        show_map(json.loads(call("Map", "iiii", *map(int, a[1:]))))
+        show_map(map_rect(*map(int, a[1:])))
     elif a[0] == "gaps":
         gaps(int(a[1]) if len(a) > 1 else 3)
     elif a[0] == "events":

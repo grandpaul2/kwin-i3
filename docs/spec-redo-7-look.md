@@ -1,6 +1,6 @@
 # Spec: redo stage 7, the look (OPEN.md item 40)
 
-**Now (2026-10-28):** Built on branch `redo-7` (on `redo-6`) as designed below. A: the script
+**Now (2026-10-28):** Built on branch `redo-7` (on `redo-6`) as designed below, except the split indicator: shown only after a split key, until the focus leaves or the split happens (Paul, OPEN.md item 44; `behaviour.md` L4), not always as B says. A: the script
 works out each shown window's class, indicator side and hidden sides at the end of a pass
 (`tellRings`, after the focus is applied) and sends `SetRing(id, class, indicator, hidden)` on a
 change; the effect keeps them by id (`Stats` lists them, so a reload of either side re-tells),

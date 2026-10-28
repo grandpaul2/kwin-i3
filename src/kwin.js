@@ -1262,7 +1262,7 @@ var KI3 = (function () {
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key] });
+        var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] });
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
@@ -1363,10 +1363,8 @@ var KI3 = (function () {
     // follows that activation. i3 looks in the closed window's own container first
     // (con_next_focused, con.c:1663): with focus following the mouse the two differ as soon as
     // the pointer has crossed another window (Paul, 2026-10-25, tests/live/79-close-focus.sh).
-    // Only there: a tiled window in a split with another window left. At a workspace's top level
-    // and for floating windows i3 takes the workspace's focus order, recency as KWin's chain is,
-    // and KWin's knows more (activations before kwin-i3 adopted a window, or before a reload;
-    // 20-rules and 25-settings went wrong when the tree's choice was taken there too).
+    // Recorded for every focused window with a parent (i3's con_next_focused for all of them,
+    // redo stage 6); before, only for a tiled window in a split, KWin's choice standing elsewhere.
     var closingNext = {};   // window id -> con
 
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
@@ -1394,7 +1392,7 @@ var KI3 = (function () {
         if (Rules.keptOut(w)) { dropWindow(w); return; }
         var floating = con.type === "floating";
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key] });
+        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
         var wantFloating = kind !== "tiling";      // "sticky" floats too (redo stage 9)
         if (wantFloating === floating) return;
         model.toggleFloating(con);
@@ -1830,9 +1828,8 @@ var KI3 = (function () {
         return vals.reduce(function (a, b) { return c.layout === o ? a + b : Math.max(a, b); }, 0);
     }
     // floating_mod_on_tiled_client: the nearest of the four edges to the press, no thirds, no
-    // limit. Of the edges with something to resize against (spec A, beyond i3, which takes the
-    // nearest and does nothing if it has no neighbour); a tie does nothing. The distance is
-    // absolute: a press in the gap is outside the frame.
+    // limit, and nothing if that edge has nothing to resize against (§9 Z1); a tie does nothing.
+    // The distance is absolute: a press in the gap is outside the frame.
     function resizeEdge(con, x, y) {
         var r = conRect(con), d = {};
         d[Tree.RIGHT] = r.x + r.width - x; d[Tree.LEFT] = x - r.x;
@@ -1937,7 +1934,8 @@ var KI3 = (function () {
     // warp (the pointer is there). Over a tiling or floating window, KWin's own focus follows
     // mouse activates it (§5 B1), a turn later (probe 91). Over an override-redirect window (a
     // popup spanning the boundary) the model's focus moves and the popup keeps the keyboard (D7).
-    // Per motion this costs one rectangle test per output; the hit test runs only at a crossing.
+    // Per motion this costs one rectangle test per output and one comparison; the hit test runs
+    // only while the focus is on another output than the pointer's.
     // Nothing while a tiling drag or resize runs (the helper holds the pointer), and until
     // screensChanged has reseeded the output seen after a change. kwin-i3's own warp needs no
     // mask: it goes to the output that has the focus, so its crossing finds nothing to change.
@@ -1955,7 +1953,13 @@ var KI3 = (function () {
         if (!s) return;
         var was = pointerOutput;
         pointerOutput = s.name;
-        if (was === null || was === s.name || drag || !focusFollowsMouse()) return;
+        if (was === null || drag || !focusFollowsMouse()) return;
+        // i3 checks on every motion over the root or a dock, not only at a crossing
+        // (handlers.c check_crossing_screen_boundary): nothing while the pointer's output holds
+        // the focus, one comparison; the hit test only when it doesn't (focus moved to another
+        // output by a key, mouseWarping off). Paul, 2026-10-28: follow i3.
+        var fws = focusedWs(), fout = fws ? outputOf(fws) : null;
+        if (fout && fout.name === s.name) return;
         var under = windowUnder(p.x, p.y, s);
         if (under && wins[id(under)]) return;           // KWin's focus follows mouse takes it (B1)
         var num = deskNum(workspace.currentDesktopForScreen(s));
@@ -2165,9 +2169,10 @@ var KI3 = (function () {
             if (!occupied) Workspaces.claimHome(n, outputOf(Tree.wsOf(con)));
         }
         model.moveToWorkspace(con, wsModel(n));
-        // A sticky window sent to N (D of the stage's spec): the push brings it to what N's
-        // output shows, as i3 does after a move.
-        if (con.sticky) pushSticky(outputOf(wsModel(n)), null);
+        // A sticky window sent to N stays on N, hidden if N is, until the next workspace shown on
+        // that output pushes it there: i3 pushes only at workspace_show, a new window, a sticky
+        // change and _NET_WM_DESKTOP (output_push_sticky_windows' five callers), not at a move
+        // (Paul, 2026-10-28: follow i3).
     }
 
     // ---- workspace commands with no default key (docs/spec-workspace-commands.md) -------------

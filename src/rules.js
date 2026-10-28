@@ -72,6 +72,22 @@ var Rules = (function () {
     var CRITERIA = ["class", "instance", "title", "window_role", "window_type", "workspace", "floating", "tiling", "all"];
     var escapeRe = function (s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
 
+    // i3's window_type values (match.c); kwin-i3's windows only ever have the first six, the
+    // rest are kept out of the tree, as Plasma's notifications are (philosophy.md).
+    var WINDOW_TYPES = ["normal", "dialog", "utility", "toolbar", "splash", "notification", "menu", "dropdown_menu", "popup_menu", "tooltip"];
+
+    // i3 compiles a criterion with PCRE2 (regex.c). JavaScript's own syntax, strict (the u flag),
+    // reads most of it; what it refuses and i3 configs commonly hold, a leading (?i) and escaped
+    // punctuation (\-, \ , \_), is read as PCRE would: the case-insensitive flag, loose escapes.
+    // Possessive quantifiers and atomic groups stay unreadable: WARN, the rule skipped.
+    function regex(src, where) {
+        try { return new RegExp(src, "u"); } catch (e) { /* PCRE-only syntax: try loosely below */ }
+        var flags = "", body = src;
+        if (/^\(\?i\)/.test(body)) { flags = "i"; body = body.slice(4); }
+        try { return new RegExp(body, flags); }
+        catch (e) { log("WARN setting " + where + ": \"" + src + "\" isn't a regular expression kwin-i3 can read (" + e.message + ")"); return null; }
+    }
+
     // `[class="^x$" title="y"]` -> { class: RegExp, title: RegExp } (`floating`, `tiling`, `all`
     // take no value); null with a logged WARN for anything else. Values are quoted, `\"` inside.
     function parseCriteria(text, where) {
@@ -87,9 +103,15 @@ var Rules = (function () {
             } else if (m[2] === undefined) {
                 log("WARN setting " + where + ": " + key + " needs a quoted value (\"" + text + "\")");
                 return null;
+            } else if (key === "window_type") {
+                // A keyword in i3, matched case-insensitively against the window's one type
+                // (match.c, strcasecmp), not a regular expression.
+                var type = m[2].toLowerCase();
+                if (!has(WINDOW_TYPES, type)) { log("WARN setting " + where + ": window_type \"" + m[2] + "\" isn't one of i3's (" + WINDOW_TYPES.join(", ") + ")"); return null; }
+                crit[key] = { test: function (v) { return v === type; } };
             } else {
-                try { crit[key] = new RegExp(m[2].replace(/\\"/g, "\""), "u"); }
-                catch (e) { log("WARN setting " + where + ": \"" + m[2] + "\" isn't a regular expression JavaScript can read (" + e.message + ")"); return null; }
+                crit[key] = regex(m[2].replace(/\\"/g, "\""), where);
+                if (!crit[key]) return null;
             }
             n++;
         }
@@ -239,7 +261,9 @@ var Rules = (function () {
         ctx = ctx || {};
         var kept = keptOut(w);
         if (kept) return kept;
-        if (w.onAllDesktops) return "sticky";
+        // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
+        // kwin.js relocate): a caption change then floated a tiled window for good (review 2026-10-28).
+        if (w.onAllDesktops && !ctx.crossing) return "sticky";
         var kind = ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {

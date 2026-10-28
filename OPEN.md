@@ -89,3 +89,32 @@ Alacritty to reach 2546x1386, released at 06:21:37.443, Alacritty's frame landin
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
 inside kwini3hold's hold or after its release. Next: `tools/capture-read` on both at the start of a
 session, a diagnosis for Paul (no fix without his go); the captures stay until then.
+
+**46. The redo's review, 2026-10-28: what's left** (9 agents, each finding checked against the
+code; the batch fixed on branch `review-fixes`: the crash in `Hold::release`, the colour index,
+strips taking KWin's window actions, the probe's `Map` stall, the 1x1 floating size, a crossing
+window floated by a caption change, resize mode stuck after a plugin reload, old title rules with
+`"`, strips with a floating ring; and 13-20 decided, written in `behaviour.md`). Left, each
+suspected or minor, none seen live:
+- **Suspected**: tiling drag switches itself off after a 500 ms unanswered poll until the next
+  reconfigure (`tilingdrag.cpp:112-120`); Move Workspace to Output pushes no sticky window
+  (`kwin.js` `moveWorkspaceToOutput`); KWin's pick after kwin-i3 moves the focused window to a
+  hidden workspace may override i3's; `shownOutside` vs `screensChanged` ordering; a stuck
+  `drag.busy` if the helper dies mid-drag; minimize when KWin's pick isn't managed; `old =
+  model.focused` read after `showOn` (`gotoWorkspace`, `shownOutside`); a close's warp via
+  `windowActivated`; `focusedOutput` null at login; `Placement.shownBefore` last entry.
+- **Hardening** (hostile or broken callers only): `HoldNew` ms and `SetDropIndicator` unbounded,
+  `holdTimeoutMs` unclamped, GL blend state not restored, `SetRing`/`SetFloating` for a window
+  already gone, `m_indicatorShown` not cleaned on destroy, `isActive` per-frame allocations, the
+  banner re-rendered at mixed scales.
+- **Settings page**: a stray `"` breaks `;` splitting for later lines; an empty-pattern row
+  dropped at the next edit; an unreadable `assign` row moved into `forWindow`; `isAssign` regex
+  unanchored; Pick a Window duplicates; a blank row lost silently; `isDefault` badge
+  order-dependent; `75 x 50` with spaces rejected; output names exact (no `primary`); one assign
+  per window (i3 allows a workspace and an output one); `Workspaces.qml` monitor slot 0 "Any".
+- **i3 differences not yet decided by a doc** (decide from `philosophy.md` and precedent when
+  reached, `feedback_decide_from_docs`): `all` popup_during_fullscreen and where the newcomer
+  opens; `unusedWorkspace` not preferring one assigned to the source; assigns matching
+  `[floating]`/`[tiling]` (never in i3); a launch-workspace step (`startup_ws`); kept-out windows
+  that switch desktops handled as outside switches.
+Next: the suspected ones first, a test-KWin probe each before any change.

@@ -220,11 +220,13 @@ const OLD_IGNORE_ROLE = ["quake"];
 function list(text) { return String(text || "").split(",").map((s) => s.trim()).filter((s) => s); }
 function oldRules(settings) {
     const out = [];
-    list(settings.floatingClass).forEach((c) => { out.push('[class="' + wholeClass(c) + '"] floating enable'); out.push('[instance="' + wholeClass(c) + '"] floating enable'); });
-    list(settings.floatingTitle).forEach((t) => out.push('[title="' + escapeRe(t) + '"] floating enable'));
+    list(settings.floatingClass).forEach((c) => { out.push('[class=' + quote(wholeClass(c)) + '] floating enable'); out.push('[instance=' + quote(wholeClass(c)) + '] floating enable'); });
+    // quote(): a value holding " (a title, "Firefox "Private" Browsing") would end the
+    // criterion early, the script rejected it, and the migration had cleared the old key.
+    list(settings.floatingTitle).forEach((t) => out.push('[title=' + quote(escapeRe(t)) + '] floating enable'));
     parseWorkspaces(settings.floatingWorkspaces).forEach((n) => out.push(workspaceRule(n)));
-    list(settings.ignoreClass).forEach((c) => { if (OLD_IGNORE_CLASS.indexOf(c) < 0) { out.push('[class="' + wholeClass(c) + '"] floating enable'); out.push('[instance="' + wholeClass(c) + '"] floating enable'); } });
-    list(settings.ignoreRole).forEach((r) => { if (OLD_IGNORE_ROLE.indexOf(r) < 0) out.push('[window_role="' + wholeClass(r) + '"] floating enable'); });
+    list(settings.ignoreClass).forEach((c) => { if (OLD_IGNORE_CLASS.indexOf(c) < 0) { out.push('[class=' + quote(wholeClass(c)) + '] floating enable'); out.push('[instance=' + quote(wholeClass(c)) + '] floating enable'); } });
+    list(settings.ignoreRole).forEach((r) => { if (OLD_IGNORE_ROLE.indexOf(r) < 0) out.push('[window_role=' + quote(wholeClass(r)) + '] floating enable'); });
     return out;
 }
 

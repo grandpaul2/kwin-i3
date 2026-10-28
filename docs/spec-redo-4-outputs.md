@@ -57,8 +57,9 @@ the desktop it last showed in the activity, else desktop 1 (M5).
 
 In `screensChanged`, for each lost output: each workspace living there gets the **first output**
 (KWin's order, `workspace.screens[0]`, primary first; i3's `get_first_output`) as its home, for
-good; an assigned one goes to its next connected assigned output if it has one (i3: the
-assignment is re-read when an output appears, C). Windows follow their workspace (the reconcile's
+good, assigned or not, as i3's `move_content` (`randr.c:860`, assignments are read only when an
+output appears, C). (Built first with an assigned one going to its next connected assigned output,
+which i3 doesn't do; changed at the review of 2026-10-28, Paul: follow i3.) Windows follow their workspace (the reconcile's
 `relocate`, as now, over KWin's own evacuation). The first output keeps showing what it showed,
 unless the focus was on a moved workspace: then that workspace is shown there (i3's
 `workspace_show(next)`; 84-unplug-focus checks exactly this today).

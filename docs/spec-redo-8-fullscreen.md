@@ -27,8 +27,9 @@ KWin keeps a fullscreen window above the panels only while it is active
 **i3 4.24** (`manage.c:424-528`), with a fullscreen window on the new window's workspace:
 
 - the new window never takes the focus (`fs != NULL, not focusing`), except:
-- **`smart`**: a transient (`transient_for`, or a group leader i3 manages) **of the fullscreen
-  window** does (`con_find_transient_for_window`);
+- **`smart`**: a transient **of the fullscreen window** does: `con_find_transient_for_window`
+  follows `transient_for` only; the group leader test only gates the branch (`manage.c:487-489`;
+  wording corrected at the review of 2026-10-28, the code was right);
 - **`leave_fullscreen`**: any such transient **ends the fullscreen** (`con_disable_fullscreen`,
   `:502-503`); nothing sets the focus, so it opens without it;
 - **`all`**: any window that floats (`want_floating`: dialogs, transients, fixed sizes, `for_window`

@@ -29,12 +29,12 @@ test("homesAfterLoss: B lost: its workspaces with windows go to the first output
     assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: null, 5: "A" });
 });
 
-test("homesAfterLoss: an assigned workspace goes to its next connected assigned output; the focused empty one keeps a home", () => {
+test("homesAfterLoss: every workspace goes to the first output, assignments not read (i3's move_content); the focused empty one keeps a home", () => {
     const s = st();
     s.outputs = ["A", "C"];                 // B lost, C here
-    assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: null, 5: "C" });
+    assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: null, 5: "A" }, "5 is assigned B then C: still A, as i3");
     s.focused = 3;
-    assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: "A", 5: "C" }, "the focused empty 3 moves (i3 shows it there)");
+    assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: "A", 5: "A" }, "the focused empty 3 moves (i3 shows it there)");
 });
 
 test("movingTo: an output appearing takes the workspaces whose first connected assigned output it is (init_ws_for_output)", () => {

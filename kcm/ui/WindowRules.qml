@@ -157,7 +157,9 @@ KCM.SimpleKCM {
             function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
             onStoredChanged: sync()
             Component.onCompleted: sync()
-            onActivated: currentValue === "none" ? parent.write(-1, -1) : currentValue === "default" ? parent.write(0, 0) : parent.write(Math.max(1, parent.w), Math.max(1, parent.h))
+            onActivated: currentValue === "none" ? parent.write(-1, -1) : currentValue === "default" ? parent.write(0, 0) : parent.write(parent.w > 0 ? parent.w : Screen.width, parent.h > 0 ? parent.h : Screen.height)
+            // A size starts from the screen's, never 1x1 (the largest size: every floating window
+            // shrunk to a pixel, review 2026-10-28).
             Accessible.name: i18nc("@label:listbox", "%1 floating window size", what)
             KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
         }
@@ -236,7 +238,6 @@ KCM.SimpleKCM {
                             { text: i18nc("@item:inlistbox window type", "utility"), value: "utility" },
                             { text: i18nc("@item:inlistbox window type", "toolbar"), value: "toolbar" },
                             { text: i18nc("@item:inlistbox window type", "splash"), value: "splash" },
-                            { text: i18nc("@item:inlistbox window type", "notification"), value: "notification" },
                         ]
                         readonly property string stored: ruleRow.rule.type || ""
                         function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }

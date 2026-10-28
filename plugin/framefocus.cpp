@@ -94,7 +94,7 @@ KWin::Window *FrameFocus::tiledFrameAt(const QPointF &pos) const
 bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 {
     if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop()
-        || w->isFullScreen() || w->decoration()) {
+        || w->isFullScreen() || w->decoration() || GapStrips::isStrip(w)) {
         return false;
     }
     // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
@@ -159,25 +159,33 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     // taken here, which would otherwise leave the bit set and eat the next release of that
     // button anywhere (review of the change, finding 5).
     m_taken &= ~event->button;
-    if (input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+    // A press this filter doesn't act on goes on to KWin, except over a strip of kwin-i3's own
+    // (gapstrips.h): KWin counts it a window (an InternalWindow is always a client) and would run
+    // its window actions on it, Meta+right resizing the strip itself (review 2026-10-28). There
+    // the press goes nowhere, as on i3's root.
+    const bool overStrip = GapStrips::isStrip(input()->pointer()->hover());
+    const auto pass = [&](const QString &why) {
         if (m_probe) {
-            m_probe->note(QStringLiteral("FrameFocus pass (pointer constrained or shortcuts inhibited)"));
+            m_probe->note(QStringLiteral("FrameFocus pass") + why + (overStrip ? QStringLiteral(", over a strip: taken") : QString()));
         }
-        return false;
+        if (overStrip) {
+            m_taken |= event->button;
+        }
+        return overStrip;
+    };
+    if (input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+        return pass(QStringLiteral(" (pointer constrained or shortcuts inhibited)"));
     }
     if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
-        if (m_probe) {
-            m_probe->note(QStringLiteral("FrameFocus pass (modifiers)"));
-        }
-        return false;
+        return pass(QStringLiteral(" (modifiers)"));
     }
     const Decision d = decide(event->position, input()->pointer()->hover(), event->button);
-    if (m_probe) {
+    if (m_probe && d.kind != Decision::Pass) {
         m_probe->note(QStringLiteral("FrameFocus ") + d.describe());
     }
     switch (d.kind) {
     case Decision::Pass:
-        return false;
+        return pass(QString());
     case Decision::Ring:
     case Decision::RingResize:
     case Decision::GapResize:

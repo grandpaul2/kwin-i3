@@ -62,7 +62,9 @@ gets its own systemd scope.
   the script on each change through a hidden action (`kwin-i3 Mode Changed`, then `State()`, as
   the drag does), and the script asks once at load, so a script reload can't lose step. Plasma's
   own shortcuts still run (i3 doesn't own them).
-- **Leaving otherwise**: the helper unloading, kwin-i3 releasing, the screen locking.
+- **Leaving otherwise**: the helper unloading, kwin-i3 releasing. (Not the screen locking: i3 has
+  no lock handling and stays in the mode, and the locker is Plasma's, `philosophy.md`; dropped at
+  the review of 2026-10-28, never built.)
 - **The four actions** keep their names and go unbound (their Meta+Ctrl keys free); a user who
   wants them flat binds them on the Keys page. Their steps stay `resizeStep` and `floatingStep`
   (i3's `10 ppt` and `10 px`).

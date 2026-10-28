@@ -16,7 +16,9 @@
 using namespace KWin;
 
 static const int s_eventsKeep = 1000;
-static const int s_mapMaxPixels = 100000;
+// Each pixel walks the stacking order a few times on KWin's main thread: 100000 stalled KWin
+// for seconds (review 2026-10-28); tools/pointer-map asks in slices of this size.
+static const int s_mapMaxPixels = 10000;
 
 static QString at(const QPointF &p);
 static QString cursorNow();
