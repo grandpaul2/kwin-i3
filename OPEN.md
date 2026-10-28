@@ -99,7 +99,8 @@ default `smart`); V3 kept (KWin's fullscreen is one output's).
 §6 (table Y: Y2, minimum sizes respected, kept: Wayland clients and KWin's tiles won't go below),
 §13 and §14 checked for gaps (2026-10-28): nothing to decide. **The redo of `behaviour.md` is
 complete.**
-The feature map's stale rows brought up to date (2026-10-28).
+The feature map's stale rows brought up to date (2026-10-28). §5 C5 decided, not built (Paul,
+2026-10-28): i3's `smart`, only the fullscreen window's own transients keep the focus.
 Next: the build plan with Paul (the agreed outline, with §6-§12's decisions placed in it; the
 settings page's rework after).
 
