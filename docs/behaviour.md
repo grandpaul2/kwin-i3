@@ -462,6 +462,16 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
 - **A GTK 4 window short of its tile** after its border was taken is asked for 0 × 0, then its tile,
   so KWin resends its bounds.
 
+**Y. Against i3** (i3 4.24 `render.c`; the rest of this section is how KWin's tiles are driven, with
+no i3 counterpart)
+
+| # | What | Here | i3 | Note |
+|---|---|---|---|---|
+| Y1 | The area tiled | the output's work area (`MaximizeArea`: panels left out) | = | i3 leaves out its docks (the bar) |
+| Y2 | A tiling window's minimum size | respected: the display bends to fit, the model keeps i3's shares; too many to fit: the largest floats (§3) | ≠ | i3 ignores size hints on tiling windows. Kept: a Wayland client draws at least its minimum whatever it is sent, and KWin's tiles won't size a window below it (§9 Z5) |
+| Y3 | A window resizing itself; KWin's pack and grow keys, a maximize | put back on the next pass | = | i3 refuses a tiling window's own geometry |
+| Y4 | A root tile kwin-i3 never placed (a desktop it hasn't shown) | keeps KWin's saved tiles | + | |
+
 ---
 
 ## 7. The frame and the look
@@ -938,9 +948,13 @@ One notification per load (app "kwin-i3"), its parts collected first:
 - **Taken keys** (`warnTakenKeys`): kwin-i3's keys another active component holds, with how to free
   them (System Settings > Shortcuts, or `make take-keys`).
 - **Layout keys** (`warnTakenKeys`): without the helper, any keyboard layout other than US, as
-  kwin-i3's position keys are set for US.
+  kwin-i3's position keys are set for US. Its part waits at most 3 s for KWin's answer, so a D-Bus call
+  that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
   becomes a problem; never set.
+
+i3 has no counterpart: it reports a config error with `i3-nagbar`; here a setting that doesn't
+parse logs a `WARN` and uses its default (§11).
 
 `Dump State` (Meta+Shift+B's capture) sends the outputs, the tree, the windows, a JSON state and the
 in-memory log to `net.local.kwini3.dump`; `tools/capture` saves it with the effect's `Events`
