@@ -54,6 +54,14 @@ public Q_SLOTS:
     // kwin-i3 says which windows it floats (docs/spec-window-modes.md, decision 5c): the set
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
+    // kwin-i3 says how a window's ring is drawn (docs/spec-redo-7-look.md A-C; i3's x.c): its
+    // colour class, "focused", "focused_inactive" or "unfocused" ("" forgets the window: KWin's
+    // active window colours it, as before the first call); the indicator side, "right" or
+    // "bottom", drawn in the class's indicator colour on a window alone in its split, else "";
+    // and the sides hidden at the output's edge (hide_edge_borders), "left right top bottom" in
+    // any mix, "" for none. Sent only when it changes; the script reads back the ids it holds
+    // from Stats ("rings") after a reload of either side.
+    void SetRing(const QString &id, const QString &cls, const QString &indicator, const QString &hidden);
     // kwin-i3 says whether tiled windows get the ring (tiledLook "frame"; not "bare", where they
     // stay borderless and rounded without it: docs/spec-tiled-look.md). Told by the script, not
     // read from kwinrc, so the ring and the tiles' frame room change in the same pass.
@@ -111,11 +119,25 @@ private:
     bool holding() const;                                   // a hold, or a new window hidden
     bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
     bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)
-    bool ringed(KWin::EffectWindow *w) const;               // drawn with a ring: framed with the tiled ring, or floatingFramed
+    bool ringed(KWin::EffectWindow *w) const;               // drawn with a ring: framed with the tiled ring, or floatingFramed; not one hidden on every side
     void updateRadius(KWin::EffectWindow *w);               // rounded while framed (docs/spec-rounded-corners.md)
     void updateRadii();
     void resetRadii();
-    QList<KWin::RectF> ring(const KWin::RectF &frame, double scale, double radius) const;
+    // One window's ring as kwin-i3 last said (SetRing); without an entry, by KWin's active window.
+    enum Side { Left = 1, Right = 2, Top = 4, Bottom = 8 };
+    struct Ring
+    {
+        int cls = 0;                                        // 0 focused, 1 focused_inactive, 2 unfocused
+        int indicator = 0;                                  // 0 none, else the Side (Right or Bottom)
+        int hidden = 0;                                     // Sides not drawn
+    };
+    struct Bar
+    {
+        KWin::RectF rect;
+        bool indicator = false;                             // drawn in the class's indicator colour
+    };
+    Ring ringOf(KWin::EffectWindow *w) const;
+    QList<Bar> ring(const KWin::RectF &frame, double scale, double radius, const Ring &how) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
@@ -143,12 +165,15 @@ private:
     std::unique_ptr<KWin::GLTexture> m_banner;               // the banner's text, drawn once per scale
     double m_bannerScale = 0;
     QSize m_bannerSize;
-    QColor m_frameActive{0x4c, 0x78, 0x99}, m_frameInactive{0x33, 0x33, 0x33};
-    QColor m_floatingActive{0x4d, 0x72, 0x54}, m_floatingInactive{0x33, 0x33, 0x33};
+    // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
+    // means the class's frame colour (the form's empty value).
+    QColor m_frameColour[3]{QColor(0x4c, 0x78, 0x99), QColor(0x5f, 0x6b, 0x78), QColor(0x33, 0x33, 0x33)};
+    QColor m_indicatorColour[3]{QColor(0x3d, 0xae, 0xe9), QColor(), QColor()};
     bool m_frameOnFloating = false;
     bool m_roundedCorners = true;
     bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
+    QHash<QString, Ring> m_rings;                           // SetRing, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
