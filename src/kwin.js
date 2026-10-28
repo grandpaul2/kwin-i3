@@ -1199,13 +1199,24 @@ var KI3 = (function () {
         var a = workspace.activeWindow;
         return !!(a && a.modal && transientOf(a, w));
     }
-    function keepsFullscreenFocus(w, ws, fresh) {
+    // i3's popup_during_fullscreen (manage.c:424-528; §10 V6, redo stage 8): `smart`, the
+    // fullscreen window's own transient (its transientFor chain reaches it) takes the focus;
+    // `ignore`, nothing does; `leave_fullscreen`, a transient of any window ends the fullscreen
+    // instead (con_disable_fullscreen) and opens without the focus; `all`, a floating newcomer
+    // (`kind`, stage 3's kinds: i3's want_floating) takes it.
+    function keepsFullscreenFocus(w, ws, fresh, kind) {
         // A newcomer that opens fullscreen itself (mpv --fs, a game) takes the workspace's
         // fullscreen over, as in i3 (manage.c: con_toggle_fullscreen, fs = NULL): no hand-back.
         if (!fresh || !activatedNow(w) || w.fullScreen) return null;
         var fs = model.fullscreenOn(ws);
         if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
-        if (transientOf(w, wins[fs.win])) return null;
+        var how = Settings.get("popupDuringFullscreen");
+        if (how === "smart" && transientOf(w, wins[fs.win])) return null;
+        if (how === "all" && kind === "floating") return null;
+        if (how === "leave_fullscreen" && w.transient) {
+            log("FULLSCREEN " + wins[fs.win].caption + ": ends for " + w.caption + " (leave_fullscreen)");
+            wins[fs.win].fullScreen = false;    // fullScreenChanged then clears the tree's flag
+        }
         if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
         return wins[fs.win];
     }
@@ -1235,7 +1246,7 @@ var KI3 = (function () {
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
-        var fs = keepsFullscreenFocus(w, ws, fresh);
+        var fs = keepsFullscreenFocus(w, ws, fresh, kind);
         if (kind === "floating") { model.openFloating(key, ws); setFloatingLook(w, true); if (fresh) clampFloating(w); }
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);

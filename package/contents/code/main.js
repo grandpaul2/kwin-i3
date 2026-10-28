@@ -54,6 +54,8 @@ var Settings = (function () {
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
+        // i3's popup_during_fullscreen (§10 V6; redo stage 8): what a new window may do on a workspace with a fullscreen window.
+        popupDuringFullscreen: { type: "choice", def: "smart", choices: ["smart", "ignore", "leave_fullscreen", "all"] },
         // i3's tiling_drag (§9 G3): which presses start the tiling drag; read by the helper from kwinrc.
         tilingDrag: { type: "choice", def: "modifier titlebar", choices: ["off", "modifier", "titlebar", "modifier titlebar"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
@@ -3024,13 +3026,24 @@ var KI3 = (function () {
         var a = workspace.activeWindow;
         return !!(a && a.modal && transientOf(a, w));
     }
-    function keepsFullscreenFocus(w, ws, fresh) {
+    // i3's popup_during_fullscreen (manage.c:424-528; §10 V6, redo stage 8): `smart`, the
+    // fullscreen window's own transient (its transientFor chain reaches it) takes the focus;
+    // `ignore`, nothing does; `leave_fullscreen`, a transient of any window ends the fullscreen
+    // instead (con_disable_fullscreen) and opens without the focus; `all`, a floating newcomer
+    // (`kind`, stage 3's kinds: i3's want_floating) takes it.
+    function keepsFullscreenFocus(w, ws, fresh, kind) {
         // A newcomer that opens fullscreen itself (mpv --fs, a game) takes the workspace's
         // fullscreen over, as in i3 (manage.c: con_toggle_fullscreen, fs = NULL): no hand-back.
         if (!fresh || !activatedNow(w) || w.fullScreen) return null;
         var fs = model.fullscreenOn(ws);
         if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
-        if (transientOf(w, wins[fs.win])) return null;
+        var how = Settings.get("popupDuringFullscreen");
+        if (how === "smart" && transientOf(w, wins[fs.win])) return null;
+        if (how === "all" && kind === "floating") return null;
+        if (how === "leave_fullscreen" && w.transient) {
+            log("FULLSCREEN " + wins[fs.win].caption + ": ends for " + w.caption + " (leave_fullscreen)");
+            wins[fs.win].fullScreen = false;    // fullScreenChanged then clears the tree's flag
+        }
         if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
         return wins[fs.win];
     }
@@ -3060,7 +3073,7 @@ var KI3 = (function () {
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
-        var fs = keepsFullscreenFocus(w, ws, fresh);
+        var fs = keepsFullscreenFocus(w, ws, fresh, kind);
         if (kind === "floating") { model.openFloating(key, ws); setFloatingLook(w, true); if (fresh) clampFloating(w); }
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);

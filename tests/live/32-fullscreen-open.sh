@@ -133,6 +133,55 @@ check "after the reload z is still active"  active_is z
 # of the row (still in the tree, still fullscreen; it joins the tiles there when it ends).
 check "1 is as it was, p last"              wait_tree 1 "H[c e p!]"
 
+# i3's popup_during_fullscreen (§10 V6, redo stage 8), on workspace 5: for each value, f goes
+# fullscreen (its own dialog 3 s after it opens), o opens behind it (its dialog 1 s after).
+# o's dialog: smart and ignore leave the focus with f; leave_fullscreen ends f's fullscreen
+# (the dialog opens without the focus); all gives the dialog (floating) the focus. Then f's own
+# dialog: smart and all focus it; ignore would not, but it is modal, and KWin activates a
+# window's modal dialog in its place (activation.cpp:373, findModal: kept, ≠ i3, §5 C5); under
+# leave_fullscreen f is no longer fullscreen by then, so it opens as any dialog.
+set_key() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
+reload_settings() { local m; m=$(mark); key "Reload Settings"; wait_log '^.{9}SETTINGS ' "$m"; }
+slow_poll() { WAIT=10 poll "$@"; }
+fs_is() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.fullScreen); })")" == "$2" ]]; }
+key "Workspace 5"
+for v in smart ignore leave_fullscreen all; do
+    set_key popupDuringFullscreen $v; reload_settings
+    client --title "f$v" --color blue --dialog --dialog-delay 6
+    check "$v: f opens on 5"                wait_tree 5 "H[f$v*]"
+    on "f$v" 'w.fullScreen = true;'
+    check "  f fullscreen"                  wait_tree 5 "H[f$v*!]"
+    client --title "o$v" --dialog --dialog-delay 1
+    check "  o opens behind f, f keeps the focus" poll eval '[[ "$(tree 5)" == *"o$v"* ]] && active_is "f$v"'
+    check "  o's dialog opens"              poll _has_window "o$v dialog"
+    sleep 0.3
+    case $v in
+        smart|ignore) check "  $v: f keeps the focus over it" poll active_is "f$v"
+                      check "    f still fullscreen"  fs_is "f$v" true ;;
+        # kwin-i3 hands the focus back to f (i3: the dialog opens without it); then the GTK dialog's
+        # own activation request (xdg-activation, as GTK presents a dialog) is honoured by KWin now
+        # that no fullscreen window protects the focus (activation.cpp allowWindowActivation), as
+        # i3's focus_on_window_activation smart would honour it: the dialog ends up focused.
+        leave_fullscreen) check "  leave_fullscreen: f leaves fullscreen" poll fs_is "f$v" false
+                      check "    f got the focus back, then the dialog's own request took it" wait_log "^.{9}FULLSCREEN f$v: keeps the focus over o$v dialog"
+                      check "    the dialog focused"  poll active_is "o$v dialog" ;;
+        all)          check "  all: the dialog (floating) takes the focus" poll active_is "o$v dialog"
+                      check "    f still fullscreen"  fs_is "f$v" true ;;
+    esac
+    kclose "o$v dialog"
+    check "  f's own dialog opens"          slow_poll _has_window "f$v dialog"
+    sleep 0.3
+    case $v in
+        smart|all)    check "  $v: f's own dialog takes the focus" poll active_is "f$v dialog" ;;
+        ignore)       check "  ignore: f's own modal dialog takes it all the same (KWin's modal rule)" poll active_is "f$v dialog" ;;
+        leave_fullscreen) check "  (f not fullscreen: its dialog focused as any)" poll active_is "f$v dialog" ;;
+    esac
+    kclose "f$v dialog"; kclose "o$v"; kclose "f$v"
+    check "  5 empty again"                 wait_tree 5 "H[]*"
+done
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key popupDuringFullscreen --delete; reload_settings
+key "Workspace 1"
+
 # A fullscreen window KWin keeps in its tile (no rebuild since, as Firefox alone on its
 # workspace) and a padding change: KWin's Tile::setPadding resizes every window in the tile,
 # fullscreen or not, and the refit skipped fullscreen windows, so it stayed fullscreen at its

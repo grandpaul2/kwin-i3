@@ -33,6 +33,8 @@ var Settings = (function () {
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
+        // i3's popup_during_fullscreen (§10 V6; redo stage 8): what a new window may do on a workspace with a fullscreen window.
+        popupDuringFullscreen: { type: "choice", def: "smart", choices: ["smart", "ignore", "leave_fullscreen", "all"] },
         // i3's tiling_drag (§9 G3): which presses start the tiling drag; read by the helper from kwinrc.
         tilingDrag: { type: "choice", def: "modifier titlebar", choices: ["off", "modifier", "titlebar", "modifier titlebar"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
