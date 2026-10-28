@@ -127,3 +127,8 @@ then shows it at the bottom. With `hideEdgeBorders=smart`, a lone window has no 
 
 Live and Paul's "it works": L3, L4, L6, L11, N2 rewritten as built; §11's settings table gains the
 new keys, loses the two floating colours.
+
+## Paul's review (2026-10-28)
+
+67. The indicator shows on a window alone on its workspace too, as i3 (most of Paul's focused
+    windows will carry it); seen on screen when the colours are confirmed.
