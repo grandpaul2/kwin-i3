@@ -48,7 +48,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; its first full `make test` that way is the
 next session's); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules: all ten stages built, stage 1 live, stage 2 merged, the rest going live one at a time** (Paul, 2026-10-27/28;
+**40. i3's rules: all ten stages built, stages 1-2 live, the rest going live one at a time** (Paul, 2026-10-27/28;
 from the 17:05 capture: Prism Launcher's modal dialog and KWin took Prism to the other monitor;
 stage 1 closed it, and the capture is deleted). The build plan is `docs/spec-i3-redo-build.md` (each
 stage's spec `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Built,
@@ -67,9 +67,8 @@ replugged monitor's workspace stays, a press on the ring resizes); 62 from stage
 frame in the tiled colours); KWin's own: a window's modal dialog takes the focus whatever
 `popupDuringFullscreen` says (`activation.cpp findModal`, §5 C5), and a desktops change puts a
 window first in KWin's focus chain (40). **Stage 1 done 2026-10-28: `redo-1` merged, live, and
-Paul's "it works". `redo-2` merged into main 2026-10-28 (Paul's go;
-`make unit` and its ten scenarios green on main), not yet live. Next: Paul's go for the reload (no
-plugin change), then his live check (stage 2's spec); then the rest the same way (each
+Paul's "it works". `redo-2` merged into main and live 2026-10-28 (Paul's
+go; `make unit` and its ten scenarios green on main). Next: Paul's live check (stage 2's spec); then the rest the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's
