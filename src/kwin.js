@@ -1021,10 +1021,9 @@ var KI3 = (function () {
     }
 
     // ---- the ring's colour class, indicator and hidden sides (§7 L3, L4, L6; redo stage 7) ------
-    // i3's x.c x_draw_decoration: `focused` for the focused window, `focused_inactive` for its
-    // parent's last focus (the other output's focused window, the last focus of a split the focus
-    // isn't in), `unfocused` otherwise; i3 wraps a floating window in a container of its own, so it
-    // is always that container's last focus: focused_inactive unless focused. The indicator: the
+    // i3's x.c x_draw_decoration: `focused` for the focused window, `unfocused` otherwise. i3's
+    // `focused_inactive` (a parent's last focus: the other output's focused window) is left out,
+    // as unfocused (Paul, 2026-10-28: a third colour confused more than it told). The indicator: the
     // side where the next window opens, on a tiling window alone in its parent (x.c:585-599), the
     // workspace counting as a parent. Hidden sides: i3's hide_edge_borders (con.c
     // con_border_style_rect_without_title): smart, and smart_no_gaps with no outer gap, take a lone
@@ -1040,9 +1039,7 @@ var KI3 = (function () {
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
         function cls(c) {
-            if (c === model.focused) return "focused";
-            if (c.type === "floating" || c.parent.focus[0] === c) return "focused_inactive";
-            return "unfocused";
+            return c === model.focused ? "focused" : "unfocused";
         }
         function send(key, c, ind, hidden) {
             var v = c + "|" + ind + "|" + hidden;
@@ -2411,7 +2408,7 @@ var KI3 = (function () {
         if (t.length) log("RULES old ignore entries read as floating: " + t.join(", "));
     }
     // The floating ring's own colours went with redo stage 7 (§7 L11): a floating ring uses the
-    // three colour classes. Said once, at load, to a user who had set them.
+    // colour classes. Said once, at load, to a user who had set them.
     function checkOldColours() {
         var set = ["frameFloatingActive", "frameFloatingInactive"].filter(function (k) { return String(readConfig(k, "")).trim() !== ""; });
         reportOpen();

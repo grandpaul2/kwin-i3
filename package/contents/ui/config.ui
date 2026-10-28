@@ -531,7 +531,7 @@
      <item row="17" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
-        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. Colours are #rrggbb; i3's three classes: focused, focused_inactive, unfocused.</string>
+        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. Colours are #rrggbb; i3's classes focused and unfocused.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignHCenter</set>
@@ -630,26 +630,6 @@
        </property>
       </widget>
      </item>
-     <item row="21" column="0">
-      <widget class="QLabel" name="frameFocusedInactiveLabel">
-       <property name="text">
-        <string>Last-focused tiled window of another monitor or split:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameFocusedInactive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="21" column="1">
-      <widget class="QLineEdit" name="kcfg_frameFocusedInactive">
-       <property name="placeholderText">
-        <string>#5f6b78</string>
-       </property>
-       <property name="toolTip">
-        <string>i3's focused_inactive: the window that has the focus on the other monitor, or had it last in a split the focus has left.</string>
-       </property>
-      </widget>
-     </item>
      <item row="23" column="0">
       <widget class="QLabel" name="frameIndicatorActiveLabel">
        <property name="text">
@@ -667,26 +647,6 @@
        </property>
        <property name="toolTip">
         <string>i3's indicator: on a window alone in its split, the side where the next window opens (right, or bottom in a vertical split) in this colour. Empty: the frame's colour.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="24" column="0">
-      <widget class="QLabel" name="frameIndicatorFocusedInactiveLabel">
-       <property name="text">
-        <string>Next-window side, last-focused:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameIndicatorFocusedInactive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="24" column="1">
-      <widget class="QLineEdit" name="kcfg_frameIndicatorFocusedInactive">
-       <property name="placeholderText">
-        <string>as the frame</string>
-       </property>
-       <property name="toolTip">
-        <string>The indicator on a last-focused window of another monitor or split. Empty: that frame colour.</string>
        </property>
       </widget>
      </item>

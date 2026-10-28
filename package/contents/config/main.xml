@@ -113,17 +113,11 @@
     <entry name="frameActive" type="String">
       <default>#4c7899</default>
     </entry>
-    <entry name="frameFocusedInactive" type="String">
-      <default>#5f6b78</default>
-    </entry>
     <entry name="frameInactive" type="String">
       <default>#333333</default>
     </entry>
     <entry name="frameIndicatorActive" type="String">
       <default>#3daee9</default>
-    </entry>
-    <entry name="frameIndicatorFocusedInactive" type="String">
-      <default></default>
     </entry>
     <entry name="frameIndicatorInactive" type="String">
       <default></default>

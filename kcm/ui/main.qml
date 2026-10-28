@@ -284,7 +284,7 @@ KCM.SimpleKCM {
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
         }
         // A floating window's frame uses the tiled colours (redo stage 7, §7 L11): the checkbox
-        // alone. The three colour classes and the indicator colours, hide_edge_borders, the
+        // alone. The colour classes and the indicator colours, hide_edge_borders, the
         // per-side and per-workspace gaps and smart_gaps reach this page with redo stage 10.
         QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Floating windows:")

@@ -139,9 +139,8 @@ void Hold::loadConfig()
         return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;    // opaque whatever it says
     };
     m_frameColour[0] = colour("frameActive", QColor(0x4c, 0x78, 0x99));
-    m_frameColour[1] = colour("frameFocusedInactive", QColor(0x5f, 0x6b, 0x78));
-    m_frameColour[2] = colour("frameInactive", QColor(0x33, 0x33, 0x33));
-    // An indicator colour left empty (the default for the two inactive classes) is its class's
+    m_frameColour[1] = colour("frameInactive", QColor(0x33, 0x33, 0x33));
+    // An indicator colour left empty (the default for the unfocused class) is its class's
     // frame colour, read at paint time: invalid here.
     const auto optColour = [&group](const char *key, const QColor &def) {
         const QString text = group.readEntry(key, def.isValid() ? def.name() : QString());
@@ -149,8 +148,7 @@ void Hold::loadConfig()
         return text.isEmpty() ? QColor() : c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;
     };
     m_indicatorColour[0] = optColour("frameIndicatorActive", QColor(0x3d, 0xae, 0xe9));
-    m_indicatorColour[1] = optColour("frameIndicatorFocusedInactive", QColor());
-    m_indicatorColour[2] = optColour("frameIndicatorInactive", QColor());
+    m_indicatorColour[1] = optColour("frameIndicatorInactive", QColor());
     m_frameOnFloating = group.readEntry("frameOnFloating", false);
     m_roundedCorners = group.readEntry("roundedCorners", true);
     updateRadii();
@@ -790,7 +788,7 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
         m_rings.remove(id);
     } else {
         Ring r;
-        r.cls = cls == QLatin1String("focused") ? 0 : cls == QLatin1String("focused_inactive") ? 1 : 2;
+        r.cls = cls == QLatin1String("focused") ? 0 : 1;
         r.indicator = indicator == QLatin1String("right") ? Right : indicator == QLatin1String("bottom") ? Bottom : 0;
         const QStringList sides = hidden.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (const QString &s : sides) {

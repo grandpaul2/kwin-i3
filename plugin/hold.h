@@ -55,7 +55,7 @@ public Q_SLOTS:
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
     // kwin-i3 says how a window's ring is drawn (docs/spec-redo-7-look.md A-C; i3's x.c): its
-    // colour class, "focused", "focused_inactive" or "unfocused" ("" forgets the window: KWin's
+    // colour class, "focused" or "unfocused" ("" forgets the window: KWin's
     // active window colours it, as before the first call); the indicator side, "right" or
     // "bottom", drawn in the class's indicator colour on a window alone in its split, else "";
     // and the sides hidden at the output's edge (hide_edge_borders), "left right top bottom" in
@@ -127,7 +127,7 @@ private:
     enum Side { Left = 1, Right = 2, Top = 4, Bottom = 8 };
     struct Ring
     {
-        int cls = 0;                                        // 0 focused, 1 focused_inactive, 2 unfocused
+        int cls = 0;                                        // 0 focused, 1 unfocused
         int indicator = 0;                                  // 0 none, else the Side (Right or Bottom)
         int hidden = 0;                                     // Sides not drawn
     };
@@ -167,8 +167,8 @@ private:
     QSize m_bannerSize;
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the form's empty value).
-    QColor m_frameColour[3]{QColor(0x4c, 0x78, 0x99), QColor(0x5f, 0x6b, 0x78), QColor(0x33, 0x33, 0x33)};
-    QColor m_indicatorColour[3]{QColor(0x3d, 0xae, 0xe9), QColor(), QColor()};
+    QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};
+    QColor m_indicatorColour[2]{QColor(0x3d, 0xae, 0xe9), QColor()};
     bool m_frameOnFloating = false;
     bool m_roundedCorners = true;
     bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
