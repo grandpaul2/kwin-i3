@@ -105,7 +105,18 @@ monitor and stay there when it's back; the returning monitor shows a free worksp
 like `3=DP-6` in `workspaceOutputs`, workspace 3 goes back to DP-6 when it returns. Focus after
 either: on the first monitor.
 
+**After a night with the monitors asleep** (call 62): Meta+Shift+B in the morning; the capture's
+log shows whether outputs came and went (a DisplayPort monitor that disconnects when it sleeps
+would count as an unplug every night). If they do, `workspaceOutputs` assignments are the answer.
+
 ## Done when
 
 Live and Paul's "it works": W3, W5, M3, M4, M5, D5 rewritten as built; §11's `workspaceOutputs`
 row gives the list form; `plan.md` decision 10's "Verified" line kept.
+
+## Paul's review (2026-10-28)
+
+61. Defaults stay i3's (no assignments): a monitor that goes away keeps its workspaces on the first
+    one until assigned; Paul's own layout can be assigned in kwinrc for today's feel.
+62. The overnight check above goes into the live check (two days of logs showed no disconnect, not
+    proof).
