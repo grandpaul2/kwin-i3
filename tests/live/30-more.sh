@@ -13,12 +13,15 @@ client --title b
 check "KRuler floats (a default rule)"      wait_tree 1 "H[a b*] ~ruler"
 check "and keeps its own size"              geom_is ruler "440,196 400x328"
 kclose ruler
-# a managed window made sticky (on all desktops) leaves the tree; back on one desktop, it returns
+# a managed window made sticky (on all desktops) floats, in the tree (§3 R3, X4, redo stage 9);
+# back on one desktop it stays floating there; Floating Toggle tiles it again
 on b 'w.onAllDesktops = true;'
-check "made sticky: out of the tree"        wait_tree 1 "H[a*]"
+check "made sticky: floating, focused"      wait_tree 1 "H[a] ~b*"
 check "a fills the screen"                  geom_is a "0,0 1280x720"
 on b 'w.desktops = [workspace.desktops[0]];'
-check "on one desktop again: back, focused" wait_tree 1 "H[a b*]"
+check "on one desktop again: still floating" wait_tree 1 "H[a] ~b*"
+key "Floating Toggle"
+check "tiled again: back, focused"          wait_tree 1 "H[a b*]"
 
 # up and down
 on b 'workspace.activeWindow = w;'
