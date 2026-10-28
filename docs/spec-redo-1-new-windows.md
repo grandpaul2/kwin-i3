@@ -2,12 +2,12 @@
 
 **Now (2026-10-28):** Built on branch `redo-1` as designed below (`src/placement.js`, `placeNew`,
 `shownOutside`, `holdNew` in `src/kwin.js`; `HoldNew` in `plugin/hold.cpp`; scenario 87); `make unit`
-and the scenarios green; `behaviour.md`'s rows rewritten. Waiting for Paul's go to merge and reload,
-then his live check below.
+and the scenarios green; `behaviour.md`'s rows rewritten. **Done 2026-10-28**: merged, live, and Paul's "it works" on the
+live check below; the 17:05 capture deleted.
 
 **The rows**: `behaviour.md` §5 C1, C2, C3, C5, D2, D3 and §4 S4, all decided (Paul, 2026-10-27/28).
-This stage is the 17:05 capture's (`~/.local/state/kwin-i3/captures/2026-10-27_170539.003`, kept
-until it is live): Prism Launcher's "Please wait…" dialog opened while focus was on the empty
+This stage is the 17:05 capture's (`~/.local/state/kwin-i3/captures/2026-10-27_170539.003`, deleted
+once it went live): Prism Launcher's "Please wait…" dialog opened while focus was on the empty
 workspace 5 of the other output, two outputs showed workspace 5, and Prism moved output.
 
 ## What happens today, from the sources
