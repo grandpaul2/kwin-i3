@@ -10,8 +10,9 @@
 # C3); (3) a desktop switched from outside on any output is `workspace N`: N shows on its own
 # output and takes the focus (D2, D3); (4) another app's dialog over a fullscreen window opens
 # behind it (C5). Virtual-0 at x 0, Virtual-1 at x 1280; login numbering: 1 left, 2 right. Focus
-# follows the mouse (the test KWin's policy), so the pointer is parked over empty workspaces. The
-# effect's frame insets every tiled window by 1 px.
+# follows the mouse (the test KWin's policy), and since stage 2 a crossing moves the focus with the
+# pointer, so part 1 turns the warp off to pull the two apart. The effect's frame insets every
+# tiled window by 1 px.
 source "$(dirname "$0")/lib.sh"
 shows() { [[ "$(kjs "workspace.screens.forEach(function (s) { if (s.name === \"$1\") log(workspace.desktops.indexOf(workspace.currentDesktopForScreen(s)) + 1); })")" == "$2" ]]; }
 screen_is() { [[ "$(kjs 'log(workspace.activeScreen.name)')" == "$1" ]]; }
@@ -25,13 +26,19 @@ switch_outside() { kjs "workspace.setCurrentDesktopForScreen(workspace.desktops[
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
-# (1) C1: the focus on the right monitor's empty workspace 2, the pointer on the left monitor's
-# empty workspace 1 (KWin's active output follows it): the new window goes to 2.
+# (1) C1: the focus on the right monitor's empty workspace 2, KWin's active output (the pointer's)
+# the left one. With mouseWarping output (and stage 2's crossing) focus and pointer never come
+# apart, so mouseWarping none for this part: Meta+2 moves the focus without the pointer, and a
+# motion on the left makes KWin's active output the left one again (Switch to Screen had moved it).
+set_key() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
+reload_with() { local m; m=$(mark); set_key "$1" "$2"; key "Reload Settings"; wait_log "^.{9}SETTINGS $1\$" "$m"; }
+check "mouseWarping none, for this part"    reload_with mouseWarping none
+point 640 360
 key "Workspace 2"
 check "Meta+2: the empty 2 on the right has the focus" poll screen_is Virtual-1
-check "the pointer went with it"            poll cursor_on Virtual-1
-point 640 360
-check "the pointer is back on the left monitor" poll cursor_on Virtual-0
+sleep 0.3
+check "the pointer stayed on the left (mouseWarping none)" cursor_on Virtual-0
+point 600 300
 m=$(mark)
 client --title a
 check "a opens on the focused workspace 2"  wait_tree 2 "H[a*]"
@@ -41,6 +48,7 @@ check "the left monitor still shows 1"      poll shows Virtual-0 1
 check "the right still shows 2"             poll shows Virtual-1 2
 check "a has the focus"                     poll active_is a
 check "it was moved as a newcomer (the log says why)" wait_log 'ADD a tile ws 2 \(focused\)' "$m"
+check "mouseWarping output again"           reload_with mouseWarping output
 
 # (2) C2, C3, the capture: m with a modal dialog on the left; the focus (and the pointer) on the
 # right monitor's workspace when the dialog opens. KWin gives the dialog the right monitor's

@@ -9,6 +9,7 @@ active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.cap
 cursor_x() { kjs 'log(Math.round(workspace.cursorPos.x))'; }
 cursor_right() { (( $(cursor_x) >= 1280 )); }
 cursor_left() { (( $(cursor_x) < 1280 )); }
+cursor_x_is() { [[ "$(cursor_x)" == "$1" ]]; }
 steady_right() { local i; for i in 1 2 3 4; do cursor_right || return 1; sleep 0.2; done; }
 
 load_kwin_i3
@@ -18,28 +19,30 @@ client --title a
 client --title b
 check "a, b on the left monitor"            wait_tree 1 "H[a b*]"
 
-# 1. The pointer parked on the right monitor (empty: nothing to focus there); a panel popup opens
-#    and closes there. Focus never left b: the pointer stays.
+# 1. The pointer parked on the right monitor's empty workspace: i3's crossing (redo stage 2, §5
+#    B2) gives the focus to that workspace, nothing to activate there, and the pointer stays (no
+#    warp: it is there already). A panel popup opens and closes there: the focus stays on the
+#    workspace, the pointer stays.
 point 1900 600
-sleep 0.3
-check "b keeps the focus (nothing under the pointer)" active_is b
+check "the focus crossed to the empty workspace: no window is active" poll active_is ""
+check "the pointer stayed on the right monitor (no warp: it was there)" steady_right
 python3 -I "$root/tools/popupclient.py" --title pop --geometry 300x200+1700+400 >/dev/null 2>&1 & pid=$!
 poll _has_window pop
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "pop") workspace.activeWindow = w; });' >/dev/null
 check "the popup is active"                 poll active_is pop
 kill "$pid"; poll _no_window pop
-check "closed: b has the focus again"       poll active_is b
+check "closed: no window is active again (the focus is the empty workspace)" poll active_is ""
 check "the pointer stayed on the right monitor" steady_right
 
-# 2. The focused window closed by its key, the pointer still on the right: focus goes to a, on the
-#    same monitor as before, so the pointer stays (i3 compares the monitors, not the pointer's).
+# 2. A window on the left closes while the focus and the pointer are on the right: nothing jumps
+#    (i3's close sets no warp).
 m=$(mark)
-key "Close"
-check "b closed: a has the focus"           wait_tree 1 "H[a*]" "$m"
+kclose b
+check "b closed: a is left alone"           wait_tree 1 "H[a]" "$m"
 check "the pointer stayed again"            steady_right
 
-# 3. Focus that does change monitor still brings the pointer: Meta+2 (workspace 2, right), then
-#    Meta+1 back to the left.
+# 3. Focus that does change monitor brings the pointer when it isn't there: Meta+2 (workspace 2,
+#    right), then Meta+1 back to the left.
 point 1000 300
 check "hovering a"                          poll active_is a
 key "Workspace 2"
@@ -57,6 +60,7 @@ client --title d
 check "c, d on the right"                   wait_tree 2 "H[c d*]"
 point 1500 300
 check "hovering c focuses it"               poll active_is c
+check "the pointer didn't move (an activation on the output it is on: no warp)" cursor_x_is 1500
 point 300 300
 check "hovering a (left) focuses it"        poll active_is a
 point 1500 300

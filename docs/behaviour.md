@@ -323,12 +323,11 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
 | A1 | A key moves focus on the same output (Meta+arrows, Meta+Space, Meta+N visible there) | kwin-i3 | the tree's choice (§2, §4) | stays | = | |
-| A2 | A key moves focus to another output (an edge, Meta+N on the other, focus/move workspace to output) | kwin-i3 | the workspace's fullscreen window, else its last focus | to the focused window's centre; an empty workspace: the output's centre | ≠ | kwin-i3 moves the pointer when the **focus** changed output; i3 when the target isn't the output the **pointer** is on (`x.c` `x_push_changes`). Same result while focus and pointer agree; when B2 has split them, neither brings the pointer back. **Decided, not built** (Paul, 2026-10-27): i3's rule (`workspace.c`, `x.c`): whenever focus moves to a workspace on another output (a key, the Overview or a pager, an activation), the pointer goes to the new focus's centre unless it is already on that output. `b57b5dc`'s "only from keys, as in i3" was a near miss |
-| A3 | A key that doesn't move focus (split, resize, layout) while a window kept out of the tree has the keyboard | — | that window keeps it | stays | = for override-redirect; ≠ for the floating ones (§3) | An override-redirect window keeps the keyboard in i3 too (dmenu). A floating one would be the model's focus, and A1 would apply (`docs/spec-windows-placing-themselves.md`) |
-| A4 | A key that moves focus while such a window has the keyboard | kwin-i3 | as A1/A2 | as A1/A2 | ≠ | |
-| A5 | Meta+F, Meta+Shift+Q | KWin | unchanged; acts on KWin's active window, whatever its kind | stays | ≠ | i3 acts on its focused container; here also on a window kept out of the tree (`docs/spec-own-keys.md`) With A3-A5 decided, KWin's active window is the focus's window whenever these keys act: = once built |
-
-**A3-A5 decided, not built** (Paul, 2026-10-27): while an override-redirect window has the keyboard (KRunner, a menu), kwin-i3's keys do nothing, as i3's bindings don't fire while dmenu holds the keyboard; Escape first. Reverses "a focus key takes the keyboard from them" (`docs/spec-window-words.md`, `docs/spec-windows-placing-themselves.md`). The floating kinds (§3) are the focused window, and every key acts on them.
+| A2 | A key moves focus to another output (an edge, Meta+N on the other, focus/move workspace to output); also an outside desktop switch (D2) or an activation (Alt+Tab, the task manager, an app) | kwin-i3 | the workspace's fullscreen window, else its last focus | to the focused window's centre, an empty workspace's output centre, **unless the pointer is on that output already**; `mouseWarping none` (§11 N7): never | = | i3's `x_set_warp_to` from `workspace_show` and the focus commands, `x_push_changes` warping only if the pointer isn't there (`workspace.c`, `x.c`). Never from a close (`applyFocus`'s `byKey`; the start menu closing sent the pointer across, Paul, 2026-10-25). Built 2026-10-28 (redo stage 2); before, from keys only, whenever the focus changed output |
+| A3 | Any key of kwin-i3's while an **override-redirect** window has the keyboard (KRunner, a menu, a panel popup, a notification; §3 `i3Kind`) | — | nothing: the key does nothing (`KEY … ignored` in the log); Escape first | stays | = | i3's bindings don't fire while dmenu holds the keyboard; panel popups included (Paul's call 59). Built 2026-10-28 (redo stage 2); before, a focus key took the keyboard from it |
+| A4 | A key that doesn't move focus (split, resize, layout) while another window kept out of the tree has the keyboard (Yakuake, Spectacle, a dialog of KWin's: no kind until stage 3) | — | that window keeps it | stays | ≠ | As before stage 2; stage 3 makes these floating, the focused window |
+| A5 | A key that moves focus while such a window has the keyboard | kwin-i3 | as A1/A2 | as A1/A2 | ≠ | As A4 |
+| A5b | Meta+F, Meta+Shift+Q | KWin | unchanged; acts on KWin's active window, whatever its kind, unless it is override-redirect (A3) | stays | = | i3 acts on its focused container; `docs/spec-own-keys.md` |
 
 | A6 | Move window to workspace N / to an output | kwin-i3 | stays on the source workspace, i3's next focus there | stays | = | |
 | A7 | Any key, first | kwin-i3 | the model takes KWin's active window, if it is in the tree | — | + | Not stale-checked: a key in the millisecond after an output unplug takes a stale activation (accepted, 2026-10-26) |
@@ -338,9 +337,9 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
 | B1 | The pointer enters a window (focus follows mouse), or its ring (§9) | KWin | that window | — | = | KWin's own policy, set by Paul's setup (`FocusPolicy=FocusFollowsMouse`); stock Plasma is click to focus |
-| B2 | The pointer crosses onto another output over the root window or a dock (an empty workspace, a gap, a panel) | — | **unchanged**, on the old output; KWin's active output is now the new one | — | **≠** | i3 focuses that output's workspace (C75). **The one place focus and pointer come apart**; C1 and D2 follow from it. **Decided, not built** (Paul, 2026-10-27): i3's rule: that workspace's last focus, or the empty workspace; a dock counts as root; an override-redirect window keeps the keyboard while the focus moves under it; nothing with focus follows mouse off |
+| B2 | The pointer crosses onto another output over the root window or a dock (an empty workspace, a gap, a panel) | kwin-i3 (`pointerMoved`, from `cursorPosChanged`) | that output's visible workspace: its fullscreen window, else its last focus, or the empty workspace; over an override-redirect window the model's focus moves and that window keeps the keyboard (D7); nothing with focus follows mouse off, during a tiling drag, or until a monitor change has settled | stays | = | i3's `check_crossing_screen_boundary` (`handlers.c`); a dock counts as root. Over a tiling or floating window, KWin's focus follows mouse activates it a turn later (B1, probe 91). Focus and pointer never come apart across outputs now. Built 2026-10-28 (redo stage 2) |
 | B3 | A click on a window | KWin | that window, raised | — | = | |
-| B4 | A click on the root window or a dock | KWin, then kwin-i3 | the desktop window is active for a moment; Show Desktop off: back to the model's focus on the next pass | — | ≠ | i3 focuses the clicked output (`click.c`, root click). **Decided, not built** (Paul, 2026-10-27): a click on the desktop focuses that output's visible workspace at its last focus, and the desktop doesn't keep the keyboard (i3); on a panel, focus unchanged (i3), what it opens is override-redirect (A3-A5); with Show Desktop on, the desktop keeps the keyboard (+, Plasma's edit mode). Known limit kept: typing into the desktop itself (an icon rename) loses the keyboard on the next pass |
+| B4 | A click on the root window or a dock | KWin, then kwin-i3 (`desktopActivated`) | the desktop: that output's visible workspace at its last focus (or the empty workspace), the desktop window given up at once; a panel: unchanged (KWin never activates a dock), what it opens is override-redirect (A3); with Show Desktop on, the desktop keeps the keyboard (+, Plasma's edit mode) | — | = | i3's root click (`click.c`). Known limit kept: typing into the desktop itself (an icon rename) loses the keyboard on the next pass. Built 2026-10-28 (redo stage 2) |
 | B5 | The pointer still, a window grows under it (after a close, a resize) | — | unchanged | — | = | i3 ignores enter events its own re-layout caused (`add_ignore_event`); KWin acts only on motion |
 | B6 | A tiling drag drops | kwin-i3 | the dropped window | stays | = | |
 | B7 | The pointer crosses the gap to a panel popup (override-redirect) | helper | the popup keeps it (KWin's delay 1.5 s) | — | + | i3's popups grab the pointer; `docs/spec-popup-grace.md` |
@@ -369,13 +368,13 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | D4 | A desktop switch kwin-i3 made itself | KWin, then kwin-i3 | KWin activates that desktop's last window; the model's choice replaces it on the same pass | — | = | |
 | D5 | An output lost, or back | kwin-i3 | the model's focus kept | — | ≠ | i3 focuses the primary output's workspace at the end of every output change (`randr.c`). (Accepted earlier the same day, then reversed:) **Decided, not built** (Paul, 2026-10-27): i3's rule: focus goes to the first output in KWin's order, its visible workspace; the reason for keeping the focus went with decision 10's rewrite |
 | D6 | Desktops removed or reordered | kwin-i3 | rebuilt from KWin's active window (§4) | — | + | |
-| D7 | A window kept out of the tree takes the keyboard (KRunner, a popup, Yakuake) | KWin | it keeps it through passive passes, until a key moves focus (A4) or it closes; then the model's focus again | — | = for override-redirect; ≠ for the floating ones (§3) | A floating one would follow C1 and C7. Not root or a dock: those get B4 |
+| D7 | A window kept out of the tree takes the keyboard (KRunner, a popup, Yakuake) | KWin | it keeps it through passive passes and, if override-redirect, through every key (A3), until it closes: then the model's focus again, **not** KWin's own next choice (`closingOutside`: the activation KWin makes before `windowRemoved` is set aside) | — | = for override-redirect; ≠ for the floating ones (§3) | A floating one would follow C1 and C7. Not root or a dock: those get B4 |
 
 **E. Start**
 
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
-| E1 | A login | kwin-i3 | workspace 1 (§12) | — | ≠ | i3: the output under the pointer. **Decided, not built** (Paul, 2026-10-27): i3's (§12 P2) |
+| E1 | A login | kwin-i3 | the output under the pointer, at its workspace's focus (§12 P2) | — | = | Built 2026-10-28 (redo stage 2); before, workspace 1 |
 | E2 | A reload | kwin-i3 | KWin's active window | — | + | |
 
 ### In from KWin
@@ -803,6 +802,7 @@ again.
 | `resizeStep` | 10 | 1-50 % | resize by key, tiling | next press |
 | `floatingStep` | 10 | 1-200 px | move and resize by key, floating | next press |
 | `focusWrapping` | `yes` | `yes`, `no`, `force`, `workspace` | §2 | next press |
+| `mouseWarping` | `output` | `output`, `none` | §5 A2: the pointer follows the focus to another output, or never | next focus change |
 | `workspaceOutputs` | empty | `N=OUTPUT, …`, N 1-10 | assigned outputs (§4) | at login, when the output appears, and for a workspace first used after |
 | `workspaceAutoBackAndForth` | off | | §4 | next press |
 | `floatingWorkspaces` | empty | numbers 1-10 | workspaces whose new windows float | next pass, new windows |
@@ -840,7 +840,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N4 | `workspace_layout default \| stacking \| tabbed` | none | ≠ | kept: tabbed and stacked are out (§8 K7) |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |
 | N6 | `focus_follows_mouse` | KWin's focus policy (System Settings) | + | Plasma's own setting, and §5 B1 |
-| N7 | `mouse_warping output \| none` | always `output` (§5 A2) | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's setting |
+| N7 | `mouse_warping output \| none` | `mouseWarping`, `output` (default) or `none` (§5 A2) | = | Built 2026-10-28 (redo stage 2); in the Configure form, on the settings page with stage 10 |
 | N8 | `focus_on_window_activation smart \| urgent \| focus \| none` | KWin's (focus stealing prevention) | ≠ | kept: §5 C4, accepted |
 | N9 | `popup_during_fullscreen` | `smart`, fixed, as i3's (§5 C5) | ≠ | the setting: §10 V6, decided as i3 (redo stage 8) |
 | N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
@@ -902,7 +902,7 @@ Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_wind
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
 | P1 | A login: workspaces onto outputs | §4 M1 | = | `init_ws_for_output` |
-| P2 | A login: where focus starts | workspace 1, after Plasma's first activity event | ≠ | i3 focuses **the output under the pointer**, at its workspace's focus (`main.c`, after `tree_init`). **Decided, not built** (Paul, 2026-10-27): i3's |
+| P2 | A login: where focus starts | the output under the pointer, at its workspace's focus (`focusUnderPointer`): at the load with no windows, and again after Plasma's first activity event numbers the outputs | = | i3: `main.c`, after `tree_init`. Built 2026-10-28 (redo stage 2); before, workspace 1 |
 | P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
 | P4 | Windows open at load that no tile holds | adopted bottom of the stack first, each as a new window, so the focus order follows the stacking | = | `manage_existing_windows`, in the X server's stacking order |
 | P5 | Release (Meta+Ctrl+Shift+Q), or a load or rebuild failing | every window out of its tile, KWin's state put back; kwin-i3 does nothing more until reloaded | + | the safety valve; i3's `exit` ends the session |

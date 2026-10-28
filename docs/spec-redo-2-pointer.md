@@ -1,7 +1,16 @@
 # Spec: redo stage 2, the pointer (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-2` (on `redo-1`) as designed below: `pointerMoved`,
+`desktopActivated`, `keyboardHeld`, `focusUnderPointer`, the warp in `applyFocus` and
+`windowActivated` (`src/kwin.js`), `Rules.i3Kind` with its unit test, the `mouseWarping` setting
+(table, form, README); the checks in 40, 72 and 74; 72's case 1 and 73's premises updated to the
+crossing rule. One addition the design didn't name: KWin's own next-window activation after a
+window outside the tree closes (`closingOutside`, D7) is set aside, or the crossing's focus on an
+empty workspace would snap back to the window KWin picks, and the pointer with it (72, case 1).
+`make unit` and the scenarios green. Waiting for Paul's go (after stage 1's) to merge and reload.
+Not testable with focus follows mouse: a key moving the focus to the output the pointer is already
+on (D's pointer test), since the crossing has already moved the focus there; an activation with
+the pointer there is checked instead (72, case 4).
 
 **The rows**: `behaviour.md` §5 B2, B4, A2, A3-A5, E1 (§12 P2), and §11 N7's `mouse_warping`
 setting, all decided (Paul, 2026-10-27). Together: focus and pointer never come apart, as in i3.
