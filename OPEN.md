@@ -5,9 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, tenth session, end** (the pointer probe, the gap strips, the review
-of the 10-stage redo with every finding fixed or decided, all live; main's `package/` is what KWin
-runs).
+Last reconciled: **2026-10-28, eleventh session** (item 40, i3's rules, done: all ten stages live,
+stage 4's check included, Paul's word; main's `package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -49,40 +48,6 @@ alone), so it now runs alone (~29 s on the alone tail; green in its first full `
 2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
 stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
 session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
-
-**40. i3's rules: all ten stages live; stage 4's live check owed** (Paul,
-2026-10-27/28; the build plan `docs/spec-i3-redo-build.md`, each stage's spec
-`docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Done 2026-10-28**
-(merged, live, Paul's "it works"): stage 1 new windows and outside switches (the 17:05 capture
-closed and deleted), 2 the pointer, 3 i3's kinds and rules (its Window Rules page came with stage
-10), 5 keys (in `hotkeys` and dotfiles' Plasma table; the banner's look is
-item 42), 6 clicks, closes, minimize (its two resizes are item 43), 7 the look (its split
-indicators are item 44). **Stage 4** (outputs) merged and
-live, **its live check deferred by Paul, still owed**: the unplug, an assignment, and a Meta+Shift+B
-the morning after a night with the monitors asleep (stage 4's spec). Since the review of
-2026-10-28 a lost monitor's workspaces all go to the first output, as i3 (`behaviour.md` W3, M3):
-the check tests that.
-
-**Stage 7 (the look), done 2026-10-28, ninth session** (Paul: "looks good"): `redo-7b` (i3's
-`focused_inactive` left out) plus `redo-7c`'s fix, the ring not following a focus change KWin made
-on its own (focus follows mouse, a click, Alt+Tab: no pass after, so `tellRings` never ran; now
-told from `windowActivated`; 57's new case watched red, then green).
-
-**Stage 8** (popupDuringFullscreen) live 2026-10-28, ninth session: `redo-8b`, the pick of `redo-8`
-onto main (unit 172/172, 32 green), Paul's go; the default `smart` changes nothing seen.
-**Stage 9** (sticky floating) done 2026-10-28, ninth session: `redo-9b` (unit 173/173, 40 and 62
-green), live, Paul's "worked fine" (Sticky Toggle tried on a temporary Meta+Shift+Y, unbound
-again: it has no key, as i3's).
-
-**Stage 10** (the settings page) live 2026-10-28, ninth session: `redo-10b`, the pick of `redo-10`
-onto main with the "Focused on another monitor or split" colour row dropped (7b left i3's
-`focused_inactive` out); unit 173/173, 25 37 76 green; merged, `make kcm-install`, reloaded,
-Paul's go; then the helper banner's check fixed (`bdebbac`: the installed id carries a hash),
-and Paul on the live page: "looks good". Done. Found while building 7-10 and kept:
-KWin's own: a window's modal dialog takes the focus whatever `popupDuringFullscreen` says
-(`activation.cpp findModal`, §5 C5), and a desktops change puts a window first in KWin's focus
-chain (40). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
-tool proposal); a unit test for the page's rule parser (`kcm/ui/settings.js`) is a proposal too.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
