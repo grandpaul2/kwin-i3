@@ -368,7 +368,7 @@ and **C1** is what follows from that.
 
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
-| E1 | A login | kwin-i3 | workspace 1 (§12) | — | = | |
+| E1 | A login | kwin-i3 | workspace 1 (§12) | — | ≠ | i3: the output under the pointer. **Decided, not built** (Paul, 2026-10-27): i3's (§12 P2) |
 | E2 | A reload | kwin-i3 | KWin's active window | — | + | |
 
 ### In from KWin

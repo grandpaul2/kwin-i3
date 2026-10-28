@@ -99,7 +99,9 @@ default `smart`); V3 kept (KWin's fullscreen is one output's).
 §6 (table Y: Y2, minimum sizes respected, kept: Wayland clients and KWin's tiles won't go below),
 §13 and §14 checked for gaps (2026-10-28): nothing to decide. **The redo of `behaviour.md` is
 complete.**
-Next: the feature map's stale rows (the gap check's last line), then the build plan with Paul.
+The feature map's stale rows brought up to date (2026-10-28).
+Next: the build plan with Paul (the agreed outline, with §6-§12's decisions placed in it; the
+settings page's rework after).
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
@@ -118,4 +120,3 @@ their section is done. "i3≠" is a difference from i3 the doc doesn't mark.
 - §11 (done 2026-10-27; the settings page's details wait for its rework): list settings skip a bad entry rather than falling back; the script also enforces `holdTimeoutMs`'s range; an out-of-range number falls back whole, colours lowercased; the settings page's dependencies, steps, summaries, the "bare" note, the window picker, the key slots, the monitor list.
 - §12 (done 2026-10-27): load: the other windows' adoption finishes after the keys are registered (to check); release resets any root that isn't exactly full-screen.
 - §13 (done 2026-10-28): the report's notification shapes and its 3 s layout timeout.
-- Then: the feature map's stale rows (R40, C2, C26, C59, C75, C77, C78, C23/R50, B51-B52, B123's old names, findings 7 and 8).
