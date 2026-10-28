@@ -104,7 +104,7 @@ The feature map's stale rows brought up to date (2026-10-28). §5 C5 decided, no
 The docs review (2026-10-28, a separate agent) found marks, contradictions and code facts; fixed.
 The build plan: `docs/spec-i3-redo-build.md` (ten stages; order and calls 31-33 agreed).
 **Paul's process (2026-10-28): all ten stages fully specced first, then a review and adjust pass,
-then building.** Next: stage 1's spec, `docs/spec-redo-1-new-windows.md`.
+then building.** Stage 1 specced (`docs/spec-redo-1-new-windows.md`, 2026-10-28). Next: stage 2's spec (the pointer).
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

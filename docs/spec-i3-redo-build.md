@@ -34,7 +34,7 @@ session), L (more, or unknowns).
 C2, C3 (a dialog on its parent's workspace), D2/D3 (a switch from outside is i3's `workspace N`),
 §4 S4 (an empty workspace shows on the focused output), §5 C5 (`smart`: only the fullscreen
 window's own transients). Why first: the 17:05 capture (Prism) is this stage; it closes it, and
-the capture can then go. Touches `adoptWindow`, `wsForWindow`, `shownOutside`.
+the capture can then go. Touches `adoptWindow`, `wsForWindow`, `shownOutside`. Spec: `spec-redo-1-new-windows.md`.
 
 **2. The pointer** (L). §5 B2 (crossing onto root or a dock focuses that output), B4 (a click on
 the desktop window), A2 (warp to the focused window's centre, an empty workspace's output centre),
