@@ -1053,7 +1053,8 @@ var KI3 = (function () {
     // KWin's active window (an empty class forgets a window).
     var ringTold = {};
     // A split key's window (Paul, 2026-10-28: the indicator only after Split H, Split V, Toggle
-    // Split, for a few seconds; ≠ i3, always on): shown once its side is told, at the pass's end.
+    // Split, until the focus leaves it or the split happens; ≠ i3, always on): shown once its side
+    // is told, at the pass's end.
     var indicatorFor = null;
     function tellRings() {
         var flash = indicatorFor;

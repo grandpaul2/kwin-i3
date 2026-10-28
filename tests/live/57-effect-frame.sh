@@ -49,14 +49,13 @@ sleep 0.5; capture
 echo "    row 360: $(row 360 0 1 639 640 641 1278 1279)"
 check "no stale frame where a and b met"    eval 'pix 639 360 $RED && pix 640 360 $RED'
 # i3's indicator (§7 L4): a alone in a horizontal workspace, its right side in the focused
-# indicator colour, only after a split key (Paul, 2026-10-28), for 5 s, then the frame's colour.
+# indicator colour, only after a split key (Paul, 2026-10-28), until the focus leaves a.
 check "a alone, no split key: no indicator"  pix 1279 360 $ACT
 key "Split H"; sleep 0.3; capture
 check "Split H: the indicator at a's right"  pix 1279 360 $IND
 check "  its other sides in the focused colour" eval 'pix 0 360 $ACT && pix 300 0 $ACT && pix 300 719 $ACT'
-faded() { capture && pix 1279 360 $ACT; }
-fade_poll() { WAIT=8 poll "$@"; }         # a prefix assignment inside check would be run as a command
-check "  gone after its 5 s, in the frame's colour" fade_poll faded
+sleep 2; capture
+check "  still there 2 s later (no timer)"   pix 1279 360 $IND
 
 # The colour classes (§7 L3, redo stage 7): the second monitor's focused window is unfocused
 # from the first's point of view (i3's focused_inactive left out, Paul 2026-10-28), as is the rest.
@@ -79,6 +78,7 @@ sleep 0.5; "$shot" capture Virtual-1 "$png"
 check "t, the second monitor's focus, unfocused now" pix 1279 360 $INACT
 capture
 check "a focused again"                     pix 0 360 $ACT
+check "  no indicator back: the focus left a (Split H's is gone)" pix 1279 360 $ACT
 kclose s; kclose t
 check "the second monitor empty"            wait_tree 2 "H[]"
 

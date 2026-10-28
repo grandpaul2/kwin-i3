@@ -67,8 +67,9 @@ public Q_SLOTS:
     // read from kwinrc, so the ring and the tiles' frame room change in the same pass.
     void SetTiledRing(bool on);
     // kwin-i3 says a split key was pressed on this window (Split H, Split V, Toggle Split; Paul,
-    // 2026-10-28, ≠ i3's indicator always on): its indicator side shows for a few seconds, then
-    // fades into the frame's colour. Without it, the side is drawn in the frame's colour.
+    // 2026-10-28, ≠ i3's indicator always on): its indicator side shows until another window is
+    // activated or SetRing says it is no longer focused or alone (the split happened). No timer:
+    // it goes with a repaint that happens anyway. Without it, the side is in the frame's colour.
     void ShowIndicator(const QString &id);
     // kwin-i3's tiling drag (docs/spec-tiled-look.md, item 8): where the dragged window would
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
@@ -141,9 +142,7 @@ private:
         bool indicator = false;                             // drawn in the class's indicator colour
     };
     Ring ringOf(KWin::EffectWindow *w) const;
-    double indicatorShown(KWin::EffectWindow *w) const;     // 1 shown, 0 gone, between: fading
     void repaintRingOf(const QString &id);
-    void fadeIndicators();
     QList<Bar> ring(const KWin::RectF &frame, double scale, double radius, const Ring &how) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
@@ -181,8 +180,7 @@ private:
     bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
     QHash<QString, Ring> m_rings;                           // SetRing, by internal id
-    QHash<QString, QElapsedTimer> m_indicatorShown;         // ShowIndicator, by internal id
-    QTimer m_indicatorFade;                                 // running only while one fades
+    QSet<QString> m_indicatorShown;                         // ShowIndicator, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
