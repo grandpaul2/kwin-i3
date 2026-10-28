@@ -520,26 +520,41 @@ window that is no longer visible counts as settled.
 ## 8. Keys
 
 All keys are kglobalaccel shortcuts on component `kwin`, named `kwin-i3 <Action>`; the second key
-of a pair has the key in its name (`kwin-i3 Focus Left (J)`). The defaults are i3's, from Paul's
-i3 config (`docs/plan.md`, "Behaviour"); a rebinding is kept by kglobalaccel.
+of a pair has the key in its name (`kwin-i3 Focus Left (J)`), and Move to Workspace N is
+`kwin-i3 Move to Workspace N (symbol)` (the id an install already holds its key under); a rebinding is kept by kglobalaccel.
+Checked against i3 4.24's shipped config (`etc/config.keycodes`, what `i3-config-wizard` writes),
+with `$mod` as the wizard's Win choice.
 
-| action | default | |
-|---|---|---|
-| Focus Left / Down / Up / Right | Meta+Left Down Up Right, Meta+J K L ; | §2 `focusDir` |
-| Move Left / Down / Up / Right | Meta+Shift+arrow, Meta+Shift+J K L, Meta+: | tiling: §2 `move`; floating: by `floatingStep` px |
-| Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+Ctrl+Left Down Up Right, Meta+Ctrl+J K L ; | tiling: by `resizeStep` %; floating: by `floatingStep` px |
-| Split H / Split V | Meta+H / Meta+V | |
-| Toggle Split | Meta+E | |
-| Floating Toggle | Meta+Shift+Space | |
-| Focus Mode Toggle | Meta+Space | |
-| Fullscreen | Meta+F | KWin's Window Fullscreen |
-| Close | Meta+Shift+Q | KWin's Window Close |
-| Workspace 1 … 10 | Meta+1 … Meta+0 | |
-| Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | the US Shift+digit symbols |
-| Reload Settings | Meta+Shift+C | KWin's reconfigure |
-| Release | Meta+Ctrl+Shift+Q | the safety valve (§12) |
-| Dump State | none | `tools/capture` (Meta+Shift+B, from the dotfiles) |
-| back-and-forth, next/prev, output moves (§4) | none | as in i3 |
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
+**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+
+**K. The keys**
+
+| # | Action | Default | i3 | Note |
+|---|---|---|---|---|
+| K1 | The modifier | Meta | = | i3's wizard offers Win or Alt; Alt is Plasma's menu key |
+| K2 | Focus Left / Down / Up / Right | Meta+Left Down Up Right, Meta+J K L ; | = | §2 `focusDir` |
+| K3 | Move Left / Down / Up / Right | Meta+Shift+arrow, Meta+Shift+J K L, Meta+: | = | tiling: §2 `move`; floating: by `floatingStep` px (i3's 10 px) |
+| K4 | Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+Ctrl+Left Down Up Right, Meta+Ctrl+J K L ; | ≠ | tiling by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px (10 px). i3: **mode "resize"** on Meta+R, then J K L ; and the arrows, left with Return, Escape or Meta+R. `plan.md`'s reason (2026-10-21): a script can't register keys that exist only in a mode; the helper (built later) can, as it takes Escape during a drag. **For Paul (12)**: i3's mode, in the helper; the four actions stay, unbound |
+| K5 | Split H / Split V | Meta+H / Meta+V | = | |
+| K6 | Toggle Split | Meta+E | = | `layout toggle split` |
+| K7 | Stacking, Tabbed (i3: Meta+S, Meta+W) | none | ≠ | Out (`plan.md` Scope, Paul 2026-10-21). Meta+W is Plasma's Overview |
+| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (Paul, 2026-10-21: "never used this"); tidy's removal of a split holding only a split rests on it (`plan.md`, decision on nested splits). **For Paul (13)**: kept out, recommended: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
+| K9 | Floating Toggle | Meta+Shift+Space | = | |
+| K10 | Focus Mode Toggle | Meta+Space | = | |
+| K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10 |
+| K12 | Close | Meta+Shift+Q | = | KWin's Window Close: asks the window to close, as i3's `kill` |
+| K13 | Workspace 1 … 10 | Meta+1 … Meta+0 | = | |
+| K14 | Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | = | the US Shift+digit symbols; refitted by position (below), as i3's `bindcode` |
+| K15 | Reload Settings | Meta+Shift+C | = | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own |
+| K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **For Paul (14)**: kept, recommended |
+| K17 | Exit (i3: Meta+Shift+E, with a confirmation bar) | none | ≠ | `plan.md`: "exit is Plasma's own" (Ctrl+Alt+Del). **For Paul (15)**: i3's key: Meta+Shift+E opens Plasma's logout prompt, its own confirmation |
+| K18 | Terminal, launcher (i3: Meta+Return, Meta+D: `i3-sensible-terminal`, `dmenu_run`) | none | ≠ | `plan.md` Scope: the launcher is KRunner's. Plasma's Meta+D is Show Desktop (Peek at Desktop). **For Paul (16)**: i3's keys: Meta+Return opens Plasma's default terminal, Meta+D KRunner (Show Desktop loses Meta+D, reported as a taken key) |
+| K19 | Back-and-forth, next/prev, output moves (§4) | none | = | unbound in i3's config too |
+| K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
+| K21 | Dump State | none | + | `tools/capture` (Meta+Shift+B, from the dotfiles) |
+| K22 | Any other command on a key (`bindsym`, arguments, `mode`, chains) | none | ≠ | kept: a key runs one fixed action; no command language (§4 S5, S8) |
+| K23 | The volume and media keys (i3's config binds them to `pactl`) | Plasma's | + | |
 
 - **Move Right's second key is Meta+:** because Shift+; arrives as `:`; Meta+Shift+; never fires.
 - **Floating windows by key**: a move is refused only if the window would leave every output;
