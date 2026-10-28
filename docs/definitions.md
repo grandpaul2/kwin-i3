@@ -1,6 +1,6 @@
 # kwin-i3's words: one name per thing
 
-**Draft, 2026-10-27, for Paul's review.** Every other doc, every commit message and every reply
+**Paul's, 2026-10-27.** Every other doc, every commit message and every reply
 uses these words in these senses. (Paul, 2026-10-27: a day of rules went wrong on words that
 meant two things: "manage", "places itself", "active", "desktop", "home".)
 
@@ -13,7 +13,6 @@ meant two things: "manage", "places itself", "active", "desktop", "home".)
   counterpart. A difference needs a specific, explicit reason, minor or not.
 - Code keeps its identifiers (`wins`, `ignore`, `currentDesktopForScreen`); the docs say the word
   here and give the identifier in backticks when it helps.
-- **Open** marks a choice for Paul.
 
 ## Windows: the kinds (i3's)
 
@@ -33,8 +32,7 @@ Every window is one of these. Today's code has fewer (`behaviour.md` §3 says wh
 | **window type** | what the app says a window is: normal, dialog, utility, splash, … | `window_type` | `windowType`; **KWin's "normal window"** (`normalWindow`) means type Normal only, so an X11 dialog is not one |
 
 **Not used any more:** "places itself", "unmanaged", "managed" for a kind, "Plasma window(s)" for
-a kind, "left alone". **Open:** "tiled" (the adjective in today's docs and settings page) or
-"tiling" (i3's).
+a kind, "left alone", "tiled" (Paul, 2026-10-27: **tiling**, i3's).
 
 ## The tree (i3's)
 
@@ -55,12 +53,12 @@ a kind, "left alone". **Open:** "tiled" (the adjective in today's docs and setti
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **output** | a monitor | output | KWin's output (`LogicalOutput`); the script API's **screen**. **Open**: "output" (i3's) or "monitor" (today's docs, 114 times) |
+| **output** | a monitor (Paul, 2026-10-27: i3's word; not "monitor" or "screen") | output | KWin's output (`LogicalOutput`); the script API's **screen** |
 | **workspace** | workspace N, 1 to 10; it is virtual desktop N | workspace | **virtual desktop** |
 | **virtual desktop** | KWin's object behind a workspace; said only when KWin's side matters | — | virtual desktop (`workspace.desktops`) |
 | **per-output desktops** | KWin showing a different virtual desktop on each output; kwin-i3 needs it | (i3's normal) | `perOutputVirtualDesktops` |
 | **a workspace's output** | the output a workspace is on | the workspace's output | — |
-| **shown** (visible) | the workspace an output is showing; one per output | visible workspace | `currentDesktopForScreen(output)` |
+| **visible** | the workspace an output is showing; one per output (Paul, 2026-10-27: i3's word; not "shown") | visible workspace | `currentDesktopForScreen(output)` |
 | **the focused workspace / output** | the workspace (and its output) that holds the focus | focused workspace / output | — |
 | **assignment** | `workspaceOutputs`: a workspace's chosen output | `workspace N output X` | — |
 | **back-and-forth** | going to the previously focused workspace | `workspace back_and_forth` | — |
