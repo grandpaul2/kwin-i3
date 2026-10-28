@@ -1,6 +1,6 @@
 # Spec: the gaps are kwin-i3's, as i3's are i3's
 
-Paul, 2026-10-28 (OPEN.md item 43). Status: **built on branch `gap-ownership` (2026-10-28), not live**; see "Now" at the end. The measurements are in `docs/pointer.md`.
+Paul, 2026-10-28 (OPEN.md item 43). Status: **live 2026-10-28** (Paul: "works great"); see "Now" at the end. The measurements are in `docs/pointer.md`.
 
 ## 1. How i3 does it
 

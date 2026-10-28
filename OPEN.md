@@ -5,8 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, tenth session** (the pointer probe live; item 43 reframed: the gap's
-cursor, `docs/spec-gap-ownership.md` for Paul; main's `package/` is what KWin runs).
+Last reconciled: **2026-10-28, tenth session** (the pointer probe live; item 43 done: the gaps are
+kwin-i3's, live, Paul: "works great"; main's `package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -96,14 +96,5 @@ QPainter text, since KWin 6.7's `OffscreenQuickView` gives an effect no texture 
 spec, "Now"). Next: Paul says what bothers him (or a screenshot of it), then a proposal; a change
 is a plugin change, so `make plugin-install` with his go.
 
-**43. The gap: kwin-i3's, as i3's gaps are i3's** (Paul, 2026-10-28; tenth session). The model
-was wrong: the press in the gap was already i3's everywhere (`tools/pointer-map`, `docs/pointer.md`);
-what was left of Plasma is **the cursor**: next to an app drawing its own frame (VS Code's default
-title bar, Chromium, Electron, GTK header bars), the app's invisible 10 px resize band holds the
-pointer across the gap, with its resize cursor, and 4 px of the neighbour's content (a bug: a press
-there resizes the neighbour's bottom). i3 owns that space by construction (reparenting,
-`manage.c:554`). The proposal, **`docs/spec-gap-ownership.md`**: A, a masked window of kwin-i3's
-over the gaps (probed: the arrow and i3's press beside VS Code); B, the tiled window under the
-pointer raised among tiled ones; C, the bug. Both probes passed;
 **built on branch `gap-ownership`**, tests green (the spec's "Now"). Next: Paul's go for
 `make plugin-install` and the script reload, then his check beside VS Code.
