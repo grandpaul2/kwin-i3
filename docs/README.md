@@ -5,6 +5,7 @@ home and point there from the other. (Paul, 2026-10-27.)
 
 | a fact about | its home |
 |---|---|
+| what a word means (one name per thing, i3's where i3 has one) | `definitions.md` |
 | what kwin-i3 is for, who for, the lines it draws | `philosophy.md` |
 | the scope, what is left out, where it differs from i3 and why, the standing decisions | `plan.md` |
 | what the code does today, exactly, with its known limits | `behaviour.md` |

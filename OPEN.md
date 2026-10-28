@@ -62,6 +62,12 @@ kept with its cost written down, ppt-only resize accepted. §3 drafted (tables R
 dialogs float) decided. **Paul's rule from here** (2026-10-27): ride i3 hard; a difference, minor
 or not, needs a specific and explicit reason; "places itself" leaves the vocabulary. So the
 "accepted, minor" rows of §2/§4 (W5, S5, S8, S9, T12) are reviewed again against that rule.
+Proposed, to confirm in the redo: §3 2 (drop "skips the taskbar"), 3 (a rule runs once, never
+undone), 6 (X6, X7 kept: KWin limits), 4 (i3's `for_window` criteria and actions), 5 (no
+user ignore list; Plasma's system windows built in); W5 a list (i3), S5 extra unbound actions
+(i3), S8/S9 `next` and `primary` (i3; by name stays ≠: shortcuts are registered at load), T12
+kept (i3's default config gives ppt). **Now**: `docs/definitions.md` first (Paul: it would have
+saved several wrong turns), then the redo of §5, §4, §2, §3 in its words, then the rest.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
