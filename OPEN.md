@@ -74,7 +74,11 @@ appearing one takes its assigned ones and shows its lowest, focus to the first o
 on `redo-5` (`docs/spec-redo-5-keys.md`, "Now"): i3's resize mode in the helper with the
 effect's banner, Exit, Terminal and Launcher keys, the no-back-and-forth and next/primary
 actions; 55 and 68 extended. When it goes live: `~/.local/bin/hotkeys` and dotfiles' Plasma table
-(Meta+Ctrl resize keys → Meta+R's mode). **Next:
+(Meta+Ctrl resize keys → Meta+R's mode). **Stage 6 built** on `redo-6`
+(`docs/spec-redo-6-clicks-closes.md`, "Now"): i3's next focus for every close and for a minimize,
+minimized windows out of the focus's reach, the Meta-drag without activation, `tilingDrag`, i3's
+drag ending, the nearest edge, the ring's resize and scroll; step A's finding fixed in the model
+(a modal dialog's parent in the focus order). **Next:
 Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
 `HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
 the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile

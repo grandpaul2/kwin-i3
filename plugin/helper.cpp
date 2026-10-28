@@ -3,6 +3,7 @@
 #include <input.h>
 
 Helper::Helper()
+    : m_frameFocus(&m_tilingDrag)
 {
     KWin::input()->installInputEventFilter(&m_frameFocus);
     KWin::input()->installInputEventFilter(&m_tilingDrag);

@@ -26,5 +26,31 @@ m=$(mark); key "Close"; sleep 0.5
 echo "    after closing d: tree $(tree 1)  KWin active $(active)"; after "$m" | grep -E "CLOSE|ACTIVE" | cut -c10- | sed "s/^/      /"
 check "closing d focuses b, the one above"  wait_tree 1 "H[a V[b*]]"
 check "  and KWin agrees"                   poll active_is b
+
+# i3's next focus for every close (§5 C7, redo stage 6): a top-level window, and a floating one,
+# with the pointer resting on another window, which KWin's NextFocusPrefersMouse would pick.
+activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
+activate a
+check "a focused"                           poll active_is a
+term e                                       # after the focused a, at the top level
+check "a | e | V[b]"                        wait_tree 1 "H[a e* V[b]]"
+point 1066 360                               # over b: it takes the focus (focus follows mouse)
+check "hovering b"                          poll active_is b
+activate a; activate e                       # the order used: e, then a, then b
+check "e focused, a used before it"         poll active_is e
+m=$(mark); key "Close"
+check "closing e at the top level focuses a, not b under the pointer" wait_tree 1 "H[a* V[b]]" "$m"
+check "  and KWin agrees"                   poll active_is a
+term f
+check "f tiles after a"                     wait_tree 1 "H[a f* V[b]]"
+key "Floating Toggle"
+check "f floats"                            wait_tree 1 "H[a V[b]] ~f*"
+point 1000 300; point 1066 360               # a motion onto b again
+check "hovering b again"                    poll active_is b
+activate a; activate f
+check "f focused, a used before it"         poll active_is f
+m=$(mark); key "Close"
+check "closing the floating f focuses a, not b under the pointer" wait_tree 1 "H[a* V[b]]" "$m"
+check "  and KWin agrees"                   poll active_is a
 check "no invariant failures or errors"     clean_log
 finish

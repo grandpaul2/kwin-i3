@@ -25,8 +25,8 @@ public:
     ~Helper() override;
 
 private:
+    TilingDrag m_tilingDrag;        // before FrameFocus, which takes a pointer to it
     FrameFocus m_frameFocus;
-    TilingDrag m_tilingDrag;
     SettingsWatch m_settingsWatch;
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;

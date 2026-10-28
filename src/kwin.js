@@ -44,6 +44,9 @@ var KI3 = (function () {
     // addWaylandWindow), so adoptWindow runs first and claims that switch (Placement.claim); what
     // is left is i3's `workspace N` on that output (shownOutside).
     var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
+    // The helper's tiling drag (docs/spec-tiled-look.md B; startDrag below).
+    var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
+    var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
     // i3's resize mode (docs/spec-redo-5-keys.md A): the helper owns the state and tells kwin-i3
     // through the hidden action Mode Changed, then Mode(); asked once at load, so a reload of this
     // script can't lose step. While it is on, every key of kwin-i3's does nothing but the four
@@ -1142,16 +1145,23 @@ var KI3 = (function () {
         if (kind === "floating") { model.openFloating(key, ws); setFloatingLook(w, true); if (fresh) clampFloating(w); }
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);
+        if (w.minimized) model.setMinimized(key, true);
         connectWindow(w);
         // i3's manage.c:437: a newcomer takes the focus only on the focused output's visible
         // workspace (§5 C1, C3); one that asked for its desktop takes it there (C4). Otherwise
-        // the focus goes back to what had it (KWin activated the window already).
+        // the focus goes back to what had it (KWin activated the window already). A newcomer
+        // whose modal dialog KWin activated in its place (activatedNow) takes its place in the
+        // focus order right behind the dialog, as i3 focuses a window at its opening before its
+        // dialog: without it, a close beside them went to an older window (redo stage 6, step A).
         var takes = !placed || placed.why === "asked" ||
             Placement.takesFocus(workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num),
                                  !fws || outputOf(ws) === outputOf(fws), !!fws);
-        if (w.active && !fs) {
-            if (takes) model.focusWin(key);
-            else wantFocus();
+        var active = workspace.activeWindow, viaModal = !w.active && activatedNow(w) && active ? active : null;
+        if (activatedNow(w) && !fs) {
+            if (takes) {
+                model.focusWin(key);
+                if (viaModal && model.byWin[id(viaModal)]) model.focusWin(id(viaModal));
+            } else wantFocus();
         }
         log("ADD " + w.caption + " " + kind + " ws " + ws.num + (placed ? " (" + placed.why + (takes ? "" : ", no focus") + ")" : ""));
         if (fs) {
@@ -1264,18 +1274,23 @@ var KI3 = (function () {
         if (connected[key]) return;
         connected[key] = true;
         var dragging = false;
-        // Before KWin activates its choice (closingNext, above).
+        // Before KWin activates its choice (closingNext, above): i3's next focus for every close
+        // of the focused window, a top-level or floating one too (§5 C7; redo stage 6).
         w.closed.connect(guard("closed", function () {
-            var con = model.byWin[key], parent = con && con.parent;
-            if (con && model.focused === con && con.type !== "floating" && parent && parent.type !== "ws"
-                && parent.nodes.length > 1) closingNext[key] = model.nextFocused(con);
+            var con = model.byWin[key];
+            if (con && model.focused === con && con.parent) closingNext[key] = model.nextFocused(con);
+            // i3's drain_drag_events: a window unmapping on the focused workspace aborts a drag (§9 G7).
+            if (drag && con && focusedWs() === Tree.wsOf(con)) {
+                callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel");
+                endDrag("cancelled: " + shortCaption(w) + " closed on the focused workspace");
+            }
         }));
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
         w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
         w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
         w.minimizedChanged.connect(guard("minimized", function () {
-            var con = model.byWin[key];
+            var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
             if (con) schedule(Tree.wsOf(con));
         }));
         w.fullScreenChanged.connect(guard("fullscreen", function () {
@@ -1518,8 +1533,6 @@ var KI3 = (function () {
     // from there kwin-i3 polls its State() until the drop or the cancel, shows the drop on
     // kwini3hold's indicator, and drops in the tree (Tree drop). The window stays put meanwhile.
 
-    var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
-    var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
@@ -1677,22 +1690,31 @@ var KI3 = (function () {
         d[Tree.DOWN] = r.y + r.height - y; d[Tree.UP] = y - r.y;
         var best = null, tie = false;
         [Tree.RIGHT, Tree.LEFT, Tree.DOWN, Tree.UP].forEach(function (dir) {
-            var part = model.resizeParticipants(con, dir);
-            if (!part) return;
             var dist = Math.abs(d[dir]);
-            if (!best || dist < best.dist) { best = { dir: dir, part: part, dist: dist }; tie = false; }
+            if (!best || dist < best.dist) { best = { dir: dir, dist: dist }; tie = false; }
             else if (dist === best.dist) tie = true;
         });
-        return tie ? null : best;
+        if (!best || tie) return null;
+        // i3's: the nearest edge, and nothing if it has nothing to resize against (§9 Z1, redo
+        // stage 6; before, the nearest edge that had a neighbour).
+        var part = model.resizeParticipants(con, best.dir);
+        return part ? { dir: best.dir, part: part, dist: best.dist } : null;
+    }
+    // A ring press (§9 Z3, i3's tiling_resize on a border): the side pressed, from the helper.
+    function resizeSide(con, side) {
+        var dir = { top: Tree.UP, bottom: Tree.DOWN, left: Tree.LEFT, right: Tree.RIGHT }[side];
+        if (!dir) return null;
+        var part = model.resizeParticipants(con, dir);
+        return part ? { dir: dir, part: part, dist: 0 } : null;
     }
     // resize_graphical_handler's set-up: the boundary is the middle of the gap between the
     // participants' descended-focused leaves (a split's own rect has no gaps within it).
-    function resizePlan(con, x, y) {
+    function resizePlan(con, x, y, side) {
         var ws = Tree.wsOf(con);
         // i3 refuses a resize between containers of different fullscreen modes; here, while a window
         // is fullscreen on the workspace, none.
         if (model.fullscreenOn(ws)) return null;
-        var e = resizeEdge(con, x, y);
+        var e = side ? resizeSide(con, side) : resizeEdge(con, x, y);
         if (!e) return null;
         var o = e.dir === Tree.LEFT || e.dir === Tree.RIGHT ? "h" : "v", part = e.part;
         var ff = model.descendFocused(part.first), fs = model.descendFocused(part.second);
@@ -1741,8 +1763,10 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("resize start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "resize" || drag) return;
-            var x = Number(f[2]), y = Number(f[3]), rz = con && con.type === "con" && wins[con.win] ? resizePlan(con, x, y) : null;
-            if (!rz) { log("RESIZE not started: nothing to resize against"); return; }
+            // f[4]: the ring's side pressed (Z3), or "-" for Meta+right's nearest edge (Z1).
+            var x = Number(f[2]), y = Number(f[3]), side = f[4] && f[4] !== "-" ? f[4] : null;
+            var rz = con && con.type === "con" && wins[con.win] ? resizePlan(con, x, y, side) : null;
+            if (!rz) { log("RESIZE not started: nothing to resize against" + (side ? " on the " + side : "")); callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel"); return; }
             var timer = new QTimer();
             timer.interval = 16;
             timer.timeout.connect(guard("resize poll", pollDrag));
@@ -2620,6 +2644,19 @@ var KI3 = (function () {
                 wantFocus();
                 return;
             }
+            // The focused window being minimized (§5 C9, i3's move scratchpad): KWin activates its
+            // own choice inside doMinimize, before minimizedChanged (xdgshellwindow.cpp:858), so the
+            // flag on the window is already set while the model's isn't. The focus goes to i3's
+            // next, over KWin's choice; the next pass applies it (redo stage 6).
+            var had = model.focused;
+            if (!switching && had && had.win !== null && wins[had.win] && wins[had.win].minimized && !had.minimized && wins[had.win] !== w) {
+                model.setMinimized(had.win, true);
+                var next = model.nextFocused(had);
+                log("ACTIVE " + shortCaption(w) + " on the minimize of " + conCaption(had) + ": i3's choice " + conCaption(next));
+                model.activate(next);
+                wantFocus();
+                return;
+            }
             // KWin itself activating a window its monitor isn't showing: KWin switches the desktop
             // before it activates a window elsewhere, so this is a stale choice, not a request.
             // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
@@ -2632,6 +2669,10 @@ var KI3 = (function () {
                 wantFocus();
                 return;
             }
+            // A modal dialog activated: its parent takes the place right behind it in the focus
+            // order, as in i3 the parent was focused at its opening (step A of redo stage 6:
+            // KWin activates a new window's modal dialog in its place, so the parent never got in).
+            if (w.modal && w.transientFor && !w.transientFor.deleted && model.byWin[id(w.transientFor)]) model.focusWin(id(w.transientFor));
             model.focusWin(id(w));
             // The pointer follows an activation to another output (Alt+Tab, the task manager, an
             // app's request; i3's focus_on_window_activation ends in workspace_show), unless it

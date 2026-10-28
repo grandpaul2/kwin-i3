@@ -12,6 +12,8 @@
 
 #include <input.h>
 
+#include <KConfigWatcher>
+
 #include <QObject>
 #include <QPointer>
 #include <QPointF>
@@ -41,6 +43,9 @@ public Q_SLOTS:
     // Moves the pointer (i3 warps it onto the resize bar at the press, spec D); during a resize
     // State() reports it at once, the warp's own motion being no event to this filter.
     void Warp(int x, int y);
+    // kwin-i3 ends the drag (a window closed on the focused workspace, i3's drain_drag_events;
+    // nothing to resize on a ring's side): the presses taken stay taken until released.
+    void Cancel();
 
 private:
     TilingDrag *m_drag;
@@ -63,10 +68,25 @@ private:
     TilingDrag *m_drag;
 };
 
+// i3's drain_drag_events: any key press cancels a drag, and the key goes on as usual (a binding
+// still runs). The helper's drag filters sit at Decoration and Effects, after KWin's global
+// shortcuts, so a bound key never reaches them: this one is ahead of the shortcuts (TabBox's
+// place), installed only while a press is held (§9 G7, Z7; redo stage 6).
+class TilingDragKeys : public KWin::InputEventFilter
+{
+public:
+    explicit TilingDragKeys(TilingDrag *drag);
+    bool keyboardKey(KWin::KeyboardKeyEvent *event) override;
+
+private:
+    TilingDrag *m_drag;
+};
+
 class TilingDrag : public KWin::InputEventFilter
 {
 public:
     TilingDrag();
+    ~TilingDrag() override;
 
     bool pointerMotion(KWin::PointerMotionEvent *event) override;
     bool pointerButton(KWin::PointerButtonEvent *event) override;
@@ -74,10 +94,15 @@ public:
 
     QString state();
     void setOn(bool on);
+    bool on() const { return m_on; }
     void setResizeGap(int px) { m_resizeGap = px; }
     void warp(int x, int y);
+    void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
     TilingDragGrab *grab() { return &m_grab; }
+    // A left or right press on a tiled window's ring (FrameFocus; i3's tiling_resize on a border,
+    // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
+    void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
 
 private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
@@ -87,10 +112,21 @@ private:
     void begin();
     void cancel();
     void hoverAt(const QPointF &pos);
+    void takePress(KWin::Window *window, Qt::MouseButton button, const QPointF &pos, bool resize, const QString &side, bool threshold);
+    void pressDone();
+    void loadConfig();
 
     TilingDragBus m_bus;
     TilingDragGrab m_grab;
+    TilingDragKeys m_keys;
+    bool m_keysInstalled = false;
     bool m_on = false;
+    // i3's tiling_drag (§9 G3), from kwinrc [Script-kwin-i3] tilingDrag: "off", "modifier",
+    // "titlebar", "modifier titlebar" (the default).
+    bool m_modifierDrag = true, m_titlebarDrag = true;
+    KConfigWatcher::Ptr m_watcher;
+    QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
+    QString m_side;                   // a ring press's side, else empty
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;

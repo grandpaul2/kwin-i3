@@ -42,6 +42,17 @@ check "b: frame at x=0, app at x=1"         eval 'pix 0 540 $ACT && pix 1 540 $L
 check "b: frame at the bottom row"          eval 'pix 300 719 $ACT && pix 300 718 $LIME'
 check "c: frame at the right edge"          eval 'pix 1279 360 $INACT && pix 1278 360 $BLUE'
 
+# i3's resize from a border (§9 Z3, redo stage 6): a left drag on c's left ring resizes c against
+# V[a b] on that side; the shares change at the release. (A ring scroll focusing, F4, isn't driven
+# here: tools/ei-send sends no scroll; a verb for it is a tool proposal.)
+wid() { local g; g=$(geom "$1"); g=${g#* }; echo "${g%x*}"; }
+cx=$(geom c); cx=${cx%%,*}; cw=$(wid c)
+"$INJECT" "abs $((cx - 1)) 360" "wait 40" "btn left down" "wait 40" "abs $((cx + 100)) 360" "wait 40" "abs $((cx + 200)) 360" "wait 40" "btn left up"
+check "a drag on c's left ring narrows c by about 200" poll eval 'w=$(wid c); (( w <= cw - 170 && w >= cw - 230 ))' || echo "    c was $cw wide, is $(wid c)"
+check "  a and b widened"                   poll eval '[[ "$(geom a)" == 1,1* ]] && (( $(wid a) > 640 ))'
+"$INJECT" "abs $(( $(geom c | cut -d, -f1) - 1 )) 360" "wait 40" "btn left down" "wait 40" "abs $((cx + 100)) 360" "wait 40" "abs $((cx)) 360" "wait 40" "btn left up"
+check "and back"                            poll eval 'w=$(wid c); (( w >= cw - 30 && w <= cw + 30 ))' || echo "    c is $(wid c)"
+
 # 2. A floating window over a frame: the frame repaints (b loses focus, a gains it) and must not
 #    paint over it. f is fixed-size, so it floats.
 client --title f --color yellow --fixed --size 300x200

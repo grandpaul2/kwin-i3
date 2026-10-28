@@ -987,3 +987,30 @@ test("swap: not a container with its own child, not itself", () => {
     assert.strictEqual(m.swap(v, leaf(m, "c")), false);
     assert.strictEqual(m.swap(leaf(m, "a"), leaf(m, "a")), false);
 });
+
+// ---- minimize (i3's scratchpad rule, §5 C9, §10 V7; redo stage 6; approved by Paul, 2026-10-28) --
+
+test("minimize: the focus kwin-i3 chooses never lands on a minimized window: nextFocused, descendFocused, the focus keys, the mode toggle", () => {
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.focusWin("b");
+    m.setMinimized("b", true);
+    assert.strictEqual(d(m), "H[a b*_ c]", "marked _, still in the tree");
+    assert.strictEqual(m.nextFocused(leaf(m, "b")), leaf(m, "c"), "minimizing the focused b: c, the one used before it (opened last)");
+    m.focusWin("a");
+    assert.strictEqual(m.focusDir(RIGHT), leaf(m, "c"), "Focus Right skips the minimized b");
+    assert.strictEqual(m.focusDir(LEFT), leaf(m, "a"), "and back");
+    m.setMinimized("c", true);
+    assert.strictEqual(m.descendFocused(m.ws(1)), leaf(m, "a"), "the workspace's focus: a, the one not minimized");
+    assert.strictEqual(m.focusDir(RIGHT), null, "nothing else to focus on 1 (no second output here)");
+    m.setMinimized("a", true);
+    assert.strictEqual(m.descendFocused(m.ws(1)), m.ws(1), "all minimized: the workspace itself");
+    assert.strictEqual(m.nextFocused(leaf(m, "a")), m.ws(1));
+    m.setMinimized("a", false);
+    m.setMinimized("b", false);
+    assert.strictEqual(d(m), "H[a* b c_]");
+    m.openFloating("f", m.ws(1)); m.focusWin("f");
+    m.setMinimized("f", true);
+    assert.strictEqual(m.focusModeToggle(), leaf(m, "a"), "to tiling: a");
+    assert.strictEqual(m.focusModeToggle(), null, "to floating: f is minimized, nothing");
+});

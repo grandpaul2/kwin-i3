@@ -6,12 +6,13 @@ on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
-# ignore rules: a class on Krohnkite's ignore list is never managed
+# The kinds (docs/behaviour.md §3, redo stage 3): KRuler floats by a default rule, at its own size.
 client --title a
 client --title ruler --app-id org.kde.kruler
 client --title b
-check "an ignored class stays out of the tree" wait_tree 1 "H[a b*]"
+check "KRuler floats (a default rule)"      wait_tree 1 "H[a b*] ~ruler"
 check "and keeps its own size"              geom_is ruler "440,196 400x328"
+kclose ruler
 # a managed window made sticky (on all desktops) leaves the tree; back on one desktop, it returns
 on b 'w.onAllDesktops = true;'
 check "made sticky: out of the tree"        wait_tree 1 "H[a*]"
@@ -46,7 +47,7 @@ check "and the next action still works"     wait_tree 1 "H[a V[c* b]]" "$m"
 # reload with a floating and a minimized window
 client --title f --fixed
 on a 'w.minimized = true;'
-check "a minimized, f floating"             wait_tree 1 "H[a V[c b]] ~f*"
+check "a minimized, f floating"             wait_tree 1 "H[a_ V[c b]] ~f*"
 check "minimized a gives up its space"      geom_is c "0,0 1280x432"
 m=$(mark)
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
@@ -63,6 +64,22 @@ back_in_tree() {
     [[ $words == *" a "* && $words == *" ~f "* ]]
 }
 check "the minimized window comes back into the tree" poll back_in_tree
+
+# Minimizing the focused window (§5 C9, i3's move scratchpad; redo stage 6): the focus goes to i3's
+# next (the one used before), and a focus key never lands on the minimized one. The tree is
+# V[c a b] here (a came back after the focused c, the known limit above).
+active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")')" == "$1" ]]; }
+check "V[c a b]"                            poll eval '[[ "$(tree 1)" == "V[c a"*"b]"* ]]'
+on c 'workspace.activeWindow = w;'; on b 'workspace.activeWindow = w;'
+check "b focused, c used before it"         poll active_is b
+m=$(mark)
+on b 'w.minimized = true;'
+check "b minimized: the focus goes to c (i3's next)" poll active_is c
+check "  the tree marks it"                 wait_log '^.{9}TREE 1 .*b_' "$m"
+key "Focus Up"
+check "Focus Up from c (the top) wraps to a, skipping the minimized b at the bottom" poll active_is a
+on b 'w.minimized = false;'
+check "b back in its place"                 wait_tree 1 "V[c a* b] ~f"
 
 # A window whose minimum can't fit beside the others floats instead of hanging off the screen
 # (the plan's rule; the live-desktop review saw 580 px off a 1280 px screen).

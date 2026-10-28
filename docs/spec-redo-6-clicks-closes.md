@@ -1,7 +1,20 @@
 # Spec: redo stage 6, clicks, closes, minimize (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-6` (on `redo-5`) as designed below. **Step A's
+finding**: with i3's next focus recorded for every close, 20-rules went red because `main`, a
+window whose modal dialog KWin activated in its place (`activation.cpp` `findModal`), had never
+entered the model's focus order; "KWin's record is fuller" was that, not load-time adoption. The
+fix is in the model's record: a window whose modal dialog is activated takes its place right
+behind the dialog (`adoptWindow`'s `activatedNow`, `windowActivated`), as i3 focuses a window at
+its opening before its dialog; 20, 25, 79 green with it. Then B (`tree.js` `reachable`,
+`setMinimized`; the minimize seen in `windowActivated`), C (`tilingdrag.cpp`: no activation on
+Meta+left, the `tilingDrag` setting, any release drops, `TilingDragKeys` ahead of the shortcuts for
+any key, `Cancel` from the script on a close), D (`resizeEdge` strictly nearest; `pressRing` with
+the side, `resizePlan`'s `side`), E (`FrameFocus::pointerAxis` activates). Tests as approved, but
+58's ring-scroll check (F4): `tools/ei-send` sends no scroll, so it isn't driven; a scroll verb
+for it is a tool proposal. 86's G1/G7 checks park the pointer on the window first: with focus
+follows mouse, the motion onto it would focus it, and then the drop rightly keeps that focus.
+Waiting for Paul's go, after stages 1-5.
 
 **The rows**: `behaviour.md` §5 C7 (i3's next focus for every close), C9 (minimize as `move
 scratchpad`), §9 G1, G3, G4, G7/Z7, Z1, Z3, F4, all decided (Paul, 2026-10-27).
