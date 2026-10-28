@@ -803,9 +803,41 @@ again.
 | `warnTakenKeys` | on | | the load-time key reports (§13) | next load |
 | `debugLog` | off | | the D-Bus log, the debug actions; no control on either form | at once (debug actions: next load) |
 
-The plugins accept any colour Qt parses; the script only `#rrggbb`. `holdTimeoutMs`'s range is
-kept by the forms, not by the effect. The effect still reads `[kwin-i3-hold] Enabled` and
-`TimeoutMs` where the new keys are missing.
+The plugins accept any colour Qt parses; the script only `#rrggbb` (lowercased). A number out of
+its range falls back to the default whole; a list skips a bad entry and keeps the rest.
+`holdTimeoutMs`'s range is kept by the forms and the script, not by the effect. The effect still
+reads `[kwin-i3-hold] Enabled` and `TimeoutMs` where the new keys are missing.
+
+**N. Against i3's config** (i3 4.24 `parser-specs/config.spec`; the feature map's B rows are the
+full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-socket`,
+`set`, `include` are Plasma's or have nothing to set.
+
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart ·
+**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+
+| # | i3 option | Here | i3 | Note |
+|---|---|---|---|---|
+| N1 | `gaps inner \| outer` | `gapsInner`, `gapsOuter` (outer added to inner at the edges, as i3) | = | |
+| N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | none | ≠ | **For Paul (25)**: i3's: outer gaps per side, and per workspace |
+| N3 | `default_orientation` | `defaultOrientation` | = | |
+| N4 | `workspace_layout default \| stacking \| tabbed` | none | ≠ | kept: tabbed and stacked are out (§8 K7) |
+| N5 | `focus_wrapping` | `focusWrapping` | = | |
+| N6 | `focus_follows_mouse` | KWin's focus policy (System Settings) | + | Plasma's own setting, and §5 B1 |
+| N7 | `mouse_warping output \| none` | always `output` (§5 A2) | ≠ | **For Paul (26)**: i3's setting |
+| N8 | `focus_on_window_activation smart \| urgent \| focus \| none` | KWin's (focus stealing prevention) | ≠ | kept: §5 C4, accepted |
+| N9 | `popup_during_fullscreen` | `smart`, fixed | = | §5 C5; the other values are §10's |
+| N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
+| N11 | `workspace N output X …` | `workspaceOutputs` | = | a list per number decided (§4 W5) |
+| N12 | `assign [criteria] → workspace N \| output X` | none | ≠ | **For Paul (27)**: i3's: windows sent to a workspace or output by the same criteria as §3 R9 |
+| N13 | `for_window [criteria] floating enable \| disable` | `floatingClass`, `floatingTitle`; `floatingWorkspaces` | ≠ | decided as i3 (§3 R9); `floatingWorkspaces` is then `for_window [workspace=N] floating enable` |
+| N14 | (no i3 option) the ignore lists | `ignoreClass`, `ignoreRole` | ≠ | decided: they go (§3 R5) |
+| N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; the output) | none: KWin's floor (~150 px), the output | ≠ | **For Paul (28)**: i3's settings, as limits on a window floated |
+| N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7) |
+| N17 | `tiling_drag`, `swap_modifier` | none | ≠ | `tiling_drag` decided (§9 G3); no swap modifier (G11) |
+| N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`, the colours | ≠ | §7 L1-L11, decided |
+| N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out |
+| N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
+| N21 | `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | | + | |
 
 ### The settings page
 
@@ -846,15 +878,14 @@ not built, as the pager is the tool there.
 
 Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_windows`).
 
-**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
-**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
 **P. Start, reload, release**
 
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
 | P1 | A login: workspaces onto outputs | §4 M1 | = | `init_ws_for_output` |
-| P2 | A login: where focus starts | workspace 1, after Plasma's first activity event | ≠ | i3 focuses **the output under the pointer**, at its workspace's focus (`main.c`, after `tree_init`). **For Paul (24)**: i3's |
+| P2 | A login: where focus starts | workspace 1, after Plasma's first activity event | ≠ | i3 focuses **the output under the pointer**, at its workspace's focus (`main.c`, after `tree_init`). **Decided, not built** (Paul, 2026-10-27): i3's |
 | P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
 | P4 | Windows open at load that no tile holds | adopted bottom of the stack first, each as a new window, so the focus order follows the stacking | = | `manage_existing_windows`, in the X server's stacking order |
 | P5 | Release (Meta+Ctrl+Shift+Q), or a load or rebuild failing | every window out of its tile, KWin's state put back; kwin-i3 does nothing more until reloaded | + | the safety valve; i3's `exit` ends the session |
