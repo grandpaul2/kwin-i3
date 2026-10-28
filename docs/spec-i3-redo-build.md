@@ -2,9 +2,9 @@
 
 **Now (2026-10-28):** The order and calls 31-33 agreed (Paul); every stage specced and reviewed.
 Each stage's spec is its own file, `spec-redo-N-<subject>.md`, listed under its stage below.
-**Stages 1-6 built**, on branches `redo-1` to `redo-6` (each stacked on the one before; each
-spec's "Now"), waiting for Paul's go to merge and reload, one at a time (Paul, 2026-10-28: build
-on through the stages unless a major issue stops it).
+**All ten built** on branches `redo-1` to `redo-10`. **Stages 1-6 live** (2026-10-28;
+stage 4's live check still owed); stage 7 live twice and reverted twice (`redo-7`, `redo-7b`), its
+ring focus bug next; 8-10 after it (`OPEN.md` item 40).
 
 The rows are the spec: each says today's behaviour (its Result) and the change (its note). This
 file only orders them and says how each stage is built and checked. When a stage goes live, its
