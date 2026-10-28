@@ -42,6 +42,19 @@ check "b: frame at x=0, app at x=1"         eval 'pix 0 540 $ACT && pix 1 540 $L
 check "b: frame at the bottom row"          eval 'pix 300 719 $ACT && pix 300 718 $LIME'
 check "c: frame at the right edge"          eval 'pix 1279 360 $INACT && pix 1278 360 $BLUE'
 
+# i3's hide_edge_borders (§7 L6, redo stage 7) with no gaps: `both` leaves out the ring's sides
+# at the output's edges (the strip stays empty: the background) and keeps the seam between V[a b]
+# and c; `smart` with three windows hides nothing; `none` again.
+BG=0,0,0
+form_set hideEdgeBorders both
+check "both: a's left side gone, the strip empty" poll eval 'capture && pix 0 180 $BG && pix 1 180 $RED'
+check "  b's bottom and c's right gone too" eval 'pix 300 719 $BG && pix 1279 360 $BG'
+check "  the seam between V[a b] and c stays" eval 'pix 639 180 $INACT && pix 640 360 $INACT'
+form_set hideEdgeBorders smart
+check "smart, three windows: every side drawn" poll eval 'capture && pix 0 180 $INACT && pix 1279 360 $INACT && pix 300 719 $ACT'
+form_del hideEdgeBorders
+check "none: as before"                     poll eval 'capture && pix 0 180 $INACT && pix 1 180 $RED'
+
 # i3's resize from a border (§9 Z3, redo stage 6): a left drag on c's left ring resizes c against
 # V[a b] on that side; the shares change at the release. (A ring scroll focusing, F4, isn't driven
 # here: tools/ei-send sends no scroll; a verb for it is a tool proposal.)

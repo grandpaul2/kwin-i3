@@ -1,7 +1,18 @@
 # Spec: redo stage 7, the look (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-7` (on `redo-6`) as designed below. A: the script
+works out each shown window's class, indicator side and hidden sides at the end of a pass
+(`tellRings`, after the focus is applied) and sends `SetRing(id, class, indicator, hidden)` on a
+change; the effect keeps them by id (`Stats` lists them, so a reload of either side re-tells),
+colours by KWin's active window for a window it was never told, and draws the ring's bars in up
+to two colours (the indicator side full height on the right, as i3). B, C as designed. D: the
+gaps are per workspace (`gaps(ws)`, cached per pass; i3's `calculate_effective_gaps`), the root's
+inset per side, the hair per side with no gap. The two floating colours went; the load report
+names them once to a user who set them. The cog's form has the new keys; the settings page lost
+the floating colours row and gets the rest with stage 10. **Found on the way**: 26 (gaps) and 54
+(frame) were red on `redo-6` already, from stages 4 and 6, as neither stage ran them: 26's
+replugged monitor expected its workspace back (W3 now keeps it on the first monitor); 54's left
+drag on the ring expected nothing (Z3 resizes). Both updated here to the decided behaviour.
 
 **The rows**: `behaviour.md` §7 L3 (three colour classes), L4 (the split indicator), L6
 (`hide_edge_borders`, `smart_gaps`), L11 (floating rings in the same classes), §11 N2 (outer gaps
