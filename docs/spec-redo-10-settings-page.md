@@ -87,7 +87,7 @@ as now for every setting.
   table check), 37 (settings page), 76 (sub-pages), 25.
 - **Expectations that change**: 76's Window Rules page throughout; 37's Frame section (six
   colours); the unit tests' table (new keys, two gone).
-- **New checks, for Paul's go**: 76, a rule added with Pick a Window… and applied appears in
+- **New checks, approved (Paul, 2026-10-28, item 68)**: 76, a rule added with Pick a Window… and applied appears in
   `forWindow`; the migration on Apply (old keys gone, Paul's two titles as rules); the Gaps
   sub-page's per-workspace row reaching `workspaceGaps`.
 - **Screenshots** (the style guide's §1: every layout change checked on a screenshot): each
@@ -104,3 +104,7 @@ as now for every setting.
 
 Paul has seen each page's screenshots and used it: `behaviour.md` §11 "The settings page" rewritten
 as built; the style guide's §2; `LATER.md` item 22 says what this stage took from it.
+
+## Paul's review (2026-10-28)
+
+As specced; 76's new checks approved (68).
