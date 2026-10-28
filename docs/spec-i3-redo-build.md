@@ -61,7 +61,7 @@ KWin's order after an output change). Driven by the replug scenarios (48 and its
 Return, Escape, Meta+R leave; the Meta+Ctrl actions stay, unbound; an on-screen sign while in the
 mode, to design), K17 (Meta+Shift+E: Plasma's logout prompt), K18 (Meta+Return: Plasma's default
 terminal; Meta+D: KRunner, Show Desktop reported as taken), §4 S5 (the no-back-and-forth actions),
-S8/S9 (`next`, `primary`). Touches `KEYS`, the helper, `kcm/ui/commands.json`.
+S8/S9 (`next`, `primary`). Touches `KEYS`, the helper, `kcm/ui/commands.json`. Spec: `spec-redo-5-keys.md`.
 
 **6. Clicks, closes, minimize** (M). §5 C7 (i3's next focus for every close), C9 (minimize as
 `move scratchpad`), §9 G1 (a Meta-drag doesn't move focus), G4 (no targets: the press goes to the
