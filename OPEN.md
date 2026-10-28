@@ -46,8 +46,8 @@ the press is there and the timeline in time order). All five green alone after t
 rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in the batch, 48/48
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
-stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake); 39, 57, 70,
-80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
+stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
+session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **40. i3's rules: all ten stages live; stage 4's live check owed** (Paul,
 2026-10-27/28; the build plan `docs/spec-i3-redo-build.md`, each stage's spec

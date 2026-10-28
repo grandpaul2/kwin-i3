@@ -14,6 +14,14 @@ Moved out of `OPEN.md` 2026-10-25 (Paul). When the Stage ends, suggested order: 
 
 ## Reliability
 
+**45. A press past a monitor edge disagreed with the probe** (tenth session, 2026-10-28, test
+KWin). VS Code's invisible band reached 1-3 px across the edge onto the other monitor: the probe
+said `margin`, the real press passed (`FrameFocus pass`). Suspected, not proven: per-output
+desktops, with the press making the other output active, so `isOnCurrentDesktop` drops VS Code
+there. Rare (a custom-frame app's band at the monitor edge, the gap strips stop at their own
+output). Next: a test-KWin trace of that press with `pointer-map events` (the press line was not
+printed in the sweep). Waits: the Stage, nothing seen live.
+
 **36. The test depth held back during the Stage** (Paul, 2026-10-26: testing that heavy "is really
 hurting my motivation"; `docs/testing.md` is lean until the Stage ends). Then, each in runs of 5
 minutes or less (never one long run): the fault battery (`make mutate-live`, `make mutate`) and
