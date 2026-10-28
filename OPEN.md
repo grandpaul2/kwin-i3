@@ -5,9 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, eighth session** (live session: item 40's stages 1-6 merged and
-live; stage 7 live twice and reverted twice, shelved for its ring focus bug; main's `package/` is
-what KWin runs, stage 6's).
+Last reconciled: **2026-10-28, ninth session** (stage 7 live with its ring fix; main's
+`package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -48,32 +47,24 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules: stages 1-6 live, stage 7 shelved for its ring focus bug, 8-10 waiting** (Paul,
+**40. i3's rules: stages 1-7 live, 8-10 waiting** (Paul,
 2026-10-27/28; the build plan `docs/spec-i3-redo-build.md`, each stage's spec
 `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Done 2026-10-28**
 (merged, live, Paul's "it works"): stage 1 new windows and outside switches (the 17:05 capture
 closed and deleted), 2 the pointer, 3 i3's kinds and rules (its Window Rules page waits for stage
 10's `make kcm-install`), 5 keys (in `hotkeys` and dotfiles' Plasma table; the banner's look is
-item 42), 6 clicks, closes, minimize (its two resizes are item 43). **Stage 4** (outputs) merged and
+item 42), 6 clicks, closes, minimize (its two resizes are item 43), 7 the look (its split
+indicators are item 44). **Stage 4** (outputs) merged and
 live, **its live check deferred by Paul, still owed**: the unplug, an assignment, and a Meta+Shift+B
 the morning after a night with the monitors asleep (stage 4's spec).
 
-**Stage 7 (the look): the next session's main work** (Paul: "the main focus will be on finding the
-focus switching issue"). Went live twice, reverted twice: `redo-7` (Paul: the "previous focus" ring,
-i3's `focused_inactive`, more confusing than useful), then `redo-7b` (that class left out, nothing
-else of the plan changed; 25 26 54 57 58 64 78 85 green in the test KWin), reverted because
-**"something else is breaking the ring focus changing"**: live, the ring's colour doesn't follow
-the focus, though 57 passed. **Loaded again 2026-10-28 (ninth session, Paul's go) for a capture**:
-main's code is `redo-7b`'s; both branches stay on origin. Next: what the
-ring does wrong (Paul's Meta+Shift+B at the moment), then the cause from the code before any
-change: `tellRings` runs at the end of a pass, so a focus change without a pass would leave the
-old class told; the effect colours an untold window by KWin's active window; the test KWin's
-57 drives focus by keys only. Then `redo-7b` fixed, Paul's go to merge, plugin-install, reload.
-26's and 54's updates for stages 4 and 6 (W3, Z3) are on `redo-7`/`redo-7b` only: on main both
-expect the old behaviour and are red until stage 7 lands (or they're carried over alone).
+**Stage 7 (the look), done 2026-10-28, ninth session** (Paul: "looks good"): `redo-7b` (i3's
+`focused_inactive` left out) plus `redo-7c`'s fix, the ring not following a focus change KWin made
+on its own (focus follows mouse, a click, Alt+Tab: no pass after, so `tellRings` never ran; now
+told from `windowActivated`; 57's new case watched red, then green).
 
 **Stages 8-10** (`redo-8` popupDuringFullscreen, `redo-9` sticky floating, `redo-10` the settings
-page) are stacked on `redo-7`: they merge after stage 7, rebased onto `redo-7b` as fixed. Paul,
+page) are stacked on `redo-7`: next, rebased onto main (stage 7 as live), each with Paul's go. Paul,
 2026-10-28: they're small; if stage 7's fix moves a lot, throwing them away and rewriting is fine
 (under ten minutes). Stage 10 needs `make kcm-install`; its "done when" is Paul's pass over the
 pages' screenshots (`~/.local/state/kwin-i3/redo-10-shots/`). Found while building 7-10 and kept:
@@ -81,6 +72,11 @@ KWin's own: a window's modal dialog takes the focus whatever `popupDuringFullscr
 (`activation.cpp findModal`, §5 C5), and a desktops change puts a window first in KWin's focus
 chain (40). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
 tool proposal); a unit test for the page's rule parser (`kcm/ui/settings.js`) is a proposal too.
+
+**44. The split indicators: reassess them** (Paul, 2026-10-28, after stage 7 went live: "I'm not
+completely happy with them"). i3's `indicator` (`behaviour.md` §7 L4): on a window alone in its
+split, the side where the next window opens, in `frameIndicatorActive`/`frameIndicatorInactive`.
+Next: Paul says what bothers him (or a screenshot), then a proposal; no change without his go.
 
 **41. A wallpaper flash again, with Firefox** (Paul's capture `2026-10-27_233113.474`, Meta+Shift+B
 during the fifth session, note: "Another wallpaper flash involving ff"; not yet read). `behaviour.md`
