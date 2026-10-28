@@ -702,7 +702,9 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
 {
     const double scale = viewport.scale();
     if (!m_banner || m_bannerScale != scale) {
-        const QString text = QStringLiteral("Resize mode:  J K L ;  or the arrows resize,  Escape leaves");
+        // i3's bar shows only the mode's name ("resize", i3bar xcb.c draw_button); here with the
+        // way out (Paul, 2026-10-28, OPEN.md item 42).
+        const QString text = QStringLiteral("Resize (Esc)");
         QFont font = QGuiApplication::font();
         const QFontMetrics fm(font);
         const int pad = 10, height = fm.height() + 2 * pad, width = fm.horizontalAdvance(text) + 3 * pad;
