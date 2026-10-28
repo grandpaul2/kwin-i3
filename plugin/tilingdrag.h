@@ -103,12 +103,12 @@ public:
     // A left or right press on a tiled window's ring (FrameFocus; i3's tiling_resize on a border,
     // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
     void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
+    KWin::Window *gapWindow(const QPointF &pos) const;
 
 private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
 
     bool pressResize(KWin::PointerButtonEvent *event);
-    KWin::Window *gapWindow(const QPointF &pos) const;
     void begin();
     void cancel();
     void hoverAt(const QPointF &pos);

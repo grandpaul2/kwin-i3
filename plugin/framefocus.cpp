@@ -32,6 +32,15 @@ FrameFocus::FrameFocus(TilingDrag *drag)
     QObject::connect(workspace(), &Workspace::configChanged, &m_context, load);
 }
 
+// The side of a window's frame a press outside it is on: top, then left, right, bottom at a corner
+// (i3's tiling_resize on a border, CLICK_BORDER).
+static QString sideOf(const Window *w, const QPointF &pos)
+{
+    const RectF frame = w->frameGeometry();
+    return pos.y() < frame.top() ? QStringLiteral("top") : pos.x() < frame.left() ? QStringLiteral("left")
+         : pos.x() >= frame.right() ? QStringLiteral("right") : QStringLiteral("bottom");
+}
+
 static bool customTiled(const Window *w)
 {
     return w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
@@ -126,8 +135,22 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     }
     Window *window = ringWindow(event->position);
     if (!window) {
-        // In the gap over a tiled window's margin: as a press on the bare gap, nothing; the app
-        // doesn't get it, so it starts no resize of its own (OPEN.md item 43).
+        // A plain left or right press in the gap (over the desktop, or a tiled window's margin):
+        // as on the ring of the nearest tiled window (TilingDrag::gapWindow, Z2's reach), on its
+        // side facing the press. The gap is a handle, not a sliver of desktop: i3 shows none
+        // between windows (Paul, 2026-10-28, OPEN.md item 43).
+        Window *hover = input()->pointer()->hover();
+        const bool gap = !hover || hover->isDesktop() || overTiledMargin(event->position);
+        if (gap && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
+            if (Window *near = m_drag->gapWindow(event->position)) {
+                if (const auto command = near->getMousePressCommand(event->button)) {
+                    near->performMousePressCommand(*command, event->position);
+                }
+                m_drag->pressRing(near, sideOf(near, event->position), event);
+                return true;
+            }
+        }
+        // Over a margin with no tiled window in reach: nothing, and not the app's resize.
         if (overTiledMargin(event->position)) {
             m_taken |= event->button;
             return true;
@@ -142,11 +165,7 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     // press from here, kwin-i3 resizes at the release. The release is then its.
     const bool tiled = customTiled(window);
     if (tiled && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
-        const RectF frame = window->frameGeometry();
-        const QPointF pos = event->position;
-        const QString side = pos.y() < frame.top() ? QStringLiteral("top") : pos.x() < frame.left() ? QStringLiteral("left")
-                           : pos.x() >= frame.right() ? QStringLiteral("right") : QStringLiteral("bottom");
-        m_drag->pressRing(window, side, event);
+        m_drag->pressRing(window, sideOf(window, event->position), event);
         return true;
     }
     m_taken |= event->button;

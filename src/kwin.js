@@ -3028,8 +3028,10 @@ var KI3 = (function () {
 
     function settingsChanged() {
         checkFrame();
-        tellDrag(true);         // every reconfigure: the helper may be new (it asks for one at load)
         var changed = Settings.load();
+        // Every reconfigure, the helper may be new (it asks for one at load); after the load, or a
+        // changed gap would leave Meta+right's and the gap press's reach at the old one.
+        tellDrag(true);
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));
         // The rules changed: every rule runs anew on every window (each window's record cleared),
