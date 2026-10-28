@@ -97,3 +97,7 @@ Desktops" from its menu floats and follows workspace switches on its monitor.
 
 Live and Paul's "it works": R3, R13, X4, V10 and §3's Yakuake row rewritten as built; C's kept
 difference written into §3.
+
+## Paul's review (2026-10-28)
+
+As specced.

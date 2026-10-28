@@ -58,3 +58,7 @@ focus); Firefox's own download dialog shows over it.
 
 Live and Paul's "it works": V6 and §5 C5 rewritten as built; §11 gains `popupDuringFullscreen`,
 and N9 says its four values.
+
+## Paul's review (2026-10-28)
+
+As specced.
