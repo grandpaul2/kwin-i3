@@ -94,7 +94,9 @@ there.
 (table N, i3's config options): decided, not built: N2 (outer gaps per side, gaps per
 workspace), N7 (`mouse_warping`), N12 (`assign` to a workspace or output, R9's criteria), N15
 (`floating_minimum_size`/`maximum_size`). Load order and release's roots corrected in §12.
-Next: fold §10 into the sections; §6/§13/§14 for gaps.
+§10 done as table V (kept in place, not folded): V6 decided (`popup_during_fullscreen`, i3's values,
+default `smart`); V3 kept (KWin's fullscreen is one output's).
+Next: §6/§13/§14 for gaps.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
@@ -109,7 +111,7 @@ their section is done. "i3≠" is a difference from i3 the doc doesn't mark.
 - §7 (done 2026-10-27 as table L; the hold's exceptions below still to check): (v) with `frameOnFloating` a floating window's border is taken too, "given back when it floats" is wrong then; the hold's exceptions (an output being dragged on, fullscreen windows, untiled closes); no ring on fullscreen, minimized or decorated windows, it follows opacity and corners; colours forced opaque, width clamped 1-10. i3≠: frame 1 px (i3 2), gaps 4/2 (i3 0), no smart_borders/smart_gaps, two colours not four, floating border two states.
 - §8 (done 2026-10-27, folded into K and Taken keys): i3≠: resize mode flattened into keys; Close is KWin's (no kill); Meta+Shift+C reloads all of KWin's config; no arguments or flags; the "(symbol)" action names; which holder wins each taken key.
 - §9 (done 2026-10-27, folded into G, Z, F; the rest checked when built): (v) a window dropped by KWin's own move on another monitor joins the workspace shown there; the parent strip is 25 px on a framed window and capped by the sibling zone, the parent test first; the resize reach grows with `frameWidth` (rounded up, Chebyshev, topmost wins); no drag or resize while a game holds the pointer or shortcuts are inhibited; a press activates and raises; Meta+Shift+right is KWin's; Escape is swallowed only after the drag starts; the ring's hit zone and when its click passes on; a fullscreen window dropped (flags), a drop on itself; KWin's window-action modifier must stay Meta. i3≠: centre always swaps (i3's swap_modifier); tiling_drag on by default.
-- §10: (v) two desktops are ignored only during kwin-i3's own relocate, otherwise it is "made sticky"; fullscreen: KWin allows several, above panels, no ring or gaps; Shift-drag into KWin's custom tiles puts two windows in a leaf until the next pass; i3≠: minimize exists.
+- §10 (done 2026-10-28 as table V): (v) two desktops are ignored only during kwin-i3's own relocate, otherwise it is "made sticky"; fullscreen: KWin allows several, above panels, no ring or gaps; Shift-drag into KWin's custom tiles puts two windows in a leaf until the next pass; i3≠: minimize exists.
 - §11 (done 2026-10-27; the settings page's details wait for its rework): list settings skip a bad entry rather than falling back; the script also enforces `holdTimeoutMs`'s range; an out-of-range number falls back whole, colours lowercased; the settings page's dependencies, steps, summaries, the "bare" note, the window picker, the key slots, the monitor list.
 - §12 (done 2026-10-27): load: the other windows' adoption finishes after the keys are registered (to check); release resets any root that isn't exactly full-screen.
 - §13: the report's notification shapes and its 3 s layout timeout.

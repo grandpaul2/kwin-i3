@@ -683,8 +683,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_con`) and
 `handlers.c` (client messages: fullscreen, desktop, iconic).
 
-**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
-**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
 **V. Fullscreen, minimize, maximize, KWin's own tools**
 
@@ -695,7 +694,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 | V3 | Fullscreen across all outputs (i3's `fullscreen enable global`) | none | ≠ | kept: KWin's fullscreen is one output's area |
 | V4 | A floating window fullscreen (a game, `mpv --fs`) | its workspace's fullscreen window, as a tiling one; a tiling one at the top level wins a tie | = | `con_get_fullscreen_con` searches the floating windows too |
 | V5 | A fullscreen window floated or tiled again, or moved | it stays fullscreen; focus and moves across it are blocked (§2, §5) | = | |
-| V6 | A new window on a workspace with a fullscreen window | §5 C5 (`popup_during_fullscreen smart`) | ≠ | i3's other values, `ignore`, `leave_fullscreen`, `all`, have no setting. **For Paul (29)**: i3's setting, default `smart` |
+| V6 | A new window on a workspace with a fullscreen window | §5 C5 (`popup_during_fullscreen smart`) | ≠ | i3's other values, `ignore`, `leave_fullscreen`, `all`, have no setting. **Decided, not built** (Paul, 2026-10-28): i3's setting, default `smart` |
 | V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored. Across a reload a minimized window loses its place | ≠ | i3 refuses minimize (`handlers.c`, iconic state rejected). Decided (§5 C9): as i3's `move scratchpad` |
 | V8 | Maximize | no handler: it leaves its tile, the next pass puts it back, and that clears the maximize | = | i3 has no maximize and ignores the request |
 | V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
