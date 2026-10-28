@@ -844,6 +844,22 @@ not built, as the pager is the tool there.
 
 ## 12. Start, reload, release
 
+Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_windows`).
+
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
+**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+
+**P. Start, reload, release**
+
+| # | When | Result | i3 | Note |
+|---|---|---|---|---|
+| P1 | A login: workspaces onto outputs | §4 M1 | = | `init_ws_for_output` |
+| P2 | A login: where focus starts | workspace 1, after Plasma's first activity event | ≠ | i3 focuses **the output under the pointer**, at its workspace's focus (`main.c`, after `tree_init`). **For Paul (24)**: i3's |
+| P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
+| P4 | Windows open at load that no tile holds | adopted bottom of the stack first, each as a new window, so the focus order follows the stacking | = | `manage_existing_windows`, in the X server's stacking order |
+| P5 | Release (Meta+Ctrl+Shift+Q), or a load or rebuild failing | every window out of its tile, KWin's state put back; kwin-i3 does nothing more until reloaded | + | the safety valve; i3's `exit` ends the session |
+| P6 | The plugins loaded or unloaded | below | + | |
+
 ### Load (`start`, `startRest`)
 
 1. Register Release and Dump State first, so the safety valve exists whatever fails next.
@@ -852,11 +868,12 @@ not built, as the pager is the tool there.
 3. **Adopt the tiles** (`adoptTiled`): windows already in KWin's tiles keep their layout
    (`docs/plan.md`, decision 5).
 4. Connect KWin's signals; register the hidden drag actions; turn the tiling drag on.
-5. **Ask the effect** for its stats, waiting up to 250 ms, then **adopt every other window**,
-   bottom of the stack first (so the focus order follows stacking), and focus KWin's active
-   window.
-6. Register the keys, ask the helper to fit them, check taken keys, layout keys and per-output
-   desktops (one notification, §13), place everything.
+5. **Ask the effect** for its stats (the answer waited for up to 250 ms, then step 7 runs).
+6. Meanwhile, at once: register the keys, ask the helper to fit them, check taken keys, layout
+   keys and per-output desktops (one notification, §13), place everything. So the keys exist
+   before step 7 has run.
+7. **Adopt every other window**, bottom of the stack first (so the focus order follows
+   stacking), and focus KWin's active window.
 
 An exception during load releases (below). The effect is asked again at every reconfigure: two
 missed answers (1 s each) turn the frame off; an answer turns it on and borders are given back
@@ -872,7 +889,8 @@ the first answer). Paul's reload is CLAUDE.md's.
 
 The safety valve, also run on a load or rebuild failure: turn the tiling drag off; every window
 out of its tile, Keep Above cleared where kwin-i3 set it, its border given back; every root tile
-kwin-i3 touched emptied and reset to the full screen with no padding. Logs `RELEASED`. After it
+kwin-i3 touched, and any other not exactly the full screen (one a previous instance left inset
+by gaps), emptied and reset to the full screen with no padding. Logs `RELEASED`. After it
 the script does nothing until reloaded.
 
 ### The plugins
