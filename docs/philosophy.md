@@ -46,8 +46,12 @@ In order:
 1. **The foundations**: `docs/definitions.md` (the words), this page (the lines), `docs/plan.md`
    (the scope, the reasons a difference may have, the standing decisions).
 2. **Precedent**: `docs/behaviour.md`'s rows and the reasons recorded in them, and the specs'
-   decisions. A case like one already decided is decided the same way, citing it.
-3. **i3's source**, where both are silent: do what i3 does (`docs/plan.md`, "Scope").
+   decisions. A case like one already decided is decided the same way, citing it. A row whose
+   reason is Paul's live verdict (`docs/plan.md`, reason (c)) is precedent only for the thing it
+   names; a case merely like it follows i3, or another of the reasons.
+3. **i3's source**, for *how* something already in scope behaves, where both are silent: do what
+   i3 does. Whether something is in scope at all is `docs/plan.md`'s test; a feature not in is
+   out, not a hole.
 4. **A hole**: a case none of these settles is a gap in the docs, not a question. Write the
    missing principle into the doc it belongs in, as a proposal, and say it was a hole.
 5. **Paul**, when out of moves: two foundations that genuinely conflict, or the product's

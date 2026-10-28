@@ -51,17 +51,20 @@ session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill 
 
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again, as a
 refinement. (1) Four agents poked holes in the foundations (59 findings, merged into 17 calls,
-Paul: "all good", with his role lightened: `philosophy.md`, "How a decision is made"). (2) The
-three docs rewritten; next, one fresh agent looks for holes again, until it finds none that
-matter (two rounds at most). (3) The code against the docs, by `src/` area, each mismatch
-labelled code / `behaviour.md` / docs wrong; carried in from (1): every ≠ row's reason one of
-`plan.md`'s (a)-(e) (L2's 1 px and L5's gaps rest on "Paul's old config"; N6 focus follows mouse
-becomes ≠ (e)); T12's i3 side (`commands.c:505`, a resize spreads over all siblings); Z1 against
-i3's climb (`resize.c:72-120`); i3 hiding floating windows behind a fullscreen one
-(`render.c:253`); a virtual desktop 11; no output left (decision 10); px logical in the code;
-internal settings off the page's main view; the i3-syntax fields below the plain controls; the
-README pointing laptop users at the workspace output setting; "adopt" against i3's "manage".
-(4) A build plan, `spec-refine-build.md`, shaped as `spec-i3-redo-build.md`. Next: (2)'s review.
+Paul: "all good", with his role lightened: `philosophy.md`, "How a decision is made"). (2) **Done**:
+the three docs rewritten (531b86b); round 2's fresh agent found 10, none high, each fixed in the
+docs or carried to (3). (3) The code against the docs, by `src/` area, each mismatch labelled
+code / `behaviour.md` / docs wrong; carried in: every ≠ row's reason one of `plan.md`'s (a)-(e)
+(L2's 1 px and L5's gaps rest on "Paul's old config"; N6 focus follows mouse becomes ≠ (e));
+T12's i3 side (`commands.c:505`, a resize spreads over all siblings); Z1 against i3's climb
+(`resize.c:72-120`); i3 hiding floating windows behind a fullscreen one (`render.c:253`); a
+virtual desktop 11; no output left (decision 10); px logical in the code; internal settings off
+the page; the i3-syntax fields below the plain controls; the README pointing laptop users at the
+workspace output setting; "adopt" against i3's "manage"; an on-all-desktops window kept sticky
+before any `for_window` rule runs (`src/rules.js:269`, where i3 runs rules last; R3 says =); an
+X11 notification-type window kept out where i3 floats it (`manage.c:466`); behaviour.md's kinds
+table (sticky, root) against definitions.md's four. (4) A build plan, `spec-refine-build.md`,
+shaped as `spec-i3-redo-build.md`. Next: (3), its batch sized for Paul first.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and

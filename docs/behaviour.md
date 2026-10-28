@@ -101,7 +101,7 @@ function names the i3 function it ports.
 - **A split left empty closes**, and so on upward (`onRemoveChild`).
 - **`flatten`** is i3's `tree_flatten`: a split whose only child is a split of the other
   direction, inside a parent of that same direction, is dissolved into the parent.
-- **`tidy`** **≠** i3 (`docs/spec-nested-boxes.md`; `plan.md`'s differences table): a split whose only child is a split is
+- **`tidy`** **≠** i3 (`docs/spec-nested-boxes.md`; `plan.md` decision 8): a split whose only child is a split is
   replaced by that child, repeatedly. A one-child split holding a window stays. Run after a move
   (through `flatten`), a close, floating a window, sending one to a workspace, a drop and the
   adoption at load; not after tiling a floating window.
@@ -214,7 +214,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | X4 | Put on all desktops (the window menu, a client, a KWin rule, Sticky Toggle) | floated if tiling, marked sticky, pushed to what its output shows (R3). Off all desktops onto one: no longer sticky, it stays floating on that desktop's workspace. **Made tiling** (Floating Toggle): taken off all desktops onto its workspace's first | ≠ | i3: `sticky enable` (`cmd_sticky`), and a tiled sticky con keeps its flag. Kept: KWin's tiles belong to one desktop's root, so a tiling window can't stay on all of them. Sticky Toggle is an unbound action, as i3's `sticky toggle` (Paul, 2026-10-28). Built 2026-10-28 (redo stage 9) |
 | X5 | Meta+Shift+drag on a tiling window | out of its tile, floating where dropped (§9) | + | Paul, 2026-10-26 |
 | X6 | KWin refuses to tile it (not resizable, or not on the tile's desktop) | floating; a fullscreen window stays in the tree, out of the tiles, until fullscreen ends | ≠ | i3 tiles any window; KWin's tiles can't hold one that won't resize **Kept** (Paul, 2026-10-27): KWin's tiles can't hold a window that won't resize |
-| X7 | The tiling windows' minimum sizes don't fit the output | the one with the largest minimum along that axis floats, repeatedly (`floatWhatCannotFit`) | ≠ | i3 ignores size hints on tiling windows (`plan.md`'s differences table) **Kept** (Paul, 2026-10-27): a Wayland client can't be drawn smaller than its minimum; it would hang outside its tile |
+| X7 | The tiling windows' minimum sizes don't fit the output | the one with the largest minimum along that axis floats, repeatedly (`floatWhatCannotFit`) | ≠ | i3 ignores size hints on tiling windows (`plan.md` reason (a)) **Kept** (Paul, 2026-10-27): a Wayland client can't be drawn smaller than its minimum; it would hang outside its tile |
 
 ### A floating window's size
 
@@ -602,7 +602,7 @@ with `$mod` as the wizard's Win choice.
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
 | K7 | Stacking, Tabbed (i3: Meta+S, Meta+W) | none | ≠ | Out (`plan.md` Scope, Paul 2026-10-21). Meta+W is Plasma's Overview |
-| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (Paul, 2026-10-21: "never used this"); tidy's removal of a split holding only a split rests on it (`plan.md`, decision on nested splits). **Kept** (Paul, 2026-10-27): out: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
+| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (Paul, 2026-10-21: "never used this"); tidy's removal of a split holding only a split rests on it (`plan.md` decision 8). **Kept** (Paul, 2026-10-27): out: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
 | K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10 |

@@ -27,8 +27,10 @@ be common"). What kwin-i3 does on an older Plasma, and how the plugins reach a u
    (`assign` though KWin has Window Rules, Exit though Plasma has logout).
 2. **Anything else of i3's is out** unless Paul adds it to "In"; "not more of i3" means this list
    does not grow by itself.
-3. **Not i3's at all** (a widget, a notification, a tool): in only if Plasma doesn't already do
-   it and it serves the "In" list.
+3. **Not i3's at all** (a widget, a notification, a tool): in only if it shows or serves
+   something of the "In" list that Plasma's own can't. The workspace widget is in because Plasma's
+   pager can't show per-output workspaces; the hold, because KWin's tile moves would otherwise show
+   torn layouts; an OSD or an animation Plasma already has is out.
 
 **In:** i3's tree, with its focus, move, split, layout toggle and resize (by key, its resize mode,
 and by mouse); workspaces that live on an output, with i3's workspace output and `assign`;
@@ -48,6 +50,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 | a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key opens Plasma's) |
 | i3's config file, `i3-msg` IPC and a command language (`bindsym`, `mode`, chains) | settings belong in System Settings (and `kwinrc`); a key runs one fixed action. No scripting surface is promised during the Stage (`LATER.md`, "Release prep") |
 | workspace names, and workspaces past 10 | decision 9 |
+| fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only |
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace focused when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
 | mouse chords beyond i3's | one chord was ever used (2026-10-22 to 10-24); i3's own tiling drag and Meta+right-drag resize are in instead |
@@ -61,8 +64,10 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   (`docs/philosophy.md`, "How a decision is made"), recorded as "Paul, live".
 - **(d) Out of scope**: the "Out" list above, or what rests on it (tidy rests on `focus parent`
   and tabbed being out).
-- **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them (focus follows
-  mouse is KWin's focus policy; another component's shortcut stays its own).
+- **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them, and where an i3
+  directive is one of them, Plasma's setting stands in for it (focus follows mouse is KWin's
+  focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
+  component's shortcut stays its own).
 
 Not reasons: "minor", "simpler", "Paul's old config", "it was already built that way". A row
 whose only reason is one of these goes back to i3's, or finds a real reason. **The list of
@@ -71,7 +76,7 @@ differences is `docs/behaviour.md`'s ≠ rows**; there is no second copy here.
 **Settings:** each i3 directive inside the scope gets a setting, named for i3's (`behaviour.md`
 §11, the N rows); kwin-i3's own machinery gets one only where a user would reasonably want it
 different. Internal values (timeouts, debug switches) live in `kwinrc`, never on the settings
-page's main view. Rule fields (`for_window`, `assign`, `workspace … gaps`) take i3's syntax, for
+page. Rule fields (`for_window`, `assign`, `workspace … gaps`) take i3's syntax, for
 i3 users (`docs/philosophy.md`, "Who it is for").
 
 **Keys and Plasma's shortcuts:** kwin-i3's default keys are i3's (`behaviour.md` §8). A key
@@ -153,8 +158,8 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
       good (Paul, 2026-10-28, as i3's `randr.c` "Move the content of an outputs container to the
       first output");
     - **an output appears**: it takes the workspaces whose workspace output names it (moving
-      them back, the one exception to "for good"); else its first assigned workspace; else the
-      first free number (`randr.c` `init_ws_for_output`, 444-520);
+      them back, the one exception to "for good"); else the lowest-numbered
+      workspace whose workspace output names it; else the first free number (`randr.c` `init_ws_for_output`, 444-520);
     - **no output left**: as i3, which falls back to one output covering the root window
       (`randr.c:931`); here KWin's placeholder output, until one returns;
     - windows KWin moves on its own during a hotplug are ignored: the tree, not KWin's move, says

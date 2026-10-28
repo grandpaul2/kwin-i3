@@ -24,7 +24,7 @@ meant two things: "manage", "places itself", "active", "desktop", "home".)
 | **tiling window** | a window in the tree's layout; the tree places it | `tiling` (criteria), "tiling window" | a window in one of KWin's tiles |
 | **floating window** | a window in the tree, on its workspace's floating list; you place it | `floating` | a window KWin places; kept above the tiling ones |
 | **dock** | a panel: reserves space, never focused, not in a workspace | dock client (`_NET_WM_WINDOW_TYPE_DOCK`, `manage.c:248`), i3bar | Plasma's panels |
-| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:139`: "Don't manage") | on Wayland: popups, menus, tooltips, notifications, OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3) |
+| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:139`: "Don't manage") | on Wayland: popups, menus, tooltips, Plasma's notifications and OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3) |
 
 **How the kind is decided** (i3's `manage.c`, in its order): override-redirect is never in the
 tree; a dock type is a dock; anything else is tiling, unless it floats: by its window type
@@ -33,17 +33,17 @@ maximum), by being on all desktops (then also sticky), or by being transient, th
 `transient_for` or (X11) a client leader that is already in the tree (`manage.c:462-497`). A
 `for_window` rule runs after and has the last word (`floating enable` / `floating disable`).
 
-**A window's states**, which a tiling or floating window may have (several at once):
+**A window's states**, which a window in the tree may have (several at once):
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**) | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
+| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**; `behaviour.md` and the code call it a kind, `sticky`). A floating window's state only: i3 ignores it on a tiling one | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
 | **transient window** (a dialog) | a window that belongs to another, its **parent** | `transient_for`, or the client leader (X11) | `transient`, `transientFor` |
 | **modal dialog** | a transient window the app marks modal; i3 floats it and does nothing more | `_NET_WM_STATE_MODAL` | `modal`; KWin keeps it and its parent on the same virtual desktop and gives it the parent's focus |
 | **fullscreen window** | a window covering its output, on top, its workspace's focus kept on it | `fullscreen` (output mode; global mode is out of scope) | `fullScreen` |
 | **window type** | what the app says a window is (an input to the kind, not a kind): normal, dialog, utility, splash, … | `window_type` | `windowType`; **KWin's "normal window"** (`normalWindow`) means type Normal only, so an X11 dialog is not one |
 
-**The root window** is not a kind: it is the background; a click or a crossing there focuses its
+**The root window** is not a kind (`behaviour.md` lists it with them, as `root`): it is the background; a click or a crossing there focuses its
 output (i3: the X root window; KWin/Plasma: the **desktop window**, Plasma's wallpaper and icons,
 `desktopWindow`).
 
