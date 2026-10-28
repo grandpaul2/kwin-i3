@@ -133,3 +133,10 @@ a window you're not in: your focus stays. Drag a ring to resize; scroll on a rin
 
 Live and Paul's "it works": C7, C9, V7, G1, G3, G4, G7, Z1, Z3, Z7, F4 rewritten as built;
 `LATER.md` item 30 (focus after a close on a stock install) closed by A, or its remainder said.
+
+## Paul's review (2026-10-28)
+
+65. The ring drag's target stays the ring itself (1 px at Paul's `frameWidth`, as i3's `pixel 1`);
+    nothing beyond it: Meta+right in the gap (Z2) is the easy way.
+66. Z1 as decided (strictly nearest edge, nothing without a neighbour), knowing a press nearer the
+    screen's edge than the boundary does nothing.
