@@ -79,10 +79,6 @@ KWin's own: a window's modal dialog takes the focus whatever `popupDuringFullscr
 chain (40). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
 tool proposal); a unit test for the page's rule parser (`kcm/ui/settings.js`) is a proposal too.
 
-**44. The split indicators: only after a split key, fading** (Paul, 2026-10-28). Live (`9081818`,
-Paul's go): shown after Split H, Split V or Toggle Split, 5 s, then a 0.5 s fade into the frame's
-colour (`behaviour.md` §7 L4, ≠ i3). Next: Paul's look at it live; then this item goes.
-
 **41. A wallpaper flash again, with Firefox** (Paul's capture `2026-10-27_233113.474`, Meta+Shift+B
 during the fifth session, note: "Another wallpaper flash involving ff"; not yet read). `behaviour.md`
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
