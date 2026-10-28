@@ -228,6 +228,9 @@ void Hold::onAdded(EffectWindow *w)
     // the window would show at KWin's default spot for a frame. Not dialogs, modal or transient
     // windows (a Wayland transient is still "Normal" by type): kwin-i3 floats them.
     Window *win = w->window();
+    if (win && win->isInternal()) {
+        return;     // KWin's own windows and kwini3helper's gap strips: nothing kwin-i3 places
+    }
     const bool transient = w->isDialog() || w->isModal() || (win && win->transientFor());
     if (w->isNormalWindow() && !transient && shown(w) && !w->isFullScreen() && !w->isDeleted()) {
         hide(w, s_graceMs);

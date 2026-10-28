@@ -9,6 +9,7 @@
 #pragma once
 
 #include "framefocus.h"
+#include "gapstrips.h"
 #include "layoutkeys.h"
 #include "pointerprobe.h"
 #include "popupgrace.h"
@@ -29,6 +30,7 @@ private:
     TilingDrag m_tilingDrag;        // before FrameFocus, which takes a pointer to it
     FrameFocus m_frameFocus;
     PointerProbe m_pointerProbe;    // after FrameFocus, which it reads (and is told by)
+    GapStrips m_gapStrips;          // after both: reads TilingDrag's reach, FrameFocus's frame
     SettingsWatch m_settingsWatch;
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;

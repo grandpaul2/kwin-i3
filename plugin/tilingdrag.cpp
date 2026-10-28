@@ -1,4 +1,5 @@
 #include "tilingdrag.h"
+#include "gapstrips.h"
 
 #include <effect/globals.h>
 #include <input_event.h>
@@ -401,7 +402,7 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
         return false;
     }
     Window *window = input()->pointer()->hover();
-    if (window && !window->isDeleted() && !window->isDesktop()) {
+    if (window && !window->isDeleted() && !window->isDesktop() && !GapStrips::isStrip(window)) {
         if (window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
             return false;
         }

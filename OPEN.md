@@ -104,5 +104,6 @@ pointer across the gap, with its resize cursor, and 4 px of the neighbour's cont
 there resizes the neighbour's bottom). i3 owns that space by construction (reparenting,
 `manage.c:554`). The proposal, **`docs/spec-gap-ownership.md`**: A, a masked window of kwin-i3's
 over the gaps (probed: the arrow and i3's press beside VS Code); B, the tiled window under the
-pointer raised among tiled ones; C, the bug. Next: Paul's read of the spec; then two probes (A's
-paint cost, B's raise) before anything is built. The probe code: branch `gapwin-probe`.
+pointer raised among tiled ones; C, the bug. Both probes passed;
+**built on branch `gap-ownership`**, tests green (the spec's "Now"). Next: Paul's go for
+`make plugin-install` and the script reload, then his check beside VS Code.

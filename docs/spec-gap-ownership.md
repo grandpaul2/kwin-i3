@@ -1,7 +1,6 @@
 # Spec: the gaps are kwin-i3's, as i3's are i3's
 
-Paul, 2026-10-28 (OPEN.md item 43). Status: **probed; verdict build A + B + C, for Paul's go**. Nothing built on main;
-the probes are on branch `gapwin-probe`. The measurements are in `docs/pointer.md`.
+Paul, 2026-10-28 (OPEN.md item 43). Status: **built on branch `gap-ownership` (2026-10-28), not live**; see "Now" at the end. The measurements are in `docs/pointer.md`.
 
 ## 1. How i3 does it
 
@@ -128,3 +127,25 @@ resize cursor over its 10 px band), plus the 4 px bug (part C). The press stays 
 cost only the gaps, and the raise is invisible. That is the full i3 ownership without needless
 bulk, for every app that draws its own frame. Before building, the design left is the mask's upkeep
 (what sits above a gap, fullscreen, desktops, outputs) and when to raise.
+
+## Now (2026-10-28, tenth session)
+
+Built on `gap-ownership`: `plugin/gapstrips.{h,cpp}` (A), the raise in `FrameFocus::pointerMotion`
+(B), the margin case in `FrameFocus::decide` (C); the strips count as the gap in `FrameFocus` and
+in `TilingDrag::pressResize` (Meta+right); the script and kwini3hold skip them. Checked in the
+test KWin (terminal | VS Code | terminal, Paul's gaps): the gap is kwin-i3's (the arrow, i3's
+press), the terminal owns its frame after a crossing, a floating window cuts the strips, fullscreen
+has none. Unit 173/173, the 18 plugin scenarios green (80's expectation widened, Paul's OK).
+
+Found while testing, both from KWin's own focus code, which counts a strip as a window (an
+`InternalWindow` is always `isClient`):
+- **A strip added or removed is a stacking change**, at which KWin re-enters whatever window is
+  under a pointer that hasn't moved, and focus follows mouse focuses it (`input.cpp`
+  `InputDeviceHandler::init`, `window.cpp` `pointerEnterEvent`; KWin's last mouse position is
+  stale after a drag kwin-i3 took). 53, 58, 86 went red. Fixed: strips are only ever moved, a
+  spare parked off every output, never destroyed.
+- **After a close with the pointer resting in a gap**, KWin's "next focus prefers mouse" picks the
+  strip (`activation.cpp` `windowUnderMouse`), which takes no focus: KWin activates none and
+  kwin-i3 gives i3's choice the same millisecond. The same window ends up focused; the log says
+  "chose" where it said "kept" (80).
+

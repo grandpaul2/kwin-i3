@@ -1,4 +1,5 @@
 #include "framefocus.h"
+#include "gapstrips.h"
 #include "pointerprobe.h"
 #include "tilingdrag.h"
 
@@ -64,13 +65,27 @@ bool FrameFocus::overTiledMargin(const QPointF &pos, Window *hover) const
 // (custom tiling), or floating with frameOnFloating; no server decoration, not fullscreen.
 KWin::Window *FrameFocus::ringWindow(const QPointF &pos, Window *hover) const
 {
-    if (hover && !hover->isDesktop() && !overTiledMargin(pos, hover)) {
+    if (hover && !hover->isDesktop() && !GapStrips::isStrip(hover) && !overTiledMargin(pos, hover)) {
         return nullptr;
     }
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         if (onRing(*it, pos)) {
             return *it;
+        }
+    }
+    return nullptr;
+}
+
+// The shown tiled window whose own frame holds pos, if any (tiled windows never overlap).
+KWin::Window *FrameFocus::tiledFrameAt(const QPointF &pos) const
+{
+    const auto order = workspace()->stackingOrder();
+    for (auto it = order.crbegin(); it != order.crend(); ++it) {
+        Window *w = *it;
+        if (w->isClient() && !w->isDeleted() && !w->isMinimized() && !w->isHidden() && w->isOnCurrentDesktop() && !w->isFullScreen()
+            && customTiled(w) && w->frameGeometry().contains(pos)) {
+            return w;
         }
     }
     return nullptr;
@@ -101,7 +116,21 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 // requested that window's focus, and cancelDelayFocus would drop it.
 bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
-    Window *window = ringWindow(event->position, input()->pointer()->hover());
+    // A tiled neighbour's invisible band over this tiled window's own frame (an app drawing its
+    // own frame, stacked above): raise this one among the tiles, so that each tiled window owns
+    // its whole frame, as a clipped client does in i3 (spec-gap-ownership.md, part B). Tiled
+    // windows never overlap visibly, so the order among them shows nothing (probed: no pixel
+    // changed), and floating windows keep above; no focus change.
+    Window *hover = input()->pointer()->hover();
+    if (overTiledMargin(event->position, hover)) {
+        if (Window *owner = tiledFrameAt(event->position); owner && owner != hover && owner != m_raised) {
+            m_raised = owner;
+            workspace()->raiseWindow(owner);
+        }
+    } else {
+        m_raised = nullptr;
+    }
+    Window *window = ringWindow(event->position, hover);
     if (window == m_ringWindow) {
         return false;
     }
@@ -176,7 +205,14 @@ FrameFocus::Decision FrameFocus::decide(const QPointF &pos, Window *hover, Qt::M
         // as on the ring of the nearest tiled window (TilingDrag::gapWindow, Z2's reach), on its
         // side facing the press. The gap is a handle, not a sliver of desktop: i3 shows none
         // between windows (Paul, 2026-10-28, OPEN.md item 43).
-        const bool gap = !hover || hover->isDesktop() || overTiledMargin(pos, hover);
+        // Over a strip of kwin-i3's (gapstrips.h): the gap, as the root is in i3.
+        const bool gap = !hover || hover->isDesktop() || GapStrips::isStrip(hover) || overTiledMargin(pos, hover);
+        // Inside another tiled window's own frame, under this one's band: that window's pixel,
+        // which only the app holding the pointer could hand on. Nothing, not a resize of it
+        // (spec-gap-ownership.md, part C; the raise in pointerMotion makes it rare).
+        if (overTiledMargin(pos, hover) && tiledFrameAt(pos)) {
+            return {Decision::Margin, hover, QString()};
+        }
         if (gap && resizeButton) {
             if (Window *near = m_drag->gapWindow(pos)) {
                 return {Decision::GapResize, near, sideOf(near, pos)};

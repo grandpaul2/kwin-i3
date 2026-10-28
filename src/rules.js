@@ -30,6 +30,8 @@ var Rules = (function () {
     function i3Kind(w) {
         if (w.dock) return "dock";
         if (w.desktopWindow) return "root";
+        // kwini3helper's strips over the gaps are kwin-i3's own, as i3's frames: no client.
+        if (String(w.caption) === "kwin-i3 gap") return "override-redirect";
         if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip || w.notification ||
             w.criticalNotification || w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
         if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";

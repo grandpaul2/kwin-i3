@@ -10,6 +10,8 @@
 // and 9, "Probe result".
 #pragma once
 
+#include <functional>
+
 #include <input.h>
 
 #include <KConfigWatcher>
@@ -95,7 +97,15 @@ public:
     QString state();
     void setOn(bool on);
     bool on() const { return m_on; }
-    void setResizeGap(int px) { m_resizeGap = px; }
+    void setResizeGap(int px)
+    {
+        m_resizeGap = px;
+        if (onResizeGapChanged) {
+            onResizeGapChanged();
+        }
+    }
+    int resizeGap() const { return m_resizeGap; }
+    std::function<void()> onResizeGapChanged;   // the gap strips follow it (gapstrips.h)
     void warp(int x, int y);
     void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet

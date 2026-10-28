@@ -46,10 +46,12 @@ public:
     void setProbe(PointerProbe *probe) { m_probe = probe; }
     // `w` has a frame ring and `pos` is on it (what kwini3hold draws there; ringWindow's test).
     bool onRing(const KWin::Window *w, const QPointF &pos) const;
+    int frameWidth() const { return m_frameWidth; }
 
 private:
     KWin::Window *ringWindow(const QPointF &pos, KWin::Window *hover) const;
     bool overTiledMargin(const QPointF &pos, KWin::Window *hover) const;
+    KWin::Window *tiledFrameAt(const QPointF &pos) const;
 
     TilingDrag *m_drag;                   // a ring press is its resize on that side (§9 Z3)
     PointerProbe *m_probe = nullptr;      // records each press's decision
@@ -63,5 +65,6 @@ private:
     bool m_frameOnFloating = false;
     bool m_tiledRing = true;
     QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any
+    QPointer<KWin::Window> m_raised;      // the tiled window last raised over a neighbour's band
     Qt::MouseButtons m_taken;             // presses taken on a frame: their releases are ours too
 };
