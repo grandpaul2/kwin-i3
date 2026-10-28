@@ -102,7 +102,7 @@ assign=[class="^steam$"] → 5
   can't name a workspace beyond 10 (`WARN`, skipped).
 - **The defaults** (`forWindow`): the floating kinds of §3, `[class="^org\.kde\.spectacle$"]`,
   `[class="^org\.kde\.polkit-kde-authentication-agent-1$"]`, `[class="^(org\.kde\.)?kruler$"]`,
-  `[class="^(org\.kde\.)?plasmashell$"] [window_type="normal"]`, each `floating enable`; the
+  `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]`, each `floating enable`; the
   classes confirmed by the live read below before building. A user can delete one and see the
   tool tile.
 
