@@ -8,8 +8,9 @@ access, so the QML scene of A fell back to the next best thing, not to the ring'
 script's `Resize Mode`, `Exit`, `Terminal`, `Launcher` keys, the mode state (`Mode Changed`, `inMode`),
 the four resize actions unbound, the no-back-and-forth and next/primary actions, call 63's
 same-launch skip, the load report; `keys.json`, the Keys page table and tests; 55 and 68 extended
-as approved, 69's Meta+Ctrl+ö check gone with the key. Waiting for Paul's go, after stages 1-4;
-then `~/.local/bin/hotkeys` and dotfiles' Plasma table (the key change).
+as approved, 69's Meta+Ctrl+ö check gone with the key. **Done 2026-10-28**: merged, live, and
+Paul's "it works" on the live check below; `~/.local/bin/hotkeys` and dotfiles' Plasma table
+updated. The banner's look: `OPEN.md` item 42.
 
 **The rows**: `behaviour.md` §8 K4 (i3's resize mode), K17 (exit), K18 (terminal, launcher), §4 S5
 (the no-back-and-forth actions), S8/S9 (`next`, `primary`), all decided (Paul, 2026-10-27).
