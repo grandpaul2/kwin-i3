@@ -104,16 +104,14 @@ as a flag of its own (`byKey`). `mouseWarping` (`output` default, `none`): with 
 The activity handler in `startRest` activates the visible workspace of the output under the
 pointer (`screenAt(workspace.cursorPos)`), not workspace 1.
 
-## Unknown, settled before building
+## Probe result (2026-10-28, probe 91, branch `probe-redo`)
 
-**The crossing's order.** Whether `cursorPosChanged` arrives before or after KWin's focus-follows-
-mouse activation of a window entered at the same motion, and whether KWin's delay
-(`DelayFocusInterval`) leaves a moment where the topmost window is a window but nothing is active
-yet. A's hit test makes the order not matter for windows (A does nothing over one); the probe
-confirms it and counts the signal's rate. **Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, two outputs in
-`tools/testkwin.sh`, the pointer moved with `tools/inject.py` as 72 does): log
-`cursorPosChanged` (count, output), `windowActivated`, `activeScreen`, across a crossing onto an
-empty workspace, a window and a panel. Under a minute.
+Raw KWin, focus follows mouse, b focused on Virtual-0, the pointer moved onto a on Virtual-1:
+`cursorPosChanged` comes once per motion event (34 for 34 steps); at the crossing
+`workspace.activeScreen` is already the new output and KWin's active window is **still b**; KWin's
+activation of a comes **in the next turn**. Back over the gap onto Virtual-0: the crossing, then
+b's activation when the pointer reached it. A's hit test (what is under the pointer, not what is
+active) is right for both orders.
 
 ## Tests
 

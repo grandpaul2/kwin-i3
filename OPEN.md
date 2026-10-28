@@ -109,9 +109,10 @@ then building.** Stage 1 specced (`docs/spec-redo-1-new-windows.md`, 2026-10-28)
 filter order, the minimize order, the root's clamp, `from`'s two jobs, i3's `leave_fullscreen`,
 stage 3's classify order, citations, probes marked for Paul's go); three became calls (41-43).
 Calls 34-43 settled (Paul, 2026-10-28; G4 now kept, L6's per-edge values with a strip; the
-mode's sign a banner in the window if the effect can, else the ring's colour). Next: the review
-pass with Paul stage by stage, and the items held for his go (probes, the live read, new checks,
-unit tests, scenario 87).
+mode's sign a banner in the window if the effect can, else the ring's colour). Items 44-56 approved (Paul, 2026-10-28); probes 90-93 run (branch `probe-redo`,
+results in the stage specs): stage 1's modal tie redone (kwin-i3's own relocate moved Prism),
+Spectacle's overlays an open question for the review pass. Stage 10's new checks still need his
+go. Next: the review pass with Paul, stage by stage.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

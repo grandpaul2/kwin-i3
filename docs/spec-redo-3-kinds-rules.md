@@ -147,14 +147,20 @@ OBS, the stream stage (Xephyr, `STAGE (streamed)`: Paul's `floatingTitle` keeps 
 Normal (type 0) and don't skip the taskbar, so R4's end changes none of them. The only Normal one
 that skips the taskbar is `xwaylandvideobridge`, on A4's built-in list.
 
+## Probe result (2026-10-28, probe 93, branch `probe-redo`)
+
+Spectacle's main window: class `org.kde.spectacle`, Normal, not skipping the taskbar, not on all
+desktops. **Its region overlay is a Normal fullscreen window per output**, the same class (title
+"Unsaved* — Spectacle"). So B's default `[class="^org\.kde\.spectacle$"] floating enable` also
+brings the overlays into the tree, each its workspace's fullscreen window. **For the review pass**:
+whether the overlays should be kept out (a built-in case: Spectacle's class and fullscreen when it
+opens) or are fine as fullscreen floating windows, as i3 would hold them. KRuler and Yakuake
+aren't installed on Paul's machine; the password prompt's class is `ignoreClass`'s default.
+
 ## Unknown, settled before building
 
-**The Plasma tools not open on Paul's desktop** (R4's "check first", the rest): Spectacle, KRuler,
-the password prompt and Yakuake (shown, hidden, shown, for stage 9), **in the test KWin**
-(`docs/testing.md` P4, approved (Paul, 2026-10-28): each started on the headless session's display, the same
-`getWindowInfo` read on its bus, Yakuake toggled through its own D-Bus; nothing on Paul's screen).
-plasmashell's panel configuration and edit-mode windows are hard to run headless: read from
-plasmashell's source, or left on the built-in list (B's default rule waits for them).
+plasmashell's panel configuration and edit-mode windows: read from plasmashell's source before
+building, or left on the built-in list (B's default rule waits for them).
 
 ## Paul's calls (2026-10-28)
 

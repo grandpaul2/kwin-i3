@@ -92,14 +92,12 @@ Workspace to Output Primary**. `next` is KWin's output order, wrapping (i3's
 `get_output_next_wrap` over its list); `primary` is the first in that order. Listed in
 `kcm/ui/commands.json` so the Keys page shows them.
 
-## Unknown, settled before building
+## Probe result (2026-10-28, probe 92, branch `probe-redo`)
 
-**C's terminal route.** Whether `doRegister` on a `.desktop` component that kglobalacceld hasn't
-loaded (Alacritty's desktop file has no `X-KDE-Shortcuts`) then answers `invokeShortcut _launch`.
-**Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, against the test KWin's own kglobalacceld if `testkwin.sh` runs
-one, else read-only reasoning from `kglobalacceld.cpp`; no live call): register, invoke, see the
-process start. If it can't, the fallback is the helper starting a transient systemd unit itself
-(`org.freedesktop.systemd1` `StartTransientUnit`, what KIO does), for Paul's call.
+In the test KWin (kglobalaccel runs inside it): `doRegister` of `Alacritty.desktop` (no
+`X-KDE-Shortcuts`) then `invokeShortcut _launch` on `/component/Alacritty_desktop` **opened
+Alacritty**; the same for `org.kde.konsole.desktop` opened Konsole. C's route works. Not shown:
+the app's own systemd scope (the test bus has no systemd); KIO's launcher does that live.
 
 ## Tests
 

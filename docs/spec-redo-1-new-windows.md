@@ -46,10 +46,12 @@ own output and focuses it (`workspace_show`).
 At `adoptWindow` for a window that just appeared (`fresh`), the **target workspace** T is the
 first that applies (stage 3 adds `assign` before 1, as i3 checks it first):
 
-1. **A modal dialog whose parent is in the tree**: the parent's workspace **as it was before the
-   dialog appeared** (C3, ≠ i3, decided: KWin ties the two). A new record, `movedFrom[key] = { ws,
-   turn }`, keeps each tree window's last workspace change from outside, so the tie that moved the
-   parent (`setDesktops` on the dialog) is undone even if it was handled first.
+1. **A modal dialog whose parent is in the tree**: the parent's workspace (C3, ≠ i3, decided: KWin
+   ties the two). Probe 90: KWin itself doesn't move the parent when the dialog opens; the tie
+   fires only when someone calls `setDesktops` on the dialog later, and in the 17:05 capture that
+   was kwin-i3's own `relocate`. So the dialog is given its parent's virtual desktop directly
+   (the tie then sets the parent's to what it already is), and **never through `relocate`'s move
+   via all desktops**, which would put the parent on all desktops too.
 2. **A window that asked for a virtual desktop** (session restore, a KWin rule, X11
    `_NET_WM_DESKTOP`): that one (i3's `_NET_WM_DESKTOP`; C4, accepted: a hidden one switches its
    output). Seen as: its virtual desktop is not the one KWin gives by default, the current one of
@@ -114,15 +116,12 @@ pointer as A2 does today; A2's own change is stage 2's.
 focused workspace's), else KWin's active output when nothing has focus. `moveToWorkspace` already
 uses the window's output.
 
-## Unknown, settled before building
+## Probe result (2026-10-28, probe 90, branch `probe-redo`)
 
-**The modal tie's turn.** The capture shows the parent relocated after the dialog's `ADD`, but not
-whether KWin's `setDesktops` on the dialog (which moves the parent) runs in the turn of
-`windowAdded` or an earlier one (the client's first commit). A1's `movedFrom` record covers both
-orders; the order decides only how long a record is kept (one turn, or until the dialog arrives,
-at most 1 s). **Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, in `tools/testkwin.sh`, with 44-dialog-drag's
-modal dialog on another output's workspace): log the parent's `desktopsChanged`,
-`currentDesktopChanged` and `windowAdded` with a turn counter. Under a minute.
+Raw KWin, the parent on Virtual-1's desktop 2, the pointer on Virtual-0 (desktop 1), the parent's
+modal dialog opening: `SHOWN Virtual-1 2 -> 1`, `ACTIVE "p dialog"`, `ADD "p dialog" desks=1
+out=Virtual-1`, **all in one event-loop turn** (B's claim holds), and **no desktop change for the
+parent at all** within half a second: KWin's tie didn't fire at the dialog's opening (A1 above).
 
 ## Tests
 
