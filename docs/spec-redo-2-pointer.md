@@ -59,8 +59,11 @@ frame geometry holds the point):
   above, KWin's active window stays with the popup (B2's "keeps the keyboard while the focus
   moves under it"), and a passive pass leaves it (D7).
 
-Not while a tiling drag or resize runs (the helper holds the pointer), nor while kwin-i3's own warp
-moves it (a flag around the invoke, as i3 masks its own motion events).
+Not while a tiling drag or resize runs (the helper holds the pointer), after a release, or while
+outputs come and go (`screensChanged` resets the last output seen, from the pointer's position
+then). kwin-i3's own warp needs no mask: it goes to the output that already has the focus, so the
+crossing it causes finds nothing to change (a flag around `invoke` couldn't work anyway: the call
+is asynchronous, the motion arrives after it).
 
 ### B. A click on the desktop window (B4)
 
@@ -88,10 +91,13 @@ today (A4: a focus key takes the keyboard from it).
 
 `applyFocus` keeps the output its last focus was on. When the new focus is on another output and
 the pointer (`workspace.cursorPos`) isn't on that output: the warp, to the focused window's centre
-(`MoveMouseToFocus`) or an empty workspace's output centre (`MoveMouseToCenter`). Whatever moved
-the focus: a key, stage 1's outside switch, an activation (Alt+Tab), a close (§5 C6-C8: today's
-"a closing window never warps" holds only while the pointer is on the new focus's output, as in
-i3). The `from` argument goes. `mouseWarping` (`output` default, `none`): with `none`, no warp.
+(`MoveMouseToFocus`) or an empty workspace's output centre (`MoveMouseToCenter`). What moves
+the focus there, as i3's callers of `x_set_warp_to` (`workspace_show`, focus commands): a key,
+stage 1's outside switch, an activation (Alt+Tab). **Not a close** (i3's close sets no warp:
+the 2026-10-25 start-menu bug that 72 guards stays fixed). `from` today does two jobs: the output
+focus left (the warp) and "a key asked for this" (the passive-pass test at `applyFocus`'s top,
+which spares KRunner and popups); the warp's job moves to the kept last output, the key's stays
+as a flag of its own (`byKey`). `mouseWarping` (`output` default, `none`): with `none`, no warp.
 
 ### E. Login (E1, P2)
 
@@ -104,7 +110,7 @@ pointer (`screenAt(workspace.cursorPos)`), not workspace 1.
 mouse activation of a window entered at the same motion, and whether KWin's delay
 (`DelayFocusInterval`) leaves a moment where the topmost window is a window but nothing is active
 yet. A's hit test makes the order not matter for windows (A does nothing over one); the probe
-confirms it and counts the signal's rate. **Probe** (`docs/testing.md` P4, two outputs in
+confirms it and counts the signal's rate. **Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, two outputs in
 `tools/testkwin.sh`, the pointer moved with `tools/inject.py` as 72 does): log
 `cursorPosChanged` (count, output), `windowActivated`, `activeScreen`, across a crossing onto an
 empty workspace, a window and a panel. Under a minute.

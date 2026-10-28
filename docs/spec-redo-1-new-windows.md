@@ -47,8 +47,8 @@ At `adoptWindow` for a window that just appeared (`fresh`), the **target workspa
 first that applies (stage 3 adds `assign` before 1, as i3 checks it first):
 
 1. **A modal dialog whose parent is in the tree**: the parent's workspace **as it was before the
-   dialog appeared** (C3, ≠ i3, decided: KWin ties the two). kwin-i3 keeps each tree window's
-   last workspace change from outside (`movedFrom[key] = { ws, turn }`), so the tie that moved the
+   dialog appeared** (C3, ≠ i3, decided: KWin ties the two). A new record, `movedFrom[key] = { ws,
+   turn }`, keeps each tree window's last workspace change from outside, so the tie that moved the
    parent (`setDesktops` on the dialog) is undone even if it was handled first.
 2. **A window that asked for a virtual desktop** (session restore, a KWin rule, X11
    `_NET_WM_DESKTOP`): that one (i3's `_NET_WM_DESKTOP`; C4, accepted: a hidden one switches its
@@ -120,7 +120,7 @@ uses the window's output.
 whether KWin's `setDesktops` on the dialog (which moves the parent) runs in the turn of
 `windowAdded` or an earlier one (the client's first commit). A1's `movedFrom` record covers both
 orders; the order decides only how long a record is kept (one turn, or until the dialog arrives,
-at most 1 s). **Probe** (`docs/testing.md` P4, in `tools/testkwin.sh`, with 44-dialog-drag's
+at most 1 s). **Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, in `tools/testkwin.sh`, with 44-dialog-drag's
 modal dialog on another output's workspace): log the parent's `desktopsChanged`,
 `currentDesktopChanged` and `windowAdded` with a turn counter. Under a minute.
 

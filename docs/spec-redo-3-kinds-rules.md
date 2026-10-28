@@ -62,12 +62,18 @@ First match wins:
 5. On all virtual desktops → kept out (stage 9: sticky floating); on two or more but not all → not
    adopted until it is on one (R13, as today).
 6. **The default float** (i3's manage): transient, modal, fixed size (R6); types dialog, utility,
-   toolbar, splash, notification, for X11 windows too (R2: KWin's `normalWindow` no longer gates
+   toolbar, splash, for X11 windows too (an X11 notification window already met 3: KWin gives it
+   the same type as Plasma's notifications, so it is override-redirect, ≠ i3, which floats it) (R2: KWin's `normalWindow` no longer gates
    these; the X11 dialog of an Xwayland app floats, as i3); the capture note (R8). Skipping the
    taskbar decides nothing (R4).
 7. **`forWindow`'s rules** (B), in order, each that matches applying `floating enable` or
    `floating disable`: the last one wins, and they override 6.
 8. Otherwise tiling.
+
+**The order inside `adoptWindow`**: the target workspace first (stage 1's A, with `assign` as its
+case 0), then `classify(w, T)`, so the `workspace` criterion matches the workspace the window
+opens on, as in i3 (`run_assignments` runs after the window is placed). Today `classify` runs
+before `wsForWindow` (`src/kwin.js` `adoptWindow`); the two swap.
 
 ### B. The rules: `forWindow` and `assign` (R9, X2, N12, N13)
 
@@ -103,18 +109,21 @@ assign=[class="^steam$"] → 5
 - **The defaults** (`forWindow`): the floating kinds of §3, `[class="^org\.kde\.spectacle$"]`,
   `[class="^org\.kde\.polkit-kde-authentication-agent-1$"]`, `[class="^(org\.kde\.)?kruler$"]`,
   `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]`, each `floating enable`; the
-  classes confirmed by the live read below before building. A user can delete one and see the
+  classes confirmed by the live read below before building. **plasmashell stays on the built-in
+  override-redirect list until the live read** has seen its panel configuration and edit-mode
+  windows: adopting those into the tree is what `docs/bug-panel-config.md` warns about. A user can delete one and see the
   tool tile.
 
 ### C. The old settings (`ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle`, `floatingWorkspaces`)
 
-Read on as rules, so nothing a user set changes at the update, Paul's two titles included:
+Read on as rules, so nothing a user set changes at the update, Paul's two titles included
+(the ignore lists' part is **call 43**):
 `floatingClass` X → `[class="^X$"] floating enable` and the same for `instance`;
 `floatingTitle` X → `[title="X"]` with X's special characters escaped (a substring, as now);
 `floatingWorkspaces` N → `[workspace="^N$"] floating enable`. An `ignoreClass` or `ignoreRole`
 entry that isn't a default can't become override-redirect (R5: a user can't make a window
-override-redirect): it reads as `floating enable`, and the load report (§13) says so once, naming
-the entries. The defaults of the two ignore lists go. Stage 10's settings page writes the new
+override-redirect). Proposed: it reads as `floating enable`, and the load report (§13) says so
+once, naming the entries; no row decided this mapping, so it is call 43. The defaults of the two ignore lists go. Stage 10's settings page writes the new
 keys and removes the old; until then the Configure form shows both.
 
 ### D. Floating sizes (N15)
@@ -136,10 +145,18 @@ line, with i3's syntax shown under it, and keeps its window picker (it fills in 
 **Which windows on Paul's desktop the new rules move** (R4's "check first"): every Normal window
 that skips the taskbar or is on today's ignore lists changes kind with this stage. **A live read,
 read-only, with Paul's go**: Paul opens Spectacle, KRunner, a password prompt (`pkexec true`),
-KRuler, a widget's settings and Yakuake, and presses Meta+Shift+B; for each window id in the
+KRuler, a widget's settings, a panel's configuration and Plasma's edit mode, and Yakuake (shown,
+hidden, shown, for stage 9), and presses Meta+Shift+B; for each window id in the
 capture's JSON, `busctl --user call org.kde.KWin /KWin org.kde.KWin getWindowInfo s <id>` gives
 its class, instance, type and skip-taskbar flag. Each goes to the built-in list (4), a default
 rule (B), or is left to tile; the result goes into this spec.
+
+## For Paul (in the review)
+
+43. **A user's own ignore entries** (`ignoreClass`, `ignoreRole` beyond the defaults). R5
+    decided the lists go; it didn't say what becomes of what a user put there. Proposed:
+    `floating enable`, reported once at load (the nearest i3 has: a user can't make a window
+    override-redirect). The other way: dropped, reported once, the window tiling.
 
 ## Tests
 

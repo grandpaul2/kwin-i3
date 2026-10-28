@@ -38,14 +38,21 @@ gets its own systemd scope.
 - **Entering**: a kwin-i3 action **Resize Mode** (default Meta+R) asks the helper over D-Bus,
   `SetMode("resize")`. Without the helper the action does nothing and the load report says the
   mode needs it (§13).
+- **The filter's place**: KWin runs its input filters in order (`/usr/include/kwin/input.h`:
+  … TabBox, **GlobalShortcut**, Effects, … WindowAction …); the helper's drag filter is at
+  Effects, after the shortcuts, so a bound key (Meta+R itself) never reaches it. The mode's key
+  filter goes **before GlobalShortcut** (at TabBox's order), installed only while the mode is on.
 - **In the mode** the helper's keyboard filter takes, by **key code** (evdev, as i3's `bindcode`,
   so no layout refit): J and Left → Shrink Width, K and Down → Grow Height, L and Up → Shrink
   Height, ; and Right → Grow Width, on press and key repeat (holding a key keeps resizing, as in
   i3); it runs each by invoking the kwin-i3 action (as the drag does). Return, Escape and Meta+R
   leave the mode. **Every other key goes to the focused window**, as in i3.
 - **kwin-i3's other keys do nothing in the mode** (i3: only the mode's bindings are active): the
-  script's `act()` returns while the mode is on, as stage 2's override-redirect check does.
-  Plasma's own shortcuts still run (i3 doesn't own them).
+  script's `act()` returns while the mode is on, as stage 2's override-redirect check does, except
+  for the four resize actions the mode itself runs. **The mode's state is the helper's**; it tells
+  the script on each change through a hidden action (`kwin-i3 Mode Changed`, then `State()`, as
+  the drag does), and the script asks once at load, so a script reload can't lose step. Plasma's
+  own shortcuts still run (i3 doesn't own them).
 - **Leaving otherwise**: the helper unloading, kwin-i3 releasing, the screen locking.
 - **The four actions** keep their names and go unbound (their Meta+Ctrl keys free); a user who
   wants them flat binds them on the Keys page. Their steps stay `resizeStep` and `floatingStep`
@@ -81,7 +88,7 @@ Next**, **Move to Output Primary**. `next` is KWin's output order, wrapping (i3'
 
 **C's terminal route.** Whether `doRegister` on a `.desktop` component that kglobalacceld hasn't
 loaded (Alacritty's desktop file has no `X-KDE-Shortcuts`) then answers `invokeShortcut _launch`.
-**Probe** (`docs/testing.md` P4, against the test KWin's own kglobalacceld if `testkwin.sh` runs
+**Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, against the test KWin's own kglobalacceld if `testkwin.sh` runs
 one, else read-only reasoning from `kglobalacceld.cpp`; no live call): register, invoke, see the
 process start. If it can't, the fallback is the helper starting a transient systemd unit itself
 (`org.freedesktop.systemd1` `StartTransientUnit`, what KIO does), for Paul's call.
@@ -92,8 +99,8 @@ process start. If it can't, the fallback is the helper starting a transient syst
   expectations change to Meta+R's mode), 33 (own keys), 35 (taken keys: Meta+D), 50 (keys), 55
   (helper), 64 (plugin reload, a helper change), 68 (workspace commands), 69 (layouts: the mode's
   keys need no refit), 76 (the Keys page lists the new actions).
-- **New checks, for Paul's go**: in 55, the mode (Meta+R, then J resizes, Meta+1 does nothing and
-  reaches the window, Escape leaves); in 68, a no-back-and-forth action and Focus Output Next.
+- **New checks, for Paul's go**: in 55, the mode (Meta+R, then J resizes, Meta+1 does nothing (kglobalaccel takes it, kwin-i3
+  ignores it), a plain letter reaches the window, Escape leaves); in 68, a no-back-and-forth action and Focus Output Next.
   Exit, terminal and launcher open things on the test session's bus: checked by the D-Bus call
   made (logged), not by what opens.
 

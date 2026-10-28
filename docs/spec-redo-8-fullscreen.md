@@ -19,8 +19,8 @@ KWin keeps a fullscreen window above the panels only while it is active
 - the new window never takes the focus (`fs != NULL, not focusing`), except:
 - **`smart`**: a transient (`transient_for`, or a group leader i3 manages) **of the fullscreen
   window** does (`con_find_transient_for_window`);
-- **`leave_fullscreen`**: any such transient **ends the fullscreen**, and is then focused as on
-  any workspace;
+- **`leave_fullscreen`**: any such transient **ends the fullscreen** (`con_disable_fullscreen`,
+  `:502-503`); nothing sets the focus, so it opens without it;
 - **`all`**: any window that floats (`want_floating`: dialogs, transients, fixed sizes, `for_window`
   floats) takes the focus;
 - **`ignore`**: nothing more;
@@ -37,7 +37,7 @@ KWin keeps a fullscreen window above the panels only while it is active
 |---|---|---|
 | `smart` | if its `transientFor` chain reaches the fullscreen window | focus handed back |
 | `ignore` | never | focus handed back |
-| `leave_fullscreen` | if it is a transient (any parent): the fullscreen window's fullscreen ends first (`setFullScreen(false)`, the tree's flag with it) | focus handed back |
+| `leave_fullscreen` | never; but a transient (any parent) ends the fullscreen window's fullscreen (`setFullScreen(false)`, the tree's flag with it), so it shows | focus handed back |
 | `all` | if it is floating (stage 3's kinds) | focus handed back |
 
 Opening fullscreen itself: it takes over, whatever the value (as today). "A transient" is KWin's

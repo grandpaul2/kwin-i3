@@ -42,7 +42,11 @@ every workspace (`gaps()`, §6).
 ### A. The ring's class comes from the model (L3, L11)
 
 The script works out each framed window's class at the end of a pass, from the tree as i3's
-`x.c` does (focused; its parent's last focus; else unfocused), and sends only changes to the
+`x.c` does (focused; its parent's last focus; else unfocused). **A floating window**: i3 wraps
+each in a floating container holding only it, so an unfocused floating window is always its
+parent's last focus, `focused_inactive`; kwin-i3's model puts floating windows straight on the
+workspace, so this is written as its own case, not left to the parent test. Before the script's
+first `SetRing`, and after a release, the effect colours as today (KWin's active window); and sends only changes to the
 effect: `SetRing(id, class, indicator, hidden)` (one call per changed window, as `SetFloating`
 is now). The effect stops reading KWin's active window for the colour. **So the ring follows
 i3's focus, not the keyboard**: with KRunner or a menu open (stage 2's override-redirect keeping
@@ -62,25 +66,29 @@ window keeps Plasma's look by default (`frameOnFloating` off).
 the ring in the class's indicator colour. Only where a ring is drawn (`frame` look, and floating
 windows never: i3's `con->parent->type != CT_FLOATING_CON`).
 
-### C. Hiding ring sides (L6, `hide_edge_borders`)
+### C. Hiding ring sides (L6, `hide_edge_borders`): call 41
 
-`hidden` in A's call: the sides to leave out, from the setting and i3's adjacency (the window's
-tile touches its workspace's edge: here, the edge's gap is 0). For a hidden side the tiles leave
-no room for the ring there: the root's inset on that side drops by the ring's width, so the
-window reaches the edge. `smart` and `smart_no_gaps`: a workspace with one visible tiling window
-has no ring at all, and no room left for it. Floating windows: never.
+**`smart` and `smart_no_gaps` work**: a workspace with one visible tiling window has no ring and
+no room for it (its one tile's padding 0). **The per-edge values (`vertical`, `horizontal`,
+`both`) can't be built as i3's**: KWin clamps a root tile to the output
+(`tiles/customtile.cpp:58`, `intersected(0,0,1,1)`), so its inset can't go below 0, and a
+tile's padding is one number for all four sides (`tiles/tile.h:33`; an edge side gets the full
+padding, `tile.cpp:175-177`), so taking the ring's room away at an edge takes it from all four.
+Hiding the ring side only would leave a strip of the ring's width (1 px by default) where the
+window doesn't reach the edge.
 
 ### D. Gaps (N2, L6 `smart_gaps`)
 
 - `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (empty: `gapsOuter`), as i3's per-side outer
-  gaps; the root's inset per side (KWin's root tile takes any rectangle).
+  gaps; the root's inset per side (KWin's root tile takes any rectangle inside the output, which
+  an inset of 0 or more always is).
 - `workspaceGaps`, i3's lines (`3 gaps inner 10`, `5 gaps outer 0`), **added** to the global ones
   per workspace, as i3; each workspace's root and its tiles' padding (one root per output and
   virtual desktop, so per workspace).
 - `smartGaps` (`off` default, `on`, `inverse_outer`): judged per workspace each pass (one
   visible tiling window); a change re-places that workspace only.
-- KWin's tile padding is one number per tile, the same on all sides; the per-side and per-edge
-  differences live in the root's inset, which is why C and D both work through it.
+- KWin's tile padding is one number per tile, the same on all sides; the per-side gaps live in
+  the root's inset.
 
 ### E. Cost (Paul's rule)
 
@@ -107,6 +115,11 @@ ring with up to two colours. No per-frame work is added.
     #5f6b78 (a muted version of the focused blue), indicators #3daee9 (Breeze's highlight) for
     focused and the class's own colour for the other two (no indicator unless focused, quieter);
     `unfocused` stays #333333. Paul picks on screen; the settings page shows them.
+
+41. **`hide_edge_borders`'s per-edge values** (C). Proposed: `none`, `smart`, `smart_no_gaps`
+    as i3; `vertical`, `horizontal`, `both` hide the ring's side and accept the strip of the
+    ring's width at the edge, ≠ i3 with KWin's reason (one padding per tile, a root inside the
+    output). The other way: those three left out, with the same reason.
 
 ## Live check (Paul)
 

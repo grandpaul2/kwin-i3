@@ -18,9 +18,9 @@ with Paul's `NextFocusPrefersMouse=true` is the one under the pointer. Why only 
 before a reload); which checks, and why, wasn't kept.
 
 **Minimize**: the model has no notion of it. Only the projection onto KWin's tiles skips a
-minimized window (`src/tree.js:186`), so its share goes to its siblings and it comes back where
+minimized window (`src/kwin.js:186`, `inLayout`), so its share goes to its siblings and it comes back where
 it was. Focus can still point at it (a focus key, `con_next_focused`, a workspace's last focus),
-and KWin's `activateWindow` un-minimizes what it activates (`activation.cpp:332`): C9's
+and KWin's `activateWindow` un-minimizes what it activates (`activation.cpp:333`): C9's
 "unchecked" is this.
 
 **The mouse** (`plugin/tilingdrag.cpp`, `plugin/framefocus.cpp`, `startDrag` and `resizeEdge` in
@@ -36,7 +36,8 @@ split with another window goes), and put it back over KWin's choice after `windo
 a split today. For a floating window i3's `con_next_focused` takes the workspace's focus order
 (`tree.js`'s port already does: `isFloating`).
 
-**First, on the build's branch**: run 20 and 25 with the condition removed, and read the failing
+**First, on the build's branch, for Paul's go** (a run of a changed build, not one of
+`docs/testing.md` P1's): run 20 and 25 with the condition removed, and read the failing
 checks' logs, to name what "KWin's record is fuller" was. The fix goes where the model's record is
 short, not back to KWin's choice: the likely causes are windows adopted at load (adopted bottom of
 the stack first, P4, so their order should follow stacking) and activations of windows before
@@ -50,8 +51,12 @@ costs.
 - **Focus never goes to a minimized window by kwin-i3's own choice**: `nextFocused`,
   `descendFocused` (a workspace's last focus), the focus keys (§2 T rows) and Focus Mode Toggle
   skip minimized cons, as i3's focus never reaches the scratchpad's windows.
-- **Minimizing the focused window**: the focus goes to `nextFocused` (as a close, A), over KWin's
-  choice.
+- **Minimizing the focused window**: the focus goes to `nextFocused`, over KWin's choice. Not as
+  A records it: KWin activates its choice inside `doMinimize` (`xdgshellwindow.cpp:858-863`,
+  `x11window.cpp:1119-1124`) **before** `minimizedChanged` is emitted, so the script hears the
+  activation first. The `windowActivated` handler therefore checks the window that had the
+  model's focus: already minimized (KWin sets the flag before choosing), it is a minimize, and
+  the model's choice is `nextFocused` of that window, taken before the new activation is.
 - **Restoring** (the task manager, Alt+Tab: an activation): it takes the focus where it was in the
   tree (V7's "back where it was"), as today.
 - A minimized window keeps its place in the tree and its share is its siblings' (the projection,
@@ -66,11 +71,16 @@ costs.
 - **G3**: `tilingDrag` (`off`, `modifier`, `titlebar`, `modifier titlebar`; default the last), read
   by the helper from kwinrc as its other settings are; `off` leaves Meta+left to KWin (floating
   windows move as usual, tiling ones don't).
-- **G4**: the helper must know **before** it takes a press whether there is anywhere to drop. The
-  script sends it after every pass (`SetCanDrop(bool)`, from `hasDropTargets`). With nowhere to
-  drop: a Meta+left press activates the window (i3's step 3) and goes on to the app.
+- **G4**: **call 42.** Passing the press on can't be done as decided: KWin's input filters run
+  in order (`/usr/include/kwin/input.h`: … Effects, …, **WindowAction** …), the helper's at
+  Effects, so a Meta+left press it lets go reaches KWin's window-action filter, whose Meta+left is
+  KWin's move: the window would be pulled out of its tile and floated, not clicked. Today's
+  swallow is there for that.
 - **G7, and Z7 for the resize** (i3's `drain_drag_events`): **any key press** cancels (it then goes
-  on as usual, so a key binding still runs, as in i3); **any button's release** drops, at the
+  on as usual, so a key binding still runs, as in i3). The helper's drag filter is at KWin's
+  Effects order, after GlobalShortcut, so a bound key never reaches it: the cancel needs a key
+  filter **before GlobalShortcut** (TabBox's order), installed only while a drag runs, as stage
+  5's mode does; **any button's release** drops, at the
   pointer, as the drag button's release would (another button's press is swallowed); **a window
   closing on the focused workspace** aborts (the script ends the drag on that window's `closed`).
 
@@ -90,6 +100,14 @@ costs.
 
 `FrameFocus::pointerAxis`: a scroll with no modifier on a ring activates its window (i3's step 3)
 and is swallowed, as now.
+
+## For Paul (in the review)
+
+42. **G4, a Meta press with nowhere to drop.** i3 passes it to the app; here KWin's own
+    window-action filter would take it first and float the window (above). Proposed: kept as
+    today (activated, swallowed), ≠ i3 with that reason. The other way: the helper sends the
+    press to the window itself, past KWin's filters (it can reach the window's surface; not
+    probed, and a press that bypasses KWin's own handling is a new class of risk).
 
 ## Tests
 
