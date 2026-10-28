@@ -67,7 +67,7 @@ S8/S9 (`next`, `primary`). Touches `KEYS`, the helper, `kcm/ui/commands.json`. S
 `move scratchpad`), §9 G1 (a Meta-drag doesn't move focus), G4 (no targets: the press goes to the
 app), G7/Z7 (a drag's end: any key cancels, any button's release drops, an unmap on the focused
 workspace aborts), Z1 (i3's nearest edge), Z3 (a ring drag resizes), F4 (a ring scroll focuses),
-G3 (`tilingDrag`, i3's four values). Mostly the helper (`tilingdrag.cpp`, `framefocus.cpp`).
+G3 (`tilingDrag`, i3's four values). Mostly the helper (`tilingdrag.cpp`, `framefocus.cpp`). Spec: `spec-redo-6-clicks-closes.md`.
 
 **7. The look** (M). §7 L3 (three colour classes: `focused` #4c7899, `focused_inactive` and
 `unfocused` defaults to pick with Paul), L4 (the lone-child split indicator), L6
