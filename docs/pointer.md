@@ -105,4 +105,11 @@ gaps, no press:
   press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). A bug.
 - Both come from one cause: KWin sends the app no tiled edges for a padded tile (`Tile::anchors`),
   so it keeps its invisible resize border.
+- KWin can't send them for a padded tile, and nothing else sets them (`tile.cpp:190`
+  `Tile::anchors`, `xdgshellwindow.cpp:907` the only reader; no constrained states in 6.7.5).
+  Chromium's 10 px input band reads maximized/fullscreen and its client-shadow flag, not tiled
+  (`frame_view_layout_linux.cc:141`; read 2026-10-28, not traced to the end).
+- **VS Code with `"window.titleBarStyle": "native"`** (test KWin, same sweep): buffer = frame, the
+  gaps and rings are no window's (KWin's `default` arrow), the terminals keep all their pixels,
+  every press there kwin-i3's resize: i3's picture exactly.
 
