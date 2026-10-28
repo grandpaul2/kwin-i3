@@ -525,8 +525,7 @@ of a pair has the key in its name (`kwin-i3 Focus Left (J)`), and Move to Worksp
 Checked against i3 4.24's shipped config (`etc/config.keycodes`, what `i3-config-wizard` writes),
 with `$mod` as the wizard's Win choice.
 
-**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
-**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
 **K. The keys**
 
@@ -535,11 +534,11 @@ with `$mod` as the wizard's Win choice.
 | K1 | The modifier | Meta | = | i3's wizard offers Win or Alt; Alt is Plasma's menu key |
 | K2 | Focus Left / Down / Up / Right | Meta+Left Down Up Right, Meta+J K L ; | = | §2 `focusDir` |
 | K3 | Move Left / Down / Up / Right | Meta+Shift+arrow, Meta+Shift+J K L, Meta+: | = | tiling: §2 `move`; floating: by `floatingStep` px (i3's 10 px) |
-| K4 | Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+Ctrl+Left Down Up Right, Meta+Ctrl+J K L ; | ≠ | tiling by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px (10 px). i3: **mode "resize"** on Meta+R, then J K L ; and the arrows, left with Return, Escape or Meta+R. `plan.md`'s reason (2026-10-21): a script can't register keys that exist only in a mode; the helper (built later) can, as it takes Escape during a drag. **For Paul (12)**: i3's mode, in the helper; the four actions stay, unbound |
+| K4 | Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+Ctrl+Left Down Up Right, Meta+Ctrl+J K L ; | ≠ | tiling by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px (10 px). i3: **mode "resize"** on Meta+R, then J K L ; and the arrows, left with Return, Escape or Meta+R. `plan.md`'s reason (2026-10-21): a script can't register keys that exist only in a mode; the helper (built later) can, as it takes Escape during a drag. **Decided, not built** (Paul, 2026-10-27): i3's mode, in the helper; the four actions stay, unbound |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
 | K7 | Stacking, Tabbed (i3: Meta+S, Meta+W) | none | ≠ | Out (`plan.md` Scope, Paul 2026-10-21). Meta+W is Plasma's Overview |
-| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (Paul, 2026-10-21: "never used this"); tidy's removal of a split holding only a split rests on it (`plan.md`, decision on nested splits). **For Paul (13)**: kept out, recommended: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
+| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (Paul, 2026-10-21: "never used this"); tidy's removal of a split holding only a split rests on it (`plan.md`, decision on nested splits). **Kept** (Paul, 2026-10-27): out: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
 | K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10 |
@@ -547,9 +546,9 @@ with `$mod` as the wizard's Win choice.
 | K13 | Workspace 1 … 10 | Meta+1 … Meta+0 | = | |
 | K14 | Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | = | the US Shift+digit symbols; refitted by position (below), as i3's `bindcode` |
 | K15 | Reload Settings | Meta+Shift+C | = | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own |
-| K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **For Paul (14)**: kept, recommended |
-| K17 | Exit (i3: Meta+Shift+E, with a confirmation bar) | none | ≠ | `plan.md`: "exit is Plasma's own" (Ctrl+Alt+Del). **For Paul (15)**: i3's key: Meta+Shift+E opens Plasma's logout prompt, its own confirmation |
-| K18 | Terminal, launcher (i3: Meta+Return, Meta+D: `i3-sensible-terminal`, `dmenu_run`) | none | ≠ | `plan.md` Scope: the launcher is KRunner's. Plasma's Meta+D is Show Desktop (Peek at Desktop). **For Paul (16)**: i3's keys: Meta+Return opens Plasma's default terminal, Meta+D KRunner (Show Desktop loses Meta+D, reported as a taken key) |
+| K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **Kept** (Paul, 2026-10-27): none |
+| K17 | Exit (i3: Meta+Shift+E, with a confirmation bar) | none | ≠ | `plan.md`: "exit is Plasma's own" (Ctrl+Alt+Del). **Decided, not built** (Paul, 2026-10-27): i3's key: Meta+Shift+E opens Plasma's logout prompt, its own confirmation |
+| K18 | Terminal, launcher (i3: Meta+Return, Meta+D: `i3-sensible-terminal`, `dmenu_run`) | none | ≠ | `plan.md` Scope: the launcher is KRunner's. Plasma's Meta+D is Show Desktop (Peek at Desktop). **Decided, not built** (Paul, 2026-10-27): i3's keys: Meta+Return opens Plasma's default terminal, Meta+D KRunner (Show Desktop loses Meta+D, reported as a taken key) |
 | K19 | Back-and-forth, next/prev, output moves (§4) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
 | K21 | Dump State | none | + | `tools/capture` (Meta+Shift+B, from the dotfiles) |
@@ -576,6 +575,15 @@ layouts) is a known limit. A key set by hand to the US default counts as kwin-i3
 at a time; a change during one queues another (`docs/spec-keyboard-layouts.md`).
 
 ### Taken keys
+
+**Which holder wins a shared key**: kglobalaccel gives the key to every action that asks
+(`registerShortcut` never fails), and a press runs **the active holder registered first, ever**:
+each action gets a serial at its first registration, kept across logins
+(`~/.local/state/kglobalshortcutsstaterc`), and the lowest serial among the active holders runs
+(kglobalacceld 6.7.5, `GlobalShortcutsRegistry::activeShortcutByKey`). So Plasma's own actions
+beat kwin-i3's (live: Quick Tile Left 141, kwin-i3 Focus Left 504); an app installed after
+kwin-i3 that asks for one of its keys loses to it; a holder that isn't active (its app not
+running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 
 At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys another active
 component holds, and reports them (§13). `make take-keys` frees them, recording the holders in
