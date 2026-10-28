@@ -89,7 +89,3 @@ Alacritty to reach 2546x1386, released at 06:21:37.443, Alacritty's frame landin
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
 inside kwini3hold's hold or after its release. Next: `tools/capture-read` on both at the start of a
 session, a diagnosis for Paul (no fix without his go); the captures stay until then.
-
-**42. The resize mode's banner reads "Resize (Esc)"** (Paul, 2026-10-28: i3's bar shows only the
-mode's name, so the same banner with that text). Built (`plugin/hold.cpp`, 55 and 64 green).
-Live (`make plugin-install`, 2026-10-28). Next: Paul's look at Meta+R.
