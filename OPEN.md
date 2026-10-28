@@ -62,12 +62,13 @@ kept with its cost written down, ppt-only resize accepted. §3 drafted (tables R
 dialogs float) decided. **Paul's rule from here** (2026-10-27): ride i3 hard; a difference, minor
 or not, needs a specific and explicit reason; "places itself" leaves the vocabulary. So the
 "accepted, minor" rows of §2/§4 (W5, S5, S8, S9, T12) are reviewed again against that rule.
-Proposed, to confirm in the redo: §3 2 (drop "skips the taskbar"), 3 (a rule runs once, never
-undone), 6 (X6, X7 kept: KWin limits), 4 (i3's `for_window` criteria and actions), 5 (no
-user ignore list; Plasma's system windows built in); W5 a list (i3), S5 extra unbound actions
-(i3), S8/S9 `next` and `primary` (i3; by name stays ≠: shortcuts are registered at load), T12
-kept (i3's default config gives ppt). **Now**: `docs/definitions.md` first (Paul: it would have
-saved several wrong turns), then the redo of §5, §4, §2, §3 in its words, then the rest.
+Confirmed in the redo (Paul, 2026-10-27), all decided, not built: D5 as i3 (the first output in
+KWin's order); §3 R4 (the taskbar hint decides nothing), R5 (no user list; Plasma's system
+windows built in), R9 (i3's `for_window` criteria and floating enable/disable), X2 (a rule runs
+once, never undone); §4 W5 (a list), S5 (unbound no-back-and-forth actions), S8/S9 (`next`,
+`primary`; by name ≠: shortcuts are registered at load). Kept with their reasons: T12, X6, X7.
+`docs/definitions.md` is Paul's (output, tiling, visible), and `behaviour.md` uses its words.
+Next: the rest of `behaviour.md` (§9, §8, §7, §12, §11, folding §10 in; §6/§13/§14 for gaps).
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

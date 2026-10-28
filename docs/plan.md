@@ -20,7 +20,7 @@ the author's (`OPEN.md`), not adding more of i3.
 
 **In:** i3's tree, with its focus, move, split, layout toggle and resize; workspaces that live on
 a monitor; floating and the focus-mode toggle; i3's keys; the frame; i3's tiling drag and resize
-by mouse; the rules that decide which windows tile, float or place themselves. What each does,
+by mouse; i3's window kinds and its `for_window` floating rules (`docs/definitions.md`). What each does,
 exactly: `docs/behaviour.md`.
 
 **Out, with the reason:**
@@ -32,7 +32,7 @@ exactly: `docs/behaviour.md`.
 | i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
 | a bar, launcher, notifications, lock, session control | Plasma's panel, KRunner, notifications, screen locker and logout |
 | i3's config file and `i3-msg` IPC | settings belong in System Settings (and `kwinrc`); KWin's D-Bus is the scripting surface |
-| `assign`, `for_window` and other per-window rules beyond tiled / floating / places itself | KWin's Window Rules already do them |
+| `assign`, and `for_window` beyond `floating enable` / `floating disable` | KWin's Window Rules already do them |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only. **Xwayland apps in a Wayland session are in, first-class** (Paul, 2026-10-24: "that's going to be common"; `docs/spec-window-modes.md`, decision 8) |
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace current when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
 | mouse chords beyond i3's (a chord plugin, 2026-10-22 to 10-24) | one chord was ever used; i3's own tiling drag and Meta+right-drag resize came back in the helper plugin instead (2026-10-26, `docs/spec-tiled-look.md`, `docs/spec-tiling-resize.md`) |
@@ -42,21 +42,18 @@ exactly: `docs/behaviour.md`.
 | here | i3 | why |
 |---|---|---|
 | a centre drop swaps the two windows | `tiling_drag`'s centre drop moves the window into the target's container | Paul, 2026-10-26: "I love swap" (`docs/spec-tiled-look.md`) |
-| Meta+Shift+drag pulls a tiled window out to float | no such chord | Paul, 2026-10-26 (`docs/spec-tiled-look.md`) |
+| Meta+Shift+drag pulls a tiling window out to float | no such chord | Paul, 2026-10-26 (`docs/spec-tiled-look.md`) |
 | a window opens on the workspace current when it appears | on its launch workspace, for programs i3 started | as above, "Out"; `LATER.md` item 28 |
-| windows that place themselves (Plasma's own, KRunner, panels, a user's list) | i3 manages every window but docks | the seam between i3 and Plasma (`docs/spec-window-words.md`) |
-| a window on all desktops places itself | a sticky window floats and follows the workspace | in Plasma, a sticky window is Plasma's to place (a widget, a picture-in-picture) |
-| a window that skips the taskbar places itself | the hint is ignored | Plasma's convention for its own helpers (Yakuake, OSDs); confirmed by Paul, 2026-10-27 |
-| a tiled window never gets smaller than its minimum size; if the layout can't hold the minimums, the largest floats | minimum sizes apply only to floating windows (`floating_check_size`); tiled windows get what the split gives | a Wayland client can't be drawn smaller than its minimum; it would hang off its tile (2026-10-22) |
+| Plasma's system windows (`kded5`, the video bridge, `ksplashqml`, `kwin_wayland`) are override-redirect, on a built-in list | i3 never sees such windows | on Wayland Plasma makes them Normal windows (Paul, 2026-10-27; `docs/behaviour.md` §3 R5) |
+| a tiling window never gets smaller than its minimum size; if the layout can't hold the minimums, the largest floats | minimum sizes apply only to floating windows (`floating_check_size`); tiling windows get what the split gives | a Wayland client can't be drawn smaller than its minimum; it would hang off its tile (2026-10-22) |
 | Meta+right-drag resizes the nearest edge that has a neighbour, and works from the gap beside a window | the nearest edge, nothing if it has no neighbour; the press must be on a window | Paul, 2026-10-26: the area to grab was too small (`docs/spec-tiling-resize.md`) |
 | a split holding only another split is removed | kept | each costs a move key press; they only matter with `focus parent` and tabbed/stacked, both out (`docs/spec-nested-boxes.md`) |
 | a window KWin activates on a hidden workspace (a window rule, a session restore, a link opened in a running browser) switches its monitor to that workspace; kwin-i3 follows | the workspace is marked urgent, never switched to | KWin's activation policy; won't-fix (Paul, 2026-10-25; i3 feature map, finding 6, rows C4, C67) |
 
-**Window modes** (Paul, 2026-10-24, `docs/spec-window-modes.md`): a window is tiled (the
-tree places it) or floating (you place it; the user's own decoration, as a Plasma window), and a
-workspace can open new windows floating; a third kind places itself (the ignore lists). The words
-are `docs/spec-window-words.md` (2026-10-27). It passes the test below: who arranges a window, i3's tree or Plasma, is the seam
-itself, and only kwin-i3 can decide it.
+**Window kinds** (Paul, 2026-10-27, replacing the window modes of 2026-10-24): every window is one
+of i3's kinds, by i3's names (`docs/definitions.md`, `docs/behaviour.md` §3); a workspace can
+open new windows floating (`floatingWorkspaces`). Who arranges a window, i3's tree or Plasma, is
+the seam itself, and only kwin-i3 can decide it.
 
 **The test for anything new:** if Plasma already does it, kwin-i3 doesn't. A feature belongs
 here only if it is part of how i3 arranges windows and Plasma can't do it. A setting belongs here
