@@ -86,7 +86,7 @@ setting the stages added (criteria and `assign`, `mouse_warping`, `tilingDrag`, 
 `hide_edge_borders`, `smart_gaps`, the gaps, the floating sizes, `popup_during_fullscreen`,
 `workspaceOutputs` lists), i3's kind names, super descriptive and explicit
 (`docs/style-settings-page.md`). The settings page's finishing is `LATER.md`'s; this stage is
-only what the new settings need to be usable.
+only what the new settings need to be usable. Spec: `spec-redo-10-settings-page.md`.
 
 ## Paul's calls (2026-10-28)
 
