@@ -79,7 +79,7 @@ gaps; no performance cost (Paul's rule for the look). Spec: `spec-redo-7-look.md
 made `smart` exact). Spec: `spec-redo-8-fullscreen.md`.
 
 **9. Sticky** (M). §3 R3, X4, §10 V10 (a window on all desktops is sticky floating, in the tree,
-visible on every workspace of its output). Last, as agreed: it touches every workspace switch.
+visible on every workspace of its output). Last, as agreed: it touches every workspace switch. Spec: `spec-redo-9-sticky.md`.
 
 **10. The settings page** (L). Paul, 2026-10-27: the new settings clash with what is there. Every
 setting the stages added (criteria and `assign`, `mouse_warping`, `tilingDrag`, the colour classes,
