@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # needs: plugin
+# timing: alone
 # kwin-i3's keys on other keyboard layouts (docs/spec-keyboard-layouts.md): kwini3helper gives the
 # digit row's and the ; key's actions the symbols each layout types there, as KWin matches them.
 # Keys are pressed by position (tools/inject.py sends key codes; press names them by the US

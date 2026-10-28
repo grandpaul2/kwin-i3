@@ -44,7 +44,9 @@ proven): 39 and 69 waited 5 s for a layout change to reach the keyboard daemon a
 sleeps); 70 and 80 expected nothing after the press, which `capture-read` prints by design (now:
 the press is there and the timeline in time order). All five green alone after the change.
 **Watched**: if one of these fails again in a full run, it moves alone (`# timing: alone`)
-rather than another guess. 53-hold's `--notify` kill switch: closed unless it comes back.
+rather than another guess. 69 did (2026-10-27, fifth session: "the helper fitted French" red in
+the batch, 48/48 alone), so it now runs alone (~29 s on the alone tail); 39, 57, 70, 80 still
+watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **40. The focus rules, complete and in i3's terms** (Paul, 2026-10-27, from the 17:05 capture:
 Prism Launcher's modal dialog opened on the pointer's monitor and KWin took Prism along; the
