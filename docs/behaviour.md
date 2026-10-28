@@ -64,6 +64,10 @@ polls `State()`. Only `Stats` and `State` are asked for a reply. Settings reach 
 directly from kwinrc `[Script-kwin-i3]`, each with its own watcher, except the tiling ring, which
 the script tells the effect (`SetTiledRing`).
 
+The script also runs three of KWin's own shortcuts by name (`invoke`): **Switch to Screen N**,
+to make an output with an empty workspace KWin's active one, and **MoveMouseToCenter** /
+**MoveMouseToFocus**, the pointer warp when focus changes output (§5 A2).
+
 The script logs to `net.local.kwini3.log` only when `debugLog` is on, and keeps the last 2000
 lines in memory either way for `Dump State` (`src/log.js`; `docs/debugging.md`).
 
@@ -382,7 +386,8 @@ and **C1** is what follows from that.
 
 ### Out to KWin
 
-`applyFocus` runs once after each pass of placing (so a pointer warp lands on settled windows):
+`applyFocus` runs at the end of a pass that asked for focus (`wantFocus`: a key, a close, a new
+window and the like), after the placing, so a pointer warp lands on settled windows:
 
 1. **A passive pass** (no key caused it) leaves the focus with a window kept out of the tree
    (KRunner, a panel popup, a dialog of Plasma's), unless that is the desktop window or a panel.
