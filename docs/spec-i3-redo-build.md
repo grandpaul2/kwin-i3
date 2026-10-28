@@ -73,7 +73,7 @@ G3 (`tilingDrag`, i3's four values). Mostly the helper (`tilingdrag.cpp`, `frame
 `unfocused` defaults to pick with Paul), L4 (the lone-child split indicator), L6
 (`hide_edge_borders`, `smart_gaps`), L11 (floating rings in the same classes; the two floating
 colours go), §11 N2 (outer gaps per side, gaps per workspace). The effect (`kwini3hold`) and §6's
-gaps; no performance cost (Paul's rule for the look).
+gaps; no performance cost (Paul's rule for the look). Spec: `spec-redo-7-look.md`.
 
 **8. Fullscreen** (S). §10 V6 (`popup_during_fullscreen`, i3's values, default `smart`; stage 1
 made `smart` exact).
