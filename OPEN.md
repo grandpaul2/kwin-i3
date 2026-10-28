@@ -47,12 +47,12 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules: stages 1-9 live, 10 waiting** (Paul,
+**40. i3's rules: all ten stages live; stage 10's pass and stage 4's check owed** (Paul,
 2026-10-27/28; the build plan `docs/spec-i3-redo-build.md`, each stage's spec
 `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Done 2026-10-28**
 (merged, live, Paul's "it works"): stage 1 new windows and outside switches (the 17:05 capture
-closed and deleted), 2 the pointer, 3 i3's kinds and rules (its Window Rules page waits for stage
-10's `make kcm-install`), 5 keys (in `hotkeys` and dotfiles' Plasma table; the banner's look is
+closed and deleted), 2 the pointer, 3 i3's kinds and rules (its Window Rules page came with stage
+10), 5 keys (in `hotkeys` and dotfiles' Plasma table; the banner's look is
 item 42), 6 clicks, closes, minimize (its two resizes are item 43), 7 the look (its split
 indicators are item 44). **Stage 4** (outputs) merged and
 live, **its live check deferred by Paul, still owed**: the unplug, an assignment, and a Meta+Shift+B
@@ -69,9 +69,11 @@ onto main (unit 172/172, 32 green), Paul's go; the default `smart` changes nothi
 green), live, Paul's "worked fine" (Sticky Toggle tried on a temporary Meta+Shift+Y, unbound
 again: it has no key, as i3's).
 
-**Stage 10** (`redo-10`, the settings page) is stacked on `redo-7`: next, picked onto main, with
-Paul's go. Stage 10 needs `make kcm-install`; its "done when" is Paul's pass over the
-pages' screenshots (`~/.local/state/kwin-i3/redo-10-shots/`). Found while building 7-10 and kept:
+**Stage 10** (the settings page) live 2026-10-28, ninth session: `redo-10b`, the pick of `redo-10`
+onto main with the "Focused on another monitor or split" colour row dropped (7b left i3's
+`focused_inactive` out); unit 173/173, 25 37 76 green; merged, `make kcm-install`, reloaded,
+Paul's go. **Owed**: its "done when", Paul's pass over the pages (the screenshots in
+`~/.local/state/kwin-i3/redo-10-shots/`, or the page itself). Found while building 7-10 and kept:
 KWin's own: a window's modal dialog takes the focus whatever `popupDuringFullscreen` says
 (`activation.cpp findModal`, §5 C5), and a desktops change puts a window first in KWin's focus
 chain (40). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
