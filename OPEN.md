@@ -48,7 +48,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; its first full `make test` that way is the
 next session's); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules: all ten stages built, stages 1-7 live, the rest going live one at a time** (Paul, 2026-10-27/28;
+**40. i3's rules: all ten stages built, stages 1-6 live, stage 7 shelved, the rest going live one at a time** (Paul, 2026-10-27/28;
 from the 17:05 capture: Prism Launcher's modal dialog and KWin took Prism to the other monitor;
 stage 1 closed it, and the capture is deleted). The build plan is `docs/spec-i3-redo-build.md` (each
 stage's spec `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Built,
@@ -71,9 +71,16 @@ window first in KWin's focus chain (40). **Stages 1-3, 5 and 6 done 2026-10-28: 
 are in `hotkeys` and dotfiles' Plasma table; its banner's look is item 42; stage 6's two resizes
 are item 43). Stage 4 merged and live the same day, **its live check deferred by Paul (not set up
 for it that night), still owed**: stage 4's spec (the unplug, an assignment, and the morning
-capture after a night with the monitors asleep). `redo-7` merged into main and live 2026-10-28 (Paul's go,
-dropping his `frameFloatingActive`; `make unit` and its eight scenarios, 64 included, green on
-main; plugin installed, script reloaded): live. Next: Paul's live check (stage 7's spec); then the rest the same way (each
+capture after a night with the monitors asleep). **Stage 7 (the look) shelved 2026-10-28** (Paul, after it went live: "even if it was
+working right it's not as good as the way it has been working. All the different colors are just
+confusing"): the merge reverted on main, the old effect reinstalled, his `frameFloatingActive`
+still set and read again. `redo-7` stays on origin as built. **Stages 8-10 are stacked on
+`redo-7`**, so each now needs rebasing onto main without stage 7 before it can merge (stage 10's
+settings page has stage 7's Gaps sub-page and colour classes in it). Also lost with the revert:
+26's and 54's updates for stages 4 and 6 (a replugged monitor's workspace stays, W3; a left drag
+on the ring resizes, Z3), made on `redo-7`; on main both scenarios expect the old behaviour and
+are red until those parts are carried over. Next: Paul's go to carry 26's and 54's stage-4/6 parts
+onto main, and to rebase `redo-8` onto it; then the rest the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's

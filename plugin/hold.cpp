@@ -138,19 +138,10 @@ void Hold::loadConfig()
         const QColor c(group.readEntry(key, def.name()));
         return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;    // opaque whatever it says
     };
-    m_frameColour[0] = colour("frameActive", QColor(0x4c, 0x78, 0x99));
-    m_frameColour[1] = colour("frameFocusedInactive", QColor(0x5f, 0x6b, 0x78));
-    m_frameColour[2] = colour("frameInactive", QColor(0x33, 0x33, 0x33));
-    // An indicator colour left empty (the default for the two inactive classes) is its class's
-    // frame colour, read at paint time: invalid here.
-    const auto optColour = [&group](const char *key, const QColor &def) {
-        const QString text = group.readEntry(key, def.isValid() ? def.name() : QString());
-        const QColor c(text);
-        return text.isEmpty() ? QColor() : c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;
-    };
-    m_indicatorColour[0] = optColour("frameIndicatorActive", QColor(0x3d, 0xae, 0xe9));
-    m_indicatorColour[1] = optColour("frameIndicatorFocusedInactive", QColor());
-    m_indicatorColour[2] = optColour("frameIndicatorInactive", QColor());
+    m_frameActive = colour("frameActive", QColor(0x4c, 0x78, 0x99));
+    m_frameInactive = colour("frameInactive", QColor(0x33, 0x33, 0x33));
+    m_floatingActive = colour("frameFloatingActive", QColor(0x4d, 0x72, 0x54));
+    m_floatingInactive = colour("frameFloatingInactive", QColor(0x33, 0x33, 0x33));
     m_frameOnFloating = group.readEntry("frameOnFloating", false);
     m_roundedCorners = group.readEntry("roundedCorners", true);
     updateRadii();
@@ -277,7 +268,6 @@ void Hold::onClosed(EffectWindow *w)
 void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
-    m_rings.remove(w->internalId().toString());
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
@@ -699,9 +689,9 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
         img.fill(Qt::transparent);
         QPainter p(&img);
         p.setRenderHint(QPainter::Antialiasing);
-        QColor bg = m_frameColour[0];
+        QColor bg = m_frameActive;
         bg.setAlphaF(0.94);
-        p.setPen(QPen(m_frameColour[0].lighter(135), 1));
+        p.setPen(QPen(m_frameActive.lighter(135), 1));
         p.setBrush(bg);
         p.drawRoundedRect(QRectF(0.5, 0.5, width - 1, height - 1), 6, 6);
         p.setPen(Qt::white);
@@ -766,44 +756,7 @@ bool Hold::floatingFramed(EffectWindow *w) const
 
 bool Hold::ringed(EffectWindow *w) const
 {
-    if (!((m_tiledRing && framed(w)) || floatingFramed(w))) {
-        return false;
-    }
-    const auto it = m_rings.constFind(w->internalId().toString());
-    return it == m_rings.cend() || it->hidden != (Left | Right | Top | Bottom);
-}
-
-Hold::Ring Hold::ringOf(EffectWindow *w) const
-{
-    const auto it = m_rings.constFind(w->internalId().toString());
-    if (it != m_rings.cend()) {
-        return *it;
-    }
-    Ring r;
-    r.cls = effects->activeWindow() == w ? 0 : 2;
-    return r;
-}
-
-void Hold::SetRing(const QString &id, const QString &cls, const QString &indicator, const QString &hidden)
-{
-    if (cls.isEmpty()) {
-        m_rings.remove(id);
-    } else {
-        Ring r;
-        r.cls = cls == QLatin1String("focused") ? 0 : cls == QLatin1String("focused_inactive") ? 1 : 2;
-        r.indicator = indicator == QLatin1String("right") ? Right : indicator == QLatin1String("bottom") ? Bottom : 0;
-        const QStringList sides = hidden.split(QLatin1Char(' '), Qt::SkipEmptyParts);
-        for (const QString &s : sides) {
-            r.hidden |= s == QLatin1String("left") ? Left : s == QLatin1String("right") ? Right : s == QLatin1String("top") ? Top : s == QLatin1String("bottom") ? Bottom : 0;
-        }
-        m_rings.insert(id, r);
-    }
-    const auto windows = effects->stackingOrder();
-    for (EffectWindow *w : windows) {
-        if (w->internalId().toString() == id) {
-            repaintRing(w, w->frameGeometry());
-        }
-    }
+    return (m_tiledRing && framed(w)) || floatingFramed(w);
 }
 
 void Hold::SetTiledRing(bool on)
@@ -878,7 +831,7 @@ void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &v
     ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
     binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
-    QColor colour = m_frameColour[0];
+    QColor colour = m_frameActive;
     colour.setAlphaF(0.5);
     binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
     const bool blend = glIsEnabled(GL_BLEND);
@@ -966,38 +919,17 @@ void Hold::resetRadii()
 // The bars around `frame`, in device pixels (logical x scale): each from the window's rounded
 // edge out to the rounded edge of the frame width beyond it, which is the middle of the padding
 // between two windows, so neighbours meet with no overlap and no gap at any scale (review R1-6).
-// Top and bottom span the corners, except the right side when it is the indicator: i3 draws
-// that side full height (x.c:591). With a radius (device px) each bar reaches that far inside
+// Top and bottom span the corners. With a radius (device px) each bar reaches that far inside
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
-// A hidden side is left out, its corners with it (hide_edge_borders: the side at the output's
-// edge; the strip stays empty, docs/spec-redo-7-look.md C).
-QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, double radius, const Ring &how) const
+QList<RectF> Hold::ring(const RectF &frame, double scale, double radius) const
 {
     const double f = m_frameWidth, r = radius;
     const double ix0 = std::round(frame.x() * scale), iy0 = std::round(frame.y() * scale);
     const double ix1 = std::round((frame.x() + frame.width()) * scale), iy1 = std::round((frame.y() + frame.height()) * scale);
     const double ox0 = std::round((frame.x() - f) * scale), oy0 = std::round((frame.y() - f) * scale);
     const double ox1 = std::round((frame.x() + frame.width() + f) * scale), oy1 = std::round((frame.y() + frame.height() + f) * scale);
-    const bool rightTall = how.indicator == Right;           // the right bar owns its corners
-    const bool left = !(how.hidden & Left), right = !(how.hidden & Right), top = !(how.hidden & Top), bottom = !(how.hidden & Bottom);
-    // Where the top and bottom bars start and end: a hidden side takes its corner away, the
-    // tall right bar its own.
-    const double hx0 = left ? ox0 : ix0 + r, hx1 = right && !rightTall ? ox1 : ix1 - r;
-    QList<Bar> bars;
-    if (top) {
-        bars << Bar{RectF(hx0, oy0, hx1 - hx0, iy0 + r - oy0), how.indicator == Top};
-    }
-    if (bottom) {
-        bars << Bar{RectF(hx0, iy1 - r, hx1 - hx0, oy1 - iy1 + r), how.indicator == Bottom};
-    }
-    if (left) {
-        bars << Bar{RectF(ox0, iy0 + r, ix0 + r - ox0, iy1 - iy0 - 2 * r), how.indicator == Left};
-    }
-    if (right) {
-        const double y0 = rightTall && top ? oy0 : iy0 + r, y1 = rightTall && bottom ? oy1 : iy1 - r;
-        bars << Bar{RectF(ix1 - r, y0, ox1 - ix1 + r, y1 - y0), how.indicator == Right};
-    }
-    return bars;
+    return {RectF(ox0, oy0, ox1 - ox0, iy0 + r - oy0), RectF(ox0, iy1 - r, ox1 - ox0, oy1 - iy1 + r),
+            RectF(ox0, iy0 + r, ix0 + r - ox0, iy1 - iy0 - 2 * r), RectF(ix1 - r, iy0 + r, ox1 - ix1 + r, iy1 - iy0 - 2 * r)};
 }
 
 void Hold::repaintRing(EffectWindow *w, const RectF &frame)
@@ -1031,21 +963,16 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     const double radius = std::round(w->window()->borderRadius().topLeft() * scale);   // as KWin rounds its clip
     const double ix0 = std::round(drawn.x() * scale), iy0 = std::round(drawn.y() * scale);
     const double ix1 = std::round((drawn.x() + drawn.width()) * scale), iy1 = std::round((drawn.y() + drawn.height()) * scale);
-    // The class and the indicator side as kwin-i3 said (SetRing), else by KWin's active window;
-    // the sides in two colours at most: the class's, and its indicator colour on the indicator.
-    const Ring how = ringOf(w);
-    const QColor colour = m_frameColour[how.cls];
-    const QColor indicator = m_indicatorColour[how.cls].isValid() ? m_indicatorColour[how.cls] : colour;
-    QList<QVector2D> verts[2];                             // the frame's, the indicator's
-    for (const Bar &bar : ring(drawn, scale, radius, how)) {
-        const Rect device(bar.rect.x() - origin.x(), bar.rect.y() - origin.y(), bar.rect.width(), bar.rect.height());
+    QList<QVector2D> verts;
+    for (const RectF &bar : ring(drawn, scale, radius)) {
+        const Rect device(bar.x() - origin.x(), bar.y() - origin.y(), bar.width(), bar.height());
         for (const Rect &r : (deviceRegion & device).rects()) {
             const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
-            verts[bar.indicator ? 1 : 0] << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
-                                         << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
+                  << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
         }
     }
-    if (verts[0].isEmpty() && verts[1].isEmpty()) {
+    if (verts.isEmpty()) {
         return;
     }
     const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
@@ -1053,27 +980,23 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         return;
     }
     GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
+    vbo->reset();
+    const bool active = effects->activeWindow() == w;
+    QColor colour = framed(w) ? (active ? m_frameActive : m_frameInactive) : (active ? m_floatingActive : m_floatingInactive);
     if (radius <= 0) {
         // Square: plain bars. The border shader would round the outer corner by the frame
         // width even at radius 0 (base.frag: outer radius = radius + thickness).
         ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
         binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
         binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+        colour.setAlphaF(opacity);
         if (opacity < 1.0) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
-        for (int i = 0; i < 2; ++i) {
-            if (verts[i].isEmpty()) {
-                continue;
-            }
-            QColor c = i ? indicator : colour;
-            c.setAlphaF(opacity);
-            binder.shader()->setUniform(GLShader::ColorUniform::Color, c);
-            vbo->reset();
-            vbo->setVertices(verts[i]);
-            vbo->render(GL_TRIANGLES);
-        }
+        binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
+        vbo->setVertices(verts);
+        vbo->render(GL_TRIANGLES);
         if (opacity < 1.0) {
             glDisable(GL_BLEND);
         }
@@ -1088,6 +1011,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     shader->setUniform(GLShader::Vec4Uniform::Box, QVector4D((ix0 + ix1) / 2, (iy0 + iy1) / 2, (ix1 - ix0) / 2, (iy1 - iy0) / 2));
     shader->setUniform(GLShader::Vec4Uniform::CornerRadius, QVector4D(radius, radius, radius, radius));
     shader->setUniform(GLShader::IntUniform::Thickness, int(std::round(m_frameWidth * scale)));
+    shader->setUniform(GLShader::ColorUniform::Color, colour);
     shader->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     // The shader scales all four channels by coverage: premultiplied, blended always (the
     // antialiased arc is partly transparent even at full opacity); the blend state put back.
@@ -1097,15 +1021,8 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     glGetIntegerv(GL_BLEND_DST_RGB, &dst);
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    for (int i = 0; i < 2; ++i) {
-        if (verts[i].isEmpty()) {
-            continue;
-        }
-        shader->setUniform(GLShader::ColorUniform::Color, i ? indicator : colour);
-        vbo->reset();
-        vbo->setVertices(verts[i]);
-        vbo->render(GL_TRIANGLES);
-    }
+    vbo->setVertices(verts);
+    vbo->render(GL_TRIANGLES);
     glBlendFunc(src, dst);
     if (!blend) {
         glDisable(GL_BLEND);
@@ -1188,7 +1105,6 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("tiledRing")] = m_tiledRing;
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
-    m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
     return m;
 }
 

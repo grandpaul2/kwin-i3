@@ -39,29 +39,14 @@ var Settings = (function () {
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
         gapsOuter: { type: "int", def: "2", min: 0, max: 200 },                 // px more at the screen edge
-        // i3's gaps top|right|bottom|left (§11 N2; redo stage 7): that side's outer gap, -1 for gapsOuter.
-        gapsTop: { type: "int", def: "-1", min: -1, max: 200 },
-        gapsRight: { type: "int", def: "-1", min: -1, max: 200 },
-        gapsBottom: { type: "int", def: "-1", min: -1, max: 200 },
-        gapsLeft: { type: "int", def: "-1", min: -1, max: 200 },
-        workspaceGaps: { type: "wsgaps", def: "" },                             // i3's "workspace N gaps inner|outer|… M", added to the global ones
-        smartGaps: { type: "choice", def: "off", choices: ["off", "on", "inverse_outer"] },   // i3's smart_gaps
-        // i3's hide_edge_borders (§7 L6): smart and smart_no_gaps drop a lone window's ring; the
-        // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
-        hideEdgeBorders: { type: "choice", def: "none", choices: ["none", "vertical", "horizontal", "both", "smart", "smart_no_gaps"] },
         // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the form has them.
-        // i3's three colour classes (§7 L3): focused, focused_inactive (an output's or a split's
-        // last focus), unfocused; the indicator is the side where the next window opens on a
-        // window alone in its split (L4), an empty colour being the class's frame colour.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
-        frameFocusedInactive: { type: "colour", def: "#5f6b78" },
         frameInactive: { type: "colour", def: "#333333" },
-        frameIndicatorActive: { type: "colour", def: "#3daee9" },
-        frameIndicatorFocusedInactive: { type: "colour", def: "" },
-        frameIndicatorInactive: { type: "colour", def: "" },
+        frameFloatingActive: { type: "colour", def: "#4d7254" },
+        frameFloatingInactive: { type: "colour", def: "#333333" },
         // Window modes (docs/spec-window-modes.md): workspaces whose new windows open floating, as
-        // Plasma windows; and the frame on floating windows too, in the same colour classes (L11).
+        // Plasma windows; and the frame on floating windows too, in the floating colours.
         floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
         frameOnFloating: { type: "bool", def: "false" },
         // How tiled windows look (docs/spec-tiled-look.md): i3's frame, their own title bars, or
@@ -86,25 +71,7 @@ var Settings = (function () {
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
         if (type === "size") return /^-?[0-9]+x-?[0-9]+$/.test(text) ? text : null;   // "WxH", 0 and -1 allowed (Rules.parseSize)
         if (type === "text") return text;                                              // the rules, parsed by Rules
-        if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
-        // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
-        // added to the global ones), one per line or separated by ";" or ",", "workspace" optional:
-        // "3 gaps inner 10, 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0, right: 0, bottom: 0, left: 0 } }.
-        // A negative M takes from the global gap (the sum stops at 0: KWin's root tile can't leave
-        // its output). A malformed entry is skipped (and logged), the rest still apply.
-        if (type === "wsgaps") {
-            var ws = {};
-            text.split(/[\n;,]/).forEach(function (e) {
-                e = e.trim();
-                if (!e) return;
-                var m = /^(?:workspace\s+)?([0-9]+)\s+gaps\s+(inner|outer|horizontal|vertical|top|right|bottom|left)\s+(-?[0-9]+)$/.exec(e);
-                if (!m || +m[1] < 1 || +m[1] > 10) { log("WARN setting workspaceGaps: ignoring \"" + e + "\" (want N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, N 1-10)"); return; }
-                var g = ws[+m[1]] || (ws[+m[1]] = {}), v = +m[3];
-                var sides = { inner: ["inner"], outer: ["top", "right", "bottom", "left"], horizontal: ["left", "right"], vertical: ["top", "bottom"] }[m[2]] || [m[2]];
-                sides.forEach(function (s) { g[s] = v; });
-            });
-            return ws;
-        }
+        if (type === "colour") return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;
         // i3's "workspace N output A B …": { N: [output names] }, the first connected one wins
         // (§4 W5; redo stage 4). "1=DP-4 HDMI-A-1, 2=DP-6": names space-separated, so an output
         // name can't contain a space (i3's can't either). A malformed entry is skipped (and

@@ -6,7 +6,7 @@
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
-RED=255,0,0; LIME=0,255,0; ACT=76,120,153; INACT=51,51,51; FIN=95,107,120; IND=61,174,233   # focused, unfocused, focused_inactive, the focused indicator
+RED=255,0,0; LIME=0,255,0; ACT=76,120,153; INACT=51,51,51
 capture() { "$shot" capture Virtual-0 "$png"; }
 px() { "$shot" probe "$png" "$1" "$2"; }
 # row <y> <x...>: the colours along a row, for the log
@@ -39,34 +39,7 @@ check "b closed: a fills the screen"        poll eval '[[ "$(fc a)" == "1,1 1278
 sleep 0.5; capture
 echo "    row 360: $(row 360 0 1 639 640 641 1278 1279)"
 check "no stale frame where a and b met"    eval 'pix 639 360 $RED && pix 640 360 $RED'
-# i3's indicator (§7 L4, redo stage 7): a alone in a horizontal workspace, its right side in the
-# focused indicator colour, the rest in the focused colour.
-check "a's frame at the right edge now: the indicator" pix 1279 360 $IND
-check "  its other sides in the focused colour" eval 'pix 0 360 $ACT && pix 300 0 $ACT && pix 300 719 $ACT'
-
-# The three colour classes (§7 L3, redo stage 7): the second monitor's focused window is
-# focused_inactive from the first's point of view, and a window that is neither is unfocused.
-key "Workspace 2"
-term s "#0000ff"
-check "s alone on the second monitor"       wait_tree 2 "H[s*]"
-term t "#ffff00"
-check "s | t there"                         wait_tree 2 "H[s t*]"
-sleep 0.5; "$shot" capture Virtual-1 "$png"
-echo "    second monitor, row 360: $(row 360 0 1 639 640 641 1278 1279)"
-check "t focused: its left and right sides" eval 'pix 640 360 $ACT && pix 1279 360 $ACT'
-check "s unfocused"                         eval 'pix 0 360 $INACT && pix 639 360 $INACT'
-capture
-echo "    first monitor, row 360: $(row 360 0 1 1278 1279)"
-check "a, the first monitor's focus, focused_inactive" eval 'pix 0 360 $FIN && pix 300 0 $FIN'
-check "  its indicator in that class's colour (the frame's)" pix 1279 360 $FIN
-key "Workspace 1"
-check "focus back on a"                     wait_tree 1 "H[a*]"
-sleep 0.5; "$shot" capture Virtual-1 "$png"
-check "t, the second monitor's focus, focused_inactive now" pix 1279 360 $FIN
-capture
-check "a focused again"                     pix 0 360 $ACT
-kclose s; kclose t
-check "the second monitor empty"            wait_tree 2 "H[]"
+check "a's frame at the right edge now"     pix 1279 360 $ACT
 
 term b "#00ff00"
 check "b again"                             wait_tree 1 "H[a b*]"

@@ -97,163 +97,6 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="gapsSidesLabel">
-       <property name="text">
-        <string>Edge gap per side:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_gapsTop</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <layout class="QHBoxLayout" name="gapsSidesLayout">
-       <item>
-        <widget class="QSpinBox" name="kcfg_gapsTop">
-         <property name="prefix">
-          <string>top </string>
-         </property>
-         <property name="suffix">
-          <string> px</string>
-         </property>
-         <property name="specialValueText">
-          <string>top: as outer</string>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>200</number>
-         </property>
-         <property name="toolTip">
-          <string>i3's gaps top: this edge's outer gap instead of the one above. "as outer": the one above.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="kcfg_gapsRight">
-         <property name="prefix">
-          <string>right </string>
-         </property>
-         <property name="suffix">
-          <string> px</string>
-         </property>
-         <property name="specialValueText">
-          <string>right: as outer</string>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>200</number>
-         </property>
-         <property name="toolTip">
-          <string>i3's gaps right: this edge's outer gap instead of the one above. "as outer": the one above.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="kcfg_gapsBottom">
-         <property name="prefix">
-          <string>bottom </string>
-         </property>
-         <property name="suffix">
-          <string> px</string>
-         </property>
-         <property name="specialValueText">
-          <string>bottom: as outer</string>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>200</number>
-         </property>
-         <property name="toolTip">
-          <string>i3's gaps bottom: this edge's outer gap instead of the one above. "as outer": the one above.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QSpinBox" name="kcfg_gapsLeft">
-         <property name="prefix">
-          <string>left </string>
-         </property>
-         <property name="suffix">
-          <string> px</string>
-         </property>
-         <property name="specialValueText">
-          <string>left: as outer</string>
-         </property>
-         <property name="minimum">
-          <number>-1</number>
-         </property>
-         <property name="maximum">
-          <number>200</number>
-         </property>
-         <property name="toolTip">
-          <string>i3's gaps left: this edge's outer gap instead of the one above. "as outer": the one above.</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="workspaceGapsLabel">
-       <property name="text">
-        <string>Gaps per workspace:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_workspaceGaps</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLineEdit" name="kcfg_workspaceGaps">
-       <property name="placeholderText">
-        <string>3 gaps inner 10, 5 gaps outer 0</string>
-       </property>
-       <property name="toolTip">
-        <string>i3's workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, one per entry separated by commas: added to the gaps above on that workspace (a negative M takes from them, down to 0).</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="smartGapsLabel">
-       <property name="text">
-        <string>Smart gaps:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_smartGaps</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QComboBox" name="kcfg_smartGaps">
-       <property name="kcfg_property" stdset="0">
-        <cstring>currentText</cstring>
-       </property>
-       <property name="toolTip">
-        <string>i3's smart_gaps. on: no gaps on a workspace with one tiled window. inverse_outer: the edge gaps only on a workspace with one tiled window. off: gaps always.</string>
-       </property>
-       <item>
-        <property name="text">
-         <string>off</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>on</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>inverse_outer</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="6" column="0">
       <widget class="QLabel" name="defaultOrientationLabel">
        <property name="text">
         <string>New workspaces split:</string>
@@ -263,7 +106,7 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="3" column="1">
       <widget class="QComboBox" name="kcfg_defaultOrientation">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -288,7 +131,7 @@
        </item>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="4" column="0">
       <widget class="QLabel" name="resizeStepLabel">
        <property name="text">
         <string>Resize step:</string>
@@ -298,7 +141,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="4" column="1">
       <widget class="QSpinBox" name="kcfg_resizeStep">
        <property name="suffix">
         <string> %</string>
@@ -314,7 +157,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="floatingStepLabel">
        <property name="text">
         <string>Floating step:</string>
@@ -324,7 +167,7 @@
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="5" column="1">
       <widget class="QSpinBox" name="kcfg_floatingStep">
        <property name="suffix">
         <string> px</string>
@@ -340,7 +183,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="focusWrappingLabel">
        <property name="text">
         <string>Focus at an edge:</string>
@@ -350,7 +193,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
+     <item row="6" column="1">
       <widget class="QComboBox" name="kcfg_focusWrapping">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -380,7 +223,7 @@
        </item>
       </widget>
      </item>
-     <item row="10" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="holdEnabledLabel">
        <property name="text">
         <string>Layout changes:</string>
@@ -390,7 +233,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="1">
+     <item row="7" column="1">
       <widget class="QCheckBox" name="kcfg_holdEnabled">
        <property name="text">
         <string>Wait for every window to resize (needs the kwin-i3 plugins)</string>
@@ -400,7 +243,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="holdTimeoutMsLabel">
        <property name="text">
         <string>Wait at most:</string>
@@ -410,7 +253,7 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
+     <item row="8" column="1">
       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
        <property name="suffix">
         <string> ms</string>
@@ -426,7 +269,7 @@
        </property>
       </widget>
      </item>
-     <item row="12" column="0" colspan="2">
+     <item row="9" column="0" colspan="2">
       <widget class="QLabel" name="workspacesHeading">
        <property name="text">
         <string>Workspaces</string>
@@ -444,7 +287,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="workspaceAutoBackAndForthLabel">
        <property name="text">
         <string>Options:</string>
@@ -454,7 +297,7 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="1">
+     <item row="10" column="1">
       <widget class="QCheckBox" name="kcfg_workspaceAutoBackAndForth">
        <property name="text">
         <string>Pressing the current workspace's key returns to the previous one</string>
@@ -464,7 +307,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="workspaceOutputsLabel">
        <property name="text">
         <string>Workspace monitors:</string>
@@ -474,7 +317,7 @@
        </property>
       </widget>
      </item>
-     <item row="14" column="1">
+     <item row="11" column="1">
       <widget class="QLineEdit" name="kcfg_workspaceOutputs">
        <property name="minimumSize">
         <size>
@@ -490,7 +333,7 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="0">
+     <item row="12" column="0">
       <widget class="QLabel" name="floatingWorkspacesLabel">
        <property name="text">
         <string>Workspaces where new windows float:</string>
@@ -500,7 +343,7 @@
        </property>
       </widget>
      </item>
-     <item row="15" column="1">
+     <item row="12" column="1">
       <widget class="QLineEdit" name="kcfg_floatingWorkspaces">
        <property name="placeholderText">
         <string>3, 7</string>
@@ -510,7 +353,7 @@
        </property>
       </widget>
      </item>
-     <item row="16" column="0" colspan="2">
+     <item row="13" column="0" colspan="2">
       <widget class="QLabel" name="frameHeading">
        <property name="text">
         <string>Frame</string>
@@ -528,17 +371,17 @@
        </property>
       </widget>
      </item>
-     <item row="17" column="0" colspan="2">
+     <item row="14" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
-        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. Colours are #rrggbb; i3's three classes: focused, focused_inactive, unfocused.</string>
+        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. The floating colours are for the frame on floating windows (below).</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignHCenter</set>
        </property>
       </widget>
      </item>
-     <item row="18" column="0">
+     <item row="15" column="0">
       <widget class="QLabel" name="tiledLookLabel">
        <property name="text">
         <string>Tiled windows:</string>
@@ -548,7 +391,7 @@
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="15" column="1">
       <widget class="QComboBox" name="kcfg_tiledLook">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -573,7 +416,7 @@
        </item>
       </widget>
      </item>
-     <item row="19" column="0">
+     <item row="16" column="0">
       <widget class="QLabel" name="frameWidthLabel">
        <property name="text">
         <string>Width:</string>
@@ -583,7 +426,7 @@
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
+     <item row="16" column="1">
       <widget class="QSpinBox" name="kcfg_frameWidth">
        <property name="suffix">
         <string> px</string>
@@ -596,185 +439,89 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="0">
+     <item row="17" column="0">
       <widget class="QLabel" name="frameActiveLabel">
        <property name="text">
-        <string>Focused window:</string>
+        <string>Focused tiled window:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameActive</cstring>
        </property>
       </widget>
      </item>
-     <item row="20" column="1">
+     <item row="17" column="1">
       <widget class="QLineEdit" name="kcfg_frameActive">
        <property name="placeholderText">
         <string>#4c7899</string>
        </property>
       </widget>
      </item>
-     <item row="22" column="0">
+     <item row="18" column="0">
       <widget class="QLabel" name="frameInactiveLabel">
        <property name="text">
-        <string>Other tiled windows (unfocused):</string>
+        <string>Other tiled windows:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameInactive</cstring>
        </property>
       </widget>
      </item>
-     <item row="22" column="1">
+     <item row="18" column="1">
       <widget class="QLineEdit" name="kcfg_frameInactive">
        <property name="placeholderText">
         <string>#333333</string>
        </property>
       </widget>
      </item>
-     <item row="21" column="0">
-      <widget class="QLabel" name="frameFocusedInactiveLabel">
-       <property name="text">
-        <string>Last-focused tiled window of another monitor or split:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameFocusedInactive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="21" column="1">
-      <widget class="QLineEdit" name="kcfg_frameFocusedInactive">
-       <property name="placeholderText">
-        <string>#5f6b78</string>
-       </property>
-       <property name="toolTip">
-        <string>i3's focused_inactive: the window that has the focus on the other monitor, or had it last in a split the focus has left.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="23" column="0">
-      <widget class="QLabel" name="frameIndicatorActiveLabel">
-       <property name="text">
-        <string>Next-window side, focused:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameIndicatorActive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="23" column="1">
-      <widget class="QLineEdit" name="kcfg_frameIndicatorActive">
-       <property name="placeholderText">
-        <string>#3daee9</string>
-       </property>
-       <property name="toolTip">
-        <string>i3's indicator: on a window alone in its split, the side where the next window opens (right, or bottom in a vertical split) in this colour. Empty: the frame's colour.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="24" column="0">
-      <widget class="QLabel" name="frameIndicatorFocusedInactiveLabel">
-       <property name="text">
-        <string>Next-window side, last-focused:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameIndicatorFocusedInactive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="24" column="1">
-      <widget class="QLineEdit" name="kcfg_frameIndicatorFocusedInactive">
-       <property name="placeholderText">
-        <string>as the frame</string>
-       </property>
-       <property name="toolTip">
-        <string>The indicator on a last-focused window of another monitor or split. Empty: that frame colour.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="25" column="0">
-      <widget class="QLabel" name="frameIndicatorInactiveLabel">
-       <property name="text">
-        <string>Next-window side, others:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_frameIndicatorInactive</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="25" column="1">
-      <widget class="QLineEdit" name="kcfg_frameIndicatorInactive">
-       <property name="placeholderText">
-        <string>as the frame</string>
-       </property>
-       <property name="toolTip">
-        <string>The indicator on other tiled windows. Empty: that frame colour.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="26" column="0">
-      <widget class="QLabel" name="hideEdgeBordersLabel">
-       <property name="text">
-        <string>Hide the frame at screen edges:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_hideEdgeBorders</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="26" column="1">
-      <widget class="QComboBox" name="kcfg_hideEdgeBorders">
-       <property name="kcfg_property" stdset="0">
-        <cstring>currentText</cstring>
-       </property>
-       <property name="toolTip">
-        <string>i3's hide_edge_borders. none: the frame all round. vertical: not the left and right sides of a window at the screen's edge (with no gap between windows); horizontal: not the top and bottom; both: neither. smart: no frame on a window alone on its workspace; smart_no_gaps: the same, only without edge gaps. A hidden side leaves the frame's width empty (KWin's tiles).</string>
-       </property>
-       <item>
-        <property name="text">
-         <string>none</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>vertical</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>horizontal</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>both</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>smart</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>smart_no_gaps</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="27" column="1">
+     <item row="19" column="1">
       <widget class="QCheckBox" name="kcfg_roundedCorners">
        <property name="text">
         <string>Round the corners of tiled windows</string>
        </property>
       </widget>
      </item>
-     <item row="28" column="1">
+     <item row="20" column="1">
       <widget class="QCheckBox" name="kcfg_frameOnFloating">
        <property name="text">
-        <string>Frame floating windows too (in the same colours)</string>
+        <string>Frame floating windows too (in the floating colours)</string>
        </property>
       </widget>
      </item>
-     <item row="29" column="0" colspan="2">
+     <item row="21" column="0">
+      <widget class="QLabel" name="frameFloatingActiveLabel">
+       <property name="text">
+        <string>Focused floating window:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameFloatingActive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="21" column="1">
+      <widget class="QLineEdit" name="kcfg_frameFloatingActive">
+       <property name="placeholderText">
+        <string>#4d7254</string>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="0">
+      <widget class="QLabel" name="frameFloatingInactiveLabel">
+       <property name="text">
+        <string>Other floating windows:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_frameFloatingInactive</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="1">
+      <widget class="QLineEdit" name="kcfg_frameFloatingInactive">
+       <property name="placeholderText">
+        <string>#333333</string>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="0" colspan="2">
       <widget class="QLabel" name="rulesHeading">
        <property name="text">
         <string>Window rules</string>
@@ -792,7 +539,7 @@
        </property>
       </widget>
      </item>
-     <item row="30" column="0">
+     <item row="24" column="0">
       <widget class="QLabel" name="forWindowLabel">
        <property name="text">
         <string>Rules (for_window):</string>
@@ -802,7 +549,7 @@
        </property>
       </widget>
      </item>
-     <item row="30" column="1">
+     <item row="24" column="1">
       <widget class="QPlainTextEdit" name="kcfg_forWindow">
        <property name="kcfg_property" stdset="0">
         <cstring>plainText</cstring>
@@ -821,7 +568,7 @@
        </property>
       </widget>
      </item>
-     <item row="31" column="0">
+     <item row="25" column="0">
       <widget class="QLabel" name="assignLabel">
        <property name="text">
         <string>Workspaces (assign):</string>
@@ -831,7 +578,7 @@
        </property>
       </widget>
      </item>
-     <item row="31" column="1">
+     <item row="25" column="1">
       <widget class="QPlainTextEdit" name="kcfg_assign">
        <property name="kcfg_property" stdset="0">
         <cstring>plainText</cstring>
@@ -847,7 +594,7 @@
        </property>
       </widget>
      </item>
-     <item row="32" column="0">
+     <item row="26" column="0">
       <widget class="QLabel" name="floatingMinimumSizeLabel">
        <property name="text">
         <string>Floating windows, smallest:</string>
@@ -857,7 +604,7 @@
        </property>
       </widget>
      </item>
-     <item row="32" column="1">
+     <item row="26" column="1">
       <widget class="QLineEdit" name="kcfg_floatingMinimumSize">
        <property name="toolTip">
         <string>i3's floating_minimum_size, width x height in px: a window becoming floating is made at least this big. 0x0 means i3's 75x50; -1x-1 no minimum. KWin's own floor (about 150 px wide for a window with a title bar) applies anyway.</string>
@@ -867,7 +614,7 @@
        </property>
       </widget>
      </item>
-     <item row="33" column="0">
+     <item row="27" column="0">
       <widget class="QLabel" name="floatingMaximumSizeLabel">
        <property name="text">
         <string>Floating windows, largest:</string>
@@ -877,7 +624,7 @@
        </property>
       </widget>
      </item>
-     <item row="33" column="1">
+     <item row="27" column="1">
       <widget class="QLineEdit" name="kcfg_floatingMaximumSize">
        <property name="toolTip">
         <string>i3's floating_maximum_size, width x height in px: a window becoming floating is made at most this big. 0x0 means all monitors together; -1x-1 no maximum.</string>
@@ -887,7 +634,7 @@
        </property>
       </widget>
      </item>
-     <item row="34" column="0">
+     <item row="28" column="0">
       <widget class="QLabel" name="ignoreClassLabel">
        <property name="text">
         <string>Old list, still read: classes that float:</string>
@@ -897,7 +644,7 @@
        </property>
       </widget>
      </item>
-     <item row="34" column="1">
+     <item row="28" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreClass">
        <property name="minimumSize">
         <size>
@@ -910,7 +657,7 @@
        </property>
       </widget>
      </item>
-     <item row="35" column="0">
+     <item row="29" column="0">
       <widget class="QLabel" name="ignoreRoleLabel">
        <property name="text">
         <string>Old list, still read: roles that float:</string>
@@ -920,7 +667,7 @@
        </property>
       </widget>
      </item>
-     <item row="35" column="1">
+     <item row="29" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreRole">
        <property name="minimumSize">
         <size>
@@ -933,7 +680,7 @@
        </property>
       </widget>
      </item>
-     <item row="36" column="0">
+     <item row="30" column="0">
       <widget class="QLabel" name="floatingClassLabel">
        <property name="text">
         <string>Old list, still read: classes that float (floatingClass):</string>
@@ -943,7 +690,7 @@
        </property>
       </widget>
      </item>
-     <item row="36" column="1">
+     <item row="30" column="1">
       <widget class="QLineEdit" name="kcfg_floatingClass">
        <property name="minimumSize">
         <size>
@@ -956,7 +703,7 @@
        </property>
       </widget>
      </item>
-     <item row="37" column="0">
+     <item row="31" column="0">
       <widget class="QLabel" name="floatingTitleLabel">
        <property name="text">
         <string>Old list, still read: titles containing (floatingTitle):</string>
@@ -966,7 +713,7 @@
        </property>
       </widget>
      </item>
-     <item row="37" column="1">
+     <item row="31" column="1">
       <widget class="QLineEdit" name="kcfg_floatingTitle">
        <property name="minimumSize">
         <size>
@@ -979,7 +726,7 @@
        </property>
       </widget>
      </item>
-     <item row="38" column="0" colspan="2">
+     <item row="32" column="0" colspan="2">
       <widget class="QLabel" name="keysHeading">
        <property name="text">
         <string>Keys</string>
@@ -997,7 +744,7 @@
        </property>
       </widget>
      </item>
-     <item row="39" column="0">
+     <item row="33" column="0">
       <widget class="QLabel" name="warnTakenKeysLabel">
        <property name="text">
         <string>Options:</string>
@@ -1007,14 +754,14 @@
        </property>
       </widget>
      </item>
-     <item row="39" column="1">
+     <item row="33" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
         <string>Warn when kwin-i3 starts about keys other shortcuts already use</string>
        </property>
       </widget>
      </item>
-     <item row="42" column="0">
+     <item row="36" column="0">
       <widget class="QLabel" name="tilingDragLabel">
        <property name="text">
         <string>Tiling drag starts on:</string>
@@ -1024,7 +771,7 @@
        </property>
       </widget>
      </item>
-     <item row="42" column="1">
+     <item row="36" column="1">
       <widget class="QComboBox" name="kcfg_tilingDrag">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -1054,7 +801,7 @@
        </item>
       </widget>
      </item>
-     <item row="41" column="0">
+     <item row="35" column="0">
       <widget class="QLabel" name="mouseWarpingLabel">
        <property name="text">
         <string>Pointer:</string>
@@ -1064,7 +811,7 @@
        </property>
       </widget>
      </item>
-     <item row="41" column="1">
+     <item row="35" column="1">
       <widget class="QComboBox" name="kcfg_mouseWarping">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -1084,7 +831,7 @@
        </item>
       </widget>
      </item>
-     <item row="40" column="1">
+     <item row="34" column="1">
       <!-- Hidden, as on the page (debugLog does nothing on a desktop, docs/debugging.md): kept so
            Defaults still resets the key the test KWin uses. -->
       <widget class="QCheckBox" name="kcfg_debugLog">

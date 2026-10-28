@@ -68,23 +68,6 @@ set_key gapsInner 0; set_key gapsOuter 0
 reload_settings
 check "no gaps again"                       geom_is a "0,0 640x720"
 
-# 4c. i3's per-side and per-workspace gaps (§11 N2, redo stage 7): gaps left 20 insets the root
-#     on that side only; workspace 1 gaps top 10 adds to the top on this workspace only.
-set_key gapsLeft 20
-reload_settings
-check "gaps left 20: a from 20, the rest whole" geom_is a "20,0 630x720"
-check "  c likewise"                        geom_is c "650,360 630x360"
-set_key workspaceGaps "1 gaps top 10"
-reload_settings
-check "workspace 1 gaps top 10: a from 20,10" geom_is a "20,10 630x710"
-key "Workspace 3"; client --title w
-check "workspace 3: the left gap, not the top one" geom_is w "20,0 1260x720"
-kclose w; key "Workspace 1"
-kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key gapsLeft --delete   # -1 reads as an option
-set_key workspaceGaps ""
-reload_settings
-check "both off: no gaps again"             geom_is a "0,0 640x720"
-
 # 5. An odd inner gap (half pixels): within a pixel of i3's numbers. inner 5, outer 0: the edge
 #    is 5, between is 5.
 set_key gapsInner 5
@@ -117,18 +100,6 @@ check "and comes back to its tile"          geom_is a "30,30 605x660"
 #    the whole 1280; 600 px can (2 x 610 = 1220). The frame's border width is measured, not assumed.
 kclose b; kclose c
 check "a alone again"                       wait_tree 1 "H[a*]"
-# 6b. i3's smart_gaps (§6, redo stage 7): `on`, a window alone on its workspace has no gaps at
-#     all; `inverse_outer`, the outer gaps only; `off`, its 30 px again.
-set_key smartGaps on
-reload_settings
-check "smart_gaps on, a alone: no gaps"     geom_is a "0,0 1280x720"
-set_key smartGaps inverse_outer
-reload_settings
-# i3 insets a lone window by its inner gap as well (gaps.c gaps_should_inset_con, render.c): 30.
-check "inverse_outer, a alone: the outer gaps stay (30 with the inner)" geom_is a "30,30 1220x660"
-set_key smartGaps off
-reload_settings
-check "off: 30 px all round again"          geom_is a "30,30 1220x660"
 bw=$(kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "a") log(w.frameGeometry.width - w.clientGeometry.width); })')
 kclose a                                     # only the two under test on the workspace
 m=$(mark)
@@ -182,8 +153,7 @@ set_key gapsOuter 20
 reload_settings
 
 # 10. A monitor unplugged and back, with gaps: workspace 2 comes to the first monitor gapped,
-#     and stays there, gapped (§4 W3, redo stage 4: a lost output's workspaces move for good,
-#     as i3's; only an assignment brings one back. Found red here 2026-10-28, redo stage 7).
+#     and goes home gapped.
 key "Workspace 2"
 client --title s
 check "s alone on the second monitor"       geom_is s "1310,30 1220x660"
@@ -192,7 +162,7 @@ check "the second monitor is gone"          poll screens_are 1
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
 check "it is back"                          poll screens_are 2
 key "Workspace 2"
-check "s on the first monitor for good, gapped" geom_is s "30,30 1220x660"
+check "s home, gapped"                      geom_is s "1310,30 1220x660"
 key "Workspace 1"
 
 # 11. A script reload with gaps set: the inset root is found as it is, the tree kept.
