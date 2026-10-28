@@ -57,7 +57,9 @@ First match wins:
 2. The desktop window → root; a dock (a panel) → dock.
 3. Popups, menus, tooltips, notifications (critical too), OSDs, applet popups → override-redirect.
 4. **The built-in list** (R5): `kded5`, `kded6`, `xwaylandvideobridge`, `ksplashqml`,
-   `kwin_wayland`, `krunner`, `ksmserver-logout-greeter` (class or instance) → override-redirect.
+   `kwin_wayland`, `krunner`, `ksmserver-logout-greeter` (class or instance) → override-redirect;
+   `plasmashell` / `org.kde.plasmashell` too, until its panel-configuration and edit-mode windows
+   are read (below).
    Plasma makes them Normal windows where i3 would never see them. Not a setting.
 5. On all virtual desktops → kept out (stage 9: sticky floating); on two or more but not all → not
    adopted until it is on one (R13, as today).
