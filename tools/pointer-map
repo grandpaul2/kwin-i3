@@ -128,7 +128,7 @@ def main():
             flags = [k for k in ("shown", "inFrame", "inBuffer", "inVisible", "onRing", "hitTest", "decoration") if w[k]]
             print("  %-34s frame %-20s buffer %-20s %s  %s" % (w["name"], fmt(w["frame"]), fmt(w["buffer"]), " ".join(flags), w["caption"][:40]))
         n = p["pointerNow"]
-        print("the pointer now: %g,%g, hover %s, focus %s" % (*n["pos"], n["hover"], n["focus"]))
+        print("the pointer now: %g,%g, hover %s, focus %s, cursor %s" % (*n["pos"], n["hover"], n["focus"], n["cursor"]))
     elif a[0] == "map" and len(a) == 5:
         show_map(json.loads(call("Map", "iiii", *map(int, a[1:]))))
     elif a[0] == "gaps":

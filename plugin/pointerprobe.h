@@ -18,6 +18,10 @@
 // a decoration, a window action, the task manager), started and finished, with the edge, the
 // pointer and whether the window was in a tile: in a tile, KWin resizes the tile live
 // (window.cpp updateInteractiveMoveResize), Plasma's resize in place of i3's.
+// And every change of the pointer's cursor: a named shape (KWin's own, or an app's through the
+// cursor-shape protocol), an image the app drew, or hidden; with the window that has the pointer
+// focus, which is who set it unless KWin did. i3 shows the arrow on frames and in the gaps, and a
+// resize cursor only once a resize has started (i3 x.c, resize.c).
 // Read-only: nothing here changes what a press or a motion does.
 #pragma once
 
@@ -57,4 +61,5 @@ private:
     // The last crossing logged: the window KWin gives the pointer and what a press would do.
     QPointer<KWin::Window> m_lastTop;
     QString m_lastDecision;
+    QString m_lastCursor;
 };

@@ -1,5 +1,7 @@
 #include "pointerprobe.h"
 
+#include <cursor.h>
+#include <cursorsource.h>
 #include <input_event.h>
 #include <pointer_input.h>
 #include <window.h>
@@ -16,6 +18,9 @@ using namespace KWin;
 static const int s_eventsKeep = 1000;
 static const int s_mapMaxPixels = 100000;
 
+static QString at(const QPointF &p);
+static QString cursorNow();
+
 PointerProbe::PointerProbe(FrameFocus *frameFocus)
     : InputEventFilter(InputFilterOrder::VirtualTerminal)
     , m_frameFocus(frameFocus)
@@ -26,6 +31,13 @@ PointerProbe::PointerProbe(FrameFocus *frameFocus)
         watch(w);
     }
     connect(workspace(), &Workspace::windowAdded, this, &PointerProbe::watch);
+    connect(Cursors::self()->mouse(), &Cursor::cursorChanged, this, [this] {
+        const QString cursor = cursorNow();
+        if (cursor != m_lastCursor) {
+            m_lastCursor = cursor;
+            note(QStringLiteral("cursor %1 at %2, pointer focus %3").arg(cursor, at(input()->pointer()->pos()), name(input()->pointer()->focus())));
+        }
+    });
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper/pointer"), QStringLiteral("net.local.kwini3helper.Pointer"),
                                                  this, QDBusConnection::ExportAllSlots);
 }
@@ -73,7 +85,21 @@ static bool shown(const Window *w)
     return !w->isDeleted() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity();
 }
 
-static QString at(const QPointF &p);
+// The pointer's cursor now: a shape's name, an image an app drew, or hidden.
+static QString cursorNow()
+{
+    const CursorSource *source = Cursors::self()->mouse()->source();
+    if (!source || source->isBlank()) {
+        return QStringLiteral("hidden");
+    }
+    if (const auto shape = qobject_cast<const ShapeCursorSource *>(source)) {
+        return QStringLiteral("shape \"%1\"").arg(QString::fromLatin1(shape->shape()));
+    }
+    if (qobject_cast<const SurfaceCursorSource *>(source)) {
+        return QStringLiteral("app image %1x%2").arg(source->size().width()).arg(source->size().height());
+    }
+    return QStringLiteral("other");
+}
 
 static QString gravity(Gravity g)
 {
@@ -210,6 +236,7 @@ QString PointerProbe::Probe(double x, double y) const
             {QStringLiteral("pos"), QJsonArray{pointer->pos().x(), pointer->pos().y()}},
             {QStringLiteral("hover"), name(pointer->hover())},
             {QStringLiteral("focus"), name(pointer->focus())},
+            {QStringLiteral("cursor"), cursorNow()},
         }},
     }).toJson(QJsonDocument::Indented));
 }

@@ -18,7 +18,9 @@ Read-only: it moves nothing and presses nothing, so it runs on the live desktop 
 - `pointer-map events`: the last presses and crossings (also in every capture, `pointer.txt`).
 
 What it can't say: what a client draws in its own buffer (a transparent shadow counts as
-"buffer"; the screenshot settles what shows), and the cursor's shape (the client sets it).
+"buffer"; the screenshot settles what shows). The cursor is in the events: every change, a shape's
+name (KWin's, or an app's through the cursor-shape protocol) or "app image", with the window that
+has the pointer focus.
 
 ## A press, step by step (KWin 6.7.5)
 
@@ -87,3 +89,20 @@ Alacritty | VS Code on monitor 2). `pointer-map gaps 4`:
 - **Firefox | Alacritty**, across the monitor edge (x 2553-2566): two outer gaps, not siblings;
   4 px each side are the resize, the 4 px in the middle pass to the desktop.
 - Firefox's and Alacritty's buffers are their frames: neither takes the pointer outside itself.
+
+## The hover cursor (test KWin, 2026-10-28)
+
+i3 shows the arrow on frames and in the gaps (`x.c:171`, `XCURSOR_CURSOR_POINTER`; the gap is the
+root window) and a resize cursor only on the window it puts up once a resize has started
+(`resize.c:238`). Alacritty | VS Code | Alacritty at Paul's gaps, the pointer moved across both
+gaps, no press:
+
+- Between two terminals' gaps the desktop has the pointer: the arrow, as i3.
+- Beside VS Code, **VS Code has the pointer across the whole gap and both rings** and shows its own
+  `w-resize` / `e-resize`: Plasma's look where i3 has none. The press there is kwin-i3's resize.
+- **VS Code's border reaches 10 px past its frame, 4 px into the terminal's own content** (it is
+  stacked above): a click there never reaches the terminal, and `FrameFocus` takes it as a margin
+  press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). A bug.
+- Both come from one cause: KWin sends the app no tiled edges for a padded tile (`Tile::anchors`),
+  so it keeps its invisible resize border.
+
