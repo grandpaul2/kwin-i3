@@ -69,7 +69,7 @@ filters in step 4.
 
 Plasma's resize in a tile has its own entry points, none through kwin-i3's press filter: once a
 KWin interactive resize starts on a window in a KWin tile, KWin resizes the **tile** live
-(`window.cpp:1155`, `m_tile->resizeFromGravity`). It starts from an app's own resize border
+(`window.cpp:1161`, `m_tile->resizeFromGravity`). It starts from an app's own resize border
 (`xdgshellwindow.cpp:1060`, `handleResizeRequested`: the press went to the app, which asked), a
 server decoration's border, a window action (Meta+right; `TilingDrag` takes it on a tiled
 window), the task manager's Resize (`window.cpp:1778`), or Alt+F8. The probe logs every start

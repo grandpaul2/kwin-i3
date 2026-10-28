@@ -34,8 +34,10 @@ point (`Window::hitTest`: the client's region inside its buffer, not its frame; 
   (a bug: part C).
 - The band can't be removed from outside. KWin tells an app it's tiled only through
   `Tile::anchors`, which returns no edges for a tile with padding (`tile.cpp:190`). kwin-i3's
-  tiles always have padding (the gaps), and nothing else sets those states. Chromium's band
-  doesn't read the tiled state anyway (`frame_view_layout_linux.cc:141`). An app setting can
+  tiles always have padding (the gaps), and nothing else sets those states. Chromium's input
+  insets don't read the tiled state anyway (`ui/views/window/frame_view_layout_linux.cc:141`:
+  maximized, fullscreen and its client-shadow flag; its shadows and corners do read tiled). Not
+  traced: that VS Code's band is Chromium's 10 px (Electron may hit-test on its own). An app setting can
   remove it: VS Code's `"window.titleBarStyle": "native"` gives exactly i3's picture (measured).
 
 ## 3. The copy: a window of kwin-i3's over the gaps (part A)
@@ -65,7 +67,7 @@ one strip over one gap):
 
 | hurdle | answer |
 |---|---|
-| KWin widened a 6 px window to 75 px, covering VS Code's content | one window per output, the gaps by mask, never a strip |
+| the window came out 75 px wide, not 6, covering VS Code's content | kwin-i3's own floating minimum (75x50), applied because the script managed it: the script skips it (next row), and strips stay 6 px (probed below) |
 | kwin-i3's script managed it as a floating window (`~kwin-i3_gap`) | the script skips it (its caption and class), as i3 never manages its own frames |
 | `Qt::Tool` holds `Qt::Popup`'s bit: KWin closed it as a popup on the first motion | `BypassWindowManagerHint`, no Tool (fixed in the probe) |
 | asking a closed internal window for its hit test crashed KWin | fixed on main in the pointer probe (`9b856b8`); the gap window never asks closed windows |
@@ -75,7 +77,8 @@ one strip over one gap):
   `floating_minimum_size` (75x50, `src/kwin.js:822`). With the script skipping it, a strip stays
   6 px. So: **one window per gap strip**, not one per output. Its paint cost is the strips only,
   and only where something under them is redrawn. KWin's GL renderer does draw an opacity-0
-  window (`itemrenderer_opengl.cpp:434`, alpha × 0), so a whole-output window would have cost a
+  window (no opacity-0 skip in its item traversal, `itemrenderer_opengl.cpp:170-185`; it only
+  modulates the alpha, `:434`), so a whole-output window would have cost a
   blended quad over every damaged area; strips make that the gaps alone. Its scanout checks skip
   opacity 0 (`workspacescene.cpp:288`).
 
