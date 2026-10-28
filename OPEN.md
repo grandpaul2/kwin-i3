@@ -45,7 +45,9 @@ the press is there and the timeline in time order). All five green alone after t
 **Watched**: if one of these fails again in a full run, it moves alone (`# timing: alone`)
 rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in the batch, 48/48
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
-2026-10-28, eighth session: 60/60, 213 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
+2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
+stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake); 39, 57, 70,
+80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **40. i3's rules: all ten stages live; stage 4's live check owed** (Paul,
 2026-10-27/28; the build plan `docs/spec-i3-redo-build.md`, each stage's spec
@@ -79,11 +81,14 @@ KWin's own: a window's modal dialog takes the focus whatever `popupDuringFullscr
 chain (40). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
 tool proposal); a unit test for the page's rule parser (`kcm/ui/settings.js`) is a proposal too.
 
-**41. A wallpaper flash again, with Firefox** (Paul's capture `2026-10-27_233113.474`, Meta+Shift+B
-during the fifth session, note: "Another wallpaper flash involving ff"; not yet read). `behaviour.md`
+**41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
+`2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
+`2026-10-28_062151.334`, ninth session, note "wallpaper flash with just two terminals": a close on
+workspace 3 left Alacritty alone, and kwini3hold's hold **timed out after 210 ms** waiting for
+Alacritty to reach 2546x1386, released at 06:21:37.443, Alacritty's frame landing 37 ms later). `behaviour.md`
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
-inside kwini3hold's hold or after its release. Next: `tools/capture-read` on it at the start of a
-session, a diagnosis for Paul (no fix without his go); the capture stays until then.
+inside kwini3hold's hold or after its release. Next: `tools/capture-read` on both at the start of a
+session, a diagnosis for Paul (no fix without his go); the captures stay until then.
 
 **42. The resize mode's banner: clean up its look a bit** (Paul, 2026-10-28, after stage 5 went
 live and worked). The banner is the effect's `paintBanner` (`plugin/hold.cpp`): a textured quad of
