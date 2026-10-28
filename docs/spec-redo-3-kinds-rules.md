@@ -117,13 +117,13 @@ assign=[class="^steam$"] → 5
 ### C. The old settings (`ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle`, `floatingWorkspaces`)
 
 Read on as rules, so nothing a user set changes at the update, Paul's two titles included
-(the ignore lists' part is **call 43**):
+(the ignore lists' part: call 43, Paul 2026-10-28):
 `floatingClass` X → `[class="^X$"] floating enable` and the same for `instance`;
 `floatingTitle` X → `[title="X"]` with X's special characters escaped (a substring, as now);
 `floatingWorkspaces` N → `[workspace="^N$"] floating enable`. An `ignoreClass` or `ignoreRole`
 entry that isn't a default can't become override-redirect (R5: a user can't make a window
-override-redirect). Proposed: it reads as `floating enable`, and the load report (§13) says so
-once, naming the entries; no row decided this mapping, so it is call 43. The defaults of the two ignore lists go. Stage 10's settings page writes the new
+override-redirect). It reads as `floating enable`, and the load report (§13) says so once, naming the
+entries (call 43). The defaults of the two ignore lists go. Stage 10's settings page writes the new
 keys and removes the old; until then the Configure form shows both.
 
 ### D. Floating sizes (N15)
@@ -151,12 +151,9 @@ capture's JSON, `busctl --user call org.kde.KWin /KWin org.kde.KWin getWindowInf
 its class, instance, type and skip-taskbar flag. Each goes to the built-in list (4), a default
 rule (B), or is left to tile; the result goes into this spec.
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-43. **A user's own ignore entries** (`ignoreClass`, `ignoreRole` beyond the defaults). R5
-    decided the lists go; it didn't say what becomes of what a user put there. Proposed:
-    `floating enable`, reported once at load (the nearest i3 has: a user can't make a window
-    override-redirect). The other way: dropped, reported once, the window tiling.
+43. A user's own ignore entries read as `floating enable`, reported once at load (C).
 
 ## Tests
 

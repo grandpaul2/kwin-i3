@@ -54,7 +54,7 @@ the keyboard), the focused window keeps its focused colour, as under dmenu.
 
 **Settings**: `frameActive` (focused, #4c7899, kept), `frameFocusedInactive` (new),
 `frameInactive` (unfocused, #333333 today); `frameIndicatorActive`, `frameIndicatorFocusedInactive`,
-`frameIndicatorInactive` (new). The new defaults are **call 36** below. Floating rings use the
+`frameIndicatorInactive` (new). The new defaults: call 36 below (as proposed, confirmed on screen when built). Floating rings use the
 same six (L11): `frameFloatingActive` and `frameFloatingInactive` go, so Paul's muted green goes
 with them (decided, L11), and the load report says once that they are no longer read. A floating
 window keeps Plasma's look by default (`frameOnFloating` off).
@@ -66,7 +66,7 @@ window keeps Plasma's look by default (`frameOnFloating` off).
 the ring in the class's indicator colour. Only where a ring is drawn (`frame` look, and floating
 windows never: i3's `con->parent->type != CT_FLOATING_CON`).
 
-### C. Hiding ring sides (L6, `hide_edge_borders`): call 41
+### C. Hiding ring sides (L6, `hide_edge_borders`)
 
 **`smart` and `smart_no_gaps` work**: a workspace with one visible tiling window has no ring and
 no room for it (its one tile's padding 0). **The per-edge values (`vertical`, `horizontal`,
@@ -74,8 +74,9 @@ no room for it (its one tile's padding 0). **The per-edge values (`vertical`, `h
 (`tiles/customtile.cpp:58`, `intersected(0,0,1,1)`), so its inset can't go below 0, and a
 tile's padding is one number for all four sides (`tiles/tile.h:33`; an edge side gets the full
 padding, `tile.cpp:175-177`), so taking the ring's room away at an edge takes it from all four.
-Hiding the ring side only would leave a strip of the ring's width (1 px by default) where the
-window doesn't reach the edge.
+So (call 41, Paul 2026-10-28): those three hide the ring's side (`hidden` in A's call) and leave
+a strip of the ring's width (1 px by default) where the window doesn't reach the edge, ≠ i3 with
+that reason.
 
 ### D. Gaps (N2, L6 `smart_gaps`)
 
@@ -107,19 +108,14 @@ ring with up to two colours. No per-frame work is added.
   per-side gap, a workspace gap, `smartGaps on` with one window; 58, `hide_edge_borders` with
   outer gaps 0.
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-36. **The new colour defaults** (Plasma-friendly, as L3 decided; i3's in brackets):
-    `focused_inactive` (#5f676a), the three indicators (#2e9ef4, #484e50, #292d2e), and whether
-    `unfocused` stays #333333 (i3's #222222). Proposed, from Breeze's palette: `focused_inactive`
-    #5f6b78 (a muted version of the focused blue), indicators #3daee9 (Breeze's highlight) for
-    focused and the class's own colour for the other two (no indicator unless focused, quieter);
-    `unfocused` stays #333333. Paul picks on screen; the settings page shows them.
-
-41. **`hide_edge_borders`'s per-edge values** (C). Proposed: `none`, `smart`, `smart_no_gaps`
-    as i3; `vertical`, `horizontal`, `both` hide the ring's side and accept the strip of the
-    ring's width at the edge, ≠ i3 with KWin's reason (one padding per tile, a root inside the
-    output). The other way: those three left out, with the same reason.
+36. The defaults as proposed: `focused_inactive` #5f6b78; the focused indicator #3daee9, the
+    other two indicators their class's frame colour; `unfocused` stays #333333; confirmed on
+    screen when built.
+41. `hide_edge_borders`: `none`, `smart`, `smart_no_gaps` as i3; `vertical`, `horizontal`, `both`
+    hide the ring's side and leave a strip of the ring's width at the edge, ≠ i3 with KWin's
+    reason (C).
 
 ## Live check (Paul)
 

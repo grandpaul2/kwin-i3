@@ -57,7 +57,13 @@ gets its own systemd scope.
 - **The four actions** keep their names and go unbound (their Meta+Ctrl keys free); a user who
   wants them flat binds them on the Keys page. Their steps stay `resizeStep` and `floatingStep`
   (i3's `10 ppt` and `10 px`).
-- **The sign** (i3's bar shows "resize"): **call 34** below.
+- **The sign** (i3's bar shows "resize"; call 34, Paul 2026-10-28): **a banner in the focused
+  window itself**, in the style of the settings page's inline messages (Kirigami's
+  `InlineMessage`): "Resize mode: J K L ; or the arrows; Escape to leave", drawn by the effect
+  at the top of the focused window while the mode is on. **If the effect can't** draw a Qt Quick
+  item over a window (KWin 6's `OffscreenQuickView`, as its own overview effects use: whether a
+  third-party effect may, checked before building), the fallback is the focused ring in
+  another colour.
 
 ### B. Exit (K17)
 
@@ -80,7 +86,8 @@ org.kde.LogoutPrompt.promptLogout`, Plasma's own dialog, its confirmation as `i3
 
 Unbound, as i3's config leaves them: **Workspace N (no back-and-forth)** and **Move to Workspace N
 (no back-and-forth)**, 1 to 10; **Focus Output Next**, **Focus Output Primary**, **Move to Output
-Next**, **Move to Output Primary**. `next` is KWin's output order, wrapping (i3's
+Next**, **Move to Output Primary**, and (call 35) **Move Workspace to Output Next**, **Move
+Workspace to Output Primary**. `next` is KWin's output order, wrapping (i3's
 `get_output_next_wrap` over its list); `primary` is the first in that order. Listed in
 `kcm/ui/commands.json` so the Keys page shows them.
 
@@ -104,17 +111,10 @@ process start. If it can't, the fallback is the helper starting a transient syst
   Exit, terminal and launcher open things on the test session's bus: checked by the D-Bus call
   made (logged), not by what opens.
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-34. **The mode's sign.** i3's bar shows "resize" while in it. Options: (a) the workspace widget
-    shows it, as i3bar does (the widget reads Plasma's task models today, so it needs a way to
-    hear the helper: a D-Bus property it reads when it redraws); (b) Plasma's OSD on entering and
-    leaving (`org.kde.osdService`, a moment, then gone); (c) the focused window's ring in
-    another colour while in the mode (the effect, no new channel). Recommended: (c), always
-    visible where you're looking, and (a) later with the widget's next change.
-35. **`move workspace to output next | primary`.** S8/S9 decided `next` and `primary` for focus
-    and window moves; i3 has them for workspace moves too (S10 is by direction only).
-    Recommended: the same two, unbound, as i3.
+34. The sign: a banner in the focused window, else the ring's colour (A).
+35. `move workspace to output next | primary`: yes, unbound, as i3 (D).
 
 ## Live check (Paul)
 

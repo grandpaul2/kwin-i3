@@ -108,8 +108,10 @@ then building.** Stage 1 specced (`docs/spec-redo-1-new-windows.md`, 2026-10-28)
 (2026-10-28).** A fresh agent reviewed the ten (2026-10-28): its findings verified and fixed in the specs (KWin's
 filter order, the minimize order, the root's clamp, `from`'s two jobs, i3's `leave_fullscreen`,
 stage 3's classify order, citations, probes marked for Paul's go); three became calls (41-43).
-Next: the review and adjust pass with Paul, stage by stage, calls 34-43 and the items held for his
-go (probes, live reads, new checks).
+Calls 34-43 settled (Paul, 2026-10-28; G4 now kept, L6's per-edge values with a strip; the
+mode's sign a banner in the window if the effect can, else the ring's colour). Next: the review
+pass with Paul stage by stage, and the items held for his go (probes, the live read, new checks,
+unit tests, scenario 87).
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through

@@ -94,3 +94,4 @@ only what the new settings need to be usable. Spec: `spec-redo-10-settings-page.
 32. Stage 3 fixes the Window Rules sub-page minimally (the new keys read and written); its
     redesign is stage 10's.
 33. Stage 10 is inside the Stage, not `LATER.md`.
+34-43, in the stages' specs (Paul, 2026-10-28): each spec's "Paul's calls" section.

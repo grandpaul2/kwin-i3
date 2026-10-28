@@ -33,7 +33,11 @@ itself" and "Always float"), Keys. Its rules: `docs/style-settings-page.md`. Its
 | 8 | `popupDuringFullscreen` | — |
 | 5, 9 | the new actions (Resize Mode, Exit, Terminal, Launcher, the no-back-and-forth and output actions, Sticky Toggle) | Keys sub-page, from `commands.json` |
 
-## Design (the layout is call 38)
+## Design
+
+**Banners** (call 40): as today's, plus one naming a missing plugin, the helper or the effect,
+and what it costs (the helper: the tiling drag and resize, frame focus, the resize mode, layout
+keys, Apply on the Configure form).
 
 **Main page**, sections in this order:
 
@@ -89,16 +93,12 @@ as now for every setting.
 - **Screenshots** (the style guide's §1: every layout change checked on a screenshot): each
   changed page, for Paul.
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-38. **The layout above**: the new "Mouse and focus" section, gaps behind a sub-page, the colour
-    grid, the floating sizes on the Window Rules page. Paul's screenshots decide.
-39. **The rule editor**: rows with fields (recommended: the control that can't be wrong, style
-    guide §3) or i3's lines as text (what stage 3 leaves; closer to i3, easy to get wrong).
-40. **The helper's banner** from `LATER.md` item 22, brought into this stage: the page checks only
-    for the effect today, and the resize mode (stage 5), the drag settings (stage 6) and Apply on
-    the Configure form all need the helper. Recommended: yes, a banner naming the missing plugin
-    and what it costs; the rest of item 22 stays.
+38. The layout above as the starting point; Paul's screenshots decide.
+39. Rows with fields (the control that can't be wrong).
+40. Yes: the banner naming the missing plugin (the helper or the effect) and what it costs comes
+    from `LATER.md` item 22 into this stage; the rest of item 22 stays.
 
 ## Done when
 

@@ -71,11 +71,11 @@ costs.
 - **G3**: `tilingDrag` (`off`, `modifier`, `titlebar`, `modifier titlebar`; default the last), read
   by the helper from kwinrc as its other settings are; `off` leaves Meta+left to KWin (floating
   windows move as usual, tiling ones don't).
-- **G4**: **call 42.** Passing the press on can't be done as decided: KWin's input filters run
+- **G4**: **kept as today** (call 42, Paul 2026-10-28). Passing the press on can't be done as decided: KWin's input filters run
   in order (`/usr/include/kwin/input.h`: … Effects, …, **WindowAction** …), the helper's at
   Effects, so a Meta+left press it lets go reaches KWin's window-action filter, whose Meta+left is
   KWin's move: the window would be pulled out of its tile and floated, not clicked. Today's
-  swallow is there for that.
+  swallow is there for that; nothing changes, only G4's row (≠, with this reason).
 - **G7, and Z7 for the resize** (i3's `drain_drag_events`): **any key press** cancels (it then goes
   on as usual, so a key binding still runs, as in i3). The helper's drag filter is at KWin's
   Effects order, after GlobalShortcut, so a bound key never reaches it: the cancel needs a key
@@ -101,13 +101,10 @@ costs.
 `FrameFocus::pointerAxis`: a scroll with no modifier on a ring activates its window (i3's step 3)
 and is swallowed, as now.
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-42. **G4, a Meta press with nowhere to drop.** i3 passes it to the app; here KWin's own
-    window-action filter would take it first and float the window (above). Proposed: kept as
-    today (activated, swallowed), ≠ i3 with that reason. The other way: the helper sends the
-    press to the window itself, past KWin's filters (it can reach the window's surface; not
-    probed, and a press that bypasses KWin's own handling is a new class of risk).
+42. G4 **kept as today**: with nowhere to drop, a Meta press activates the window and is swallowed,
+    ≠ i3 with KWin's reason (its window-action filter would float the window).
 
 ## Tests
 

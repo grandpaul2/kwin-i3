@@ -82,11 +82,10 @@ Yakuake shown, hidden, shown, then Meta+Shift+B; the window ids say which.
 - **Unit, for Paul's go**: the push in `tests/unit/tree.test.js` (a sticky con moved to the
   visible workspace, focus kept only if it had it).
 
-## For Paul (in the review)
+## Paul's calls (2026-10-28)
 
-37. **`sticky toggle`.** i3 has it as a command, unbound in the shipped config. Here the window
-    menu's "On All Desktops" already does it (C). Recommended: an unbound **Sticky Toggle**
-    action as well, as i3 (it sets KWin's flag, and C does the rest), so it can be put on a key.
+37. **Sticky Toggle**: yes, an unbound action, as i3's `sticky toggle`: it sets KWin's "on all
+    desktops" flag (and floats a tiling window), and C does the rest. In `kcm/ui/commands.json`.
 
 ## Live check (Paul)
 
