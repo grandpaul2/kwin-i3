@@ -151,7 +151,7 @@ that skips the taskbar is `xwaylandvideobridge`, on A4's built-in list.
 
 **The Plasma tools not open on Paul's desktop** (R4's "check first", the rest): Spectacle, KRuler,
 the password prompt and Yakuake (shown, hidden, shown, for stage 9), **in the test KWin**
-(`docs/testing.md` P4, for Paul's go: each started on the headless session's display, the same
+(`docs/testing.md` P4, approved (Paul, 2026-10-28): each started on the headless session's display, the same
 `getWindowInfo` read on its bus, Yakuake toggled through its own D-Bus; nothing on Paul's screen).
 plasmashell's panel configuration and edit-mode windows are hard to run headless: read from
 plasmashell's source, or left on the built-in list (B's default rule waits for them).
@@ -166,12 +166,12 @@ plasmashell's source, or left on the built-in list (B's default rule waits for t
   the tree), 76 (the settings sub-pages: the Window Rules page changes), 77 (float size), 37.
   **Expectations that change**: 20's ignore and floating-list cases become rule cases; 62/63's
   Plasma windows by their new kinds.
-- **Unit, for Paul's go** (`docs/testing.md` rule 5: no `rules.test.js` exists today, and
+- **Unit, approved (Paul, 2026-10-28)** (`docs/testing.md` rule 5: no `rules.test.js` exists today, and
   `src/rules.js` doesn't load under node: it reads the `Settings` global and has no
   `module.exports`, so the parser and `classify` take their settings as an argument): the
   parser (criteria, commands, `assign`'s forms, the bad cases), `classify`'s order against A, the
   once-per-window record, and C's translation of the old keys, with Paul's two titles as a case.
-- **New scenario, for Paul's go**: none proposed; 20 is extended instead (an X11 dialog floats,
+- **New scenario, approved (Paul, 2026-10-28)**: none proposed; 20 is extended instead (an X11 dialog floats,
   R2; a rule runs once, X2; `assign` to a hidden workspace opens there without switching, N12;
   `floating disable` tiles a dialog). Those are new checks, for his go.
 

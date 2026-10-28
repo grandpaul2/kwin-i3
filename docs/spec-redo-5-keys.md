@@ -96,7 +96,7 @@ Workspace to Output Primary**. `next` is KWin's output order, wrapping (i3's
 
 **C's terminal route.** Whether `doRegister` on a `.desktop` component that kglobalacceld hasn't
 loaded (Alacritty's desktop file has no `X-KDE-Shortcuts`) then answers `invokeShortcut _launch`.
-**Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, against the test KWin's own kglobalacceld if `testkwin.sh` runs
+**Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, against the test KWin's own kglobalacceld if `testkwin.sh` runs
 one, else read-only reasoning from `kglobalacceld.cpp`; no live call): register, invoke, see the
 process start. If it can't, the fallback is the helper starting a transient systemd unit itself
 (`org.freedesktop.systemd1` `StartTransientUnit`, what KIO does), for Paul's call.
@@ -107,7 +107,7 @@ process start. If it can't, the fallback is the helper starting a transient syst
   expectations change to Meta+R's mode), 33 (own keys), 35 (taken keys: Meta+D), 50 (keys), 55
   (helper), 64 (plugin reload, a helper change), 68 (workspace commands), 69 (layouts: the mode's
   keys need no refit), 76 (the Keys page lists the new actions).
-- **New checks, for Paul's go**: in 55, the mode (Meta+R, then J resizes, Meta+1 does nothing (kglobalaccel takes it, kwin-i3
+- **New checks, approved (Paul, 2026-10-28)**: in 55, the mode (Meta+R, then J resizes, Meta+1 does nothing (kglobalaccel takes it, kwin-i3
   ignores it), a plain letter reaches the window, Escape leaves); in 68, a no-back-and-forth action and Focus Output Next.
   Exit, terminal and launcher open things on the test session's bus: checked by the D-Bus call
   made (logged), not by what opens.

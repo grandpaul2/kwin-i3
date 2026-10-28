@@ -36,7 +36,7 @@ split with another window goes), and put it back over KWin's choice after `windo
 a split today. For a floating window i3's `con_next_focused` takes the workspace's focus order
 (`tree.js`'s port already does: `isFloating`).
 
-**First, on the build's branch, for Paul's go** (a run of a changed build, not one of
+**First, on the build's branch, approved (Paul, 2026-10-28)** (a run of a changed build, not one of
 `docs/testing.md` P1's): run 20 and 25 with the condition removed, and read the failing
 checks' logs, to name what "KWin's record is fuller" was. The fix goes where the model's record is
 short, not back to KWin's choice: the likely causes are windows adopted at load (adopted bottom of
@@ -113,13 +113,13 @@ and is swallowed, as now.
 - **Expectations that change**: none in 79 (its first case, `H[a b c]` closing c, is a top-level
   close where KWin's choice and i3's agree; its second is the split case); 86's Meta-drag focus (the dropped window had focus only if it was focused before)
   and "another button cancels".
-- **New checks, for Paul's go** (rule 5): 79, its top-level case again with the pointer resting
+- **New checks, approved (Paul, 2026-10-28)** (rule 5): 79, its top-level case again with the pointer resting
   on another window, and a floating close, both taking i3's next focus (C7); 30 or 86, minimizing the focused window
   focuses i3's next, and a focus key never lands on the minimized one (C9); 86, a Meta-drag of an
   unfocused window leaves focus where it was (G1), any key cancels and another button's release
   drops (G7), a press with nowhere to drop reaches the app (G4); 58, a ring drag resizes on its
   side (Z3) and a ring scroll focuses (F4).
-- **Unit, for Paul's go**: `tests/unit/tree.test.js` (it exists and loads `tree.js`): the
+- **Unit, approved (Paul, 2026-10-28)**: `tests/unit/tree.test.js` (it exists and loads `tree.js`): the
   minimized skip in `nextFocused` and `descendFocused`.
 
 ## Live check (Paul)

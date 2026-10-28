@@ -103,7 +103,7 @@ ring with up to two colours. No per-frame work is added.
   corners), 85 (tiled look), 25 (settings), 64 (the effect changed).
 - **Expectations that change**: 57's ring colour checks (screenshots) where the active window
   isn't the model's focus; 26's gap cases where per-side keys are unset (unchanged values).
-- **New checks, for Paul's go**: 57, the three classes on two outputs (focused, the other output's
+- **New checks, approved (Paul, 2026-10-28)**: 57, the three classes on two outputs (focused, the other output's
   focused window as focused_inactive, a third unfocused) and the indicator on a lone window; 26, a
   per-side gap, a workspace gap, `smartGaps on` with one window; 58, `hide_edge_borders` with
   outer gaps 0.

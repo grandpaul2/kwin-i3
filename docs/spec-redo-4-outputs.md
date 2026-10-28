@@ -89,11 +89,11 @@ outputs; `plan.md` decision 10 already says why (the state behind most replug bu
   - 42 (a window sent to 2 while away): it already expects 2 not to return; its "the monitor gets
     an unused one" stays true.
   - 41 and 84 (unplug focus): unchanged, they are i3's case.
-- **New checks, for Paul's go** (rule 5): in 49, a two-output list (`2=Virtual-9 Virtual-1`: the
+- **New checks, approved (Paul, 2026-10-28)** (rule 5): in 49, a two-output list (`2=Virtual-9 Virtual-1`: the
   first absent, so 2 goes to Virtual-1), and an unassigned workspace with windows on a lost
   monitor staying on the first one after it returns; in 40, a returning monitor showing a free
   workspace, not the one it showed.
-- **Unit, for Paul's go**: `workspaceOutputs`' list form in `tests/unit/settings.test.js` (exists);
+- **Unit, approved (Paul, 2026-10-28)**: `workspaceOutputs`' list form in `tests/unit/settings.test.js` (exists);
   B's and C's choices (which home, what X shows) as pure functions of (outputs in order, homes,
   assignments, workspaces with windows), in a node-loadable file: `src/workspaces.js` isn't (it
   uses KWin's `workspace` and has no `module.exports`; only `tree.js` has).

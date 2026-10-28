@@ -76,10 +76,10 @@ Yakuake shown, hidden, shown through its own D-Bus; the window ids say which.
 
 - **Run**: `make unit`; 20 (rules: its all-desktops case changes), 43 (hidden moves: `relocate`'s
   own sticky moment), 62, 63, 40, 41.
-- **New checks, for Paul's go**: in 20 or 40, a window put on all desktops floats and follows
+- **New checks, approved (Paul, 2026-10-28)**: in 20 or 40, a window put on all desktops floats and follows
   Meta+N on its output with the focus; one taken off all desktops stays on the shown workspace;
   tiling a sticky window takes it off all desktops.
-- **Unit, for Paul's go**: the push in `tests/unit/tree.test.js` (a sticky con moved to the
+- **Unit, approved (Paul, 2026-10-28)**: the push in `tests/unit/tree.test.js` (a sticky con moved to the
   visible workspace, focus kept only if it had it).
 
 ## Paul's calls (2026-10-28)

@@ -120,7 +120,7 @@ uses the window's output.
 whether KWin's `setDesktops` on the dialog (which moves the parent) runs in the turn of
 `windowAdded` or an earlier one (the client's first commit). A1's `movedFrom` record covers both
 orders; the order decides only how long a record is kept (one turn, or until the dialog arrives,
-at most 1 s). **Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, in `tools/testkwin.sh`, with 44-dialog-drag's
+at most 1 s). **Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, in `tools/testkwin.sh`, with 44-dialog-drag's
 modal dialog on another output's workspace): log the parent's `desktopsChanged`,
 `currentDesktopChanged` and `windowAdded` with a turn counter. Under a minute.
 
@@ -130,10 +130,10 @@ modal dialog on another output's workspace): log the parent's `desktopsChanged`,
   line 48's "Meta+4 … opens on the current, first monitor" becomes the focused output, the same
   monitor there), 44 (dialog drag), 56, 72, 73 (popups and windows kept out of the tree change
   nothing: B's claim must not take their switches), 79 (close focus).
-- **Unit, for Paul's go** (`docs/testing.md` rule 5): A's choice of T and B's claim are pure functions of recorded state,
+- **Unit, approved (Paul, 2026-10-28)** (`docs/testing.md` rule 5): A's choice of T and B's claim are pure functions of recorded state,
   so they go in a small module (`src/placement.js`, as `tree.js` and `rules.js` are), unit-tested;
   `src/kwin.js` itself is not unit-testable (its tests only read its text).
-- **New scenario, for Paul's go** (`docs/testing.md` rule 5): `87-new-window-placement.sh`, two
+- **New scenario, approved (Paul, 2026-10-28)** (`docs/testing.md` rule 5): `87-new-window-placement.sh`, two
   outputs. (1) Focus on an empty workspace of one output, the pointer on the other, a window
   opens: on the focused workspace (C1). (2) The capture: a window with a modal dialog on output A,
   focus on output B's empty workspace, the dialog opens: on its parent's workspace, nothing moves

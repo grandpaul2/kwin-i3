@@ -110,7 +110,7 @@ pointer (`screenAt(workspace.cursorPos)`), not workspace 1.
 mouse activation of a window entered at the same motion, and whether KWin's delay
 (`DelayFocusInterval`) leaves a moment where the topmost window is a window but nothing is active
 yet. A's hit test makes the order not matter for windows (A does nothing over one); the probe
-confirms it and counts the signal's rate. **Probe, for Paul's go** (`docs/testing.md` P4 and rule 5, two outputs in
+confirms it and counts the signal's rate. **Probe, approved (Paul, 2026-10-28)** (`docs/testing.md` P4 and rule 5, two outputs in
 `tools/testkwin.sh`, the pointer moved with `tools/inject.py` as 72 does): log
 `cursorPosChanged` (count, output), `windowActivated`, `activeScreen`, across a crossing onto an
 empty workspace, a window and a panel. Under a minute.
@@ -123,9 +123,9 @@ empty workspace, a window and a panel. Under a minute.
   window of an ignored class, changes** where that class is override-redirect: the key does
   nothing; with a floating-kind class it still closes), 41 and 84 (unplug focus), 40 (login
   numbering), 60.
-- **Unit, for Paul's go** (`docs/testing.md` rule 5; there is no `rules.test.js` yet): `i3Kind`
+- **Unit, approved (Paul, 2026-10-28)** (`docs/testing.md` rule 5; there is no `rules.test.js` yet): `i3Kind`
   against §3's table.
-- **New checks in existing scenarios, for Paul's go** (`docs/testing.md` rule 5; no new
+- **New checks in existing scenarios, approved (Paul, 2026-10-28)** (`docs/testing.md` rule 5; no new
   scenario): 74, a click on its stand-in desktop window with Show Desktop off gives the focus to
   the output's workspace (B4; nothing checks a desktop click today); 40, after the login
   numbering, the focus is on the output the pointer was parked on (E1); 72, a key moving focus

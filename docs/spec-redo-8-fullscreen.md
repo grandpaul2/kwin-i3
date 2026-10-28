@@ -46,7 +46,7 @@ Opening fullscreen itself: it takes over, whatever the value (as today). "A tran
 ## Tests
 
 - **Run**: `make unit`; 32 (fullscreen open), 46 (replug fullscreen), 25 (settings).
-- **New checks, for Paul's go**: in 32, one case per value with a dialog of another window and a
+- **New checks, approved (Paul, 2026-10-28)**: in 32, one case per value with a dialog of another window and a
   dialog of the fullscreen one (four values, two newcomers each); about 10 s.
 
 ## Live check (Paul)
