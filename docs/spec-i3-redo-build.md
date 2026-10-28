@@ -76,7 +76,7 @@ colours go), §11 N2 (outer gaps per side, gaps per workspace). The effect (`kwi
 gaps; no performance cost (Paul's rule for the look). Spec: `spec-redo-7-look.md`.
 
 **8. Fullscreen** (S). §10 V6 (`popup_during_fullscreen`, i3's values, default `smart`; stage 1
-made `smart` exact).
+made `smart` exact). Spec: `spec-redo-8-fullscreen.md`.
 
 **9. Sticky** (M). §3 R3, X4, §10 V10 (a window on all desktops is sticky floating, in the tree,
 visible on every workspace of its output). Last, as agreed: it touches every workspace switch.
