@@ -212,6 +212,15 @@
     ]
    },
    {
+    "label": "Show the window on every workspace of its monitor, or stop (sticky)",
+    "actions": [
+     [
+      "kwin-i3 Sticky Toggle",
+      ""
+     ]
+    ]
+   },
+   {
     "label": "Fullscreen",
     "actions": [
      [

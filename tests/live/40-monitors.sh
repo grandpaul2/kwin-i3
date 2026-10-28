@@ -132,5 +132,42 @@ check "no window is active (not the hidden c)" poll active_is ""
 key "Workspace 6"
 check "Meta+6: c is active again"           poll active_is c
 
+# i3's sticky floating (§3 R3, X4; redo stage 9; approved by Paul, 2026-10-28): a window put on
+# all desktops floats and follows Meta+N on its monitor, with the focus if it had it; one taken
+# off all desktops stays on the workspace shown; tiling a sticky window takes it off all desktops.
+on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { $2 } })" >/dev/null; }
+prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
+key "Workspace 1"
+client --title s; client --title t
+check "s | t on 1"                          wait_tree 1 "H[s t*]"
+m=$(mark)
+on t 'w.onAllDesktops = true;'
+check "t on all desktops: floating, sticky" wait_log '^.{9}STICKY t on' "$m"
+check "  the tree: t floats"                wait_tree 1 "H[s] ~t*"
+key "Workspace 3"
+check "Meta+3: t follows, with the focus"   wait_tree 3 "H[a] ~t*"
+check "  and left 1"                        wait_tree 1 "H[s]"
+check "  on the first monitor still"        poll eval '[[ "$(prop t output.name)" == Virtual-0 ]]'
+key "Workspace 2"
+check "Meta+2 (the second monitor): t stays on the first's workspace 3" wait_tree 3 "H[a] ~t"
+check "  the focus went to 2"               poll shows Virtual-1 2
+key "Workspace 1"
+check "Meta+1: t joins 1 without the focus (s has it)" wait_tree 1 "H[s*] ~t"
+on t 'w.desktops = [workspace.currentDesktopForScreen(w.output)];'
+check "t off all desktops: stays on 1, floating" wait_tree 1 "H[s*] ~t"
+key "Workspace 3"
+check "  and no longer follows"             wait_tree 3 "H[a*]"
+key "Workspace 1"
+# (Back on 1, KWin's own desktop-switch activation picked t: a desktops change puts a window
+# first in KWin's focus chain, window.cpp setDesktops; the model follows KWin's choice there.)
+on t 'w.onAllDesktops = true;'
+check "t sticky again"                      poll eval '[[ "$(tree 1)" == *"~t"* ]]'
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "t") workspace.activeWindow = w; });' >/dev/null
+check "t focused"                           wait_tree 1 "H[s] ~t*"
+key "Floating Toggle"
+check "tiled: t off all desktops (one desktop)" poll eval '[[ "$(prop t onAllDesktops)" == false && "$(prop t desktops.length)" == 1 ]]'
+check "  in the layout beside s"            wait_tree 1 "H[s t*]"
+kclose t; kclose s
+
 check "no invariant failures or errors"     clean_log
 finish

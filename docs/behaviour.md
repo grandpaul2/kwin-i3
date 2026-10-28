@@ -8,8 +8,8 @@ behaviour updates this page in the same commit (`docs/testing.md` P1).
 Long and exact on purpose during the Stage (Paul, 2026-10-27); the user's documentation will be
 written from it later. Code is cited by file and function (`src/kwin.js` `applyFocus`), not by
 line, so the citations survive edits. **The words are `docs/definitions.md`'s.** A window is one
-of i3's kinds (§3): **tiling** and **floating** in the tree; **dock**, **root**, **override-redirect**
-and (until redo stage 9) **sticky** kept out of it (`src/rules.js` `classify`).
+of i3's kinds (§3): **tiling**, **floating** and **sticky** (floating on all desktops) in the tree;
+**dock**, **root** and **override-redirect** kept out of it (`src/rules.js` `classify`).
 
 Contents: 1 the pieces · 2 the tree · 3 window kinds · 4 workspaces and outputs · 5 focus ·
 6 from the tree to the screen · 7 the frame and the look · 8 keys · 9 the mouse · 10 edge cases ·
@@ -151,15 +151,15 @@ Every window is one of i3's kinds, and the rules (focus first, §5) are written 
 |---|---|---|
 | **tiling** | in the tree's layout | the tree places it |
 | **floating** | in the tree, on its workspace's floating list | you place it |
-| **sticky floating** | floating, visible on every workspace of its output (`sticky enable`) | — |
+| **sticky floating** | floating, visible on every workspace of its output (`sticky enable`) | a window on all virtual desktops (R3): floating, moved in the model to whatever its output shows |
 | **dock** | i3bar; never focused (`manage.c`) | Plasma's panels |
 | **root** | the background; a click or a crossing focuses its output | the desktop window |
 | **override-redirect** | not in the tree: i3 never places or focuses it; it takes the keyboard itself, and focus is where it was when it goes (`manage.c`) | on Wayland: popups and Plasma's shell surfaces |
 
 **The code's kinds are i3's** (redo stage 3, 2026-10-28; `src/rules.js` `classify`, `keptOut`,
 `i3Kind`): tiling and floating in the tree; dock, root and override-redirect kept out by type or by
-the built-in class list; **sticky** (on all desktops) kept out until stage 9 brings it in. The i3
-kind of each window Plasma shows, and how the code gets there:
+the built-in class list; **sticky** (on all desktops) in the tree as sticky floating (redo stage 9).
+The i3 kind of each window Plasma shows, and how the code gets there:
 
 | window | i3's kind | how |
 |---|---|---|
@@ -167,7 +167,7 @@ kind of each window Plasma shows, and how the code gets there:
 | `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland` (system windows, never meant to have focus) | override-redirect | the built-in class list (Normal windows on Wayland, where i3 would never see them) |
 | Plasma's panels, and its panel configuration window (a layer-shell surface in scope `dock`, `panelconfigview.cpp`) | dock | KWin's type |
 | the desktop window | root | KWin's type |
-| Yakuake (on all desktops) | sticky floating | **kept out until stage 9** (`sticky`; not in the focus history) |
+| Yakuake (on all desktops) | sticky floating | `classify`: on all desktops (R3). On Wayland Yakuake's hide is a close: Qt drops the surface's role and unmaps it (`QWaylandWindow::setVisible(false)`: `resetSurfaceRole`, Qt 6.9), so each show is a new window (§5 C1) and §5 C7's close focus applies when it hides |
 | Spectacle's window, the password prompt (polkit), KRuler | floating | the default `forWindow` rules, by class (a user can delete one and see the tool tile) |
 | Spectacle's region overlays (a Normal fullscreen window per output, probe 93) | override-redirect | by class and fullscreen (Paul's call 60: in the tree they would gather on the focused workspace) |
 | the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the built-in class list |
@@ -183,7 +183,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 |---|---|---|---|---|
 | R1 | KWin's type: a panel (dock), the desktop window (root); popups, menus, tooltips, notifications, OSDs, applet popups (override-redirect); another type that is neither Normal nor dialog, utility, toolbar or splash | kept out of the tree, by its i3 kind | = | `i3Kind`, `keptOut`; built 2026-10-28 (redo stage 3) |
 | R2 | An X11 dialog, utility window, toolbar or splash screen (an Xwayland app's) | floating | = | `manage.c`: dialog, utility, toolbar, splash. An X11 notification already met R1 (KWin gives it Plasma's notification type): override-redirect, ≠ i3, which floats it. Built 2026-10-28; before, kept out, as KWin's `normalWindow` is false for these types |
-| R3 | On all desktops | kept out of the tree (`sticky`) | ≠ | i3: sticky floating (`_NET_WM_DESKTOP` all: "float it and make it sticky"); redo stage 9 (Yakuake) |
+| R3 | On all desktops | **sticky floating**: in the tree, floating, on whatever workspace its output shows (the model moves it there after every switch, i3's `output_push_sticky_windows`; KWin draws it there by itself); it keeps the focus across a switch if it had it, else joins without it | = | i3: `_NET_WM_DESKTOP` all: "float it and make it sticky" (`manage.c:486-490`); `output.c:83-120`. Built 2026-10-28 (redo stage 9); Yakuake comes in this way |
 | R4 | Skips the taskbar | decides nothing | = | i3 ignores the hint. Read on Paul's desktop 2026-10-28: the only Normal window that sets it is `xwaylandvideobridge`, on the built-in list. Built 2026-10-28 |
 | R5 | The built-in class list: `krunner`, `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland`, `ksmserver-logout-greeter` (class or instance); Spectacle's windows that are fullscreen | override-redirect | ≠ | On Wayland Plasma makes its system windows Normal windows, where i3 would never see them; not a setting (a user can't make a window override-redirect). A user's own `ignoreClass`/`ignoreRole` entries are read as `floating enable` rules (R9) and named once at load (Paul's call 43). Built 2026-10-28; before, the `ignoreClass`/`ignoreRole` lists with Krohnkite's defaults |
 | R6 | Transient, modal, or a fixed size (not resizable; a fullscreen window: fixed unless its minimum and maximum differ) | floating | = | `manage.c`: transient_for (or a leader that is managed), `_NET_WM_STATE_MODAL`, min = max |
@@ -193,7 +193,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | R10 | Otherwise | tiling | = | |
 | R11 | A new window on a workspace in `floatingWorkspaces` | floating | = | read as `for_window [workspace="^N$"] floating enable` (R9, §11 N13); for the windows of Plasma's own tools (`plan.md` decision 1) |
 | R12 | After a reload: the rules say tiling, but it is in no tile and kept above (or in the effect's floating set) | floating | + | It was floating before the reload |
-| R13 | Not on exactly one desktop | not adopted until it is | ≠ | i3: sticky floating (R3) |
+| R13 | On two or more desktops, not all | not adopted until it is on one (or all: R3) | ≠ | i3 has no such state (`_NET_WM_DESKTOP` is one or all) |
 | R14 | Maximized when adopted | unmaximized | = | i3 has no maximize and ignores the request (V8) |
 | R15 | On another activity | judged like any other | + | Plasma's activities; no check |
 | R16 | A window kept out of the tree | not in the model; watched for a later change of class, title or transience **only if it is a Normal window** | = | i3 manages every window but docks and override-redirect ones; the sticky kind is R3's |
@@ -209,7 +209,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | X1 | Meta+Shift+Space (`Floating Toggle`) | tiling and floating swap; a window floated this way comes back at its untiled size (below) | = | `floating toggle` |
 | X2 | A change of title, class, transience or readiness to paint (`reclassify`) | the `forWindow` rules not yet run on the window run, each at most once, only to apply it: a window whose title stops matching stays as it is, and so does one floated or tiled by hand; a window now kept out of the tree (sticky, a type change) leaves the model | = | i3's `run_assignments` (`assignments.c`). Built 2026-10-28; before, a changed verdict was followed both ways |
 | X3 | A rule setting changed (`forWindow`, `assign`, the old lists) | every rule runs anew on every window (each window's record cleared), as a reload would in i3 | = | §11 |
-| X4 | Made sticky (on all desktops) | leaves the model, as a window kept out of the tree | ≠ | i3: becomes sticky floating. Decided, not built (R3); a Sticky Toggle action, unbound, as i3's `sticky toggle` (Paul, 2026-10-28) |
+| X4 | Put on all desktops (the window menu, a client, a KWin rule, Sticky Toggle) | floated if tiling, marked sticky, pushed to what its output shows (R3). Off all desktops onto one: no longer sticky, it stays floating on that desktop's workspace. **Made tiling** (Floating Toggle): taken off all desktops onto its workspace's first | ≠ | i3: `sticky enable` (`cmd_sticky`), and a tiled sticky con keeps its flag. Kept: KWin's tiles belong to one desktop's root, so a tiling window can't stay on all of them. Sticky Toggle is an unbound action, as i3's `sticky toggle` (Paul, 2026-10-28). Built 2026-10-28 (redo stage 9) |
 | X5 | Meta+Shift+drag on a tiling window | out of its tile, floating where dropped (§9) | + | Paul, 2026-10-26 |
 | X6 | KWin refuses to tile it (not resizable, or not on the tile's desktop) | floating; a fullscreen window stays in the tree, out of the tiles, until fullscreen ends | ≠ | i3 tiles any window; KWin's tiles can't hold one that won't resize **Kept** (Paul, 2026-10-27): KWin's tiles can't hold a window that won't resize |
 | X7 | The tiling windows' minimum sizes don't fit the output | the one with the largest minimum along that axis floats, repeatedly (`floatWhatCannotFit`) | ≠ | i3 ignores size hints on tiling windows (`plan.md`'s differences table) **Kept** (Paul, 2026-10-27): a Wayland client can't be drawn smaller than its minimum; it would hang outside its tile |
@@ -307,8 +307,7 @@ behaviour.
 
 - **the model's focus**: a window, or an empty workspace;
 - **KWin's active window**: what has the keyboard. Usually the model's window; it can also be an
-  override-redirect window (KRunner, a popup), or none. Today also any window kept out of the tree
-  (§3), Yakuake and Spectacle included, though i3 would have them floating;
+  override-redirect window (KRunner, a popup), or none;
 - **KWin's active output**: where a new window opens. It moves on **every pointer motion** and
   every activation (`pointer_input.cpp`, `activation.cpp`);
 - **the pointer**.
@@ -372,7 +371,7 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | D4 | A desktop switch kwin-i3 made itself | KWin, then kwin-i3 | KWin activates that desktop's last window; the model's choice replaces it on the same pass | — | = | |
 | D5 | An output lost, or back | kwin-i3 | the first output's visible workspace: its fullscreen window, else its last focus, or the empty workspace | to it, if it isn't on that output (A2) | = | i3 focuses the primary output's workspace at the end of every output change (`randr.c`). Built 2026-10-28; before, the model's focus was kept |
 | D6 | Desktops removed or reordered | kwin-i3 | rebuilt from KWin's active window (§4) | — | + | |
-| D7 | A window kept out of the tree takes the keyboard (KRunner, a popup, Yakuake) | KWin | it keeps it through passive passes and, if override-redirect, through every key (A3), until it closes: then the model's focus again, **not** KWin's own next choice (`closingOutside`: the activation KWin makes before `windowRemoved` is set aside) | — | = for override-redirect; ≠ for the floating ones (§3) | A floating one would follow C1 and C7. Not root or a dock: those get B4 |
+| D7 | A window kept out of the tree takes the keyboard (KRunner, a popup) | KWin | it keeps it through passive passes and, if override-redirect, through every key (A3), until it closes: then the model's focus again, **not** KWin's own next choice (`closingOutside`: the activation KWin makes before `windowRemoved` is set aside) | — | = for override-redirect; ≠ for the floating ones (§3) | A floating one would follow C1 and C7. Not root or a dock: those get B4 |
 
 **E. Start**
 
@@ -734,7 +733,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 | V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored (the leaf stays in the tree, marked `_` in the tree log); never the focus's choice (§5 C9). Across a reload a minimized window loses its place | = | i3's scratchpad, as decided (§5 C9); built 2026-10-28 (redo stage 6) |
 | V8 | Maximize | no handler: it leaves its tile, the next pass puts it back, and that clears the maximize | = | i3 has no maximize and ignores the request |
 | V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
-| V10 | A window put on all desktops, or on two (outside kwin-i3's own relocate) | leaves the tree, as a window kept out of it | ≠ | i3 floats it and makes it sticky. Decided, not built (§3 R3, X4): sticky floating |
+| V10 | A window put on all desktops, or on two (outside kwin-i3's own relocate) | all: sticky floating (§3 R3, X4); two: leaves the tree until it is on one (R13) | = | i3 floats it and makes it sticky. Built 2026-10-28 (redo stage 9) |
 | V11 | A tiling window resizes itself | put back (§6) | = | i3 ignores a tiling window's size requests |
 | V12 | KWin's quick tile; Meta+T's tile editor; a Shift-drag into KWin's tiles | pulled back into its tile; the editor's tiles are overwritten on the next pass (`LATER.md` item 26); the Shift-drag puts two windows in one tile until the next pass | + | |
 | V13 | A modal dialog | floats (§3); KWin moves it with its parent; kwin-i3 waits while either is dragged | + | |

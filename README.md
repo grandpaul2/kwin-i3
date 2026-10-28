@@ -227,7 +227,7 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the same colours (plugins; not a window that draws its own title bar). How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
-window on all desktops is kept out of the tree for now (sticky, `docs/behaviour.md` §3); panels, the desktop,
+window on all desktops is i3's sticky floating: it floats and follows the workspace its monitor shows (`docs/behaviour.md` §3; the unbound action Sticky Toggle, as i3's `sticky toggle`); panels, the desktop,
 popups and Plasma's system windows are never in it (i3's dock, root and override-redirect kinds). kwin-i3 assumes one activity: windows on other activities aren't
 handled yet (`LATER.md` item 5).
 

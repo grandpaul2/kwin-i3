@@ -1014,3 +1014,34 @@ test("minimize: the focus kwin-i3 chooses never lands on a minimized window: nex
     assert.strictEqual(m.focusModeToggle(), leaf(m, "a"), "to tiling: a");
     assert.strictEqual(m.focusModeToggle(), null, "to floating: f is minimized, nothing");
 });
+
+// ---- sticky floating (i3's output_push_sticky_windows; redo stage 9; approved by Paul, 2026-10-28) --
+
+test("sticky: the push moves a sticky floating con to the workspace its output shows; the focus stays with it only if it had it", () => {
+    const m = model();
+    open(m, 1, "a");
+    open(m, 2, "b");
+    m.setSticky(m.openFloating("s", m.ws(1)), true);
+    m.focusWin("s");
+    assert.strictEqual(d(m), "H[a] ~s*");
+    // Workspace 2 shows on the output (gotoWorkspace): its focus first, then the push with the old focus.
+    const old = m.focused;
+    m.activate(m.descendFocused(m.ws(2)));
+    assert.deepStrictEqual(m.pushSticky(m.ws(2), [m.ws(1)], old), [m.byWin.s]);
+    assert.strictEqual(d(m, 1), "H[a]", "gone from 1");
+    assert.strictEqual(d(m, 2), "H[b] ~s*", "on 2, with the focus it had");
+    assert.strictEqual(m.byWin.s.sticky, true);
+    // Back to 1 with b focused: the push without the old focus (a move, an output change) joins without it.
+    m.focusWin("b");
+    m.pushSticky(m.ws(1), [m.ws(2)], null);
+    assert.strictEqual(d(m, 1), "H[a] ~s", "on 1, b keeps the focus");
+    assert.strictEqual(d(m, 2), "H[b*]");
+    assert.strictEqual(m.ws(1).focus[0], m.byWin.a, "and a stays workspace 1's focus (ignore_focus)");
+    // A floating con that is not sticky, and a tiling one, are never pushed.
+    m.openFloating("f", m.ws(1));
+    assert.deepStrictEqual(m.pushSticky(m.ws(2), [m.ws(1)], null), [m.byWin.s]);
+    assert.strictEqual(d(m, 1), "H[a] ~f");
+    // Off: no longer pushed.
+    m.setSticky(m.byWin.s, false);
+    assert.deepStrictEqual(m.pushSticky(m.ws(1), [m.ws(2)], null), []);
+});

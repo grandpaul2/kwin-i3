@@ -7,7 +7,7 @@
 //   ws        { type: "ws", num, layout: "h"|"v", nodes: [], floating: [], focus: [], parent: null }
 //   split     { type: "con", win: null, layout, nodes: [], focus: [], parent, percent }
 //   leaf      { type: "con", win: <id>, layout: "h", nodes: [], focus: [], parent, percent, fullscreen }
-//   floating  { type: "floating", win: <id>, parent: <ws>, ... }
+//   floating  { type: "floating", win: <id>, parent: <ws>, sticky: bool, ... }  (sticky: i3's con->sticky, floating only)
 // `focus` is i3's focus_head: the children most recently focused first; a workspace's also
 // holds its floating windows.
 // Differences from i3, on purpose:
@@ -40,7 +40,7 @@ var Tree = (function () {
     }
     function newFloating(win) {
         return { type: "floating", win: win, layout: "h", nodes: [], focus: [], parent: null,
-                 percent: 0, fullscreen: false, minimized: false };
+                 percent: 0, fullscreen: false, minimized: false, sticky: false };
     }
 
     function Model(env) {
@@ -295,6 +295,39 @@ var Tree = (function () {
         attach(node, ws, false);
         this.byWin[win] = node;
         return node;
+    };
+
+    // i3's con->sticky (cmd_sticky; redo stage 9, docs/spec-redo-9-sticky.md): a floating window
+    // visible on every workspace of its output. Only floating nodes carry it here: a sticky
+    // window made tiling is taken off all desktops first (C, KWin's tiles belong to one desktop).
+    M.setSticky = function (con, on) {
+        if (con && isFloating(con)) con.sticky = !!on;
+        return con;
+    };
+
+    // output_push_sticky_windows (output.c:83-120) for one output: `ws` is what the output
+    // shows now, `others` its other workspaces. Each sticky floating con on them moves to ws
+    // (con_move_to_workspace with ignore_focus unless it was `oldFocus`, the focus before the
+    // caller's switch); the one that was the focus is activated again, then the focused
+    // workspace's own focus is restored, so pushing never changes the focused workspace unless
+    // the sticky window is on it (then it keeps the focus, as i3). Returns the cons moved.
+    M.pushSticky = function (ws, others, oldFocus) {
+        var self = this, moved = [];
+        others.forEach(function (from) {
+            if (from === ws) return;
+            from.floating.slice().forEach(function (con) {
+                if (!con.sticky) return;
+                var wasFocus = oldFocus && con === oldFocus;
+                self.moveToWorkspace(con, ws, !wasFocus);
+                moved.push(con);
+                if (wasFocus) {
+                    var current = self.focused ? wsOf(self.focused) : null;
+                    if (permitsFocusing(con)) self.activate(con);
+                    if (current) self.activate(self.descendFocused(current));
+                }
+            });
+        });
+        return moved;
     };
 
     // tree_close_internal, without the X11 part. `keepParent` is i3's dont_kill_parent.
@@ -600,13 +633,15 @@ var Tree = (function () {
 
     // con_move_to_workspace -> _con_move_to_con(behind_focused): lands after the focus of the
     // target workspace and becomes that workspace's focus; the global focus stays behind.
-    M.moveToWorkspace = function (con, ws) {
+    // ignoreFocus (i3's ignore_focus, the sticky push): no focus bookkeeping at all, the con at
+    // the tail of the target's focus stack (con_attach, step 6 skipped).
+    M.moveToWorkspace = function (con, ws, ignoreFocus) {
         if (!con || con.type === "ws") return;
         var source = wsOf(con);
         if (ws === source) return;
         var target = this.descendFocused(ws);
         var focusNext = null;
-        if (this.focused && wsOf(this.focused) === source) {
+        if (!ignoreFocus && this.focused && wsOf(this.focused) === source) {
             focusNext = this.descendFocused(source);
             if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
         }
@@ -620,7 +655,7 @@ var Tree = (function () {
         fixPercent(parent);
         con.percent = 0;
         fixPercent(target);
-        if (!fs) focusUp(con);              // i3 step 6: not under the target's fullscreen window
+        if (!fs && !ignoreFocus) focusUp(con);   // i3 step 6: not under the target's fullscreen window
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
         this.tidy();

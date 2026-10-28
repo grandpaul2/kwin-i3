@@ -1,7 +1,21 @@
 # Spec: redo stage 9, sticky floating (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-9` (on `redo-8`) as designed. A: `classify` gives
+the kind `sticky` (floating, `con.sticky`), adopted onto the workspace its output shows. B: the
+model's `pushSticky` is i3's `output_push_sticky_windows` for one output (`moveToWorkspace` with
+i3's `ignore_focus` unless the con was the focus before the switch), called from `gotoWorkspace`,
+the outside switch (`shownOutside`), the outputs' change, a move and `makeSticky`; `relocate`
+only sets a sticky window's output. C: `desktopsChanged` makes a window sticky (floated if tiling)
+or takes the flag off; Floating Toggle on a sticky window puts it on its workspace's desktop
+first (`unstick`). D as designed. Sticky Toggle: in `UNBOUND` and `commands.json`. **The
+unknown, settled**: Yakuake on Wayland hides with `QWidget::hide`, which Qt does by dropping the
+surface's role and unmapping it (`QWaylandWindow::setVisible(false)`: `resetSurfaceRole`, a null
+buffer and a commit; Qt 6.9), so KWin sees a close and each show is a new window: stage 1's C at
+each show, C7's close focus when it hides; no code of its own. **Found on the way**: 62 (plasma windows) expected the floating frame in the old
+floating colour; stage 7 did not run it (updated: the focused class). And in 40, back on a
+workspace after a window was taken off all desktops, KWin's own desktop-switch activation picks
+that window (`window.cpp` `setDesktops` puts it first in KWin's focus chain), which the model
+follows as for any such activation; the check allows it.
 
 **The rows**: `behaviour.md` §3 R3, X4 (and R13's all-desktops half), §10 V10, and §3's kind for
 Yakuake, all decided (Paul, 2026-10-27): a window on all virtual desktops is i3's **sticky
