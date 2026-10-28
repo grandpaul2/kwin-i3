@@ -17,6 +17,11 @@
 #include <KSharedConfig>
 
 #include <QDBusConnection>
+#include <QFontMetrics>
+#include <QGuiApplication>
+#include <QImage>
+#include <QPainter>
+#include <QPen>
 #include <QTime>
 
 #include <cmath>
@@ -77,6 +82,9 @@ Hold::Hold()
     connect(effects, &EffectsHandler::windowDeleted, this, &Hold::onDeleted);
 
     connect(effects, &EffectsHandler::windowActivated, this, [this](EffectWindow *w) {
+        if (!m_mode.isEmpty()) {
+            effects->addRepaintFull();
+        }
         if (m_active) {
             repaintRing(m_active, m_active->frameGeometry());
         }
@@ -604,7 +612,7 @@ bool Hold::holding() const
 // While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
 bool Hold::isActive() const
 {
-    if (holding() || !m_drop.isEmpty()) {
+    if (holding() || !m_drop.isEmpty() || !m_mode.isEmpty()) {
         return true;
     }
     const auto windows = effects->stackingOrder();
@@ -657,6 +665,81 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
     if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
+    if (!m_mode.isEmpty() && w == effects->activeWindow() && !w->isDeleted() && !m_hidden.contains(w)) {
+        paintBanner(renderTarget, viewport, w, data);
+    }
+}
+
+// i3's bar shows the mode's name; here a banner in the focused window (Paul's call 34), in the
+// look of the settings page's inline messages: the frame's active colour, white text, rounded.
+// Drawn once as an image at the output's scale and kept as a texture; placed at the top centre
+// of wherever the window is drawn, in device pixels, as the ring is. KWin 6.7.5 gives an effect
+// no way to draw an offscreen QML scene of its own (OffscreenQuickView has no texture access in
+// its public header), so the banner is a plain textured quad.
+void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const WindowPaintData &data)
+{
+    const double scale = viewport.scale();
+    if (!m_banner || m_bannerScale != scale) {
+        const QString text = QStringLiteral("Resize mode:  J K L ;  or the arrows resize,  Escape leaves");
+        QFont font = QGuiApplication::font();
+        const QFontMetrics fm(font);
+        const int pad = 10, height = fm.height() + 2 * pad, width = fm.horizontalAdvance(text) + 3 * pad;
+        QImage img(QSize(std::lround(width * scale), std::lround(height * scale)), QImage::Format_ARGB32_Premultiplied);
+        img.setDevicePixelRatio(scale);
+        img.fill(Qt::transparent);
+        QPainter p(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+        QColor bg = m_frameActive;
+        bg.setAlphaF(0.94);
+        p.setPen(QPen(m_frameActive.lighter(135), 1));
+        p.setBrush(bg);
+        p.drawRoundedRect(QRectF(0.5, 0.5, width - 1, height - 1), 6, 6);
+        p.setPen(Qt::white);
+        p.setFont(font);
+        p.drawText(QRect(0, 0, width, height), Qt::AlignCenter, text);
+        p.end();
+        m_banner = GLTexture::upload(img);
+        m_bannerScale = scale;
+        m_bannerSize = img.size();
+    }
+    if (!m_banner) {
+        return;
+    }
+    const RectF cur = w->frameGeometry();
+    const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
+    if (drawn.width() * scale < m_bannerSize.width() + 8) {
+        return;                                 // too narrow a window for the banner
+    }
+    const double x = std::round(drawn.x() * scale + (drawn.width() * scale - m_bannerSize.width()) / 2);
+    const double y = std::round((drawn.y() + 12) * scale);
+    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
+    QMatrix4x4 mvp = viewport.projectionMatrix();
+    mvp.translate(x, y);
+    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    const bool blend = glIsEnabled(GL_BLEND);
+    GLint src = GL_ONE, dst = GL_ZERO;
+    glGetIntegerv(GL_BLEND_SRC_RGB, &src);
+    glGetIntegerv(GL_BLEND_DST_RGB, &dst);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    m_banner->bind();
+    m_banner->render(QSizeF(m_bannerSize));
+    m_banner->unbind();
+    glBlendFunc(src, dst);
+    if (!blend) {
+        glDisable(GL_BLEND);
+    }
+}
+
+void Hold::SetMode(const QString &mode)
+{
+    if (m_mode == mode) {
+        return;
+    }
+    m_mode = mode;
+    note(mode.isEmpty() ? QStringLiteral("mode: off") : QStringLiteral("mode: %1").arg(mode));
+    effects->addRepaintFull();
 }
 
 // A floating window kwin-i3 took the decoration of, with frameOnFloating: the frame in the

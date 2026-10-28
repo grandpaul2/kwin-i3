@@ -103,7 +103,8 @@ key() {
     # Move to Workspace N's action is "... (symbol)": the key it holds is Meta+<symbol> (src/kwin.js).
     local id="kwin-i3 $1"; [[ $1 =~ ^Move\ to\ Workspace\ [0-9]+$ ]] && id+=" (symbol)"
     busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "$id"
-    wait_log "^.{9}ACTION $1\$" "$m" || echo "    key: \"$1\" did not run within ${WAIT}s" >&2
+    local re; re=$(printf '%s' "$1" | sed 's/[][()\\.*^$+?{}|]/\\&/g')   # "Workspace 6 (no back-and-forth)" has parens
+    wait_log "^.{9}ACTION $re\$" "$m" || echo "    key: \"$1\" did not run within ${WAIT}s" >&2
 }
 
 tree() { after "${2:-0}" | grep -E "^.{9}TREE $1 " | tail -1 | cut -d' ' -f4-; }
@@ -147,7 +148,7 @@ finish() {
 #   point X Y                       move the pointer
 declare -A EVDEV=(
     [Meta]=125 [Shift]=42 [Ctrl]=29 [Alt]=56
-    [Left]=105 [Right]=106 [Up]=103 [Down]=108 [Space]=57 [Tab]=15 [Enter]=28 [Escape]=1 [";"]=39 [":"]=39
+    [Left]=105 [Right]=106 [Up]=103 [Down]=108 [Space]=57 [Tab]=15 [Enter]=28 [Return]=28 [Escape]=1 [";"]=39 [":"]=39
     [Q]=16 [W]=17 [E]=18 [R]=19 [T]=20 [Y]=21 [U]=22 [I]=23 [O]=24 [P]=25
     [A]=30 [S]=31 [D]=32 [F]=33 [G]=34 [H]=35 [J]=36 [K]=37 [L]=38
     [Z]=44 [X]=45 [C]=46 [V]=47 [B]=48 [N]=49 [M]=50

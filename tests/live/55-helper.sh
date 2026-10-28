@@ -76,5 +76,35 @@ for d in 0.17 0.18 0.19; do
     busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5   # put it right for the next
 done
 
+# 6. i3's resize mode (plugin/resizemode.cpp, docs/spec-redo-5-keys.md; redo stage 5): Meta+R
+#    enters it and the effect shows its banner; J shrinks the width (the helper runs kwin-i3's
+#    action by key code); Meta+1 is kglobalaccel's but kwin-i3 ignores it in the mode; a plain
+#    letter fires no kwin-i3 action (it reaches the window); Escape leaves.
+mode_is() { [[ "$(busctl --user call org.kde.KWin /kwini3mode net.local.kwini3mode Mode)" == "s \"$1\"" ]]; }
+width_of() { local g; g=$(geom "$1"); g=${g#* }; echo "${g%x*}"; }
+m=$(mark)
+press Meta+R
+check "6. Meta+R: the mode is on"           poll mode_is resize
+check "6. kwin-i3 heard it"                 wait_log '^.{9}MODE resize$' "$m"
+check "6. the effect shows the banner (its log says so)" poll eval 'busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Events | grep -q "mode: resize"'
+w0=$(width_of c)
+m=$(mark)
+press J
+check "6. J: Shrink Width ran"              wait_log '^.{9}ACTION Shrink Width$' "$m"
+check "6. c got narrower"                   poll eval '(( $(width_of c) < w0 ))'
+m=$(mark)
+press Meta+1
+check "6. Meta+1 in the mode: kwin-i3 ignores it" wait_log '^.{9}KEY Workspace 1 ignored: the resize mode is on$' "$m"
+m=$(mark)
+press X
+sleep 0.3
+check "6. a plain letter: no kwin-i3 action (it went to the window)" eval '! after "$m" | grep -qE "^.{9}ACTION "'
+press Escape
+check "6. Escape: the mode is off"          poll mode_is ""
+check "6. kwin-i3 heard that too"           wait_log '^.{9}MODE off$' "$m"
+m=$(mark)
+press Meta+1
+check "6. Meta+1 works again"               wait_log '^.{9}ACTION Workspace 1$' "$m"
+
 check "no invariant failures or errors"     clean_log
 finish

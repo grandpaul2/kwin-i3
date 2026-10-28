@@ -140,12 +140,16 @@ Window to Next Screen=none,Meta+Shift+Right,Move Window to Next Screen
 view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=none,Meta++,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
+Show Desktop=none,Meta+D,Peek at Desktop
 
 [ksmserver]
 Lock Session=none,Meta+L,Lock Session
 
 [services][org.kde.dolphin.desktop]
 _launch=none
+
+[services][org.kde.spectacle.desktop]
+RecordRegion=none
 SC
 export KI3_LOG=$tmp/ki3.log
 # Screenshots (tools/shot.py) without KWin's per-caller permission check: a test is not a

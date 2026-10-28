@@ -44,6 +44,14 @@ var KI3 = (function () {
     // addWaylandWindow), so adoptWindow runs first and claims that switch (Placement.claim); what
     // is left is i3's `workspace N` on that output (shownOutside).
     var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
+    // i3's resize mode (docs/spec-redo-5-keys.md A): the helper owns the state and tells kwin-i3
+    // through the hidden action Mode Changed, then Mode(); asked once at load, so a reload of this
+    // script can't lose step. While it is on, every key of kwin-i3's does nothing but the four
+    // resize actions the mode itself runs (i3: only the mode's bindings are active).
+    var MODE = ["org.kde.KWin", "/kwini3mode", "net.local.kwini3mode"];
+    var mode = "";
+    var MODE_ACTIONS = { "Shrink Width": true, "Grow Width": true, "Shrink Height": true, "Grow Height": true, "Resize Mode": true };
+
     // Newcomers the effect hides until kwin-i3 has moved them (holdNew): window id -> true.
     var holdNamed = {};
     // A window outside the tree that is closing (its `closed` signal, before windowRemoved): KWin's
@@ -1833,9 +1841,15 @@ var KI3 = (function () {
         return true;
     }
 
+    function inMode(name) {
+        if (!mode || MODE_ACTIONS[name]) return false;
+        log("KEY " + name + " ignored: the " + mode + " mode is on");
+        return true;
+    }
+
     function act(name, fn) {
         return guard(name, function () {
-            if (keyboardHeld(name)) return;
+            if (keyboardHeld(name) || inMode(name)) return;
             var con = focusedCon();
             var before = con ? Tree.wsOf(con) : null, focusBefore = model.focused;
             fn(con);
@@ -1871,6 +1885,12 @@ var KI3 = (function () {
         // not; a stock Plasma binds neither key (docs/spec-own-keys.md).
         "Fullscreen": function () { invoke("Window Fullscreen"); },
         "Close": function () { invoke("Window Close"); },
+        // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the load
+        // report says the mode needs the plugins (checkHelperKeys).
+        "Resize Mode": function () { callDBus(MODE[0], MODE[1], MODE[2], "SetMode", mode ? "" : "resize"); },
+        "Exit": function () { callDBus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt", "promptLogout"); },
+        "Terminal": function () { callDBus(MODE[0], MODE[1], MODE[2], "LaunchTerminal"); },
+        "Launcher": function () { callDBus("org.kde.krunner", "/App", "org.kde.krunner.App", "display"); },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
         // or floatingStep px on a floating window.
         "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step()); },
@@ -1963,23 +1983,39 @@ var KI3 = (function () {
         if (!t) return;
         if (con) moveToWorkspace(t, con); else gotoWorkspace(t);
     }
-    // The screen next to the focused workspace's, in a direction (i3's get_output_next).
-    function screenFrom(dir) { return Workspaces.screenToward(Workspaces.outputOf(focusedWsNum()), dir); }
+    // The output a direction names from `from` (i3's get_output_next), or "next" (KWin's order,
+    // wrapping: get_output_next_wrap) or "primary" (the first in that order); null for none, or
+    // the same output.
+    function screenBy(spec, from) {
+        var all = workspace.screens, i = all.indexOf(from), t = null;
+        if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;
+        else if (spec === "primary") t = all[0];
+        else t = Workspaces.screenToward(from, spec);
+        return t && t !== from ? t : null;
+    }
+    // The screen next to the focused workspace's, in a direction (or next, primary).
+    function screenFrom(spec) { return screenBy(spec, Workspaces.outputOf(focusedWsNum())); }
+    // The model workspace an output shows.
+    function visibleWsOn(t) {
+        var num = deskNum(workspace.currentDesktopForScreen(t));
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, t);
+        return wsModel(num);
+    }
     // i3's cmd_focus_output: show the target's visible workspace, focusing its focused window.
     function focusOutput(dir) {
         var t = screenFrom(dir);
         if (t) gotoWorkspace(deskNum(workspace.currentDesktopForScreen(t)));
     }
     // i3's con_move_to_output: to the target's visible workspace; focus stays behind.
-    function moveToOutput(dir, con) {
-        var ws = con ? outputNeighbour(Tree.wsOf(con), dir) : null;
-        if (ws) model.moveToWorkspace(con, ws);
+    function moveToOutput(spec, con) {
+        var t = con ? screenBy(spec, outputOf(Tree.wsOf(con))) : null;
+        if (t) model.moveToWorkspace(con, visibleWsOn(t));
     }
     // i3's workspace_move_to_output: the focused workspace lives on the target and is shown
     // there, focused; the monitor it left, if it showed it, shows the one it showed most recently
     // that still lives there, else an unused one. Reconcile's relocate carries the windows.
-    function moveWorkspaceToOutput(dir) {
-        var n = focusedWsNum(), src = Workspaces.outputOf(n), t = Workspaces.screenToward(src, dir);
+    function moveWorkspaceToOutput(spec) {
+        var n = focusedWsNum(), src = Workspaces.outputOf(n), t = screenBy(spec, src);
         if (!t) return;
         var wasShown = Workspaces.showing(n) === src;
         // i3's focus stack holds only workspaces with windows (an empty hidden one is closed):
@@ -2022,11 +2058,14 @@ var KI3 = (function () {
         // Shift+; arrives as ":": only Meta+: fires, Meta+Shift+; never does (probed 2026-10-24,
         // KWin 6.7.5; i3ws registered both). The same holds for Shift+digit below.
         "Move Right": ["Meta+Shift+Right", "Meta+:"],
-        // The old config's resize mode: Left/J shrink width, Down/K grow height,
-        // Up/L shrink height, Right/; grow width.
-        "Shrink Width": ["Meta+Ctrl+Left", "Meta+Ctrl+J"], "Grow Height": ["Meta+Ctrl+Down", "Meta+Ctrl+K"],
-        "Shrink Height": ["Meta+Ctrl+Up", "Meta+Ctrl+L"], "Grow Width": ["Meta+Ctrl+Right", "Meta+Ctrl+;"],
+        // i3's resize mode (§8 K4; redo stage 5): Meta+R enters, then the helper takes J K L ; and
+        // the arrows and runs these four, unbound (a user who wants them flat binds them).
+        "Resize Mode": ["Meta+R"],
+        "Shrink Width": [], "Grow Height": [], "Shrink Height": [], "Grow Width": [],
         "Reload Settings": ["Meta+Shift+C"],
+        // i3's exit, terminal and launcher (K17, K18): Plasma's logout prompt, the default
+        // terminal, KRunner.
+        "Exit": ["Meta+Shift+E"], "Terminal": ["Meta+Return"], "Launcher": ["Meta+D"],
     };
 
     var UNBOUND = {
@@ -2041,23 +2080,40 @@ var KI3 = (function () {
         "Move to Workspace Next on Output": function (c) { if (c) stepWorkspace(1, true, c); },
         "Move to Workspace Prev on Output": function (c) { if (c) stepWorkspace(-1, true, c); },
     };
-    ["left", "right", "up", "down"].forEach(function (d) {
+    ["left", "right", "up", "down", "next", "primary"].forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
         UNBOUND["Focus Output " + cap] = function () { focusOutput(d); };
         UNBOUND["Move to Output " + cap] = function (c) { moveToOutput(d, c); };
         UNBOUND["Move Workspace to Output " + cap] = function () { moveWorkspaceToOutput(d); };
     });
+    // i3's --no-auto-back-and-forth (§4 S5): Meta+N's and Meta+Shift+N's work without the
+    // setting's back-and-forth, unbound as in i3's config.
+    NAMES.forEach(function (k, i) {
+        var n = i + 1;
+        UNBOUND["Workspace " + n + " (no back-and-forth)"] = function () { gotoWorkspace(n); };
+        UNBOUND["Move to Workspace " + n + " (no back-and-forth)"] = function (c) { moveToWorkspace(n, c); };
+    });
 
     // KWin's own actions run on KWin's active window, so not through act(): its focus request
     // would activate kwin-i3's focused window before KWin's queued action ran, and a window
     // kwin-i3 doesn't manage would lose the key to it (closed the wrong one; 33-own-keys.sh).
-    var KWIN_OWN = { "Fullscreen": true, "Close": true };
+    // The mode, exit, terminal and launcher act on no window either.
+    var KWIN_OWN = { "Fullscreen": true, "Close": true, "Resize Mode": true, "Exit": true, "Terminal": true, "Launcher": true };
+    function askMode() {
+        callDBus(MODE[0], MODE[1], MODE[2], "Mode", guard("mode", function (m) {
+            m = String(m || "");
+            if (m === mode) return;
+            mode = m;
+            log("MODE " + (mode || "off"));
+        }));
+    }
 
     function registerKeys() {
         Object.keys(KEYS).forEach(function (name) {
-            var fn = KWIN_OWN[name] ? guard(name, function () { if (keyboardHeld(name)) return; actions[name](); log("ACTION " + name); })
+            var fn = KWIN_OWN[name] ? guard(name, function () { if (keyboardHeld(name) || inMode(name)) return; actions[name](); log("ACTION " + name); })
                                     : act(name, actions[name]);
-            KEYS[name].forEach(function (key, i) {
+            // No default key (the mode's four): registered all the same, for the mode and the Keys page.
+            (KEYS[name].length ? KEYS[name] : [""]).forEach(function (key, i) {
                 var action = "kwin-i3 " + name + (i ? " (" + key.split("+").pop() + ")" : "");
                 registerShortcut(action, "kwin-i3: " + name.toLowerCase() + (i ? " (" + key + ")" : ""), key, fn);
             });
@@ -2149,9 +2205,20 @@ var KI3 = (function () {
     // isn't active (its app not running and not launched by kglobalaccel) doesn't block the key:
     // kwin-i3's fires (35-taken-keys.sh). kwin-i3's current keys come from kglobalaccel, so a
     // key the user rebound is the one checked.
+    // The terminal the helper launches (kdeglobals' TerminalService), asked at load for the
+    // taken-key check; "" without the helper.
+    var terminalService = "";
+    function sameLaunch(key, h) {
+        if (String(h[1]) !== "_launch") return false;
+        var mine = KEYS.Launcher.concat(KEYS.Terminal), k = KeyName.of(key);
+        if (KEYS.Launcher.indexOf(k) >= 0) return String(h[0]).indexOf("krunner") >= 0;
+        if (KEYS.Terminal.indexOf(k) >= 0) return !!terminalService && String(h[0]) === terminalService;
+        return mine.indexOf(k) >= 0 && false;
+    }
     function checkTakenKeys() {
         if (!Settings.get("warnTakenKeys")) { log("TAKEN not checked (warnTakenKeys off)"); return; }
         reportOpen();
+        callDBus(MODE[0], MODE[1], MODE[2], "TerminalService", guard("terminal", function (t) { terminalService = String(t || ""); }));
         callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component", "allShortcutInfos",
                  guard("taken keys", function (infos) {
             var mine = [], taken = [];
@@ -2173,6 +2240,10 @@ var KI3 = (function () {
                          guard("taken keys", function (h) {
                     function one() { if (--left === 0) done(); }
                     if (!h || !h[1] || String(h[1]).indexOf("kwin-i3 ") === 0) { one(); return; }
+                    // A holder that launches what the kwin-i3 action launches (Paul's call 63):
+                    // KRunner's own _launch on the Launcher's key, the default terminal's on the
+                    // Terminal's. Both fire the same thing: nothing to report.
+                    if (sameLaunch(k, h)) { log("TAKEN-SAME " + KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")"); one(); return; }
                     callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "getComponent", h[0],
                              guard("taken keys", function (path) {
                         callDBus("org.kde.kglobalaccel", String(path), "org.kde.kglobalaccel.Component", "isActive",
@@ -2194,6 +2265,21 @@ var KI3 = (function () {
     // the report; later, when it becomes a problem (a second monitor, the setting turned off),
     // once per load on its own.
     var perOutputBad = false, perOutputLater = false;
+    // The resize mode (Meta+R) and the terminal (Meta+Return) are the helper's (§8 K4, K18): without
+    // it, said once at load (§13).
+    function checkHelperKeys() {
+        if (!Settings.get("warnTakenKeys")) return;
+        reportOpen();
+        var closed = false;
+        function close(lines) { if (!closed) { closed = true; reportClose("two keys need the plugins", lines); } }
+        later(3000, function () { close([]); });
+        callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
+                 guard("helper keys", function (loaded) {
+            if (String(loaded).indexOf("kwini3helper") >= 0) { close([]); return; }
+            log("HELPER not loaded: the resize mode and the terminal key do nothing");
+            close(["Meta+R (i3's resize mode) and Meta+Return (the default terminal) need kwin-i3's plugins: make plugin-install."]);
+        }));
+    }
     // The old ignore lists' own entries are read as floating rules now (§3 R5; Paul's call 43):
     // said once, at load, naming them. The old defaults are the built-in kinds and are not named.
     function checkOldIgnores() {
@@ -2250,6 +2336,7 @@ var KI3 = (function () {
         if (released) return;
         released = true;
         try { tellDrag(false); } catch (e) { log("ERROR in release (drag): " + e); }
+        try { if (mode) callDBus(MODE[0], MODE[1], MODE[2], "SetMode", ""); } catch (e) { log("ERROR in release (mode): " + e); }
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
@@ -2572,6 +2659,11 @@ var KI3 = (function () {
                          guard("Tiling Drag", startDrag));
         registerShortcut("kwin-i3 Tiling Resize", "kwin-i3: tiling resize (run by the mouse, no key)", "",
                          guard("Tiling Resize", startResize));
+        // The helper's resize mode changed (plugin/resizemode.cpp): read it. Not in registerKeys,
+        // so not on the Keys page.
+        registerShortcut("kwin-i3 Mode Changed", "kwin-i3: the resize mode changed (run by the helper, no key)", "",
+                         guard("Mode Changed", askMode));
+        askMode();
         tellDrag(true);
         adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores
@@ -2598,6 +2690,7 @@ var KI3 = (function () {
         // All open their part of the report before any can close it: one notification.
         checkTakenKeys();
         checkLayoutKeys();
+        checkHelperKeys();
         checkOldIgnores();
         checkPerOutput(true);
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {

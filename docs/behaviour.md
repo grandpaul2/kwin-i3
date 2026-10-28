@@ -274,11 +274,11 @@ reports when it is off with two or more outputs and never sets it (§13).
 | S2 | Meta+N, N visible on the other output | focus goes to that output (§5 A2 for the pointer) | = | |
 | S3 | Meta+N, N hidden, with windows | N shows on its output; focus to its fullscreen window, else its last focus | = | |
 | S4 | Meta+N, N hidden and empty | N shows on its assigned output, else the **focused output** (the focused workspace's; KWin's active output only with nothing focused), which becomes its output | = | `workspace_show`. Built 2026-10-28 (redo stage 1); before, KWin's active output, which follows the pointer |
-| S5 | Meta+Shift+N | the window goes to N on N's output; focus stays behind, on i3's next focus there. An empty hidden N takes the window's output as its own. Auto back-and-forth applies | ≠ | `workspaceAutoBackAndForth` is one setting for all; i3 also has a per-command `--no-auto-back-and-forth` (≠, accepted, Paul 2026-10-27: a key takes no arguments) **Decided, not built** (Paul, 2026-10-27): unbound actions "Workspace N (no back-and-forth)" and "Move to Workspace N (no back-and-forth)", as i3's flag |
+| S5 | Meta+Shift+N | the window goes to N on N's output; focus stays behind, on i3's next focus there. An empty hidden N takes the window's output as its own. Auto back-and-forth applies; the unbound **Workspace N (no back-and-forth)** and **Move to Workspace N (no back-and-forth)** actions skip it | = | i3's `--no-auto-back-and-forth` flag, as actions (a key takes no arguments). Built 2026-10-28 (redo stage 5) |
 | S6 | Back-and-forth, and moving a window there (unbound) | the previous workspace, if it still exists | = | Unbound by default, as in i3 (`docs/spec-workspace-commands.md`) |
 | S7 | Next and previous, overall or on this output, and moving a window there (unbound) | over workspaces with windows or visible, wrapping | = | |
-| S8 | Focus the output in a direction (unbound) | its visible workspace, at its last focus | ≠ | By direction only; i3 also takes a name, `primary`, `next` (≠, accepted, Paul 2026-10-27: a key takes no arguments) **Decided, not built** (Paul, 2026-10-27): `next` and `primary` as actions, as i3; by name stays ≠: KWin's shortcuts are registered once, at load, under fixed names, so they can't name an output plugged in later |
-| S9 | Move a window to the output in a direction (unbound) | to the workspace visible there; focus stays | ≠ | By direction only, as S8 **Decided, not built** (Paul, 2026-10-27): as S8 |
+| S8 | Focus the output in a direction, or **next** (KWin's order, wrapping) or **primary** (the first in that order) (unbound) | its visible workspace, at its last focus | = | i3's `focus output left|right|up|down|next|primary`; by name stays out: KWin's shortcuts are registered once, at load, under fixed names. Built 2026-10-28 (redo stage 5) |
+| S9 | Move a window to the output in a direction, next or primary (unbound) | to the workspace visible there; focus stays | = | as S8; Move Workspace to Output takes next and primary too (Paul's call 35) |
 | S10 | Move the workspace to the output in a direction (unbound) | it shows there, with the focus; the source shows the workspace it most recently showed that has windows, else its lowest with windows, else an unused one; none left (all ten in use): refused. An assigned workspace moves too. The previous workspace (back-and-forth) is then the one the source shows | = | i3's has no "refused": it makes a new workspace; here there are ten **Decided, not built** (Paul, 2026-10-28): `next` and `primary` too, unbound, as i3 |
 | S11 | Which output is "in a direction" | the nearest by edge distance; a diagonal one can qualify | = | `get_output_next`, closest |
 
@@ -586,7 +586,7 @@ with `$mod` as the wizard's Win choice.
 | K1 | The modifier | Meta | = | i3's wizard offers Win or Alt; Alt is Plasma's menu key |
 | K2 | Focus Left / Down / Up / Right | Meta+Left Down Up Right, Meta+J K L ; | = | §2 `focusDir` |
 | K3 | Move Left / Down / Up / Right | Meta+Shift+arrow, Meta+Shift+J K L, Meta+: | = | tiling: §2 `move`; floating: by `floatingStep` px (i3's 10 px) |
-| K4 | Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+Ctrl+Left Down Up Right, Meta+Ctrl+J K L ; | ≠ | tiling by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px (10 px). i3: **mode "resize"** on Meta+R, then J K L ; and the arrows, left with Return, Escape or Meta+R. `plan.md`'s reason (2026-10-21): a script can't register keys that exist only in a mode; the helper (built later) can, as it takes Escape during a drag. **Decided, not built** (Paul, 2026-10-27): i3's mode, in the helper; the four actions stay, unbound |
+| K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Meta+R leave; the four actions themselves unbound (a user who wants them flat binds them) | = | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; every other key goes to the focused window, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`); Plasma's shortcuts still run. The sign (Paul's call 34): a banner at the top of the focused window, drawn by the effect (`SetMode`), in the frame's active colour. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing and the load report says so (§13). Built 2026-10-28 (redo stage 5); before, Meta+Ctrl+arrows and Meta+Ctrl+J K L ; |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
 | K7 | Stacking, Tabbed (i3: Meta+S, Meta+W) | none | ≠ | Out (`plan.md` Scope, Paul 2026-10-21). Meta+W is Plasma's Overview |
@@ -599,9 +599,9 @@ with `$mod` as the wizard's Win choice.
 | K14 | Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | = | the US Shift+digit symbols; refitted by position (below), as i3's `bindcode` |
 | K15 | Reload Settings | Meta+Shift+C | ≠ | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own |
 | K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **Kept** (Paul, 2026-10-27): none |
-| K17 | Exit (i3: Meta+Shift+E, with a confirmation bar) | none | ≠ | `plan.md`: "exit is Plasma's own" (Ctrl+Alt+Del). **Decided, not built** (Paul, 2026-10-27): i3's key: Meta+Shift+E opens Plasma's logout prompt, its own confirmation |
-| K18 | Terminal, launcher (i3: Meta+Return, Meta+D: `i3-sensible-terminal`, `dmenu_run`) | none | ≠ | `plan.md` Scope: the launcher is KRunner's. Plasma's Meta+D is Show Desktop (Peek at Desktop). **Decided, not built** (Paul, 2026-10-27): i3's keys: Meta+Return opens Plasma's default terminal, Meta+D KRunner (Show Desktop loses Meta+D, reported as a taken key) |
-| K19 | Back-and-forth, next/prev, output moves (§4) | none | = | unbound in i3's config too |
+| K17 | Exit | Meta+Shift+E | = | Plasma's logout prompt (`org.kde.LogoutPrompt` `promptLogout`), its confirmation as `i3-nagbar`'s. Built 2026-10-28 (redo stage 5) |
+| K18 | Terminal, Launcher | Meta+Return, Meta+D | = | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) is reported as a taken key; a holder that launches the same thing (KRunner's own `_launch`, the default terminal's) is not (call 63). Built 2026-10-28 |
+| K19 | Back-and-forth, next/prev, output moves (§4), the no-back-and-forth forms (S5), next and primary outputs (S8, S9) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
 | K21 | Dump State | none | + | `tools/capture` (Meta+Shift+B, from the dotfiles) |
 | K22 | Any other command on a key (`bindsym`, arguments, `mode`, chains) | none | ≠ | kept: a key runs one fixed action; no command language (§4 S5, S8) |
@@ -638,7 +638,9 @@ kwin-i3 that asks for one of its keys loses to it; a holder that isn't active (i
 running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 
 At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys another active
-component holds, and reports them (§13). `make take-keys` frees them, recording the holders in
+component holds, and reports them (§13); a holder that launches what the kwin-i3 action launches
+(KRunner's own `_launch` on Meta+D, the default terminal's on Meta+Return) is logged
+(`TAKEN-SAME`), not reported: both fire the same thing (Paul's call 63, redo stage 5). `make take-keys` frees them, recording the holders in
 `~/.local/state/kwin-i3/taken-keys.json`; `make restore-keys` gives them back. The settings page's
 Keys page takes a key the same way on Apply, recording it in the same file
 (`docs/spec-taken-keys.md`).
@@ -969,6 +971,8 @@ One notification per load (app "kwin-i3"), its parts collected first:
   that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
   becomes a problem; never set.
+- **Two keys need the plugins**: without the helper, Meta+R (the resize mode) and Meta+Return
+  (the terminal) do nothing (§8 K4, K18).
 - **Ignore entries now float**: a user's own `ignoreClass`/`ignoreRole` entries, read as floating
   rules since redo stage 3 (§3 R5), named once (Paul's call 43).
 

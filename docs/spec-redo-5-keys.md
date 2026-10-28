@@ -1,7 +1,15 @@
 # Spec: redo stage 5, keys (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-5` (on `redo-4`) as designed below: the helper's
+`ResizeMode` filter (`plugin/resizemode.cpp`: `SetMode`, `Mode`, `LaunchTerminal`,
+`TerminalService` on `/kwini3mode`), the effect's banner (`SetMode`, `paintBanner`: a textured
+quad of QPainter text, since KWin 6.7.5's public `OffscreenQuickView` gives an effect no texture
+access, so the QML scene of A fell back to the next best thing, not to the ring's colour), the
+script's `Resize Mode`, `Exit`, `Terminal`, `Launcher` keys, the mode state (`Mode Changed`, `inMode`),
+the four resize actions unbound, the no-back-and-forth and next/primary actions, call 63's
+same-launch skip, the load report; `keys.json`, the Keys page table and tests; 55 and 68 extended
+as approved, 69's Meta+Ctrl+ö check gone with the key. Waiting for Paul's go, after stages 1-4;
+then `~/.local/bin/hotkeys` and dotfiles' Plasma table (the key change).
 
 **The rows**: `behaviour.md` §8 K4 (i3's resize mode), K17 (exit), K18 (terminal, launcher), §4 S5
 (the no-back-and-forth actions), S8/S9 (`next`, `primary`), all decided (Paul, 2026-10-27).

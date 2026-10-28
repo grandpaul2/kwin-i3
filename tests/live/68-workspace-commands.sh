@@ -158,5 +158,30 @@ check "6 shows on the second monitor"       poll shows Virtual-1 6
 check "k fills the second monitor"          poll geom_is k "1280,0 1280x720"
 check "and is still fullscreen"             poll is_fs
 
+# 12. i3's --no-auto-back-and-forth (unbound, redo stage 5): with the auto setting on, Meta+6 on 6
+#     would go back, "Workspace 6 (no back-and-forth)" stays; and the outputs by next (KWin's
+#     order, wrapping) and primary (the first).
+key "Fullscreen"
+set_key workspaceAutoBackAndForth true
+reload
+key "Workspace 6 (no back-and-forth)"
+sleep 0.5
+check "12. no back-and-forth: still on 6 (k)" active_is k
+key "Workspace 6"
+check "12. the auto form goes back: k loses the focus" poll eval '[[ "$(active)" != k ]]'
+key "Workspace 6"
+check "12. and forth to 6 (k)"              poll active_is k
+set_key workspaceAutoBackAndForth false
+reload
+key "Focus Output Next"
+check "12. focus output next: from the second monitor wraps to the first (its visible 7: m)" poll active_is m
+key "Focus Output Next"
+check "12. next again: the second (6: k)"   poll active_is k
+key "Focus Output Primary"
+check "12. focus output primary: the first (m)" poll active_is m
+key "Move to Output Next"
+check "12. move to output next: m joins 6 on the second" poll tree_has 6 m
+check "12. focus stayed on the first (7, now empty: no window)" poll screen_is Virtual-0
+
 check "no invariant failures or errors"     clean_log
 finish
