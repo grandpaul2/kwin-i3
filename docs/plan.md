@@ -126,7 +126,7 @@ the hold effect are extras that cost a rebuild after every Plasma update.
     (`workspaceOutputs`) brings workspaces home. Windows KWin moves on its own during a hotplug
     are ignored: the model, not KWin's move, says where they belong. (Verified: a window KWin
     moves to another monitor loses its tile and is switched to the desktop that monitor shows.)
-    Not built yet (`OPEN.md` item 40).
+    Built 2026-10-28 (redo stage 4, `src/outputs.js`; `OPEN.md` item 40).
 
 ## Repo layout
 

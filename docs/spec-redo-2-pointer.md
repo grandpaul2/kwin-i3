@@ -8,6 +8,10 @@ crossing rule. One addition the design didn't name: KWin's own next-window activ
 window outside the tree closes (`closingOutside`, D7) is set aside, or the crossing's focus on an
 empty workspace would snap back to the window KWin picks, and the pointer with it (72, case 1).
 `make unit` and the scenarios green. Waiting for Paul's go (after stage 1's) to merge and reload.
+**Fixed the same day** (found by 68-workspace-commands while building stage 4): the warp's output
+memory was a `var focusOutput`, which overwrote the `focusOutput(dir)` action's function in the
+same scope, so every Focus Output key threw; renamed `focusedOutput` (commit on `redo-2`, the later
+stages rebased on it).
 Not testable with focus follows mouse: a key moving the focus to the output the pointer is already
 on (D's pointer test), since the crossing has already moved the focus there; an activation with
 the pointer there is checked instead (72, case 4).

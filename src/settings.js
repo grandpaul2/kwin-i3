@@ -33,7 +33,7 @@ var Settings = (function () {
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
-        workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
+        workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
         gapsOuter: { type: "int", def: "2", min: 0, max: 200 },                 // px more at the screen edge
@@ -70,16 +70,18 @@ var Settings = (function () {
         if (type === "size") return /^-?[0-9]+x-?[0-9]+$/.test(text) ? text : null;   // "WxH", 0 and -1 allowed (Rules.parseSize)
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;
-        // i3's "workspace N output X": { N: output name }. A malformed entry is skipped (and
+        // i3's "workspace N output A B …": { N: [output names] }, the first connected one wins
+        // (§4 W5; redo stage 4). "1=DP-4 HDMI-A-1, 2=DP-6": names space-separated, so an output
+        // name can't contain a space (i3's can't either). A malformed entry is skipped (and
         // logged), the rest still apply.
         if (type === "outputs") {
             var out = {};
             text.split(",").forEach(function (e) {
                 e = e.trim();
                 if (!e) return;
-                var m = /^([0-9]+)\s*=\s*(\S+)$/.exec(e);
-                if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2];
-                else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT, N 1-10)");
+                var m = /^([0-9]+)\s*=\s*(\S+(?:\s+\S+)*)$/.exec(e);
+                if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2].split(/\s+/);
+                else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT [OUTPUT …], N 1-10)");
             });
             return out;
         }

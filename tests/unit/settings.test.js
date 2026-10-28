@@ -140,12 +140,14 @@ test("a choice: one of the list, else the default", () => {
     assert.strictEqual(loadSettings({}).S.get("defaultOrientation"), "auto");
 });
 
-test("workspaceOutputs: N=OUTPUT pairs; a bad entry is skipped and logged, the rest apply", () => {
+test("workspaceOutputs: N=OUTPUT pairs, or a list of outputs per number (the first connected wins, redo stage 4); a bad entry is skipped and logged, the rest apply", () => {
     assert.deepStrictEqual(loadSettings({}).S.get("workspaceOutputs"), {});
     assert.deepStrictEqual(loadSettings({ workspaceOutputs: "1=DP-4, 2 = DP-6,10=HDMI-A-1" }).S.get("workspaceOutputs"),
-        { 1: "DP-4", 2: "DP-6", 10: "HDMI-A-1" });
-    const { S, logs } = loadSettings({ workspaceOutputs: "1=DP-4, 11=DP-6, two=DP-6, 3=, 4=DP 6" });
-    assert.deepStrictEqual(S.get("workspaceOutputs"), { 1: "DP-4" });
+        { 1: ["DP-4"], 2: ["DP-6"], 10: ["HDMI-A-1"] });
+    assert.deepStrictEqual(loadSettings({ workspaceOutputs: "1=DP-4 HDMI-A-1, 2=DP-6  eDP-1 DP-5" }).S.get("workspaceOutputs"),
+        { 1: ["DP-4", "HDMI-A-1"], 2: ["DP-6", "eDP-1", "DP-5"] }, "i3's workspace N output A B …");
+    const { S, logs } = loadSettings({ workspaceOutputs: "1=DP-4, 11=DP-6, two=DP-6, 3=, =DP-1" });
+    assert.deepStrictEqual(S.get("workspaceOutputs"), { 1: ["DP-4"] });
     assert.strictEqual(logs.filter((l) => /WARN setting workspaceOutputs/.test(l)).length, 4, logs.join("\n"));
 });
 

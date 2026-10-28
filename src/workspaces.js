@@ -2,9 +2,10 @@
 // Workspace N is virtual desktop N. It lives on one monitor (its "home"), shown there or hidden;
 // Plasma 6.7's per-output desktops let each monitor show a different one.
 //
-// Homes are remembered by output *name*, so a workspace whose monitor goes away (unplugged, or a
-// monitor deep-sleeping, 2026-10-21) is shown on a remaining one meanwhile and goes back when it
-// returns, as in i3 (docs/plan.md decision 10).
+// Homes are output *names*, always of a connected output: when a monitor goes away its workspaces
+// move to a remaining one for good, and a returning monitor gets back only the workspaces assigned
+// to it, as in i3 (randr.c; docs/plan.md decision 10, redo stage 4: src/outputs.js decides,
+// src/kwin.js screensChanged acts).
 
 var Workspaces = (function () {
     var home = {};          // ws num -> output name
@@ -35,7 +36,7 @@ var Workspaces = (function () {
     }
 
     // Where workspace num is now: its home if that monitor is here; else the screen showing it;
-    // else the first screen. Only a missing home is filled in; a gone home is kept for its return.
+    // else the first screen. Only a missing home is filled in (screensChanged settles a lost one).
     function outputOf(num) {
         var h = home[num] ? screenNamed(home[num]) : null;
         if (h) return h;
@@ -45,21 +46,22 @@ var Workspaces = (function () {
     }
 
     function setHome(num, screen) { home[num] = screen.name; }
+    function setHomeName(num, name) { if (name) home[num] = name; else delete home[num]; }
     function hasHome(num) { return !!home[num]; }
 
-    // i3's "workspace N output X" (workspaceOutputs; docs/spec-settings.md): the output a
-    // workspace is assigned to, by name, or null. Applied where a home is first claimed, so a
-    // changed setting moves no workspace that exists (i3 assigns at creation).
-    function assigned(num) { return Settings.get("workspaceOutputs")[num] || null; }
-    function assignedScreen(num) { var a = assigned(num); return a ? screenNamed(a) : null; }
-    // A workspace's first home: its assigned output (present or not: a home is kept by name),
-    // else the screen it is used on.
-    function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
-    // A monitor appeared: the workspaces assigned to it live there again (i3 moves them to it).
-    function claimAssigned(name) {
-        var a = Settings.get("workspaceOutputs");
-        Object.keys(a).forEach(function (n) { if (a[n] === name && deskOf(+n)) home[n] = name; });
+    // i3's "workspace N output A B …" (workspaceOutputs; §4 W5): the first connected output of
+    // the workspace's list, by name, or null (none listed, or none connected). Applied where a
+    // home is first claimed and when an output appears, so a changed setting moves no workspace
+    // that exists (i3 assigns at creation).
+    function assignedList(num) { return Settings.get("workspaceOutputs")[num] || []; }
+    function assigned(num) {
+        var list = assignedList(num);
+        for (var i = 0; i < list.length; i++) if (screenNamed(list[i])) return list[i];
+        return null;
     }
+    function assignedScreen(num) { var a = assigned(num); return a ? screenNamed(a) : null; }
+    // A workspace's first home: its assigned output if connected, else the screen it is used on.
+    function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
 
     // The nearest screen in a direction (i3ws screenToward; i3's get_output_next, CLOSEST_OUTPUT).
     function screenToward(s, dir) {
@@ -86,10 +88,10 @@ var Workspaces = (function () {
     function numberScreens() {
         var s = workspace.screens, n = workspace.desktops.length, taken = {};
         var a = Settings.get("workspaceOutputs");
-        Object.keys(a).forEach(function (k) { if (+k <= n) home[k] = a[k]; });
+        Object.keys(a).forEach(function (k) { if (+k <= n && assigned(+k)) home[k] = assigned(+k); });
         for (var i = 0; i < s.length; i++) {
             for (var num = 1; num <= MAX; num++) {
-                if (taken[num] || (a[num] && a[num] !== s[i].name)) continue;
+                if (taken[num] || (assigned(num) && assigned(num) !== s[i].name)) continue;
                 ensure(num);
                 taken[num] = true;
                 workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
@@ -101,8 +103,8 @@ var Workspaces = (function () {
 
     return {
         deskOf: deskOf, deskNum: deskNum, ensure: ensure, showing: showing, outputOf: outputOf,
-        setHome: setHome, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
-        assigned: assigned, assignedScreen: assignedScreen, claimHome: claimHome, claimAssigned: claimAssigned,
+        setHome: setHome, setHomeName: setHomeName, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
+        assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen, claimHome: claimHome,
         homes: function () { return home; },
         reset: function () { home = {}; },      // the model rebuilt (docs/spec-desktop-changes.md)
     };

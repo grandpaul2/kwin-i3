@@ -19,8 +19,11 @@ KCM.SimpleKCM {
     readonly property var screens: Qt.application.screens.map((s) => ({
         name: s.name, text: s.model ? i18nc("monitor name — model", "%1 — %2", s.name, s.model) : s.name }))
 
+    // The page sets one monitor per workspace; a list typed in kwinrc (i3's "output A B": the
+    // first connected wins) is kept as long as its first monitor is the one shown here.
     function setOutput(n, name) {
-        const map = Object.assign({}, outputs);
+        const map = Logic.parseOutputLists(settings.workspaceOutputs);
+        if ((outputs[n] || "") === name) return;
         map[n] = name;
         settings.workspaceOutputs = Logic.formatOutputs(map);
     }

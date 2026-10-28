@@ -10,6 +10,9 @@ test("workspace monitors: read as the script reads them, written back in order",
     assert.deepStrictEqual(K.parseOutputs("2=DP-6, 1=DP-4"), { 1: "DP-4", 2: "DP-6" });
     assert.deepStrictEqual(K.parseOutputs(" 3 = HDMI-A-1 ,11=DP-1, x=DP-2, 4"), { 3: "HDMI-A-1" }, "11, x and 4 dropped");
     assert.deepStrictEqual(K.parseOutputs(""), {});
+    assert.deepStrictEqual(K.parseOutputs("1=DP-4 HDMI-A-1"), { 1: "DP-4" }, "a list: the first monitor is what the page shows");
+    assert.deepStrictEqual(K.parseOutputLists("1=DP-4  HDMI-A-1, 2=DP-6"), { 1: "DP-4 HDMI-A-1", 2: "DP-6" });
+    assert.strictEqual(K.formatOutputs(K.parseOutputLists("1=DP-4 HDMI-A-1")), "1=DP-4 HDMI-A-1", "a list written back whole");
     assert.strictEqual(K.formatOutputs({ 2: "DP-6", 1: "DP-4" }), "1=DP-4, 2=DP-6");
     assert.strictEqual(K.formatOutputs({ 1: "DP-4", 2: "" }), "1=DP-4", "a workspace set back to any monitor leaves");
     assert.strictEqual(K.formatOutputs({}), "");

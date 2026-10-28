@@ -67,7 +67,10 @@ the desktop click, keys held off by override-redirect windows, the warp with `mo
 login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40 updated.
 **Stage 3 built** on `redo-3` (`docs/spec-redo-3-kinds-rules.md`, "Now"): i3's kinds and rules
 (`forWindow`, `assign`, the floating sizes; the old lists read as rules), the Window Rules
-sub-page as text; `rules.test.js`; 20 extended, 25, 73, 76 updated. **Next:
+sub-page as text; `rules.test.js`; 20 extended, 25, 73, 76 updated. **Stage 4 built** on
+`redo-4` (`docs/spec-redo-4-outputs.md`, "Now"): a lost output's workspaces move for good, an
+appearing one takes its assigned ones and shows its lowest, focus to the first output;
+`workspaceOutputs` a list per number; `outputs.test.js`; 40, 45-49 updated. **Next:
 Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
 `HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
 the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile

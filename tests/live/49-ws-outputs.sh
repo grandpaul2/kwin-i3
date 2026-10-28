@@ -70,10 +70,9 @@ key "Workspace 5"
 check "Meta+5 now shows 5 on the second"    poll shows Virtual-1 5
 check "e went with it"                      poll on_second e
 
-# 6. A returning monitor's spare workspace (42-replug-home.sh's case) skips one assigned to
-#    another monitor: 4 is assigned to the first by a reload, never used. The second monitor
-#    shows an empty 6; while it is away a window is sent to 6, which then lives on the first; so
-#    the returning monitor needs a spare: 4 is free but the first's, so 7.
+# 6. A returning monitor shows its lowest workspace (i3's init_ws_for_output, redo stage 4): 1, 3
+#    and 5 are its; while it is away a window is sent to 6, unassigned, which then lives on the
+#    first monitor and stays there (i3: only assignment brings a workspace back).
 m=$(mark)
 set_key workspaceOutputs "1=Virtual-1, 3=Virtual-1, 5=Virtual-1, 4=Virtual-0"
 key "Reload Settings"
@@ -82,7 +81,6 @@ key "Workspace 6"
 check "Meta+6 from the second: 6 there"     poll shows Virtual-1 6
 key "Workspace 2"
 check "back on the first (2)"               poll shows Virtual-0 2
-point 300 300                               # a new window opens under the pointer (KWin)
 client --title f
 check "f on workspace 2"                    wait_tree 2 "H[f*]"
 timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
@@ -91,7 +89,25 @@ key "Move to Workspace 6"
 check "f went to 6"                         wait_tree 6 "H[f]"
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
 check "the second monitor is back again"    poll screens_are 2
-check "it shows 7, not the first's 4"       poll shows Virtual-1 7
+check "it shows 1, its lowest workspace"    poll shows Virtual-1 1
+check "6, unassigned, stayed on the first with f" poll on_first f
+key "Workspace 6"
+check "Meta+6 shows 6 on the first"         poll shows Virtual-0 6
+
+# 7. A list of outputs per workspace (i3's "workspace N output A B"): 6 assigned to Virtual-9 (absent)
+#    then Virtual-1, so it goes to Virtual-1 when that monitor appears.
+m=$(mark)
+set_key workspaceOutputs "1=Virtual-1, 3=Virtual-1, 5=Virtual-1, 4=Virtual-0, 6=Virtual-9 Virtual-1"
+key "Reload Settings"
+check "reload: 6 assigned to Virtual-9, then Virtual-1" wait_log '^.{9}SETTINGS workspaceOutputs$' "$m"
+check "nothing moved yet: f still on the first" on_first f
+timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
+check "the second monitor is gone"          poll screens_are 1
+timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
+check "the second monitor is back"          poll screens_are 2
+key "Workspace 6"
+check "6 went to the second monitor, the first connected of its list" poll shows Virtual-1 6
+check "f with it"                           poll on_second f
 
 check "no invariant failures or errors"     clean_log
 finish
