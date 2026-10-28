@@ -19,19 +19,21 @@ reload() {
 "$root/tools/fakenotify.py" > "$KI3_TMP/notify.out" 2>&1 &
 poll grep -q READY "$KI3_TMP/notify.out"
 
-# 1. US: logged, nothing to say.
+# 1. US: logged, nothing to say about the layout. (Without the helper the load report has one
+#    part all the same since redo stage 5: Meta+R and Meta+Return need the plugins.)
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "US: logged, no notice"               wait_log '^.{9}LAYOUTS us$'
-sleep 0.5
-check "no notification"                     notes_are 0
+check "one notification, the plugins' keys" poll notes_are 1
+check "  which says so"                     grep -q "need kwin-i3's plugins" "$KI3_TMP/notify.out"
+check "  and nothing about the layout"      bash -c "! grep -q 'keyboard layout' '$KI3_TMP/notify.out'"
 
 # 2. German, at the next load: one notification naming the layout and the fix.
 layout de
 m=$(mark); reload
 slow_log() { WAIT=20 wait_log "$@"; }   # a prefix assignment inside check would be run as a command
 check "de: logged as not fitted"            slow_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
-check "one notification"                    poll notes_are 1
+check "a second notification"               poll notes_are 2
 check "it names the layout"                 grep -q "Its keys may not fit the keyboard layout (de)" "$KI3_TMP/notify.out"
 check "and the fix"                         grep -q "make plugin-install" "$KI3_TMP/notify.out"
 
@@ -40,7 +42,7 @@ kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key warnTakenKeys false
 m=$(mark); reload
 sleep 1
 check "off: no LAYOUTS line"                bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -q 'LAYOUTS'"
-check "and no new notification"             notes_are 1
+check "and no new notification"             notes_are 2
 
 check "no invariant failures or errors"     clean_log
 finish

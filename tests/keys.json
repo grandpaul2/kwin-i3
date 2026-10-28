@@ -52,23 +52,23 @@
   "Meta+Shift+Right",
   "Meta+:"
  ],
- "Shrink Width": [
-  "Meta+Ctrl+Left",
-  "Meta+Ctrl+J"
+ "Resize Mode": [
+  "Meta+R"
  ],
- "Grow Height": [
-  "Meta+Ctrl+Down",
-  "Meta+Ctrl+K"
- ],
- "Shrink Height": [
-  "Meta+Ctrl+Up",
-  "Meta+Ctrl+L"
- ],
- "Grow Width": [
-  "Meta+Ctrl+Right",
-  "Meta+Ctrl+;"
- ],
+ "Shrink Width": [],
+ "Grow Height": [],
+ "Shrink Height": [],
+ "Grow Width": [],
  "Reload Settings": [
   "Meta+Shift+C"
+ ],
+ "Exit": [
+  "Meta+Shift+E"
+ ],
+ "Terminal": [
+  "Meta+Return"
+ ],
+ "Launcher": [
+  "Meta+D"
  ]
 }

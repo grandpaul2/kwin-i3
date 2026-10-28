@@ -11,6 +11,7 @@
 
 #include <effect/effectwindow.h>
 #include <effect/offscreeneffect.h>
+#include <opengl/gltexture.h>
 #include <scene/item.h>
 
 #include <KConfigWatcher>
@@ -68,6 +69,9 @@ public Q_SLOTS:
     // never leaving the pointer dead. `shape`: 0 the move cursor, 1 left-right and 2 up-down for
     // the tiling resize (docs/spec-tiling-resize.md).
     void SetDragCursor(bool on, int shape);
+    // The helper's resize mode (plugin/resizemode.cpp; docs/spec-redo-5-keys.md A, Paul's call 34):
+    // "resize" draws the mode's banner at the top of the focused window, "" takes it away.
+    void SetMode(const QString &mode);
     // kwin-i3 moves a new window to another output or desktop (docs/spec-redo-1-new-windows.md,
     // A): keep it hidden until its tile places it, or `ms` at most, instead of the 20 ms a new
     // window gets by itself; a geometry change that isn't its tile's leaves it hidden meanwhile.
@@ -114,6 +118,7 @@ private:
     QList<KWin::RectF> ring(const KWin::RectF &frame, double scale, double radius) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -134,6 +139,10 @@ private:
     bool m_enabled = true;
     int m_timeoutMs = 100;
     int m_frameWidth = 1;
+    QString m_mode;                                          // the helper's mode: "resize" shows the banner
+    std::unique_ptr<KWin::GLTexture> m_banner;               // the banner's text, drawn once per scale
+    double m_bannerScale = 0;
+    QSize m_bannerSize;
     QColor m_frameActive{0x4c, 0x78, 0x99}, m_frameInactive{0x33, 0x33, 0x33};
     QColor m_floatingActive{0x4d, 0x72, 0x54}, m_floatingInactive{0x33, 0x33, 0x33};
     bool m_frameOnFloating = false;

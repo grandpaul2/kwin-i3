@@ -69,7 +69,6 @@ const Slot s_slots[] = {
     {"kwin-i3 Workspace 9", KEY_9, 0, Qt::META, "Meta+9"},
     {"kwin-i3 Workspace 10", KEY_0, 0, Qt::META, "Meta+0"},
     {"kwin-i3 Focus Right (;)", KEY_SEMICOLON, 0, Qt::META, "Meta+;"},
-    {"kwin-i3 Grow Width (;)", KEY_SEMICOLON, 0, Qt::META | Qt::CTRL, "Meta+Ctrl+;"},
     // The Shift ones after the plain ones: on AZERTY, Move to Workspace 1 takes Meta+1, which
     // Workspace 1 must have let go first (kglobalaccel gives a key to one action).
     {"kwin-i3 Move to Workspace 1 (symbol)", KEY_1, 1, Qt::META, "Meta+!"},

@@ -8,7 +8,7 @@ const path = require("node:path");
 const KeyName = Function(fs.readFileSync(path.join(__dirname, "../../src/keyname.js"), "utf8") + "\nreturn KeyName;")();
 
 const MOD = { Meta: 0x10000000, Ctrl: 0x04000000, Alt: 0x08000000, Shift: 0x02000000 };
-const KEY = { Left: 0x01000012, Up: 0x01000013, Right: 0x01000014, Down: 0x01000015, Space: 0x20 };
+const KEY = { Left: 0x01000012, Up: 0x01000013, Right: 0x01000014, Down: 0x01000015, Space: 0x20, Return: 0x01000004 };
 function code(text) {
     const parts = text === "Meta++" ? ["Meta", "+"] : text.split("+");
     const key = parts.pop();

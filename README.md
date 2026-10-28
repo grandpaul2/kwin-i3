@@ -33,7 +33,9 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+E | toggle the split's orientation |
 | Meta+Shift+Space | floating toggle |
 | Meta+Space | focus mode toggle (tiled / floating) |
-| Meta+Ctrl+arrows, Meta+Ctrl+J/K/L/; | resize by 10 % (i3's resize mode, without the mode: a script can't have mode-only keys). As in i3, the keys move the window's bottom-right corner: right and down grow it, left and up shrink it |
+| Meta+R, then J/K/L/; or the arrows | i3's **resize mode** (plugins): Meta+R enters, a banner on the focused window says so; J/Left shrink the width, ;/Right grow it, L/Up shrink the height, K/Down grow it, by 10 % (holding a key repeats); every other key goes to the window; Return, Escape or Meta+R leave. The four resize actions have no flat key; bind one on the Keys page if you want |
+| Meta+Return, Meta+D | the default terminal (System Settings ▸ Default Applications; plugins), KRunner |
+| Meta+Shift+E | exit: Plasma's logout prompt |
 | Meta+F | fullscreen (per output, as i3; runs KWin's own action, on any window) |
 | Meta+Shift+Q | close (KWin's own action, on any window; Alt+F4 still works) |
 | Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
@@ -90,8 +92,8 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
    before that).
    **Never alongside another tiling script** (Krohnkite, i3ws, …): two scripts would place the
    same windows.
-2. Plasma's own keys that collide with i3's: Meta+arrows (quick tiling), Meta+Ctrl+arrows
-   (desktop switching), Meta+Shift+Left/Right (window to previous/next screen), Meta+E (Dolphin),
+2. Plasma's own keys that collide with i3's: Meta+arrows (quick tiling), Meta+D (Peek at
+   Desktop), Meta+R (Spectacle's region recording), Meta+Shift+Left/Right (window to previous/next screen), Meta+E (Dolphin),
    Meta+L (lock), Meta+0 and Meta+plus/minus (zoom), Meta+1..9 if the task manager uses them. A
    key another shortcut holds fires that one, not kwin-i3's, so at load kwin-i3 names every such
    key in one notification (`warnTakenKeys` turns it off). **`make take-keys`** frees them: it
@@ -198,8 +200,8 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] floatingClass`, `floatingTitle`, `ignoreClass`, `ignoreRole` | empty | the old lists, still read as rules (a class or title entry floats those windows; the ignore lists no longer keep windows out: Plasma's system windows are built in, and a user's own entries float). The settings page writes rules |
 | `[Script-kwin-i3] gapsInner` | `4` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
 | `[Script-kwin-i3] gapsOuter` | `2` | px added at the screen's edge (i3's `gaps outer`: the edge gap is inner + outer), 0-200 |
-| `[Script-kwin-i3] resizeStep` | `10` | % per Meta+Ctrl+arrow, 1-50 (i3's `resize ... 10 ppt`) |
-| `[Script-kwin-i3] floatingStep` | `10` | px a floating window moves (Meta+Shift+arrow) or resizes (Meta+Ctrl+arrow), 1-200 (i3's `move left 10 px`) |
+| `[Script-kwin-i3] resizeStep` | `10` | % per resize key in the mode, 1-50 (i3's `resize ... 10 ppt`) |
+| `[Script-kwin-i3] floatingStep` | `10` | px a floating window moves (Meta+Shift+arrow) or resizes (the mode's keys), 1-200 (i3's `move left 10 px`) |
 | `[Script-kwin-i3] defaultOrientation` | `auto` | how a new workspace splits: `auto` (side by side unless the monitor is taller than wide), `horizontal`, `vertical` (i3's `default_orientation`; workspaces that exist keep theirs) |
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next monitor, else wrap), `no` (never wrap, still cross monitors), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] mouseWarping` | `output` | i3's `mouse_warping`: `output` (when the focus moves to another monitor by a key, a workspace switch or an activation, the pointer goes to the focused window's centre, unless it is on that monitor already), `none` (the pointer never moves by itself) |

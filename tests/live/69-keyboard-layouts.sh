@@ -48,7 +48,6 @@ check "de: Meta+Shift+7 (/) moves to 7"     runs "Meta+Shift+7" "Move to Workspa
 check "de: Meta+0 shows 10"                 runs "Meta+0" "Workspace 10"
 check "de: Meta+ö (the ; key) focuses right" runs "Meta+;" "Focus Right"
 check "de: Meta+Shift+ö moves right"        runs "Meta+Shift+;" "Move Right"
-check "de: Meta+Ctrl+ö grows the width"     runs "Meta+Ctrl+;" "Grow Width"
 # With the helper, a non-US layout is no reason for a notice (39 is the case without it).
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 m=$(mark); load_kwin_i3

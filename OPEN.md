@@ -70,7 +70,11 @@ login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40
 sub-page as text; `rules.test.js`; 20 extended, 25, 73, 76 updated. **Stage 4 built** on
 `redo-4` (`docs/spec-redo-4-outputs.md`, "Now"): a lost output's workspaces move for good, an
 appearing one takes its assigned ones and shows its lowest, focus to the first output;
-`workspaceOutputs` a list per number; `outputs.test.js`; 40, 45-49 updated. **Next:
+`workspaceOutputs` a list per number; `outputs.test.js`; 40, 45-49 updated. **Stage 5 built**
+on `redo-5` (`docs/spec-redo-5-keys.md`, "Now"): i3's resize mode in the helper with the
+effect's banner, Exit, Terminal and Launcher keys, the no-back-and-forth and next/primary
+actions; 55 and 68 extended. When it goes live: `~/.local/bin/hotkeys` and dotfiles' Plasma table
+(Meta+Ctrl resize keys → Meta+R's mode). **Next:
 Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
 `HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
 the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile

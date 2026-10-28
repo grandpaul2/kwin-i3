@@ -126,54 +126,47 @@
   "group": "Resize",
   "commands": [
    {
-    "label": "Shrink width",
+    "label": "Enter or leave the resize mode",
+    "actions": [
+     [
+      "kwin-i3 Resize Mode",
+      "Meta+R"
+     ]
+    ]
+   },
+   {
+    "label": "Shrink width (in the mode: J, Left)",
     "actions": [
      [
       "kwin-i3 Shrink Width",
-      "Meta+Ctrl+Left"
-     ],
-     [
-      "kwin-i3 Shrink Width (J)",
-      "Meta+Ctrl+J"
+      ""
      ]
     ]
    },
    {
-    "label": "Grow width",
+    "label": "Grow width (in the mode: ;, Right)",
     "actions": [
      [
       "kwin-i3 Grow Width",
-      "Meta+Ctrl+Right"
-     ],
-     [
-      "kwin-i3 Grow Width (;)",
-      "Meta+Ctrl+;"
+      ""
      ]
     ]
    },
    {
-    "label": "Shrink height",
+    "label": "Shrink height (in the mode: L, Up)",
     "actions": [
      [
       "kwin-i3 Shrink Height",
-      "Meta+Ctrl+Up"
-     ],
-     [
-      "kwin-i3 Shrink Height (L)",
-      "Meta+Ctrl+L"
+      ""
      ]
     ]
    },
    {
-    "label": "Grow height",
+    "label": "Grow height (in the mode: K, Down)",
     "actions": [
      [
       "kwin-i3 Grow Height",
-      "Meta+Ctrl+Down"
-     ],
-     [
-      "kwin-i3 Grow Height (K)",
-      "Meta+Ctrl+K"
+      ""
      ]
     ]
    }
@@ -375,6 +368,96 @@
       ""
      ]
     ]
+   },
+   {
+    "label": "Workspace 1, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 1 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 2, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 2 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 3, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 3 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 4, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 4 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 5, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 5 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 6, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 6 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 7, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 7 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 8, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 8 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 9, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 9 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Workspace 10, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Workspace 10 (no back-and-forth)",
+      ""
+     ]
+    ]
    }
   ]
  },
@@ -515,6 +598,96 @@
       ""
      ]
     ]
+   },
+   {
+    "label": "Move to workspace 1, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 1 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 2, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 2 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 3, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 3 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 4, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 4 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 5, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 5 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 6, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 6 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 7, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 7 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 8, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 8 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 9, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 9 (no back-and-forth)",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move to workspace 10, no back-and-forth",
+    "actions": [
+     [
+      "kwin-i3 Move to Workspace 10 (no back-and-forth)",
+      ""
+     ]
+    ]
    }
   ]
  },
@@ -628,12 +801,93 @@
       ""
      ]
     ]
+   },
+   {
+    "label": "Focus the next monitor",
+    "actions": [
+     [
+      "kwin-i3 Focus Output Next",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Focus the primary monitor",
+    "actions": [
+     [
+      "kwin-i3 Focus Output Primary",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move the window to the next monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Output Next",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move the window to the primary monitor",
+    "actions": [
+     [
+      "kwin-i3 Move to Output Primary",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move the workspace to the next monitor",
+    "actions": [
+     [
+      "kwin-i3 Move Workspace to Output Next",
+      ""
+     ]
+    ]
+   },
+   {
+    "label": "Move the workspace to the primary monitor",
+    "actions": [
+     [
+      "kwin-i3 Move Workspace to Output Primary",
+      ""
+     ]
+    ]
    }
   ]
  },
  {
   "group": "kwin-i3",
   "commands": [
+   {
+    "label": "Open the default terminal",
+    "actions": [
+     [
+      "kwin-i3 Terminal",
+      "Meta+Return"
+     ]
+    ]
+   },
+   {
+    "label": "Open the launcher (KRunner)",
+    "actions": [
+     [
+      "kwin-i3 Launcher",
+      "Meta+D"
+     ]
+    ]
+   },
+   {
+    "label": "Exit (Plasma's logout prompt)",
+    "actions": [
+     [
+      "kwin-i3 Exit",
+      "Meta+Shift+E"
+     ]
+    ]
+   },
    {
     "label": "Reload settings",
     "actions": [

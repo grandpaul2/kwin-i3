@@ -17,9 +17,12 @@ function registered() {
     const out = [];
     const reg = (action, friendly, key) => out.push([action, key]);
     // The actions with no default key: the UNBOUND table and the loop that adds the output moves.
-    const unbound = src.match(/(var UNBOUND = \{[\s\S]*?\n    \}\);\n)/);
+    // The UNBOUND table, the loop that adds the output moves, and the one that adds the
+    // no-back-and-forth workspace actions (redo stage 5).
+    const unbound = src.match(/(var UNBOUND = \{[\s\S]*?\n    \}\);\n(?:[^\n]*\n)*?    NAMES\.forEach[\s\S]*?\n    \}\);\n)/);
     assert.ok(unbound, "UNBOUND not found in src/kwin.js");
-    const UNBOUND = Function(unbound[1] + "return UNBOUND;")();
+    const UNBOUND = Function("NAMES", "gotoWorkspace", "moveToWorkspace", "focusOutput", "moveToOutput", "moveWorkspaceToOutput",
+                             unbound[1] + "return UNBOUND;")(get(/var NAMES = (\[[^\]]*\]);/), null, null, null, null, null);
     Function("KEYS", "NAMES", "SHIFTED", "RETIRED", "KWIN_OWN", "UNBOUND", "registerShortcut", "act", "guard", "actions", "log",
              "gotoWorkspace", "moveToWorkspace", "DEBUG_LOG", "callDBus", fn[0] + "registerKeys();")(
         get(/var KEYS = (\{[\s\S]*?\n    \});/), get(/var NAMES = (\[[^\]]*\]);/), get(/var SHIFTED = (\[[^\]]*\]);/),
@@ -53,8 +56,10 @@ test("the workspace commands are registered with no key (docs/spec-workspace-com
     const want = ["Workspace Back and Forth", "Move to Workspace Back and Forth", "Workspace Next", "Workspace Prev",
                   "Workspace Next on Output", "Workspace Prev on Output", "Move to Workspace Next", "Move to Workspace Prev",
                   "Move to Workspace Next on Output", "Move to Workspace Prev on Output"];
-    for (const d of ["Left", "Right", "Up", "Down"])
+    for (const d of ["Left", "Right", "Up", "Down", "Next", "Primary"])
         want.push("Focus Output " + d, "Move to Output " + d, "Move Workspace to Output " + d);
+    for (let n = 1; n <= 10; n++) want.push("Workspace " + n + " (no back-and-forth)", "Move to Workspace " + n + " (no back-and-forth)");
+    for (const a of ["Shrink Width", "Grow Width", "Shrink Height", "Grow Height"]) want.push(a);
     for (const a of want) assert.strictEqual(r["kwin-i3 " + a], "", a);
 });
 
@@ -76,7 +81,7 @@ test("every command has a label and a group", () => {
 test("the layout keys' table names registered actions with their registered US keys", () => {
     const cpp = fs.readFileSync(path.join(root, "plugin/layoutkeys.cpp"), "utf8");
     const slots = [...cpp.matchAll(/\{"(kwin-i3 [^"]+)", KEY_\w+, [01], [^,]+, "([^"]+)"\}/g)].map((m) => [m[1], m[2]]);
-    assert.strictEqual(slots.length, 23, "10 workspaces, 10 moves, three on the ; key");
+    assert.strictEqual(slots.length, 22, "10 workspaces, 10 moves, two on the ; key (Grow Width's went with the resize mode, redo stage 5)");
     const reg = Object.fromEntries(registered());
     for (const [action, us] of slots) assert.strictEqual(reg[action], us, action);
 });
