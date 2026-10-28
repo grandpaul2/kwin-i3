@@ -60,6 +60,12 @@ First match wins:
    `kwin_wayland`, `krunner`, `ksmserver-logout-greeter` (class or instance) → override-redirect;
    `plasmashell` / `org.kde.plasmashell` too, until its panel-configuration and edit-mode windows
    are read (below).
+   **Spectacle's windows that open fullscreen** (its region overlay, one Normal fullscreen window
+   per output, probe 93) → override-redirect too (Paul, 2026-10-28, call 60): in the tree, stage 1
+   would put both overlays on the focused workspace and the selection on the other monitor would
+   break; i3 itself gets this wrong (Flameshot's documented "only appears on a single monitor"
+   under i3, fixed by user rules), and only override-redirect keeps them where Spectacle put
+   them. Its main window floats by the default rule (B).
    Plasma makes them Normal windows where i3 would never see them. Not a setting.
 5. On all virtual desktops → kept out (stage 9: sticky floating); on two or more but not all → not
    adopted until it is on one (R13, as today).
@@ -154,9 +160,7 @@ that skips the taskbar is `xwaylandvideobridge`, on A4's built-in list.
 Spectacle's main window: class `org.kde.spectacle`, Normal, not skipping the taskbar, not on all
 desktops. **Its region overlay is a Normal fullscreen window per output**, the same class (title
 "Unsaved* — Spectacle"). So B's default `[class="^org\.kde\.spectacle$"] floating enable` also
-brings the overlays into the tree, each its workspace's fullscreen window. **For the review pass**:
-whether the overlays should be kept out (a built-in case: Spectacle's class and fullscreen when it
-opens) or are fine as fullscreen floating windows, as i3 would hold them. KRuler and Yakuake
+brings the overlays into the tree, each its workspace's fullscreen window. Kept out (A4, call 60). KRuler and Yakuake
 aren't installed on Paul's machine; the password prompt's class is `ignoreClass`'s default.
 
 ## Unknown, settled before building
@@ -193,3 +197,7 @@ app) to its workspace without switching; Yakuake as today until stage 9.
 
 Live and Paul's "it works": §3's kinds table and R1-R18 rewritten as built, X2, §11's rule
 settings and N12, N13, N15; the old keys described as read for compatibility until stage 10.
+
+## Paul's review (2026-10-28)
+
+60. Spectacle's fullscreen overlays are override-redirect (A4); the stage otherwise as specced.
