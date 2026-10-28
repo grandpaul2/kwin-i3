@@ -17,7 +17,9 @@ KCM.SimpleKCM {
     title: i18nc("@title", "Window Rules")
 
     readonly property var settings: kcm.settings
-    readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow"))
+    // Normalised as the page writes rules (formatRule), so the "default" mark doesn't depend on
+    // the order of the criteria in the shipped text (review 2026-10-28).
+    readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow")).map((t) => Logic.formatRule(Logic.parseRule(t, false)))
     // The rows, read from the settings whenever they change from outside (Reset, Defaults), and
     // written back as one string each on every edit. `editing` stops the read-back mid-edit.
     property var rows: []
@@ -66,7 +68,10 @@ KCM.SimpleKCM {
         target: kcm
         function onWindowPicked(info) {
             const value = info.resourceClass || info.resourceName || "";
-            if (page.picking && value) {
+            if (page.picking && value && page.rows.some((r) => r.cls === Logic.wholeClass(value))) {
+                // A second pick of the same application: no second row (review 2026-10-28).
+                page.report(Kirigami.MessageType.Information, i18n("%1 already has a rule: change it in its row.", value));
+            } else if (page.picking && value) {
                 page.add({ cls: Logic.wholeClass(value) });
                 page.report(Kirigami.MessageType.Positive, i18n("Added a rule: windows of %1 float. Change what it does in its row.", value));
             } else if (page.picking) {
@@ -292,6 +297,13 @@ KCM.SimpleKCM {
                         onActivated: page.set(ruleRow.index, "output", currentValue)
                         Accessible.name: i18nc("@label:listbox", "Rule %1: the monitor it opens on", ruleRow.index + 1)
                         KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
+                    }
+                    // A row with no pattern is not written (it would match every window): said, not
+                        // lost silently at the next reopening (review 2026-10-28).
+                    QQC2.Label {
+                        visible: ruleRow.rule.kind !== "raw" && Logic.formatRule(ruleRow.rule) === ""
+                        text: i18nc("@info:status a rule with no pattern", "not saved until it has a pattern")
+                        color: Kirigami.Theme.neutralTextColor
                     }
                     QQC2.Label {
                         visible: ruleRow.isDefault

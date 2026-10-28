@@ -105,7 +105,9 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
-        if (type === "size") return /^-?[0-9]+x-?[0-9]+$/.test(text) ? text : null;   // "WxH", 0 and -1 allowed (Rules.parseSize)
+        // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces taken, given back
+        // without (review 2026-10-28: rejected, the default stood in silently).
+        if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz ? sz[1] + "x" + sz[2] : null; }
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
         // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
@@ -1448,7 +1450,10 @@ var Rules = (function () {
             var c = text.charAt(i);
             if (c === "\\" && quoted && i + 1 < text.length) { cur += c + text.charAt(++i); continue; }
             if (c === "\"") quoted = !quoted;
-            if ((c === "\n" || c === "\r" || (c === ";" && !quoted))) { out.push(cur); cur = ""; continue; }
+            // A line break ends a rule whatever the quotes: one stray " (a typo) no longer joins
+            // the lines below into it, losing their ;-separated rules too (review 2026-10-28).
+            if (c === "\n" || c === "\r") { out.push(cur); cur = ""; quoted = false; continue; }
+            if (c === ";" && !quoted) { out.push(cur); cur = ""; continue; }
             cur += c;
         }
         out.push(cur);
@@ -1601,12 +1606,18 @@ var Rules = (function () {
     // `tiling` criteria see (i3 runs assign at manage, before for_window).
     // No kind yet: i3 reads assignments before the con exists (manage.c), so a `floating` or
     // `tiling` criterion never matches in an assign (match.c, window_mode; review 2026-10-28).
+    // Both kinds, as i3 applies both: the first matching workspace assignment, then the first
+    // matching output one on top of it (manage.c:289, :354; review 2026-10-28). -> null, or
+    // { workspace, output } with one or both set.
     function assignFor(w) {
-        var rules = current().assign;
-        for (var i = 0; i < rules.length; i++)
-            if (matches(rules[i].crit, w, { ws: null, kind: null }))
-                return rules[i].workspace ? { workspace: rules[i].workspace } : { output: rules[i].output };
-        return null;
+        var rules = current().assign, out = null;
+        for (var i = 0; i < rules.length; i++) {
+            if (!matches(rules[i].crit, w, { ws: null, kind: null })) continue;
+            out = out || {};
+            if (rules[i].workspace && !out.workspace) out.workspace = rules[i].workspace;
+            if (rules[i].output && !out.output) out.output = rules[i].output;
+        }
+        return out;
     }
 
     // i3's floating_minimum_size / floating_maximum_size (N15): "WxH"; 0 means i3's default (75x50
@@ -3085,11 +3096,13 @@ var KI3 = (function () {
                 if (!Workspaces.hasHome(assigned.workspace)) Workspaces.claimHome(assigned.workspace, fws ? outputOf(fws) : w.output);
                 t = { ws: assigned.workspace, why: "assign" };
             }
-        } else if (assigned && assigned.output) {
-            workspace.screens.forEach(function (s) {
-                if (s.name === assigned.output) t = { ws: deskNum(workspace.currentDesktopForScreen(s)), why: "assign" };
-            });
-            if (t && t.ws < 1) t = null;
+        }
+        // An output assignment on top, as i3's con_move_to_output_name after the workspace one:
+        // that output's visible workspace, if the output is here.
+        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, fws ? outputOf(fws) : workspace.activeScreen) : null;
+        if (assignedOut) {
+            var shown = deskNum(workspace.currentDesktopForScreen(assignedOut));
+            if (shown >= 1) t = { ws: shown, why: "assign" };
         }
         if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
                                      Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
@@ -4149,6 +4162,18 @@ var KI3 = (function () {
     // The output a direction names from `from` (i3's get_output_next), or "next" (KWin's order,
     // wrapping: get_output_next_wrap) or "primary" (the first in that order); null for none, or
     // the same output.
+    // i3's get_output_from_string (output.c) for an `assign … output X`: current, a direction from
+    // the current output, primary (KWin's first screen), nonprimary, or a name, case-insensitive
+    // (randr.c get_output_by_name; review 2026-10-28: the exact name only).
+    function outputNamed(name, current) {
+        var n = String(name).toLowerCase(), all = workspace.screens;
+        if (n === "current") return current;
+        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n);
+        if (n === "primary") return all[0] || null;
+        if (n === "nonprimary") return all.length > 1 ? all[1] : null;
+        for (var i = 0; i < all.length; i++) if (String(all[i].name).toLowerCase() === n) return all[i];
+        return null;
+    }
     function screenBy(spec, from) {
         var all = workspace.screens, i = all.indexOf(from), t = null;
         if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;

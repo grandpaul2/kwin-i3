@@ -23,6 +23,7 @@
 #include <QTimer>
 #include <QVariantMap>
 
+#include <map>
 #include <memory>
 #include <optional>
 
@@ -146,6 +147,7 @@ private:
     QList<Bar> ring(const KWin::RectF &frame, double scale, double radius, const Ring &how) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    KWin::EffectWindow *windowById(const QString &id) const;
     void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
@@ -168,9 +170,14 @@ private:
     int m_timeoutMs = 100;
     int m_frameWidth = 1;
     QString m_mode;                                          // the helper's mode: "resize" shows the banner
-    std::unique_ptr<KWin::GLTexture> m_banner;               // the banner's text, drawn once per scale
-    double m_bannerScale = 0;
-    QSize m_bannerSize;
+    struct Banner {
+        std::unique_ptr<KWin::GLTexture> texture;
+        QSize size;
+    };
+    // The banner's text, drawn once per output scale (two monitors at two scales redrew it on
+    // every paint, review 2026-10-28); cleared when the settings change (its colour).
+    std::map<double, Banner> m_banners;
+    bool m_bannersStale = false;    // set by loadConfig; cleared in the paint, where GL is current
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the form's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};

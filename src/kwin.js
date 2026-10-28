@@ -1184,11 +1184,13 @@ var KI3 = (function () {
                 if (!Workspaces.hasHome(assigned.workspace)) Workspaces.claimHome(assigned.workspace, fws ? outputOf(fws) : w.output);
                 t = { ws: assigned.workspace, why: "assign" };
             }
-        } else if (assigned && assigned.output) {
-            workspace.screens.forEach(function (s) {
-                if (s.name === assigned.output) t = { ws: deskNum(workspace.currentDesktopForScreen(s)), why: "assign" };
-            });
-            if (t && t.ws < 1) t = null;
+        }
+        // An output assignment on top, as i3's con_move_to_output_name after the workspace one:
+        // that output's visible workspace, if the output is here.
+        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, fws ? outputOf(fws) : workspace.activeScreen) : null;
+        if (assignedOut) {
+            var shown = deskNum(workspace.currentDesktopForScreen(assignedOut));
+            if (shown >= 1) t = { ws: shown, why: "assign" };
         }
         if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
                                      Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
@@ -2248,6 +2250,18 @@ var KI3 = (function () {
     // The output a direction names from `from` (i3's get_output_next), or "next" (KWin's order,
     // wrapping: get_output_next_wrap) or "primary" (the first in that order); null for none, or
     // the same output.
+    // i3's get_output_from_string (output.c) for an `assign … output X`: current, a direction from
+    // the current output, primary (KWin's first screen), nonprimary, or a name, case-insensitive
+    // (randr.c get_output_by_name; review 2026-10-28: the exact name only).
+    function outputNamed(name, current) {
+        var n = String(name).toLowerCase(), all = workspace.screens;
+        if (n === "current") return current;
+        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n);
+        if (n === "primary") return all[0] || null;
+        if (n === "nonprimary") return all.length > 1 ? all[1] : null;
+        for (var i = 0; i < all.length; i++) if (String(all[i].name).toLowerCase() === n) return all[i];
+        return null;
+    }
     function screenBy(spec, from) {
         var all = workspace.screens, i = all.indexOf(from), t = null;
         if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;

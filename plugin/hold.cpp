@@ -30,6 +30,34 @@
 
 using namespace KWin;
 
+// The blend state as found, put back whole when this goes out of scope: on or off, and the four
+// factors (KWin's item renderer sets its own per draw; anything later in the chain may not;
+// review 2026-10-28: two paths left the function changed, the others kept only RGB).
+namespace
+{
+struct BlendState {
+    BlendState()
+        : on(glIsEnabled(GL_BLEND))
+    {
+        glGetIntegerv(GL_BLEND_SRC_RGB, &srcRgb);
+        glGetIntegerv(GL_BLEND_DST_RGB, &dstRgb);
+        glGetIntegerv(GL_BLEND_SRC_ALPHA, &srcAlpha);
+        glGetIntegerv(GL_BLEND_DST_ALPHA, &dstAlpha);
+    }
+    ~BlendState()
+    {
+        glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha);
+        if (on) {
+            glEnable(GL_BLEND);
+        } else {
+            glDisable(GL_BLEND);
+        }
+    }
+    bool on;
+    GLint srcRgb = GL_ONE, dstRgb = GL_ZERO, srcAlpha = GL_ONE, dstAlpha = GL_ZERO;
+};
+}
+
 // The config form's group (docs/spec-settings.md); the old [kwin-i3-hold] keys are still read
 // where the new ones are missing.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
@@ -139,12 +167,16 @@ void Hold::reconfigure(ReconfigureFlags)
 
 void Hold::loadConfig()
 {
+    m_bannersStale = true;
     auto config = m_watcher->config();
     config->reparseConfiguration();
     const KConfigGroup group = config->group(s_group), old = config->group(s_oldGroup);
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
                                                 : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
+    // A layout never waits longer than 2 s, nor not at all (a negative timer never fires: the
+    // hold would wait on a window for good; review 2026-10-28).
+    m_timeoutMs = std::clamp(m_timeoutMs, 1, 2000);
     // The frame's keys (src/settings.js); not affected by holdEnabled.
     m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
     const auto colour = [&group](const char *key, const QColor &def) {
@@ -292,6 +324,7 @@ void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
     m_rings.remove(w->internalId().toString());
+    m_indicatorShown.remove(w->internalId().toString());
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
@@ -437,6 +470,7 @@ void Hold::armHidden(EffectWindow *w, int ms)
 
 void Hold::HoldNew(const QString &id, int ms)
 {
+    ms = std::min(ms, 1000);    // kwin-i3 asks 200: a larger ask would keep a window unseen (review 2026-10-28)
     EffectWindow *w = nullptr;
     const auto windows = effects->stackingOrder();
     for (EffectWindow *x : windows) {
@@ -633,6 +667,10 @@ bool Hold::holding() const
 }
 
 // While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
+// Per paint and window: cheap checks first (holding, a drop, the mode), then the stacking order
+// until the first shown ring; ringed() builds a window's id string only for a framed window. Kept
+// as is at the review of 2026-10-28: the allocations happen only when every framed window's ring
+// is hidden whole (hideEdgeBorders), a setup too rare for a cache.
 bool Hold::isActive() const
 {
     if (holding() || !m_drop.isEmpty() || !m_mode.isEmpty()) {
@@ -702,7 +740,12 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
 void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const WindowPaintData &data)
 {
     const double scale = viewport.scale();
-    if (!m_banner || m_bannerScale != scale) {
+    if (m_bannersStale) {
+        m_banners.clear();
+        m_bannersStale = false;
+    }
+    Banner &banner = m_banners[scale];
+    if (!banner.texture) {
         // i3's bar shows only the mode's name ("resize", i3bar xcb.c draw_button); here with the
         // way out (Paul, 2026-10-28, OPEN.md item 42).
         const QString text = QStringLiteral("Resize (Esc)");
@@ -723,38 +766,30 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
         p.setFont(font);
         p.drawText(QRect(0, 0, width, height), Qt::AlignCenter, text);
         p.end();
-        m_banner = GLTexture::upload(img);
-        m_bannerScale = scale;
-        m_bannerSize = img.size();
+        banner.texture = GLTexture::upload(img);
+        banner.size = img.size();
     }
-    if (!m_banner) {
+    if (!banner.texture) {
         return;
     }
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
-    if (drawn.width() * scale < m_bannerSize.width() + 8) {
+    if (drawn.width() * scale < banner.size.width() + 8) {
         return;                                 // too narrow a window for the banner
     }
-    const double x = std::round(drawn.x() * scale + (drawn.width() * scale - m_bannerSize.width()) / 2);
+    const double x = std::round(drawn.x() * scale + (drawn.width() * scale - banner.size.width()) / 2);
     const double y = std::round((drawn.y() + 12) * scale);
     ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
     QMatrix4x4 mvp = viewport.projectionMatrix();
     mvp.translate(x, y);
     binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
-    const bool blend = glIsEnabled(GL_BLEND);
-    GLint src = GL_ONE, dst = GL_ZERO;
-    glGetIntegerv(GL_BLEND_SRC_RGB, &src);
-    glGetIntegerv(GL_BLEND_DST_RGB, &dst);
+    const BlendState kept;
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
-    m_banner->bind();
-    m_banner->render(QSizeF(m_bannerSize));
-    m_banner->unbind();
-    glBlendFunc(src, dst);
-    if (!blend) {
-        glDisable(GL_BLEND);
-    }
+    banner.texture->bind();
+    banner.texture->render(QSizeF(banner.size));
+    banner.texture->unbind();
 }
 
 void Hold::SetMode(const QString &mode)
@@ -807,6 +842,8 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
     }
     if (cls.isEmpty()) {
         m_rings.remove(id);
+    } else if (!windowById(id)) {
+        return;     // gone already (an async call crossing its deletion): kept, it never left
     } else {
         Ring r;
         r.cls = cls == QLatin1String("focused") ? 0 : 1;
@@ -822,8 +859,23 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
 
 void Hold::ShowIndicator(const QString &id)
 {
+    if (!windowById(id)) {
+        return;
+    }
     m_indicatorShown.insert(id);
     repaintRingOf(id);
+}
+
+// The shown window with this id, if it is still there (ids from the script's async calls).
+EffectWindow *Hold::windowById(const QString &id) const
+{
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        if (!w->isDeleted() && w->internalId().toString() == id) {
+            return w;
+        }
+    }
+    return nullptr;
 }
 
 void Hold::repaintRingOf(const QString &id)
@@ -868,6 +920,9 @@ void Hold::SetDragCursor(bool on, int shape)
 
 void Hold::SetDropIndicator(int x, int y, int width, int height)
 {
+    // Far past any output, the rounding to device pixels would overflow (review 2026-10-28).
+    const auto clamp = [](int v) { return std::clamp(v, -100000, 100000); };
+    x = clamp(x), y = clamp(y), width = clamp(width), height = clamp(height);
     const RectF drop = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
     if (drop == m_drop) {
         return;
@@ -911,19 +966,16 @@ void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &v
     QColor colour = m_frameColour[0];
     colour.setAlphaF(0.5);
     binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
-    const bool blend = glIsEnabled(GL_BLEND);
+    const BlendState kept;
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
-    if (!blend) {
-        glDisable(GL_BLEND);
-    }
 }
 
 void Hold::SetFloating(const QString &id, bool on)
 {
-    if (on) {
+    if (on && windowById(id)) {
         m_floating.insert(id);
     } else {
         m_floating.remove(id);
@@ -1091,6 +1143,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
         binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
         binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+        const BlendState kept;
         if (opacity < 1.0) {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1106,9 +1159,6 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
             vbo->setVertices(verts[i]);
             vbo->render(GL_TRIANGLES);
         }
-        if (opacity < 1.0) {
-            glDisable(GL_BLEND);
-        }
         return;
     }
     // Border, not UniformColor too: both declare the colour uniform (base.frag). The opacity by
@@ -1123,10 +1173,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     shader->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     // The shader scales all four channels by coverage: premultiplied, blended always (the
     // antialiased arc is partly transparent even at full opacity); the blend state put back.
-    const bool blend = glIsEnabled(GL_BLEND);
-    GLint src = GL_ONE, dst = GL_ZERO;
-    glGetIntegerv(GL_BLEND_SRC_RGB, &src);
-    glGetIntegerv(GL_BLEND_DST_RGB, &dst);
+    const BlendState kept;
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     for (int i = 0; i < 2; ++i) {
@@ -1137,10 +1184,6 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         vbo->reset();
         vbo->setVertices(verts[i]);
         vbo->render(GL_TRIANGLES);
-    }
-    glBlendFunc(src, dst);
-    if (!blend) {
-        glDisable(GL_BLEND);
     }
 }
 

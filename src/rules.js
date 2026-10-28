@@ -127,7 +127,10 @@ var Rules = (function () {
             var c = text.charAt(i);
             if (c === "\\" && quoted && i + 1 < text.length) { cur += c + text.charAt(++i); continue; }
             if (c === "\"") quoted = !quoted;
-            if ((c === "\n" || c === "\r" || (c === ";" && !quoted))) { out.push(cur); cur = ""; continue; }
+            // A line break ends a rule whatever the quotes: one stray " (a typo) no longer joins
+            // the lines below into it, losing their ;-separated rules too (review 2026-10-28).
+            if (c === "\n" || c === "\r") { out.push(cur); cur = ""; quoted = false; continue; }
+            if (c === ";" && !quoted) { out.push(cur); cur = ""; continue; }
             cur += c;
         }
         out.push(cur);
@@ -280,12 +283,18 @@ var Rules = (function () {
     // `tiling` criteria see (i3 runs assign at manage, before for_window).
     // No kind yet: i3 reads assignments before the con exists (manage.c), so a `floating` or
     // `tiling` criterion never matches in an assign (match.c, window_mode; review 2026-10-28).
+    // Both kinds, as i3 applies both: the first matching workspace assignment, then the first
+    // matching output one on top of it (manage.c:289, :354; review 2026-10-28). -> null, or
+    // { workspace, output } with one or both set.
     function assignFor(w) {
-        var rules = current().assign;
-        for (var i = 0; i < rules.length; i++)
-            if (matches(rules[i].crit, w, { ws: null, kind: null }))
-                return rules[i].workspace ? { workspace: rules[i].workspace } : { output: rules[i].output };
-        return null;
+        var rules = current().assign, out = null;
+        for (var i = 0; i < rules.length; i++) {
+            if (!matches(rules[i].crit, w, { ws: null, kind: null })) continue;
+            out = out || {};
+            if (rules[i].workspace && !out.workspace) out.workspace = rules[i].workspace;
+            if (rules[i].output && !out.output) out.output = rules[i].output;
+        }
+        return out;
     }
 
     // i3's floating_minimum_size / floating_maximum_size (N15): "WxH"; 0 means i3's default (75x50

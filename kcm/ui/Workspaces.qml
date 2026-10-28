@@ -28,7 +28,9 @@ KCM.SimpleKCM {
         const map = Logic.parseOutputLists(settings.workspaceOutputs);
         const list = (map[n] || "").split(" ").filter((s) => s);
         if ((list[i] || "") === name) return;
-        if (name) list[i] = name; else list.splice(i, 1);
+        // "Any monitor" in the first slot is no assignment at all, its fallbacks with it; in a
+        // fallback slot, that fallback gone (review 2026-10-28: slot 0 promoted the fallback).
+        if (name) list[i] = name; else if (i === 0) list.length = 0; else list.splice(i, 1);
         map[n] = list.filter((s) => s).join(" ");
         settings.workspaceOutputs = Logic.formatOutputs(map);
     }

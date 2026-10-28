@@ -45,7 +45,9 @@ function splitRules(text) {
         const c = t.charAt(i);
         if (c === "\\" && quoted && i + 1 < t.length) { cur += c + t.charAt(++i); continue; }
         if (c === "\"") quoted = !quoted;
-        if (c === "\n" || c === "\r" || (c === ";" && !quoted)) { out.push(cur); cur = ""; continue; }
+        // As the script's split (src/rules.js): a line break ends a rule whatever the quotes.
+        if (c === "\n" || c === "\r") { out.push(cur); cur = ""; quoted = false; continue; }
+        if (c === ";" && !quoted) { out.push(cur); cur = ""; continue; }
         cur += c;
     }
     out.push(cur);
@@ -96,15 +98,21 @@ function parseCriteria(text) {
     return n ? crit : null;
 }
 const SHOWN = ["class", "title", "window_role", "window_type"];
+// A rule the page can't show as a row stays as its text, in the setting it came from (`assign`:
+// review 2026-10-28, an unreadable assign rule moved into forWindow at the next save and ran there).
 function parseRule(src, assign) {
+    const raw = Object.assign({ text: src, src, fromAssign: !!assign }, RAW);
     const m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(src);
     const crit = m ? parseCriteria(m[1]) : null;
-    if (!crit || Object.keys(crit).some((k) => SHOWN.indexOf(k) < 0)) return Object.assign({ text: src, src }, RAW);
+    if (!crit || Object.keys(crit).some((k) => SHOWN.indexOf(k) < 0)) return raw;
     const rest = m[2].trim();
     const row = { cls: crit.class || "", title: crit.title || "", role: crit.window_role || "", type: crit.window_type || "", src };
+    // Nothing a row can show (`[class=""]`, every window): kept as its text, else the next save
+    // dropped it as an empty row (review 2026-10-28).
+    if (!row.cls && !row.title && !row.role && !row.type) return raw;
     if (!assign) {
         const f = /^floating\s+(enable|disable)$/.exec(rest);
-        if (!f) return Object.assign({ text: src, src }, RAW);
+        if (!f) return raw;
         row.kind = f[1] === "enable" ? "float" : "tile";
         return row;
     }
@@ -112,7 +120,7 @@ function parseRule(src, assign) {
     if (a && +a[1] >= 1 && +a[1] <= 10) { row.kind = "workspace"; row.workspace = +a[1]; return row; }
     a = /^(?:(?:→|->)\s*)?output\s+(\S+)$/.exec(rest);
     if (a) { row.kind = "output"; row.output = a[1]; return row; }
-    return Object.assign({ text: src, src }, RAW);
+    return raw;
 }
 // Every rule of both settings as rows, the for_window ones first (as the script runs them).
 function parseRules(forWindow, assign) {
@@ -140,8 +148,11 @@ function formatRules(rows) {
     rows.forEach((row) => {
         const text = formatRule(row);
         if (!text) return;
+        // A raw row goes back where it came from; one typed fresh on the page (no origin) by its
+        // tail after the criteria, read past quoted values (a "]" inside one is no end).
         const isAssign = row.kind === "workspace" || row.kind === "output" ||
-            (row.kind === "raw" && /\]\s*(?:(?:→|->)|workspace\s|number\s|output\s|[0-9]+\s*$)/.test(text));
+            (row.kind === "raw" && (row.fromAssign !== undefined ? row.fromAssign
+                : /^\[(?:[^\]"]|"(?:[^"\\]|\\.)*")*\]\s*(?:(?:→|->)|workspace\s|number\s|output\s|[0-9]+\s*$)/.test(text)));
         (isAssign ? as : fw).push(text);
     });
     return { forWindow: fw.join("\n"), assign: as.join("\n") };

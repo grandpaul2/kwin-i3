@@ -84,7 +84,9 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
-        if (type === "size") return /^-?[0-9]+x-?[0-9]+$/.test(text) ? text : null;   // "WxH", 0 and -1 allowed (Rules.parseSize)
+        // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces taken, given back
+        // without (review 2026-10-28: rejected, the default stood in silently).
+        if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz ? sz[1] + "x" + sz[2] : null; }
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
         // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
