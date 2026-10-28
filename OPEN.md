@@ -92,4 +92,4 @@ session, a diagnosis for Paul (no fix without his go); the captures stay until t
 
 **42. The resize mode's banner reads "Resize (Esc)"** (Paul, 2026-10-28: i3's bar shows only the
 mode's name, so the same banner with that text). Built (`plugin/hold.cpp`, 55 and 64 green).
-Next: Paul's go for `make plugin-install`, then his look.
+Live (`make plugin-install`, 2026-10-28). Next: Paul's look at Meta+R.
