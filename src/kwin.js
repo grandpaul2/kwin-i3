@@ -16,6 +16,7 @@ var KI3 = (function () {
     var frameOn = false, tookBorder = {};
     var borderGone = {};                             // window id -> its GTK 4 bounds (refitOnFrameChange)
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
+    var gapCache = {}, passWs = null;                // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
     // The floating mark (spec-window-modes decision 5c): with the effect, it keeps the set of
     // floating windows (told[key]: what it was last told), which outlives a reload of this
     // script; at load the answer says which windows were floating (atLoadFloating).
@@ -181,6 +182,8 @@ var KI3 = (function () {
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place (i3ws learned this, 2026-10-21).
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.byKey, fp.checked); }
+        passWs = null;
+        try { tellRings(); } catch (e) { log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : "")); }
         showHeld();
         rememberShown();
     }
@@ -326,26 +329,59 @@ var KI3 = (function () {
     // below): KWin rounds tile edges to whole pixels (absoluteGeometry) and takes half the padding
     // a side, so an odd padding put every window half a pixel off, its text shifting when
     // anything redrew it (Paul, 2026-10-25, gap 5; docs/spec-settings.md).
-    function gaps() {
-        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter");
+    // Per workspace since redo stage 7 (§11 N2, §7 L6): i3's gaps.c calculate_effective_gaps.
+    // The outer gap per side (gapsTop … gapsLeft, else gapsOuter) plus the workspace's own lines
+    // (workspaceGaps, added; the sum stops at 0), then smart_gaps: `on` drops every gap on a
+    // workspace with one visible tiling window, `inverse_outer` keeps the outer ones only there.
+    // hide_edge_borders `smart` (and `smart_no_gaps` with no outer gap) takes a lone window's ring
+    // and its room away. "One visible tiling window" is i3's con_num_visible_children <= 1: the
+    // projection is a single leaf (or nothing). Computed once per pass (reconcileNow caches it:
+    // a pass asks many times, and names the workspace it is on, passWs, for them); without a
+    // workspace, the global values.
+    function gaps(ws) {
+        ws = ws || passWs;
+        if (ws && gapCache[ws.num]) return gapCache[ws.num];
+        return computeGaps(ws, ws ? project(ws) : undefined);
+    }
+    function computeGaps(ws, p) {
+        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), fw = Settings.get("frameWidth");
+        var side = { top: Settings.get("gapsTop"), right: Settings.get("gapsRight"), bottom: Settings.get("gapsBottom"), left: Settings.get("gapsLeft") };
+        var own = ws && Settings.get("workspaceGaps")[ws.num] || {};
+        if (own.inner !== undefined) i += own.inner;
+        i = Math.max(0, i);
         i -= i % 2;
+        var inset = {};
+        Object.keys(side).forEach(function (s) {
+            var v = side[s] < 0 ? o : side[s];
+            if (own[s] !== undefined) v += own[s];
+            inset[s] = Math.max(0, v);
+        });
+        var one = !!(p && p.win !== undefined), smart = Settings.get("smartGaps"), hide = Settings.get("hideEdgeBorders");
+        if (ws && (smart === "on" && one || smart === "inverse_outer" && !one)) inset = { top: 0, right: 0, bottom: 0, left: 0 };
+        if (ws && smart === "on" && one) i = 0;
+        var outerGap = inset.top > 0 || inset.right > 0 || inset.bottom > 0 || inset.left > 0;
+        var ring = tiledRing() && !(ws && one && (hide === "smart" || hide === "smart_no_gaps" && !outerGap));
+        Object.keys(inset).forEach(function (s) { inset[s] += i / 2; });
         // The frame's room: twice its width, so KWin's half padding leaves it on each side.
-        return { inner: i + (tiledRing() ? 2 * Settings.get("frameWidth") : 0), inset: o + i / 2 };
+        return { inner: i + (ring ? 2 * fw : 0), gap: i, inset: inset, ring: ring, one: one };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
-    function rootRect(area) {
-        var e = gaps().inset;
+    function rootRect(area, ws) {
+        var g = gaps(ws), e = g.inset;
         // KWin gives a tile side exactly at the screen's edge the full padding, two frames
-        // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) makes every side half.
-        if (!e && tiledRing()) e = HAIR * Math.max(area.width, area.height);
-        return { x: e / area.width, y: e / area.height, width: 1 - 2 * e / area.width, height: 1 - 2 * e / area.height };
+        // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) on a side with no gap makes
+        // every side half. Only where there is padding to halve.
+        var hair = g.inner ? HAIR * Math.max(area.width, area.height) : 0;
+        var l = e.left || hair, t = e.top || hair, r = e.right || hair, b = e.bottom || hair;
+        return { x: l / area.width, y: t / area.height, width: 1 - (l + r) / area.width, height: 1 - (t + b) / area.height };
     }
     // For root tiles only (the hair's tolerance would be wrong for any other tile).
     function sameRect(g, r) {
-        // The hair is far below the tolerance for float noise: told apart on its own.
-        var tol = (r.x > 0 && r.x < 1e-4) || (g.x > 0 && g.x < 1e-4) ? 1e-9 : 1e-4;
-        return Math.abs(g.x - r.x) <= tol && Math.abs(g.y - r.y) <= tol &&
-               Math.abs(g.width - r.width) <= tol && Math.abs(g.height - r.height) <= tol;
+        // The hair is far below the tolerance for float noise: told apart on its own, per edge (a
+        // side may be the only one with no gap, so each edge is judged alone).
+        function hairish(v) { return (v > 0 && v < 1e-4) || (v > 1 - 1e-4 && v < 1); }
+        function near(a, b) { return Math.abs(a - b) <= (hairish(a) || hairish(b) ? 1e-9 : 1e-4); }
+        return near(g.x, r.x) && near(g.y, r.y) && near(g.x + g.width, r.x + r.width) && near(g.y + g.height, r.y + r.height);
     }
     // Every layout's children on its outer edges and spanning its cross axis. With gaps no edge
     // is at the screen's border, so KWin lets a window's outer side be dragged
@@ -674,14 +710,17 @@ var KI3 = (function () {
         var area = areaOf(screen, ws);
         relocate(ws, screen);
         ws.floating.forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
+        passWs = ws;
+        delete gapCache[ws.num];            // the settings or the tree may have changed
         floatWhatCannotFit(ws, area);
         var p = project(ws);
+        gapCache[ws.num] = computeGaps(ws, p);   // a float above may have left one window
         refused = false;
         // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
         // its edges (probed). Then padding, then minimums (review).
-        var inset = rootRect(area), reinset = !sameRect(root.relativeGeometry, inset) || !edgesIntact(root);
+        var inset = rootRect(area, ws), reinset = !sameRect(root.relativeGeometry, inset) || !edgesIntact(root);
         prepareTiles(root, area);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
         if (want !== have || reinset) {
@@ -712,6 +751,7 @@ var KI3 = (function () {
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
         else checkInvariants(ws, root, p, area);
+        passWs = null;
     }
 
 
@@ -794,7 +834,7 @@ var KI3 = (function () {
     // the tiled windows' minimum sizes can't fit the screen, float the one with the largest
     // minimum along the axis that overflows.
     function floatWhatCannotFit(ws, area) {
-        var e = gaps().inset, W = area.width - 2 * e, H = area.height - 2 * e;    // the root's room
+        var e = gaps(ws).inset, W = area.width - e.left - e.right, H = area.height - e.top - e.bottom;    // the root's room
         for (var n = 0; n < 32; n++) {
             var p = project(ws);
             if (!p) return;
@@ -876,8 +916,8 @@ var KI3 = (function () {
 
     // Logged, never thrown: the live tests fail on any "INVARIANT" line.
     function checkInvariants(ws, root, p, area) {
-        var problems = [], inner = gaps().inner;
-        if (!sameRect(root.relativeGeometry, rootRect(area))) problems.push("root not inset for the gaps");
+        var problems = [], inner = gaps(ws).inner;
+        if (!sameRect(root.relativeGeometry, rootRect(area, ws))) problems.push("root not inset for the gaps");
         (function walk(t) {
             if (t.padding !== inner) problems.push("padding " + t.padding + ", gaps " + inner);
             if (!t.tiles.length && t.windows.length > 1) problems.push("tile holds " + t.windows.length + " windows");
@@ -914,8 +954,8 @@ var KI3 = (function () {
         // Each model node's extent is the union of its visible windows' frames; shares follow.
         // Clipped to the root's rect: with gaps a dragged outer side can pin a tile to the
         // screen's border (edgesIntact), and an outer edge is never a share.
-        var area = areaOf(outputOf(ws), ws), e = gaps().inset;
-        var lo = { x: area.x + e, y: area.y + e }, hi = { x: area.x + area.width - e, y: area.y + area.height - e };
+        var area = areaOf(outputOf(ws), ws), e = gaps(ws).inset;
+        var lo = { x: area.x + e.left, y: area.y + e.top }, hi = { x: area.x + area.width - e.right, y: area.y + area.height - e.bottom };
         function extent(c) {
             if (c.win !== null && c.type !== "ws") {
                 var w = wins[c.win];
@@ -978,6 +1018,63 @@ var KI3 = (function () {
         if (!frameOn || !marks || told[key] === on) return;
         told[key] = on;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
+    }
+
+    // ---- the ring's colour class, indicator and hidden sides (§7 L3, L4, L6; redo stage 7) ------
+    // i3's x.c x_draw_decoration: `focused` for the focused window, `focused_inactive` for its
+    // parent's last focus (the other output's focused window, the last focus of a split the focus
+    // isn't in), `unfocused` otherwise; i3 wraps a floating window in a container of its own, so it
+    // is always that container's last focus: focused_inactive unless focused. The indicator: the
+    // side where the next window opens, on a tiling window alone in its parent (x.c:585-599), the
+    // workspace counting as a parent. Hidden sides: i3's hide_edge_borders (con.c
+    // con_border_style_rect_without_title): smart, and smart_no_gaps with no outer gap, take a lone
+    // window's whole ring (computeGaps leaves no room for it either); vertical, horizontal, both
+    // hide a side where the window's tile is at the root's edge and the inner gap is 0 (i3's
+    // con_adjacent_borders on the rendered rects: an outer gap moves the workspace's rect, an inner
+    // gap moves the window off it; the ring's strip stays, Paul's call 41). Worked out for the
+    // windows on the shown workspaces at the end of every pass, sent only when changed (Paul's rule
+    // for the look: no per-frame cost). Until told, and after a release, the effect colours by
+    // KWin's active window (an empty class forgets a window).
+    var ringTold = {};
+    function tellRings() {
+        if (!frameOn || !marks) return;
+        var hide = Settings.get("hideEdgeBorders");
+        function cls(c) {
+            if (c === model.focused) return "focused";
+            if (c.type === "floating" || c.parent.focus[0] === c) return "focused_inactive";
+            return "unfocused";
+        }
+        function send(key, c, ind, hidden) {
+            var v = c + "|" + ind + "|" + hidden;
+            if (ringTold[key] === v) return;
+            ringTold[key] = v;
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, c, ind, hidden);
+        }
+        workspace.screens.forEach(function (s) {
+            var ws = model.workspaces[deskNum(workspace.currentDesktopForScreen(s))];
+            if (!ws || outputOf(ws).name !== s.name) return;
+            var g = gaps(ws), root = workspace.rootTile(s, deskOf(ws.num));
+            model.leaves(ws).forEach(function (c) {
+                var w = wins[c.win];
+                if (!w) return;
+                var ind = c.parent.nodes.length === 1 ? (c.parent.layout === "h" ? "right" : "bottom") : "", sides = [];
+                if (!g.ring) sides = ["top", "right", "bottom", "left"];
+                else if ((hide === "vertical" || hide === "horizontal" || hide === "both") && w.tile && root && g.gap === 0) {
+                    var r = w.tile.relativeGeometry, rr = root.relativeGeometry;
+                    var eq = function (a, b) { return Math.abs(a - b) < 1e-7; };
+                    if (hide !== "horizontal") { if (eq(r.x, rr.x)) sides.push("left"); if (eq(r.x + r.width, rr.x + rr.width)) sides.push("right"); }
+                    if (hide !== "vertical") { if (eq(r.y, rr.y)) sides.push("top"); if (eq(r.y + r.height, rr.y + rr.height)) sides.push("bottom"); }
+                }
+                send(c.win, cls(c), ind, sides.join(" "));
+            });
+            ws.floating.forEach(function (c) { if (wins[c.win]) send(c.win, cls(c), "", ""); });
+        });
+    }
+    function forgetRings() {
+        Object.keys(ringTold).forEach(function (key) {
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
+        });
+        ringTold = {};
     }
 
     // How tiled windows look (docs/spec-tiled-look.md), with the effect there: without their
@@ -1210,7 +1307,7 @@ var KI3 = (function () {
         // the tree picked it; "kept", KWin had activated another window first (forgetWindow then
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
-        delete told[key];
+        delete told[key]; delete ringTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
         schedule(ws);
@@ -1676,7 +1773,7 @@ var KI3 = (function () {
     // The tiles' smallest extent along o: windows' minimums (frameMin, with the inner gap) added
     // up along a split and the largest across it, as minOf does for a projection.
     function minExtent(c, o) {
-        if (c.win !== null) { var fm = frameMin(wins[c.win]); return (o === "h" ? fm.w : fm.h) + gaps().inner; }
+        if (c.win !== null) { var fm = frameMin(wins[c.win]); return (o === "h" ? fm.w : fm.h) + gaps(Tree.wsOf(c)).inner; }
         var vals = c.nodes.filter(function (k) { return conRect(k).width > 0; }).map(function (k) { return minExtent(k, o); });
         return vals.reduce(function (a, b) { return c.layout === o ? a + b : Math.max(a, b); }, 0);
     }
@@ -1719,7 +1816,7 @@ var KI3 = (function () {
         var o = e.dir === Tree.LEFT || e.dir === Tree.RIGHT ? "h" : "v", part = e.part;
         var ff = model.descendFocused(part.first), fs = model.descendFocused(part.second);
         if (ff.win === null || fs.win === null || !wins[ff.win] || !wins[fs.win]) return null;
-        var a = conRect(ff), b = conRect(fs), f = conRect(part.first), sr = conRect(part.second), inner = gaps().inner;
+        var a = conRect(ff), b = conRect(fs), f = conRect(part.first), sr = conRect(part.second), inner = gaps(ws).inner;
         var start = o === "h" ? b.x - Math.floor((b.x - (a.x + a.width)) / 2) : b.y - Math.floor((b.y - (a.y + a.height)) / 2);
         // Kept inside the two participants' tiles less each one's minimum, so a release can't ask
         // for what KWin's tiles refuse (i3 keeps the bar 25 px inside the output).
@@ -2313,6 +2410,15 @@ var KI3 = (function () {
             "these entries of yours float them instead: " + t.join(", ") + ". Write them as rules (forWindow) when you like."] : []);
         if (t.length) log("RULES old ignore entries read as floating: " + t.join(", "));
     }
+    // The floating ring's own colours went with redo stage 7 (§7 L11): a floating ring uses the
+    // three colour classes. Said once, at load, to a user who had set them.
+    function checkOldColours() {
+        var set = ["frameFloatingActive", "frameFloatingInactive"].filter(function (k) { return String(readConfig(k, "")).trim() !== ""; });
+        reportOpen();
+        reportClose("floating colours no longer read", set.length ? [set.join(" and ") + " in kwinrc " +
+            (set.length > 1 ? "are" : "is") + " no longer read: a floating window's frame uses the tiled colours now (as i3). Delete the key" + (set.length > 1 ? "s" : "") + " when you like."] : []);
+        if (set.length) log("SETTINGS old floating colours set, not read: " + set.join(", "));
+    }
     function checkPerOutput(atLoad) {
         var was = perOutputBad, n = workspace.screens.length;
         perOutputBad = n >= 2 && !options.perOutputVirtualDesktops;
@@ -2361,6 +2467,7 @@ var KI3 = (function () {
         released = true;
         try { tellDrag(false); } catch (e) { log("ERROR in release (drag): " + e); }
         try { if (mode) callDBus(MODE[0], MODE[1], MODE[2], "SetMode", ""); } catch (e) { log("ERROR in release (mode): " + e); }
+        try { forgetRings(); } catch (e) { log("ERROR in release (rings): " + e); }
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
@@ -2733,6 +2840,7 @@ var KI3 = (function () {
         checkLayoutKeys();
         checkHelperKeys();
         checkOldIgnores();
+        checkOldColours();
         checkPerOutput(true);
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
             checkPerOutput(false);
@@ -2770,6 +2878,10 @@ var KI3 = (function () {
                     var has = {};
                     for (var i = 0; i < m.floating.length; i++) has[m.floating[i]] = true;
                     var lost = Object.keys(told).some(function (k) { return told[k] === true && !has[k]; });
+                    // The rings likewise (SetRing; Stats lists the windows it holds a class for).
+                    var rings = {};
+                    (m.rings || []).forEach(function (k) { rings[k] = true; });
+                    if (Object.keys(ringTold).some(function (k) { return !rings[k]; })) { ringTold = {}; lost = true; }
                     if (lost) { told = {}; scheduleAll(); }
                 }
             }
@@ -2786,7 +2898,7 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
-        told = {};                      // a new effect knows nothing: the next pass tells it again
+        told = {}; ringTold = {};       // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled

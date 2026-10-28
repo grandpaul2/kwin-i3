@@ -22,7 +22,7 @@ function loadSettings(conf) {
     return { S, logs, store, debug: ctx.DEBUG_LOG };
 }
 
-const KCFG_TYPE = { list: "String", string: "String", text: "String", size: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", workspaces: "String" };
+const KCFG_TYPE = { list: "String", string: "String", text: "String", size: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", workspaces: "String", wsgaps: "String" };
 
 function xmlEntries() {
     const out = {};
