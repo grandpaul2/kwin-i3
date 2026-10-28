@@ -69,8 +69,8 @@ output's workspace it goes to that output. Sticky across outputs: it follows its
 
 **How Yakuake hides.** If it closes and reopens its window (a new id each time), each show is a
 new window (stage 1's C, then C7's close focus when it hides); if it only hides it (minimize or an
-unmapped surface), stage 6's minimize rules apply. **Read with stage 3's live read** (Paul's go):
-Yakuake shown, hidden, shown, then Meta+Shift+B; the window ids say which.
+unmapped surface), stage 6's minimize rules apply. **Read in stage 3's test-KWin probe** (Paul's go):
+Yakuake shown, hidden, shown through its own D-Bus; the window ids say which.
 
 ## Tests
 

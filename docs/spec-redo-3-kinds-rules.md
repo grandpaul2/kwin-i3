@@ -154,13 +154,7 @@ the password prompt and Yakuake (shown, hidden, shown, for stage 9), **in the te
 (`docs/testing.md` P4, for Paul's go: each started on the headless session's display, the same
 `getWindowInfo` read on its bus, Yakuake toggled through its own D-Bus; nothing on Paul's screen).
 plasmashell's panel configuration and edit-mode windows are hard to run headless: read from
-plasmashell's source, or left on the built-in list (B's default rule waits for them). The earlier
-plan, a live read with Paul at the desk, was: Paul opens Spectacle, KRunner, a password prompt (`pkexec true`),
-KRuler, a widget's settings, a panel's configuration and Plasma's edit mode, and Yakuake (shown,
-hidden, shown, for stage 9), and presses Meta+Shift+B; for each window id in the
-capture's JSON, `busctl --user call org.kde.KWin /KWin org.kde.KWin getWindowInfo s <id>` gives
-its class, instance, type and skip-taskbar flag. Each goes to the built-in list (4), a default
-rule (B), or is left to tile; the result goes into this spec.
+plasmashell's source, or left on the built-in list (B's default rule waits for them).
 
 ## Paul's calls (2026-10-28)
 
