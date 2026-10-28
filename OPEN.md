@@ -5,9 +5,9 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, fifth session** (docs only: item 40's `behaviour.md` redo finished,
-its build planned and specced in ten stages, reviewed by an agent and by Paul, probes 90-93 run;
-69 moved alone; nothing built, nothing live changed).
+Last reconciled: **2026-10-28, seventh session** (build session: item 40's stages 7-10 built on
+branches `redo-7` … `redo-10`, each stacked on the one before, all pushed; all ten stages are now
+built, nothing merged, nothing live changed; main's `package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -48,44 +48,36 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; its first full `make test` that way is the
 next session's); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules, decided and specced; the build next** (Paul, 2026-10-27/28; from the 17:05
-capture: Prism Launcher's modal dialog and KWin took Prism to the other monitor; the capture is
-kept until stage 1 is live). **Decided**: every section of `docs/behaviour.md` is a table, each
-row against i3 4.24's source; the rows marked **"Decided, not built"** are the work (Paul's rule:
-ride i3 hard, a difference needs a specific reason; the look may differ to blend with Plasma, at no
-performance cost). Words: `docs/definitions.md`. **Planned**: `docs/spec-i3-redo-build.md`, ten
-stages, one live at a time (new windows, pointer, kinds and rules, outputs, keys, clicks and
-closes, look, fullscreen, sticky, settings page), each with its spec `docs/spec-redo-N-*.md`:
-reviewed by a separate agent and by Paul (each spec's "Paul's calls" / "Paul's review"), every new
-check, unit test and scenario approved, probes 90-93 run (branch `probe-redo`, never merged,
-results in the specs). **Stage 1 built** (2026-10-28, sixth session) on branch `redo-1`
-(`docs/spec-redo-1-new-windows.md`, "Now"): `src/placement.js` with its unit test, `placeNew`,
-`shownOutside` and `holdNew` in `src/kwin.js`, `HoldNew` in `plugin/hold.cpp`, scenario 87; `make
-unit`, scenarios 32, 40, 44, 56, 64, 72, 73, 79 and 87 green. **Stage 2 built** on branch
-`redo-2`, stacked on `redo-1` (`docs/spec-redo-2-pointer.md`, "Now"): the pointer's crossing,
-the desktop click, keys held off by override-redirect windows, the warp with `mouseWarping`,
-login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40 updated.
-**Stage 3 built** on `redo-3` (`docs/spec-redo-3-kinds-rules.md`, "Now"): i3's kinds and rules
-(`forWindow`, `assign`, the floating sizes; the old lists read as rules), the Window Rules
-sub-page as text; `rules.test.js`; 20 extended, 25, 73, 76 updated. **Stage 4 built** on
-`redo-4` (`docs/spec-redo-4-outputs.md`, "Now"): a lost output's workspaces move for good, an
-appearing one takes its assigned ones and shows its lowest, focus to the first output;
-`workspaceOutputs` a list per number; `outputs.test.js`; 40, 45-49 updated. **Stage 5 built**
-on `redo-5` (`docs/spec-redo-5-keys.md`, "Now"): i3's resize mode in the helper with the
-effect's banner, Exit, Terminal and Launcher keys, the no-back-and-forth and next/primary
-actions; 55 and 68 extended. When it goes live: `~/.local/bin/hotkeys` and dotfiles' Plasma table
-(Meta+Ctrl resize keys → Meta+R's mode). **Stage 6 built** on `redo-6`
-(`docs/spec-redo-6-clicks-closes.md`, "Now"): i3's next focus for every close and for a minimize,
-minimized windows out of the focus's reach, the Meta-drag without activation, `tilingDrag`, i3's
-drag ending, the nearest edge, the ring's resize and scroll; step A's finding fixed in the model
-(a modal dialog's parent in the focus order). **Next:
-Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
-`HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
-the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile
-(Paul, 2026-10-28).
-Left from the 2026-10-27 gap check, checked when its stage is built: §7 the hold's
-exceptions (an output being dragged on, fullscreen windows, untiled closes; stage 7); §9's helper
-details (stage 6); §11's settings-page details (stage 10).
+**40. i3's rules: all ten stages built, waiting to go live one at a time** (Paul, 2026-10-27/28;
+from the 17:05 capture: Prism Launcher's modal dialog and KWin took Prism to the other monitor;
+the capture is kept until stage 1 is live). The build plan is `docs/spec-i3-redo-build.md` (each
+stage's spec `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Built,
+each on its own branch stacked on the one before, each with `make unit` and its scenarios green,
+none merged** (Paul, 2026-10-28: build on through the stages): `redo-1` new windows and outside
+switches (+ scenario 87); `redo-2` the pointer; `redo-3` i3's kinds and rules; `redo-4` outputs;
+`redo-5` keys (the resize mode, Exit, Terminal, Launcher); `redo-6` clicks, closes, minimize;
+`redo-7` the look (three colour classes from the tree, the split indicator, `hideEdgeBorders`,
+`smartGaps`, gaps per side and per workspace; the floating colours gone); `redo-8`
+`popupDuringFullscreen`; `redo-9` sticky floating (a window on all desktops in the tree, Sticky
+Toggle unbound); `redo-10` the settings page (the Gaps sub-page, Mouse and focus, the colour
+classes, the Window Rules rows, two monitors per workspace, the helper banner, the old list keys
+migrated to rules on the page's first Apply). **Found while building 7-10, each fixed in the
+scenario to the decided behaviour**: 26 and 54 were red on `redo-6` from stages 4 and 6 (a
+replugged monitor's workspace stays, a press on the ring resizes); 62 from stage 7 (the floating
+frame in the tiled colours); KWin's own: a window's modal dialog takes the focus whatever
+`popupDuringFullscreen` says (`activation.cpp findModal`, §5 C5), and a desktops change puts a
+window first in KWin's focus chain (40). **Next: Paul's go to merge `redo-1` into main, then
+`make plugin-install` (the effect's `HoldNew`) and the reload, then his live check (stage 1's
+spec); his "it works" ends the stage and the 17:05 capture goes. Then `redo-2` the same way (each
+branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
+(the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
+`~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's
+mode; on a stock Plasma Meta+R and Meta+D collide with Spectacle's recording and Peek at Desktop:
+reported as taken, `make take-keys`). Stage 10's "done when" is Paul's pass over the pages'
+screenshots: the ones 37 and 76 kept are in `~/.local/state/kwin-i3/redo-10-shots/` (the main
+page, Keys, Workspaces, Window Rules, Gaps; no plugins in the test KWin, so the Frame section is
+greyed). Not driven in a test: F4's ring scroll (`tools/ei-send` has no scroll verb; a verb is a
+tool proposal); a unit test for the page's rule parser (`kcm/ui/settings.js`) is a proposal too.
 
 **41. A wallpaper flash again, with Firefox** (Paul's capture `2026-10-27_233113.474`, Meta+Shift+B
 during the fifth session, note: "Another wallpaper flash involving ff"; not yet read). `behaviour.md`

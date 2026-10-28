@@ -49,10 +49,14 @@ nothing, do what Plasma's own pages do.
   Workspaces…", "Configure Window Rules…", "Configure Keys…".
 - **Twins are told apart by their words**, not a long parenthesis: "Move back and forth
   (previous workspace)" beside "Move to the previous workspace".
-- **Three words for a window, and only these** (Paul, 2026-10-27, `docs/spec-window-words.md`):
-  **tiled**, **floating**, **places itself**. "Plasma" describes a look ("its own title bar, as
-  a Plasma window"), never a mode. Never "leave alone", "don't manage" or "unmanaged": none is
-  true, and "not managed" sends the user looking for where it is.
+- **A window is named by its i3 kind, and only these** (Paul, 2026-10-27/28; redo stage 10
+  supersedes `docs/spec-window-words.md`, which `docs/behaviour.md` §3 now holds): **tiling**
+  ("tiles", "a tiling window"), **floating** ("floats", "a floating window"), **sticky
+  floating** (floating, on every workspace of its monitor), and where a page ever names them,
+  **dock**, **root**, **override-redirect**. Super descriptive and explicit: "floats (a floating
+  window)" in a choice, not "float". "Plasma" describes a look ("its own title bar, as a Plasma
+  window"), never a mode. Never "places itself", "leave alone", "don't manage" or "unmanaged":
+  none is true, and "not managed" sends the user looking for where it is.
 - **Every string through `i18nc`** with KDE's context tag (`@label`, `@option:check`,
   `@action:button`, `@title:group`, `@item:inlistbox`); a number with a unit through `i18ncp`.
 

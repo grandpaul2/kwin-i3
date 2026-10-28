@@ -44,6 +44,37 @@ KCM.SimpleKCM {
             visible: kcm.scriptLoaded && !kcm.holdLoaded
             text: i18n("The frame and waiting for windows to resize need kwin-i3's plugins. Without them, tiled windows keep their title bars.")
         }
+        // The helper plugin (redo stage 10, Paul's call 40): what goes without it.
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            position: Kirigami.InlineMessage.Position.Header
+            type: Kirigami.MessageType.Information
+            visible: kcm.scriptLoaded && !kcm.helperLoaded
+            text: i18n("kwin-i3's helper plugin isn't loaded: no dragging or resizing tiled windows with the mouse, no focus from the frame, no resize mode, no layout-dependent keys, and the Configure form's Apply doesn't reach kwin-i3 (make plugin-install).")
+        }
+    }
+
+    // The old list settings (ignoreClass, ignoreRole, floatingClass, floatingTitle,
+    // floatingWorkspaces) become rules the moment the page reads them (redo stage 10): the
+    // rows show them, and Apply writes the rules and takes the old keys out of kwinrc (a
+    // setting at its default is removed). As src/rules.js reads them at load.
+    function migrateOld() {
+        const s = root.settings;
+        const rules = Logic.oldRules(s);
+        if (!rules.length && !s.floatingClass && !s.floatingTitle && !s.floatingWorkspaces && !s.ignoreClass && !s.ignoreRole) return;
+        let text = s.forWindow;
+        rules.forEach((r) => { text = Logic.addRule(text, r); });
+        s.forWindow = text;
+        s.floatingClass = ""; s.floatingTitle = ""; s.floatingWorkspaces = ""; s.ignoreClass = ""; s.ignoreRole = "";
+    }
+    Component.onCompleted: migrateOld()
+    Connections {
+        target: root.settings
+        function onFloatingClassChanged() { root.migrateOld() }
+        function onFloatingTitleChanged() { root.migrateOld() }
+        function onFloatingWorkspacesChanged() { root.migrateOld() }
+        function onIgnoreClassChanged() { root.migrateOld() }
+        function onIgnoreRoleChanged() { root.migrateOld() }
     }
 
     // A spin box that shows its unit: "8 px".
@@ -85,6 +116,41 @@ KCM.SimpleKCM {
             configObject: root.settings
             settingName: parent.settingName
             extraEnabledConditions: kcm.frameAvailable && parent.applies
+        }
+    }
+
+    // i3's three colour classes (docs/behaviour.md §7 L3, L4; redo stage 7): a row each, the
+    // frame's colour and the split indicator's (the side where the next window opens on a
+    // window alone in its split; empty in kwinrc means the frame's colour, shown as such).
+    component ClassRow: RowLayout {
+        property string frameKey
+        property string indicatorKey
+        property string who
+        spacing: Kirigami.Units.smallSpacing
+        readonly property bool applies: root.settings.tiledLook === "frame" || root.settings.frameOnFloating
+        QQC2.Label { text: i18nc("@label before a colour", "frame"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
+        FrameColour {
+            settingName: parent.frameKey
+            applies: parent.applies
+            Accessible.name: i18nc("@action:button", "Frame colour of %1", parent.who)
+        }
+        Item { implicitWidth: Kirigami.Units.largeSpacing }
+        QQC2.Label { text: i18nc("@label before a colour", "next-window side"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
+        KQC.ColorButton {
+            readonly property string key: parent.indicatorKey
+            showAlphaChannel: false
+            color: root.settings[key] || root.settings[parent.frameKey]
+            onAccepted: (c) => root.settings[key] = c.toString()
+            Accessible.name: i18nc("@action:button", "Colour of the side where the next window opens, on %1 alone in its split", parent.who)
+            KCM.SettingStateBinding { configObject: root.settings; settingName: parent.indicatorKey; extraEnabledConditions: kcm.frameAvailable && parent.applies }
+        }
+        QQC2.ToolButton {
+            visible: root.settings[parent.indicatorKey] !== ""
+            icon.name: "edit-clear"
+            onClicked: root.settings[parent.indicatorKey] = ""
+            Accessible.name: i18nc("@action:button", "Use the frame colour for the next-window side of %1", parent.who)
+            QQC2.ToolTip.text: i18nc("@info:tooltip", "Same as the frame")
+            QQC2.ToolTip.visible: hovered
         }
     }
 
@@ -139,6 +205,15 @@ KCM.SimpleKCM {
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsOuter" }
             }
             QQC2.Label { text: i18nc("@label after a gap's size", "more at screen edges"); Accessible.ignored: true }
+        }
+        SubPageButton {
+            text: i18nc("@action:button", "Configure Gaps…")
+            readonly property var g: Logic.gapsSummary(root.settings)
+            summary: [g.sides ? i18np("1 screen edge set", "%1 screen edges set", g.sides) : "",
+                      g.workspaces ? i18np("1 workspace differs", "%1 workspaces differ", g.workspaces) : "",
+                      g.smart === "on" ? i18n("none with one window") : g.smart === "inverse_outer" ? i18n("edges only with one window") : ""]
+                     .filter(s => s).join(", ") || i18n("Same on every side and workspace")
+            onClicked: kcm.push("Gaps.qml")
         }
         ChoiceBox {
             Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces split:")
@@ -204,6 +279,38 @@ KCM.SimpleKCM {
 
         Item {
             Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: i18nc("@title:group", "Mouse and focus")
+        }
+        QQC2.CheckBox {
+            Kirigami.FormData.label: i18nc("@label", "Pointer:")
+            text: i18nc("@option:check", "Move the pointer to a monitor that gets the focus")
+            checked: root.settings.mouseWarping === "output"
+            onToggled: root.settings.mouseWarping = checked ? "output" : "none"
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
+        }
+        ChoiceBox {
+            Kirigami.FormData.label: i18nc("@label:listbox", "Drag a tiling window:")
+            settingName: "tilingDrag"
+            model: [
+                { text: i18nc("@item:inlistbox", "By its title bar, or anywhere with Meta"), value: "modifier titlebar" },
+                { text: i18nc("@item:inlistbox", "Anywhere with Meta"), value: "modifier" },
+                { text: i18nc("@item:inlistbox", "By its title bar"), value: "titlebar" },
+                { text: i18nc("@item:inlistbox", "Not at all"), value: "off" },
+            ]
+        }
+        ChoiceBox {
+            Kirigami.FormData.label: i18nc("@label:listbox", "New windows over a fullscreen window:")
+            settingName: "popupDuringFullscreen"
+            model: [
+                { text: i18nc("@item:inlistbox", "Stay behind it, except its own dialogs"), value: "smart" },
+                { text: i18nc("@item:inlistbox", "Always stay behind it"), value: "ignore" },
+                { text: i18nc("@item:inlistbox", "End the fullscreen, if a dialog"), value: "leave_fullscreen" },
+                { text: i18nc("@item:inlistbox", "Come in front, if floating"), value: "all" },
+            ]
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Workspaces")
         }
         QQC2.CheckBox {
@@ -216,7 +323,7 @@ KCM.SimpleKCM {
         SubPageButton {
             Kirigami.FormData.label: i18nc("@label", "Each workspace:")
             text: i18nc("@action:button", "Configure Workspaces…")
-            readonly property var counts: Logic.workspaceCounts(root.settings.workspaceOutputs, root.settings.floatingWorkspaces)
+            readonly property var counts: { "pinned": Object.keys(Logic.parseOutputs(root.settings.workspaceOutputs)).length, "plasma": Logic.floatingWorkspaceList(root.settings.forWindow).length }
             summary: counts.pinned === 0 && counts.plasma === 0 ? i18n("All tiled, on any monitor")
                 : [counts.pinned ? i18np("1 on a set monitor", "%1 on a set monitor", counts.pinned) : "",
                    counts.plasma ? i18np("1 floating", "%1 floating", counts.plasma) : ""].filter(s => s).join(", ")
@@ -257,23 +364,33 @@ KCM.SimpleKCM {
             Accessible.name: i18nc("@label:spinbox", "Frame width")
             KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable && (root.settings.tiledLook === "frame" || root.settings.frameOnFloating) }
         }
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Tiled frame:")
-            spacing: Kirigami.Units.smallSpacing
-            readonly property bool applies: root.settings.tiledLook === "frame"
-            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
-            FrameColour {
-                settingName: "frameActive"
-                applies: parent.applies
-                Accessible.name: i18nc("@action:button", "Frame colour of the focused tiled window")
-            }
-            Item { implicitWidth: Kirigami.Units.largeSpacing }
-            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
-            FrameColour {
-                settingName: "frameInactive"
-                applies: parent.applies
-                Accessible.name: i18nc("@action:button", "Frame colour of other tiled windows")
-            }
+        ClassRow {
+            Kirigami.FormData.label: i18nc("@label", "Focused window:")
+            frameKey: "frameActive"; indicatorKey: "frameIndicatorActive"
+            who: i18nc("@item which window", "the focused window")
+        }
+        ClassRow {
+            Kirigami.FormData.label: i18nc("@label", "Focused on another monitor or split:")
+            frameKey: "frameFocusedInactive"; indicatorKey: "frameIndicatorFocusedInactive"
+            who: i18nc("@item which window", "the window that had the focus on another monitor or in another split")
+        }
+        ClassRow {
+            Kirigami.FormData.label: i18nc("@label", "Other windows:")
+            frameKey: "frameInactive"; indicatorKey: "frameIndicatorInactive"
+            who: i18nc("@item which window", "other windows")
+        }
+        ChoiceBox {
+            Kirigami.FormData.label: i18nc("@label:listbox", "Hide frame sides:")
+            settingName: "hideEdgeBorders"
+            applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
+            model: [
+                { text: i18nc("@item:inlistbox", "Never"), value: "none" },
+                { text: i18nc("@item:inlistbox", "At the screen's left and right edges"), value: "vertical" },
+                { text: i18nc("@item:inlistbox", "At the screen's top and bottom edges"), value: "horizontal" },
+                { text: i18nc("@item:inlistbox", "At every screen edge"), value: "both" },
+                { text: i18nc("@item:inlistbox", "All of it, when a workspace has one window"), value: "smart" },
+                { text: i18nc("@item:inlistbox", "The same, only with no gap at the edges"), value: "smart_no_gaps" },
+            ]
         }
         // Drawn by kwini3hold (docs/spec-rounded-corners.md), so it needs the plugins too; a
         // title bar brings its theme's corners. Under the tiled colours, unlabelled.
@@ -283,9 +400,7 @@ KCM.SimpleKCM {
             onToggled: root.settings.roundedCorners = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
         }
-        // A floating window's frame uses the tiled colours (redo stage 7, §7 L11): the checkbox
-        // alone. The three colour classes and the indicator colours, hide_edge_borders, the
-        // per-side and per-workspace gaps and smart_gaps reach this page with redo stage 10.
+        // A floating window's frame uses the same colour classes (redo stage 7, §7 L11).
         QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Floating windows:")
             text: i18nc("@option:check", "Draw the frame on floating windows too")
@@ -302,8 +417,8 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label", "Rules:")
             text: i18nc("@action:button", "Configure Window Rules…")
             readonly property var counts: Logic.ruleCounts(root.settings)
-            summary: i18np("1 floating rule", "%1 floating rules", counts.rules) + ", "
-                   + (counts.assigns ? i18np("1 workspace assignment", "%1 workspace assignments", counts.assigns) : i18n("no workspace assignments"))
+            summary: i18np("1 rule", "%1 rules", counts.rules + counts.assigns)
+                   + (counts.assigns ? ", " + i18np("1 sending to a workspace or monitor", "%1 sending to a workspace or monitor", counts.assigns) : "")
             onClicked: kcm.push("WindowRules.qml")
         }
 

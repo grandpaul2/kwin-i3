@@ -72,7 +72,165 @@ function workspaceCounts(outputsText, floatingText) {
     return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
 }
 
+// ---- the rules as rows (redo stage 10, docs/spec-redo-10-settings-page.md) -------------------
+// A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
+// workspace (N) or output (name), src }, when the rule's criteria are among the four the page
+// shows (class, title, window_role, window_type; src/rules.js parseCriteria's grammar); any
+// other rule is { kind: "raw", text } and edited as text. The page writes every row back in
+// i3's words (formatRule), so a rule it read it writes the same.
+const RAW = { kind: "raw" };
+function unquote(v) { return v.replace(/\\"/g, '"'); }
+function quote(v) { return '"' + String(v).replace(/"/g, '\\"') + '"'; }
+function parseCriteria(text) {
+    const crit = {};
+    let rest = text.trim(), n = 0;
+    while (rest.length) {
+        const m = /^(\w+)(?:\s*=\s*"((?:[^"\\]|\\.)*)")?\s*/.exec(rest);
+        if (!m) return null;
+        rest = rest.slice(m[0].length);
+        if (m[1] === "floating" || m[1] === "tiling" || m[1] === "all") { if (m[2] !== undefined) return null; crit[m[1]] = true; }
+        else if (m[2] === undefined) return null;
+        else crit[m[1]] = unquote(m[2]);
+        n++;
+    }
+    return n ? crit : null;
+}
+const SHOWN = ["class", "title", "window_role", "window_type"];
+function parseRule(src, assign) {
+    const m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(src);
+    const crit = m ? parseCriteria(m[1]) : null;
+    if (!crit || Object.keys(crit).some((k) => SHOWN.indexOf(k) < 0)) return Object.assign({ text: src, src }, RAW);
+    const rest = m[2].trim();
+    const row = { cls: crit.class || "", title: crit.title || "", role: crit.window_role || "", type: crit.window_type || "", src };
+    if (!assign) {
+        const f = /^floating\s+(enable|disable)$/.exec(rest);
+        if (!f) return Object.assign({ text: src, src }, RAW);
+        row.kind = f[1] === "enable" ? "float" : "tile";
+        return row;
+    }
+    let a = /^(?:(?:→|->)\s*)?(?:workspace\s+)?(?:number\s+)?([0-9]+)$/.exec(rest);
+    if (a && +a[1] >= 1 && +a[1] <= 10) { row.kind = "workspace"; row.workspace = +a[1]; return row; }
+    a = /^(?:(?:→|->)\s*)?output\s+(\S+)$/.exec(rest);
+    if (a) { row.kind = "output"; row.output = a[1]; return row; }
+    return Object.assign({ text: src, src }, RAW);
+}
+// Every rule of both settings as rows, the for_window ones first (as the script runs them).
+function parseRules(forWindow, assign) {
+    return splitRules(forWindow).map((r) => parseRule(r, false)).concat(splitRules(assign).map((r) => parseRule(r, true)));
+}
+function formatRule(row) {
+    if (row.kind === "raw") return String(row.text || "").trim();
+    const crit = [];
+    if (row.cls) crit.push("class=" + quote(row.cls));
+    if (row.title) crit.push("title=" + quote(row.title));
+    if (row.role) crit.push("window_role=" + quote(row.role));
+    if (row.type) crit.push("window_type=" + quote(row.type));
+    if (!crit.length) return "";                                  // a row with nothing to match: not written
+    const c = "[" + crit.join(" ") + "] ";
+    if (row.kind === "float") return c + "floating enable";
+    if (row.kind === "tile") return c + "floating disable";
+    if (row.kind === "workspace") return c + "→ " + (row.workspace || 1);
+    if (row.kind === "output") return row.output ? c + "output " + row.output : "";
+    return "";
+}
+// -> { forWindow, assign }: a raw row goes to the setting it came from (assign: its text names
+// a workspace or an output), one rule per line, empty rows dropped.
+function formatRules(rows) {
+    const fw = [], as = [];
+    rows.forEach((row) => {
+        const text = formatRule(row);
+        if (!text) return;
+        const isAssign = row.kind === "workspace" || row.kind === "output" ||
+            (row.kind === "raw" && /\]\s*(?:(?:→|->)|workspace\s|number\s|output\s|[0-9]+\s*$)/.test(text));
+        (isAssign ? as : fw).push(text);
+    });
+    return { forWindow: fw.join("\n"), assign: as.join("\n") };
+}
+// The criteria the page escapes for a picked or typed name, matched whole.
+function escapeRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function wholeClass(cls) { return "^" + escapeRe(cls) + "$"; }
+
+// A workspace whose new windows float (the Workspaces sub-page): the rule
+// [workspace="^N$"] floating enable in forWindow, as src/rules.js reads the old floatingWorkspaces.
+function workspaceRule(n) { return '[workspace="^' + n + '$"] floating enable'; }
+function floatingWorkspaceList(forWindow) {
+    const out = [];
+    splitRules(forWindow).forEach((r) => { const m = /^\[workspace="\^([0-9]+)\$"\]\s*floating\s+enable$/.exec(r); if (m) out.push(+m[1]); });
+    return out.sort((a, b) => a - b);
+}
+function setWorkspaceFloating(forWindow, n, on) {
+    const rules = splitRules(forWindow).filter((r) => r !== workspaceRule(n));
+    if (on) rules.push(workspaceRule(n));
+    return rules.join("\n");
+}
+
+// Per-workspace gaps (workspaceGaps; src/settings.js parses the same lines): "3 gaps inner 10,
+// 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0, right: 0, bottom: 0, left: 0 } }. The page
+// sets inner and outer (all four sides) per workspace and writes them back as "N gaps inner M,
+// N gaps outer M"; sides set one by one in kwinrc are kept as they are while the page doesn't
+// touch that workspace.
+function parseWorkspaceGaps(text) {
+    const ws = {};
+    String(text || "").split(/[\n;,]/).forEach((e) => {
+        const m = /^\s*(?:workspace\s+)?([0-9]+)\s+gaps\s+(inner|outer|horizontal|vertical|top|right|bottom|left)\s+(-?[0-9]+)\s*$/.exec(e);
+        if (!m || +m[1] < 1 || +m[1] > 10) return;
+        const g = ws[+m[1]] || (ws[+m[1]] = {}), v = +m[3];
+        const sides = { inner: ["inner"], outer: ["top", "right", "bottom", "left"], horizontal: ["left", "right"], vertical: ["top", "bottom"] }[m[2]] || [m[2]];
+        sides.forEach((s) => { g[s] = v; });
+    });
+    return ws;
+}
+function formatWorkspaceGaps(map) {
+    const out = [];
+    Object.keys(map).map(Number).sort((a, b) => a - b).forEach((n) => {
+        const g = map[n];
+        if (g.inner) out.push(n + " gaps inner " + g.inner);
+        const sides = ["top", "right", "bottom", "left"].filter((s) => g[s]);
+        if (sides.length === 4 && g.top === g.right && g.top === g.bottom && g.top === g.left) out.push(n + " gaps outer " + g.top);
+        else sides.forEach((s) => out.push(n + " gaps " + s + " " + g[s]));
+    });
+    return out.join(", ");
+}
+// A workspace's outer gap as one number: the four sides when equal, else null (shown as "mixed").
+function outerOf(g) {
+    const v = ["top", "right", "bottom", "left"].map((s) => g[s] || 0);
+    return v.every((x) => x === v[0]) ? v[0] : null;
+}
+function setWorkspaceGap(text, n, which, value) {
+    const map = parseWorkspaceGaps(text), g = map[n] || (map[n] = {});
+    if (which === "inner") g.inner = value;
+    else ["top", "right", "bottom", "left"].forEach((s) => { g[s] = value; });
+    return formatWorkspaceGaps(map);
+}
+// The Gaps button's summary.
+function gapsSummary(settings) {
+    const sides = [settings.gapsTop, settings.gapsRight, settings.gapsBottom, settings.gapsLeft].filter((v) => v >= 0).length;
+    const ws = Object.keys(parseWorkspaceGaps(settings.workspaceGaps)).length;
+    return { sides, workspaces: ws, smart: settings.smartGaps };
+}
+
+// The old list settings (ignoreClass, ignoreRole, floatingClass, floatingTitle,
+// floatingWorkspaces) as rules, exactly as src/rules.js oldRules reads them (stage 3's C), for
+// the migration the page makes at load (kcm.cpp): the old entries that were defaults are the
+// built-in kinds and give no rule. -> the rules to append to forWindow.
+const OLD_IGNORE_CLASS = ["krunner", "yakuake", "spectacle", "kded5", "xwaylandvideobridge", "plasmashell",
+                          "ksplashqml", "org.kde.plasmashell", "org.kde.polkit-kde-authentication-agent-1",
+                          "org.kde.kruler", "kruler", "kwin_wayland", "ksmserver-logout-greeter"];
+const OLD_IGNORE_ROLE = ["quake"];
+function list(text) { return String(text || "").split(",").map((s) => s.trim()).filter((s) => s); }
+function oldRules(settings) {
+    const out = [];
+    list(settings.floatingClass).forEach((c) => { out.push('[class="' + wholeClass(c) + '"] floating enable'); out.push('[instance="' + wholeClass(c) + '"] floating enable'); });
+    list(settings.floatingTitle).forEach((t) => out.push('[title="' + escapeRe(t) + '"] floating enable'));
+    parseWorkspaces(settings.floatingWorkspaces).forEach((n) => out.push(workspaceRule(n)));
+    list(settings.ignoreClass).forEach((c) => { if (OLD_IGNORE_CLASS.indexOf(c) < 0) { out.push('[class="' + wholeClass(c) + '"] floating enable'); out.push('[instance="' + wholeClass(c) + '"] floating enable'); } });
+    list(settings.ignoreRole).forEach((r) => { if (OLD_IGNORE_ROLE.indexOf(r) < 0) out.push('[window_role="' + wholeClass(r) + '"] floating enable'); });
+    return out;
+}
+
 if (typeof module !== "undefined") module.exports = {
     parseOutputs, parseOutputLists, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
-    workspaceCounts, ruleCounts,
+    workspaceCounts, ruleCounts, parseRules, parseRule, formatRule, formatRules, wholeClass, workspaceRule,
+    floatingWorkspaceList, setWorkspaceFloating, parseWorkspaceGaps, formatWorkspaceGaps, outerOf, setWorkspaceGap,
+    gapsSummary, oldRules,
 };
