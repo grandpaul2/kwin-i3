@@ -32,6 +32,8 @@ using namespace KWin;
 // where the new ones are missing.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
+static const int s_indicatorMs = 5000;   // a split's indicator shows this long (Paul, 2026-10-28)
+static const int s_indicatorFadeMs = 500; // then fades into the frame's colour over this
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
 static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
 // Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
@@ -72,6 +74,8 @@ Hold::Hold()
     m_dragCursor.setSingleShot(true);
     m_dragCursor.setInterval(500);
     connect(&m_dragCursor, &QTimer::timeout, this, [this] { effects->stopMouseInterception(this); });
+    m_indicatorFade.setInterval(16);
+    connect(&m_indicatorFade, &QTimer::timeout, this, &Hold::fadeIndicators);
 
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
@@ -796,6 +800,48 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
         }
         m_rings.insert(id, r);
     }
+    repaintRingOf(id);
+}
+
+void Hold::ShowIndicator(const QString &id)
+{
+    m_indicatorShown[id].start();
+    repaintRingOf(id);
+    QTimer::singleShot(s_indicatorMs, this, [this] { m_indicatorFade.start(); });
+}
+
+double Hold::indicatorShown(EffectWindow *w) const
+{
+    const auto it = m_indicatorShown.constFind(w->internalId().toString());
+    if (it == m_indicatorShown.cend()) {
+        return 0;
+    }
+    return std::clamp(1.0 - double(it->elapsed() - s_indicatorMs) / s_indicatorFadeMs, 0.0, 1.0);
+}
+
+// Each frame of a fade repaints the fading rings only; the timer stops with the last one.
+void Hold::fadeIndicators()
+{
+    bool fading = false;
+    for (auto it = m_indicatorShown.begin(); it != m_indicatorShown.end();) {
+        const qint64 ms = it->elapsed();
+        if (ms >= s_indicatorMs) {
+            repaintRingOf(it.key());
+        }
+        if (ms >= s_indicatorMs + s_indicatorFadeMs) {
+            it = m_indicatorShown.erase(it);
+            continue;
+        }
+        fading = fading || ms >= s_indicatorMs;
+        ++it;
+    }
+    if (!fading) {
+        m_indicatorFade.stop();
+    }
+}
+
+void Hold::repaintRingOf(const QString &id)
+{
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
         if (w->internalId().toString() == id) {
@@ -1033,7 +1079,12 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     // the sides in two colours at most: the class's, and its indicator colour on the indicator.
     const Ring how = ringOf(w);
     const QColor colour = m_frameColour[how.cls];
-    const QColor indicator = m_indicatorColour[how.cls].isValid() ? m_indicatorColour[how.cls] : colour;
+    // The indicator only after a split key (ShowIndicator), fading into the frame's colour.
+    const QColor full = m_indicatorColour[how.cls].isValid() ? m_indicatorColour[how.cls] : colour;
+    const double shown = indicatorShown(w);
+    const QColor indicator = QColor::fromRgbF(colour.redF() + (full.redF() - colour.redF()) * shown,
+                                              colour.greenF() + (full.greenF() - colour.greenF()) * shown,
+                                              colour.blueF() + (full.blueF() - colour.blueF()) * shown);
     QList<QVector2D> verts[2];                             // the frame's, the indicator's
     for (const Bar &bar : ring(drawn, scale, radius, how)) {
         const Rect device(bar.rect.x() - origin.x(), bar.rect.y() - origin.y(), bar.rect.width(), bar.rect.height());

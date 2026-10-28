@@ -1052,7 +1052,12 @@ var KI3 = (function () {
     // for the look: no per-frame cost). Until told, and after a release, the effect colours by
     // KWin's active window (an empty class forgets a window).
     var ringTold = {};
+    // A split key's window (Paul, 2026-10-28: the indicator only after Split H, Split V, Toggle
+    // Split, for a few seconds; ≠ i3, always on): shown once its side is told, at the pass's end.
+    var indicatorFor = null;
     function tellRings() {
+        var flash = indicatorFor;
+        indicatorFor = null;
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
         function cls(c) {
@@ -1083,6 +1088,8 @@ var KI3 = (function () {
             });
             ws.floating.forEach(function (c) { if (wins[c.win]) send(c.win, cls(c), "", ""); });
         });
+        if (flash && flash.win !== null && wins[flash.win])
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ShowIndicator", flash.win);
     }
     function forgetRings() {
         Object.keys(ringTold).forEach(function (key) {
@@ -2034,9 +2041,9 @@ var KI3 = (function () {
     }
 
     var actions = {
-        "Split H": function (c) { model.split(c, "h"); },
-        "Split V": function (c) { model.split(c, "v"); },
-        "Toggle Split": function (c) { model.toggleSplit(c); },
+        "Split H": function (c) { model.split(c, "h"); indicatorFor = c; },
+        "Split V": function (c) { model.split(c, "v"); indicatorFor = c; },
+        "Toggle Split": function (c) { model.toggleSplit(c); indicatorFor = c; },
         "Floating Toggle": function (c) {
             if (!c) return;
             var w = wins[c.win];
