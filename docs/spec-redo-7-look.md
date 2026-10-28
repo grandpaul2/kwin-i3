@@ -15,8 +15,7 @@ replugged monitor expected its workspace back (W3 now keeps it on the first moni
 drag on the ring expected nothing (Z3 resizes). Both updated here to the decided behaviour. **Live, then reverted, then rebuilt (2026-10-28)**: Paul, after it went live: the
 "previous focus" ring (`focused_inactive`) confused more than it told. Rebuilt on `redo-7b` with
 that class left out (two classes, focused and unfocused; `frameFocusedInactive` and
-`frameIndicatorFocusedInactive` gone; 57's checks expect unfocused there); the rest as built. **Reverted again the same day** (Paul: "something else is breaking the ring
-focus changing"); main is stage 6's; the diagnosis is `OPEN.md` item 40's next step.
+`frameIndicatorFocusedInactive` gone; 57's checks expect unfocused there); the rest as built.
 
 **The rows**: `behaviour.md` §7 L3 (three colour classes), L4 (the split indicator), L6
 (`hide_edge_borders`, `smart_gaps`), L11 (floating rings in the same classes), §11 N2 (outer gaps

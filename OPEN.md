@@ -63,8 +63,9 @@ focus switching issue"). Went live twice, reverted twice: `redo-7` (Paul: the "p
 i3's `focused_inactive`, more confusing than useful), then `redo-7b` (that class left out, nothing
 else of the plan changed; 25 26 54 57 58 64 78 85 green in the test KWin), reverted because
 **"something else is breaking the ring focus changing"**: live, the ring's colour doesn't follow
-the focus, though 57 passed. Main's code is stage 6's; both branches stay on origin. Next: what the
-ring does wrong (Paul, or a Meta+Shift+B at the moment), then the cause from the code before any
+the focus, though 57 passed. **Loaded again 2026-10-28 (ninth session, Paul's go) for a capture**:
+main's code is `redo-7b`'s; both branches stay on origin. Next: what the
+ring does wrong (Paul's Meta+Shift+B at the moment), then the cause from the code before any
 change: `tellRings` runs at the end of a pass, so a focus change without a pass would leave the
 old class told; the effect colours an untold window by KWin's active window; the test KWin's
 57 drives focus by keys only. Then `redo-7b` fixed, Paul's go to merge, plugin-install, reload.

@@ -283,31 +283,15 @@ KCM.SimpleKCM {
             onToggled: root.settings.roundedCorners = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
         }
-        // The floating colours only mean something with the frame on floating windows
-        // (docs/spec-window-modes.md, decision 3): the checkbox, then the colours under it, as
-        // the tiled row (docs/spec-settings-cleanup.md).
+        // A floating window's frame uses the tiled colours (redo stage 7, §7 L11): the checkbox
+        // alone. The colour classes and the indicator colours, hide_edge_borders, the
+        // per-side and per-workspace gaps and smart_gaps reach this page with redo stage 10.
         QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Floating windows:")
             text: i18nc("@option:check", "Draw the frame on floating windows too")
             checked: root.settings.frameOnFloating
             onToggled: root.settings.frameOnFloating = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
-        }
-        RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            QQC2.Label { text: i18nc("@label before a colour", "focused"); Accessible.ignored: true; enabled: root.settings.frameOnFloating && kcm.frameAvailable }
-            FrameColour {
-                settingName: "frameFloatingActive"
-                applies: root.settings.frameOnFloating
-                Accessible.name: i18nc("@action:button", "Frame colour of the focused floating window")
-            }
-            Item { implicitWidth: Kirigami.Units.largeSpacing }
-            QQC2.Label { text: i18nc("@label before a colour", "others"); Accessible.ignored: true; enabled: root.settings.frameOnFloating && kcm.frameAvailable }
-            FrameColour {
-                settingName: "frameFloatingInactive"
-                applies: root.settings.frameOnFloating
-                Accessible.name: i18nc("@action:button", "Frame colour of other floating windows")
-            }
         }
 
         Item {
