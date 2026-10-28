@@ -69,8 +69,10 @@ frame in the tiled colours); KWin's own: a window's modal dialog takes the focus
 window first in KWin's focus chain (40). **Stages 1-3 done 2026-10-28: `redo-1` to `redo-3` merged,
 live, and Paul's "it works" (stage 3's Window Rules page waits for stage 10's `make kcm-install`).
 `redo-4` merged into main and live 2026-10-28 (Paul's go; `make unit` and its ten
-scenarios green on main). Next: Paul's live check (stage 4's spec,
-with its morning capture after a night with the monitors asleep); then the rest the same way (each
+scenarios green on main); **its live check deferred by Paul (2026-10-28: not set up for it that
+night), still owed**: stage 4's spec (the unplug, an assignment, and
+the morning capture after a night with the monitors asleep). Next: Paul's go to merge `redo-5`; then
+the rest the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's
