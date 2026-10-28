@@ -39,5 +39,24 @@ var Rules = (function () {
         return "tile";
     }
 
-    return { classify: classify };
+    // i3's kind of a window kwin-i3 keeps out of the tree (docs/behaviour.md §3): "dock" (a
+    // panel), "root" (the desktop window), "override-redirect" (KRunner, popups, menus,
+    // tooltips, notifications, OSDs, Plasma's system windows, the logout screen), or null: a
+    // window kwin-i3 manages, or one stage 3 gives its kind (Yakuake, Spectacle, the password
+    // prompt, plasmashell's ordinary windows: kept out of the tree as today). An override-redirect
+    // window holds the keyboard against kwin-i3's keys (§5 A3-A5), as dmenu does in i3.
+    var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
+                            "kwin_wayland", "ksmserver-logout-greeter"];
+    function i3Kind(w) {
+        if (w.dock) return "dock";
+        if (w.desktopWindow) return "root";
+        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip || w.notification ||
+            w.criticalNotification || w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";
+        return null;
+    }
+
+    return { classify: classify, i3Kind: i3Kind };
 })();
+
+if (typeof module !== "undefined") module.exports = Rules;

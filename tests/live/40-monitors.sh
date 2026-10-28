@@ -8,11 +8,20 @@ cursor_on() {   # the pointer is on that screen
     if [[ $1 == Virtual-0 ]]; then (( x < 1280 )); else (( x >= 1280 )); fi
 }
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
+point 1900 600                        # the pointer on the second monitor before kwin-i3 starts
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
 check "login numbering: 1 on the first monitor" poll shows Virtual-0 1
 check "login numbering: 2 on the second"    poll shows Virtual-1 2
+# i3's start: the focus on the output under the pointer (§12 P2, redo stage 2): an empty, hidden
+# workspace opens on the focused output.
+key "Workspace 3"
+check "login: the focus is on the monitor under the pointer (Meta+3 opens there)" poll shows Virtual-1 3
+key "Workspace 2"
+check "Meta+2: 2 is back on the second monitor" poll shows Virtual-1 2
+key "Workspace 1"
+check "Meta+1: the pointer comes to the first monitor" poll cursor_on Virtual-0
 
 client --title a
 check "a on workspace 1, first monitor"     geom_is a "0,0 1280x720"

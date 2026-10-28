@@ -42,6 +42,9 @@
     <entry name="focusWrapping" type="String">
       <default>yes</default>
     </entry>
+    <entry name="mouseWarping" type="String">
+      <default>output</default>
+    </entry>
     <entry name="workspaceOutputs" type="String">
       <default></default>
     </entry>

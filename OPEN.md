@@ -61,9 +61,14 @@ check, unit test and scenario approved, probes 90-93 run (branch `probe-redo`, n
 results in the specs). **Stage 1 built** (2026-10-28, sixth session) on branch `redo-1`
 (`docs/spec-redo-1-new-windows.md`, "Now"): `src/placement.js` with its unit test, `placeNew`,
 `shownOutside` and `holdNew` in `src/kwin.js`, `HoldNew` in `plugin/hold.cpp`, scenario 87; `make
-unit`, scenarios 32, 40, 44, 56, 64, 72, 73, 79 and 87 green. **Next: Paul's go to merge, then
-to reload (and `make plugin-install` for the effect's `HoldNew`), then his live check** (the
-spec's "Live check"); his "it works" ends the stage and the 17:05 capture goes. Then stage 2.
+unit`, scenarios 32, 40, 44, 56, 64, 72, 73, 79 and 87 green. **Stage 2 built** on branch
+`redo-2`, stacked on `redo-1` (`docs/spec-redo-2-pointer.md`, "Now"): the pointer's crossing,
+the desktop click, keys held off by override-redirect windows, the warp with `mouseWarping`,
+login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40 updated. **Next:
+Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
+`HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
+the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile
+(Paul, 2026-10-28).
 Left from the 2026-10-27 gap check, checked when its stage is built: §7 the hold's
 exceptions (an output being dragged on, fullscreen windows, untiled closes; stage 7); §9's helper
 details (stage 6); §11's settings-page details (stage 10).

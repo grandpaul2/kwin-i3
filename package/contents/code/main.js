@@ -42,6 +42,7 @@ var Settings = (function () {
         floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
+        mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
@@ -1242,8 +1243,27 @@ var Rules = (function () {
         return "tile";
     }
 
-    return { classify: classify };
+    // i3's kind of a window kwin-i3 keeps out of the tree (docs/behaviour.md §3): "dock" (a
+    // panel), "root" (the desktop window), "override-redirect" (KRunner, popups, menus,
+    // tooltips, notifications, OSDs, Plasma's system windows, the logout screen), or null: a
+    // window kwin-i3 manages, or one stage 3 gives its kind (Yakuake, Spectacle, the password
+    // prompt, plasmashell's ordinary windows: kept out of the tree as today). An override-redirect
+    // window holds the keyboard against kwin-i3's keys (§5 A3-A5), as dmenu does in i3.
+    var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
+                            "kwin_wayland", "ksmserver-logout-greeter"];
+    function i3Kind(w) {
+        if (w.dock) return "dock";
+        if (w.desktopWindow) return "root";
+        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip || w.notification ||
+            w.criticalNotification || w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";
+        return null;
+    }
+
+    return { classify: classify, i3Kind: i3Kind };
 })();
+
+if (typeof module !== "undefined") module.exports = Rules;
 // ---- src/workspaces.js
 // Workspaces and monitors, carried over from i3ws (~/.dotfiles, plasma/.../kwin/scripts/i3ws).
 // Workspace N is virtual desktop N. It lives on one monitor (its "home"), shown there or hidden;
@@ -1492,6 +1512,9 @@ var KI3 = (function () {
     var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
     // Newcomers the effect hides until kwin-i3 has moved them (holdNew): window id -> true.
     var holdNamed = {};
+    // A window outside the tree that is closing (its `closed` signal, before windowRemoved): KWin's
+    // activation in between is its own next choice, not the user's (windowActivated).
+    var closingOutside = null;
     var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -1504,7 +1527,7 @@ var KI3 = (function () {
     // _tree_next and workspace_show). Any other pass (a window closed, settings, monitors) moves
     // no pointer: a panel popup closing on the other monitor sent it to the focused window
     // although focus never moved (Paul, 2026-10-25; tests/live/72-pointer-stays.sh).
-    var focusPending = null; // { from: screen or null, checked: KWin said Show Desktop is off (applyFocus) }
+    var focusPending = null; // { byKey: a key asked (wantFocus), checked: KWin said Show Desktop is off (applyFocus) }
 
     function id(w) { return String(w.internalId); }
 
@@ -1612,13 +1635,16 @@ var KI3 = (function () {
         if (ok) failures = 0; else retrySoon();
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place (i3ws learned this, 2026-10-21).
-        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.from, fp.checked); }
+        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.byKey, fp.checked); }
         showHeld();
         rememberShown();
     }
-    function wantFocus(from) {
-        if (!focusPending) focusPending = { from: from || null };
-        else if (from && !focusPending.from) focusPending.from = from;
+    // byKey: a key or an outside desktop switch asked for this pass (i3's callers of x_set_warp_to):
+    // it takes the focus from an open window kwin-i3 doesn't manage and may warp the pointer; a
+    // passive pass (a close, a reload, a monitor change, the pointer's crossing) does neither.
+    function wantFocus(byKey) {
+        if (!focusPending) focusPending = { byKey: !!byKey };
+        else if (byKey) focusPending.byKey = true;
         kick();
     }
 
@@ -2754,9 +2780,16 @@ var KI3 = (function () {
     // ---- focus -----------------------------------------------------------------------------
 
     // Make KWin show what the model has focused: its workspace on its monitor, the window
-    // active; and the pointer follows when focus changed monitor (i3's mouse_warping output).
-    // checked: this pass has KWin's answer that Show Desktop is off (below).
-    function applyFocus(from, checked) {
+    // active; and the pointer follows when the focus changed output and the pointer isn't there
+    // already (i3's x_push_changes with mouse_warping output; docs/spec-redo-2-pointer.md D):
+    // only for a pass a key or an outside switch asked for (byKey), as i3 warps from workspace_show
+    // and the focus commands, never from a close (the start menu closing sent the pointer across,
+    // Paul, 2026-10-25; 72-pointer-stays). checked: this pass has KWin's answer that Show Desktop
+    // is off (below).
+    var focusOutput = null;     // the output the focus was last applied or taken on, by name
+    function pointerOn() { var p = workspace.cursorPos; return screenAt(p.x, p.y); }
+    function warps() { return Settings.get("mouseWarping") !== "none"; }
+    function applyFocus(byKey, checked) {
         var f = model.focused;
         if (!f) return;
         // A passive pass (no key action: a window closed, a reload, a monitor change) leaves an
@@ -2765,7 +2798,7 @@ var KI3 = (function () {
         // that window closes, its own pass brings kwin-i3's focus back. The desktop and the
         // panel hold the focus only when nothing else does, so they don't count.
         var a = workspace.activeWindow;
-        if (!from && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock) return;
+        if (!byKey && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock) return;
         // Except with Show Desktop on: then the desktop holds the focus on purpose (Plasma's edit
         // mode turns it on as the panel's menu closes, and the menu closing is this pass), and
         // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
@@ -2775,7 +2808,7 @@ var KI3 = (function () {
         // window is left to focus on a monitor is also the desktop: that pass still brings the
         // focus back (73-places-itself). The answer rides on focusPending, so it is the pass it
         // brought that has it, however long a rebuild holds that pass (review).
-        if (!from && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
+        if (!byKey && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
             callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
                      "showingDesktop", guard("showing desktop", function (showing) {
                 if (showing) return;
@@ -2785,6 +2818,9 @@ var KI3 = (function () {
             return;
         }
         var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
+        var crossed = focusOutput !== null && focusOutput !== s.name;
+        focusOutput = s.name;
+        var warp = byKey && crossed && warps() && pointerOn() !== s;
         if (workspace.currentDesktopForScreen(s) !== desk) {
             showOn(desk, s);
             // KWin places a tile's windows only while its desktop is current (Tile::manage calls
@@ -2797,14 +2833,14 @@ var KI3 = (function () {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
             // needs no guard of its own (a fault here alone changed nothing, 73-places-itself).
-            if (workspace.activeScreen !== s) {
-                invoke("Switch to Screen " + workspace.screens.indexOf(s));
-                if (from && from !== s) invoke("MoveMouseToCenter");
-            }
+            if (workspace.activeScreen !== s) invoke("Switch to Screen " + workspace.screens.indexOf(s));
+            if (warp) invoke("MoveMouseToCenter");
             // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
-            // it with the window just moved away, hidden on another workspace (fuzzer, I8).
-            var a = workspace.activeWindow, ac = a ? model.byWin[id(a)] : null;
-            if (f.type === "ws" && ac && Tree.wsOf(ac) !== ws) workspace.activeWindow = null;
+            // it with the window just moved away, hidden on another workspace (fuzzer, I8); the
+            // desktop window doesn't keep it either (i3's root click, §5 B4: the Show Desktop
+            // check above has already let this pass through).
+            var ac = a && !a.deleted ? model.byWin[id(a)] : null;
+            if (f.type === "ws" && ((ac && Tree.wsOf(ac) !== ws) || (a && !a.deleted && a.desktopWindow))) workspace.activeWindow = null;
             return;
         }
         var w = wins[f.win];
@@ -2821,7 +2857,7 @@ var KI3 = (function () {
             try { workspace.activeWindow = w; } finally { switching--; }
             if (before && workspace.currentDesktopForScreen(o) !== before) showOn(before, o);
         }
-        if (from && from !== s) invoke("MoveMouseToFocus");
+        if (warp) invoke("MoveMouseToFocus");
     }
 
     function focusedCon() {
@@ -3131,8 +3167,94 @@ var KI3 = (function () {
         }));
     }
 
+    // ---- the pointer (docs/spec-redo-2-pointer.md, A) --------------------------------------
+
+    // i3's check_crossing_screen_boundary (handlers.c): with focus follows mouse, the pointer
+    // moving onto another output over the root window or a dock focuses that output's visible
+    // workspace: its fullscreen window, else its last focus, or the empty workspace, with no
+    // warp (the pointer is there). Over a tiling or floating window, KWin's own focus follows
+    // mouse activates it (§5 B1), a turn later (probe 91). Over an override-redirect window (a
+    // popup spanning the boundary) the model's focus moves and the popup keeps the keyboard (D7).
+    // Per motion this costs one rectangle test per output; the hit test runs only at a crossing.
+    // Nothing while a tiling drag or resize runs (the helper holds the pointer), and until
+    // screensChanged has reseeded the output seen after a change. kwin-i3's own warp needs no
+    // mask: it goes to the output that has the focus, so its crossing finds nothing to change.
+    var pointerOutput = null;   // the output the pointer was last seen on, by name
+    function focusFollowsMouse() {
+        var p = String(options.focusPolicy);
+        return p !== "0" && p !== "ClickToFocus";
+    }
+    function seedPointer() {
+        var s = pointerOn();
+        pointerOutput = s ? s.name : null;
+    }
+    function pointerMoved() {
+        var p = workspace.cursorPos, s = screenAt(p.x, p.y);
+        if (!s) return;
+        var was = pointerOutput;
+        pointerOutput = s.name;
+        if (was === null || was === s.name || drag || !focusFollowsMouse()) return;
+        var under = windowUnder(p.x, p.y, s);
+        if (under && wins[id(under)]) return;           // KWin's focus follows mouse takes it (B1)
+        var num = deskNum(workspace.currentDesktopForScreen(s));
+        if (num < 1 || num > NAMES.length) return;
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, s);
+        var ws = wsModel(num), target = model.fullscreenOn(ws) || model.descendFocused(ws);
+        if (model.focused === target) return;
+        model.activate(target);
+        log("POINTER onto " + s.name + (under ? " over " + shortCaption(under) : "") + ": the focus follows to workspace " + num);
+        wantFocus();
+    }
+    // The topmost window under a point, on the output's visible desktop; null for the bare root.
+    function windowUnder(x, y, s) {
+        var order = workspace.stackingOrder, desk = workspace.currentDesktopForScreen(s);
+        for (var i = order.length - 1; i >= 0; i--) {
+            var w = order[i];
+            if (w.deleted || w.minimized || w.hidden || w.output !== s) continue;
+            if (!w.onAllDesktops && w.desktops.indexOf(desk) < 0) continue;
+            var g = w.frameGeometry;
+            if (x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height) return w;
+        }
+        return null;
+    }
+    // i3's root click (click.c): the desktop window activated by a click (Show Desktop off)
+    // focuses its output's visible workspace; applyFocus then takes the keyboard from the
+    // desktop (§5 B4; its Show Desktop check leaves Plasma's edit mode alone). A panel is never
+    // activated by KWin, so a click on it changes nothing, as in i3.
+    function desktopActivated(w) {
+        var s = w.output;
+        if (!s) return;
+        var num = deskNum(workspace.currentDesktopForScreen(s));
+        if (num < 1 || num > NAMES.length) return;
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, s);
+        var ws = wsModel(num);
+        model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
+        log("ACTIVE " + shortCaption(w) + " (the desktop): the focus goes to workspace " + num);
+        wantFocus();
+    }
+    // i3's start (main.c): the focus on the output under the pointer, at its workspace's focus
+    // (§12 P2, §5 E1).
+    function focusUnderPointer() {
+        var s = pointerOn() || workspace.activeScreen;
+        var num = deskNum(workspace.currentDesktopForScreen(s));
+        if (num < 1 || num > NAMES.length) return;
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, s);
+        var ws = wsModel(num);
+        model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
+    }
+    // While an override-redirect window has the keyboard (KRunner, a menu, a panel popup), no
+    // key of kwin-i3's fires, as i3's bindings don't while dmenu holds it; Escape first (§5
+    // A3-A5; Paul's call 59: panel popups included). The safety valve and the dump are not keys.
+    function keyboardHeld(name) {
+        var a = workspace.activeWindow;
+        if (!a || a.deleted || wins[id(a)] || Rules.i3Kind(a) !== "override-redirect") return false;
+        log("KEY " + name + " ignored: " + shortCaption(a) + " has the keyboard");
+        return true;
+    }
+
     function act(name, fn) {
         return guard(name, function () {
+            if (keyboardHeld(name)) return;
             var con = focusedCon();
             var before = con ? Tree.wsOf(con) : null, focusBefore = model.focused;
             fn(con);
@@ -3146,7 +3268,7 @@ var KI3 = (function () {
             // dialog): only keys that move the focus do, as in i3 (docs/spec-windows-placing-themselves.md).
             var a = workspace.activeWindow;
             var keep = model.focused === focusBefore && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock;
-            if (!keep) wantFocus(before ? outputOf(before) : workspace.activeScreen);
+            if (!keep) wantFocus(true);
             log("ACTION " + name);
         });
     }
@@ -3352,7 +3474,7 @@ var KI3 = (function () {
 
     function registerKeys() {
         Object.keys(KEYS).forEach(function (name) {
-            var fn = KWIN_OWN[name] ? guard(name, function () { actions[name](); log("ACTION " + name); })
+            var fn = KWIN_OWN[name] ? guard(name, function () { if (keyboardHeld(name)) return; actions[name](); log("ACTION " + name); })
                                     : act(name, actions[name]);
             KEYS[name].forEach(function (key, i) {
                 var action = "kwin-i3 " + name + (i ? " (" + key.split("+").pop() + ")" : "");
@@ -3795,14 +3917,34 @@ var KI3 = (function () {
     function startRest() {
         // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
         var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
-        if (login) { switching++; try { Workspaces.numberScreens(); } finally { switching--; } }
+        if (login) {
+            switching++;
+            try { Workspaces.numberScreens(); } finally { switching--; }
+            focusUnderPointer();
+        }
         adoptTiled();
-        workspace.windowAdded.connect(guard("windowAdded", function (w) { adoptWindow(w, true); }));
-        workspace.windowRemoved.connect(guard("windowRemoved", forgetWindow));
+        workspace.windowAdded.connect(guard("windowAdded", function (w) {
+            // A window kwin-i3 doesn't manage closing: KWin then activates its own next choice
+            // before windowRemoved (workspace.cpp removeWindow), which is not the user's (below).
+            w.closed.connect(guard("closed outside", function () { if (!wins[id(w)]) closingOutside = w; }));
+            adoptWindow(w, true);
+        }));
+        workspace.windowRemoved.connect(guard("windowRemoved", function (w) { closingOutside = null; forgetWindow(w); }));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
             log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
-            if (!w || !wins[id(w)]) return;
+            if (!w || !wins[id(w)]) {
+                if (w && !w.deleted && w.desktopWindow && !switching) desktopActivated(w);
+                return;
+            }
+            // KWin's own choice after a popup or another window outside the tree closed: the focus
+            // stays where the model has it, as in i3 the focus is where it was when such a window
+            // goes (§5 D7); the close's pass puts it back (72-pointer-stays, case 1).
+            if (closingOutside && !switching) {
+                log("ACTIVE " + shortCaption(w) + " after " + shortCaption(closingOutside) + " closed: the focus stays " + conCaption(model.focused));
+                wantFocus();
+                return;
+            }
             // KWin itself activating a window its monitor isn't showing: KWin switches the desktop
             // before it activates a window elsewhere, so this is a stale choice, not a request.
             // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
@@ -3816,7 +3958,17 @@ var KI3 = (function () {
                 return;
             }
             model.focusWin(id(w));
+            // The pointer follows an activation to another output (Alt+Tab, the task manager, an
+            // app's request; i3's focus_on_window_activation ends in workspace_show), unless it
+            // is there already (§5 A2); kwin-i3's own activations warp from applyFocus.
+            if (w.output) {
+                var crossed = focusOutput !== null && focusOutput !== w.output.name;
+                focusOutput = w.output.name;
+                if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
+            }
         }));
+        workspace.cursorPosChanged.connect(guard("pointer", pointerMoved));
+        seedPointer();
         workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
             log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
                 (current ? deskNum(current) : "-") + (switching ? " (kwin-i3)" : " (outside)"));
@@ -3847,7 +3999,7 @@ var KI3 = (function () {
             renumbered = true;
             switching++;
             try { Workspaces.numberScreens(); } finally { switching--; }
-            model.activate(model.descendFocused(wsModel(1)));
+            focusUnderPointer();
             scheduleAll();
             wantFocus();
         }));
@@ -4004,7 +4156,6 @@ var KI3 = (function () {
         var m = model.workspaces[num];
         var occupied = !!(m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(num));
         var where = occupied ? Workspaces.outputOf(num) : Workspaces.assignedScreen(num) || output;
-        var fws = focusedWs(), from = fws ? outputOf(fws) : null;
         if (where !== output) {
             if (e.previous >= 1 && deskOf(e.previous)) showOn(deskOf(e.previous), output);
             if (workspace.currentDesktopForScreen(where) !== deskOf(num)) showOn(deskOf(num), where);
@@ -4015,7 +4166,7 @@ var KI3 = (function () {
         }
         var ws = wsModel(num);
         model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
-        wantFocus(from && from !== where ? from : null);
+        wantFocus(true);
         rememberShown();
     }
     function screensChanged() {
@@ -4042,6 +4193,7 @@ var KI3 = (function () {
         }
         lastShown = {};
         rememberShown();
+        seedPointer();
         armRefit();
         scheduleAll();
         wantFocus();

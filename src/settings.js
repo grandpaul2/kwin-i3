@@ -21,6 +21,7 @@ var Settings = (function () {
         floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
+        mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4, 2=DP-6"
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)

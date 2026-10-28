@@ -29,7 +29,8 @@ point 300 300
 client --title a
 check "a on the left monitor"               wait_tree 1 "H[a*]"
 
-# 1. Focus on a, the pointer parked on the right monitor (empty there): each kind comes and goes.
+# 1. The pointer parked on the right monitor (empty there): i3's crossing gives the focus to that
+#    empty workspace (redo stage 2, §5 B2), and each kind comes and goes.
 point 1900 600; sleep 0.3
 before=$(snap)
 for t in tooltip notification osd; do
@@ -62,7 +63,7 @@ before=$(snap)
 kclose z; sleep 0.5
 check "3. z closed: the popup keeps the focus" unchanged "$before"
 kill "$pop"; poll _no_window pop
-check "3. the popup closed: kwin-i3's focus is back (a)" poll active_is a
+check "3. the popup closed: kwin-i3's focus is back (the empty workspace under the pointer, no window)" poll active_is none
 
 # 4. An empty workspace has the focus (3 on the left), and a popup on the right: a tooltip closing
 #    leaves the popup open. KWin's Switch to Screen would focus the desktop there: Plasma has a
@@ -110,7 +111,7 @@ client --title e
 check "7. a, e on 1"                        wait_tree 1 "H[a e*]"
 key "Focus Left"
 check "7. a focused"                        poll active_is a
-point 1900 600; sleep 0.3
+# The pointer stays on the left, over a (parked on the right it would focus that monitor, stage 2).
 stand_in dlg2 dialog 300x200+400+300; dlg2=$sid
 activate dlg2
 check "7. the dialog is active"             poll active_is dlg2

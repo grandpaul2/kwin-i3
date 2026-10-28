@@ -70,6 +70,11 @@ check "3. b closed: Show Desktop is still on" showing_is true
 show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
 
+# 4. A click on the desktop with Show Desktop off (i3's root click, §5 B4, redo stage 2): the focus
+#    goes to that output's workspace at once; the desktop doesn't keep the keyboard.
+activate desk
+check "4. the desktop clicked: a has the focus back" poll active_is a
+
 kill "$desk"; poll _no_window desk
 check "no invariant failures or errors"     clean_log
 finish

@@ -74,6 +74,7 @@ existing setup keeps working; the README documents the new keys only.
 | `resizeStep` | %, 10 (1-50) | `resize ... 10 ppt` | script: `model.resize` |
 | `defaultOrientation` | auto / horizontal / vertical, auto | `default_orientation` | script: `wsModel` |
 | `focusWrapping` | yes / no / force / workspace, yes | `focus_wrapping` | model: `focusDir` |
+| `mouseWarping` | output / none, output | `mouse_warping` | script: `applyFocus`, `windowActivated` (redo stage 2) |
 | `workspaceOutputs` | text, empty: `1=DP-4, 2=DP-6` | `workspace N output X` | script: `Workspaces` |
 | `ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle` | as today | `for_window ... floating enable` (the managed/floating part only) | script: `Rules` |
 | `debugLog` | as today | | script |
