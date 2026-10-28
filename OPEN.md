@@ -48,7 +48,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; its first full `make test` that way is the
 next session's); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**40. i3's rules: all ten stages built, stages 1-7 live (7 rebuilt), the rest going live one at a time** (Paul, 2026-10-27/28;
+**40. i3's rules: all ten stages built, stages 1-6 live, stage 7 shelved, the rest going live one at a time** (Paul, 2026-10-27/28;
 from the 17:05 capture: Prism Launcher's modal dialog and KWin took Prism to the other monitor;
 stage 1 closed it, and the capture is deleted). The build plan is `docs/spec-i3-redo-build.md` (each
 stage's spec `docs/spec-redo-N-*.md`, its "Now" says what was built and what came up). **Built,
@@ -71,11 +71,19 @@ window first in KWin's focus chain (40). **Stages 1-3, 5 and 6 done 2026-10-28: 
 are in `hotkeys` and dotfiles' Plasma table; its banner's look is item 42; stage 6's two resizes
 are item 43). Stage 4 merged and live the same day, **its live check deferred by Paul (not set up
 for it that night), still owed**: stage 4's spec (the unplug, an assignment, and the morning
-capture after a night with the monitors asleep). **Stage 7 went live, then was reverted** (Paul: the
-"previous focus" ring, i3's `focused_inactive`, confused more than it told): rebuilt on `redo-7b`
-(main, stage 7 re-applied, that class left out: two classes, focused and unfocused; nothing else
-of the plan changed). Merged (fast-forward) and live 2026-10-28 (Paul's go; plugin installed, script
-reloaded). Next: Paul's live check (stage 7's spec, without the focused_inactive ring); then the rest the same way (each
+capture after a night with the monitors asleep). **Stage 7 shelved on main, reverted twice 2026-10-28.** First live (`redo-7`): Paul found
+the "previous focus" ring (i3's `focused_inactive`) more confusing than useful. Rebuilt without it
+(`redo-7b`: two classes, nothing else of the plan changed; 25 26 54 57 58 64 78 85 green), live,
+and reverted again: **"something else is breaking the ring focus changing"** (Paul: the ring's
+colour doesn't follow the focus as it should; not yet described further, no capture). Main's code
+is stage 6's again, the old effect reinstalled; `redo-7` and `redo-7b` stay on origin. **Next
+session: dive into it** (Paul): what the ring does wrong live (ask Paul, or a capture), then the
+cause in `tellRings`/`SetRing` and the effect's colour choice (a window told `unfocused` that
+later gets the focus with no pass to re-tell it? KWin's active window colouring untold windows?),
+read from the code, before any change. **Stages 8-10 are stacked on `redo-7`** and need rebasing
+onto main (or onto a fixed stage 7) before they merge; stage 10's settings page carries stage 7's
+Gaps sub-page and colour classes. 26's and 54's updates for stages 4 and 6 (W3, Z3) live on
+`redo-7`, so on main both expect the old behaviour and are red until carried over; then the rest the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's

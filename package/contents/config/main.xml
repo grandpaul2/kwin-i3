@@ -76,35 +76,6 @@
       <min>0</min>
       <max>200</max>
     </entry>
-    <entry name="gapsTop" type="Int">
-      <default>-1</default>
-      <min>-1</min>
-      <max>200</max>
-    </entry>
-    <entry name="gapsRight" type="Int">
-      <default>-1</default>
-      <min>-1</min>
-      <max>200</max>
-    </entry>
-    <entry name="gapsBottom" type="Int">
-      <default>-1</default>
-      <min>-1</min>
-      <max>200</max>
-    </entry>
-    <entry name="gapsLeft" type="Int">
-      <default>-1</default>
-      <min>-1</min>
-      <max>200</max>
-    </entry>
-    <entry name="workspaceGaps" type="String">
-      <default></default>
-    </entry>
-    <entry name="smartGaps" type="String">
-      <default>off</default>
-    </entry>
-    <entry name="hideEdgeBorders" type="String">
-      <default>none</default>
-    </entry>
     <entry name="frameWidth" type="Int">
       <default>1</default>
       <min>1</min>
@@ -116,11 +87,11 @@
     <entry name="frameInactive" type="String">
       <default>#333333</default>
     </entry>
-    <entry name="frameIndicatorActive" type="String">
-      <default>#3daee9</default>
+    <entry name="frameFloatingActive" type="String">
+      <default>#4d7254</default>
     </entry>
-    <entry name="frameIndicatorInactive" type="String">
-      <default></default>
+    <entry name="frameFloatingInactive" type="String">
+      <default>#333333</default>
     </entry>
     <entry name="floatingWorkspaces" type="String">
       <default></default>

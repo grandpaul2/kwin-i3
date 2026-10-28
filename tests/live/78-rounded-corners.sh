@@ -93,7 +93,7 @@ set_key frameOnFloating true
 check "b borderless, floating"              poll eval '[[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"b\") log(w.noBorder); })")" == true ]]'
 sleep 0.5; read -r bxy bwh <<<"$(fc b)"; bx=${bxy%,*}; by=${bxy#*,}
 capture; echo "    b framed floating at $bx,$by:"; corner $((bx - 1)) $((by - 1))
-check "frameOnFloating: b square, its frame square (focused: the tiled colour, L11)" square "$bx" "$by" $LIME $ACT
+check "frameOnFloating: b square, its frame square" square "$bx" "$by" $LIME $FACT
 set_key frameOnFloating false
 key "Floating Toggle"; wait_tree 1 "H[a b*]"
 

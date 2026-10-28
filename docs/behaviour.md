@@ -438,22 +438,13 @@ is written to it. Then it logs the tree (`TREE`) and checks its invariants (logg
 
 ### Gaps
 
-i3's `gaps.c` `calculate_effective_gaps`, per workspace (`gaps(ws)`, worked out once per pass):
-
-- The **inner gap** (`gapsInner`, plus the workspace's own `gaps inner` line) counts as the even
-  number at or below it (an odd padding put windows half a pixel off). The **frame** adds twice
-  its width to it, when the ring is drawn on that workspace.
-- The **outer gap per side**: `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft`, each `gapsOuter`
-  unless set (-1), plus the workspace's own lines (`workspaceGaps`: i3's `workspace N gaps …`,
-  **added**, the sum stopping at 0: KWin's root tile can't leave its output).
-- **`smartGaps`** (i3's `smart_gaps`): `on`, no gaps at all on a workspace with one visible tiling
-  window (i3's `con_num_visible_children <= 1`: the projection is one leaf); `inverse_outer`,
-  the outer gaps only on such a workspace. The ring keeps its room either way.
-- Every tile has the inner padding; the root is inset on each side by that side's outer gap plus
-  half the inner gap. So between windows: the inner gap; at the output's edge: that side's outer
-  gap plus the inner gap (the root's inset plus the tile's own half), as i3.
-- A side with an inset of 0 and a padding to halve is inset by a hair, as KWin gives a full
-  padding at an edge it judges exactly 0 or 1.
+- The **inner gap** (`gapsInner`) counts as the even number at or below it (an odd padding put
+  windows half a pixel off). The **frame** adds twice its width to it, when the tiling ring is on.
+- Every tile has that padding; the root is inset by `gapsOuter` plus half the inner gap. So
+  between windows: the inner gap; at the output's edge: the outer gap plus the inner gap (the
+  root's inset plus the tile's own half), as i3.
+- With an inset of 0 and the ring on, the root is inset by a hair, as KWin gives a full padding
+  at an edge it judges exactly 0 or 1.
 - Edges are rounded to whole pixels (thirds of 2560 left a 1 px hole).
 
 ### Minimum sizes
@@ -511,15 +502,15 @@ that it fits Plasma better.
 |---|---|---|---|---|
 | L1 | A tiling window's default look | `frame`: no title bar, a ring | ≠ | i3's default is `normal`: its own title bar (a tab) and a border. Kept: the only title bar here is KWin's decoration (Breeze, with buttons), not i3's tab; `frame` is i3's `pixel`, `bare` its `none`, `titlebars` the nearest to `normal` |
 | L2 | The ring's width (`frameWidth`) | 1 px | ≠ | i3: 2 px (`default_border_width`). 1 is Paul's old config. **Kept** (Paul, 2026-10-27): 1 px: it looks right on Plasma |
-| L3 | The ring's colours | two classes, from the tree (`x.c:498-512`): `focused` (`frameActive` #4c7899) for the focused window; `unfocused` (`frameInactive` #333333) for every other, the other output's focused window included. The ring follows the tree's focus, not the keyboard: with KRunner or a menu open the focused window keeps its colour | ≠ | i3 has a third, `focused_inactive`, for a parent's last focus (the other output's focused window, a split's last focus, an unfocused floating window). **Left out** (Paul, 2026-10-28, after it went live: a third colour confused more than it told). i3 draws the border in `child_border`, by default the class's **background**: #285577, #5f676a, #222222. Kept: Plasma-friendly defaults (Paul, 2026-10-27/28, call 36); `urgent` stays out with urgency. Built 2026-10-28 (redo stage 7): the script sends each shown window's class to the effect at the end of a pass, only when it changes; until told, and after a release, the effect colours KWin's active window `focused` |
-| L4 | A window alone in a split | the side where the next window opens (right in a horizontal split, bottom in a vertical one; the workspace counts, so a window alone on its workspace has it too) is drawn in the class's indicator colour: `frameIndicatorActive` #3daee9, `frameIndicatorInactive` empty, the class's frame colour | = | i3's `x.c:585-599` (its #2e9ef4, #484e50, #292d2e). Built 2026-10-28 (redo stage 7); the defaults Paul's call 36 and review 67 |
+| L3 | The ring's colours | two: `frameActive` #4c7899, `frameInactive` #333333 | ≠ | i3 draws the border in `child_border`, by default its colour class's **background**: `focused` #285577, `focused_inactive` #5f676a (the focused window of an output or split that doesn't have focus: the other monitor's), `unfocused` #222222; #4c7899 / #333333 are its title bars' edge. **Decided, not built** (Paul, 2026-10-27): i3's three classes (`urgent` stays out with urgency), each a colour picker, with Plasma-friendly defaults rather than i3's: `focused` keeps #4c7899; the other two to pick |
+| L4 | A window alone in a split | nothing marks it | ≠ | i3 draws the side where the next window opens in the class's `indicator` (#2e9ef4 focused), as a split of one looks like no split otherwise. **Decided, not built** (Paul, 2026-10-27): i3's |
 | L5 | Gaps (`gapsInner`, `gapsOuter`) | 4 px between, 2 px more at the edges | ≠ | i3: 0 and 0. 4/2 are Paul's old config. **Kept** (Paul, 2026-10-27): 4/2, the look on Plasma |
-| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | `hideEdgeBorders` (`none` default): `smart` draws no ring on a workspace with one visible tiling window, and its tile leaves no room for it; `smart_no_gaps` the same when that workspace has no outer gap; `vertical`, `horizontal`, `both` leave out the ring's left and right, top and bottom, or all sides where the window's tile is at the root's edge and the inner gap is 0 (i3's `con_adjacent_borders` on the rendered rects: an outer gap moves the workspace's rect, an inner gap moves the window off it). `smartGaps`: §6. Floating windows never | ≠ | i3's `con.c:1821-1879`. Built 2026-10-28 (redo stage 7). `vertical`, `horizontal`, `both` leave a strip of the ring's width where the side was: ≠, KWin's tiles have one padding for all sides and a root inside its output (Paul's call 41, 2026-10-28) |
+| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | no settings; the ring is drawn at the outputs' edges, gaps always | ≠ | i3's defaults (`none`, off) are what this does. **Decided, not built** (Paul, 2026-10-27): i3's settings, with their values (`none \| vertical \| horizontal \| both \| smart \| smart_no_gaps`; `smart_gaps on \| off \| inverse_outer`) and defaults `vertical`, `horizontal`, `both` hide the ring's side and leave a strip of its width at the edge: ≠, KWin's tiles have one padding for all sides and a root inside its output (Paul, 2026-10-28) |
 | L7 | A window's own look (i3's `border normal \| pixel N \| none`, `border toggle`, `for_window … border`) | one look for all tiling windows | ≠ | kept: no command language (§8 K22), and §3 R9's criteria set floating only |
 | L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway (`docs/spec-tiled-look.md` B) |
 | L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **Kept** (Paul, 2026-10-27): rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded |
 | L10 | A floating window | its own decoration (KWin's title bar and border) | = | i3's `default_floating_border normal 2`: a title bar too |
-| L11 | A floating window's ring (`frameOnFloating`, off) | L3's classes: `focused`, else `unfocused` (i3's would be `focused_inactive`, left out as L3); no indicator | ≠ | i3's `x.c`. Built 2026-10-28 (redo stage 7): `frameFloatingActive` and `frameFloatingInactive` are no longer read (the load report says so once to a user who set them); by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
+| L11 | A floating window's ring (`frameOnFloating`, off) | its own colours, `frameFloatingActive` #4d7254 (Paul's muted green, 2026-10-24), `frameFloatingInactive` | ≠ | i3 uses the same colour classes for floating and tiling. **Decided, not built** (Paul, 2026-10-27): the two floating colours go, a floating ring uses L3's classes; by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
 | L12 | Floating above tiling | kept above (kwin-i3 owns Keep Above), except on a Floating workspace while the effect marks floating windows | = | i3 keeps floating windows above tiling ones. Keep Below overwritten: + |
 | L13 | No ring on a fullscreen window | none | = | i3 draws no border on a fullscreen window |
 | L14 | No ring on a minimized window, or one with a client-side decoration | none | + | i3 refuses minimize; it borders every window, as X11 apps there draw no shadow |
@@ -532,17 +523,14 @@ that it fits Plasma better.
 `tiledLook`, with the effect loaded:
 
 - `frame` (default): no title bar; the effect draws a ring `frameWidth` px outside the window, in
-  its colour class's colour (L3) with the indicator side in the class's indicator colour (L4), and
-  the tiles leave room for it;
+  `frameActive` for the focused window and `frameInactive` for others, and the tiles leave room
+  for it;
 - `titlebars`: the window's own decoration; its maximize button and a title-bar double-click do
   nothing, as in sway (decided, `docs/spec-tiled-look.md` B: the tree places it);
 - `bare`: no title bar and no ring (nothing marks the focused window; the page suggests Dim
   Inactive).
 
-The ring is drawn at the output's edges too (i3's `hide_edge_borders none`), unless
-`hideEdgeBorders` says otherwise (L6). What the effect is told: `SetRing(id, class, indicator,
-hidden sides)` for each window on a shown workspace at the end of a pass, when it changes;
-`SetTiledRing` for `tiledLook`; the effect reads the colours from kwinrc itself.
+The ring is drawn at the output's edges too (i3's `hide_edge_borders none`).
 
 **Without the effect**, every tiling window keeps its title bar. **Rounded corners**
 (`roundedCorners`, default on): the effect gives tiling framed windows Breeze's 5 px radius, in
@@ -556,8 +544,9 @@ given back. It reasserts this every pass (the window menu, `borderlessMaximizedW
 ### Floating windows
 
 - Keep their own decoration. With `frameOnFloating`, their border is taken and the effect draws
-  the ring in the colour classes (L11), except on a window that draws its own title bar: no
-  border is taken, so no ring and no frame focus (`takeBorder`, `floatingFramed`).
+  the ring in `frameFloatingActive` / `frameFloatingInactive`, except on a window that draws its
+  own title bar: no border is taken, so no ring and no frame focus (`takeBorder`,
+  `floatingFramed`).
 - Are **kept above** tiling windows (kwin-i3 owns their Keep Above flag, including one left by a
   previous instance; `docs/spec-reload-keepabove.md`), except on a Floating workspace while the
   effect marks floating windows. Keep Below is overwritten (`LATER.md` item 27).
@@ -815,10 +804,6 @@ again.
 |---|---|---|---|---|
 | `gapsInner` | 4 | 0-100 | gap between tiling windows (even; an odd value counts as the one below) | next pass |
 | `gapsOuter` | 2 | 0-200 | added at the output's edges | next pass |
-| `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` | -1 | -1 (as `gapsOuter`), 0-200 | that edge's outer gap (i3's `gaps top` …; §6) | next pass |
-| `workspaceGaps` | empty | `N gaps inner \| outer \| horizontal \| vertical \| top \| right \| bottom \| left M`, one per line or `;`- or `,`-separated, `workspace` optional | i3's `workspace N gaps …`: added to the global gaps on that workspace, M negative allowed, the sum stopping at 0 (§6) | next pass |
-| `smartGaps` | `off` | `off`, `on`, `inverse_outer` | i3's `smart_gaps` (§6) | next pass |
-| `hideEdgeBorders` | `none` | `none`, `vertical`, `horizontal`, `both`, `smart`, `smart_no_gaps` | i3's `hide_edge_borders` (§7 L6) | next pass |
 | `defaultOrientation` | `auto` | `auto`, `horizontal`, `vertical` | a new workspace's direction | new workspaces |
 | `resizeStep` | 10 | 1-50 % | resize by key, tiling | next press |
 | `floatingStep` | 10 | 1-200 px | move and resize by key, floating | next press |
@@ -836,9 +821,9 @@ again.
 | `floatingTitle` | empty | list | read as `[title="X"] floating enable`, X escaped: a substring (R9) | as `forWindow` |
 | `tiledLook` | `frame` | `frame`, `titlebars`, `bare` | §7 | next pass |
 | `frameWidth` | 1 | 1-10 px | the ring | next pass; the effect at once |
-| `frameActive`, `frameInactive` | `#4c7899`, `#333333` | `#rrggbb` | the ring's colour classes, i3's `focused`, `unfocused` (§7 L3) | the effect at once |
-| `frameIndicatorActive`, `frameIndicatorInactive` | `#3daee9`, empty | `#rrggbb`, or empty for the class's frame colour | the indicator side's colour per class (§7 L4) | the effect at once |
-| `frameOnFloating` | off | | ring on floating windows, in the same classes (§7 L11) | next pass |
+| `frameActive`, `frameInactive` | `#4c7899`, `#333333` | `#rrggbb` | tiling ring colours | the effect at once |
+| `frameOnFloating` | off | | ring on floating windows | next pass |
+| `frameFloatingActive`, `frameFloatingInactive` | `#4d7254`, `#333333` | `#rrggbb` | floating ring colours | the effect at once |
 | `roundedCorners` | on | | §7 | the effect at once |
 | `holdEnabled` | on | | §7 | the effect at once |
 | `holdTimeoutMs` | 100 | 10-2000 ms | §7 | the effect at once |
@@ -859,7 +844,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | # | i3 option | Here | i3 | Note |
 |---|---|---|---|---|
 | N1 | `gaps inner \| outer` | `gapsInner`, `gapsOuter` (outer added to inner at the edges, as i3) | = | |
-| N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (each `gapsOuter` unless set), and `workspaceGaps` in i3's words, added (§6) | = | Built 2026-10-28 (redo stage 7); on the settings page with stage 10 |
+| N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | none | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's: outer gaps per side, and per workspace |
 | N3 | `default_orientation` | `defaultOrientation` | = | |
 | N4 | `workspace_layout default \| stacking \| tabbed` | none | ≠ | kept: tabbed and stacked are out (§8 K7) |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |
@@ -875,7 +860,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | `floatingMinimumSize`, `floatingMaximumSize` (§3 R20) | = | Built 2026-10-28 |
 | N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7) |
 | N17 | `tiling_drag`, `swap_modifier` | none | ≠ | `tiling_drag` decided (§9 G3); no swap modifier (G11) |
-| N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`; `hideEdgeBorders` and `smartGaps` as i3's; `client.focused`, `client.unfocused` as the two frame colours and two indicator colours (`client.focused_inactive` left out, §7 L3) | ≠ | §7 L1-L11; the look's differences kept, the settings built 2026-10-28 (redo stage 7) |
+| N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`, the colours | ≠ | §7 L1-L11, decided |
 | N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out |
 | N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
 | N21 | `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | | + | |
