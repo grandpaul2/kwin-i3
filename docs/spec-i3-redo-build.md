@@ -1,7 +1,9 @@
 # Spec: building the i3 redo (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for Paul. The plan for the rows `behaviour.md` marks **Decided, not
-built** (2026-10-27/28). Nothing built.
+**Now (2026-10-28):** The order and calls 31-33 agreed (Paul). **Next: every stage fully specced
+first, then a review and adjust pass over all ten, and only then any building** (Paul, 2026-10-28).
+Each stage's spec is its own file, `spec-redo-N-<subject>.md`, listed under its stage below.
+Nothing built.
 
 The rows are the spec: each says today's behaviour (its Result) and the change (its note). This
 file only orders them and says how each stage is built and checked. When a stage goes live, its
@@ -86,12 +88,9 @@ setting the stages added (criteria and `assign`, `mouse_warping`, `tilingDrag`, 
 (`docs/style-settings-page.md`). The settings page's finishing is `LATER.md`'s; this stage is
 only what the new settings need to be usable.
 
-## For Paul
+## Paul's calls (2026-10-28)
 
-31. The order above: new windows, pointer, kinds, outputs, keys, clicks, look, fullscreen, sticky,
-    settings page. Outputs moved before keys: its decisions change where workspaces live, which
-    the keys' tests rest on.
-32. Stage 3 leaves the Window Rules sub-page minimally fixed until stage 10. The other way: stage
-    10's Window Rules part comes with stage 3 (a longer stage 3).
-33. Stage 10 inside the Stage, or in `LATER.md` with the rest of the settings page's finishing
-    (until then the new settings are set in kwinrc or the Configure form).
+31. The order above (outputs before keys): agreed.
+32. Stage 3 fixes the Window Rules sub-page minimally (the new keys read and written); its
+    redesign is stage 10's.
+33. Stage 10 is inside the Stage, not `LATER.md`.
