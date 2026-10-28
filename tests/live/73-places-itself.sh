@@ -21,6 +21,12 @@ come_and_go() {   # come_and_go <type> <geometry> [--no-input]: one opens, then 
     sleep 0.3; kill "$p"; poll _no_window "x-$1"; sleep 0.5
 }
 activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
+# sticky_in <title>: a window of kwin-i3's made sticky (on all desktops), which leaves the tree.
+sticky_in() {
+    client --title "$1"
+    kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") w.onAllDesktops = true; });" >/dev/null
+    poll eval '[[ "$(tree 1)" != *"'"$1"'"* ]]' || echo "    sticky_in: $1 still in the tree" >&2
+}
 unchanged() { local now; now=$(snap); [[ "$now" == "$1" ]] || { echo "    was: $1"; echo "    now: $now"; return 1; }; }
 
 load_kwin_i3
@@ -82,17 +88,18 @@ check "4. a tooltip came and went: the popup keeps the focus" unchanged "$before
 kill "$pop"; poll _no_window pop
 kill "$desk"; poll _no_window desk
 
-# 5. A dialog (not kwin-i3's) has the focus: a notification closing leaves it with the focus.
+# 5. A window kept out of the tree has the focus (a sticky one, Yakuake's kind until redo stage 9;
+#    an X11 dialog floats in the tree since stage 3): a notification closing leaves it the focus.
 key "Workspace 1"
 check "5. back on 1 (a)"                    poll active_is a
-stand_in dlg dialog 300x200+400+300; dlg=$sid
+sticky_in dlg
 activate dlg
-check "5. the dialog is active"             poll active_is dlg
+check "5. the sticky window is active"      poll active_is dlg
 before=$(snap)
 come_and_go notification 300x100+1700+400 --no-input
-check "5. a notification came and went: the dialog keeps the focus" unchanged "$before"
-kill "$dlg"; poll _no_window dlg
-check "5. the dialog closed: a has the focus" poll active_is a
+check "5. a notification came and went: it keeps the focus" unchanged "$before"
+kclose dlg
+check "5. it closed: a has the focus"       poll active_is a
 
 # 6. A monitor switched to an empty desktop by something else (the Overview, Plasma's pager): a
 #    notification closing doesn't switch it back.
@@ -102,8 +109,9 @@ before=$(snap)
 come_and_go notification 300x100+1700+400 --no-input
 check "6. a notification came and went: the left still shows 5" unchanged "$before"
 
-# 7. Keys with a window kwin-i3 doesn't manage active (a dialog standing in for Yakuake, KRunner):
-#    one that leaves kwin-i3's focus where it was takes nothing; one that moves it does, as in i3.
+# 7. Keys with a window kwin-i3 doesn't manage active (a sticky window standing in for Yakuake;
+#    KRunner's kind, override-redirect, holds every key since stage 2, 33-own-keys): one that leaves
+#    kwin-i3's focus where it was takes nothing; one that moves it does, as in i3.
 key "Workspace 1"
 check "7. back on 1 (a)"                    poll active_is a
 point 300 300; sleep 0.3
@@ -112,17 +120,17 @@ check "7. a, e on 1"                        wait_tree 1 "H[a e*]"
 key "Focus Left"
 check "7. a focused"                        poll active_is a
 # The pointer stays on the left, over a (parked on the right it would focus that monitor, stage 2).
-stand_in dlg2 dialog 300x200+400+300; dlg2=$sid
+sticky_in dlg2
 activate dlg2
-check "7. the dialog is active"             poll active_is dlg2
+check "7. the sticky window is active"      poll active_is dlg2
 before=$(snap)
 key "Split H"; sleep 0.3
-check "7. Split H: the dialog keeps the focus" unchanged "$before"
+check "7. Split H: it keeps the focus"      unchanged "$before"
 key "Grow Width"; sleep 0.3
-check "7. Grow Width: the dialog keeps the focus" unchanged "$before"
+check "7. Grow Width: it keeps the focus"   unchanged "$before"
 key "Focus Right"
 check "7. Focus Right moves kwin-i3's focus to e: e has it" poll active_is e
-kill "$dlg2"; poll _no_window dlg2
+kclose dlg2
 
 check "no invariant failures or errors"     clean_log
 finish

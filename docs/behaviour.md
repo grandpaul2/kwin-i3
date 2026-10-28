@@ -8,9 +8,8 @@ behaviour updates this page in the same commit (`docs/testing.md` P1).
 Long and exact on purpose during the Stage (Paul, 2026-10-27); the user's documentation will be
 written from it later. Code is cited by file and function (`src/kwin.js` `applyFocus`), not by
 line, so the citations survive edits. **The words are `docs/definitions.md`'s.** A window is one
-of i3's kinds (§3); today's code has three: **tiling**, **floating**, and **kept out of the tree**
-(the rules' verdict `"ignore"`, from the settings `ignoreClass`/`ignoreRole`), which holds every
-other kind.
+of i3's kinds (§3): **tiling** and **floating** in the tree; **dock**, **root**, **override-redirect**
+and (until redo stage 9) **sticky** kept out of it (`src/rules.js` `classify`).
 
 Contents: 1 the pieces · 2 the tree · 3 window kinds · 4 workspaces and outputs · 5 focus ·
 6 from the tree to the screen · 7 the frame and the look · 8 keys · 9 the mouse · 10 edge cases ·
@@ -157,20 +156,23 @@ Every window is one of i3's kinds, and the rules (focus first, §5) are written 
 | **root** | the background; a click or a crossing focuses its output | the desktop window |
 | **override-redirect** | not in the tree: i3 never places or focuses it; it takes the keyboard itself, and focus is where it was when it goes (`manage.c`) | on Wayland: popups and Plasma's shell surfaces |
 
-**Today's code has three** (below): tiling, floating, and kept out of the tree, which holds every
-kind but the first two. The i3 kind of each window kept out of the tree, by default:
+**The code's kinds are i3's** (redo stage 3, 2026-10-28; `src/rules.js` `classify`, `keptOut`,
+`i3Kind`): tiling and floating in the tree; dock, root and override-redirect kept out by type or by
+the built-in class list; **sticky** (on all desktops) kept out until stage 9 brings it in. The i3
+kind of each window Plasma shows, and how the code gets there:
 
-| window | i3's kind | today |
+| window | i3's kind | how |
 |---|---|---|
-| KRunner, panel popups, menus, notifications, OSDs | override-redirect | the same in effect (§5, D7) |
-| `kded5`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland` (system windows, never meant to have focus) | override-redirect | the same |
-| Plasma's panels | dock | kept out of the tree |
-| the desktop window | root | kept out of the tree |
-| Yakuake (on all desktops) | sticky floating | kept out of the tree: **differs** (not in the focus history) |
-| Spectacle, the password prompt (polkit), KRuler | floating | kept out of the tree: **differs** |
-| the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the same in effect |
-| `plasmashell`'s shell surfaces (panels, popups, the edit-mode toolbar) | dock / override-redirect, by type | the same in effect |
-| `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating (judged by type, not class; mind `docs/bug-panel-config.md` when built) | kept out of the tree: **differs** |
+| KRunner, panel popups, menus, notifications, OSDs | override-redirect | by KWin's type (popups, menus, tooltips, notifications, OSDs, applet popups); KRunner by class |
+| `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland` (system windows, never meant to have focus) | override-redirect | the built-in class list (Normal windows on Wayland, where i3 would never see them) |
+| Plasma's panels, and its panel configuration window (a layer-shell surface in scope `dock`, `panelconfigview.cpp`) | dock | KWin's type |
+| the desktop window | root | KWin's type |
+| Yakuake (on all desktops) | sticky floating | **kept out until stage 9** (`sticky`; not in the focus history) |
+| Spectacle's window, the password prompt (polkit), KRuler | floating | the default `forWindow` rules, by class (a user can delete one and see the tool tile) |
+| Spectacle's region overlays (a Normal fullscreen window per output, probe 93) | override-redirect | by class and fullscreen (Paul's call 60: in the tree they would gather on the focused workspace) |
+| the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the built-in class list |
+| `plasmashell`'s shell surfaces (panels, popups) | dock / override-redirect, by type | KWin's type |
+| `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating | the default rule `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]` |
 
 ### How a window gets its kind
 
@@ -179,23 +181,25 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 
 | # | When | Kind today | i3 | Note |
 |---|---|---|---|---|
-| R1 | KWin's type isn't Normal: panels, the desktop window, popups, menus, tooltips, notifications, OSDs | kept out of the tree | = for each by its i3 kind (§3 above) | |
-| R2 | **An X11 dialog, utility window or splash screen** (an Xwayland app's) | **kept out of the tree** | **≠** | i3: floating (`manage.c`: dialog, utility, toolbar, splash, notification). KWin's `normalWindow` is false for these types, so R1 catches them; the rule meant for them (R7) can never match. A Wayland dialog is a Normal window and floats by R6. Found 2026-10-27. **Decided, not built** (Paul, 2026-10-27): floating, as i3 |
-| R3 | On all desktops | kept out of the tree | ≠ | i3: sticky floating (`_NET_WM_DESKTOP` all: "float it and make it sticky"). Decided, not built: §3 above (Yakuake) |
-| R4 | Skips the taskbar | kept out of the tree | ≠ | i3 ignores the hint. Plasma's convention for its own helpers (confirmed by Paul, 2026-10-27, before the kinds); each such window now gets its i3 kind (§3 above) **Decided, not built** (Paul, 2026-10-27): the hint decides nothing, as i3; each window gets its kind by type (check first which Normal windows on Paul's desktop set it) |
-| R5 | Its class or name in `ignoreClass`, or its role in `ignoreRole` | kept out of the tree | ≠ | i3 has no such list; the default entries' i3 kinds are §3 above **Decided, not built** (Paul, 2026-10-27): no user list (i3 has none, and a user can't make a window override-redirect); Plasma's system windows (`kded5`, the video bridge, `ksplashqml`, `kwin_wayland`) stay override-redirect on a built-in list: on Wayland Plasma makes them Normal windows, where i3 would never see them |
+| R1 | KWin's type: a panel (dock), the desktop window (root); popups, menus, tooltips, notifications, OSDs, applet popups (override-redirect); another type that is neither Normal nor dialog, utility, toolbar or splash | kept out of the tree, by its i3 kind | = | `i3Kind`, `keptOut`; built 2026-10-28 (redo stage 3) |
+| R2 | An X11 dialog, utility window, toolbar or splash screen (an Xwayland app's) | floating | = | `manage.c`: dialog, utility, toolbar, splash. An X11 notification already met R1 (KWin gives it Plasma's notification type): override-redirect, ≠ i3, which floats it. Built 2026-10-28; before, kept out, as KWin's `normalWindow` is false for these types |
+| R3 | On all desktops | kept out of the tree (`sticky`) | ≠ | i3: sticky floating (`_NET_WM_DESKTOP` all: "float it and make it sticky"); redo stage 9 (Yakuake) |
+| R4 | Skips the taskbar | decides nothing | = | i3 ignores the hint. Read on Paul's desktop 2026-10-28: the only Normal window that sets it is `xwaylandvideobridge`, on the built-in list. Built 2026-10-28 |
+| R5 | The built-in class list: `krunner`, `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland`, `ksmserver-logout-greeter` (class or instance); Spectacle's windows that are fullscreen | override-redirect | ≠ | On Wayland Plasma makes its system windows Normal windows, where i3 would never see them; not a setting (a user can't make a window override-redirect). A user's own `ignoreClass`/`ignoreRole` entries are read as `floating enable` rules (R9) and named once at load (Paul's call 43). Built 2026-10-28; before, the `ignoreClass`/`ignoreRole` lists with Krohnkite's defaults |
 | R6 | Transient, modal, or a fixed size (not resizable; a fullscreen window: fixed unless its minimum and maximum differ) | floating | = | `manage.c`: transient_for (or a leader that is managed), `_NET_WM_STATE_MODAL`, min = max |
-| R7 | KWin's type is dialog, splash or utility | floating | — | Never reached (R2) |
+| R7 | KWin's type is dialog, utility, toolbar or splash (R2) | floating | = | `floatsByDefault`; before stage 3 never reached |
 | R8 | Its title is exactly `kwin-i3 capture note` | floating | + | `tools/capture`'s box |
-| R9 | Its class or name in `floatingClass`, or its title contains a `floatingTitle` entry | floating | ≠ | i3's `for_window [criteria] floating enable`: a criterion is a regular expression on any property. Here: class or name matched exactly and case-sensitively, title as a case-sensitive substring; no role; no "class X and title Y" **Decided, not built** (Paul, 2026-10-27): i3's `for_window [criteria] floating enable|disable`: `class`, `instance`, `title`, `window_role`, `window_type`, each a regular expression, case-sensitive, all in one rule must match. It is how a user adjusts the kinds, and it gives a way to force tiling |
+| R9 | The `forWindow` rules, i3's `for_window [criteria] floating enable \| disable`, in order, each at most once per window (X2): `class`, `instance`, `title`, `window_role`, `window_type` (`normal`, `dialog`, `utility`, `toolbar`, `splash`, `notification`), `workspace` (the number it opens on), `floating`, `tiling`, `all`; each a JavaScript regular expression (`u`), case-sensitive, all in one rule must match | as the last matching rule says | = | `Rules.classify`; a pattern JavaScript can't read, or another command, skips the rule with a `WARN`. The old `floatingClass` (class or instance, whole), `floatingTitle` (a substring) and `floatingWorkspaces` (`[workspace="^N$"]`) are read on as rules before `forWindow`'s. Built 2026-10-28 |
 | R10 | Otherwise | tiling | = | |
-| R11 | A new window on a workspace set to Floating (`floatingWorkspaces`) | floating | + | for the windows of Plasma's own tools (`plan.md` decision 1); decided as i3's `for_window [workspace=N] floating enable` (§11 N13) |
+| R11 | A new window on a workspace in `floatingWorkspaces` | floating | = | read as `for_window [workspace="^N$"] floating enable` (R9, §11 N13); for the windows of Plasma's own tools (`plan.md` decision 1) |
 | R12 | After a reload: the rules say tiling, but it is in no tile and kept above (or in the effect's floating set) | floating | + | It was floating before the reload |
 | R13 | Not on exactly one desktop | not adopted until it is | ≠ | i3: sticky floating (R3) |
 | R14 | Maximized when adopted | unmaximized | = | i3 has no maximize and ignores the request (V8) |
 | R15 | On another activity | judged like any other | + | Plasma's activities; no check |
-| R16 | A window kept out of the tree | not in the model; watched for a later change of class, title or transience **only if it is a Normal window** | ≠ | i3 manages every window but docks and override-redirect ones |
-| R17 | A window already closing when kwin-i3 first sees it (`deleted`) | kept out of the tree | + | nothing to place |
+| R16 | A window kept out of the tree | not in the model; watched for a later change of class, title or transience **only if it is a Normal window** | = | i3 manages every window but docks and override-redirect ones; the sticky kind is R3's |
+| R17 | A window already closing when kwin-i3 first sees it (`deleted`) | kept out of the tree (override-redirect) | + | nothing to place |
+| R19 | `assign` (§11 N12): `[criteria] → N` (`workspace N`, `number N`; 1-10) or `[criteria] output X`, the first matching rule, at adoption only, before every other choice of workspace (§5 C1's `placeNew`) | opens on N, shown or not, without switching an output and without the focus if N is hidden; or on X's visible workspace; an output that isn't connected leaves the rule aside | = | i3 marks a hidden target urgent; there is no urgency here, so the window waits there. A never-used N is created on the focused output. Built 2026-10-28 |
+| R20 | A window becoming floating (adoption, a rule, Meta+Shift+Space, KWin's refusal to tile) | sized within `floatingMinimumSize` (75x50) and `floatingMaximumSize` (0x0: all outputs together; -1x-1: none), then KWin's own floor (~150 px wide with a title bar) | = | i3's `floating_minimum_size`/`floating_maximum_size` (`floating.c`); `clampFloating`. Built 2026-10-28 |
 | R18 | A window adopted with no border, not to be framed (a session restore of one kwin-i3 had taken, or a reload after the effect went) | its border given back; a KWin rule forcing no border wins | + | |
 
 ### Changing kind
@@ -203,8 +207,8 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
 | X1 | Meta+Shift+Space (`Floating Toggle`) | tiling and floating swap; a window floated this way comes back at its untiled size (below) | = | `floating toggle` |
-| X2 | A change of title, class, transience or readiness to paint (`reclassify`) | the rules run again; an unchanged verdict changes nothing (a window floated or tiled by hand stays); a changed one is followed **both ways**, and a window now kept out of the tree leaves the model | ≠ | i3 re-runs `for_window` on such changes, but each rule at most once per window, and only to apply it (`assignments.c`): a window whose title stops matching isn't tiled again **Decided, not built** (Paul, 2026-10-27): i3's: each rule at most once per window, only to apply it |
-| X3 | A rule setting changed | every window reclassified as X2 (§11) | + | |
+| X2 | A change of title, class, transience or readiness to paint (`reclassify`) | the `forWindow` rules not yet run on the window run, each at most once, only to apply it: a window whose title stops matching stays as it is, and so does one floated or tiled by hand; a window now kept out of the tree (sticky, a type change) leaves the model | = | i3's `run_assignments` (`assignments.c`). Built 2026-10-28; before, a changed verdict was followed both ways |
+| X3 | A rule setting changed (`forWindow`, `assign`, the old lists) | every rule runs anew on every window (each window's record cleared), as a reload would in i3 | = | §11 |
 | X4 | Made sticky (on all desktops) | leaves the model, as a window kept out of the tree | ≠ | i3: becomes sticky floating. Decided, not built (R3); a Sticky Toggle action, unbound, as i3's `sticky toggle` (Paul, 2026-10-28) |
 | X5 | Meta+Shift+drag on a tiling window | out of its tile, floating where dropped (§9) | + | Paul, 2026-10-26 |
 | X6 | KWin refuses to tile it (not resizable, or not on the tile's desktop) | floating; a fullscreen window stays in the tree, out of the tiles, until fullscreen ends | ≠ | i3 tiles any window; KWin's tiles can't hold one that won't resize **Kept** (Paul, 2026-10-27): KWin's tiles can't hold a window that won't resize |
@@ -805,11 +809,14 @@ again.
 | `mouseWarping` | `output` | `output`, `none` | §5 A2: the pointer follows the focus to another output, or never | next focus change |
 | `workspaceOutputs` | empty | `N=OUTPUT, …`, N 1-10 | assigned outputs (§4) | at login, when the output appears, and for a workspace first used after |
 | `workspaceAutoBackAndForth` | off | | §4 | next press |
-| `floatingWorkspaces` | empty | numbers 1-10 | workspaces whose new windows float | next pass, new windows |
-| `ignoreClass` | Plasma's own (krunner, yakuake, spectacle, plasmashell, polkit agent, kruler, logout greeter, kded5, xwaylandvideobridge, ksplashqml, kwin_wayland) | list | windows kept out of the tree, by class | reclassify |
-| `ignoreRole` | `quake` | list | the same, by role | reclassify |
-| `floatingClass` | empty | list | always floating, by class | reclassify |
-| `floatingTitle` | empty | list | always floating, by title substring | reclassify |
+| `forWindow` | Spectacle, the password prompt, KRuler, plasmashell's Normal windows: `floating enable` | i3's `for_window` rules, one per line or `;`-separated (§3 R9) | the kinds | every rule anew on every window |
+| `assign` | empty | i3's `assign` rules (§3 R19) | where a new window opens | new windows |
+| `floatingMinimumSize` | `75x50` | `WxH`, 0 i3's default, -1 none | §3 R20 | a window becoming floating |
+| `floatingMaximumSize` | `0x0` (all outputs together) | `WxH`, -1 none | §3 R20 | a window becoming floating |
+| `floatingWorkspaces` | empty | numbers 1-10 | read as `[workspace="^N$"] floating enable` (R11) | as `forWindow` |
+| `ignoreClass`, `ignoreRole` | empty (the old defaults are the built-in kinds now) | list | the old lists: a user's entries read as `floating enable` rules, named once at load (R5) | as `forWindow` |
+| `floatingClass` | empty | list | read as `[class="^X$"]` and `[instance="^X$"] floating enable` (R9) | as `forWindow` |
+| `floatingTitle` | empty | list | read as `[title="X"] floating enable`, X escaped: a substring (R9) | as `forWindow` |
 | `tiledLook` | `frame` | `frame`, `titlebars`, `bare` | §7 | next pass |
 | `frameWidth` | 1 | 1-10 px | the ring | next pass; the effect at once |
 | `frameActive`, `frameInactive` | `#4c7899`, `#333333` | `#rrggbb` | tiling ring colours | the effect at once |
@@ -845,10 +852,10 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N9 | `popup_during_fullscreen` | `smart`, fixed, as i3's (§5 C5) | ≠ | the setting: §10 V6, decided as i3 (redo stage 8) |
 | N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
 | N11 | `workspace N output X …` | `workspaceOutputs` | ≠ | one output per number; a list decided (§4 W5) |
-| N12 | `assign [criteria] → workspace N \| output X` | none | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's: windows sent to a workspace or output by the same criteria as §3 R9 |
-| N13 | `for_window [criteria] floating enable \| disable` | `floatingClass`, `floatingTitle`; `floatingWorkspaces` | ≠ | decided as i3 (§3 R9); `floatingWorkspaces` is then `for_window [workspace=N] floating enable` |
-| N14 | (no i3 option) the ignore lists | `ignoreClass`, `ignoreRole` | ≠ | decided: they go (§3 R5) |
-| N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | none: KWin's floor (~150 px), the output | ≠ | **Decided, not built** (Paul, 2026-10-27): i3's settings, as limits on a window floated |
+| N12 | `assign [criteria] → workspace N \| output X` | `assign` (§3 R19) | = | Built 2026-10-28 (redo stage 3) |
+| N13 | `for_window [criteria] floating enable \| disable` | `forWindow` (§3 R9); the old `floatingClass`, `floatingTitle`, `floatingWorkspaces` read as rules | = | Built 2026-10-28 |
+| N14 | (no i3 option) the ignore lists | `ignoreClass`, `ignoreRole`: empty, read as floating rules for a user's own entries (§3 R5) | = | the defaults went 2026-10-28; the settings page writes rules (redo stage 10) |
+| N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | `floatingMinimumSize`, `floatingMaximumSize` (§3 R20) | = | Built 2026-10-28 |
 | N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7) |
 | N17 | `tiling_drag`, `swap_modifier` | none | ≠ | `tiling_drag` decided (§9 G3); no swap modifier (G11) |
 | N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`, the colours | ≠ | §7 L1-L11, decided |
@@ -962,6 +969,8 @@ One notification per load (app "kwin-i3"), its parts collected first:
   that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
   becomes a problem; never set.
+- **Ignore entries now float**: a user's own `ignoreClass`/`ignoreRole` entries, read as floating
+  rules since redo stage 3 (§3 R5), named once (Paul's call 43).
 
 i3 has no counterpart: it reports a config error with `i3-nagbar`; here a setting that doesn't
 parse logs a `WARN` and uses its default (§11).

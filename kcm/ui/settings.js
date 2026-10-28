@@ -27,48 +27,36 @@ function formatWorkspaces(list) {
     return parseWorkspaces(list.join(",")).join(", ");
 }
 
-// The window rules as two lists of entries, from the four comma-separated settings:
-// "ignore" (ignoreClass, ignoreRole) and "float" (floatingClass, floatingTitle).
-const RULE_KEYS = [
-    { key: "ignoreClass", list: "ignore", kind: "class" },
-    { key: "ignoreRole", list: "ignore", kind: "role" },
-    { key: "floatingClass", list: "float", kind: "class" },
-    { key: "floatingTitle", list: "float", kind: "title" },
-];
-function splitList(text) {
-    return String(text || "").split(",").map((s) => s.trim()).filter((s) => s !== "");
-}
-// settings, defaults: { ignoreClass: "...", ... } -> [{ list, kind, value, isDefault }]
-function ruleEntries(settings, defaults) {
+// The window rules (docs/spec-redo-3-kinds-rules.md, E): i3's for_window and assign rules as text,
+// one rule per line or `;`-separated (the script's reading, src/rules.js split), until stage 10's
+// redesign. splitRules gives the rules, trimmed, empty ones dropped.
+function splitRules(text) {
     const out = [];
-    RULE_KEYS.forEach((r) => {
-        const defs = splitList(defaults[r.key]);
-        splitList(settings[r.key]).forEach((v) => {
-            out.push({ list: r.list, kind: r.kind, value: v, isDefault: defs.indexOf(v) >= 0 });
-        });
-    });
-    return out;
+    let cur = "", quoted = false;
+    const t = String(text || "");
+    for (let i = 0; i < t.length; i++) {
+        const c = t.charAt(i);
+        if (c === "\\" && quoted && i + 1 < t.length) { cur += c + t.charAt(++i); continue; }
+        if (c === "\"") quoted = !quoted;
+        if (c === "\n" || c === "\r" || (c === ";" && !quoted)) { out.push(cur); cur = ""; continue; }
+        cur += c;
+    }
+    out.push(cur);
+    return out.map((r) => r.trim()).filter((r) => r !== "");
 }
-// The inverse: entries -> { ignoreClass: "a,b", ... }, each in the order given (the defaults are
-// written as main.xml has them, with no spaces, so an unchanged list still equals its default).
-function ruleSettings(entries) {
-    const out = {};
-    RULE_KEYS.forEach((r) => {
-        out[r.key] = entries.filter((e) => e.list === r.list && e.kind === r.kind).map((e) => e.value).join(",");
-    });
-    return out;
+// A floating rule for a picked window's class, the class matched whole (its dots escaped).
+function pickRule(cls) {
+    return "[class=\"^" + String(cls).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$\"] floating enable";
 }
-// An entry the user typed: no comma (it would split it in two), not blank, not already there.
-function entryProblem(entries, list, kind, value) {
-    const v = String(value || "").trim();
-    if (v === "") return "empty";
-    if (v.indexOf(",") >= 0) return "comma";
-    if (entries.some((e) => e.list === list && e.kind === kind && e.value === v)) return "duplicate";
-    return "";
+// The text with one more rule on its own line; a rule already there is not added twice.
+function addRule(text, rule) {
+    if (splitRules(text).indexOf(rule) >= 0) return String(text || "");
+    const t = String(text || "").replace(/\s+$/, "");
+    return t === "" ? rule : t + "\n" + rule;
 }
-// The kinds each list takes.
-function kindsFor(list) {
-    return RULE_KEYS.filter((r) => r.list === list).map((r) => r.kind);
+// The Window Rules button's summary: how many rules of each kind.
+function ruleCounts(settings) {
+    return { rules: splitRules(settings.forWindow).length, assigns: splitRules(settings.assign).length };
 }
 
 // The Workspaces button's summary, as counts the page words: how many workspaces have a monitor
@@ -76,12 +64,8 @@ function kindsFor(list) {
 function workspaceCounts(outputsText, floatingText) {
     return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
 }
-// The window rules' summary: how many entries each list has.
-function ruleCounts(entries) {
-    return { ignore: entries.filter((e) => e.list === "ignore").length, float: entries.filter((e) => e.list === "float").length };
-}
 
 if (typeof module !== "undefined") module.exports = {
-    parseOutputs, formatOutputs, parseWorkspaces, formatWorkspaces, ruleEntries, ruleSettings,
-    entryProblem, kindsFor, workspaceCounts, ruleCounts,
+    parseOutputs, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
+    workspaceCounts, ruleCounts,
 };

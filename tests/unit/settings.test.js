@@ -22,7 +22,7 @@ function loadSettings(conf) {
     return { S, logs, store, debug: ctx.DEBUG_LOG };
 }
 
-const KCFG_TYPE = { list: "String", string: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", workspaces: "String" };
+const KCFG_TYPE = { list: "String", string: "String", text: "String", size: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", workspaces: "String" };
 
 function xmlEntries() {
     const out = {};
@@ -58,11 +58,13 @@ test("metadata.json names the generic scripted config module", () => {
     assert.strictEqual(meta["X-KDE-ConfigModule"], "kwin/effects/configs/kcm_kwin4_genericscripted");
 });
 
-test("defaults: lists split on commas, debugLog off", () => {
+test("defaults: lists split on commas, debugLog off; the old ignore lists are empty (their kinds are built in, redo stage 3)", () => {
     const { S, debug } = loadSettings({});
-    assert.deepStrictEqual(S.get("ignoreRole"), ["quake"]);
+    assert.deepStrictEqual(S.get("ignoreRole"), []);
     assert.deepStrictEqual(S.get("floatingClass"), []);
-    assert.ok(S.get("ignoreClass").includes("krunner"));
+    assert.deepStrictEqual(S.get("ignoreClass"), []);
+    assert.ok(S.get("forWindow").indexOf("spectacle") >= 0, "the default rules float Plasma's tools");
+    assert.strictEqual(S.get("floatingMinimumSize"), "75x50");
     assert.strictEqual(S.get("debugLog"), false);
     assert.strictEqual(debug(), false);
     assert.strictEqual(S.get("workspaceAutoBackAndForth"), false, "off, as i3's default");
@@ -85,7 +87,7 @@ test("load() reports exactly the keys that changed", () => {
     const { S, store } = loadSettings({});
     assert.deepStrictEqual(S.load(), []);
     store.floatingTitle = "Picture-in-Picture";
-    store.ignoreRole = "quake";              // the default, written out: no change
+    store.floatingMaximumSize = "0x0";       // the default, written out: no change
     assert.deepStrictEqual(S.load(), ["floatingTitle"]);
     assert.deepStrictEqual(S.get("floatingTitle"), ["Picture-in-Picture"]);
     assert.deepStrictEqual(S.load(), []);

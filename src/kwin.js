@@ -49,7 +49,7 @@ var KI3 = (function () {
     // A window outside the tree that is closing (its `closed` signal, before windowRemoved): KWin's
     // activation in between is its own next choice, not the user's (windowActivated).
     var closingOutside = null;
-    var ruleKind = {};      // window id -> the rules' verdict at adoption or last change (reclassify)
+    var ruleRan = {};       // window id -> { rule index: true }: the forWindow rules already run on it (Rules.classify, X2)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
     var released = false;
@@ -748,9 +748,34 @@ var KI3 = (function () {
         if (!con || con.type === "floating") return;
         untile(w);
         floatAtRecord(w);
+        clampFloating(w);
         model.floatingEnable(con);
         setFloatingLook(w, true);
         log("FLOAT " + w.caption + ": " + why);
+    }
+
+    // i3's floating_minimum_size / floating_maximum_size (§11 N15; floating.c
+    // floating_check_size): a window becoming floating is kept within them. 0 means i3's default
+    // (75x50 for the minimum; all outputs together for the maximum), -1 no limit. KWin's own
+    // floor (a decorated window is about 150 px wide at least) applies after.
+    function clampFloating(w) {
+        if (w.fullScreen || w.deleted || !w.output) return;
+        var min = Rules.parseSize(Settings.get("floatingMinimumSize")) || { w: 75, h: 50 };
+        var max = Rules.parseSize(Settings.get("floatingMaximumSize")) || { w: 0, h: 0 };
+        var all = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
+        workspace.screens.forEach(function (s) {
+            var g = s.geometry;
+            all.x1 = Math.min(all.x1, g.x); all.y1 = Math.min(all.y1, g.y);
+            all.x2 = Math.max(all.x2, g.x + g.width); all.y2 = Math.max(all.y2, g.y + g.height);
+        });
+        function lo(v, def) { return v === -1 ? 1 : v === 0 ? def : v; }
+        function hi(v, def) { return v === -1 ? Infinity : v === 0 ? def : v; }
+        var g = w.frameGeometry;
+        var width = Math.min(Math.max(g.width, lo(min.w, 75)), hi(max.w, all.x2 - all.x1));
+        var height = Math.min(Math.max(g.height, lo(min.h, 50)), hi(max.h, all.y2 - all.y1));
+        if (width === g.width && height === g.height) return;
+        w.frameGeometry = { x: g.x, y: g.y, width: width, height: height };
+        log("FLOAT " + shortCaption(w) + ": sized to " + width + "x" + height + " (floating size limits)");
     }
 
     // The plan's rule "a window that can't fit floats" (code review: a window with a 900 px
@@ -1015,8 +1040,23 @@ var KI3 = (function () {
         var outputs = workspace.screens.map(function (s) {
             return { name: s.name, shows: deskNum(workspace.currentDesktopForScreen(s)) };
         });
-        var t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
-                                 Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
+        // i3's `assign` first (§11 N12; manage.c:289-317): to workspace N, shown or not, or to an
+        // output's visible workspace; an output that isn't connected leaves the rule aside.
+        var t = null, assigned = Rules.assignFor(w);
+        if (assigned && assigned.workspace) {
+            Workspaces.ensure(assigned.workspace);
+            if (deskOf(assigned.workspace)) {
+                if (!Workspaces.hasHome(assigned.workspace)) Workspaces.claimHome(assigned.workspace, fws ? outputOf(fws) : w.output);
+                t = { ws: assigned.workspace, why: "assign" };
+            }
+        } else if (assigned && assigned.output) {
+            workspace.screens.forEach(function (s) {
+                if (s.name === assigned.output) t = { ws: deskNum(workspace.currentDesktopForScreen(s)), why: "assign" };
+            });
+            if (t && t.ws < 1) t = null;
+        }
+        if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
+                                     Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
         var e = Placement.claim(pendingShown, w.output.name, desk);
         if (e && t.why !== "asked" && e.previous >= 1 && deskOf(e.previous)) {
             showOn(deskOf(e.previous), w.output);
@@ -1068,28 +1108,30 @@ var KI3 = (function () {
     function adoptWindow(w, fresh) {
         var key = id(w);
         if (wins[key]) return;
-        var kind = Rules.classify(w);
-        // Ignored now, perhaps not later (class, transient or desktops set after it appears):
-        // watch it, so reclassify can adopt it then (code review).
-        if (kind === "ignore") { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
-        ruleKind[key] = kind;              // the rules' own verdict; reclassify acts when it changes
-        // Not just appeared (a load, a window taken back after a desktop change), in no tile and
-        // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
-        // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
-        if (kind === "tile" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "float";
-        // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
-        // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
-        if (w.noBorder && !(tiledBorderless() && kind === "tile")) w.noBorder = false;
+        // Kept out of the tree by its kind (dock, root, override-redirect, sticky; §3): a Normal
+        // one is watched, since a later change of class, transience or desktops can bring it in
+        // (reclassify; code review).
+        if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
+        // The workspace first (placeNew, `assign` included), then the kind: a `workspace`
+        // criterion sees the workspace the window opens on, as i3's run_assignments runs after
+        // the window is placed (docs/spec-redo-3-kinds-rules.md, A).
         var fws = focusedWs(), placed = fresh ? placeNew(w) : null;
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
-        // A new window on a workspace of Plasma windows opens floating (decision 1).
-        if (kind === "tile" && fresh && plasmaWs(ws)) kind = "float";
+        if (!ruleRan[key]) ruleRan[key] = {};
+        var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key] });
+        // Not just appeared (a load, a window taken back after a desktop change), in no tile and
+        // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
+        // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
+        if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "floating";
+        // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
+        // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
+        if (w.noBorder && !(tiledBorderless() && kind === "tiling")) w.noBorder = false;
         wins[key] = w;
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh);
-        if (kind === "float") { model.openFloating(key, ws); setFloatingLook(w, true); }
+        if (kind === "floating") { model.openFloating(key, ws); setFloatingLook(w, true); if (fresh) clampFloating(w); }
         else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);
         connectWindow(w);
@@ -1152,7 +1194,7 @@ var KI3 = (function () {
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
-        delete ruleKind[key]; delete untiled[key];
+        delete untiled[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -1179,7 +1221,7 @@ var KI3 = (function () {
     // if one was recorded and is still there, over KWin's.
     function forgetWindow(w) {
         var key = id(w), next = closingNext[key];
-        delete closingNext[key];
+        delete closingNext[key]; delete ruleRan[key];
         dropWindow(w);
         if (next && (next.win === null ? next.type === "ws" : model.byWin[next.win] === next) && model.focused !== next) {
             log("CLOSE " + shortCaption(w) + " i3's choice over KWin's: " + conCaption(next));
@@ -1188,25 +1230,23 @@ var KI3 = (function () {
         wantFocus();
     }
 
-    // reclassify: the rules act when their verdict changes (ruleKind, declared at the top), never
-    // because it differs from what Paul set by hand: a window floated with Meta+Shift+Space used
-    // to tile again at its next caption change, which for a browser is seconds
-    // (docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
+    // reclassify (§3 X2; i3's run_assignments on a change of title, class, role or type): the
+    // rules not yet run on the window run now, each at most once, only to apply it (ruleRan): a
+    // window whose title stops matching stays as it is, and so does one floated or tiled by hand
+    // (a window floated with Meta+Shift+Space used to tile again at its next caption change, which
+    // for a browser is seconds: docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
     function reclassify(w) {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
-        var kind = Rules.classify(w);
-        if (kind === "ignore") { dropWindow(w); return; }
-        var was = ruleKind[key];
-        ruleKind[key] = kind;
-        if (kind === was) return;
+        if (Rules.keptOut(w)) { dropWindow(w); return; }
         var floating = con.type === "floating";
-        if ((kind === "float") !== floating) {
-            model.toggleFloating(con);
-            setFloatingLook(w, kind === "float");
-            if (kind === "float") { untile(w); floatAtRecord(w); }
-            schedule(Tree.wsOf(model.byWin[key]));
-        }
+        if (!ruleRan[key]) ruleRan[key] = {};
+        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key] });
+        if ((kind === "floating") === floating) return;
+        model.toggleFloating(con);
+        setFloatingLook(w, kind === "floating");
+        if (kind === "floating") { untile(w); floatAtRecord(w); clampFloating(w); }
+        schedule(Tree.wsOf(model.byWin[key]));
     }
 
     var connected = {};     // window id -> true once its signals are connected (once only)
@@ -1816,7 +1856,7 @@ var KI3 = (function () {
             var n = model.toggleFloating(c), w = wins[c.win];
             if (n && w) {
                 setFloatingLook(w, n.type === "floating");
-                if (n.type === "floating") { untile(w); floatAtRecord(w); }
+                if (n.type === "floating") { untile(w); floatAtRecord(w); clampFloating(w); }
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
@@ -2147,6 +2187,15 @@ var KI3 = (function () {
     // the report; later, when it becomes a problem (a second monitor, the setting turned off),
     // once per load on its own.
     var perOutputBad = false, perOutputLater = false;
+    // The old ignore lists' own entries are read as floating rules now (§3 R5; Paul's call 43):
+    // said once, at load, naming them. The old defaults are the built-in kinds and are not named.
+    function checkOldIgnores() {
+        var t = Rules.translated();
+        reportOpen();
+        reportClose("ignore entries now float", t.length ? ["kwin-i3 no longer keeps windows out by class or role; " +
+            "these entries of yours float them instead: " + t.join(", ") + ". Write them as rules (forWindow) when you like."] : []);
+        if (t.length) log("RULES old ignore entries read as floating: " + t.join(", "));
+    }
     function checkPerOutput(atLoad) {
         var was = perOutputBad, n = workspace.screens.length;
         perOutputBad = n >= 2 && !options.perOutputVirtualDesktops;
@@ -2322,7 +2371,7 @@ var KI3 = (function () {
             // Only windows that really are on this desktop: KWin can leave a window in a tile
             // after its desktop changed (spike); those go through adoptWindow instead (review).
             var mine = tile.windows.filter(function (w) {
-                return Rules.classify(w) === "tile" && w.desktops.length === 1 && w.desktops[0] === desk;
+                return Rules.classify(w) === "tiling" && w.desktops.length === 1 && w.desktops[0] === desk;
             });
             if (mine.length !== 1) return null;
             return { win: id(mine[0]), percent: total };
@@ -2432,7 +2481,7 @@ var KI3 = (function () {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
                 model = Tree.create({ outputNeighbour: outputNeighbour });
-                wins = {}; expected = {}; armed = {}; lastFit = {}; selfFitAt = {}; selfFitLater = {}; ruleKind = {}; dirty = {}; placing = {};
+                wins = {}; expected = {}; armed = {}; lastFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
                 borderGone = {};
                 beforeLoss = null;                  // numbers by the old positions
                 lastShown = {}; shownBefore = {};   // likewise
@@ -2544,6 +2593,7 @@ var KI3 = (function () {
         // All open their part of the report before any can close it: one notification.
         checkTakenKeys();
         checkLayoutKeys();
+        checkOldIgnores();
         checkPerOutput(true);
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
             checkPerOutput(false);
@@ -2555,7 +2605,7 @@ var KI3 = (function () {
 
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
     // after a load (KWin's own start-up reconfigure), with nothing changed.
-    var RULE_KEYS = ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"];
+    var RULE_KEYS = ["forWindow", "assign", "ignoreClass", "ignoreRole", "floatingClass", "floatingTitle", "floatingWorkspaces"];
     // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
     // asks for one when it loads or goes). Only an effect that draws the frame answers with
     // frameWidth (an older kwini3hold answers too: review of the change, finding 1). callDBus calls
@@ -2618,10 +2668,13 @@ var KI3 = (function () {
         var changed = Settings.load();
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));
-        // The rules: every window judged again; one whose verdict changed follows it, one floated
-        // or tiled by hand under an unchanged verdict stays (reclassify).
-        if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; }))
+        // The rules changed: every rule runs anew on every window (each window's record cleared),
+        // as a reload would in i3 (docs/spec-redo-3-kinds-rules.md, B); a window a rule doesn't
+        // reach stays as it is, floated or tiled by hand included (reclassify).
+        if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; })) {
+            ruleRan = {};
             workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
+        }
         // A new look: the effect told now; the next pass gives or takes each tiled window's
         // border (tiledBorder) and redoes the padding. A loop giving borders back here was found
         // redundant by the fault battery (2026-10-26).

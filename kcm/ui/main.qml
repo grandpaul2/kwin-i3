@@ -315,11 +315,11 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@title:group", "Window rules")
         }
         SubPageButton {
-            Kirigami.FormData.label: i18nc("@label", "Exceptions:")
+            Kirigami.FormData.label: i18nc("@label", "Rules:")
             text: i18nc("@action:button", "Configure Window Rules…")
-            readonly property var counts: Logic.ruleCounts(Logic.ruleEntries(root.settings, {}))
-            summary: i18np("1 places itself", "%1 place themselves", counts.ignore) + ", "
-                   + (counts.float ? i18np("1 always floats", "%1 always float", counts.float) : i18n("none always float"))
+            readonly property var counts: Logic.ruleCounts(root.settings)
+            summary: i18np("1 floating rule", "%1 floating rules", counts.rules) + ", "
+                   + (counts.assigns ? i18np("1 workspace assignment", "%1 workspace assignments", counts.assigns) : i18n("no workspace assignments"))
             onClicked: kcm.push("WindowRules.qml")
         }
 

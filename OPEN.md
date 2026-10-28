@@ -64,7 +64,10 @@ results in the specs). **Stage 1 built** (2026-10-28, sixth session) on branch `
 unit`, scenarios 32, 40, 44, 56, 64, 72, 73, 79 and 87 green. **Stage 2 built** on branch
 `redo-2`, stacked on `redo-1` (`docs/spec-redo-2-pointer.md`, "Now"): the pointer's crossing,
 the desktop click, keys held off by override-redirect windows, the warp with `mouseWarping`,
-login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40 updated. **Next:
+login focus under the pointer; `Rules.i3Kind` with its unit test; 72, 73, 74, 40 updated.
+**Stage 3 built** on `redo-3` (`docs/spec-redo-3-kinds-rules.md`, "Now"): i3's kinds and rules
+(`forWindow`, `assign`, the floating sizes; the old lists read as rules), the Window Rules
+sub-page as text; `rules.test.js`; 20 extended, 25, 73, 76 updated. **Next:
 Paul's go to merge stage 1, then to reload (and `make plugin-install` for the effect's
 `HoldNew`), then his live check** (the spec's "Live check"); his "it works" ends the stage and
 the 17:05 capture goes; stage 2 the same way after it. Building goes on with stage 3 meanwhile

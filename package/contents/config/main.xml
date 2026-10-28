@@ -8,11 +8,23 @@
       http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
   <kcfgfile name=""/>
   <group name="">
+    <entry name="forWindow" type="String">
+      <default>[class="^org\.kde\.spectacle$"] floating enable; [class="^org\.kde\.polkit-kde-authentication-agent-1$"] floating enable; [class="^(org\.kde\.)?kruler$"] floating enable; [class="^(org\.kde\.)?plasmashell$" window_type="normal"] floating enable</default>
+    </entry>
+    <entry name="assign" type="String">
+      <default></default>
+    </entry>
+    <entry name="floatingMinimumSize" type="String">
+      <default>75x50</default>
+    </entry>
+    <entry name="floatingMaximumSize" type="String">
+      <default>0x0</default>
+    </entry>
     <entry name="ignoreClass" type="String">
-      <default>krunner,yakuake,spectacle,kded5,xwaylandvideobridge,plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1,org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter</default>
+      <default></default>
     </entry>
     <entry name="ignoreRole" type="String">
-      <default>quake</default>
+      <default></default>
     </entry>
     <entry name="floatingClass" type="String">
       <default></default>

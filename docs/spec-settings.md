@@ -76,7 +76,10 @@ existing setup keeps working; the README documents the new keys only.
 | `focusWrapping` | yes / no / force / workspace, yes | `focus_wrapping` | model: `focusDir` |
 | `mouseWarping` | output / none, output | `mouse_warping` | script: `applyFocus`, `windowActivated` (redo stage 2) |
 | `workspaceOutputs` | text, empty: `1=DP-4, 2=DP-6` | `workspace N output X` | script: `Workspaces` |
-| `ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle` | as today | `for_window ... floating enable` (the managed/floating part only) | script: `Rules` |
+| `forWindow` | text, one rule per line or `;`-separated; default: Spectacle, the password prompt, KRuler, plasmashell's Normal windows float | `for_window [criteria] floating enable \| disable` | script: `Rules.classify` (redo stage 3) |
+| `assign` | text, empty | `assign [criteria] → N \| output X` | script: `Rules.assignFor`, `placeNew` |
+| `floatingMinimumSize`, `floatingMaximumSize` | `WxH`, 75x50 and 0x0 | `floating_minimum_size`, `floating_maximum_size` | script: `clampFloating` |
+| `ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle`, `floatingWorkspaces` | the old lists, defaults empty; read on as rules | | script: `Rules` (oldRules) |
 | `debugLog` | as today | | script |
 | `frameWidth` | px, 1 (1-10) | `default_border pixel N` | kwini3frame |
 | `frameActive`, `frameInactive`, `frameFloatingActive`, `frameFloatingInactive` | as today's colours | `client.focused` ... | kwini3frame |

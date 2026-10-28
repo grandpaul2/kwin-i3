@@ -1,7 +1,19 @@
 # Spec: redo stage 3, kinds and rules (OPEN.md item 40)
 
-**Now (2026-10-28):** Draft for the review of all ten stages (`spec-i3-redo-build.md`). Nothing
-built.
+**Now (2026-10-28):** Built on branch `redo-3` (on `redo-2`) as designed below: `src/rules.js`
+rewritten (the kinds, the parser, `classify` with the once-per-window record, `assignFor`,
+`parseSize`, the old lists as rules), `forWindow`, `assign`, `floatingMinimumSize`,
+`floatingMaximumSize` in the settings (table, form, README), `placeNew`'s `assign`, `reclassify`
+on the record, `clampFloating`, the load report for a user's ignore entries; the Window Rules
+sub-page as text with Pick a Window (E); the unit tests; 20 extended as approved, 25, 73 and 76
+updated to the rules. **Settled**: plasmashell's panel configuration window is a layer-shell
+surface in scope `dock` (`panelconfigview.cpp:54`), so KWin types it Dock and R1 keeps it out
+by type; the desktop view is scope `desktop` (root); the edit-mode toolbar lives inside the
+desktop view's QML, no window of its own. So `plasmashell` left the built-in list, and its
+ordinary windows float by the default rule. **Rules are separated by line breaks or `;` outside
+quotes**: the default must be one line in `main.xml` (a newline inside a kcfg default is not safe
+through kconfig_compiler), and the Window Rules page shows the text as it is until stage 10.
+Waiting for Paul's go, after stages 1 and 2.
 
 **The rows**: `behaviour.md` §3's kinds that differ (Spectacle, the password prompt, KRuler,
 plasmashell's ordinary windows to floating), R2, R4, R5, R9, X2, and §11 N12 (`assign`), N13
