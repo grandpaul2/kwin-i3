@@ -1,7 +1,7 @@
 # Spec: the gaps are kwin-i3's, as i3's are i3's
 
-Paul, 2026-10-28 (OPEN.md item 43). Status: **proposal, for Paul's decision**. Nothing built on main;
-the probe is on branch `gapwin-probe`. The measurements are in `docs/pointer.md`.
+Paul, 2026-10-28 (OPEN.md item 43). Status: **probed; verdict build A + B + C, for Paul's go**. Nothing built on main;
+the probes are on branch `gapwin-probe`. The measurements are in `docs/pointer.md`.
 
 ## 1. How i3 does it
 
@@ -70,13 +70,19 @@ one strip over one gap):
 | `Qt::Tool` holds `Qt::Popup`'s bit: KWin closed it as a popup on the first motion | `BypassWindowManagerHint`, no Tool (fixed in the probe) |
 | asking a closed internal window for its hit test crashed KWin | fixed on main in the pointer probe (`9b856b8`); the gap window never asks closed windows |
 
-**Not yet known (one small probe each, before any build):**
-1. **Paint cost.** A transparent window the size of an output, composited on every repaint, on
-   Paul's NVIDIA card. KWin may skip a window at opacity 0, or a window that is only a mask.
-   Measured with KWin's frame timings, with and without the window.
-2. **Drag and drop across a gap** (a file dragged from Dolphin over the gap): KWin's
+**Probed 2026-10-28** (test KWin, after the table above):
+- **The 75 px was kwin-i3's own**: the script managed the window as floating and gave it i3's
+  `floating_minimum_size` (75x50, `src/kwin.js:822`). With the script skipping it, a strip stays
+  6 px. So: **one window per gap strip**, not one per output. Its paint cost is the strips only,
+  and only where something under them is redrawn. KWin's GL renderer does draw an opacity-0
+  window (`itemrenderer_opengl.cpp:434`, alpha × 0), so a whole-output window would have cost a
+  blended quad over every damaged area; strips make that the gaps alone. Its scanout checks skip
+  opacity 0 (`workspacescene.cpp:288`).
+
+**Still to check while building (expected unaffected):**
+1. **Drag and drop across a gap** (a file dragged from Dolphin over the gap): KWin's
    DragAndDrop filter runs first, so it should be unaffected. Check it.
-3. **KWin's own effects** (Overview, Present Windows): `findToplevel` returns nothing while an
+2. **KWin's own effects** (Overview, Present Windows): `findToplevel` returns nothing while an
    effect has the mouse, so it should be unaffected. Check it.
 
 ## 4. The neighbour's 4 px (part B)
@@ -86,9 +92,10 @@ neighbour. In i3 they would, because of clipping. The answer in KWin is **stacki
 never overlap visibly, so the order among them is invisible, and kwin-i3 can raise the tiled
 window whose frame is under the pointer above its tiled neighbours. It raises without focusing,
 and stays below every floating window. Then each tiled window owns its whole frame, as in i3.
-Probe first: that a raise among tiled windows changes nothing visible (shadows, KWin's
-blur/contrast), costs nothing noticeable, and leaves kwin-i3's own stacking (floating above tiled,
-`spec-reload-keepabove.md`) alone.
+**Probed 2026-10-28**: `Workspace::raiseWindow` of the terminal above VS Code: zero screen
+pixels changed (a screenshot diff), the tree and the focus unchanged, and KWin then gave the
+terminal all of its frame (its last 4 px were VS Code's before). To keep while building: the
+raise stays among tiled windows, below every floating one (`spec-reload-keepabove.md`).
 
 ## 5. Part C: the bug, whatever is decided
 
@@ -114,10 +121,7 @@ part B it can't happen. Without part B it is the honest minimum. The test: the t
 With a custom-frame app, without part A, **the only difference left is the cursor** (the app's
 resize cursor over its 10 px band), plus the 4 px bug (part C). The press stays kwin-i3's.
 
-**Recommendation:** run the two probes that could kill part A (paint cost, and part B's raise),
-then decide:
-- If the paint cost is nil, build A + B + C. That is the full i3 ownership, without needless
-  bulk.
-- If the paint cost is real, build C only, and record in `behaviour.md` that next to an app
-  drawing its own frame, its resize cursor shows over the gap and the press is still i3's.
-  "If a little cursor change is OK, that's all it will ever be."
+**Verdict (after the probes, 2026-10-28):** build A + B + C. Both probes passed: the strips
+cost only the gaps, and the raise is invisible. That is the full i3 ownership without needless
+bulk, for every app that draws its own frame. Before building, the design left is the mask's upkeep
+(what sits above a gap, fullscreen, desktops, outputs) and when to raise.
