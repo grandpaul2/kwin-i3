@@ -1,4 +1,5 @@
 #include "framefocus.h"
+#include "tilingdrag.h"
 
 #include <effect/globals.h>
 #include <input_event.h>
@@ -12,8 +13,9 @@
 
 using namespace KWin;
 
-FrameFocus::FrameFocus()
+FrameFocus::FrameFocus(TilingDrag *drag)
     : InputEventFilter(InputFilterOrder::Decoration)
+    , m_drag(drag)
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
     const auto load = [this] {
@@ -112,12 +114,35 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     if (const auto command = window->getMousePressCommand(event->button)) {
         window->performMousePressCommand(*command, event->position);
     }
+    // A left or right press on a tiled window's ring is i3's resize on that side (tiling_resize,
+    // CLICK_BORDER: top, then left, right, bottom at a corner; §9 Z3): the drag filter takes the
+    // press from here, kwin-i3 resizes at the release. The release is then its.
+    const bool tiled = window->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+    if (tiled && m_drag && m_drag->on() && (event->button == Qt::LeftButton || event->button == Qt::RightButton)) {
+        const RectF frame = window->frameGeometry();
+        const QPointF pos = event->position;
+        const QString side = pos.y() < frame.top() ? QStringLiteral("top") : pos.x() < frame.left() ? QStringLiteral("left")
+                           : pos.x() >= frame.right() ? QStringLiteral("right") : QStringLiteral("bottom");
+        m_drag->pressRing(window, side, event);
+        return true;
+    }
     m_taken |= event->button;
     return true;
 }
 
-// A scroll on a frame goes nowhere (on the desktop beneath it would switch desktops).
+// A scroll on a frame focuses the window, as i3's step 3 does on a border (§9 F4), and goes no
+// further (on the desktop beneath it would switch desktops).
 bool FrameFocus::pointerAxis(PointerAxisEvent *event)
 {
-    return (event->modifiers & ~Qt::KeypadModifier) == Qt::NoModifier && ringWindow(event->position);
+    if ((event->modifiers & ~Qt::KeypadModifier) != Qt::NoModifier) {
+        return false;
+    }
+    Window *window = ringWindow(event->position);
+    if (!window) {
+        return false;
+    }
+    if (!window->isActive()) {
+        workspace()->activateWindow(window);
+    }
+    return true;
 }

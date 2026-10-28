@@ -9,6 +9,9 @@
 
 #include <KDecoration3/Decoration>
 
+#include <KConfigGroup>
+#include <KSharedConfig>
+
 #include <QCoreApplication>
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -53,6 +56,25 @@ void TilingDragBus::Warp(int x, int y)
     m_drag->warp(x, y);
 }
 
+void TilingDragBus::Cancel()
+{
+    m_drag->cancelFromOutside();
+}
+
+TilingDragKeys::TilingDragKeys(TilingDrag *drag)
+    : InputEventFilter(InputFilterOrder::TabBox)
+    , m_drag(drag)
+{
+}
+
+bool TilingDragKeys::keyboardKey(KeyboardKeyEvent *event)
+{
+    if (m_drag->dragging() && event->state == KeyboardKeyState::Pressed) {
+        m_drag->cancelFromOutside();
+    }
+    return false;               // the key goes on: its binding still runs, as in i3
+}
+
 TilingDragGrab::TilingDragGrab(TilingDrag *drag)
     : InputEventFilter(InputFilterOrder::Effects)
     , m_drag(drag)
@@ -78,7 +100,12 @@ TilingDrag::TilingDrag()
     : InputEventFilter(InputFilterOrder::Decoration)
     , m_bus(this)
     , m_grab(this)
+    , m_keys(this)
+    , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
+    loadConfig();
+    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] { loadConfig(); });
+    QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] { loadConfig(); });
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
     m_unanswered.setSingleShot(true);
@@ -92,11 +119,30 @@ TilingDrag::TilingDrag()
     });
 }
 
+TilingDrag::~TilingDrag()
+{
+    if (m_keysInstalled && input()) {
+        input()->uninstallInputEventFilter(&m_keys);
+    }
+}
+
+// i3's tiling_drag (§9 G3): which presses start the drag.
+void TilingDrag::loadConfig()
+{
+    auto config = m_watcher->config();
+    config->reparseConfiguration();
+    const QString mode = config->group(QStringLiteral("Script-kwin-i3")).readEntry("tilingDrag", QStringLiteral("modifier titlebar"));
+    m_modifierDrag = mode.contains(QLatin1String("modifier"));
+    m_titlebarDrag = mode.contains(QLatin1String("titlebar"));
+}
+
+// "phase id x y side": side is the ring's side of a Z3 press, else "-".
 QString TilingDrag::state()
 {
     m_unanswered.stop();
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
-    const QString s = QStringLiteral("%1 %2 %3 %4").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()));
+    const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
+                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side);
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -135,6 +181,57 @@ void TilingDrag::cancel()
 {
     m_phase = m_phase == Phase::Drag ? Phase::Cancel : Phase::None;
     m_window.clear();
+}
+
+// kwin-i3's Cancel, or a key press (TilingDragKeys): the drag ends; the button still held keeps
+// its release ours.
+void TilingDrag::cancelFromOutside()
+{
+    if (m_phase == Phase::Pressed || m_phase == Phase::Drag) {
+        cancel();
+    }
+}
+
+// A press taken for a drag or a resize: who, which button, from where; the key filter goes in
+// front of the shortcuts while it is held.
+void TilingDrag::takePress(Window *window, Qt::MouseButton button, const QPointF &pos, bool resize, const QString &side, bool threshold)
+{
+    m_window = window;
+    m_id = window->internalId().toString();
+    m_start = m_pos = pos;
+    m_taken |= button;
+    m_button = button;
+    m_resize = resize;
+    m_side = side;
+    m_threshold = threshold;
+    m_phase = Phase::Pressed;
+    if (!m_keysInstalled && input()) {
+        input()->installInputEventFilter(&m_keys);
+        m_keysInstalled = true;
+    }
+    if (!threshold) {
+        begin();
+    }
+}
+
+void TilingDrag::pressDone()
+{
+    m_button = Qt::NoButton;
+    m_window.clear();
+    if (m_keysInstalled && input()) {
+        input()->uninstallInputEventFilter(&m_keys);
+        m_keysInstalled = false;
+    }
+}
+
+// A plain left or right press on a tiled window's ring (FrameFocus found it): i3's tiling_resize on
+// a border, against the neighbour on that side (§9 Z3). The activation is FrameFocus's (F3).
+void TilingDrag::pressRing(Window *window, const QString &side, PointerButtonEvent *event)
+{
+    if (!m_on || !window || window->isDeleted() || dragging()) {
+        return;
+    }
+    takePress(window, event->button, event->position, true, side, false);
 }
 
 // The decoration under the pointer never saw the drag's motions: its hover catches up now, not
@@ -187,22 +284,23 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return false;
         }
         m_taken &= ~event->button;
-        if (event->button == m_button) {
-            m_button = Qt::NoButton;
+        // The drag button's release drops; so does any other button's while a drag runs (i3's
+        // drain_drag_events: any release ends it at the pointer, §9 G7). The drag button's own
+        // release afterwards is still ours, taken.
+        if (event->button == m_button || (dragging() && m_phase == Phase::Drag)) {
             if (m_phase == Phase::Drag) {
                 m_phase = Phase::Drop;
                 m_pos = event->position;
             } else if (m_phase == Phase::Pressed) {
                 m_phase = Phase::None;
             }
-            m_window.clear();
+            pressDone();
             hoverAt(event->position);
         }
         return true;
     }
-    // Another button during a drag ends it, as in i3; its press and release go nowhere.
+    // Another button's press during a drag goes nowhere (i3 drains it); its release drops (above).
     if (dragging()) {
-        cancel();
         m_taken |= event->button;
         return true;
     }
@@ -227,12 +325,25 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         window->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
         return true;
     }
+    bool threshold = false;
     if (mods == Qt::MetaModifier) {
-        // Anywhere in the window, with no threshold (i3's floating modifier, click.c).
-        window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
-        m_threshold = false;
+        // Anywhere in the window, with no threshold (i3's floating modifier, click.c), and no
+        // activation: i3 starts the drag before it focuses anything (step 2 before 3), and after
+        // the drop the focus stays unless the dragged window had it (§9 G1; redo stage 6). With
+        // tiling_drag off or titlebar (G3): the press is swallowed all the same, or KWin's
+        // window-action filter would float the window (G4's reason); it activates, as G4 does.
+        if (!m_modifierDrag) {
+            window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+            m_taken |= Qt::LeftButton;
+            return true;
+        }
     } else if (mods != Qt::NoModifier || !window->decoration() || window->decoration()->sectionUnderMouse() != Qt::TitleBarArea) {
         return false;   // the client's press, an edge's resize: KWin's
+    } else if (!m_titlebarDrag) {
+        // tiling_drag off or modifier (G3): the title bar activates and raises, nothing moves.
+        window->performMousePressCommand(window->isActive() ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1(), event->position);
+        m_taken |= Qt::LeftButton;
+        return true;
     } else {
         // The decoration first, as KWin's DecorationEventFilter: a button accepts the press, and
         // its release then goes on to KWin's filter and the button as usual. Refused, it is the
@@ -246,18 +357,9 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return true;
         }
         window->performMousePressCommand(window->isActive() ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1(), event->position);
-        m_threshold = true;
+        threshold = true;
     }
-    m_window = window;
-    m_id = window->internalId().toString();
-    m_start = m_pos = event->position;
-    m_taken |= Qt::LeftButton;
-    m_button = Qt::LeftButton;
-    m_resize = false;
-    m_phase = Phase::Pressed;
-    if (!m_threshold) {
-        begin();
-    }
+    takePress(window, Qt::LeftButton, event->position, false, QString(), threshold);
     return true;
 }
 
@@ -312,14 +414,6 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
         return false;
     }
     window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
-    m_window = window;
-    m_id = window->internalId().toString();
-    m_start = m_pos = event->position;
-    m_threshold = false;
-    m_taken |= Qt::RightButton;
-    m_button = Qt::RightButton;
-    m_resize = true;
-    m_phase = Phase::Pressed;
-    begin();
+    takePress(window, Qt::RightButton, event->position, true, QString(), false);
     return true;
 }

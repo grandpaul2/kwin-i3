@@ -112,13 +112,44 @@ drag Meta left 640 540 60 180
 check "frame: Meta+drag c to b's left side"  wait_tree 1 "V[H[c* b]]" "$m"
 echo "    $(dropped $m)"
 
-# i3's Meta+right resize, in the frame look (a 2 px gap between c and b). The left third of c is
-# no edge of KWin's that has a neighbour; the nearest edge with a partner is its right one.
+# i3's G1 (redo stage 6): a Meta-drag of a window that isn't focused leaves the focus where it was
+# (the drag starts before any focusing; the dropped window has focus only if it had it): b
+# focused, c dragged onto b's right side: after b, and b keeps the focus.
+centre() { local g; g=$(fc "$1"); local x=${g%%,*} r=${g#*,}; local y=${r%% *} sz=${r#* }; echo "$((x + ${sz%x*} / 2)) $((y + ${sz#*x} / 2))"; }
+key "Focus Right"
+check "b focused"                           poll eval '[[ "$(active)" == b ]]'
+read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
+m=$(mark)
+drag Meta left "$cx" "$cy" $((bx + 250)) "$by"
+check "G1: c dropped after b, b keeps the focus" wait_tree 1 "V[H[b* c]]" "$m"
+echo "    $(dropped $m)"
+# i3's G7: any key press cancels a drag (and the key goes on); another button's release drops.
+# The pointer is moved onto c first (focus follows mouse puts the focus there), then a key puts the
+# focus back on b, so the press itself moves nothing and b's focus is what the drop must keep.
+park_on_c() { read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"; "$INJECT" "abs $cx $cy"; poll eval '[[ "$(active)" == c ]]'; key "Focus Left"; poll eval '[[ "$(active)" == b ]]'; }
+park_on_c
+check "b focused, the pointer on c"         eval '[[ "$(active)" == b ]]'
+m=$(mark)
+"$INJECT" "key ${EVDEV[Meta]} down" "btn left down" "abs $((cx - 100)) $cy" "wait 60" "abs $((bx + 200)) $by" "wait 60" \
+    "key ${EVDEV[X]} down" "key ${EVDEV[X]} up" "wait 60" "key ${EVDEV[Meta]} up" "wait 40" "btn left up"
+check "G7: a key press cancels the drag"    wait_log '^.{9}DRAG cancelled' "$m"
+sleep 0.3
+check "  the tree as it was, b focused"     eval '[[ "$(tree 1)" == "V[H[b* c]]" && "$(active)" == b ]]'
+park_on_c
+m=$(mark)
+"$INJECT" "key ${EVDEV[Meta]} down" "btn left down" "abs $((cx - 100)) $cy" "wait 60" "abs $((bx - 250)) $by" "wait 60" \
+    "btn right down" "wait 30" "btn right up" "wait 60" "key ${EVDEV[Meta]} up" "wait 40" "btn left up"
+check "G7: another button's release drops: c before b, b keeps the focus" wait_tree 1 "V[H[c b*]]" "$m"
+echo "    $(dropped $m)"
+
+# i3's Meta+right resize, in the frame look (a 2 px gap between c and b): pressed near c's right
+# edge, the one with b beyond it (i3's nearest edge, §9 Z1, redo stage 6: nearer the screen's edge
+# the press would do nothing, Paul's call 66).
 # (Escape after Meta is let go: Meta+Esc is Plasma's System Monitor key, taken before the helper.)
 read -r cw bw < <(kjs 'var o = {}; workspace.windowList().forEach(function (w) { o[w.caption] = Math.round(w.frameGeometry.width); }); log(o.c + " " + o.b)')
 echo "    c ${cw}px, b ${bw}px"
 m=$(mark)
-"$INJECT" "abs 100 180" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" "abs 200 180" "wait 40" "abs $((cw + 150)) 180" "wait 1000" \
+"$INJECT" "abs $((cw - 100)) 180" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" "abs $((cw - 50)) 180" "wait 40" "abs $((cw + 150)) 180" "wait 1000" \
     "key ${EVDEV[Meta]} up" "wait 40" "key 1 down" "key 1 up" "wait 40" "abs 300 180" "wait 40" "btn right up" &
 held=$!
 check "Meta+right mid-drag: the 2 px bar at the pointer" poll eval '[[ "$(indicator)" == $((cw + 149)),*" 2x"* ]]' || echo "    indicator: $(indicator)"
@@ -128,8 +159,11 @@ echo "    $(after $m | grep -E '^.{9}(RESIZE|ERROR|WARN|INVARIANT)' | cut -c10- 
 check "Escape: cancelled, the bar gone"      eval 'wait_log "^.{9}RESIZE cancelled" "$m" && [[ -z "$(indicator)" ]]'
 check "  c as it was"                        eval '[[ "$(wid c)" == "$cw" ]]'
 m=$(mark)
-drag Meta right 100 180 $((cw + 150)) 180
+drag Meta right $((cw - 100)) 180 $((cw + 150)) 180
 check "Meta+right drag in c: resized at the release" wait_log "^.{9}RESIZE resized width" "$m"
+m2=$(mark)
+drag Meta right 100 180 300 180
+check "Meta+right near c's left edge (the screen's): nothing, as i3" wait_log "^.{9}RESIZE not started: nothing to resize against" "$m2"
 echo "    $(after $m | grep -E '^.{9}(RESIZE|ERROR|WARN|INVARIANT)' | cut -c10- | tr '\n' '|')"
 poll eval '[[ "$(wid c)" -gt $((cw + 120)) ]]'
 echo "    c $(fc c)  b $(fc b)"

@@ -36,11 +36,11 @@ var Tree = (function () {
 
     function newCon(layout, win) {
         return { type: "con", win: win === undefined ? null : win, layout: layout || "h",
-                 nodes: [], focus: [], parent: null, percent: 0, fullscreen: false };
+                 nodes: [], focus: [], parent: null, percent: 0, fullscreen: false, minimized: false };
     }
     function newFloating(win) {
         return { type: "floating", win: win, layout: "h", nodes: [], focus: [], parent: null,
-                 percent: 0, fullscreen: false };
+                 percent: 0, fullscreen: false, minimized: false };
     }
 
     function Model(env) {
@@ -97,6 +97,19 @@ var Tree = (function () {
         if (!fs) return true;
         return con === fs || hasParent(con, fs);
     }
+    // A minimized window is i3's scratchpad window (§5 C9, §10 V7, redo stage 6): in the tree, out
+    // of the layout, and never reached by the focus kwin-i3 chooses. A container counts while any
+    // leaf in it is not minimized; a workspace always.
+    function reachable(con) {
+        if (con.type === "ws") return true;
+        if (con.win !== null) return !con.minimized;
+        for (var i = 0; i < con.nodes.length; i++) if (reachable(con.nodes[i])) return true;
+        return false;
+    }
+    function firstReachable(list) {
+        for (var i = 0; i < list.length; i++) if (reachable(list[i])) return list[i];
+        return null;
+    }
 
     // con_parent_with_orientation: the nearest ancestor with this orientation, or null at the
     // top of the workspace or for a floating window.
@@ -108,13 +121,17 @@ var Tree = (function () {
     }
 
     function firstTiling(focus) {
-        for (var i = 0; i < focus.length; i++) if (!isFloating(focus[i])) return focus[i];
+        for (var i = 0; i < focus.length; i++) if (!isFloating(focus[i]) && reachable(focus[i])) return focus[i];
         return null;
     }
 
     M.descendFocused = function (con) {                      // con_descend_focused
         var next = con;
-        while (next !== this.focused && next.focus.length) next = next.focus[0];
+        while (next !== this.focused && next.focus.length) {
+            var child = firstReachable(next.focus);
+            if (!child) break;
+            next = child;
+        }
         return next;
     };
 
@@ -132,27 +149,30 @@ var Tree = (function () {
     // con_descend_direction: the leaf of a subtree met first when entering it moving `dir`;
     // across the grain, the most recently focused child.
     function descendDirection(con, dir) {
-        var most = null;
+        var most = null, nodes = con.nodes.filter(reachable);
         if (isLeaf(con)) return con;
         if (dir === LEFT || dir === RIGHT) {
-            if (con.layout === "h") most = dir === RIGHT ? con.nodes[0] : con.nodes[con.nodes.length - 1];
+            if (con.layout === "h") most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];
             else most = firstTiling(con.focus);
         } else {
-            if (con.layout === "v") most = dir === UP ? con.nodes[con.nodes.length - 1] : con.nodes[0];
+            if (con.layout === "v") most = dir === UP ? nodes[nodes.length - 1] : nodes[0];
             else most = firstTiling(con.focus);
         }
         if (!most) return con;
         return descendDirection(most, dir);
     }
 
-    // con_next_focused: what gets focus when `con` goes away.
+    // con_next_focused: what gets focus when `con` goes away. Minimized windows are skipped, as
+    // i3's focus never reaches the scratchpad's (redo stage 6); none left: the parent.
     M.nextFocused = function (con) {
-        var next = con.parent.focus[0];
-        if (next === con) {
-            var i = con.parent.focus.indexOf(con);
-            next = con.parent.focus[i + 1] || con.parent;
+        var next = null, focus = con.parent.focus;
+        for (var i = 0; i < focus.length && !next; i++) if (focus[i] !== con && reachable(focus[i])) next = focus[i];
+        if (!next) next = con.parent;
+        while (next.focus.length) {
+            var child = firstReachable(next.focus.filter(function (c) { return c !== con; }));
+            if (!child) break;
+            next = child;
         }
-        while (next.focus.length && next.focus[0] !== con) next = next.focus[0];
         if (isFloating(con) && next !== con.parent) next = this.descendFocused(next);
         return next;
     };
@@ -826,13 +846,22 @@ var Tree = (function () {
         var ws = wsOf(this.focused), toFloating = !isFloating(this.focused);
         for (var i = 0; i < ws.focus.length; i++) {
             var c = ws.focus[i];
-            if (toFloating !== isFloating(c)) continue;
+            if (toFloating !== isFloating(c) || !reachable(c)) continue;
             var f = this.descendFocused(c);
             this.activate(f);
             return f;
         }
         return null;
     };
+
+    // Minimized: i3's scratchpad window (§5 C9): the leaf stays in the tree with its share to its
+    // siblings (the projection skips it), and the focus kwin-i3 chooses never lands on it.
+    M.setMinimized = function (win, on) {
+        var con = this.byWin[win];
+        if (con) con.minimized = !!on;
+        return con || null;
+    };
+    M.reachable = reachable;
 
     // ---- resize (commands.c cmd_resize_tiling_width_height) --------------------------------
 
@@ -918,19 +947,22 @@ var Tree = (function () {
         // A fullscreen one goes on to its workspace's neighbour below: i3 checks fullscreen first.
         if (isFloating(con) && !con.fullscreen) {
             if (o !== "h") return null;
-            var fl = con.parent.floating, k = fl.indexOf(con);
+            var fl = con.parent.floating.filter(function (c) { return c === con || reachable(c); }), k = fl.indexOf(con);
             next = (previous ? fl[k - 1] : fl[k + 1]) || (previous ? fl[fl.length - 1] : fl[0]);
+            if (next === con) return null;
             this.activate(next);
             return next;
         }
         while (con.type !== "ws") {
             if (con.fullscreen) { con = wsOf(con); break; }
             var parent = con.parent;
-            if (parent.nodes.length > 1 && parent.layout === o) {
-                var idx = parent.nodes.indexOf(con);
-                var cand = previous ? parent.nodes[idx - 1] : parent.nodes[idx + 1];
+            // Minimized windows are not there to be focused (redo stage 6): the siblings that are.
+            var siblings = parent.nodes.filter(function (c) { return c === con || reachable(c); });
+            if (siblings.length > 1 && parent.layout === o) {
+                var idx = siblings.indexOf(con);
+                var cand = previous ? siblings[idx - 1] : siblings[idx + 1];
                 if (cand && permitsFocusing(cand)) { next = cand; break; }
-                var wrap = previous ? parent.nodes[parent.nodes.length - 1] : parent.nodes[0];
+                var wrap = previous ? siblings[siblings.length - 1] : siblings[0];
                 if (wrapping === "force") {
                     // never leaves the parent; a next one blocked by fullscreen blocks the wrap too
                     if (cand || !permitsFocusing(wrap)) return null;
@@ -1023,12 +1055,12 @@ var Tree = (function () {
         var self = this, ws = this.workspaces[num];
         if (!ws) return "";
         function d(c) {
-            var mark = (c === self.focused ? "*" : "") + (c.fullscreen ? "!" : "");
+            var mark = (c === self.focused ? "*" : "") + (c.fullscreen ? "!" : "") + (c.minimized ? "_" : "");
             if (c.type !== "ws" && c.win !== null) return String(c.win) + mark;
             return c.layout.toUpperCase() + "[" + c.nodes.map(d).join(" ") + "]" + mark;
         }
         var s = d(ws);
-        ws.floating.forEach(function (f) { s += " ~" + f.win + (f === self.focused ? "*" : ""); });
+        ws.floating.forEach(function (f) { s += " ~" + f.win + (f === self.focused ? "*" : "") + (f.minimized ? "_" : ""); });
         return s;
     };
 

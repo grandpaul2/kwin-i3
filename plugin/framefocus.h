@@ -14,10 +14,12 @@
 #include <QObject>
 #include <QPointer>
 
+class TilingDrag;
+
 class FrameFocus : public KWin::InputEventFilter
 {
 public:
-    FrameFocus();
+    explicit FrameFocus(TilingDrag *drag);
 
     bool pointerMotion(KWin::PointerMotionEvent *event) override;
     bool pointerButton(KWin::PointerButtonEvent *event) override;
@@ -26,6 +28,7 @@ public:
 private:
     KWin::Window *ringWindow(const QPointF &pos) const;
 
+    TilingDrag *m_drag;                   // a ring press is its resize on that side (§9 Z3)
     KConfigWatcher::Ptr m_watcher;
     // Owns this filter's subscriptions, so they end with it. Not m_watcher: KDE's config watcher
     // is shared by everyone watching kwinrc and outlives an unloaded plugin, whose library KWin
