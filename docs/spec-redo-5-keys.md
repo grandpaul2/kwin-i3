@@ -60,10 +60,11 @@ gets its own systemd scope.
 - **The sign** (i3's bar shows "resize"; call 34, Paul 2026-10-28): **a banner in the focused
   window itself**, in the style of the settings page's inline messages (Kirigami's
   `InlineMessage`): "Resize mode: J K L ; or the arrows; Escape to leave", drawn by the effect
-  at the top of the focused window while the mode is on. **If the effect can't** draw a Qt Quick
-  item over a window (KWin 6's `OffscreenQuickView`, as its own overview effects use: whether a
-  third-party effect may, checked before building), the fallback is the focused ring in
-  another colour.
+  at the top of the focused window while the mode is on. It can: KWin 6.7.5
+  exports `OffscreenQuickView` and `OffscreenQuickScene` to plugins (`/usr/include/kwin/effect/
+  offscreenquickview.h:51, 161`, `KWIN_EXPORT`, `setSource` for a QML file), so the effect shows a
+  small QML scene over the focused window. The ring's colour stays the fallback only if that
+  fails in the build.
 
 ### B. Exit (K17)
 
