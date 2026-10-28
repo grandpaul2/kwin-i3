@@ -66,9 +66,8 @@ scenario to the decided behaviour**: 26 and 54 were red on `redo-6` from stages 
 replugged monitor's workspace stays, a press on the ring resizes); 62 from stage 7 (the floating
 frame in the tiled colours); KWin's own: a window's modal dialog takes the focus whatever
 `popupDuringFullscreen` says (`activation.cpp findModal`, §5 C5), and a desktops change puts a
-window first in KWin's focus chain (40). **`redo-1` merged into main 2026-10-28 (Paul's go), not
-yet live. Next: Paul's go for `make plugin-install` (the effect's `HoldNew`) and the reload, then his live check (stage 1's
-spec); his "it works" ends the stage and the 17:05 capture goes. Then `redo-2` the same way (each
+window first in KWin's focus chain (40). **`redo-1` merged into main and live 2026-10-28 (Paul's
+go; plugin installed, script reloaded). Next: Paul's live check (stage 1's spec); his "it works" ends the stage and the 17:05 capture goes. Then `redo-2` the same way (each
 branch merges cleanly onto the one before), and so on; stage 7 needs `make plugin-install` again
 (the effect's `SetRing`), stage 10 `make kcm-install`.** Stage 5 going live also changes
 `~/.local/bin/hotkeys` and dotfiles' Plasma table (the Meta+Ctrl resize keys became Meta+R's
