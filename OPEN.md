@@ -5,8 +5,9 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, tenth session** (the pointer probe live; item 43 done: the gaps are
-kwin-i3's, live, Paul: "works great"; main's `package/` is what KWin runs).
+Last reconciled: **2026-10-28, tenth session, end** (the pointer probe, the gap strips, the review
+of the 10-stage redo with every finding fixed or decided, all live; main's `package/` is what KWin
+runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -58,7 +59,9 @@ closed and deleted), 2 the pointer, 3 i3's kinds and rules (its Window Rules pag
 item 42), 6 clicks, closes, minimize (its two resizes are item 43), 7 the look (its split
 indicators are item 44). **Stage 4** (outputs) merged and
 live, **its live check deferred by Paul, still owed**: the unplug, an assignment, and a Meta+Shift+B
-the morning after a night with the monitors asleep (stage 4's spec).
+the morning after a night with the monitors asleep (stage 4's spec). Since the review of
+2026-10-28 a lost monitor's workspaces all go to the first output, as i3 (`behaviour.md` W3, M3):
+the check tests that.
 
 **Stage 7 (the look), done 2026-10-28, ninth session** (Paul: "looks good"): `redo-7b` (i3's
 `focused_inactive` left out) plus `redo-7c`'s fix, the ring not following a focus change KWin made
