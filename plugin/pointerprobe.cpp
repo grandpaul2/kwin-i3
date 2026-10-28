@@ -21,6 +21,11 @@ PointerProbe::PointerProbe(FrameFocus *frameFocus)
     , m_frameFocus(frameFocus)
 {
     m_frameFocus->setProbe(this);
+    const auto windows = workspace()->windows();
+    for (Window *w : windows) {
+        watch(w);
+    }
+    connect(workspace(), &Workspace::windowAdded, this, &PointerProbe::watch);
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper/pointer"), QStringLiteral("net.local.kwini3helper.Pointer"),
                                                  this, QDBusConnection::ExportAllSlots);
 }
@@ -66,6 +71,30 @@ static QJsonArray rect(const RectF &r)
 static bool shown(const Window *w)
 {
     return !w->isDeleted() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity();
+}
+
+static QString at(const QPointF &p);
+
+static QString gravity(Gravity g)
+{
+    static const char *const names[] = {"none (a move)", "left", "right", "top", "bottom", "top-left", "top-right", "bottom-left", "bottom-right"};
+    const int i = int(Gravity::Kind(g));
+    return QString::fromLatin1(i >= 0 && i < 9 ? names[i] : "?");
+}
+
+// Owned by this object, so they end with the plugin (framefocus.h, m_context).
+void PointerProbe::watch(Window *w)
+{
+    connect(w, &Window::interactiveMoveResizeStarted, this, [this, w] {
+        note(QStringLiteral("KWin %1 started on %2, edge %3, pointer %4, anchor %5, %6")
+                 .arg(w->isInteractiveResize() ? QStringLiteral("resize") : QStringLiteral("move"), name(w),
+                      gravity(w->interactiveMoveResizeGravity()), at(input()->pointer()->pos()), at(w->interactiveMoveResizeAnchor()),
+                      w->tile() ? QStringLiteral("in a KWin tile (live tile resize)") : QStringLiteral("no tile")));
+    });
+    connect(w, &Window::interactiveMoveResizeFinished, this, [this, w] {
+        const RectF f = w->frameGeometry();
+        note(QStringLiteral("KWin move/resize finished on %1, frame %2,%3 %4x%5").arg(name(w)).arg(f.x()).arg(f.y()).arg(f.width()).arg(f.height()));
+    });
 }
 
 void PointerProbe::note(const QString &text)

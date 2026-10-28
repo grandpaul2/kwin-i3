@@ -14,6 +14,10 @@
 // The events come from a filter first in KWin's chain (VirtualTerminal's place, input.h
 // InputFilterOrder: only the output and accessibility filters come before), which only watches:
 // a press it logs with no "FrameFocus" line after was taken by a filter between the two.
+// And every move or resize KWin runs itself (its interactive move/resize: an app's own border,
+// a decoration, a window action, the task manager), started and finished, with the edge, the
+// pointer and whether the window was in a tile: in a tile, KWin resizes the tile live
+// (window.cpp updateInteractiveMoveResize), Plasma's resize in place of i3's.
 // Read-only: nothing here changes what a press or a motion does.
 #pragma once
 
@@ -46,6 +50,8 @@ public Q_SLOTS:
     QString Windows() const;
 
 private:
+    void watch(KWin::Window *w);
+
     FrameFocus *m_frameFocus;
     QStringList m_events;
     // The last crossing logged: the window KWin gives the pointer and what a press would do.
