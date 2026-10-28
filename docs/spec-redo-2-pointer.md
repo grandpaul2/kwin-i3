@@ -141,3 +141,8 @@ across monitors: the pointer follows; pointer already there (after a crossing): 
 Live and Paul's "it works": B2, B4, A2, A3-A5, E1 and §12 P2 rewritten as built; §11 gains
 `mouseWarping`; the settings page's control waits for stage 10 (the setting is in the Configure
 form and kwinrc until then).
+
+## Paul's review (2026-10-28)
+
+59. Panel popups (the calendar, the tray, the app menu) hold the keyboard while open, so kwin-i3's
+    keys do nothing until they close: C as decided, i3's dmenu rule; no exception for them.
