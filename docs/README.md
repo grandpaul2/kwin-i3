@@ -6,9 +6,9 @@ home and point there from the other. (Paul, 2026-10-27.)
 | a fact about | its home |
 |---|---|
 | what a word means (one name per thing, i3's where i3 has one) | `definitions.md` |
-| what kwin-i3 is for, who for, the lines it draws | `philosophy.md` |
-| the scope, what is left out, where it differs from i3 and why, the standing decisions | `plan.md` |
-| what the code does today, exactly, with its known limits | `behaviour.md` |
+| what kwin-i3 is for, who for, the lines it draws, how a decision is made | `philosophy.md` |
+| the scope, what is left out, the reasons a difference from i3 may have, the standing decisions | `plan.md` |
+| what the code does today, exactly, with its known limits; each difference from i3 (its ≠ rows are the list) | `behaviour.md` |
 | how to test, and which runs are the only runs | `testing.md` |
 | how to read a bug capture | `debugging.md` |
 | how the settings page looks and reads | `style-settings-page.md` |
@@ -22,10 +22,12 @@ home and point there from the other. (Paul, 2026-10-27.)
 
 Edited in place whenever what they describe changes, in the same commit as the change.
 
-- **`philosophy.md`**: the purpose and the lines; a decision against it changes it first, with
-  Paul's go.
-- **`plan.md`**: goal, scope and divergences from i3, the numbered decisions, the keys' origin,
-  the focus design, the phases (history, kept for the decisions they record), the risks.
+- **`definitions.md`**: the words, one name per thing, i3's where i3 has one.
+- **`philosophy.md`**: the purpose, the lines, and how a decision is made; a decision against it
+  changes it first.
+- **`plan.md`**: goal, scope (the test, In, Out, the reasons a difference may have, settings,
+  plugins), the numbered decisions, the keys' origin, the focus design, the risks. Its history
+  (the phases, the switch-over) is in git.
 - **`behaviour.md`**: the behaviour as built, from the code. Where a spec disagrees, the code
   decides and this page follows it.
 - **`testing.md`**, **`debugging.md`**, **`style-settings-page.md`**: procedures.
