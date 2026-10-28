@@ -192,10 +192,10 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 
 | group and key | default | meaning |
 |---|---|---|
-| `[Script-kwin-i3] ignoreClass` | krunner, yakuake, spectacle, plasmashell, polkit agent, kruler, … (Krohnkite's list) | window classes that **place themselves**: kwin-i3 never tiles, floats, moves or resizes them (they still live on a workspace) |
-| `[Script-kwin-i3] ignoreRole` | `quake` | window roles that place themselves |
-| `[Script-kwin-i3] floatingClass` | empty | classes that float instead of tiling |
-| `[Script-kwin-i3] floatingTitle` | empty | words; a window whose caption contains one floats |
+| `[Script-kwin-i3] forWindow` | Spectacle, the password prompt, KRuler and plasmashell's ordinary windows float | i3's `for_window` rules, one per line (or `;`-separated): `[criteria] floating enable` or `floating disable`. Criteria: `class`, `instance`, `title`, `window_role`, `window_type` (`normal`, `dialog`, `utility`, `toolbar`, `splash`, `notification`), `workspace` (its number), `floating`, `tiling`, `all`; each a regular expression in quotes, all in one rule must match. A rule runs at most once per window, when it opens or changes title or class (`docs/behaviour.md` §3) |
+| `[Script-kwin-i3] assign` | empty | i3's `assign` rules: `[criteria] → 5` opens matching windows on workspace 5 (shown or not, without switching a monitor); `[criteria] output DP-6` on that monitor's visible workspace |
+| `[Script-kwin-i3] floatingMinimumSize`, `floatingMaximumSize` | `75x50`, `0x0` | i3's `floating_minimum_size`/`floating_maximum_size`: a window becoming floating is sized within them; `0x0` means i3's default (75x50; all monitors together), `-1x-1` no limit |
+| `[Script-kwin-i3] floatingClass`, `floatingTitle`, `ignoreClass`, `ignoreRole` | empty | the old lists, still read as rules (a class or title entry floats those windows; the ignore lists no longer keep windows out: Plasma's system windows are built in, and a user's own entries float). The settings page writes rules |
 | `[Script-kwin-i3] gapsInner` | `4` | px between two tiled windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
 | `[Script-kwin-i3] gapsOuter` | `2` | px added at the screen's edge (i3's `gaps outer`: the edge gap is inner + outer), 0-200 |
 | `[Script-kwin-i3] resizeStep` | `10` | % per Meta+Ctrl+arrow, 1-50 (i3's `resize ... 10 ppt`) |
@@ -220,8 +220,8 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] frameFloatingInactive` | `#333333` | on an inactive floating window, likewise. How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
-window on all desktops or that skips the taskbar places itself, as do the windows `ignoreClass` and `ignoreRole`
-list (`docs/behaviour.md` §3). kwin-i3 assumes one activity: windows on other activities aren't
+window on all desktops is kept out of the tree for now (sticky, `docs/behaviour.md` §3); panels, the desktop,
+popups and Plasma's system windows are never in it (i3's dock, root and override-redirect kinds). kwin-i3 assumes one activity: windows on other activities aren't
 handled yet (`LATER.md` item 5).
 
 ## Working on it

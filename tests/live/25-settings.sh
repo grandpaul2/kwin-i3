@@ -38,22 +38,37 @@ check "reload: floatingTitle changed"       wait_log '^.{9}SETTINGS floatingTitl
 sleep 0.5
 check "b stays floating, c too"             _tree_is 1 "H[a] ~b* ~c"
 
-# 4. The rule removed: c's verdict changes back and it tiles; b, by hand, stays floating.
+# 4. The rule removed: i3 applies rules and never undoes them (§3 X2, redo stage 3), so c stays
+#    floating; a forWindow rule with floating disable tiles it, and b, floated by hand, stays.
 m=$(mark)
 del_key floatingClass
 key "Reload Settings"
 check "reload: floatingClass changed back"  wait_log '^.{9}SETTINGS floatingClass$' "$m"
-check "c tiles again, b still floats"       wait_tree 1 "H[a c] ~b*" "$m"
+sleep 0.5
+check "c stays floating (a rule only applies), b too" _tree_is 1 "H[a] ~b* ~c"
+m=$(mark)
+set_key forWindow '[class="^ki3\.probe$"] floating disable'
+key "Reload Settings"
+check "reload: forWindow changed"           wait_log '^.{9}SETTINGS forWindow$' "$m"
+check "c tiles by the rule, b still floats" wait_tree 1 "H[a c] ~b*" "$m"
 
-# 5. ignoreClass: c is let go, then taken back.
+# 5. ignoreClass no longer keeps a window out of the tree: a user's entry reads as a floating rule
+#    (§3 R5, Paul's call 43), so c floats; the entry gone and a disable rule back, c tiles.
 m=$(mark)
 set_key ignoreClass "krunner,ki3.probe"
+del_key forWindow
 key "Reload Settings"
-check "ignored: c leaves the tree"          wait_tree 1 "H[a] ~b*" "$m"
+check "ignoreClass entry: c floats instead" poll eval '[[ "$(tree 1)" == "H[a] ~c ~b*" || "$(tree 1)" == "H[a] ~b* ~c" ]]'
 m=$(mark)
 del_key ignoreClass
+set_key forWindow '[class="^ki3\.probe$"] floating disable'
 key "Reload Settings"
-check "the default list again: c is back"   wait_tree 1 "H[a c] ~b*" "$m"
+check "the entry gone, a disable rule: c tiles" wait_tree 1 "H[a c] ~b*" "$m"
+m=$(mark)
+del_key forWindow         # the default rules again; no window of theirs is open, nothing changes
+key "Reload Settings"
+check "reload: forWindow back to the default" wait_log '^.{9}SETTINGS forWindow$' "$m"
+check "c still tiles, b still floats"       _tree_is 1 "H[a c] ~b*"
 
 # 6. A reload with nothing changed logs nothing and touches nothing.
 m=$(mark)

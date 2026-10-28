@@ -540,16 +540,111 @@
       </widget>
      </item>
      <item row="24" column="0">
+      <widget class="QLabel" name="forWindowLabel">
+       <property name="text">
+        <string>Rules (for_window):</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_forWindow</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="24" column="1">
+      <widget class="QPlainTextEdit" name="kcfg_forWindow">
+       <property name="kcfg_property" stdset="0">
+        <cstring>plainText</cstring>
+       </property>
+       <property name="toolTip">
+        <string>i3's for_window rules, one per line (or separated by ;): [criteria] floating enable, or floating disable. Criteria: class, instance, title, window_role, window_type (normal, dialog, utility, toolbar, splash, notification), workspace (the number), floating, tiling, all; each a regular expression in quotes, all in one rule must match. Each rule runs at most once per window, when it opens or changes title or class. Example: [class="^org\.kde\.kate$" title="Find"] floating enable</string>
+       </property>
+       <property name="maximumBlockCount">
+        <number>200</number>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>96</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="0">
+      <widget class="QLabel" name="assignLabel">
+       <property name="text">
+        <string>Workspaces (assign):</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_assign</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="1">
+      <widget class="QPlainTextEdit" name="kcfg_assign">
+       <property name="kcfg_property" stdset="0">
+        <cstring>plainText</cstring>
+       </property>
+       <property name="toolTip">
+        <string>i3's assign rules, one per line: [criteria] → 5 opens matching windows on workspace 5 (shown or not, without switching a monitor); [criteria] output DP-6 opens them on that monitor's visible workspace. The same criteria as the rules above.</string>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>360</width>
+         <height>64</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="26" column="0">
+      <widget class="QLabel" name="floatingMinimumSizeLabel">
+       <property name="text">
+        <string>Floating windows, smallest:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingMinimumSize</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="26" column="1">
+      <widget class="QLineEdit" name="kcfg_floatingMinimumSize">
+       <property name="toolTip">
+        <string>i3's floating_minimum_size, width x height in px: a window becoming floating is made at least this big. 0x0 means i3's 75x50; -1x-1 no minimum. KWin's own floor (about 150 px wide for a window with a title bar) applies anyway.</string>
+       </property>
+       <property name="placeholderText">
+        <string>75x50</string>
+       </property>
+      </widget>
+     </item>
+     <item row="27" column="0">
+      <widget class="QLabel" name="floatingMaximumSizeLabel">
+       <property name="text">
+        <string>Floating windows, largest:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_floatingMaximumSize</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="27" column="1">
+      <widget class="QLineEdit" name="kcfg_floatingMaximumSize">
+       <property name="toolTip">
+        <string>i3's floating_maximum_size, width x height in px: a window becoming floating is made at most this big. 0x0 means all monitors together; -1x-1 no maximum.</string>
+       </property>
+       <property name="placeholderText">
+        <string>0x0</string>
+       </property>
+      </widget>
+     </item>
+     <item row="28" column="0">
       <widget class="QLabel" name="ignoreClassLabel">
        <property name="text">
-        <string>Places itself, applications:</string>
+        <string>Old list, still read: classes that float:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_ignoreClass</cstring>
        </property>
       </widget>
      </item>
-     <item row="24" column="1">
+     <item row="28" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreClass">
        <property name="minimumSize">
         <size>
@@ -558,21 +653,21 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Comma-separated window classes that place themselves: kwin-i3 never tiles, floats, moves or resizes them. KWin's Window Rules can detect a window's class.</string>
+        <string>The old setting, read as rules until the settings page writes rules: comma-separated window classes, each read as [class="^X$"] floating enable (kwin-i3 no longer keeps windows out by class; Plasma's system windows are built in).</string>
        </property>
       </widget>
      </item>
-     <item row="25" column="0">
+     <item row="29" column="0">
       <widget class="QLabel" name="ignoreRoleLabel">
        <property name="text">
-        <string>Places itself, roles:</string>
+        <string>Old list, still read: roles that float:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_ignoreRole</cstring>
        </property>
       </widget>
      </item>
-     <item row="25" column="1">
+     <item row="29" column="1">
       <widget class="QLineEdit" name="kcfg_ignoreRole">
        <property name="minimumSize">
         <size>
@@ -581,21 +676,21 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Comma-separated window roles that place themselves.</string>
+        <string>The old setting, read as rules: comma-separated window roles, each read as [window_role="^X$"] floating enable.</string>
        </property>
       </widget>
      </item>
-     <item row="26" column="0">
+     <item row="30" column="0">
       <widget class="QLabel" name="floatingClassLabel">
        <property name="text">
-        <string>Always float, applications:</string>
+        <string>Old list, still read: classes that float (floatingClass):</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_floatingClass</cstring>
        </property>
       </widget>
      </item>
-     <item row="26" column="1">
+     <item row="30" column="1">
       <widget class="QLineEdit" name="kcfg_floatingClass">
        <property name="minimumSize">
         <size>
@@ -608,17 +703,17 @@
        </property>
       </widget>
      </item>
-     <item row="27" column="0">
+     <item row="31" column="0">
       <widget class="QLabel" name="floatingTitleLabel">
        <property name="text">
-        <string>Always float, titles containing:</string>
+        <string>Old list, still read: titles containing (floatingTitle):</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_floatingTitle</cstring>
        </property>
       </widget>
      </item>
-     <item row="27" column="1">
+     <item row="31" column="1">
       <widget class="QLineEdit" name="kcfg_floatingTitle">
        <property name="minimumSize">
         <size>
@@ -631,7 +726,7 @@
        </property>
       </widget>
      </item>
-     <item row="28" column="0" colspan="2">
+     <item row="32" column="0" colspan="2">
       <widget class="QLabel" name="keysHeading">
        <property name="text">
         <string>Keys</string>
@@ -649,7 +744,7 @@
        </property>
       </widget>
      </item>
-     <item row="29" column="0">
+     <item row="33" column="0">
       <widget class="QLabel" name="warnTakenKeysLabel">
        <property name="text">
         <string>Options:</string>
@@ -659,14 +754,14 @@
        </property>
       </widget>
      </item>
-     <item row="29" column="1">
+     <item row="33" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
         <string>Warn when kwin-i3 starts about keys other shortcuts already use</string>
        </property>
       </widget>
      </item>
-     <item row="31" column="0">
+     <item row="35" column="0">
       <widget class="QLabel" name="mouseWarpingLabel">
        <property name="text">
         <string>Pointer:</string>
@@ -676,7 +771,7 @@
        </property>
       </widget>
      </item>
-     <item row="31" column="1">
+     <item row="35" column="1">
       <widget class="QComboBox" name="kcfg_mouseWarping">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -696,7 +791,7 @@
        </item>
       </widget>
      </item>
-     <item row="30" column="1">
+     <item row="34" column="1">
       <!-- Hidden, as on the page (debugLog does nothing on a desktop, docs/debugging.md): kept so
            Defaults still resets the key the test KWin uses. -->
       <widget class="QCheckBox" name="kcfg_debugLog">

@@ -47,7 +47,7 @@ check "not on the left monitor, where KWin opened it" poll on_output a Virtual-1
 check "the left monitor still shows 1"      poll shows Virtual-0 1
 check "the right still shows 2"             poll shows Virtual-1 2
 check "a has the focus"                     poll active_is a
-check "it was moved as a newcomer (the log says why)" wait_log 'ADD a tile ws 2 \(focused\)' "$m"
+check "it was moved as a newcomer (the log says why)" wait_log 'ADD a tiling ws 2 \(focused\)' "$m"
 check "mouseWarping output again"           reload_with mouseWarping output
 
 # (2) C2, C3, the capture: m with a modal dialog on the left; the focus (and the pointer) on the

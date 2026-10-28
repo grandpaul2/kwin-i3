@@ -8,11 +8,22 @@
 // reparsed its config. load() returns the keys whose value changed.
 
 var Settings = (function () {
+    // The window rules in i3's syntax, one per line (src/rules.js parses them; docs/behaviour.md
+    // §3, §11 N12-N15). The defaults float the Plasma tools i3 would float (Spectacle, the
+    // password prompt, KRuler, plasmashell's ordinary windows); the system windows are built in.
+    var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
+        "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
+        "[class=\"^(org\\.kde\\.)?kruler$\"] floating enable; " +
+        "[class=\"^(org\\.kde\\.)?plasmashell$\" window_type=\"normal\"] floating enable";
     var TABLE = {
-        ignoreClass: { type: "list", def: "krunner,yakuake,spectacle,kded5,xwaylandvideobridge," +
-            "plasmashell,ksplashqml,org.kde.plasmashell,org.kde.polkit-kde-authentication-agent-1," +
-            "org.kde.kruler,kruler,kwin_wayland,ksmserver-logout-greeter" },
-        ignoreRole: { type: "list", def: "quake" },
+        forWindow: { type: "text", def: DEFAULT_RULES },                        // for_window [criteria] floating enable|disable
+        assign: { type: "text", def: "" },                                      // assign [criteria] → N | output X
+        floatingMinimumSize: { type: "size", def: "75x50" },                    // i3's floating_minimum_size
+        floatingMaximumSize: { type: "size", def: "0x0" },                      // floating_maximum_size: 0x0 all outputs together, -1x-1 none
+        // The old list settings, read on as rules (src/rules.js oldRules) so nothing a user set
+        // changes at the update; the settings page writes the rules above (redo stage 10).
+        ignoreClass: { type: "list", def: "" },
+        ignoreRole: { type: "list", def: "" },
         floatingClass: { type: "list", def: "" },
         floatingTitle: { type: "list", def: "" },
         debugLog: { type: "bool", def: "false" },
@@ -56,6 +67,8 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
+        if (type === "size") return /^-?[0-9]+x-?[0-9]+$/.test(text) ? text : null;   // "WxH", 0 and -1 allowed (Rules.parseSize)
+        if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;
         // i3's "workspace N output X": { N: output name }. A malformed entry is skipped (and
         // logged), the rest still apply.

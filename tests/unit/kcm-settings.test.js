@@ -21,48 +21,24 @@ test("Plasma-window workspaces: whole numbers 1-10, sorted, once each", () => {
     assert.strictEqual(K.formatWorkspaces([]), "");
 });
 
-const DEFAULTS = { ignoreClass: "krunner,yakuake", ignoreRole: "quake", floatingClass: "", floatingTitle: "" };
-
-test("window rules: two lists from four settings, defaults marked", () => {
-    const e = K.ruleEntries({ ignoreClass: "krunner, yakuake,kate", ignoreRole: "quake", floatingClass: "gimp", floatingTitle: "Picture-in-Picture" }, DEFAULTS);
-    assert.deepStrictEqual(e, [
-        { list: "ignore", kind: "class", value: "krunner", isDefault: true },
-        { list: "ignore", kind: "class", value: "yakuake", isDefault: true },
-        { list: "ignore", kind: "class", value: "kate", isDefault: false },
-        { list: "ignore", kind: "role", value: "quake", isDefault: true },
-        { list: "float", kind: "class", value: "gimp", isDefault: false },
-        { list: "float", kind: "title", value: "Picture-in-Picture", isDefault: false },
-    ]);
-    assert.deepStrictEqual(K.ruleCounts(e), { ignore: 4, float: 2 });
+test("window rules: split on line breaks and on ; outside quotes, as the script reads them", () => {
+    assert.deepStrictEqual(K.splitRules('[class="^a$"] floating enable; [title="x;y"] floating disable\n\n [all] floating enable '),
+        ['[class="^a$"] floating enable', '[title="x;y"] floating disable', '[all] floating enable']);
+    assert.deepStrictEqual(K.splitRules(""), []);
 });
 
-test("window rules: written back unchanged equals the default (no spaces added)", () => {
-    assert.deepStrictEqual(K.ruleSettings(K.ruleEntries(DEFAULTS, DEFAULTS)), DEFAULTS);
-    const e = K.ruleEntries(DEFAULTS, DEFAULTS).concat([{ list: "float", kind: "title", value: "Copying", isDefault: false }]);
-    assert.strictEqual(K.ruleSettings(e).floatingTitle, "Copying");
-    assert.strictEqual(K.ruleSettings(e.filter((x) => x.value !== "yakuake")).ignoreClass, "krunner");
+test("window rules: a picked window's class becomes a floating rule, matched whole, dots escaped", () => {
+    assert.strictEqual(K.pickRule("org.kde.kate"), '[class="^org\\.kde\\.kate$"] floating enable');
+    assert.strictEqual(K.addRule("", K.pickRule("a")), '[class="^a$"] floating enable');
+    assert.strictEqual(K.addRule("[all] floating enable\n", '[class="^a$"] floating enable'),
+        '[all] floating enable\n[class="^a$"] floating enable', "on its own line");
+    assert.strictEqual(K.addRule('[class="^a$"] floating enable', '[class="^a$"] floating enable'),
+        '[class="^a$"] floating enable', "not twice");
 });
 
-test("window rules: main.xml's defaults, which the page's Defaults restores, round-trip", () => {
-    const xml = fs.readFileSync(path.join(__dirname, "../../package/contents/config/main.xml"), "utf8");
-    const defs = {};
-    ["ignoreClass", "ignoreRole", "floatingClass", "floatingTitle"].forEach((k) => {
-        const m = new RegExp('name="' + k + '"[^>]*>[\\s\\S]*?<default>([^<]*)</default>').exec(xml);
-        defs[k] = m ? m[1] : "";
-    });
-    assert.ok(defs.ignoreClass.indexOf("plasmashell") >= 0, "read the real list");
-    assert.deepStrictEqual(K.ruleSettings(K.ruleEntries(defs, defs)), defs);
-    assert.ok(K.ruleEntries(defs, defs).every((e) => e.isDefault));
-});
-
-test("a typed entry: not blank, no comma, not there already", () => {
-    const e = K.ruleEntries(DEFAULTS, DEFAULTS);
-    assert.strictEqual(K.entryProblem(e, "float", "class", "  "), "empty");
-    assert.strictEqual(K.entryProblem(e, "float", "title", "a, b"), "comma");
-    assert.strictEqual(K.entryProblem(e, "ignore", "class", " krunner "), "duplicate");
-    assert.strictEqual(K.entryProblem(e, "float", "class", "krunner"), "", "the other list may have it");
-    assert.deepStrictEqual(K.kindsFor("ignore"), ["class", "role"]);
-    assert.deepStrictEqual(K.kindsFor("float"), ["class", "title"]);
+test("window rules: the summary counts rules and assignments", () => {
+    assert.deepStrictEqual(K.ruleCounts({ forWindow: "[all] floating enable; [all] floating disable", assign: "" }), { rules: 2, assigns: 0 });
+    assert.deepStrictEqual(K.ruleCounts({ forWindow: "", assign: '[class="^steam$"] → 5' }), { rules: 0, assigns: 1 });
 });
 
 test("the Workspaces summary's counts", () => {
