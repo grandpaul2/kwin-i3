@@ -72,7 +72,13 @@ windows built in), R9 (i3's `for_window` criteria and floating enable/disable), 
 once, never undone); §4 W5 (a list), S5 (unbound no-back-and-forth actions), S8/S9 (`next`,
 `primary`; by name ≠: shortcuts are registered at load). Kept with their reasons: T12, X6, X7.
 `docs/definitions.md` is Paul's (output, tiling, visible), and `behaviour.md` uses its words.
-Next: the rest of `behaviour.md` (§9, §8, §7, §12, §11, folding §10 in; §6/§13/§14 for gaps).
+§9 done (tables G, Z, F, against i3's `click.c`, `tiling_drag.c`, `drag.c`, `resize.c`;
+Paul 2026-10-27, all as recommended): decided, not built: G1 (a Meta-drag doesn't move focus),
+G3 (a `tilingDrag` setting, i3's four values, default both), G4 (no targets: the press focuses
+and goes to the app), G7/Z7 (any key cancels, any button's release drops, an unmap on the
+focused workspace aborts), Z1 (i3's nearest edge), Z3 (a ring drag resizes), F4 (a ring scroll
+focuses). Kept with reasons: G2, G8's gap side, G11, Z2, Z4, Z5's limits, F1, F7.
+Next: the rest of `behaviour.md` (§8, §7, §12, §11, folding §10 in; §6/§13/§14 for gaps).
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
@@ -86,7 +92,7 @@ their section is done. "i3≠" is a difference from i3 the doc doesn't mark.
 - §6: tiles sized from the work area (panels); an untouched root keeps KWin's saved tiles; KWin's pack/grow keys are pulled back; i3≠: i3 ignores size hints on tiled windows.
 - §7: (v) with `frameOnFloating` a floating window's border is taken too, "given back when it floats" is wrong then; the hold's exceptions (an output being dragged on, fullscreen windows, untiled closes); no ring on fullscreen, minimized or decorated windows, it follows opacity and corners; colours forced opaque, width clamped 1-10. i3≠: frame 1 px (i3 2), gaps 4/2 (i3 0), no smart_borders/smart_gaps, two colours not four, floating border two states.
 - §8: i3≠: resize mode flattened into keys; Close is KWin's (no kill); Meta+Shift+C reloads all of KWin's config; no arguments or flags; the "(symbol)" action names; which holder wins each taken key.
-- §9: (v) a window dropped by KWin's own move on another monitor joins the workspace shown there; the parent strip is 25 px on a framed window and capped by the sibling zone, the parent test first; the resize reach grows with `frameWidth` (rounded up, Chebyshev, topmost wins); no drag or resize while a game holds the pointer or shortcuts are inhibited; a press activates and raises; Meta+Shift+right is KWin's; Escape is swallowed only after the drag starts; the ring's hit zone and when its click passes on; a fullscreen window dropped (flags), a drop on itself; KWin's window-action modifier must stay Meta. i3≠: centre always swaps (i3's swap_modifier); tiling_drag on by default.
+- §9 (done 2026-10-27, folded into G, Z, F; the rest checked when built): (v) a window dropped by KWin's own move on another monitor joins the workspace shown there; the parent strip is 25 px on a framed window and capped by the sibling zone, the parent test first; the resize reach grows with `frameWidth` (rounded up, Chebyshev, topmost wins); no drag or resize while a game holds the pointer or shortcuts are inhibited; a press activates and raises; Meta+Shift+right is KWin's; Escape is swallowed only after the drag starts; the ring's hit zone and when its click passes on; a fullscreen window dropped (flags), a drop on itself; KWin's window-action modifier must stay Meta. i3≠: centre always swaps (i3's swap_modifier); tiling_drag on by default.
 - §10: (v) two desktops are ignored only during kwin-i3's own relocate, otherwise it is "made sticky"; fullscreen: KWin allows several, above panels, no ring or gaps; Shift-drag into KWin's custom tiles puts two windows in a leaf until the next pass; i3≠: minimize exists.
 - §11: list settings skip a bad entry rather than falling back; the script also enforces `holdTimeoutMs`'s range; an out-of-range number falls back whole, colours lowercased; the settings page's dependencies, steps, summaries, the "bare" note, the window picker, the key slots, the monitor list.
 - §12: load: the other windows' adoption finishes after the keys are registered (to check); release resets any root that isn't exactly full-screen.
