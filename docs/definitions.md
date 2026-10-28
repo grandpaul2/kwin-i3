@@ -22,7 +22,7 @@ Every window is one of these. Today's code has fewer (`behaviour.md` §3 says wh
 |---|---|---|---|
 | **tiling window** | a window in the tree's layout; the tree places it | `tiling` (criteria), "tiling window" | a window in one of KWin's tiles |
 | **floating window** | a window in the tree, on its workspace's floating list; you place it | `floating` | a window KWin places; kept above |
-| **sticky floating window** | a floating window shown on every workspace of its output | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
+| **sticky floating window** | a floating window visible on every workspace of its output | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
 | **dock** | a panel: reserves space, never focused | dock client (`_NET_WM_WINDOW_TYPE_DOCK`), i3bar | Plasma's panels |
 | **root window** | the background; a click or a crossing there focuses its output | the X root window | the **desktop window** (Plasma's wallpaper and icons; `desktopWindow`) |
 | **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c`: "Don't manage") | on Wayland: popups, menus, tooltips, notifications, OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge) |
