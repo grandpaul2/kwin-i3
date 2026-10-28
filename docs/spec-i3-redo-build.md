@@ -55,7 +55,7 @@ the settings page's Window Rules sub-page is broken until stage 10: it gets a mi
 **4. Workspaces and outputs** (M). §4 W3/M3 (a lost output's workspaces move for good), M4 (a
 returning output gets its assigned workspaces), M5 (a new output: its first assigned, else the
 first free), W5 (`workspaceOutputs` takes a list per number), §5 D5 (focus to the first output in
-KWin's order after an output change). Driven by the replug scenarios (48 and its kin).
+KWin's order after an output change). Driven by the replug scenarios (48 and its kin). Spec: `spec-redo-4-outputs.md`.
 
 **5. Keys** (M). §8 K4 (i3's resize mode, in the helper: Meta+R, then J K L ; and the arrows;
 Return, Escape, Meta+R leave; the Meta+Ctrl actions stay, unbound; an on-screen sign while in the

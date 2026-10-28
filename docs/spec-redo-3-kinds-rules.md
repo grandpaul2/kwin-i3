@@ -147,7 +147,9 @@ rule (B), or is left to tile; the result goes into this spec.
   the tree), 76 (the settings sub-pages: the Window Rules page changes), 77 (float size), 37.
   **Expectations that change**: 20's ignore and floating-list cases become rule cases; 62/63's
   Plasma windows by their new kinds.
-- **Unit, for Paul's go** (`docs/testing.md` rule 5: no `rules.test.js` exists today): the
+- **Unit, for Paul's go** (`docs/testing.md` rule 5: no `rules.test.js` exists today, and
+  `src/rules.js` doesn't load under node: it reads the `Settings` global and has no
+  `module.exports`, so the parser and `classify` take their settings as an argument): the
   parser (criteria, commands, `assign`'s forms, the bad cases), `classify`'s order against A, the
   once-per-window record, and C's translation of the old keys, with Paul's two titles as a case.
 - **New scenario, for Paul's go**: none proposed; 20 is extended instead (an X11 dialog floats,
