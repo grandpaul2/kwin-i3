@@ -5,8 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, ninth session** (stages 7-10 live, the split indicator latch,
-the VS Code margin and the gap handle live; item 43 half done; main's `package/` is what KWin runs).
+Last reconciled: **2026-10-28, tenth session** (the pointer probe live; item 43 reframed: the gap's
+cursor, `docs/spec-gap-ownership.md` for Paul; main's `package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -96,36 +96,13 @@ QPainter text, since KWin 6.7's `OffscreenQuickView` gives an effect no texture 
 spec, "Now"). Next: Paul says what bothers him (or a screenshot of it), then a proposal; a change
 is a plugin change, so `make plugin-install` with his go.
 
-**43. The gap as i3's resize handle: works beside VS Code only** (Paul, 2026-10-28; ninth session,
-**the next session's first work**). Paul's wish: a plain drag anywhere in the gap between tiled
-windows is i3's blue-bar resize (`behaviour.md` §7 Z3, the gap sentence), as on the 1 px ring.
-**Live now** (`b9a32ee`, helper `kwini3helper-0634a9808caf`): Paul sees the blue bar from the gap
-**only beside VS Code**; elsewhere the gap still does what it did (not yet said what: nothing, or
-the desktop's press). Watch for it: no capture taken.
-
-What is known:
-- **VS Code's case, diagnosed and fixed** (`3e6248f`). An app drawing its own frame (VS Code's
-  custom title bar, Chromium's frame; the test client's `--csd`) keeps an invisible resize border
-  past its frame, because KWin reports no tiled edges for a tile with padding (`tile.cpp`
-  `Tile::anchors` returns none when `m_padding > 0`) and kwin-i3's tiles always have padding.
-  KWin's hit test (`Window::hitTest`, the app's input region) gave the press to the app, the app
-  started its resize, and KWin moves a custom tile's edge live (`window.cpp:1160`,
-  `resizeFromGravity`): the "live" resize. `FrameFocus` (`plugin/framefocus.cpp`) now takes a press
-  over a tiled window's margin (`overTiledMargin`).
-- **The gap press** (`b9a32ee`): in `FrameFocus::pointerButton`, when no ring is under the pointer
-  and the hover is none, the desktop, or a tiled margin, `TilingDrag::gapWindow` (Z2's reach,
-  `SetResizeGap` = ceil(gaps().inner / 2) + 1, `gaps().inner` = inner gap + 2 frame widths: 4 px
-  live at Paul's gapsInner 4) picks the nearest tiled window and `pressRing` starts i3's resize on
-  `sideOf` it. 86 drives it green in the test KWin (no desktop window there: the hover is none).
-- **A bug fixed on the way**: `settingsChanged` sent the reach before `Settings.load()`, so a gap
-  change left Meta+right's gap reach stale (a trace in the test KWin showed `gapWindow` null).
-
-Not known: why the live gap beside other windows doesn't take. Candidates, none checked: the hover
-over the live gap isn't the desktop (plasmashell's desktop window may not be `isDesktop()` in
-KWin's hover, or another window's input region covers the strip: Qt apps, Firefox); a filter ahead
-of `FrameFocus` (same `Decoration` order as `TilingDrag`; KWin's own) takes a press over the
-desktop; the live reach (4 px) against where the press lands. Next: find it without Paul (his
-rule, `feedback_cause_before_fix`): the test KWin with a Plasma-like desktop window under the gap
-(the test KWin has none, which is why 86 passed), KWin's `input.cpp` filters ahead of
-`Decoration` for a desktop hover, and a trace of `FrameFocus::pointerButton` (hover, `gap`,
-`gapWindow`) in the test KWin; then the cause to Paul before any change.
+**43. The gap: kwin-i3's, as i3's gaps are i3's** (Paul, 2026-10-28; tenth session). The model
+was wrong: the press in the gap was already i3's everywhere (`tools/pointer-map`, `docs/pointer.md`);
+what was left of Plasma is **the cursor**: next to an app drawing its own frame (VS Code's default
+title bar, Chromium, Electron, GTK header bars), the app's invisible 10 px resize band holds the
+pointer across the gap, with its resize cursor, and 4 px of the neighbour's content (a bug: a press
+there resizes the neighbour's bottom). i3 owns that space by construction (reparenting,
+`manage.c:554`). The proposal, **`docs/spec-gap-ownership.md`**: A, a masked window of kwin-i3's
+over the gaps (probed: the arrow and i3's press beside VS Code); B, the tiled window under the
+pointer raised among tiled ones; C, the bug. Next: Paul's read of the spec; then two probes (A's
+paint cost, B's raise) before anything is built. The probe code: branch `gapwin-probe`.
