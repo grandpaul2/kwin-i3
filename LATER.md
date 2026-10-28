@@ -103,10 +103,9 @@ the dev phase; it will need more attention as we end it"). Today's state: reorga
 removed (2026-10-25). Next, at the end of the Stage: a pass over the whole page with Paul,
 screenshot by screenshot, on his desktop with the plugins (the test KWin's page has none, so its
 frame section is all greyed); by hand, whether arrow keys move the highlight in an open dropdown
-(injected input didn't, in 76); then item 18. Two gaps found reading the code (2026-10-27, Paul's go to fix then): the page
-checks only for the effect, so it can't say the helper is missing (no tiling drag, frame focus,
-layout keys, or Apply on the Configure form): a banner naming whichever plugin is missing and what
-that costs; and Defaults then Apply on a non-US layout writes the US keys until the next layout
+(injected input didn't, in 76); then item 18. Two gaps found reading the code (2026-10-27, Paul's go to fix then): the helper
+banner (the page checks only for the effect) moved to `OPEN.md` item 40's stage 10 (Paul,
+2026-10-28, call 40); and Defaults then Apply on a non-US layout writes the US keys until the next layout
 change or load: the page calls the helper's `FitKeys` after Apply, as i3's `bindsym` follows the
 keymap at once. Also then: plainer words on the page where the explicit ones are stiff (Paul,
 2026-10-27: "colloquialize wording later"), still true (`docs/spec-window-words.md`).
