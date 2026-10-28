@@ -113,6 +113,7 @@ TilingDrag::TilingDrag()
     m_unanswered.setInterval(500);
     QObject::connect(&m_unanswered, &QTimer::timeout, &m_bus, [this] {
         m_on = false;
+        m_offUnanswered = true;
         if (m_phase == Phase::Drag) {
             m_phase = Phase::None;
             m_window.clear();
@@ -141,6 +142,12 @@ void TilingDrag::loadConfig()
 QString TilingDrag::state()
 {
     m_unanswered.stop();
+    // kwin-i3 answering late (a busy script, past the 500 ms) is still there: the timeout's "gone"
+    // is undone, else every drag stayed off until the next reconfigure (review 2026-10-28).
+    if (m_offUnanswered) {
+        m_offUnanswered = false;
+        m_on = true;
+    }
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
     const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
                           .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side);
@@ -154,6 +161,7 @@ QString TilingDrag::state()
 void TilingDrag::setOn(bool on)
 {
     m_on = on;
+    m_offUnanswered = false;
 }
 
 // Only for a resize in progress (a stray call must not move the pointer); the position State()

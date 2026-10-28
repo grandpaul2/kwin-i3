@@ -142,6 +142,7 @@ private:
     QPointF m_start, m_pos;
     bool m_resize = false;            // the drag is a Meta+right resize (m_button is the right button)
     Qt::MouseButton m_button = Qt::NoButton;   // the button of the drag taken, until its release
+    bool m_offUnanswered = false;  // m_on turned off by the 500 ms timeout, not by kwin-i3
     int m_resizeGap = 0;
     bool m_threshold = false;         // a title-bar press: a drag only past the start-drag distance
     Qt::MouseButtons m_taken;         // presses taken: their releases are this filter's too

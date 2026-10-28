@@ -96,13 +96,12 @@ strips taking KWin's window actions, the probe's `Map` stall, the 1x1 floating s
 window floated by a caption change, resize mode stuck after a plugin reload, old title rules with
 `"`, strips with a floating ring; and 13-20 decided, written in `behaviour.md`). Left, each
 suspected or minor, none seen live:
-- **Suspected**: tiling drag switches itself off after a 500 ms unanswered poll until the next
-  reconfigure (`tilingdrag.cpp:112-120`); Move Workspace to Output pushes no sticky window
-  (`kwin.js` `moveWorkspaceToOutput`); KWin's pick after kwin-i3 moves the focused window to a
-  hidden workspace may override i3's; `shownOutside` vs `screensChanged` ordering; a stuck
-  `drag.busy` if the helper dies mid-drag; minimize when KWin's pick isn't managed; `old =
-  model.focused` read after `showOn` (`gotoWorkspace`, `shownOutside`); a close's warp via
-  `windowActivated`; `focusedOutput` null at login; `Placement.shownBefore` last entry.
+- **The suspected ones, done 2026-10-28** (branch `suspects`): fixed: tiling drag off after a
+  slow poll, no sticky push on Move Workspace to Output, a monitor change taken for `workspace N`,
+  a drag stuck if the helper dies, a warp at a close, the first key crossing not warping,
+  `shownBefore` keeping the last switch, the focus read after the switch, and the minimize that
+  left nothing focused (pointer in a gap; probed red then green); refuted by a probe: KWin's pick
+  after a move to a hidden workspace (kwin-i3's stands).
 - **Hardening** (hostile or broken callers only): `HoldNew` ms and `SetDropIndicator` unbounded,
   `holdTimeoutMs` unclamped, GL blend state not restored, `SetRing`/`SetFloating` for a window
   already gone, `m_indicatorShown` not cleaned on destroy, `isActive` per-frame allocations, the
@@ -117,4 +116,4 @@ suspected or minor, none seen live:
   opens; `unusedWorkspace` not preferring one assigned to the source; assigns matching
   `[floating]`/`[tiling]` (never in i3); a launch-workspace step (`startup_ws`); kept-out windows
   that switch desktops handled as outside switches.
-Next: the suspected ones first, a test-KWin probe each before any change.
+Next: the i3 differences, decided from the docs; then the hardening and the page's quirks as one batch.

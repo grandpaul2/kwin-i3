@@ -1847,7 +1847,13 @@ var Placement = (function () {
     function shownBefore(outputs, pending) {
         var out = {};
         for (var i = 0; i < outputs.length; i++) out[outputs[i].name] = outputs[i].shows;
-        for (var j = 0; j < pending.length; j++) if (pending[j].output in out) out[pending[j].output] = pending[j].previous;
+        // The earliest pending switch per output: two in one turn, the first's previous is what
+        // it showed before them (review 2026-10-28; the last overwrote it).
+        var taken = {};
+        for (var j = 0; j < pending.length; j++) {
+            var o = pending[j].output;
+            if (o in out && !taken[o]) { out[o] = pending[j].previous; taken[o] = true; }
+        }
         return out;
     }
 
@@ -1954,6 +1960,9 @@ var KI3 = (function () {
     // A window outside the tree that is closing (its `closed` signal, before windowRemoved): KWin's
     // activation in between is its own next choice, not the user's (windowActivated).
     var closingOutside = null;
+    // A window in the tree that is closing, the same span: KWin's activation then is its own
+    // choice, which the close's pass corrects, and i3 doesn't warp at a close (tree.c).
+    var closingTree = null;
     var ruleRan = {};       // window id -> { rule index: true }: the forWindow rules already run on it (Rules.classify, X2)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -3305,6 +3314,7 @@ var KI3 = (function () {
         // of the focused window, a top-level or floating one too (§5 C7; redo stage 6).
         w.closed.connect(guard("closed", function () {
             var con = model.byWin[key];
+            closingTree = w;
             if (con && model.focused === con && con.parent) closingNext[key] = model.nextFocused(con);
             // i3's drain_drag_events: a window unmapping on the focused workspace aborts a drag (§9 G7).
             if (drag && con && focusedWs() === Tree.wsOf(con)) {
@@ -3317,7 +3327,18 @@ var KI3 = (function () {
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
         w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
         w.minimizedChanged.connect(guard("minimized", function () {
+            var focusedBefore = model.focused;
             var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
+            // The focused window minimized and KWin's own pick not a window of the tree (none, the
+            // desktop, a gap strip under the pointer): the focus goes to i3's next here, else the
+            // pass would activate the minimized window and KWin un-minimize it (review
+            // 2026-10-28). With a tree window picked, windowActivated has done this already.
+            if (con && w.minimized && focusedBefore === con) {
+                var next = model.nextFocused(con);
+                log("MINIMIZED " + conCaption(con) + ": i3's next " + conCaption(next));
+                model.activate(next);
+                wantFocus();
+            }
             if (con) schedule(Tree.wsOf(con));
         }));
         w.fullScreenChanged.connect(guard("fullscreen", function () {
@@ -3682,8 +3703,16 @@ var KI3 = (function () {
         log(tag + why);
     }
     function pollDrag() {
-        if (!drag || drag.busy) return;
+        if (!drag) return;
+        // An answer that never comes (the helper unloaded mid-drag: KWin's callDBus calls back only
+        // on a reply) would leave the drag on for good, every later drag and the pointer's
+        // crossings refused (review 2026-10-28): after a second without one, it ends.
+        if (drag.busy) {
+            if (Date.now() - drag.busySince > 1000) endDrag("the helper stopped answering");
+            return;
+        }
         drag.busy = true;
+        drag.busySince = Date.now();
         dragCursor(true, drag.shape);
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
     }
@@ -3900,6 +3929,7 @@ var KI3 = (function () {
         if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, s);
         var ws = wsModel(num);
         model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
+        focusedOutput = s.name;     // else a first key crossing outputs found it null: no warp (review 2026-10-28)
     }
     // While an override-redirect window has the keyboard (KRunner, a menu, a panel popup), no
     // key of kwin-i3's fires, as i3's bindings don't while dmenu holds it; Escape first (§5
@@ -3986,6 +4016,9 @@ var KI3 = (function () {
     function gotoWorkspace(n) {
         Workspaces.ensure(n);
         if (!deskOf(n)) return;
+        // i3's old_focus is the focus before the switch (workspace.c:464-468): read here, not after
+        // KWin's own activation at the switch has reached the model (review 2026-10-28).
+        var old = model.focused;
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n], fws = focusedWs();
             var occupied = m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(n);
@@ -4002,7 +4035,7 @@ var KI3 = (function () {
         // newcomer sent there while hidden, and activating it drops the fullscreen window
         // from the top layer. As in i3, a fullscreen window keeps the focus on its workspace
         // (con_fullscreen_permits_focusing; docs/spec-fullscreen-tree.md).
-        var fs = model.fullscreenOn(ws), old = model.focused;
+        var fs = model.fullscreenOn(ws);
         model.activate(fs || model.descendFocused(ws));
         pushSticky(outputOf(ws), old);
     }
@@ -4139,6 +4172,7 @@ var KI3 = (function () {
     function moveWorkspaceToOutput(spec) {
         var n = focusedWsNum(), src = Workspaces.outputOf(n), t = screenBy(spec, src);
         if (!t) return;
+        var old = model.focused;    // i3's old_focus, before the switches (workspace.c)
         var wasShown = Workspaces.showing(n) === src;
         // i3's focus stack holds only workspaces with windows (an empty hidden one is closed):
         // the most recently shown of those, else the lowest, else an unused one.
@@ -4160,6 +4194,10 @@ var KI3 = (function () {
         showOn(deskOf(n), t);
         var ws = wsModel(n), fs = model.fullscreenOn(ws);
         model.activate(fs || model.descendFocused(ws));
+        // Both are i3's workspace_show, which pushes sticky windows (workspace.c:566): each
+        // output's sticky windows go to what it shows now (review 2026-10-28, OPEN.md item 46).
+        if (back) pushSticky(src, old);
+        pushSticky(t, old);
         // i3 shows the source's next workspace, then this one: the previous is the former.
         if (back) model.previousWs = back;
         log("WSMOVE " + n + " to " + t.name + (back ? ", " + src.name + " shows " + back : ""));
@@ -4743,7 +4781,7 @@ var KI3 = (function () {
             w.closed.connect(guard("closed outside", function () { if (!wins[id(w)]) closingOutside = w; }));
             adoptWindow(w, true);
         }));
-        workspace.windowRemoved.connect(guard("windowRemoved", function (w) { closingOutside = null; forgetWindow(w); }));
+        workspace.windowRemoved.connect(guard("windowRemoved", function (w) { closingOutside = null; closingTree = null; forgetWindow(w); }));
         workspace.windowActivated.connect(guard("windowActivated", function (w) {
             // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
             log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
@@ -4791,8 +4829,10 @@ var KI3 = (function () {
             model.focusWin(id(w));
             // The pointer follows an activation to another output (Alt+Tab, the task manager, an
             // app's request; i3's focus_on_window_activation ends in workspace_show), unless it
-            // is there already (§5 A2); kwin-i3's own activations warp from applyFocus.
-            if (w.output) {
+            // is there already (§5 A2); kwin-i3's own activations warp from applyFocus. Not KWin's
+            // pick at a close (closingTree): the close's pass corrects it, and i3 sets no warp
+            // at a close (tree.c; review 2026-10-28).
+            if (w.output && !closingTree) {
                 var crossed = focusedOutput !== null && focusedOutput !== w.output.name;
                 focusedOutput = w.output.name;
                 if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
@@ -5023,7 +5063,7 @@ var KI3 = (function () {
         rememberShown();
     }
     // Outputs came or went (docs/spec-redo-4-outputs.md; i3's randr.c): a lost output's workspaces
-    // move to the first output for good (an assigned one to its next connected assigned output);
+    // move to the first output for good, assignments not read (i3's move_content);
     // a new output takes the workspaces assigned to it and shows its lowest, else its first
     // assigned, else the lowest free one; then the first output's visible workspace gets the
     // focus (§5 D5), the pointer following (A2). src/outputs.js decides from a snapshot; the
@@ -5051,6 +5091,10 @@ var KI3 = (function () {
         var names = workspace.screens.map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
         var added = names.filter(function (n) { return !(n in lastShown); });
+        // Desktop changes queued this turn are the outputs' own (KWin giving a new or a lost
+        // output's desktop away), not a user's `workspace N`: shownOutside, a turn later, would
+        // see the refreshed lastShown below and take them for one (review 2026-10-28).
+        if (lost.length || added.length) pendingShown = [];
         var first = workspace.screens[0], fws = focusedWs();
         // B. Lost outputs: their workspaces move for good; the focused one is shown on the first
         // output (i3's workspace_show(next) in move_content; 84-unplug-focus).

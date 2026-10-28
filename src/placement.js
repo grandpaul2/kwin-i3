@@ -43,7 +43,13 @@ var Placement = (function () {
     function shownBefore(outputs, pending) {
         var out = {};
         for (var i = 0; i < outputs.length; i++) out[outputs[i].name] = outputs[i].shows;
-        for (var j = 0; j < pending.length; j++) if (pending[j].output in out) out[pending[j].output] = pending[j].previous;
+        // The earliest pending switch per output: two in one turn, the first's previous is what
+        // it showed before them (review 2026-10-28; the last overwrote it).
+        var taken = {};
+        for (var j = 0; j < pending.length; j++) {
+            var o = pending[j].output;
+            if (o in out && !taken[o]) { out[o] = pending[j].previous; taken[o] = true; }
+        }
         return out;
     }
 
