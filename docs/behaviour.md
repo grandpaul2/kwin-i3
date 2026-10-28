@@ -467,26 +467,27 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
 ## 7. The frame and the look
 
 Checked against i3 4.24's `config.c` (defaults) and `x.c` (`x_draw_decoration`). The text after
-the table is how it works.
+the table is how it works. **The look is where kwin-i3 differs from i3 most, to blend with
+Plasma** (Paul, 2026-10-27), as long as it costs no performance: a look difference's reason can be
+that it fits Plasma better.
 
-**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's) ·
-**For Paul (N)**: a difference found in the redo (2026-10-27), awaiting his call
+**=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
 **L. The look**
 
 | # | What | Here | i3 | Note |
 |---|---|---|---|---|
 | L1 | A tiling window's default look | `frame`: no title bar, a ring | ≠ | i3's default is `normal`: its own title bar (a tab) and a border. Kept: the only title bar here is KWin's decoration (Breeze, with buttons), not i3's tab; `frame` is i3's `pixel`, `bare` its `none`, `titlebars` the nearest to `normal` |
-| L2 | The ring's width (`frameWidth`) | 1 px | ≠ | i3: 2 px (`default_border_width`). 1 is Paul's old config. **For Paul (17)**: i3's 2 |
-| L3 | The ring's colours | two: `frameActive` #4c7899, `frameInactive` #333333 | ≠ | i3 draws the border in `child_border`, by default its colour class's **background**: `focused` #285577, `focused_inactive` #5f676a (the focused window of an output or split that doesn't have focus: the other monitor's), `unfocused` #222222; #4c7899 / #333333 are its title bars' edge. **For Paul (18)**: i3's three classes and defaults (`urgent` stays out with urgency) |
-| L4 | A window alone in a split | nothing marks it | ≠ | i3 draws the side where the next window opens in the class's `indicator` (#2e9ef4 focused), as a split of one looks like no split otherwise. **For Paul (19)**: i3's |
-| L5 | Gaps (`gapsInner`, `gapsOuter`) | 4 px between, 2 px more at the edges | ≠ | i3: 0 and 0. 4/2 are Paul's old config. **For Paul (20)**: i3's 0/0 (Meta+right in the gap, Z2, then has only the ring to aim at) |
-| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is its old name) | no settings; the ring is drawn at the outputs' edges, gaps always | ≠ | i3's defaults (`none`, off) are what this does. **For Paul (21)**: i3's settings, with their values (`none \| vertical \| horizontal \| both \| smart \| smart_no_gaps`; `smart_gaps on \| off \| inverse_outer`) and defaults |
+| L2 | The ring's width (`frameWidth`) | 1 px | ≠ | i3: 2 px (`default_border_width`). 1 is Paul's old config. **Kept** (Paul, 2026-10-27): 1 px: it looks right on Plasma |
+| L3 | The ring's colours | two: `frameActive` #4c7899, `frameInactive` #333333 | ≠ | i3 draws the border in `child_border`, by default its colour class's **background**: `focused` #285577, `focused_inactive` #5f676a (the focused window of an output or split that doesn't have focus: the other monitor's), `unfocused` #222222; #4c7899 / #333333 are its title bars' edge. **Decided, not built** (Paul, 2026-10-27): i3's three classes (`urgent` stays out with urgency), each a colour picker, with Plasma-friendly defaults rather than i3's: `focused` keeps #4c7899; the other two to pick |
+| L4 | A window alone in a split | nothing marks it | ≠ | i3 draws the side where the next window opens in the class's `indicator` (#2e9ef4 focused), as a split of one looks like no split otherwise. **Decided, not built** (Paul, 2026-10-27): i3's |
+| L5 | Gaps (`gapsInner`, `gapsOuter`) | 4 px between, 2 px more at the edges | ≠ | i3: 0 and 0. 4/2 are Paul's old config. **Kept** (Paul, 2026-10-27): 4/2, the look on Plasma |
+| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is its old name) | no settings; the ring is drawn at the outputs' edges, gaps always | ≠ | i3's defaults (`none`, off) are what this does. **Decided, not built** (Paul, 2026-10-27): i3's settings, with their values (`none \| vertical \| horizontal \| both \| smart \| smart_no_gaps`; `smart_gaps on \| off \| inverse_outer`) and defaults |
 | L7 | A window's own look (i3's `border normal \| pixel N \| none`, `border toggle`, `for_window … border`) | one look for all tiling windows | ≠ | kept: no command language (§8 K22), and §3 R9's criteria set floating only |
 | L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway (`docs/spec-tiled-look.md` B) |
-| L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **For Paul (22)**: kept, recommended: the floating windows around them are Breeze's, rounded |
+| L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **Kept** (Paul, 2026-10-27): rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded |
 | L10 | A floating window | its own decoration (KWin's title bar and border) | = | i3's `default_floating_border normal 2`: a title bar too |
-| L11 | A floating window's ring (`frameOnFloating`, off) | its own colours, `frameFloatingActive` #4d7254 (Paul's muted green, 2026-10-24), `frameFloatingInactive` | ≠ | i3 uses the same colour classes for floating and tiling. **For Paul (23)**: i3's: the two floating colours go, floating rings use L3's |
+| L11 | A floating window's ring (`frameOnFloating`, off) | its own colours, `frameFloatingActive` #4d7254 (Paul's muted green, 2026-10-24), `frameFloatingInactive` | ≠ | i3 uses the same colour classes for floating and tiling. **Decided, not built** (Paul, 2026-10-27): the two floating colours go, a floating ring uses L3's classes; by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
 | L12 | Floating above tiling | kept above (kwin-i3 owns Keep Above), except on a Floating workspace while the effect marks floating windows | = | i3 keeps floating windows above tiling ones. Keep Below overwritten: + |
 | L13 | No ring on a fullscreen window | none | = | i3 draws no border on a fullscreen window |
 | L14 | No ring on a minimized window, or one with a client-side decoration | none | + | i3 has no minimize; it borders every window, as X11 apps there draw no shadow |
