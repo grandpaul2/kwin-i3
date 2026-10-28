@@ -79,6 +79,10 @@ Paul's go, and only super justified** (its rule 5: "if you give an agent a handl
 - During the Stage (`OPEN.md`), a new test tool is its own proposal.
 - The settings page (`kcm/ui/`) and the cog's form follow `docs/style-settings-page.md`.
 - i3 behaviour is ported from i3's source (i3's `src/move.c`, `src/tree.c`, `src/con.c`), not from memory.
+- **Lead with i3, every time** (Paul, 2026-10-28: "the name of the frikin project is kwin-i3"). A
+  bug, a capture, a design question or an option list opens with: how i3 does it (its source,
+  file:line), how kwin-i3 copies it, the hurdles (KWin, Wayland). Then KWin's detail. Paul should
+  never have to ask "how does i3 do it?".
 
 ## Where things live outside this repo
 
