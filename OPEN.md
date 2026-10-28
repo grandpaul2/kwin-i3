@@ -101,8 +101,9 @@ default `smart`); V3 kept (KWin's fullscreen is one output's).
 complete.**
 The feature map's stale rows brought up to date (2026-10-28). §5 C5 decided, not built (Paul,
 2026-10-28): i3's `smart`, only the fullscreen window's own transients keep the focus.
-Next: the build plan with Paul (the agreed outline, with §6-§12's decisions placed in it; the
-settings page's rework after).
+The docs review (2026-10-28, a separate agent) found marks, contradictions and code facts; fixed.
+The build plan: `docs/spec-i3-redo-build.md` (draft, ten stages). Next: Paul's calls 31-33 on it,
+then stage 1.
 
 **The gap check's findings** (2026-10-27: three read-only sweeps, `kwin.js`, the other sources
 and the feature map, each against `behaviour.md`), by the section they go into. Worked through
