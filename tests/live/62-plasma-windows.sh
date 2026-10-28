@@ -6,7 +6,7 @@
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
-FLOAT_ACT=77,114,84
+ACT=76,120,153     # the focused class (§7 L3; the floating colours went with redo stage 7)
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 floating() { [[ "$(tree "$2")" == *"~$1"* ]]; }
@@ -55,19 +55,21 @@ key "Workspace 1"
 client --title t --color blue
 check "t tiles on workspace 1"              wait_tree 1 "H[t*]"
 
-# 6. The frame on floating windows: p loses its title bar, the frame in the floating colours.
+# 6. The frame on floating windows: p loses its title bar, the frame in the colour classes (§7
+#    L11, redo stage 7: the floating colours went; p is the focused window). Found red here
+#    2026-10-28 (redo stage 9): stage 7 did not run 62.
 key "Workspace 3"
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "p") workspace.activeWindow = w; });' >/dev/null
 form_set frameOnFloating true
 check "frameOnFloating: p borderless"       poll prop_is p noBorder true
 g=$(geom p); px=${g%%,*}; r=${g#*,}; py=${r%% *}; s=${g#* }; ph=${s#*x}
-check "  its frame, green, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $FLOAT_ACT
+check "  its frame, the focused colour, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $ACT
 # A window that draws its own title bar is never framed floating (review R1-5, finding 2).
 client --title z --csd --color blue
 check "z (CSD) floats on workspace 3"       poll floating z 3
 check "  kwin-i3 left its decoration alone" prop_is z noBorder false
 g=$(geom z); zx=${g%%,*}; r=${g#*,}; zy=${r%% *}; s=${g#* }; zh=${s#*x}
-check "  no frame of ours beside it"        eval '! pixel_is $((zx - 1)) $((zy + zh / 2)) $FLOAT_ACT && ! pixel_is $((zx - 1)) $((zy + zh / 2)) 51,51,51'
+check "  no frame of ours beside it"        eval '! pixel_is $((zx - 1)) $((zy + zh / 2)) $ACT && ! pixel_is $((zx - 1)) $((zy + zh / 2)) 51,51,51'
 kclose z
 # The effect reloaded while the frame stays on: kwin-i3 tells it again which windows float.
 eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"')

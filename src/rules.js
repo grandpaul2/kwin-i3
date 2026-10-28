@@ -5,15 +5,16 @@
 // `floatingTitle`, `floatingWorkspaces`, and a user's own `ignoreClass`/`ignoreRole` entries) are
 // read on as rules, so nothing a user set changes at the update (C).
 //
-// Kinds: "tiling" and "floating" are in the tree; "dock" (a panel), "root" (the desktop window),
-// "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) and
-// "sticky" (on all desktops; stage 9 brings it into the tree) are kept out of it.
+// Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
+// output, redo stage 9) are in the tree; "dock" (a panel), "root" (the desktop window) and
+// "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) are
+// kept out of it.
 
 var Rules = (function () {
     var S = function (key) { return Settings.get(key); };
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
-    function managed(kind) { return kind === "tiling" || kind === "floating"; }
+    function managed(kind) { return kind === "tiling" || kind === "floating" || kind === "sticky"; }
 
     // ---- the kinds kept out of the tree ---------------------------------------------------------
 
@@ -228,13 +229,15 @@ var Rules = (function () {
         var kept = i3Kind(w);
         if (kept) return kept;
         if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash)) return "override-redirect";
-        if (w.onAllDesktops) return "sticky";
         return null;
     }
+    // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
+    // make it sticky"; redo stage 9): in the tree, floating, before any rule.
     function classify(w, ctx) {
         ctx = ctx || {};
         var kept = keptOut(w);
         if (kept) return kept;
+        if (w.onAllDesktops) return "sticky";
         var kind = ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {

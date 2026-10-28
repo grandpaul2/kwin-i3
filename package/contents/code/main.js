@@ -197,7 +197,7 @@ var Settings = (function () {
 //   ws        { type: "ws", num, layout: "h"|"v", nodes: [], floating: [], focus: [], parent: null }
 //   split     { type: "con", win: null, layout, nodes: [], focus: [], parent, percent }
 //   leaf      { type: "con", win: <id>, layout: "h", nodes: [], focus: [], parent, percent, fullscreen }
-//   floating  { type: "floating", win: <id>, parent: <ws>, ... }
+//   floating  { type: "floating", win: <id>, parent: <ws>, sticky: bool, ... }  (sticky: i3's con->sticky, floating only)
 // `focus` is i3's focus_head: the children most recently focused first; a workspace's also
 // holds its floating windows.
 // Differences from i3, on purpose:
@@ -230,7 +230,7 @@ var Tree = (function () {
     }
     function newFloating(win) {
         return { type: "floating", win: win, layout: "h", nodes: [], focus: [], parent: null,
-                 percent: 0, fullscreen: false, minimized: false };
+                 percent: 0, fullscreen: false, minimized: false, sticky: false };
     }
 
     function Model(env) {
@@ -485,6 +485,39 @@ var Tree = (function () {
         attach(node, ws, false);
         this.byWin[win] = node;
         return node;
+    };
+
+    // i3's con->sticky (cmd_sticky; redo stage 9, docs/spec-redo-9-sticky.md): a floating window
+    // visible on every workspace of its output. Only floating nodes carry it here: a sticky
+    // window made tiling is taken off all desktops first (C, KWin's tiles belong to one desktop).
+    M.setSticky = function (con, on) {
+        if (con && isFloating(con)) con.sticky = !!on;
+        return con;
+    };
+
+    // output_push_sticky_windows (output.c:83-120) for one output: `ws` is what the output
+    // shows now, `others` its other workspaces. Each sticky floating con on them moves to ws
+    // (con_move_to_workspace with ignore_focus unless it was `oldFocus`, the focus before the
+    // caller's switch); the one that was the focus is activated again, then the focused
+    // workspace's own focus is restored, so pushing never changes the focused workspace unless
+    // the sticky window is on it (then it keeps the focus, as i3). Returns the cons moved.
+    M.pushSticky = function (ws, others, oldFocus) {
+        var self = this, moved = [];
+        others.forEach(function (from) {
+            if (from === ws) return;
+            from.floating.slice().forEach(function (con) {
+                if (!con.sticky) return;
+                var wasFocus = oldFocus && con === oldFocus;
+                self.moveToWorkspace(con, ws, !wasFocus);
+                moved.push(con);
+                if (wasFocus) {
+                    var current = self.focused ? wsOf(self.focused) : null;
+                    if (permitsFocusing(con)) self.activate(con);
+                    if (current) self.activate(self.descendFocused(current));
+                }
+            });
+        });
+        return moved;
     };
 
     // tree_close_internal, without the X11 part. `keepParent` is i3's dont_kill_parent.
@@ -790,13 +823,15 @@ var Tree = (function () {
 
     // con_move_to_workspace -> _con_move_to_con(behind_focused): lands after the focus of the
     // target workspace and becomes that workspace's focus; the global focus stays behind.
-    M.moveToWorkspace = function (con, ws) {
+    // ignoreFocus (i3's ignore_focus, the sticky push): no focus bookkeeping at all, the con at
+    // the tail of the target's focus stack (con_attach, step 6 skipped).
+    M.moveToWorkspace = function (con, ws, ignoreFocus) {
         if (!con || con.type === "ws") return;
         var source = wsOf(con);
         if (ws === source) return;
         var target = this.descendFocused(ws);
         var focusNext = null;
-        if (this.focused && wsOf(this.focused) === source) {
+        if (!ignoreFocus && this.focused && wsOf(this.focused) === source) {
             focusNext = this.descendFocused(source);
             if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
         }
@@ -810,7 +845,7 @@ var Tree = (function () {
         fixPercent(parent);
         con.percent = 0;
         fixPercent(target);
-        if (!fs) focusUp(con);              // i3 step 6: not under the target's fullscreen window
+        if (!fs && !ignoreFocus) focusUp(con);   // i3 step 6: not under the target's fullscreen window
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
         this.tidy();
@@ -1293,15 +1328,16 @@ if (typeof module !== "undefined") module.exports = Tree;
 // `floatingTitle`, `floatingWorkspaces`, and a user's own `ignoreClass`/`ignoreRole` entries) are
 // read on as rules, so nothing a user set changes at the update (C).
 //
-// Kinds: "tiling" and "floating" are in the tree; "dock" (a panel), "root" (the desktop window),
-// "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) and
-// "sticky" (on all desktops; stage 9 brings it into the tree) are kept out of it.
+// Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
+// output, redo stage 9) are in the tree; "dock" (a panel), "root" (the desktop window) and
+// "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) are
+// kept out of it.
 
 var Rules = (function () {
     var S = function (key) { return Settings.get(key); };
 
     function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
-    function managed(kind) { return kind === "tiling" || kind === "floating"; }
+    function managed(kind) { return kind === "tiling" || kind === "floating" || kind === "sticky"; }
 
     // ---- the kinds kept out of the tree ---------------------------------------------------------
 
@@ -1516,13 +1552,15 @@ var Rules = (function () {
         var kept = i3Kind(w);
         if (kept) return kept;
         if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash)) return "override-redirect";
-        if (w.onAllDesktops) return "sticky";
         return null;
     }
+    // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
+    // make it sticky"; redo stage 9): in the tree, floating, before any rule.
     function classify(w, ctx) {
         ctx = ctx || {};
         var kept = keptOut(w);
         if (kept) return kept;
+        if (w.onAllDesktops) return "sticky";
         var kind = ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
@@ -1948,6 +1986,8 @@ var KI3 = (function () {
     }
 
     function wsForWindow(w) {
+        // On all desktops (sticky, §3 R3; redo stage 9): the workspace its output shows.
+        if (w.onAllDesktops && w.output) return wsModel(shownOn(w.output));
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
         if (num < 1) return null;
@@ -1955,6 +1995,12 @@ var KI3 = (function () {
         return wsModel(num);
     }
 
+    // The number of the workspace an output shows, its home claimed if it had none.
+    function shownOn(s) {
+        var num = deskNum(workspace.currentDesktopForScreen(s));
+        if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, s);
+        return num;
+    }
     // i3's "visible workspace on the output next to this one" (move_to_output_directed, focus).
     function outputNeighbour(ws, dir) {
         var t = Workspaces.screenToward(outputOf(ws), dir);
@@ -2710,9 +2756,18 @@ var KI3 = (function () {
         model.leaves(ws).concat(ws.floating).forEach(function (c) {
             var w = wins[c.win];
             if (!w) return;
-            if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
             if (inDrag(w)) return;
             var key = id(w);
+            // A sticky window (redo stage 9) stays on all desktops: KWin draws it on whatever its
+            // output shows, which is where the model has it (pushSticky); only its output is set.
+            if (c.sticky) {
+                if (w.output === screen || !w.onAllDesktops) return;
+                placing[key] = true;
+                relocating++;
+                try { workspace.sendClientToScreen(w, screen); } finally { delete placing[key]; relocating--; }
+                return;
+            }
+            if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
             if (crossing[key]) { crossing[key] = desk; return; }    // still crossing: arrives below
             untile(w);
             placing[key] = true;
@@ -2969,8 +3024,10 @@ var KI3 = (function () {
     // desktops, which would take the parent along (probe 90: KWin ties the two in setDesktops).
     // -> { ws, why } or null (not on one desktop, as wsForWindow).
     function placeNew(w) {
-        if (w.desktops.length !== 1 || !w.output) return null;
-        var desk = deskNum(w.desktops[0]);
+        if (!w.output || (w.desktops.length !== 1 && !w.onAllDesktops)) return null;
+        // On all desktops (sticky, redo stage 9): as a window on the desktop its output shows;
+        // the push then keeps it on whatever that output shows.
+        var desk = w.onAllDesktops ? deskNum(workspace.currentDesktopForScreen(w.output)) : deskNum(w.desktops[0]);
         if (desk < 1) return null;
         var parent = w.modal && w.transientFor && !w.transientFor.deleted ? model.byWin[id(w.transientFor)] : null;
         var fws = focusedWs();
@@ -3044,7 +3101,7 @@ var KI3 = (function () {
         if (!fs || fs.win === id(w) || !wins[fs.win]) return null;
         var how = Settings.get("popupDuringFullscreen");
         if (how === "smart" && transientOf(w, wins[fs.win])) return null;
-        if (how === "all" && kind === "floating") return null;
+        if (how === "all" && kind !== "tiling") return null;
         if (how === "leave_fullscreen" && w.transient) {
             log("FULLSCREEN " + wins[fs.win].caption + ": ends for " + w.caption + " (leave_fullscreen)");
             wins[fs.win].fullScreen = false;    // fullScreenChanged then clears the tree's flag
@@ -3079,8 +3136,11 @@ var KI3 = (function () {
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh, kind);
-        if (kind === "floating") { model.openFloating(key, ws); setFloatingLook(w, true); if (fresh) clampFloating(w); }
-        else model.open(key, ws);          // under a fullscreen window: second in the focus stack
+        if (kind === "floating" || kind === "sticky") {
+            model.setSticky(model.openFloating(key, ws), kind === "sticky");
+            setFloatingLook(w, true);
+            if (fresh) clampFloating(w);
+        } else model.open(key, ws);          // under a fullscreen window: second in the focus stack
         if (w.fullScreen) model.setFullscreen(key, true);
         if (w.minimized) model.setMinimized(key, true);
         connectWindow(w);
@@ -3197,10 +3257,11 @@ var KI3 = (function () {
         var floating = con.type === "floating";
         if (!ruleRan[key]) ruleRan[key] = {};
         var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key] });
-        if ((kind === "floating") === floating) return;
+        var wantFloating = kind !== "tiling";      // "sticky" floats too (redo stage 9)
+        if (wantFloating === floating) return;
         model.toggleFloating(con);
-        setFloatingLook(w, kind === "floating");
-        if (kind === "floating") { untile(w); floatAtRecord(w); clampFloating(w); }
+        setFloatingLook(w, wantFloating);
+        if (wantFloating) { untile(w); floatAtRecord(w); clampFloating(w); }
         schedule(Tree.wsOf(model.byWin[key]));
     }
 
@@ -3245,11 +3306,24 @@ var KI3 = (function () {
             if (relocating && w.desktops.length !== 1) return;
             var con = model.byWin[key];
             if (!con && placing[key]) return;       // placeNew giving a dialog its parent's desktop
-            if (!con) { if (w.desktops.length === 1) adoptWindow(w); return; }
+            if (!con) { if (w.desktops.length === 1 || w.onAllDesktops) adoptWindow(w); return; }
+            if (w.onAllDesktops) {
+                // Put on all desktops (the window menu, a client, a rule; §3 X4, §10 V10; redo
+                // stage 9): i3's sticky floating: floated if tiling, marked, pushed to what its
+                // output shows.
+                if (!con.sticky) makeSticky(w, con);
+                return;
+            }
             if (w.desktops.length !== 1) {
-                // Now on all desktops (sticky): no longer ours, as if it had never been (rules).
+                // On two desktops, not all (§3 R13): not ours until it is on one again.
                 dropWindow(w);
                 return;
+            }
+            if (con.sticky) {
+                // Taken off all desktops onto one (X4): no longer sticky; it stays floating on
+                // that desktop's workspace (i3's _NET_WM_DESKTOP index: moved there, below).
+                model.setSticky(con, false);
+                log("STICKY " + shortCaption(w) + " off: on workspace " + deskNum(w.desktops[0]));
             }
             if (placing[key] || dragging) return;   // ours, or settled when the drag ends
             var from = Tree.wsOf(con), to = wsForWindow(w);
@@ -3835,7 +3909,11 @@ var KI3 = (function () {
         "Toggle Split": function (c) { model.toggleSplit(c); },
         "Floating Toggle": function (c) {
             if (!c) return;
-            var n = model.toggleFloating(c), w = wins[c.win];
+            var w = wins[c.win];
+            // A sticky window made tiling (§3 X4, C of the stage's spec): off all desktops first,
+            // onto its workspace's; KWin's tiles belong to one desktop (≠ i3, which keeps the flag).
+            if (c.sticky && w) unstick(w, c);
+            var n = model.toggleFloating(c);
             if (n && w) {
                 setFloatingLook(w, n.type === "floating");
                 if (n.type === "floating") { untile(w); floatAtRecord(w); clampFloating(w); }
@@ -3889,8 +3967,52 @@ var KI3 = (function () {
         // newcomer sent there while hidden, and activating it drops the fullscreen window
         // from the top layer. As in i3, a fullscreen window keeps the focus on its workspace
         // (con_fullscreen_permits_focusing; docs/spec-fullscreen-tree.md).
-        var fs = model.fullscreenOn(ws);
+        var fs = model.fullscreenOn(ws), old = model.focused;
         model.activate(fs || model.descendFocused(ws));
+        pushSticky(outputOf(ws), old);
+    }
+
+    // i3's output_push_sticky_windows (output.c:83-120; redo stage 9, docs/spec-redo-9-sticky.md
+    // B): after a change of what output s shows, every sticky floating window on its other
+    // workspaces moves to the shown one, in the model only (KWin draws a window on all desktops
+    // wherever its output is). `old`, the focus before the switch: a sticky window that had it
+    // keeps it (workspace_show calls with old_focus); null otherwise (a move, an output change).
+    function pushSticky(s, old) {
+        var ws = wsModel(shownOn(s)), others = [];
+        Object.keys(model.workspaces).forEach(function (n) {
+            var m = model.workspaces[n];
+            if (m !== ws && m.floating.some(function (c) { return c.sticky; }) && outputOf(m) === s) others.push(m);
+        });
+        if (!others.length) return;
+        var moved = model.pushSticky(ws, others, old);
+        if (!moved.length) return;
+        log("STICKY " + moved.map(function (c) { return wins[c.win] ? shortCaption(wins[c.win]) : "?"; }).join(", ") + " pushed to workspace " + ws.num + " on " + s.name);
+        others.forEach(schedule);
+        schedule(ws);
+        wantFocus();
+    }
+    // A window put on all desktops (X4): i3's sticky floating. Floated if tiling (its tile left),
+    // marked, pushed to what its output shows.
+    function makeSticky(w, con) {
+        if (con.type !== "floating") {
+            con = model.toggleFloating(con);
+            setFloatingLook(w, true);
+            untile(w); floatAtRecord(w); clampFloating(w);
+        }
+        model.setSticky(con, true);
+        log("STICKY " + shortCaption(w) + " on: floating, on every workspace of " + (w.output ? w.output.name : "its output"));
+        schedule(Tree.wsOf(con));
+        if (w.output) pushSticky(w.output, null);
+    }
+    // Off all desktops, onto its workspace's desktop, by kwin-i3 (Sticky Toggle, Floating Toggle):
+    // the model's flag goes here, and desktopsChanged sees kwin-i3's own move (placing).
+    function unstick(w, con) {
+        var key = id(w), ws = Tree.wsOf(con);
+        model.setSticky(con, false);
+        placing[key] = true;
+        relocating++;
+        try { w.desktops = [deskOf(ws.num)]; } finally { delete placing[key]; relocating--; }
+        log("STICKY " + shortCaption(w) + " off: on workspace " + ws.num);
     }
 
     // Meta+Shift+N: send the window to workspace N, on N's monitor (i3ws moveToWorkspace); an
@@ -3905,6 +4027,9 @@ var KI3 = (function () {
             if (!occupied) Workspaces.claimHome(n, outputOf(Tree.wsOf(con)));
         }
         model.moveToWorkspace(con, wsModel(n));
+        // A sticky window sent to N (D of the stage's spec): the push brings it to what N's
+        // output shows, as i3 does after a move.
+        if (con.sticky) pushSticky(outputOf(wsModel(n)), null);
     }
 
     // ---- workspace commands with no default key (docs/spec-workspace-commands.md) -------------
@@ -4030,6 +4155,13 @@ var KI3 = (function () {
     };
 
     var UNBOUND = {
+        // i3's `sticky toggle` (Paul's call 37, redo stage 9): KWin's "on all desktops" flag;
+        // desktopsChanged does the rest (makeSticky, or off it onto its workspace's desktop).
+        "Sticky Toggle": function (c) {
+            var w = c && wins[c.win];
+            if (!w) return;
+            if (w.onAllDesktops) unstick(w, c); else w.onAllDesktops = true;
+        },
         "Workspace Back and Forth": function () { var p = previousWs(); if (p) gotoWorkspace(p); },
         "Move to Workspace Back and Forth": function (c) { var p = previousWs(); if (p) moveToWorkspace(p, c); },
         "Workspace Next": function () { stepWorkspace(1, false); },
@@ -4843,8 +4975,9 @@ var KI3 = (function () {
             if (!occupied) Workspaces.claimHome(num, output);
             log("SHOWN " + num + " on " + output.name + " outside kwin-i3: the focus follows");
         }
-        var ws = wsModel(num);
+        var ws = wsModel(num), old = model.focused;
         model.activate(model.fullscreenOn(ws) || model.descendFocused(ws));
+        pushSticky(outputOf(ws), old);
         wantFocus(true);
         rememberShown();
     }
@@ -4917,6 +5050,7 @@ var KI3 = (function () {
         });
         lastShown = {};
         rememberShown();
+        workspace.screens.forEach(function (s) { pushSticky(s, null); });   // sticky windows follow what each output shows now
         seedPointer();
         armRefit();
         scheduleAll();
