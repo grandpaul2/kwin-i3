@@ -69,6 +69,8 @@ Also fixed: the test terminals read the user's own alacritty config (the laptop'
 sat on 78's corner pixels); 59's arc pixel is the GPU's antialiasing (NVIDIA 55,48,48, AMD
 68,33,33), judged as 78 judges it. 53-hold's two laptop findings fixed 2026-10-29 (6dd3a82: a
 new window stays hidden until it lands; a kept closing window grabbed from Scale), 53 green on
-both machines; on main, not yet installed live (`make plugin-install`, Paul's go). Next: the
-rest of the suite once more on the laptop, and stage (a)'s live install with
+both machines; installed live the same day. The suite once more on the laptop, 2026-10-29: 58 of
+60 green; 39 and 69 red, both from `kwriteconfig6 --notify` losing its signal on the slower
+machine (4 in 30; the tests now send it with gdbus, `lib.sh` `set_layouts`; upstream note in
+`LATER.md`), green on both machines after. Next: stage (a)'s live install with
 Paul at the laptop (the by-hand list above).

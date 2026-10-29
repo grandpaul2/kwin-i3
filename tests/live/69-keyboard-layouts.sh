@@ -5,17 +5,14 @@
 # digit row's and the ; key's actions the symbols each layout types there, as KWin matches them.
 # Keys are pressed by position (tools/inject.py sends key codes; press names them by the US
 # label), and each check is the action that ran. Layouts change through kxkbrc, as System
-# Settings writes it (KWin's KConfigWatcher: --notify).
+# Settings writes it (KWin's KConfigWatcher: lib.sh's set_layouts).
 source "$(dirname "$0")/lib.sh"
 plan() { busctl --user call org.kde.KWin /kwini3helper net.local.kwini3helper Plan 2>/dev/null; }
 plan_has() { plan | grep -qF -- "$1"; }
 # A layout change reaches the helper through the keyboard daemon: 20 s, not 5, under the batch's
 # load (item 34: "the helper fitted French" missed its 5 s).
 fitted() { WAIT=20 poll plan_has "$@"; }
-layout() {
-    kwriteconfig6 --file kxkbrc --group Layout --key Use true
-    kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1" --notify
-}
+layout() { set_layouts "$1"; }
 runs() {    # runs <keys by position> <action>: the key press runs that kwin-i3 action
     local m; m=$(mark)
     press "$1"

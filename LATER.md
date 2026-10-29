@@ -185,3 +185,9 @@ when the Stage ends, (d) asked as a foundation change, (a) after item 50.
 **2. Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left: the one-line
 KWin fix upstream (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`), so the Configure
 form's Apply applies without the plugins too (the settings page's Apply already does).
+
+**kwriteconfig6 --notify loses its signal** (found 2026-10-29, OPEN.md item 50): it sends KConfig's
+`ConfigChanged` with a fire-and-forget `QDBusConnection::send` (`kconfig.cpp`, `notifyClients`)
+and exits; on the slower laptop 4 writes in 30 reached the file but never the bus. A KConfig bug
+report (flush before exit). The tests send the signal with gdbus instead (`tests/live/lib.sh`,
+`set_layouts`).

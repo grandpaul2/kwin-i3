@@ -98,6 +98,17 @@ kclose() {
 _logged_since() { after "$2" | grep -qE "$1"; }
 wait_log() { poll _logged_since "$1" "${2:-0}"; }
 
+# set_layouts <list>: the keyboard layouts as System Settings sets them: kxkbrc, then KConfig's
+# ConfigChanged signal, which KWin's KConfigWatcher hears. Sent by gdbus, which waits for the
+# message to go out: kwriteconfig6 --notify sends and exits, and on the slower laptop the signal
+# was lost 4 times in 30 (2026-10-29: the file changed, KWin never heard).
+set_layouts() {
+    kwriteconfig6 --file kxkbrc --group Layout --key Use true
+    kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1"
+    gdbus emit --session --object-path /kxkbrc --signal org.kde.kconfig.notify.ConfigChanged \
+        "{'Layout': [b'Use', b'LayoutList']}" >/dev/null
+}
+
 key() {
     local m; m=$(mark)
     # Move to Workspace N's action is "... (symbol)": the key it holds is Meta+<symbol> (src/kwin.js).

@@ -5,11 +5,10 @@
 source "$(dirname "$0")/lib.sh"
 notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
 notes_are() { [[ $(notes) == "$1" ]]; }
-layout() {
-    kwriteconfig6 --file kxkbrc --group Layout --key Use true
-    kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1" --notify
-    # 20 s, not 5: under the batch's load the layout reaches the keyboard daemon late (item 34).
-    WAIT=20 poll eval '[[ "$(busctl --user call org.kde.keyboard /Layouts org.kde.KeyboardLayouts getLayoutsList)" == *"\"${1%%,*}\""* ]]'
+has_layout() { [[ "$(busctl --user call org.kde.keyboard /Layouts org.kde.KeyboardLayouts getLayoutsList)" == *"\"$1\""* ]]; }
+layout() {   # a check: a layout KWin never got would fail two steps later, as a missing log line
+    set_layouts "$1"
+    WAIT=20 poll has_layout "${1%%,*}"
 }
 reload() {
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
@@ -29,7 +28,7 @@ check "  which says so"                     grep -q "Without the helper: no tili
 check "  and nothing about the layout"      bash -c "! grep -qi 'may not fit the keyboard layout' '$KI3_TMP/notify.out'"
 
 # 2. German, at the next load: one notification naming the layout and the fix.
-layout de
+check "de: KWin has the layout"             layout de
 m=$(mark); reload
 slow_log() { WAIT=20 wait_log "$@"; }   # a prefix assignment inside check would be run as a command
 check "de: logged as not fitted"            slow_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
