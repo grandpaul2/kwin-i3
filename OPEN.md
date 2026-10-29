@@ -48,8 +48,10 @@ lid closed and opened (with and without an external monitor), suspend and resume
 undocking (windows home again, as on a replug), the internal screen at its HiDPI scale (frame
 1 px, gaps, the margins' focus), touchpad scrolling and gestures (Overview, desktop switch) beside
 kwin-i3's keys, the wallpaper flash on Intel/AMD, and the workspace widget on the laptop's panel.
-Not yet decided: a test-KWin option for one output and a scale (the suite has only two 1280x720
-outputs at scale 1, `tools/testkwin.sh:178`), to run a few scenarios at the laptop's HiDPI. Worked over ssh from here (one repo, one
+**HiDPI in the test KWin** (Paul's go, 2026-10-29): `KI3_OUTPUTS` and `KI3_SCALE`
+(`tools/testkwin.sh`); 10-tiling, 26-gaps, 54-frame and 85-tiled-look green at `KI3_SCALE=2`
+the same day. On the laptop, those four again at its own scale (1.5 is the likely one, and
+fractional rounding is where a 1 px frame could break) with `KI3_OUTPUTS=1`. Worked over ssh from here (one repo, one
 `OPEN.md`); the laptop's live session under the same "nothing goes live without Paul's go".
 Next: Paul at the laptop for the first session: ssh access from the desktop, and the ALA snapshot
 date.

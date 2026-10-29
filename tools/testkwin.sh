@@ -8,6 +8,10 @@
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_DESKTOPS=<n>                     the test KWin's virtual desktops (default 10; stock is 1)
 #   KI3_PEROUTPUT=true|false             per-output desktops (default true; stock is false)
+#   KI3_OUTPUTS=<n>                      the number of outputs (default 2; 1 is a laptop's screen)
+#   KI3_SCALE=<s>                        each output's scale (default 1; 2 or 1.5 for HiDPI): the
+#                                        pixels grow, each output stays 1280x720 logical, so the
+#                                        scenarios' geometry holds (OPEN.md item 50)
 #   KI3_STOCK=1                          Plasma's stock settings instead of the author's: stock
 #                                        shortcuts and focus (docs/spec-stock-mode.md); the caller
 #                                        sets KI3_DESKTOPS and KI3_PEROUTPUT (run.sh: 1, true)
@@ -175,7 +179,7 @@ if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     flock 9
 fi
 xbefore=$(ls /tmp/.X11-unix/)
-kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count 2 \
+kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count "${KI3_OUTPUTS:-2}" --scale "${KI3_SCALE:-1}" \
     --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
 kwin=$!
 up=""
@@ -187,6 +191,15 @@ for _ in $(seq 150); do
     sleep 0.1
 done
 [[ -n $up ]] || { echo "testkwin: KWin or the log sink did not start" >&2; cat "$tmp/kwin.out" >&2; exit 1; }
+# KI3_SCALE: --scale alone doesn't stick (KWin 6.7.5: its output config store sets a virtual
+# output, which has no physical size, back to scale 1 with the pixels kept), so kscreen-doctor sets
+# it, its backend in-process (the private bus starts no kscreen service), and places the outputs
+# side by side again (they kept their pixel positions: Virtual-1 at x=1920 for 1.5).
+if [[ ${KI3_SCALE:-1} != 1 ]]; then
+    for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=(output.Virtual-$o.scale.$KI3_SCALE output.Virtual-$o.position.$((o * 1280)),0); done
+    KSCREEN_BACKEND_INPROCESS=1 kscreen-doctor "${args[@]}" >/dev/null 2>&1 ||
+        { echo "testkwin: kscreen-doctor could not set scale $KI3_SCALE" >&2; exit 1; }
+fi
 if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     # KWin picks the display number itself and starts Xwayland on the first connection, so
     # the display is the X socket that appeared after the test KWin started.

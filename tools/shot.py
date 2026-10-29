@@ -41,10 +41,13 @@ def capture(output, path):
 
 
 def pixels(path, coords):
+    """Coordinates are logical, as the scenarios' geometry is; the capture is native, so with
+    KI3_SCALE (tools/testkwin.sh) each reads the middle of the pixels its logical pixel covers."""
     from PIL import Image
+    s = float(os.environ.get("KI3_SCALE", "1"))
     with Image.open(path) as img:
         rgb = img.convert("RGB")
-        return [rgb.getpixel((int(x), int(y))) for x, y in coords]
+        return [rgb.getpixel((int((int(x) + 0.5) * s), int((int(y) + 0.5) * s))) for x, y in coords]
 
 
 def pixel(path, x, y):
