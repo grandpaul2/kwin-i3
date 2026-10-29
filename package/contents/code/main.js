@@ -3233,6 +3233,23 @@ var KI3 = (function () {
         return wins[fs.win];
     }
 
+    // fullscreen_blocks_floating_render, for an existing floating window w: its workspace has
+    // another window fullscreen, and popupDuringFullscreen doesn't let it over (`all` lets every
+    // floating window over, `smart` the fullscreen window's own transients).
+    function fullscreenBlocks(w) {
+        var con = model.byWin[id(w)];
+        if (!con || con.type !== "floating" || w.fullScreen) return false;
+        var fs = model.fullscreenOn(Tree.wsOf(con));
+        if (!fs || fs === con || !wins[fs.win]) return false;
+        // The fullscreen window's own modal dialog: KWin activates it in its place whatever is
+        // asked (activation.cpp findModal, §5 C5), so handing back would only loop.
+        if (w.modal && transientOf(w, wins[fs.win])) return false;
+        var how = Settings.get("popupDuringFullscreen");
+        if (how === "all") return false;
+        if (how === "smart" && transientOf(w, wins[fs.win])) return false;
+        return true;
+    }
+
     function adoptWindow(w, fresh) {
         var key = id(w);
         if (wins[key]) return;
@@ -4957,6 +4974,17 @@ var KI3 = (function () {
                 w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {
                 log("ACTIVE " + shortCaption(w) + " refused: its workspace isn't shown");
                 wantFocus();
+                return;
+            }
+            // A floating window activated on a workspace with another window fullscreen (Alt+Tab,
+            // the task manager, an app's request): i3 neither draws it over the fullscreen one nor
+            // focuses it (render.c:253-270 fullscreen_blocks_floating_render, with
+            // popup_during_fullscreen's exceptions; con_fullscreen_permits_focusing), so the
+            // fullscreen window takes the focus back, as a new window's does (§5 C5, §10 V6b).
+            if (!switching && fullscreenBlocks(w)) {
+                var fsw = wins[model.fullscreenOn(Tree.wsOf(model.byWin[id(w)])).win];
+                log("FULLSCREEN " + shortCaption(fsw) + ": keeps the focus over " + shortCaption(w) + " (activated)");
+                workspace.activeWindow = fsw;
                 return;
             }
             // A modal dialog activated: its parent takes the place right behind it in the focus

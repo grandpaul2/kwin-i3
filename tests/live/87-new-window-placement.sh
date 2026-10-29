@@ -102,7 +102,10 @@ m=$(mark)
 client --title o --dialog
 check "o's dialog is there"                 poll _has_window "o dialog"
 echo "    since o: $(after "$m" | grep -E 'ACTIVE|ADD|FULLSCREEN' | cut -c10- | tr '\n' '|')"
-check "m kept the focus over o"             wait_log 'FULLSCREEN m: keeps the focus over o$' "$m"
+# o itself never takes the focus (its dialog's second activation is handed back at once,
+# refinement stage 7, so o may arrive with m already active and no hand-back of its own).
+o_never_active() { ! after "$m" | grep -q 'ACTIVE o (KWin)'; }
+check "m kept the focus over o"             o_never_active
 check "and over o's dialog"                 wait_log 'FULLSCREEN m: keeps the focus over o dialog' "$m"
 check "m is active"                         poll active_is m
 check "m still fills the monitor"           geom_is m "0,0 1280x720"
