@@ -26,7 +26,9 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 - **Testing follows `docs/testing.md`** ("Testing" below), which applies the global "Long runs"
   rule here; its rule 2 says where each run writes its results.
 - **When Paul says it works and moves on, it is done.** Drop your planned checks, and don't chase him
-  for test results.
+  for test results. A live change waits for his word only within its session: at the session's end
+  it is done unless he reported a problem, and "Paul's it works" is never an `OPEN.md` next action
+  (Paul, 2026-10-28).
 
 ## Safety — the desktop is Paul's live session
 
