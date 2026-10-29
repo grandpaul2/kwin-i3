@@ -456,13 +456,14 @@ test("move: the lone child of a split at the workspace edge goes to the next out
     assert.strictEqual(d(m, 1), "H[x a*]", "entering from the right, it goes last");
 });
 
-test("focus: blocked from leaving while another window is fullscreen", () => {
+test("focus: from a window that isn't fullscreen, on past another that is (con_fullscreen_permits_focusing walks up from the focus)", () => {
     const m = model(false);
     open(m, 1, "a", "b", "c");
     m.setFullscreen("c", true);
-    m.focusWin("a");
-    assert.strictEqual(m.focusDir(RIGHT), null, "b is behind the fullscreen c");
-    assert.strictEqual(d(m), "H[a* b c!]");
+    m.focusWin("a");                       // an activation can put it there; the focus's ancestor is the workspace
+    assert.strictEqual(m.focusDir(RIGHT).win, "b", "i3 lets it move (con.c:2327-2364)");
+    m.focusWin("c");
+    assert.strictEqual(m.focusDir(LEFT), null, "from the fullscreen c itself: blocked, as i3");
 });
 
 // ---- i3's own testsuite (testcases/t/, branch next), translated ------------------------------
@@ -716,8 +717,8 @@ test("a floating fullscreen window is the workspace's, as a tiled one (con_get_f
     m.focusWin("f");
     m.open("c", m.ws(1));                  // KWin's activation is handed back: no focusWin
     assert.deepStrictEqual(m.focusOrder(m.ws(1)).slice(0, 2), ["~f", "c"], "manage.c: the newcomer second, f keeps the focus");
-    m.focusWin("c");                       // the mouse can; the keys can't reach b behind f
-    assert.strictEqual(m.focusDir(LEFT), null, "con_fullscreen_permits_focusing");
+    m.focusWin("c");                       // the mouse can; from c, not fullscreen, the keys go on
+    assert.strictEqual(m.focusDir(LEFT).win, "b", "con_fullscreen_permits_focusing: the focus's ancestor is the workspace");
     m.setFullscreen("a", true);
     assert.strictEqual(leaf(m, "f").fullscreen, false, "con_enable_fullscreen: one per workspace, floating included");
     m.setFullscreen("f", true);
@@ -797,11 +798,10 @@ test("focus_wrapping: floating focus is the same in every mode (left/right throu
     }
 });
 
-test("focus_wrapping: force, the next one blocked by fullscreen: no wrap either (i3: return NULL)", () => {
+test("focus_wrapping: force, from a window that isn't fullscreen: the next is permitted (con_fullscreen_permits_focusing from the focus)", () => {
     const m = model(); open(m, 1, "a", "b", "c");
-    m.setFullscreen("a", true); m.focusWin("b");        // the mouse can focus b; c is behind a
-    assert.strictEqual(m.focusDir(RIGHT, "force"), null);
-    assert.strictEqual(m.focusDir(RIGHT, "yes").win, "a", "yes: the wrap to the fullscreen a");
+    m.setFullscreen("a", true); m.focusWin("b");        // the mouse can focus b
+    assert.strictEqual(m.focusDir(RIGHT, "force").win, "c", "the focus's ancestor is the workspace: c is permitted");
 });
 
 // ---- back_and_forth and workspace next/prev (workspace.c; docs/spec-workspace-commands.md) ----

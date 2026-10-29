@@ -282,11 +282,6 @@ var Tree = (function () {
         return null;
     }
 
-    function permitsFocusing(con) {                          // con_fullscreen_permits_focusing
-        var fs = fullscreenOn(wsOf(con));
-        if (!fs) return true;
-        return con === fs || hasParent(con, fs);
-    }
     // A minimized window is i3's scratchpad window (§5 C9, §10 V7, redo stage 6): in the tree, out
     // of the layout, and never reached by the focus kwin-i3 chooses. A container counts while any
     // leaf in it is not minimized; a workspace always.
@@ -423,9 +418,15 @@ var Tree = (function () {
     // workspace focused before (whatever moved the focus: a key, the mouse, an activation).
     // The workspace is the one focus was on when it was set, not the focused window's now: a
     // move to another workspace takes the focused window away first (moveToWorkspace).
+    // con_activate: con_focus, then con_raise: a floating window goes to the tail of its
+    // workspace's floating list, which is its stacking order (floating_raise_con, floating.c:478).
     M.activate = function (con) {
         var to = wsOf(con), from = this.focusedWsNum;
         focusUp(con);
+        if (isFloating(con) && con.parent && con.parent.floating[con.parent.floating.length - 1] !== con) {
+            remove(con.parent.floating, con);
+            con.parent.floating.push(con);
+        }
         this.focused = con;
         if (!to) return;
         if (from && from !== to.num) this.previousWs = from;   // kept if it closes, as i3 keeps the name
@@ -478,11 +479,14 @@ var Tree = (function () {
         return leaf;
     };
 
-    // A window that opens floating (dialogs, fixed size, rules).
+    // A window that opens floating (dialogs, fixed size, rules): at the head of the floating list,
+    // as floating_enable (floating.c:295); its activation raises it to the tail (con_activate).
     M.openFloating = function (win, ws) {
         if (this.byWin[win]) return this.byWin[win];
         var node = newFloating(win);
         attach(node, ws, false);
+        remove(ws.floating, node);
+        ws.floating.unshift(node);
         this.byWin[win] = node;
         return node;
     };
@@ -512,7 +516,7 @@ var Tree = (function () {
                 moved.push(con);
                 if (wasFocus) {
                     var current = self.focused ? wsOf(self.focused) : null;
-                    if (permitsFocusing(con)) self.activate(con);
+                    if (focusPermits(self, con)) self.activate(con);
                     if (current) self.activate(self.descendFocused(current));
                 }
             });
@@ -682,11 +686,12 @@ var Tree = (function () {
         var lca = lowestCommonAncestor(con, parent);
         if (lca === con) return;
         if (!lca) {
-            // Another workspace (a tiling drop onto the other monitor): the meeting point is i3's
-            // root, whose focus order is the workspaces'; con goes first in its new parent's if it
-            // had its workspace's focus and that workspace is the focused one. The global focus
+            // Another workspace (a tiling drop onto the other output): the meeting point is i3's
+            // root, whose focus order is the outputs' and workspaces'; con goes first in its new
+            // parent's focus stack when its own side is ahead in that order, i.e. it is on the
+            // focused workspace (insert_con_into's focus_before, move.c:88-135). The global focus
             // is the caller's (drop activates con).
-            var first = isFocusedDescendant(con, wsOf(con)) && !!this.focused && wsOf(this.focused) === wsOf(con);
+            var first = !!this.focused && wsOf(this.focused) === wsOf(con);
             detach(con);
             fixPercent(con.parent);
             con.parent = parent;
@@ -802,7 +807,7 @@ var Tree = (function () {
 
         var above = con;
         while (above.parent !== same) above = above.parent;
-        if (!permitsFocusing(above.parent)) return;
+        if (!focusPermits(this, above.parent)) return;
         var aIdx = above.parent.nodes.indexOf(above);
         var next = isBefore(dir) ? above.parent.nodes[aIdx - 1] : above.parent.nodes[aIdx + 1];
         if (next && !isLeaf(next)) {
@@ -857,9 +862,9 @@ var Tree = (function () {
 
     var SIBLING = "sibling", CENTER = "center", PARENT = "parent";
 
-    // con_fullscreen_permits_focusing, i3's form: judged from the global focus's fullscreen
-    // ancestor, which the move must not leave in a bad shape (not permitsFocusing above, which
-    // asks about the fullscreen window on con's own workspace).
+    // con_fullscreen_permits_focusing (con.c:2327-2364): judged from the global focus's
+    // fullscreen ancestor, which the change must not leave in a bad shape; a focus on another
+    // window of a workspace with a fullscreen one (after an activation) moves on, as in i3.
     function focusPermits(model, con) {
         var fs = model.focused;
         while (fs && fs.type !== "ws" && !fs.fullscreen) fs = fs.parent;
@@ -1092,10 +1097,11 @@ var Tree = (function () {
 
     // resize grow|shrink width|height <ppt>: the nearest ancestor (or con itself) that has a
     // sibling along that orientation grows by ppt, the siblings give it up equally. False if it
-    // can't (nothing to resize against, or someone would vanish). i3's minimum is one pixel; the
-    // model has no pixels, so the floor is a thousandth (about 1-3 px on these monitors).
+    // can't (nothing to resize against, or someone would vanish). i3's floor is one pixel of the
+    // split (percent_for_1px, resize.c:131-136): sizeOf(split) gives its px along the orientation
+    // (kwin.js has the tiles); without it, a thousandth (about 1-3 px on these outputs).
     var MIN_SHARE = 0.001;
-    M.resize = function (con, what, ppt) {
+    M.resize = function (con, what, ppt, sizeOf) {
         if (!con || con.type !== "con") return false;
         var o = what === "width" ? "h" : "v";
         var current = con;
@@ -1109,11 +1115,12 @@ var Tree = (function () {
         parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / children; });
         var next = current.percent + ppt;
         var subtract = ppt / (children - 1);
-        if (ppt < 0 && next < MIN_SHARE) return false;
+        var px = sizeOf ? sizeOf(parent) : 0, floor = px > 0 ? 1 / px : MIN_SHARE;
+        if (ppt < 0 && next < floor) return false;
         if (subtract >= 0) {
             for (var i = 0; i < children; i++) {
                 var c = parent.nodes[i];
-                if (c !== current && c.percent - subtract < MIN_SHARE) return false;
+                if (c !== current && c.percent - subtract < floor) return false;
             }
         }
         current.percent = next;
@@ -1175,6 +1182,10 @@ var Tree = (function () {
             var fl = con.parent.floating.filter(function (c) { return c === con || reachable(c); }), k = fl.indexOf(con);
             next = (previous ? fl[k - 1] : fl[k + 1]) || (previous ? fl[fl.length - 1] : fl[0]);
             if (next === con) return null;
+            // _tree_next: raised keeping the relative stack order, the list rotated until it is
+            // last (tree.c:615-625), so the cycle goes on round the same order.
+            var all = con.parent.floating;
+            while (all[all.length - 1] !== next) all.unshift(all.pop());
             this.activate(next);
             return next;
         }
@@ -1186,15 +1197,15 @@ var Tree = (function () {
             if (siblings.length > 1 && parent.layout === o) {
                 var idx = siblings.indexOf(con);
                 var cand = previous ? siblings[idx - 1] : siblings[idx + 1];
-                if (cand && permitsFocusing(cand)) { next = cand; break; }
+                if (cand && focusPermits(this, cand)) { next = cand; break; }
                 var wrap = previous ? siblings[siblings.length - 1] : siblings[0];
                 if (wrapping === "force") {
                     // never leaves the parent; a next one blocked by fullscreen blocks the wrap too
-                    if (cand || !permitsFocusing(wrap)) return null;
+                    if (cand || !focusPermits(this, wrap)) return null;
                     next = wrap;
                     break;
                 }
-                if (wrapping !== "no" && !firstWrap && permitsFocusing(wrap)) firstWrap = wrap;
+                if (wrapping !== "no" && !firstWrap && focusPermits(this, wrap)) firstWrap = wrap;
             }
             con = parent;
         }
@@ -3718,6 +3729,11 @@ var KI3 = (function () {
         return n > 1;
     }
     function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
+    // con_rect_size_in_orientation: a split's px along its own orientation, for the resize floor.
+    function splitSize(split) {
+        var r = conRect(split);
+        return split.layout === "h" ? r.width : r.height;
+    }
     // con->rect: a window's frame, a split's leaves together, a workspace's area.
     function conRect(con) {
         if (con.type === "ws") return areaOf(outputOf(con), con);
@@ -4088,10 +4104,10 @@ var KI3 = (function () {
         "Launcher": function () { callDBus("org.kde.krunner", "/App", "org.kde.krunner.App", "display"); },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
         // or floatingStep px on a floating window.
-        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step()); },
-        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step()); },
-        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step()); },
-        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step()); },
+        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step(), splitSize); },
+        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step(), splitSize); },
+        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
+        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values. The config form saves without telling KWin (docs/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },

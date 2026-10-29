@@ -1771,6 +1771,11 @@ var KI3 = (function () {
         return n > 1;
     }
     function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
+    // con_rect_size_in_orientation: a split's px along its own orientation, for the resize floor.
+    function splitSize(split) {
+        var r = conRect(split);
+        return split.layout === "h" ? r.width : r.height;
+    }
     // con->rect: a window's frame, a split's leaves together, a workspace's area.
     function conRect(con) {
         if (con.type === "ws") return areaOf(outputOf(con), con);
@@ -2141,10 +2146,10 @@ var KI3 = (function () {
         "Launcher": function () { callDBus("org.kde.krunner", "/App", "org.kde.krunner.App", "display"); },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
         // or floatingStep px on a floating window.
-        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step()); },
-        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step()); },
-        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step()); },
-        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step()); },
+        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step(), splitSize); },
+        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step(), splitSize); },
+        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
+        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values. The config form saves without telling KWin (docs/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },

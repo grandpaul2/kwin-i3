@@ -1,7 +1,7 @@
 # Spec: building the refinement pass (OPEN.md item 47)
 
 **Now (2026-10-28):** Written from Phase 3's read of the code against the rewritten foundations
-(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 live** (2026-10-28, `refine-1` merged, Paul's go; unit 173/173, 40-49, 68, 84 green), waiting for his "it works". **Stage 2 live** (2026-10-28: merged, `make plugin-install`, reloaded; the effect reports the tree's focused window), waiting for his "it works". **Stage 3 live** but its held help-button item (merged; `make kcm-install`, `widget-install`, `plugin-install`; reloaded), waiting for his "it works". **Stage 4 live** (2026-10-28: merged, reloaded; live check: a `notify-send` popup is class `org.kde.plasmashell`, kept out as override-redirect), waiting for his "it works". Stage 5 next.
+(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 live** (2026-10-28, `refine-1` merged, Paul's go; unit 173/173, 40-49, 68, 84 green), waiting for his "it works". **Stage 2 live** (2026-10-28: merged, `make plugin-install`, reloaded; the effect reports the tree's focused window), waiting for his "it works". **Stage 3 live** but its held help-button item (merged; `make kcm-install`, `widget-install`, `plugin-install`; reloaded), waiting for his "it works". **Stage 4 live** (2026-10-28: merged, reloaded; live check: a `notify-send` popup is class `org.kde.plasmashell`, kept out as override-redirect), waiting for his "it works". **Stage 5 built** on `refine-5` (unit 173/173; 10, 30, 32, 55, 81, 86 green), waiting for his go.
 
 Every change here brings the code to what `docs/definitions.md`, `docs/philosophy.md` and
 `docs/plan.md` already say, or to i3's source where they point there. Each one's row in
