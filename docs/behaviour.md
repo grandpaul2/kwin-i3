@@ -446,7 +446,11 @@ i3's `gaps.c` `calculate_effective_gaps`, per workspace (`gaps(ws)`, worked out 
 - The **inner gap** (`gapsInner`, plus the workspace's own `gaps inner` line) counts as the even
   number at or below it (an odd padding put windows half a pixel off; ≠ i3, which halves it
   between windows and gives the full value at the edge, `render.c:70-73`: reason (a)). The **frame** adds twice
-  its width to it, when the ring is drawn on that workspace.
+  its width to it, when the ring is drawn on that workspace. **Title bars** add 2 px, for the
+  decoration's outline outside its frame geometry (Breeze's, 1 px a side; KWin tells a script no
+  theme's), when the inner gap isn't 0: so the wallpaper between two windows is the gap itself in
+  either look, as i3's borders sit inside its rects (Paul's capture, 2026-10-29: 2 px of a 4 px
+  gap showed).
 - The **outer gap per side**: `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft`, each `gapsOuter`
   unless set (-1), plus the workspace's own lines (`workspaceGaps`: i3's `workspace N gaps …`,
   **added**, the sum stopping at 0: KWin's root tile can't leave its output, reason (a)).

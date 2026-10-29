@@ -377,8 +377,14 @@ var KI3 = (function () {
         var outerGap = inset.top > 0 || inset.right > 0 || inset.bottom > 0 || inset.left > 0;
         var ring = tiledRing() && !(ws && one && (hide === "smart" || hide === "smart_no_gaps" && !outerGap));
         Object.keys(inset).forEach(function (s) { inset[s] += i / 2; });
-        // The frame's room: twice its width, so KWin's half padding leaves it on each side.
-        return { inner: i + (ring ? 2 * fw : 0), gap: i, inset: inset, ring: ring, one: one };
+        // The frame's room: twice its width, so KWin's half padding leaves it on each side. With
+        // title bars, the decoration's outline instead: Breeze (Plasma's default) draws 1 px
+        // outside the frame geometry, which ate a pixel of every gap on each side (Paul's
+        // capture, 2026-10-29). As i3, whose borders are inside the window's rect, the wallpaper
+        // between two windows is then the gap itself in either look. KWin tells a script no
+        // theme's outline, so 1 px; and only with a gap to keep (with none, i3's borders touch).
+        var room = ring ? fw : !tiledBorderless() && i > 0 ? 1 : 0;
+        return { inner: i + 2 * room, gap: i, inset: inset, ring: ring, one: one };
     }
     function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
     function rootRect(area, ws) {
