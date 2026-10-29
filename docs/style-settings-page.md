@@ -35,6 +35,9 @@ nothing, do what Plasma's own pages do.
 
 ## 2. Wording
 
+- **The page's words and their tone** (Paul, 2026-10-28: "friendly, cohesive and still
+  descriptive"): the glossary and the eleven tone rules in `docs/spec-settings-words.md` §3 and §4
+  (they move here when its rewrite is built). Short over explicit; the explaining goes in help.
 - **Sentence case** everywhere: headings, labels, buttons, list entries ("Next workspace",
   "Move to workspace 1").
 - **Field labels end in a colon** and are short ("Gaps:", "Resize step:", "Each workspace:").
@@ -53,8 +56,7 @@ nothing, do what Plasma's own pages do.
   supersedes `docs/spec-window-words.md`, which `docs/behaviour.md` §3 now holds): **tiling**
   ("tiles", "a tiling window"), **floating** ("floats", "a floating window"), **sticky
   floating** (floating, on every workspace of its output), and where a page ever names them,
-  **dock**, **root**, **override-redirect**. Super descriptive and explicit: "floats (a floating
-  window)" in a choice, not "float". "Plasma" describes a look ("its own title bar, as a Plasma
+  **dock**, **root**, **override-redirect**. A rule's action is "Float" or "Tile". "Plasma" describes a look ("its own title bar, as a Plasma
   window"), never a mode. Never "places itself", "leave alone", "don't manage" or "unmanaged":
   none is true, and "not managed" sends the user looking for where it is.
 - **Every string through `i18nc`** with KDE's context tag (`@label`, `@option:check`,

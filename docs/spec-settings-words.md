@@ -100,3 +100,38 @@ The style guide's other §2 rules stay (sentence case, colons, "Configure …", 
 9. **The glossary's words, and only them**; a new word joins the glossary first.
 10. **No "you", and no "kwin-i3" in a control's text** (the page is kwin-i3's); a banner may name it.
 11. **Units as now** ("4 px", "100 ms"; "×" in sizes, as the HIG asks).
+
+Decided 2026-10-28 (Paul: "agree"); pointed to from the style guide §2, and moved there when the
+rewrite is built.
+
+## 5. The main page, before and after (draft)
+
+Accessible names stay full sentences (style guide §6), rewritten in the glossary's words. A
+"help" is a new `ContextualHelpButton` naming i3's directive (rule 5); one sits beside each
+setting that has an i3 counterpart (the held `OPEN.md` item 47 (a) is that very help; its
+keyboard problem in 37 comes with it).
+
+| # | where | today | after |
+|---|---|---|---|
+| 1 | banner, off | kwin-i3 is turned off, so these settings do nothing yet. [Turn On] | kwin-i3 is turned off. [Turn On] |
+| 2 | banner, not running | kwin-i3 is turned on but not running. The system log says why (journalctl --user -b \| grep kwin-i3). | kwin-i3 is on but not running. Its errors are in the system log: journalctl --user -b \| grep kwin-i3 |
+| 3 | banners, plugins (two today) | The frame and waiting for windows to resize need kwin-i3's plugins. Without them, tiling windows keep their title bars. / kwin-i3's helper plugin isn't loaded: no dragging or resizing tiling windows with the mouse, no focus from the frame, no resize mode, no layout-dependent keys, and the Configure form's Apply doesn't reach kwin-i3 (make plugin-install). | one banner: kwin-i3's plugins aren't loaded: no frame, no mouse dragging, no resize mode. Install them: make plugin-install |
+| 4 | section | Mouse and focus | Mouse & focus (HIG: "&" for two) |
+| 5 | Gaps | [4 px] between windows [2 px] more at output edges | [4 px] between windows [2 px] extra at edges |
+| 6 | Gaps summary | 1 output edge set; none with one window; edges only with one window; Same on every side and workspace | 1 edge set; none with one window; edges only with one window; Same everywhere |
+| 7 | New workspaces split | Side by side, or stacked on a tall output / Side by side / Stacked | Automatic / Side by side / Top to bottom; help: "Automatic: top to bottom on a screen taller than wide. i3: `default_orientation`" |
+| 8 | Focus at an edge | Focus at an edge: Next output, else wrap around / Next output, never wrap / Always wrap inside the container / Wrap, never leave the workspace | Focus wrapping: Next screen, then wrap / Next screen only / Always wrap / Stay on the workspace; help says "Always wrap" stays inside the split |
+| 9 | Layout changes | [x] Wait for every window to resize | [x] Show all at once (accessible: "Show layout changes all at once") |
+| 10 | Pointer | [x] Move the pointer to an output that gets the focus | [x] Follow focus to another screen |
+| 11 | Drag | Drag a tiling window: By its title bar, or anywhere with Meta / Anywhere with Meta / By its title bar / Not at all | Drag tiling windows: Titlebar or Meta+drag / Meta+drag only / Titlebar only / Never |
+| 12 | Fullscreen | New windows over a fullscreen window: Stay behind it, except its own dialogs / Always stay behind it / End the fullscreen, if a dialog / Come in front, if floating | New windows in fullscreen: Behind, except its dialogs / Always behind / Dialogs end fullscreen / Floating ones in front |
+| 13 | Back and forth | Options: [x] Pressing the current workspace's key returns to the previous one | Options: [x] Repeat a key to go back and forth |
+| 14 | Workspaces summary | All tiling, on any output; 1 on a set output | All tiling, any screen; 1 on a set screen |
+| 15 | Tiling look | Tiling windows: i3's frame / Their own title bars / No frame or title bar | Tiling windows: Frame / Titlebars / Neither |
+| 16 | its note | Nothing marks the focused window. The Dim Inactive desktop effect can. | Nothing marks the focused window; the Dim Inactive effect can. |
+| 17 | colour rows | Focused window: frame [■] next-window side [■] / Other windows: … | Focused: frame [■] split indicator [■] / Unfocused: … |
+| 18 | Hide frame sides | Never / At the output's left and right edges / At the output's top and bottom edges / At every output edge / All of it, when a workspace has one window / The same, only with no gap at the edges | Hide frame: Never / Left and right edges / Top and bottom edges / All edges / On a lone window / On a lone window without gaps |
+| 19 | corners | [x] Round the corners of tiling windows | [x] Round corners of tiling windows |
+| 20 | Floating windows | [x] Draw the frame on floating windows too | [x] Draw the frame too |
+| 21 | Rules summary | 5 rules, 2 sending to a workspace or output | 5 rules, 2 to a workspace or screen |
+| 22 | Keys option | [x] Warn when kwin-i3 starts about keys other shortcuts already use | [x] Warn about keys other shortcuts use |
