@@ -57,10 +57,9 @@ against them (46 findings) and brought into line by `docs/spec-refine-build.md`'
 words and settings, kinds, the tree, a close mid-drag, the letter keys by position, floating
 windows behind fullscreen); no "Being fixed" left in `behaviour.md`. Left: (a) stage 3's i3-directive
 help beside each control, **held**: wrapping a form control moves its label off it and 37's keyboard
-path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) **Float to tile**
-(`docs/spec-float-to-tile.md`, §9 G13, with the repress rule): **built and live 2026-10-28,
-twelfth session** (b2fa04d); Paul's "it works" to come. (c) Paul's "it works" on stages 1-7.
-Next: (b) and (c) from Paul, then (a) when he wants it.
+path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) Float to tile: done
+2026-10-28, twelfth session (b2fa04d, §9 G13; Paul: "works well"). (c) Paul's "it works" on
+stages 1-7. Next: (c) from Paul, then (a) when he wants it.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
