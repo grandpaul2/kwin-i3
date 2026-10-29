@@ -116,6 +116,9 @@ banner (the page checks only for the effect) went to `OPEN.md` item 40's stage 1
 2026-10-28, call 40) and is built there (2026-10-28, branch `redo-10`); and Defaults then Apply on a non-US layout writes the US keys until the next layout
 change or load: the page calls the helper's `FitKeys` after Apply, as i3's `bindsym` follows the
 keymap at once. The plainer words came forward: `OPEN.md` item 49 (Paul, 2026-10-28).
+Also for the finished page (Paul, 2026-10-29, `plan.md` (e)): a section showing the Plasma
+settings kwin-i3 is designed around, each with a control that changes Plasma's own setting,
+labelled as Plasma's, with the words that changing it here is the same as in System Settings.
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
 tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
@@ -155,7 +158,10 @@ Left:
   steps, not only a table: under click to focus the frames look broken (they move only on a click),
   and the popup grace has nothing to do;
 - **the README pass**: install read as a stranger on a stock Plasma, the settings page
-  (`make kcm-install`) included. It must cover: a package linked while KWin runs can't be turned
+  (`make kcm-install`) included. It must cover: an install step, "For i3's feel", listing the
+  Plasma settings kwin-i3 is designed around and where each lives in System Settings, said to be
+  Plasma's (`plan.md` (e), Paul 2026-10-29); the install snags found on the laptop (`OPEN.md`
+  item 50); a package linked while KWin runs can't be turned
   on until the next login (KPackage's cache, `docs/spec-settings-page.md`); and an app's floating
   size: a floated window comes back at the size it opened with, but an app that last closed tiled
   opens at that tiled size, as in i3. The fix is a Plasma window rule (Size/Position, "Apply

@@ -118,3 +118,10 @@ a window whose frame and client sizes differ (`serverDecorated`); a window just 
 bar back, then tiled again, can read frame = client until its app commits, and a pass in that
 moment skips it with no later pass to retry. Next: a probe of the float-then-tile toggle under
 load, logging frame and client at each pass; then the cause, a fix, and 54 under load.
+
+**56. The load notification names the Plasma settings kwin-i3 is designed around** (Paul,
+2026-10-29, `plan.md` (e): named, never set unasked). Today it names taken keys and per-output
+desktops off (`behaviour.md` §13); click to focus joins them, worded as Plasma's own setting with
+where to change it (System Settings > Window Management > Window Behavior), silenced by the same
+switch. Next: the wording shown to Paul, then the change (`src/kwin.js`, the report),
+the report's scenario updated, and the reload on his go.

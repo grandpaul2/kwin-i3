@@ -73,7 +73,15 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 - **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them, and where an i3
   directive is one of them, Plasma's setting stands in for it (focus follows mouse is KWin's
   focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
-  component's shortcut stays its own).
+  component's shortcut stays its own). **Named, never set unasked** (Paul, 2026-10-29, after the
+  laptop's stock install): the Plasma settings kwin-i3 is designed around (focus follows mouse with
+  no delay and the next focus under the pointer; per-output desktops; kwin-i3's keys free;
+  animations off, optional) are named in three places, as i3 asks once at first start
+  (`i3-config-wizard`): a README install step, "For i3's feel"; the load notification, which names
+  the ones that differ; and the settings page, which shows them with a control that changes
+  Plasma's own setting when the user asks. Each says plainly that it is a **Plasma setting, not
+  kwin-i3's**, and that changing it there is the same as changing it in System Settings (the same
+  key, the same effect, undone the same way).
 
 Not reasons: "minor", "simpler", "Paul's old config", "it was already built that way". A row
 whose only reason is one of these goes back to i3's, or finds a real reason. **The list of
