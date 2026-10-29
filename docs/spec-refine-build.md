@@ -1,7 +1,7 @@
 # Spec: building the refinement pass (OPEN.md item 47)
 
 **Now (2026-10-28):** Written from Phase 3's read of the code against the rewritten foundations
-(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 built** on `refine-1` (unit 173/173; 40-49, 68, 84 green), waiting for Paul's go to merge and reload.
+(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 live** (2026-10-28, `refine-1` merged, Paul's go; unit 173/173, 40-49, 68, 84 green), waiting for his "it works"; stage 2 next.
 
 Every change here brings the code to what `docs/definitions.md`, `docs/philosophy.md` and
 `docs/plan.md` already say, or to i3's source where they point there. Each one's row in
