@@ -69,6 +69,17 @@ const Slot s_slots[] = {
     {"kwin-i3 Workspace 9", KEY_9, 0, Qt::META, "Meta+9"},
     {"kwin-i3 Workspace 10", KEY_0, 0, Qt::META, "Meta+0"},
     {"kwin-i3 Focus Right (;)", KEY_SEMICOLON, 0, Qt::META, "Meta+;"},
+    // The letters by position too, as i3's config.keycodes and its wizard (i3 4.24: bindcode,
+    // turned into the layout's symbols at those QWERTY places; Paul's call 36, refinement stage 6).
+    {"kwin-i3 Focus Left (J)", KEY_J, 0, Qt::META, "Meta+J"},
+    {"kwin-i3 Focus Down (K)", KEY_K, 0, Qt::META, "Meta+K"},
+    {"kwin-i3 Focus Up (L)", KEY_L, 0, Qt::META, "Meta+L"},
+    {"kwin-i3 Split H", KEY_H, 0, Qt::META, "Meta+H"},
+    {"kwin-i3 Split V", KEY_V, 0, Qt::META, "Meta+V"},
+    {"kwin-i3 Toggle Split", KEY_E, 0, Qt::META, "Meta+E"},
+    {"kwin-i3 Fullscreen", KEY_F, 0, Qt::META, "Meta+F"},
+    {"kwin-i3 Resize Mode", KEY_R, 0, Qt::META, "Meta+R"},
+    {"kwin-i3 Launcher", KEY_D, 0, Qt::META, "Meta+D"},
     // The Shift ones after the plain ones: on AZERTY, Move to Workspace 1 takes Meta+1, which
     // Workspace 1 must have let go first (kglobalaccel gives a key to one action).
     {"kwin-i3 Move to Workspace 1 (symbol)", KEY_1, 1, Qt::META, "Meta+!"},
@@ -82,6 +93,12 @@ const Slot s_slots[] = {
     {"kwin-i3 Move to Workspace 9 (symbol)", KEY_9, 1, Qt::META, "Meta+("},
     {"kwin-i3 Move to Workspace 10 (symbol)", KEY_0, 1, Qt::META, "Meta+)"},
     {"kwin-i3 Move Right (:)", KEY_SEMICOLON, 1, Qt::META, "Meta+:"},
+    {"kwin-i3 Move Left (J)", KEY_J, 1, Qt::META, "Meta+Shift+J"},
+    {"kwin-i3 Move Down (K)", KEY_K, 1, Qt::META, "Meta+Shift+K"},
+    {"kwin-i3 Move Up (L)", KEY_L, 1, Qt::META, "Meta+Shift+L"},
+    {"kwin-i3 Close", KEY_Q, 1, Qt::META, "Meta+Shift+Q"},
+    {"kwin-i3 Reload Settings", KEY_C, 1, Qt::META, "Meta+Shift+C"},
+    {"kwin-i3 Exit", KEY_E, 1, Qt::META, "Meta+Shift+E"},
 };
 
 const QString s_service = QStringLiteral("org.kde.kglobalaccel");

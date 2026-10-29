@@ -634,15 +634,19 @@ with `$mod` as the wizard's Win choice.
 
 ### Keyboard layouts
 
-KWin matches a shortcut by the typed symbol, not the key's position. With the helper, the 22
-position keys (Workspace 1-10, Move to Workspace 1-10, Focus Right (;), Move Right (:); Grow
-Width is unbound since stage 5, its `;` the resize mode's) are refitted to the current layout at load, on every layout change and on the
-script's `FitKeys`. A key is changed only if it still holds the US default or what the helper set
+KWin matches a shortcut by the typed symbol, not the key's position. With the helper, the 37
+position keys are refitted to the current layout at load, on every layout change and on the
+script's `FitKeys`: Workspace 1-10, Move to Workspace 1-10, Focus Right (;), Move Right (:), and
+since refinement stage 6 (Paul's call 36) the letters i3 binds by keycode: Focus and Move Left,
+Down, Up (J K L), Split H, Split V, Toggle Split (E), Fullscreen (F), Resize Mode (R), Launcher
+(D), Close (Shift+Q), Reload Settings (Shift+C), Exit (Shift+E). So on Dvorak or AZERTY the keys
+keep their QWERTY places, as i3 4.24's `etc/config.keycodes` through `i3-config-wizard` gives them
+(a shifted key types its Shift symbol where the place holds no letter: Close on Dvorak is
+Meta+"). ≠ i3 in one point: the wizard fits once, at the first run; here every layout switch
+refits, reason (a): KWin matches the current layout's symbol, and a fit done once breaks at the
+first switch. A key is changed only if it still holds the US default or what the helper set
 last (recorded in `~/.config/kwini3helperrc`, `[LayoutKeys]`); a key the user bound is theirs. A
-key with no symbol on the layout is emptied, and a letter at the position (Meta+M for 0 on some
-layouts) is a known limit. **Letters stay as named** (Meta+J is J on any layout): ≠ i3, whose
-default config binds every key by keycode (`etc/config.keycodes`), so on Dvorak or AZERTY its
-keys keep their QWERTY places; no reason from `plan.md`'s: **Being fixed** (`spec-refine-build.md`). A key set by hand to the US default counts as kwin-i3's. One fit runs
+key with no symbol on the layout is emptied. A key set by hand to the US default counts as kwin-i3's. One fit runs
 at a time; a change during one queues another (`docs/spec-keyboard-layouts.md`).
 
 ### Taken keys

@@ -1,6 +1,6 @@
 # Spec: kwin-i3's keys on non-US keyboard layouts (OPEN.md item 9)
 
-**Now (2026-10-27):** Built and live 2026-10-25; the helper's record is `~/.config/kwini3helperrc`, not `[Script-kwin-i3]`. What it does: `behaviour.md` §8, "Keyboard layouts".
+**Now (2026-10-28):** Built and live 2026-10-25; the letters follow position too since refinement stage 6 (Paul's call 36: i3's keycode config, `spec-refine-build.md`), so "Letters stay as named" below is superseded; the helper's record is `~/.config/kwini3helperrc`, not `[Script-kwin-i3]`. What it does: `behaviour.md` §8, "Keyboard layouts".
 
 Paul's go 2026-10-25 (the helper plugin; the digit row and `;`, his call deferred to the
 recommendation). Built the same day.
