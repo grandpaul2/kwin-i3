@@ -151,6 +151,9 @@ Left:
   dotfiles (finding 14, D74): say how to bind one;
 - (e) focus follows mouse and Meta-alone (also map finding 12): README only, in the README pass (four scenarios,
   `# focus: mouse`, assume it);
+  the laptop's stock install (2026-10-29, OPEN.md 52, closed) showed why it belongs in the install
+  steps, not only a table: under click to focus the frames look broken (they move only on a click),
+  and the popup grace has nothing to do;
 - **the README pass**: install read as a stranger on a stock Plasma, the settings page
   (`make kcm-install`) included. It must cover: a package linked while KWin runs can't be turned
   on until the next login (KPackage's cache, `docs/spec-settings-page.md`); and an app's floating

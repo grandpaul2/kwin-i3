@@ -90,22 +90,6 @@ carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Sh
 (4) a capture at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
 docking, lid-with-monitor and wallpaper-flash checks still to do.
 
-**52. Panel popups on a fresh install: the popup grace's premise** (Paul, 2026-10-29, at the
-laptop before kwin-i3 was loaded). On a fresh Plasma 6.7.5 a panel popup never closes when the
-pointer leaves it, however long: only a click elsewhere closes it. We had assumed Plasma kept
-popups up through KWin's focus delay, and built the popup grace (`kwini3helper`,
-`docs/spec-popup-grace.md`, 1.5 s while a popup has the focus) on that. The laptop's kwinrc has no
-`[Windows]` group, so it runs Plasma's default, click to focus: no pointer crossing moves the focus
-there, and the popup has nothing to lose it to. The closing the grace fixes comes only with focus
-follows mouse (i3's default, `focus_follows_mouse yes`; the desktop's setting), which kwin-i3
-doesn't set. Next: once kwin-i3 is loaded on the laptop, the same popup under click to focus, then
-under focus follows mouse with and without the helper; then whether the spec's cause, the README's
-helper row and `behaviour.md` §9 describe it right, and a proposal for Paul. The laptop's frames
-looked broken for the same reason (item 50, finding 3): i3's default is focus follows mouse and
-Paul lives in it, but kwin-i3 leaves Plasma's click to focus; the proposal covers that too (the
-README tells the user, the settings page offers it, or kwin-i3 follows i3's default).
-Checked: under click to focus with kwin-i3 loaded, a popup stays until a click (Paul, item 50 list 2).
-
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
 `docs/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
 kwin-i3 load, KWin activates the tile Show Desktop hides, which ends Show Desktop; no kwin-i3 pass
