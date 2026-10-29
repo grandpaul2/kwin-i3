@@ -5,9 +5,10 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, fourteenth session** (no code change: the survey of other tilers,
-LATER.md item 51; item 50, the laptop plan; before that, item 49, the settings page's words and the
-Window Rules layout, live; main's `package/` and plugins are what KWin runs).
+Last reconciled: **2026-10-29, fifteenth session** (all live: G5's float without KWin's tile
+outlines; `holdTimeoutMs` 200; the i3 help buttons, closing items 47 and 49; title bars' gap room;
+focus follows the mouse past a margin's raise; i3's gap rules. Items 34 and 41 closed; the four
+captures handled. Main's `package/` and plugins are what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
