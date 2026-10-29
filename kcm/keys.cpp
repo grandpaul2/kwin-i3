@@ -153,7 +153,7 @@ int KeysModel::rowCount(const QModelIndex &parent) const
 
 QHash<int, QByteArray> KeysModel::roleNames() const
 {
-    return {{GroupRole, "group"}, {LabelRole, "label"}, {SlotsRole, "keySlots"}};
+    return {{GroupRole, "group"}, {LabelRole, "label"}, {NoteRole, "note"}, {SlotsRole, "keySlots"}};
 }
 
 QVariant KeysModel::data(const QModelIndex &index, int role) const
@@ -166,6 +166,8 @@ QVariant KeysModel::data(const QModelIndex &index, int role) const
         return row.group;
     case LabelRole:
         return row.label;
+    case NoteRole:
+        return row.note;
     case SlotsRole: {
         QVariantList out;
         for (const Slot &s : row.entries)
@@ -194,7 +196,8 @@ void KeysModel::load()
             qFatal("kcm_kwin_i3: commands.json missing from the build");
         for (const auto group : QJsonDocument::fromJson(f.readAll()).array()) {
             for (const auto command : group[QStringLiteral("commands")].toArray()) {
-                Row row{group[QStringLiteral("group")].toString(), command[QStringLiteral("label")].toString(), {}};
+                Row row{group[QStringLiteral("group")].toString(), command[QStringLiteral("label")].toString(),
+                        command[QStringLiteral("note")].toString(), {}};
                 for (const auto a : command[QStringLiteral("actions")].toArray()) {
                     Slot s;
                     s.action = a[0].toString();

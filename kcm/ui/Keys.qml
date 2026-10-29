@@ -19,7 +19,7 @@ KCM.ScrollViewKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Warning
             visible: !kcm.keys.available
-            text: i18n("kwin-i3 isn't running, so its keys can't be shown.")
+            text: i18n("kwin-i3 isn't running.")
             actions: Kirigami.Action {
                 text: i18n("Turn On")
                 icon.name: "system-run"
@@ -47,6 +47,7 @@ KCM.ScrollViewKCM {
             id: row
             required property int index
             required property string label
+            required property string note
             required property var keySlots
             width: ListView.view.width
             down: false
@@ -117,6 +118,13 @@ KCM.ScrollViewKCM {
                             }
                         }
                     }
+                    // What the command's keys are inside a mode (docs/spec-settings-words.md row 32).
+                    QQC2.Label {
+                        visible: row.note !== ""
+                        text: row.note
+                        color: Kirigami.Theme.disabledTextColor
+                        font: Kirigami.Theme.smallFont
+                    }
                     Item {
                         Layout.fillWidth: true
                     }
@@ -129,7 +137,7 @@ KCM.ScrollViewKCM {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: Kirigami.Theme.neutralTextColor
-                        text: i18n("%1 is used by %2; it will be taken from it on Apply.",
+                        text: i18n("%1 belongs to %2; Apply moves it here.",
                                    modelData.keyText, modelData.holder)
                     }
                 }

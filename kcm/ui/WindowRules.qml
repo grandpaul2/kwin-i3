@@ -70,19 +70,19 @@ KCM.SimpleKCM {
             const value = info.resourceClass || info.resourceName || "";
             if (page.picking && value && page.rows.some((r) => r.cls === Logic.wholeClass(value))) {
                 // A second pick of the same application: no second row (review 2026-10-28).
-                page.report(Kirigami.MessageType.Information, i18n("%1 already has a rule: change it in its row.", value));
+                page.report(Kirigami.MessageType.Information, i18n("%1 already has a rule.", value));
             } else if (page.picking && value) {
                 page.add({ cls: Logic.wholeClass(value) });
-                page.report(Kirigami.MessageType.Positive, i18n("Added a rule: windows of %1 float. Change what it does in its row.", value));
+                page.report(Kirigami.MessageType.Positive, i18n("Added a rule: %1 floats.", value));
             } else if (page.picking) {
-                page.report(Kirigami.MessageType.Warning, i18n("That window has no application class."));
+                page.report(Kirigami.MessageType.Warning, i18n("That window has no application name."));
             }
             page.picking = false;
         }
         function onWindowPickFailed(error) {
             if (page.picking)
                 page.report(Kirigami.MessageType.Information, error === "org.kde.KWin.Error.InvalidWindow"
-                    ? i18n("That window isn't one KWin manages: no rule can reach it.")
+                    ? i18n("No rule can reach that window.")
                     : i18n("No window picked."));
             page.picking = false;
         }
@@ -102,7 +102,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: page.picking
-            text: i18n("Click the window to add a rule for. Escape cancels.")
+            text: i18n("Click a window. Escape cancels.")
         }
         RowLayout {
             spacing: Kirigami.Units.smallSpacing
@@ -110,11 +110,11 @@ KCM.SimpleKCM {
                 Layout.fillWidth: true
                 Layout.margins: Kirigami.Units.largeSpacing
                 wrapMode: Text.Wrap
-                text: i18n("Each rule matches windows by their application, title, role or type, and says whether they float or tile, or where they open. Patterns are regular expressions; ^…$ matches a whole name. A rule runs once per window, when it opens or changes its title or application.")
+                text: i18n("Rules decide which windows float or tile, and where they open.")
             }
             Kirigami.ContextualHelpButton {
                 Layout.rightMargin: Kirigami.Units.largeSpacing
-                toolTipText: i18n("i3's for_window and assign rules. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. A rule with other criteria (instance, workspace, floating, tiling, all) is shown as text and edited there. Rules run in this order, each at most once: for floating or tiling, the last that matches a window decides; for its workspace or output, the first.")
+                toolTipText: i18n("A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
             }
         }
     }
@@ -150,13 +150,13 @@ KCM.SimpleKCM {
             valueRole: "value"
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             model: maximum ? [
-                { text: i18nc("@item:inlistbox a floating window's largest size", "all outputs together"), value: "default" },
-                { text: i18nc("@item:inlistbox", "no limit"), value: "none" },
-                { text: i18nc("@item:inlistbox", "a size"), value: "size" },
+                { text: i18nc("@item:inlistbox a floating window's largest size", "All screens together"), value: "default" },
+                { text: i18nc("@item:inlistbox", "No limit"), value: "none" },
+                { text: i18nc("@item:inlistbox", "Custom"), value: "size" },
             ] : [
-                { text: i18nc("@item:inlistbox a floating window's smallest size", "75 × 50 px (i3's)"), value: "default" },
-                { text: i18nc("@item:inlistbox", "no limit"), value: "none" },
-                { text: i18nc("@item:inlistbox", "a size"), value: "size" },
+                { text: i18nc("@item:inlistbox a floating window's smallest size", "75 × 50 px"), value: "default" },
+                { text: i18nc("@item:inlistbox", "No limit"), value: "none" },
+                { text: i18nc("@item:inlistbox", "Custom"), value: "size" },
             ]
             readonly property string stored: parent.mode
             function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
@@ -258,10 +258,10 @@ KCM.SimpleKCM {
                         valueRole: "value"
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 10
                         model: [
-                            { text: i18nc("@item:inlistbox what a rule does", "floats (a floating window)"), value: "float" },
-                            { text: i18nc("@item:inlistbox what a rule does", "tiles (a tiling window)"), value: "tile" },
-                            { text: i18nc("@item:inlistbox what a rule does", "opens on workspace…"), value: "workspace" },
-                            { text: i18nc("@item:inlistbox what a rule does", "opens on output…"), value: "output" },
+                            { text: i18nc("@item:inlistbox what a rule does", "Float"), value: "float" },
+                            { text: i18nc("@item:inlistbox what a rule does", "Tile"), value: "tile" },
+                            { text: i18nc("@item:inlistbox what a rule does", "Workspace…"), value: "workspace" },
+                            { text: i18nc("@item:inlistbox what a rule does", "Screen…"), value: "output" },
                         ]
                         readonly property string stored: ruleRow.rule.kind
                         function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
@@ -295,14 +295,14 @@ KCM.SimpleKCM {
                         onModelChanged: sync()
                         Component.onCompleted: sync()
                         onActivated: page.set(ruleRow.index, "output", currentValue)
-                        Accessible.name: i18nc("@label:listbox", "Rule %1: the output it opens on", ruleRow.index + 1)
+                        Accessible.name: i18nc("@label:listbox", "Rule %1: the screen it opens on", ruleRow.index + 1)
                         KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
                     }
                     // A row with no pattern is not written (it would match every window): said, not
                         // lost silently at the next reopening (review 2026-10-28).
                     QQC2.Label {
                         visible: ruleRow.rule.kind !== "raw" && Logic.formatRule(ruleRow.rule) === ""
-                        text: i18nc("@info:status a rule with no pattern", "not saved until it has a pattern")
+                        text: i18nc("@info:status a rule with no pattern", "not saved: needs a pattern")
                         color: Kirigami.Theme.neutralTextColor
                     }
                     QQC2.Label {
@@ -322,7 +322,7 @@ KCM.SimpleKCM {
             }
             QQC2.Label {
                 visible: page.rows.length === 0
-                text: i18n("No rules: every window tiles unless it is a dialog, a utility window, a splash screen or of a fixed size.")
+                text: i18n("No rules. Dialogs and fixed-size windows float; the rest tile.")
                 color: Kirigami.Theme.disabledTextColor
             }
             RowLayout {

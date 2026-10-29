@@ -20,7 +20,7 @@ class KeysModel : public QAbstractListModel
     Q_PROPERTY(QVariantList layoutTable MEMBER m_layoutTable NOTIFY changed)
 
 public:
-    enum Roles { GroupRole = Qt::UserRole + 1, LabelRole, SlotsRole };
+    enum Roles { GroupRole = Qt::UserRole + 1, LabelRole, NoteRole, SlotsRole };
 
     explicit KeysModel(QObject *parent = nullptr);
 
@@ -51,7 +51,7 @@ private:
         Holder holder; // a foreign holder of pending, taken from on save; empty if none
     };
     struct Row {
-        QString group, label;
+        QString group, label, note;      // note: muted text beside the keys ("in resize mode: J, Left")
         QList<Slot> entries;
     };
     void findHolders();

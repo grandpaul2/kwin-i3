@@ -55,7 +55,7 @@
     ]
    },
    {
-    "label": "Focus between tiling and floating",
+    "label": "Focus tiling or floating",
     "actions": [
      [
       "kwin-i3 Focus Mode Toggle",
@@ -126,7 +126,7 @@
   "group": "Resize",
   "commands": [
    {
-    "label": "Enter or leave the resize mode",
+    "label": "Resize mode",
     "actions": [
      [
       "kwin-i3 Resize Mode",
@@ -135,40 +135,44 @@
     ]
    },
    {
-    "label": "Shrink width (in the mode: J, Left)",
+    "label": "Shrink width",
     "actions": [
      [
       "kwin-i3 Shrink Width",
       ""
      ]
-    ]
+    ],
+    "note": "in resize mode: J, Left"
    },
    {
-    "label": "Grow width (in the mode: ;, Right)",
+    "label": "Grow width",
     "actions": [
      [
       "kwin-i3 Grow Width",
       ""
      ]
-    ]
+    ],
+    "note": "in resize mode: ;, Right"
    },
    {
-    "label": "Shrink height (in the mode: L, Up)",
+    "label": "Shrink height",
     "actions": [
      [
       "kwin-i3 Shrink Height",
       ""
      ]
-    ]
+    ],
+    "note": "in resize mode: L, Up"
    },
    {
-    "label": "Grow height (in the mode: K, Down)",
+    "label": "Grow height",
     "actions": [
      [
       "kwin-i3 Grow Height",
       ""
      ]
-    ]
+    ],
+    "note": "in resize mode: K, Down"
    }
   ]
  },
@@ -176,7 +180,7 @@
   "group": "Layout",
   "commands": [
    {
-    "label": "Split horizontally",
+    "label": "Split side by side",
     "actions": [
      [
       "kwin-i3 Split H",
@@ -185,7 +189,7 @@
     ]
    },
    {
-    "label": "Split vertically",
+    "label": "Split top to bottom",
     "actions": [
      [
       "kwin-i3 Split V",
@@ -203,7 +207,7 @@
     ]
    },
    {
-    "label": "Float or tile the window",
+    "label": "Float or tile",
     "actions": [
      [
       "kwin-i3 Floating Toggle",
@@ -212,7 +216,7 @@
     ]
    },
    {
-    "label": "Show the window on every workspace of its output, or stop (sticky)",
+    "label": "Toggle sticky",
     "actions": [
      [
       "kwin-i3 Sticky Toggle",
@@ -230,7 +234,7 @@
     ]
    },
    {
-    "label": "Close the window",
+    "label": "Close window",
     "actions": [
      [
       "kwin-i3 Close",
@@ -334,7 +338,7 @@
     ]
    },
    {
-    "label": "Back and forth (the previous workspace)",
+    "label": "Back and forth",
     "actions": [
      [
       "kwin-i3 Workspace Back and Forth",
@@ -361,7 +365,7 @@
     ]
    },
    {
-    "label": "Next workspace on this output",
+    "label": "Next workspace on this screen",
     "actions": [
      [
       "kwin-i3 Workspace Next on Output",
@@ -370,7 +374,7 @@
     ]
    },
    {
-    "label": "Previous workspace on this output",
+    "label": "Previous workspace on this screen",
     "actions": [
      [
       "kwin-i3 Workspace Prev on Output",
@@ -379,7 +383,7 @@
     ]
    },
    {
-    "label": "Workspace 1, no back-and-forth",
+    "label": "Workspace 1, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 1 (no back-and-forth)",
@@ -388,7 +392,7 @@
     ]
    },
    {
-    "label": "Workspace 2, no back-and-forth",
+    "label": "Workspace 2, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 2 (no back-and-forth)",
@@ -397,7 +401,7 @@
     ]
    },
    {
-    "label": "Workspace 3, no back-and-forth",
+    "label": "Workspace 3, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 3 (no back-and-forth)",
@@ -406,7 +410,7 @@
     ]
    },
    {
-    "label": "Workspace 4, no back-and-forth",
+    "label": "Workspace 4, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 4 (no back-and-forth)",
@@ -415,7 +419,7 @@
     ]
    },
    {
-    "label": "Workspace 5, no back-and-forth",
+    "label": "Workspace 5, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 5 (no back-and-forth)",
@@ -424,7 +428,7 @@
     ]
    },
    {
-    "label": "Workspace 6, no back-and-forth",
+    "label": "Workspace 6, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 6 (no back-and-forth)",
@@ -433,7 +437,7 @@
     ]
    },
    {
-    "label": "Workspace 7, no back-and-forth",
+    "label": "Workspace 7, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 7 (no back-and-forth)",
@@ -442,7 +446,7 @@
     ]
    },
    {
-    "label": "Workspace 8, no back-and-forth",
+    "label": "Workspace 8, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 8 (no back-and-forth)",
@@ -451,7 +455,7 @@
     ]
    },
    {
-    "label": "Workspace 9, no back-and-forth",
+    "label": "Workspace 9, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 9 (no back-and-forth)",
@@ -460,7 +464,7 @@
     ]
    },
    {
-    "label": "Workspace 10, no back-and-forth",
+    "label": "Workspace 10, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 10 (no back-and-forth)",
@@ -564,7 +568,7 @@
     ]
    },
    {
-    "label": "Move back and forth (previous workspace)",
+    "label": "Move back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace Back and Forth",
@@ -573,7 +577,7 @@
     ]
    },
    {
-    "label": "Move to the next workspace",
+    "label": "Move to next workspace",
     "actions": [
      [
       "kwin-i3 Move to Workspace Next",
@@ -582,7 +586,7 @@
     ]
    },
    {
-    "label": "Move to the previous workspace",
+    "label": "Move to previous workspace",
     "actions": [
      [
       "kwin-i3 Move to Workspace Prev",
@@ -591,7 +595,7 @@
     ]
    },
    {
-    "label": "Move to the next on this output",
+    "label": "Move to next on this screen",
     "actions": [
      [
       "kwin-i3 Move to Workspace Next on Output",
@@ -600,7 +604,7 @@
     ]
    },
    {
-    "label": "Move to the previous on this output",
+    "label": "Move to previous on this screen",
     "actions": [
      [
       "kwin-i3 Move to Workspace Prev on Output",
@@ -609,7 +613,7 @@
     ]
    },
    {
-    "label": "Move to workspace 1, no back-and-forth",
+    "label": "Move to workspace 1, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 1 (no back-and-forth)",
@@ -618,7 +622,7 @@
     ]
    },
    {
-    "label": "Move to workspace 2, no back-and-forth",
+    "label": "Move to workspace 2, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 2 (no back-and-forth)",
@@ -627,7 +631,7 @@
     ]
    },
    {
-    "label": "Move to workspace 3, no back-and-forth",
+    "label": "Move to workspace 3, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 3 (no back-and-forth)",
@@ -636,7 +640,7 @@
     ]
    },
    {
-    "label": "Move to workspace 4, no back-and-forth",
+    "label": "Move to workspace 4, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 4 (no back-and-forth)",
@@ -645,7 +649,7 @@
     ]
    },
    {
-    "label": "Move to workspace 5, no back-and-forth",
+    "label": "Move to workspace 5, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 5 (no back-and-forth)",
@@ -654,7 +658,7 @@
     ]
    },
    {
-    "label": "Move to workspace 6, no back-and-forth",
+    "label": "Move to workspace 6, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 6 (no back-and-forth)",
@@ -663,7 +667,7 @@
     ]
    },
    {
-    "label": "Move to workspace 7, no back-and-forth",
+    "label": "Move to workspace 7, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 7 (no back-and-forth)",
@@ -672,7 +676,7 @@
     ]
    },
    {
-    "label": "Move to workspace 8, no back-and-forth",
+    "label": "Move to workspace 8, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 8 (no back-and-forth)",
@@ -681,7 +685,7 @@
     ]
    },
    {
-    "label": "Move to workspace 9, no back-and-forth",
+    "label": "Move to workspace 9, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 9 (no back-and-forth)",
@@ -690,7 +694,7 @@
     ]
    },
    {
-    "label": "Move to workspace 10, no back-and-forth",
+    "label": "Move to workspace 10, no back and forth",
     "actions": [
      [
       "kwin-i3 Move to Workspace 10 (no back-and-forth)",
@@ -701,10 +705,10 @@
   ]
  },
  {
-  "group": "Outputs",
+  "group": "Screens",
   "commands": [
    {
-    "label": "Focus the output to the left",
+    "label": "Focus left screen",
     "actions": [
      [
       "kwin-i3 Focus Output Left",
@@ -713,7 +717,7 @@
     ]
    },
    {
-    "label": "Focus the output to the right",
+    "label": "Focus right screen",
     "actions": [
      [
       "kwin-i3 Focus Output Right",
@@ -722,7 +726,7 @@
     ]
    },
    {
-    "label": "Focus the output above",
+    "label": "Focus screen above",
     "actions": [
      [
       "kwin-i3 Focus Output Up",
@@ -731,7 +735,7 @@
     ]
    },
    {
-    "label": "Focus the output below",
+    "label": "Focus screen below",
     "actions": [
      [
       "kwin-i3 Focus Output Down",
@@ -740,7 +744,7 @@
     ]
    },
    {
-    "label": "Move the window to the left output",
+    "label": "Move window to left screen",
     "actions": [
      [
       "kwin-i3 Move to Output Left",
@@ -749,7 +753,7 @@
     ]
    },
    {
-    "label": "Move the window to the right output",
+    "label": "Move window to right screen",
     "actions": [
      [
       "kwin-i3 Move to Output Right",
@@ -758,7 +762,7 @@
     ]
    },
    {
-    "label": "Move the window to the output above",
+    "label": "Move window to screen above",
     "actions": [
      [
       "kwin-i3 Move to Output Up",
@@ -767,7 +771,7 @@
     ]
    },
    {
-    "label": "Move the window to the output below",
+    "label": "Move window to screen below",
     "actions": [
      [
       "kwin-i3 Move to Output Down",
@@ -776,7 +780,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the left output",
+    "label": "Move workspace to left screen",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Left",
@@ -785,7 +789,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the right output",
+    "label": "Move workspace to right screen",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Right",
@@ -794,7 +798,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the output above",
+    "label": "Move workspace to screen above",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Up",
@@ -803,7 +807,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the output below",
+    "label": "Move workspace to screen below",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Down",
@@ -812,7 +816,7 @@
     ]
    },
    {
-    "label": "Focus the next output",
+    "label": "Focus next screen",
     "actions": [
      [
       "kwin-i3 Focus Output Next",
@@ -821,7 +825,7 @@
     ]
    },
    {
-    "label": "Focus the primary output",
+    "label": "Focus primary screen",
     "actions": [
      [
       "kwin-i3 Focus Output Primary",
@@ -830,7 +834,7 @@
     ]
    },
    {
-    "label": "Move the window to the next output",
+    "label": "Move window to next screen",
     "actions": [
      [
       "kwin-i3 Move to Output Next",
@@ -839,7 +843,7 @@
     ]
    },
    {
-    "label": "Move the window to the primary output",
+    "label": "Move window to primary screen",
     "actions": [
      [
       "kwin-i3 Move to Output Primary",
@@ -848,7 +852,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the next output",
+    "label": "Move workspace to next screen",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Next",
@@ -857,7 +861,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the primary output",
+    "label": "Move workspace to primary screen",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Primary",
@@ -871,7 +875,7 @@
   "group": "kwin-i3",
   "commands": [
    {
-    "label": "Open the default terminal",
+    "label": "Open terminal",
     "actions": [
      [
       "kwin-i3 Terminal",
@@ -880,7 +884,7 @@
     ]
    },
    {
-    "label": "Open the launcher (KRunner)",
+    "label": "Open launcher",
     "actions": [
      [
       "kwin-i3 Launcher",
@@ -889,7 +893,7 @@
     ]
    },
    {
-    "label": "Exit (Plasma's logout prompt)",
+    "label": "Log out",
     "actions": [
      [
       "kwin-i3 Exit",
@@ -907,7 +911,7 @@
     ]
    },
    {
-    "label": "Release every window (safety valve)",
+    "label": "Release all windows",
     "actions": [
      [
       "kwin-i3 Release",
@@ -916,7 +920,7 @@
     ]
    },
    {
-    "label": "Dump state for a bug report",
+    "label": "Save state for a bug report",
     "actions": [
      [
       "kwin-i3 Dump State",

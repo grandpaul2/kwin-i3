@@ -46,7 +46,7 @@ check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 #    take arrow keys from injected input). One Apply writes both strings (the floating workspace
 #    as a rule in forWindow since redo stage 10), and 4's unconnected DP-9 is kept.
 open_named kwin-i3 "Configure Workspaces…"
-$A11Y focus kcmshell6 Workspaces "Workspace 2 output"; press Down; press Down; sleep 0.3
+$A11Y focus kcmshell6 Workspaces "Workspace 2 screen"; press Down; press Down; sleep 0.3
 shot workspaces
 $A11Y focus kcmshell6 Workspaces "Workspace 3 new windows"; press Down; sleep 0.3
 m=$(mark); click_named - Apply

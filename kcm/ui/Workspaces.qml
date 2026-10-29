@@ -44,7 +44,7 @@ KCM.SimpleKCM {
         property string first: ""
         property bool applies: true
         readonly property string output: page.outputAt(num, slot)
-        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second output", "No other") : i18nc("@item:inlistbox", "Any output") }]
+        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second output", "No other") : i18nc("@item:inlistbox", "Any screen") }]
             .concat(page.screens.filter((s) => s.name !== first))
             .concat(output && !page.screens.some((s) => s.name === output)
                 ? [{ name: output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", output) }] : [])
@@ -59,8 +59,8 @@ KCM.SimpleKCM {
         onModelChanged: sync()
         Component.onCompleted: sync()
         onActivated: page.setOutput(num, slot, currentValue)
-        Accessible.name: slot ? i18nc("@label:listbox", "Workspace %1 second output, used when the first is not connected", num)
-                              : i18nc("@label:listbox", "Workspace %1 output", num)
+        Accessible.name: slot ? i18nc("@label:listbox", "Workspace %1 second screen, used when the first is not connected", num)
+                              : i18nc("@label:listbox", "Workspace %1 screen", num)
         KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceOutputs"; extraEnabledConditions: parent.applies }
     }
 
@@ -70,11 +70,11 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("A workspace with an output set starts there, or on its second output when the first is not connected; the others start on the first free output. On one set to Floating, new windows float, with their own title bar, as Plasma windows do (a rule in Window Rules).")
+            text: i18n("Each workspace opens on its screen, or on its second when the first isn't connected.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("Meta+Shift+Space tiles a floating window or floats a tiling one. A window keeps its mode when it moves to another workspace. An output that is set but not connected now is kept for when it comes back.")
+            toolTipText: i18n("Others open on the first free screen. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
         }
     }
 

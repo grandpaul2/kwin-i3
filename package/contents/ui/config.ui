@@ -76,7 +76,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="gapsOuterLabel">
        <property name="text">
-        <string>Extra gap at output edges:</string>
+        <string>Extra gap at edges:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_gapsOuter</cstring>
@@ -343,7 +343,7 @@
      <item row="9" column="0">
       <widget class="QLabel" name="focusWrappingLabel">
        <property name="text">
-        <string>Focus at an edge:</string>
+        <string>Focus wrapping:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_focusWrapping</cstring>
@@ -393,7 +393,7 @@
      <item row="10" column="1">
       <widget class="QCheckBox" name="kcfg_holdEnabled">
        <property name="text">
-        <string>Wait for every window to resize (needs the kwin-i3 plugins)</string>
+        <string>Show layout changes all at once</string>
        </property>
        <property name="toolTip">
         <string>Holds the old picture while windows resize, so the wallpaper doesn't flash through.</string>
@@ -431,7 +431,7 @@
      <item row="13" column="1">
       <widget class="QCheckBox" name="kcfg_workspaceAutoBackAndForth">
        <property name="text">
-        <string>Pressing the current workspace's key returns to the previous one</string>
+        <string>Repeat a workspace key to go back and forth</string>
        </property>
        <property name="toolTip">
         <string>i3's workspace_auto_back_and_forth: Meta+N for the focused workspace shows the one focused before, and Meta+Shift+N sends the window there.</string>
@@ -573,7 +573,7 @@
      <item row="20" column="0">
       <widget class="QLabel" name="frameActiveLabel">
        <property name="text">
-        <string>Focused window:</string>
+        <string>Focused:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameActive</cstring>
@@ -590,7 +590,7 @@
      <item row="22" column="0">
       <widget class="QLabel" name="frameInactiveLabel">
        <property name="text">
-        <string>Other tiling windows (unfocused):</string>
+        <string>Unfocused:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameInactive</cstring>
@@ -607,7 +607,7 @@
      <item row="23" column="0">
       <widget class="QLabel" name="frameIndicatorActiveLabel">
        <property name="text">
-        <string>Next-window side, focused:</string>
+        <string>Split indicator, focused:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameIndicatorActive</cstring>
@@ -627,7 +627,7 @@
      <item row="25" column="0">
       <widget class="QLabel" name="frameIndicatorInactiveLabel">
        <property name="text">
-        <string>Next-window side, others:</string>
+        <string>Split indicator, unfocused:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameIndicatorInactive</cstring>
@@ -647,7 +647,7 @@
      <item row="26" column="0">
       <widget class="QLabel" name="hideEdgeBordersLabel">
        <property name="text">
-        <string>Hide the frame at output edges:</string>
+        <string>Hide frame:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_hideEdgeBorders</cstring>
@@ -697,14 +697,14 @@
      <item row="27" column="1">
       <widget class="QCheckBox" name="kcfg_roundedCorners">
        <property name="text">
-        <string>Round the corners of tiling windows</string>
+        <string>Round corners of tiling windows</string>
        </property>
       </widget>
      </item>
      <item row="28" column="1">
       <widget class="QCheckBox" name="kcfg_frameOnFloating">
        <property name="text">
-        <string>Frame floating windows too (in the same colours)</string>
+        <string>Draw the frame on floating windows too</string>
        </property>
       </widget>
      </item>
@@ -944,14 +944,14 @@
      <item row="39" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
-        <string>Warn when kwin-i3 starts about keys other shortcuts already use</string>
+        <string>Warn about keys other shortcuts use</string>
        </property>
       </widget>
      </item>
      <item row="42" column="0">
       <widget class="QLabel" name="tilingDragLabel">
        <property name="text">
-        <string>Tiling drag starts on:</string>
+        <string>Drag tiling windows:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_tilingDrag</cstring>
@@ -1021,7 +1021,7 @@
      <item row="43" column="0">
       <widget class="QLabel" name="popupDuringFullscreenLabel">
        <property name="text">
-        <string>A new window under a fullscreen one:</string>
+        <string>New windows in fullscreen:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_popupDuringFullscreen</cstring>

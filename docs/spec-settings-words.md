@@ -1,9 +1,8 @@
 # Spec: the settings page's words (a vocabulary, then a rewrite)
 
-**Status: step 3 of 5. The glossary (§3) is decided** (Paul, 2026-10-28: "agree", every row as
-recommended); the tone rules (§4) are a draft (Paul, 2026-10-28, thirteenth session: "I like
-explicit, but I think we are a little too wordy … develop a vocabulary that is friendly, cohesive
-and still descriptive"). `OPEN.md` item 49.
+**Status: steps 1-4 decided (Paul, 2026-10-28) and built on branch `words`** (main page, the four
+sub-pages, the key commands with a `note` role for the resize mode's keys, and the cog's labels);
+the help buttons wait for `OPEN.md` item 47 (a); step 5, the Window Rules layout, is next
 
 The steps: (1) inventory every string a user reads; (2) a glossary of the core words, each decided
 once; (3) tone rules, replacing `docs/style-settings-page.md` §2's "super descriptive and explicit"
@@ -138,7 +137,7 @@ keyboard problem in 37 comes with it).
 | 21 | Rules summary | 5 rules, 2 sending to a workspace or output | 5 rules, 2 to a workspace or screen |
 | 22 | Keys option | [x] Warn when kwin-i3 starts about keys other shortcuts already use | [x] Warn about keys other shortcuts use |
 
-## 6. The sub-pages, before and after (draft)
+## 6. The sub-pages, before and after (decided 2026-10-28, Paul: "agree")
 
 Numbered on from §5. Today's text in the inventory; only what changes is listed.
 
