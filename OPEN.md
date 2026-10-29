@@ -69,3 +69,8 @@ Alacritty to reach 2546x1386, released at 06:21:37.443, Alacritty's frame landin
 §10's known limit (a rare flash, accepted 2026-10-27) says a capture would tell whether it falls
 inside kwini3hold's hold or after its release. Next: `tools/capture-read` on both at the start of a
 session, a diagnosis for Paul (no fix without his go); the captures stay until then.
+
+**49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
+"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: an
+inventory, a glossary of about 18 core words, tone rules, a page-by-page rewrite, then the Window
+Rules layout. Done: the inventory and the glossary's draft. Next: Paul's call on each glossary row.

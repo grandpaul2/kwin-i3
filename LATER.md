@@ -115,8 +115,7 @@ frame section is all greyed); by hand, whether arrow keys move the highlight in 
 banner (the page checks only for the effect) went to `OPEN.md` item 40's stage 10 (Paul,
 2026-10-28, call 40) and is built there (2026-10-28, branch `redo-10`); and Defaults then Apply on a non-US layout writes the US keys until the next layout
 change or load: the page calls the helper's `FitKeys` after Apply, as i3's `bindsym` follows the
-keymap at once. Also then: plainer words on the page where the explicit ones are stiff (Paul,
-2026-10-27: "colloquialize wording later"), still true (`docs/spec-window-words.md`).
+keymap at once. The plainer words came forward: `OPEN.md` item 49 (Paul, 2026-10-28).
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
 tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
