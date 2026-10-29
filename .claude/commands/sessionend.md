@@ -18,6 +18,8 @@ Rewrite `OPEN.md` to the state now: done items come out, new ones go in with a n
 finding from this session (a fuzz failure, a capture, a review comment) leaves **fixed**,
 **won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
 Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
+A change that went live this session is **done** unless Paul reported a problem with it: never
+leave it waiting for his "it works" (Paul, 2026-10-28).
 
 ## 3. Tidy
 
