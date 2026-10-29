@@ -8,9 +8,7 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Last reconciled: **2026-10-29, sixteenth session** (item 50 stage (a) begun: the laptop on
 Plasma 6.7.5, the suite run there and its differences fixed; the test KWin's HiDPI option. Main's
 `package/` differs from what KWin runs only by 0a1e1c0's `""`-layout fix, which changes nothing on
-Paul's desktop (its layout is `us`): it loads at his next login or reload, no reload needed. Owed,
-next at the start of a working session: the one `make test` on the desktop (none ran this
-session; P1's scenarios did, for each change).
+Paul's desktop (its layout is `us`): it loads at his next login or reload, no reload needed.
 
 ## Stage (Paul, 2026-10-24, late)
 

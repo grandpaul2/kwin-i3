@@ -49,7 +49,10 @@ then the fix and P1. A check for the bug only under rule 5.
 
 ## P3. Before anything goes live
 
-1. **One `make test` per session, at its start** (~4 min, in the background). **Not again before a live install later in the session**: a change made
+1. **At most one `make test` per session, at its start, when the work needs it** (~4 min, in
+   the background). A limit, not a duty: no session owes one, and none is listed as owed (Paul,
+   2026-10-29: "tests are tools in our toolboxes. they dont run the show"; the line exists to stop
+   runs at session end). **Not again before a live install later in the session**: a change made
    after it is covered by P1 (its scenarios, and 64 for a plugin change). (Paul, 2026-10-26: a
    second `make test` was proposed before an install because this line read as "before going
    live"; it never meant that.)

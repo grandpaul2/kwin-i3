@@ -67,8 +67,9 @@ come from `~/.dotfiles/CLAUDE.md`, which does not load here:
 
 **`docs/testing.md`, lean for the Stage** (Paul, 2026-10-26: the code runs on his desktop and
 nowhere else; testing's one job now is not to break it catastrophically). Its runs are the only
-runs: `make unit` and the changed scenario(s) for a change (and 64 for a plugin change), one
-`make test` per session at its start (not again before each live install), a probe for a KWin
+runs: `make unit` and the changed scenario(s) for a change (and 64 for a plugin change), at most
+one `make test` per session, at its start and only when the work needs it (a limit, never a debt:
+Paul, 2026-10-29, "tests are tools in our toolboxes. they dont run the show"), a probe for a KWin
 question. No run over 5 minutes, ever. Fault runs, fuzzing and stock runs
 wait in `LATER.md`. A case it doesn't cover: ask Paul first. **No new test of any kind without
 Paul's go, and only super justified** (its rule 5: "if you give an agent a handle, it will grab it").

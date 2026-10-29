@@ -1,10 +1,10 @@
 ---
-description: End a kwin-i3 session - tidy, report what's owed, commit and push
+description: End a kwin-i3 session - tidy, report what's open, commit and push
 allowed-tools: Read, Write, Edit, Bash
 ---
 
 End of a kwin-i3 session. **A wrap-up: it starts no work**, not even a short test run. Leave the
-repo clean and pushed, and everything still owed written in `OPEN.md`.
+repo clean and pushed, and everything still open written in `OPEN.md`.
 
 ## 1. Memory
 
@@ -34,10 +34,10 @@ leave it waiting for his "it works" (Paul, 2026-10-28).
 
 ## 4. Tests
 
-Report which tests ran since the last change and which didn't (CLAUDE.md, "Testing"). Owed is only
-a change's tier 1 check, or tier 3's one `make test` for something not yet live; it goes in
-`OPEN.md` as "next: at the start of a working session". Start none. Tier 4 (fuzz, the full fault
-battery, `make live-stock`) is never owed: it runs every week or two with Paul's go.
+Report in a line which tests ran since the last change (CLAUDE.md, "Testing"). Start none, and
+write none into `OPEN.md` as owed: tests are tools, not debts (Paul, 2026-10-29, "they dont run
+the show"). A change that never had its P1 scenarios run is noted with the change itself, as
+unverified work, not as a test to run.
 
 ## 5. The live desktop
 
