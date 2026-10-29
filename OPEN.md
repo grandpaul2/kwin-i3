@@ -74,3 +74,15 @@ both machines; installed live the same day. The suite once more on the laptop, 2
 machine (4 in 30; the tests now send it with gdbus, `lib.sh` `set_layouts`; upstream note in
 `LATER.md`), green on both machines after. Next: stage (a)'s live install with
 Paul at the laptop (the by-hand list above).
+
+**52. Panel popups on a fresh install: the popup grace's premise** (Paul, 2026-10-29, at the
+laptop before kwin-i3 was loaded). On a fresh Plasma 6.7.5 a panel popup never closes when the
+pointer leaves it, however long: only a click elsewhere closes it. We had assumed Plasma kept
+popups up through KWin's focus delay, and built the popup grace (`kwini3helper`,
+`docs/spec-popup-grace.md`, 1.5 s while a popup has the focus) on that. The laptop's kwinrc has no
+`[Windows]` group, so it runs Plasma's default, click to focus: no pointer crossing moves the focus
+there, and the popup has nothing to lose it to. The closing the grace fixes comes only with focus
+follows mouse (i3's default, `focus_follows_mouse yes`; the desktop's setting), which kwin-i3
+doesn't set. Next: once kwin-i3 is loaded on the laptop, the same popup under click to focus, then
+under focus follows mouse with and without the helper; then whether the spec's cause, the README's
+helper row and `behaviour.md` §9 describe it right, and a proposal for Paul.
