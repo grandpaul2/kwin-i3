@@ -194,6 +194,10 @@ KCM.SimpleKCM {
 
     // The defaults, when they run first (as kwin-i3 ships them): their own group above yours, as
     // they run; else no groups, each default only marked (docs/spec-settings-words.md, step 5).
+    // The installed applications, [{ name, id }] by name (kcm.applications); id is the class.
+    readonly property var apps: kcm.applications()
+    function appOf(id) { return apps.find((a) => a.id === id) || null; }
+
     readonly property int defaultCount: {
         let n = 0;
         while (n < rows.length && defaults.indexOf(Logic.formatRule(rows[n])) >= 0) n++;
@@ -227,7 +231,7 @@ KCM.SimpleKCM {
                     readonly property bool isRaw: rule.kind === "raw"
                     readonly property bool isDefault: page.defaults.indexOf(Logic.formatRule(rule)) >= 0
                     readonly property var plain: Logic.plainName(rule.cls)
-                    readonly property string appName: plain ? kcm.appName(plain) : ""
+                    readonly property var app: plain !== null ? page.appOf(plain) : null
                     property bool more: false
                     readonly property bool showMore: !isRaw && (more || !!rule.title || !!rule.role || !!rule.type)
                     Layout.fillWidth: true
@@ -254,23 +258,56 @@ KCM.SimpleKCM {
                             Accessible.name: i18nc("@label:textbox", "Rule %1, as text", ruleRow.index + 1)
                             KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
                         }
-                        // The application: a whole name shown plain, any other pattern as typed,
-                        // in monospace.
-                        QQC2.TextField {
-                            id: appField
+                        // The application: chosen by name from the installed ones, or typed. A
+                        // whole name shows as the application's name if installed, else plain; any
+                        // other pattern as typed, in monospace (docs/spec-settings-words.md §7).
+                        QQC2.ComboBox {
+                            id: appBox
                             visible: !ruleRow.isRaw
+                            editable: true
                             Layout.fillWidth: true
                             Layout.minimumWidth: Kirigami.Units.gridUnit * 7
-                            readonly property string shown: ruleRow.plain !== null ? ruleRow.plain : (ruleRow.rule.cls || "")
-                            text: shown
+                            model: page.apps
+                            textRole: "name"
+                            valueRole: "id"
+                            readonly property string shown: ruleRow.app ? ruleRow.app.name
+                                : ruleRow.plain !== null ? ruleRow.plain : (ruleRow.rule.cls || "")
                             font.family: ruleRow.plain === null && ruleRow.rule.cls ? "monospace" : Kirigami.Theme.defaultFont.family
-                            placeholderText: i18nc("@info:placeholder an application field left empty", "any application")
-                            onEditingFinished: if (!ruleRow.isRaw && text !== shown) page.set(ruleRow.index, "cls", Logic.classFromField(text))
+                            function sync() {
+                                currentIndex = ruleRow.app ? page.apps.indexOf(ruleRow.app) : -1;
+                                editText = shown;
+                            }
+                            onShownChanged: sync()
+                            Component.onCompleted: sync()
+                            // An empty box: what it's for, or that the rule matches by title, role or
+                            // type alone (an editable ComboBox has no placeholder of its own).
+                            QQC2.Label {
+                                x: appBox.leftPadding
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: appBox.editText === "" && !appBox.activeFocus
+                                text: ruleRow.rule.title || ruleRow.rule.role || ruleRow.rule.type
+                                    ? i18nc("@info:placeholder an application field left empty", "any application")
+                                    : i18nc("@info:placeholder", "Choose an application")
+                                color: Kirigami.Theme.disabledTextColor
+                                Accessible.ignored: true
+                            }
+                            // A name from the list stores that application's class whole; anything
+                            // else as Logic.classFromField reads it.
+                            function commit(text) {
+                                const t = String(text).trim();
+                                const hit = page.apps.find((a) => a.name === t);
+                                const cls = hit ? Logic.wholeClass(hit.id) : Logic.classFromField(t);
+                                if (cls !== (ruleRow.rule.cls || "")) page.set(ruleRow.index, "cls", cls);
+                                else sync();
+                            }
+                            onActivated: (i) => commit(page.apps[i].name)
+                            onAccepted: commit(editText)
+                            onActiveFocusChanged: if (!activeFocus && !ruleRow.isRaw) commit(editText)
                             Accessible.name: i18nc("@label:textbox", "Rule %1: application", ruleRow.index + 1)
-                            // The launcher's name ("Spectacle"): a tooltip, not on the line (Paul, 2026-10-28).
-                            Accessible.description: ruleRow.appName
-                            QQC2.ToolTip.text: ruleRow.appName
-                            QQC2.ToolTip.visible: hovered && ruleRow.appName !== ""
+                            // The class the rule matches, when the box shows a name.
+                            Accessible.description: ruleRow.app ? ruleRow.app.id : ""
+                            QQC2.ToolTip.text: ruleRow.app ? ruleRow.app.id : ""
+                            QQC2.ToolTip.visible: hovered && !!ruleRow.app
                             KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
                         }
                         QQC2.Label { visible: !ruleRow.isRaw; text: "→"; Accessible.ignored: true }

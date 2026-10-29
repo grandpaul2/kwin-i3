@@ -184,15 +184,18 @@ Numbered on from §5. Today's text in the inventory; only what changes is listed
 
 ## 7. Step 5: the Window Rules layout (Paul, 2026-10-28: layout 1, "we don't need the icons")
 
-- **One line per rule**: the application (its launcher name, "Spectacle", from its desktop file
-  through `kcm.appName` and KService, as the field's tooltip: in grey on the line it felt
-  shoehorned, Paul), "→", what the rule does and its value, the More toggle
+- **One line per rule**: the application, "→", what the rule does and its value, the More toggle
   and Remove. Title, role and type on a second line, shown when one is set or More is open. Fits
   the style guide's 34-unit column, and half a 1280 px screen.
-- **The application field**: a whole-name pattern (`^…$`, its specials escaped) shows as the plain
-  name; any other pattern shows as typed, in monospace. Typing a plain name stores it whole (as
-  Pick a Window does); typing any of `* + ? ^ $ { } ( ) | [ ] \` stores i3's regular expression
-  as typed. Title and role stay patterns as typed. kwinrc and the cog keep i3's syntax.
+- **The application box is a chooser** (Paul: "i still dont know what would go in the 'any
+  application' box"): an editable dropdown of the installed applications by name
+  (`kcm.applications`, KService: a desktop file's name, or its StartupWMClass lowercased as KWin
+  reads an X11 class). Choosing one stores its class whole; the box then shows the name
+  ("Spectacle"), the class as its tooltip. Typed text: a plain name stored whole (as Pick a
+  Window does), or with any of `* + ? ^ $ { } ( ) | [ ] \` i3's regular expression as typed,
+  shown in monospace. Empty, it says "Choose an application", or "any application" on a rule that
+  matches by title, role or type. (The launcher's name in grey beside the field, tried first,
+  felt shoehorned.) Title and role stay patterns as typed; kwinrc and the cog keep i3's syntax.
 - **The defaults a group of their own, above yours**, not below as first drafted: rules run top
   to bottom and the last float or tile wins, so a group shown below would misstate the order.
   The group shows only when the defaults run first (as shipped); otherwise each is marked

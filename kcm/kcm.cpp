@@ -90,24 +90,34 @@ public:
         return item ? item->getDefault() : QVariant();
     }
 
-    // An application's name as its launcher shows it ("Spectacle"), for a rule matching a window
-    // class whole: the desktop file of that name (a Wayland app id), else the one whose
-    // StartupWMClass it is (an X11 class). Empty when none is installed.
-    Q_INVOKABLE QString appName(const QString &cls) const
+    // The installed applications, by name, each with the window class its windows have (the
+    // Window Rules sub-page's application chooser): a Wayland app id is its desktop file's name;
+    // an X11 window's class is the StartupWMClass, which KWin reads lowercased. One entry per
+    // class, sorted by name.
+    Q_INVOKABLE QVariantList applications() const
     {
-        if (cls.isEmpty())
-            return {};
-        KService::Ptr s = KService::serviceByDesktopName(cls);
-        if (!s)
-            s = KService::serviceByDesktopName(cls.toLower());
-        if (!s) {
-            const auto found = KApplicationTrader::query([&cls](const KService::Ptr &p) {
-                return p->property<QString>(QStringLiteral("StartupWMClass")).compare(cls, Qt::CaseInsensitive) == 0;
-            });
-            if (!found.isEmpty())
-                s = found.first();
+        QMap<QString, QPair<QString, QString>> byClass;         // class -> (sort key, name)
+        const auto apps = KApplicationTrader::query([](const KService::Ptr &p) {
+            return !p->noDisplay() && !p->exec().isEmpty();
+        });
+        for (const KService::Ptr &p : apps) {
+            const QString wm = p->property<QString>(QStringLiteral("StartupWMClass"));
+            // The file name as it is (desktopEntryName may lowercase it: "Alacritty").
+            QString file = p->storageId();
+            if (file.endsWith(QLatin1String(".desktop")))
+                file.chop(8);
+            const QString cls = wm.isEmpty() ? file : wm.toLower();
+            if (!cls.isEmpty() && !byClass.contains(cls))
+                byClass.insert(cls, {p->name().toLower(), p->name()});
         }
-        return s ? s->name() : QString();
+        QList<QPair<QString, QVariantMap>> sorted;
+        for (auto it = byClass.cbegin(); it != byClass.cend(); ++it)
+            sorted.append({it.value().first, QVariantMap{{QStringLiteral("name"), it.value().second}, {QStringLiteral("id"), it.key()}}});
+        std::sort(sorted.begin(), sorted.end(), [](const auto &x, const auto &y) { return x.first < y.first; });
+        QVariantList out;
+        for (const auto &e : sorted)
+            out << e.second;
+        return out;
     }
 
     // Pick a Window (the Window Rules sub-page): KWin's interactive selection, as Window Rules'
