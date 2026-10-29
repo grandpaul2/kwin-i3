@@ -73,4 +73,4 @@ session, a diagnosis for Paul (no fix without his go); the captures stay until t
 **49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
 "friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: an
 inventory, a glossary of about 18 core words, tone rules, a page-by-page rewrite, then the Window
-Rules layout. Done: the inventory and the glossary (Paul agreed every row). Tone rules agreed and in the style guide. Next: his call on the main page's before/after (§5).
+Rules layout. Done: the inventory and the glossary (Paul agreed every row). Tone rules agreed and in the style guide. Main page's before/after agreed (§5). Next: his call on the sub-pages' (§6), then the build.

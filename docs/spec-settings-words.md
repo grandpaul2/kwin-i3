@@ -104,7 +104,9 @@ The style guide's other §2 rules stay (sentence case, colons, "Configure …", 
 Decided 2026-10-28 (Paul: "agree"); pointed to from the style guide §2, and moved there when the
 rewrite is built.
 
-## 5. The main page, before and after (draft)
+## 5. The main page, before and after (decided 2026-10-28, Paul: "agree")
+
+The words go in first; the help buttons wait for `OPEN.md` item 47 (a)'s design (Paul, same day).
 
 Accessible names stay full sentences (style guide §6), rewritten in the glossary's words. A
 "help" is a new `ContextualHelpButton` naming i3's directive (rule 5); one sits beside each
@@ -135,3 +137,48 @@ keyboard problem in 37 comes with it).
 | 20 | Floating windows | [x] Draw the frame on floating windows too | [x] Draw the frame too |
 | 21 | Rules summary | 5 rules, 2 sending to a workspace or output | 5 rules, 2 to a workspace or screen |
 | 22 | Keys option | [x] Warn when kwin-i3 starts about keys other shortcuts already use | [x] Warn about keys other shortcuts use |
+
+## 6. The sub-pages, before and after (draft)
+
+Numbered on from §5. Today's text in the inventory; only what changes is listed.
+
+**Workspaces**
+| # | today | after |
+|---|---|---|
+| 23 | Any output | Any screen |
+| 24 | top note (260 characters) and its help (200) | note: "Each workspace opens on its screen, or on its second when the first isn't connected." Help: "Others open on the first free screen. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: `workspace N output`" |
+
+**Gaps**
+| # | today | after |
+|---|---|---|
+| 25 | top note (150) and help (153) | note: "Here a screen edge or a workspace can differ from the main page." Help: "A workspace's gaps add to the main page's; the sum never goes below 0. i3: `gaps top\|right\|bottom\|left`, `smart_gaps`, `workspace N gaps`" |
+| 26 | Screen edges: [top: as outer] … | Edges: [top: same] … (glossary 7: never "screen edges") |
+| 27 | One window on a workspace: Gaps as usual / No gaps at all / Edge gaps only there, none elsewhere | Lone window: Usual gaps / No gaps / Edge gaps only (help: "Edge gaps only: and none on other workspaces") |
+| 28 | at output edges; at output edges (set per side) | at edges; at edges, set per side |
+
+**Keys** (rule 8: a verb and its object, about 30 characters)
+| # | today | after |
+|---|---|---|
+| 29 | kwin-i3 isn't running, so its keys can't be shown. | kwin-i3 isn't running. [Turn On] |
+| 30 | %1 is used by %2; it will be taken from it on Apply. | %1 belongs to %2; Apply moves it here. |
+| 31 | Focus between tiling and floating | Focus tiling or floating |
+| 32 | Enter or leave the resize mode; Shrink width (in the mode: J, Left) … | Resize mode; Shrink width … with "in resize mode: J, Left" as muted text beside the key, as the shifted symbols' "Meta+! → Meta+Shift+1" is |
+| 33 | Split horizontally; Split vertically | Split side by side; Split top to bottom |
+| 34 | Float or tile the window; Show the window on every workspace of its output, or stop (sticky); Close the window | Float or tile; Toggle sticky; Close window |
+| 35 | Back and forth (the previous workspace); Move back and forth (previous workspace) | Back and forth; Move back and forth |
+| 36 | Workspace 3, no back-and-forth; Move to workspace 3, no back-and-forth | Workspace 3, no back and forth; Move to workspace 3, always (the move's twin: it never bounces back) |
+| 37 | … on this output; Move to the next workspace; Move to the next on this output | … on this screen; Move to next workspace; Move to next on this screen |
+| 38 | group "Outputs": Focus the output to the left; Move the window to the left output; Move the workspace to the left output; … the primary output | group "Screens": Focus left screen; Move window to left screen; Move workspace to left screen; … primary screen |
+| 39 | Open the default terminal; Open the launcher (KRunner); Exit (Plasma's logout prompt); Release every window (safety valve); Dump state for a bug report | Open terminal; Open launcher; Log out; Release all windows; Save state for a bug report |
+
+**Window Rules**
+| # | today | after |
+|---|---|---|
+| 40 | top note (265) and help (388) | note: "Rules decide which windows float or tile, and where they open." Help: "A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: `for_window`, `assign`" |
+| 41 | Click the window to add a rule for. Escape cancels. | Click a window. Escape cancels. |
+| 42 | Added a rule: windows of %1 float. Change what it does in its row. / %1 already has a rule: change it in its row. | Added a rule: %1 floats. / %1 already has a rule. |
+| 43 | That window has no application class. / That window isn't one KWin manages: no rule can reach it. | That window has no application name. / No rule can reach that window. |
+| 44 | floats (a floating window) / tiles (a tiling window) / opens on workspace… / opens on output… | Float / Tile / Workspace… / Screen… |
+| 45 | not saved until it has a pattern | not saved: needs a pattern |
+| 46 | No rules: every window tiles unless it is a dialog, a utility window, a splash screen or of a fixed size. | No rules. Dialogs and fixed-size windows float; the rest tile. |
+| 47 | all outputs together / 75 × 50 px (i3's) / no limit / a size | All screens together / 75 × 50 px / No limit / Custom |
