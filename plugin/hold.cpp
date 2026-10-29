@@ -701,6 +701,16 @@ bool Hold::isActive() const
     return false;
 }
 
+// Late in the chain, after Slide (50, slide.h:197): the ring and a held snapshot are drawn with
+// the paint data the effects before this one gave the window (Slide's offset during a desktop
+// switch, Scale's opening, a fade), so they move with it. At the default 0 this effect ran first
+// and drew the ring at the window's own place while Slide drew the window elsewhere (the laptop,
+// 2026-10-29).
+int Hold::requestedEffectChainPosition() const
+{
+    return 90;
+}
+
 // A fullscreen game or video scans out directly unless a hold is on (review R1-3).
 bool Hold::blocksDirectScanout() const
 {

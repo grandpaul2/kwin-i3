@@ -45,6 +45,7 @@ public:
     void drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
     void postPaintScreen() override;
     bool blocksDirectScanout() const override;
+    int requestedEffectChainPosition() const override;
 
 public Q_SLOTS:
     // D-Bus: org.kde.KWin /kwini3hold net.local.kwini3hold Stats

@@ -81,14 +81,13 @@ machine (4 in 30; the tests now send it with gdbus, `lib.sh` `set_layouts`; upst
 `LATER.md`), green on both machines after. Stage (a)'s live install, 2026-10-29, Paul at the
 laptop: the script, plugins, settings page and widget by the README, `make take-keys` (21 keys);
 works: tiling and the frame, popups, the widget, touchpad scrolling and Overview, lid, suspend.
-Found: (1) **Meta+N with KWin's Slide** (Plasma's default desktop-switch animation; the desktop has
-animations off): the frames stay in their old spots while the desktops slide; i3 has no animation
-(`workspace_show`). (3) **Frames "not following the mouse"**: Paul's
+Found: (1) Meta+N with KWin's Slide left the incoming windows' frames at their final places:
+fixed the same day (the effect's chain position, after Slide). (3) **Frames "not following the mouse"**: Paul's
 capture 2026-10-29 16:09, the laptop is click to focus, so the focus (and the frame) moves only
 on a click; correct, and item 52's question. (4) Frames seen **flashing**, not yet captured.
 A small flash as Firefox closes is the hold's accepted trade (200 ms, Paul's decision), not
 carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Next:
-(1) a diagnosis; (4) a capture at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
+(4) a capture at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
 docking, lid-with-monitor and wallpaper-flash checks still to do.
 
 **52. Panel popups on a fresh install: the popup grace's premise** (Paul, 2026-10-29, at the
@@ -127,3 +126,11 @@ tile, so the early return at `:2146` leaves the focus behind on an output crossi
 (c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before
 `Effects`, `tilingdrag.cpp:71`); very low risk; next, a probe. Not read: fullscreen Kickoff's
 window type and the display settings' "keep these settings?" dialog (sources not found).
+
+**55. A tile can keep its title bar after floating and tiling again** (2026-10-29, one red of
+54-frame's "and loses it again" in a batch of six scenarios; green alone on both builds and in
+the same batch on main's). Hypothesis: `takeBorder` (`src/kwin.js:1179`) takes a border only from
+a window whose frame and client sizes differ (`serverDecorated`); a window just given its title
+bar back, then tiled again, can read frame = client until its app commits, and a pass in that
+moment skips it with no later pass to retry. Next: a probe of the float-then-tile toggle under
+load, logging frame and client at each pass; then the cause, a fix, and 54 under load.

@@ -597,6 +597,8 @@ window that is no longer visible counts as settled.
   shown sooner, KWin would draw it where it first put it, floating (i3 maps a new window already in
   its tile, `x.c:1107` then `:1156`).
 - Direct scan-out is blocked while holding.
+- The effect sits late in KWin's effect chain (90, after Slide's 50): the frame and a held snapshot
+  move with whatever earlier effects do to the window (Slide's desktop switch, Scale's opening).
 - `holdEnabled` off stops only the hold and the hiding; the ring, corners and drop indicator stay.
 
 ---
