@@ -120,12 +120,19 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
     // own frame, stacked above): raise this one among the tiles, so that each tiled window owns
     // its whole frame, as a clipped client does in i3 (spec-gap-ownership.md, part B). Tiled
     // windows never overlap visibly, so the order among them shows nothing (probed: no pixel
-    // changed), and floating windows keep above; no focus change.
+    // changed), and floating windows keep above. The raise is a stacking change, at which KWin
+    // enters the owner at the position this motion has just stored, and pointerEnterEvent takes
+    // that for a pointer that hasn't moved: focus follows mouse would never reach the owner, the
+    // pointer counting as in it from then on (probe 94, Paul's capture 2026-10-29). So the request
+    // its enter would have made, as for the ring below.
     Window *hover = input()->pointer()->hover();
     if (overTiledMargin(event->position, hover)) {
         if (Window *owner = tiledFrameAt(event->position); owner && owner != hover && owner != m_raised) {
             m_raised = owner;
             workspace()->raiseWindow(owner);
+            if (options->focusPolicy() != Options::ClickToFocus) {
+                workspace()->requestDelayFocus(owner);
+            }
         }
     } else {
         m_raised = nullptr;

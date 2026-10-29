@@ -255,6 +255,17 @@ client --title L --csd
 check "L, drawing its own frame"            poll eval '[[ "$(tree 1)" == *L* ]]'
 key "Split H"; client --title R
 check "L | R"                               poll eval '[[ "$(tree 1)" == *"L R*"* ]]'
+# Focus follows the mouse out of L, through its margin, into R (B1; probe 94, Paul's capture
+# 2026-10-29): the margin over R's frame raises R, and the raise must not cost R its focus. At a
+# 4 px gap, where L's margin reaches R's frame.
+set_key gapsInner 4
+key "Focus Left"
+poll eval '[[ "$(kjs "log(workspace.activeWindow.caption)")" == L ]]'
+read -r lx ly <<<"$(centre L)"; read -r rx ry <<<"$(centre R)"
+c=(); for ((x = lx; x < rx; x += 4)); do c+=("abs $x $ly" "wait 8"); done
+"$INJECT" "${c[@]}" "abs $rx $ly" "wait 300"
+check "focus follows the mouse from L across its margin into R" poll eval '[[ "$(kjs "log(workspace.activeWindow.caption)")" == R ]]'
+set_key gapsInner 16
 sleep 1
 lw=$(wid L); g=$(fc L); edge=$(( ${g%%,*} + lw ))   # the first x past L's frame: its right ring
 echo "    L $(fc L)  R $(fc R)  ring at x $edge"

@@ -98,6 +98,12 @@ and stays below every floating window. Then each tiled window owns its whole fra
 pixels changed (a screenshot diff), the tree and the focus unchanged, and KWin then gave the
 terminal all of its frame (its last 4 px were VS Code's before). To keep while building: the
 raise stays among tiled windows, below every floating one (`spec-reload-keepabove.md`).
+**Probe result 2026-10-29** (probe 94, branch `probe-ffm`, Paul's capture of focus that wouldn't
+follow the mouse out of Firefox): the raise is a stacking change, and KWin then enters the owner at
+the position the same motion has just stored (`input.cpp` `InputDeviceHandler::update`), which
+`Window::pointerEnterEvent` takes for a pointer that hasn't moved: no focus request, and the
+pointer counts as in the owner from then on. So the raise asks the owner's focus itself
+(`requestDelayFocus`, focus policy not click-to-focus), as the ring does.
 
 ## 5. Part C: the bug, whatever is decided
 
