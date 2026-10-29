@@ -111,30 +111,8 @@ Hold::Hold()
     connect(effects, &EffectsHandler::windowClosed, this, &Hold::onClosed);
     connect(effects, &EffectsHandler::windowDeleted, this, &Hold::onDeleted);
 
-    connect(effects, &EffectsHandler::windowActivated, this, [this](EffectWindow *w) {
-        if (!m_mode.isEmpty()) {
-            effects->addRepaintFull();
-        }
-        if (m_active) {
-            repaintRing(m_active, m_active->frameGeometry());
-        }
-        m_active = w;
-        if (w) {
-            repaintRing(w, w->frameGeometry());
-        }
-        // Another window activated: a split key's indicator goes (ShowIndicator), with the
-        // repaint above, also for a window on a workspace no longer shown, which SetRing skips.
-        const QString id = w ? w->internalId().toString() : QString();
-        for (auto it = m_indicatorShown.begin(); it != m_indicatorShown.end();) {
-            if (*it != id) {
-                repaintRingOf(*it);
-                it = m_indicatorShown.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    });
-    m_active = effects->activeWindow();
+    // What the effect draws about focus follows kwin-i3's tree, never KWin's active window
+    // (plan.md, "Focus"; i3's x.c:498-512): SetFocused says which window that is.
 
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3hold"),
                                                  QStringLiteral("net.local.kwini3hold"),
@@ -726,7 +704,7 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
     if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
-    if (!m_mode.isEmpty() && w == effects->activeWindow() && !w->isDeleted() && !m_hidden.contains(w)) {
+    if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
         paintBanner(renderTarget, viewport, w, data);
     }
 }
@@ -829,9 +807,37 @@ Hold::Ring Hold::ringOf(EffectWindow *w) const
     if (it != m_rings.cend()) {
         return *it;
     }
-    Ring r;
-    r.cls = effects->activeWindow() == w ? 0 : 1;
+    Ring r;      // not told its class (yet): the tree's focus decides, as SetRing would
+    r.cls = !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId ? 0 : 1;
     return r;
+}
+
+void Hold::SetFocused(const QString &id)
+{
+    if (id == m_focusedId) {
+        return;
+    }
+    const QString was = m_focusedId;
+    m_focusedId = id;
+    if (!was.isEmpty()) {
+        repaintRingOf(was);
+    }
+    if (!id.isEmpty()) {
+        repaintRingOf(id);
+    }
+    // The tree's focus moved on: a split key's indicator goes (ShowIndicator, L4), also for a
+    // window on a workspace no longer shown, which SetRing skips.
+    for (auto it = m_indicatorShown.begin(); it != m_indicatorShown.end();) {
+        if (*it != id) {
+            repaintRingOf(*it);
+            it = m_indicatorShown.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    if (!m_mode.isEmpty()) {
+        effects->addRepaintFull();     // the banner moves with it
+    }
 }
 
 void Hold::SetRing(const QString &id, const QString &cls, const QString &indicator, const QString &hidden)
@@ -1264,6 +1270,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
+    m[QStringLiteral("focused")] = m_focusedId;
     return m;
 }
 

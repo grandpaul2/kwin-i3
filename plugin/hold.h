@@ -86,6 +86,10 @@ public Q_SLOTS:
     // The helper's resize mode (plugin/resizemode.cpp; docs/spec-redo-5-keys.md A, Paul's call 34):
     // "resize" draws the mode's banner at the top of the focused window, "" takes it away.
     void SetMode(const QString &mode);
+    // kwin-i3's focused window (the tree's focus), by internal id; "" for none (an empty
+    // workspace, a release). The banner is drawn on it, an untold ring takes its class from it,
+    // and a split key's indicator goes when it changes (plan.md, "Focus").
+    void SetFocused(const QString &id);
     // kwin-i3 moves a new window to another output or desktop (docs/spec-redo-1-new-windows.md,
     // A): keep it hidden until its tile places it, or `ms` at most, instead of the 20 ms a new
     // window gets by itself; a geometry change that isn't its tile's leaves it hidden meanwhile.
@@ -189,7 +193,7 @@ private:
     QHash<QString, Ring> m_rings;                           // SetRing, by internal id
     QSet<QString> m_indicatorShown;                         // ShowIndicator, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
-    QPointer<KWin::EffectWindow> m_active;                 // its ring changes colour on activation
+    QString m_focusedId;                                    // SetFocused: the tree's focused window
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
     Qt::CursorShape m_dragShape = Qt::SizeAllCursor;        // the shape it grabs with now
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs

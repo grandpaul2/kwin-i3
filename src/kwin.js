@@ -22,6 +22,7 @@ var KI3 = (function () {
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
+    var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
     var rebuildAgain = false, rebuiltFor = "";
     // What each monitor showed, by name: which outputs kwin-i3 knows (screensChanged tells the
@@ -1059,9 +1060,20 @@ var KI3 = (function () {
     // Split, until the focus leaves it or the split happens; ≠ i3, always on): shown once its side
     // is told, at the pass's end.
     var indicatorFor = null;
+    // The tree's focused window, told to the effect whatever the frame (the banner is drawn on
+    // it; plan.md, "Focus"). focusTold is cleared when an effect answers without it (reloaded).
+    var focusTold = null;
+    function tellFocused() {
+        if (!effectSeen) return;
+        var c = model.focused, key = c && c.win !== undefined && c.win !== null && wins[c.win] ? String(c.win) : "";
+        if (focusTold === key) return;
+        focusTold = key;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", key);
+    }
     function tellRings() {
         var flash = indicatorFor;
         indicatorFor = null;
+        tellFocused();
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
         function cls(c) {
@@ -1100,6 +1112,8 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         });
         ringTold = {};
+        if (effectSeen) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", "");
+        focusTold = null;
     }
 
     // How tiled windows look (docs/spec-tiled-look.md), with the effect there: without their
@@ -3041,6 +3055,8 @@ var KI3 = (function () {
             if (n === effectAsk) {
                 frameMisses = 0;
                 marks = !!(m && m.floating && m.floating.length !== undefined);
+                effectSeen = !!m;
+                if (!m || m.focused !== focusTold) focusTold = null;     // a reloaded effect: tell it again
                 // The frame first, so the windows adopted below see it (review of (iii)+(iv), 3).
                 setFrame(!!(m && m.supported && m.frameWidth !== undefined));
                 tellRing();             // again on every answer: a reloaded effect starts with the ring on
