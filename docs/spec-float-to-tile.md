@@ -1,6 +1,6 @@
 # Spec: float to tile, Meta+Shift+drag of a floating window onto a tile
 
-**Now (2026-10-28):** Proposed, not built. Waits on Paul's go.
+**Now (2026-10-28):** Built (Paul's go 2026-10-28). What it does: `behaviour.md` §9 G13.
 
 OPEN.md item 47 (b). Paul's planned feature, the other half of the float modifier (`behaviour.md`
 §9 G5): Meta+Shift+drag pulls a tiled window out to float; the same drag of a floating window
@@ -89,10 +89,10 @@ then the tiling drop places it (`Tree.drop` with the same plan):
 - **Another workspace or monitor**: the window moves to the target's workspace, tiled there (as a
   tiling drag across outputs).
 - **Cancelled** (a key, or nowhere to drop at the release): it stays floating where it was.
-- Its look and state follow the floating toggle (`kwin.js:1470-1479`): the floating look goes
-  (keep above cleared if kwin-i3 set it), its floating geometry is kept, so Meta+Shift+Space
-  later floats it back there. A sticky floating window keeps its sticky flag, which does
-  nothing while tiled (as i3).
+- Its look and state follow the floating toggle (the "Floating Toggle" action): the floating look
+  goes (keep above cleared if kwin-i3 set it), and a sticky window is unstuck first (X4: KWin's
+  tiles belong to one desktop; ≠ i3, which keeps the flag). Floated again later, it takes the
+  geometry it opened with, as every float does (`spec-float-size.md`).
 - **Focus**: as G1, it stays where it was unless the dragged window had it.
 - **Fullscreen** (a floating fullscreen window): as G12.
 - **A window KWin can't tile** (fixed size, X6): KWin refuses the tile, and X6 floats it again,
@@ -105,7 +105,7 @@ G13, and the hotkeys cheat sheet's Meta+Shift+drag line (dotfiles, `localbin/.lo
 
 ## Tests
 
-The scenario that drives the tiling drag (`tests/live/51-input.sh`) gets the new case, which
+The scenario that drives the tiling drag (`tests/live/86-tiling-drag.sh`; 51 runs without the plugins, so its Meta drags are KWin's) gets the new case, which
 needs **Paul's go** (`testing.md` rule 5): a floating window Meta+Shift-dragged onto a tiled
 window's right edge, then the centre of another, then a key's cancel, with the tree checked
 after each; and the repress rule: a second Meta+Shift drag with the keys still held changes

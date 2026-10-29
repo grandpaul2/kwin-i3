@@ -1979,6 +1979,7 @@ var KI3 = (function () {
     // floating windows (told[key]: what it was last told), which outlives a reload of this
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
+    var dragTold = {};                  // the drag helper's floating list (tellDragFloating)
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
@@ -2996,6 +2997,7 @@ var KI3 = (function () {
         if (on) { var con = model.byWin[key]; lookFloating(w, con ? Tree.wsOf(con) : null); return; }
         if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
         tellFloating(w, false);
+        tellDragFloating(key, false);
     }
     function plasmaWs(ws) { return !!(ws && Settings.get("floatingWorkspaces")[ws.num]); }
     // A floating window's look, on its workspace (spec-window-modes R2, decisions 3 and 5):
@@ -3012,6 +3014,7 @@ var KI3 = (function () {
         else giveBorder(w);
         delete borderGone[key];         // the GTK 4 bounds are a tiled window's matter
         tellFloating(w, true);
+        tellDragFloating(key, true);
     }
     function tellFloating(w, on) {
         var key = id(w);
@@ -3381,7 +3384,7 @@ var KI3 = (function () {
         // the tree picked it; "kept", KWin had activated another window first (forgetWindow then
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
-        delete told[key]; delete ringTold[key];
+        delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
         schedule(ws);
@@ -3735,8 +3738,17 @@ var KI3 = (function () {
     // from there kwin-i3 polls its State() until the drop or the cancel, shows the drop on
     // kwini3hold's indicator, and drops in the tree (Tree drop). The window stays put meanwhile.
 
+    // The helper's list of floating windows, for float to tile (§9 G13): told whether or not the
+    // frame is on, and all again after each SetOn(true) (the helper reloaded asks a reconfigure).
+    function tellDragFloating(key, on) {
+        if (dragTold[key] === on) return;
+        dragTold[key] = on;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloating", key, on);
+    }
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
+        dragTold = {};
+        if (on) for (var k in model.byWin) if (model.byWin[k].type === "floating" && wins[k]) tellDragFloating(k, true);
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
         // windows, the frame's room included; spec-tiling-resize.md, B).
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
@@ -3759,13 +3771,13 @@ var KI3 = (function () {
         var fs = model.fullscreenOn(ws);
         return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && (!fs || fs === c); });
     }
-    function hasDropTargets() {             // has_drop_targets
+    function hasDropTargets(floating) {     // has_drop_targets; a floating window needs only one
         var n = 0;
         shownWorkspaces().forEach(function (v) {
             var k = dropTargetsOf(v.ws).length;
             n += k ? k : v.ws.nodes.length ? 0 : 1;
         });
-        return n > 1;
+        return n > (floating ? 0 : 1);
     }
     function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
     // con_rect_size_in_orientation: a split's px along its own orientation, for the resize floor.
@@ -3819,7 +3831,7 @@ var KI3 = (function () {
         var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
         if (phase === "drag" || phase === "drop") {
             var con = drag.con;
-            if (model.byWin[f[1]] !== con || con.type !== "con") { endDrag("its window is gone"); return; }
+            if (model.byWin[f[1]] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
             if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
             dropOn(drag.plan, " at " + x + "," + y);
@@ -3832,9 +3844,13 @@ var KI3 = (function () {
         var con = drag.con, from = Tree.wsOf(con), to = plan && Tree.wsOf(plan.target);
         // A centre drop onto a window swaps the two, Shift or not (Paul, 2026-10-26: i3 moves
         // it after the target, which without tabs is the same as the side drop; "I love swap").
-        // Onto an empty workspace it is a move: nothing there to swap with.
-        var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws";
-        var dropped = model.drop(con, plan, swap);
+        // Onto an empty workspace it is a move: nothing there to swap with. A floating window
+        // (float to tile, §9 G13) goes after the target, i3's centre drop: a swap would float it.
+        var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws" && drag.type === "con";
+        var unfloated = drag.type === "floating" && plan ? unfloatForDrop(con) : null;
+        if (unfloated) con = unfloated;
+        // Unfloated, the tree changed whatever the drop does after.
+        var dropped = (drag.type !== "floating" || !!unfloated) && (model.drop(con, plan, swap) || !!unfloated);
         endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (swap ? " (swap)" : "") +
                           where : "no drop" + where);
         if (dropped) {
@@ -3843,6 +3859,15 @@ var KI3 = (function () {
             schedule(Tree.wsOf(con));
             wantFocus();
         }
+    }
+    // Float to tile: tiled first, as the floating toggle does (i3's floating_disable), then the
+    // tiling drop puts it in its place.
+    function unfloatForDrop(con) {
+        var w = wins[con.win];
+        if (con.sticky && w) unstick(w, con);
+        var leaf = model.floatingDisable(con);
+        if (leaf && w) setFloatingLook(w, false);
+        return leaf;
     }
     // A window closing on the focused workspace mid-drag (closed, above): the drag ends now and
     // does what it would at the release, from where the pointer last was.
@@ -3860,7 +3885,7 @@ var KI3 = (function () {
             return;
         }
         var plan = drag.plan;
-        if (closing === drag.con || !plan || plan.target === closing || drag.con.type !== "con") { endDrag("ended, no drop" + why); return; }
+        if (closing === drag.con || !plan || plan.target === closing || drag.con.type !== drag.type) { endDrag("ended, no drop" + why); return; }
         dropOn(plan, why);
     }
     function endDrag(why) {
@@ -3885,21 +3910,23 @@ var KI3 = (function () {
         dragCursor(true, drag.shape);
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
     }
-    // The hidden action: a drag began. Only a tiled window of kwin-i3's, and only with somewhere
-    // else to drop it (has_drop_targets); otherwise the press was a click.
+    // The hidden action: a drag began. Only a tiled window of kwin-i3's, or a floating one (float
+    // to tile, §9 G13), and only with somewhere else to drop it (has_drop_targets); otherwise
+    // the press was a click.
     function startDrag() {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "drag" || drag) return;
-            if (!con || con.type !== "con" || !wins[con.win] || !hasDropTargets()) {
-                log("DRAG not started: " + (con && con.type === "con" ? "nowhere to drop" : "not a tiled window"));
+            var ours = !!con && (con.type === "con" || con.type === "floating");
+            if (!ours || !wins[con.win] || !hasDropTargets(con.type === "floating")) {
+                log("DRAG not started: " + (ours ? "nowhere to drop" : "not a window of kwin-i3's"));
                 return;
             }
             var timer = new QTimer();
             timer.interval = 16;            // a frame, about: the helper keeps only the last position
             timer.timeout.connect(guard("drag poll", pollDrag));
-            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
-            log("DRAG " + conCaption(con));
+            drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
+            log("DRAG " + conCaption(con) + (con.type === "floating" ? " (floating: to tile)" : ""));
             dragCursor(true);
             dragState(s);
             if (drag) timer.start();

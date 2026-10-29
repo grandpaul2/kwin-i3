@@ -187,6 +187,45 @@ drag Meta right 640 360 760 420
 check "  Meta+right resized it (KWin's), still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
 echo "    c $g0 -> $(fc c)"
 
+# Float to tile (§9 G13, Paul 2026-10-28): Meta+Shift+drag of the floating c onto b's right side,
+# inside the sibling zone: tiled after b. With the keys still held, a second Meta+Shift press on
+# c does nothing (one toggle per press of the keys); Shift released and pressed again, it is G5's
+# float again. Then onto b's centre: after b, no swap (b stays tiled); and a key cancels.
+tiled_c() { [[ "$(tree 1)" != *"~c"* && "$(tree 1)" == *"b"*"c"* ]]; }
+floating_c() { [[ "$(tree 1)" == *"~c"* ]]; }
+read -r cx cy <<<"$(centre c)"; g=$(fc b); bw=${g#* }; bw=${bw%x*}
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 20)) $cy" "wait 60" "abs $((bw - 100)) 360" "wait 60" "btn left up" "wait 600" \
+    "abs 960 360" "wait 60" "btn left down" "wait 30" "abs 900 300" "wait 60" "abs 700 200" "wait 60" "btn left up" "wait 300" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up"
+check "G13: the floating c dropped on b's right side: tiled after b" wait_log '^.{9}DRAG dropped sibling' "$m"
+echo "    $(dropped $m) / $(tree 1)"
+sleep 0.3
+check "  the keys held, a second press did nothing: still tiled" tiled_c
+check "  no move after the drop"            eval '! after "$m" | grep -qE "^.{9}DRAG start move"'
+read -r cx cy <<<"$(centre c)"
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx - 40)) $((cy - 40))" "wait 60" "abs $((cx - 200)) $((cy - 100))" "wait 60" "btn left up" "wait 60" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up"
+check "  the keys pressed again: G5 floats c" poll floating_c
+read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
+m=$(mark)
+drag Meta+Shift left "$cx" "$cy" "$bx" "$by"
+check "G13: onto b's centre: after b, no swap" wait_log '^.{9}DRAG dropped center' "$m"
+echo "    $(dropped $m) / $(tree 1)"
+check "  c tiled, b still tiled"            poll tiled_c
+key "Floating Toggle"
+check "c floats again"                      poll floating_c
+read -r cx cy <<<"$(centre c)"
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 40)) $cy" "wait 60" "abs 100 360" "wait 60" "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" "wait 40" \
+    "key ${EVDEV[X]} down" "key ${EVDEV[X]} up" "wait 60" "btn left up"
+check "G13: a key cancels"                  wait_log '^.{9}DRAG cancelled' "$m"
+sleep 0.3
+check "  c still floating"                  floating_c
+
 # A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3, Paul
 # 2026-10-28). An app that draws its own frame keeps an invisible resize border past it (a GTK
 # header bar here, VS Code live), as KWin reports no tiled edges for a padded tile: a press there

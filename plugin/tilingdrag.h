@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QPointF>
+#include <QSet>
 #include <QTimer>
 
 class TilingDrag;
@@ -48,6 +49,9 @@ public Q_SLOTS:
     // kwin-i3 ends the drag (a window closed on the focused workspace, i3's drain_drag_events;
     // nothing to resize on a ring's side): the presses taken stay taken until released.
     void Cancel();
+    // A window of kwin-i3's floats, or no longer does: Meta+Shift+left on it is float to tile
+    // (§9 G13). Told again after every SetOn(true).
+    void SetFloating(const QString &id, bool on);
 
 private:
     TilingDrag *m_drag;
@@ -107,6 +111,7 @@ public:
     int resizeGap() const { return m_resizeGap; }
     std::function<void()> onResizeGapChanged;   // the gap strips follow it (gapstrips.h)
     void warp(int x, int y);
+    void setFloating(const QString &id, bool on);
     void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
     TilingDragGrab *grab() { return &m_grab; }
@@ -134,6 +139,10 @@ private:
     // i3's tiling_drag (§9 G3), from kwinrc [Script-kwin-i3] tilingDrag: "off", "modifier",
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
+    QSet<QString> m_floating;         // kwin-i3's floating windows, by internal id (SetFloating)
+    // One float or float to tile per press of the keys (§9 G5, G13; Paul 2026-10-28): set by a
+    // Meta+Shift+left press taken, cleared when Meta or Shift is released.
+    bool m_shiftLatched = false;
     KConfigWatcher::Ptr m_watcher;
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty
