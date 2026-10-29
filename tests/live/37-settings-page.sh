@@ -137,7 +137,7 @@ m=$(mark); click_named - Apply
 check "kwinrc: gapsInner=8"                 poll conf_is gapsInner 8
 check "kwinrc: focusWrapping=no"            conf_is focusWrapping no
 check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*focusWrapping.*gapsInner|^.{9}SETTINGS .*gapsInner.*focusWrapping' "$m"
-check "the gap is on screen"                wait_geom kwin-i3 "8,8 1264x704"
+check "the gap is on screen"                wait_geom kwin-i3 "9,9 1262x702"   # title bars: 1 px for the outline (no plugin here)
 sleep 1
 check "one reload for one Apply"            test "$(after "$m" | grep -c '^.\{9\}SETTINGS ')" == 1
 
@@ -150,6 +150,6 @@ check "gapsInner gone from kwinrc"          poll conf_is gapsInner ""
 check "focusWrapping gone"                  conf_is focusWrapping ""
 check "Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
 check "Focus Up (L) is Meta+L again"        test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $((0x1000004C)) 0 0 0"
-check "the default gap (4, 2 more at the edge)" wait_geom kwin-i3 "6,6 1268x708"
+check "the default gap (4, 2 more at the edge)" wait_geom kwin-i3 "7,7 1266x706"
 check "no invariant failures or errors"     clean_log
 finish
