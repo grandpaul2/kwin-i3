@@ -65,7 +65,7 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    inside kwin-i3's own call.
 2. **Eligible windows**: tiled (`requestedTile()` or `tile()` set; `tile()` only changes at the
    client's ack, so both are needed to cover untiling), shown (on its output's current desktop,
-   not minimized), not fullscreen (a window *leaving* fullscreen is still fullscreen when
+   not minimized, not hidden by Show Desktop: `isHidden()` leaves that out), not fullscreen (a window *leaving* fullscreen is still fullscreen when
    KWin's own restore fires, so that isn't held; kwin-i3's re-tile that follows is. A window
    *going* fullscreen isn't fullscreen yet when it fires, KWin only records the request until the
    app acknowledges, so it is held: its tiled picture stays until its fullscreen frame arrives,

@@ -64,7 +64,13 @@ KDE platform theme: other fonts and style, a 36 px title bar, spin boxes that to
 Release-road snags so far, for the README: the repo is private; its package names are Fedora's
 (`kwin` holds the headers on Arch, `libei`, `python-dbus`, `nodejs`); missing from its list:
 `vulkan-headers` (KWin's cmake config) and `python-xlib` (the tests); a failed configure leaves
-`plugin/build` caching Qt 5 (delete it); `run.sh` alone doesn't build `tools/bin/ei-send`.
+`plugin/build` caching Qt 5 (delete it); `run.sh` alone doesn't build `tools/bin/ei-send`; the
+install (2026-10-29): `~/.local/share/kwin/scripts` doesn't exist on a fresh account (`mkdir -p`
+first); `make take-keys` needs kwin-i3 loaded, so the log-out of step 1 comes before step 2;
+`plugin-install`'s first run also prints "KWin did not load the effect … another KWin version?",
+which reads as an error; a fresh panel with one desktop has no pager to right-click for the
+widget (*Add or Manage Widgets* has it); `tools/capture` needs `kdialog` (not in Arch's Plasma);
+Picture-in-Picture tiles (only Paul's own `floatingTitle` floats it).
 Also fixed: the test terminals read the user's own alacritty config (the laptop's cursor colour
 sat on 78's corner pixels); 59's arc pixel is the GPU's antialiasing (NVIDIA 55,48,48, AMD
 68,33,33), judged as 78 judges it. 53-hold's two laptop findings fixed 2026-10-29 (6dd3a82: a
@@ -72,8 +78,18 @@ new window stays hidden until it lands; a kept closing window grabbed from Scale
 both machines; installed live the same day. The suite once more on the laptop, 2026-10-29: 58 of
 60 green; 39 and 69 red, both from `kwriteconfig6 --notify` losing its signal on the slower
 machine (4 in 30; the tests now send it with gdbus, `lib.sh` `set_layouts`; upstream note in
-`LATER.md`), green on both machines after. Next: stage (a)'s live install with
-Paul at the laptop (the by-hand list above).
+`LATER.md`), green on both machines after. Stage (a)'s live install, 2026-10-29, Paul at the
+laptop: the script, plugins, settings page and widget by the README, `make take-keys` (21 keys);
+works: tiling and the frame, popups, the widget, touchpad scrolling and Overview, lid, suspend.
+Found: (1) **Meta+N with KWin's Slide** (Plasma's default desktop-switch animation; the desktop has
+animations off): the frames stay in their old spots while the desktops slide; i3 has no animation
+(`workspace_show`). (2) **A small flash when Firefox closes**, not terminals: Firefox's buffer or
+the hold, unknown; a capture at the moment. (3) **Frames "not following the mouse"**: Paul's
+capture 2026-10-29 16:09, the laptop is click to focus, so the focus (and the frame) moves only
+on a click; correct, and item 52's question. (4) Frames seen **flashing**, not yet captured.
+Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Next: (1) a
+diagnosis; (2) and (4) captures at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
+docking, lid-with-monitor and wallpaper-flash checks still to do.
 
 **52. Panel popups on a fresh install: the popup grace's premise** (Paul, 2026-10-29, at the
 laptop before kwin-i3 was loaded). On a fresh Plasma 6.7.5 a panel popup never closes when the
@@ -85,7 +101,11 @@ there, and the popup has nothing to lose it to. The closing the grace fixes come
 follows mouse (i3's default, `focus_follows_mouse yes`; the desktop's setting), which kwin-i3
 doesn't set. Next: once kwin-i3 is loaded on the laptop, the same popup under click to focus, then
 under focus follows mouse with and without the helper; then whether the spec's cause, the README's
-helper row and `behaviour.md` §9 describe it right, and a proposal for Paul.
+helper row and `behaviour.md` §9 describe it right, and a proposal for Paul. The laptop's frames
+looked broken for the same reason (item 50, finding 3): i3's default is focus follows mouse and
+Paul lives in it, but kwin-i3 leaves Plasma's click to focus; the proposal covers that too (the
+README tells the user, the settings page offers it, or kwin-i3 follows i3's default).
+Checked: under click to focus with kwin-i3 loaded, a popup stays until a click (Paul, item 50 list 2).
 
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
 `docs/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
@@ -95,3 +115,15 @@ nothing. With the plugins, 74's case 1 fell in it (red in both builds, green aft
 74 now waits 3 s, labelled for this item. Next: trace where the activation comes from (KWin's
 source for activations with no script caller, then a test-KWin trace of `windowActivated` with
 its stack), then the cause, a fix, and 74's wait removed.
+
+**54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
+source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
+leaves out windows Show Desktop hides). Left, each with its next action: (a) the window menu's
+**No Border** and **Keep Above** aren't watched (`src/kwin.js` has no `noBorderChanged` /
+`keepAboveChanged`): "No Border" off on a tile brings its title bar back and drops the frame until
+a reclassify; next, a test-KWin probe, then listening to both and scheduling a pass. (b) **Focus
+follows mouse under Show Desktop**, two outputs: `windowUnder` (`kwin.js:2156`) counts a hidden
+tile, so the early return at `:2146` leaves the focus behind on an output crossing; next, a probe.
+(c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before
+`Effects`, `tilingdrag.cpp:71`); very low risk; next, a probe. Not read: fullscreen Kickoff's
+window type and the display settings' "keep these settings?" dialog (sources not found).

@@ -376,9 +376,12 @@ bool Hold::tiled(EffectWindow *w) const
     return win && (win->requestedTile() || win->tile());
 }
 
+// isHidden() leaves Show Desktop out (KWin window.cpp:4521): Plasma's edit mode and Peek hide
+// every window that way, and a tile closing then must not be held (audit 2026-10-29).
 bool Hold::shown(EffectWindow *w) const
 {
-    return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden();
+    return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden()
+        && !w->isHiddenByShowDesktop();
 }
 
 bool Hold::outputDragged(EffectWindow *w) const
