@@ -54,7 +54,8 @@ then the fix and P1. A check for the bug only under rule 5.
    second `make test` was proposed before an install because this line read as "before going
    live"; it never meant that.)
 2. A red scenario the change drives: fix it, then rerun only that scenario.
-3. A red scenario it doesn't: one run of it alone. Green: a line in `OPEN.md` item 34. Red: report
+3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
+   (`# timing: alone`), as 69 did (2026-10-28), not another guessed fix. Red: report
    to Paul, don't fix it.
 4. Paul's go to merge, then his go to reload (CLAUDE.md, "Nothing goes live").
 

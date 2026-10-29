@@ -67,7 +67,7 @@ following desktops switched outside kwin-i3, the pointer moved only by keys, the
 layout keys, the flight recorder's GEOM/TILE lines), and the fuzzer needs updating first: its I4
 "no hole" check must allow the frame's 1 px (the plugins load in its KWins, so the frame is on), a
 frame-pixel invariant would catch lost or stale frames, and new actions: a workspace of Plasma
-windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved. The test flakes are `OPEN.md` item 34.
+windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved.
 
 **10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;

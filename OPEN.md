@@ -26,30 +26,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 Work for now.
 
-**34. Test speed, the rest of the study** (2026-10-25; the study's report was not kept, its
-findings are here). Done: per-scenario timings in `run.sh`, many pixels per probe (78: 64 s to 29 s).
-First timings: batch 46 s, alone tail 176 s, total 222 s. (a) done 2026-10-27: 72, 73, 74 run in
-the batch, testkwin.sh finding each Xwayland's display under a lock; 71 stays alone for its 1 s
-focus checks (the five green together; ~36 s off the alone tail). Left: (b) the alone scenarios
-without millisecond timings (37, 57, 58, 59, 76, 78) two or three at a time (~30-60 s; five
-repeat runs first, ~20 min); held until a few sessions' `make test` show the flake fixes below
-holding, as it puts the screenshot scenarios back under load. (c) dropped: the fixed sleeps in
-78 and 58 add up to ~11 s, a few seconds to gain for new races. Next: (b), when the flakes have
-stayed away for a few sessions.
-
-**Done 2026-10-27** (Paul's go): (e) `make mutate-live` with `KI3_ONLY` baselines only its faults'
-scenarios; (d) the flakes, by causes read from the code (no failing run's log was kept, so not
-proven): 39 and 69 waited 5 s for a layout change to reach the keyboard daemon and the helper
-(now 20 s); 57's screenshot had to land inside a 400 ms hold (now 2 s, and polls in place of its
-sleeps); 70 and 80 expected nothing after the press, which `capture-read` prints by design (now:
-the press is there and the timeline in time order). All five green alone after the change.
-**Watched**: if one of these fails again in a full run, it moves alone (`# timing: alone`)
-rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in the batch, 48/48
-alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
-2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
-stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
-session: 60/60, 222 s; eleventh: green, 228 s; twelfth: not run, the changes covered by their scenarios; thirteenth: 59/60, 231 s, 25 red as a stale expectation from refinement stage 5's floating order, fixed; fifteenth: 60/60, 225 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
-
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
 foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
 lightened: `philosophy.md`, "How a decision is made"; i3 means 4.24, `plan.md`); the code read
