@@ -71,7 +71,7 @@ inside kwini3hold's hold or after its release. Next: `tools/capture-read` on bot
 session, a diagnosis for Paul (no fix without his go); the captures stay until then.
 
 **49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
-"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: steps 1-4
-(inventory, glossary, tone rules, every page's new words) decided and live (a211562, `make
-kcm-install`). Left: the help buttons naming i3's directives, with item 47 (a); step 5, the Window
-Rules layout. Next: step 5's design, when Paul wants it.
+"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: steps 1-5
+(inventory, glossary, tone rules, every page's new words, the Window Rules layout) decided and live
+(a211562, b0f222d; `make kcm-install`). Left: the help buttons naming i3's directives, with item
+47 (a), when Paul wants them.
