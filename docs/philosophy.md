@@ -57,14 +57,24 @@ In order:
    missing principle into the doc it belongs in, as a proposal, and say it was a hole.
 5. **Paul**, when out of moves: two foundations that genuinely conflict, or the product's
    direction. Not each call (Paul, 2026-10-28: "It's getting way beyond where I can make every
-   individual call").
+   individual call"). **Paul's decisions live in these foundations** (Paul, 2026-10-28): a
+   question put to him is a question about a foundation. Before asking, show that steps 1-4 don't
+   decide it (the scope, the reasons (a)-(e), the precedent, i3's source), and ask it as the
+   change to a foundation it would be. A question the docs already answer, asked anyway, can undo
+   a decision he made there.
 
-**The exception: overall style and feel.** How kwin-i3 looks and feels in use is judged on the
-live desktop, and Paul's verdict there carries weight (stage 7: i3's three ring colours were
+**The exception: overall style and feel.** How kwin-i3 looks (colours, sizes, gaps, decoration,
+indicators, banners) and feels in use is judged on the live desktop, **after it is built**, and
+Paul's verdict there carries weight (stage 7: i3's three ring colours were
 specced, built, and dropped live, "all the different colors are just confusing"). Even there,
 a suggestion that goes against these norms gets **heavy push back first**: the norm it breaks,
 the precedent, i3's way, said plainly before anything is built. If it stands, it is recorded as
 a difference with "Paul, live" as its reason, or the norm itself changes, here, in the same commit.
+
+The exception is for Paul's verdict and Paul's suggestions, never a reason to ask before
+building: a behaviour the steps above decide is built as they decide it, and Paul judges it in use
+(2026-10-28: floating windows over a fullscreen one were asked about, though i3, reason (a) and
+the C5 precedent already decided it).
 
 This is about deciding *what* kwin-i3 does. Putting anything on Paul's desktop still needs his go
 for that change (`CLAUDE.md`, "Nothing goes live").

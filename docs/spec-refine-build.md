@@ -1,8 +1,7 @@
 # Spec: building the refinement pass (OPEN.md item 47)
 
 **Now (2026-10-28):** Written from Phase 3's read of the code against the rewritten foundations
-(46 findings, none high). Waiting for Paul's go on the order and on stage 7's call (35). Nothing
-built.
+(46 findings, none high). Waiting for Paul's go on the order. Nothing built.
 
 Every change here brings the code to what `docs/definitions.md`, `docs/philosophy.md` and
 `docs/plan.md` already say, or to i3's source where they point there. Each one's row in
@@ -100,7 +99,9 @@ Drives: unit `tree`, 10, 30.
   (Dvorak, AZERTY, a layout switch), then the code. §8 "Keyboard layouts".
 Drives: 39, 50, 51, 64.
 
-**7. Floating windows over a fullscreen one** (S), **Paul's call 35 pending**. i3 draws no other
+**7. Floating windows over a fullscreen one** (S). Decided by the docs: fullscreen is in scope,
+so i3's behaviour (`philosophy.md` step 3); no reason (a)-(e) to differ (KWin raising an activated
+window doesn't stop a hand-back); and the precedent C5 (step 2). i3 draws no other
 floating window above a fullscreen one and won't focus one (`render.c:253-270`,
 `con_fullscreen_permits_focusing`); here KWin raises an activated one over it. As i3: an
 activation of a floating window that isn't the fullscreen window's own transient, on a workspace

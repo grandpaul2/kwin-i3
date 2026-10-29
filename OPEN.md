@@ -58,12 +58,13 @@ fixed (behaviour.md's rows, README, the style guide; each row still wrong in cod
 fixed**). Paul's calls: the 1 px frame and 4/2 gaps kept (L2, L5: reason (b) and "Paul, live");
 Meta+Shift+drag stays a float modifier (G5), **with float to tile planned** (a floating window
 Meta+Shift+dragged onto a tile tiles there; not specced yet); floating windows over a fullscreen
-one (V6b): i3 hides them, his call pending. (4) The build plan, `spec-refine-build.md`, shaped as
+one (V6b): decided by the docs as i3 (asked by mistake: the docs' hole, what "style and feel"
+covers and that it is judged after building, is now filled in `philosophy.md`). (4) The build plan, `spec-refine-build.md`, shaped as
 `spec-i3-redo-build.md`: outputs (primary order, i3's direction and wrap, login numbering, no
 desktops made on plug), kinds (`for_window` over sticky, X11 notifications, desktops past 10), the
 tree (floating list order, fullscreen focus, 1 px floor), the effect following the tree, settings
 and words (page, form, notification, help text, `holdTimeoutMs` off, popup grace's 300 ms), input
-(a close mid-drag, letter keys by position), and stage 7 for call 35. **Written** (`docs/spec-refine-build.md`).
+(a close mid-drag, letter keys by position), and stage 7, floating windows over fullscreen as i3. **Written** (`docs/spec-refine-build.md`).
 Next: Paul's go on the order, then stage 1.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
