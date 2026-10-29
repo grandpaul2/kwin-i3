@@ -506,7 +506,7 @@ no i3 counterpart)
 
 | # | What | Here | i3 | Note |
 |---|---|---|---|---|
-| Y1 | The area tiled | the output's work area (`MaximizeArea`: panels left out) | = | i3 leaves out its docks (the bar) |
+| Y1 | The area tiled | the output's work area (`MaximizeArea`: panels left out), followed as KWin changes it (a panel moved, resized, floated, hidden, or on another output; probed 2026-10-29 with plasmashell in the test KWin). Known lag, Plasma's: a *floating* panel switched to auto-hide, dodge windows or windows go below keeps its strut until the panel next redraws (its exclusive zone waits for a surface commit, `panelview.cpp:1591`; KDE bug 491363 alike); not seen in daily use, so no workaround (Paul, 2026-10-29) | = | i3 leaves out its docks (the bar) and re-renders when a dock's strut changes (`handlers.c:1259`) |
 | Y2 | A tiling window's minimum size | respected: the display bends to fit, the model keeps i3's shares; too many to fit: the window with the largest minimum along the overflowing axis (width first) floats, repeatedly (§3 X7) | ≠ | i3 ignores size hints on tiling windows. Kept: a Wayland client draws at least its minimum whatever it is sent, and KWin's tiles won't size a window below it (§9 Z5) |
 | Y3 | A window resizing itself; KWin's pack and grow keys, a maximize | put back on the next pass | = | i3 refuses a tiling window's own geometry |
 | Y4 | A root tile kwin-i3 never placed (a desktop it hasn't shown) | keeps KWin's saved tiles | + | |

@@ -138,14 +138,3 @@ globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins
 (2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
 on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
 2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
-
-**57. Panel friendliness** (Paul, 2026-10-29). Plasma's panel has settings that may clash with
-kwin-i3 (known so far: a floating panel's gap and its popups, the popup grace's reason). i3's
-side: i3bar is a dock window whose strut the layout leaves free (`bar { mode dock | hide |
-invisible }`, i3's `src/con.c` / `handlers.c` for struts). Next: list the panel's settings in
-Plasma 6.7 (position, floating, visibility: always visible, auto-hide, dodge windows, windows go
-below / can cover; adaptive opacity; length and thickness; several panels; a panel on the second
-output), how KWin presents each (strut, layer-shell exclusive zone, the work area kwin-i3 tiles
-in), and for each: works / clashes. A clash gets a workaround in kwin-i3 if one is clean; if not,
-the setting kwin-i3 is designed for joins `plan.md` (e)'s list, named at install, at load and on
-the settings page as Plasma's.
