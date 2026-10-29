@@ -25,9 +25,6 @@ public Q_SLOTS:
     void FitKeys();
     // For the live tests and bug reports: the layouts and each action's keys, as last fitted.
     QString Plan() const;
-    // True the first time it is asked about what, then never again on this install: the script's
-    // say-once notes (plan.md (e)), since a KWin script can't write config. Kept in kwini3helperrc.
-    bool SayOnce(const QString &what);
 
 private:
     struct Want {

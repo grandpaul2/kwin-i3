@@ -4725,32 +4725,6 @@ var KI3 = (function () {
         reportClose("per-output desktops are off", lines);
     }
 
-    // i3 focuses the window under the pointer (focus_follows_mouse yes, its default); Plasma's
-    // default is click to focus. A Plasma setting, never set by kwin-i3: named once per install
-    // (plan.md (e), Paul 2026-10-29), the helper keeping the mark (a script can't write config).
-    // Without the helper, no answer comes (callDBus calls back only on a reply), and after 3 s it
-    // is named at every load, beside the plugins' own part.
-    function checkFocusPolicy() {
-        var ffm = focusFollowsMouse();
-        log("FOCUS " + (ffm ? "follows mouse" : "click to focus"));
-        if (ffm) return;
-        reportOpen();
-        var closed = false;
-        function close(say) {
-            if (closed) return;
-            closed = true;
-            reportClose("Plasma's focus is click to focus", say ? [
-                "i3 focuses the window under the pointer, and kwin-i3's frames and focus are made for that. " +
-                "This is a Plasma setting, not kwin-i3's: System Settings > Window Management > Window Behavior > " +
-                "Focus, \"Window activation policy\": Focus follows mouse (mouse precedence), and \"Delay focus by\": 0 ms. " +
-                "Changing it there is all it takes, and it's undone the same way."] : []);
-            log("FOCUS note " + (say ? "said" : "said before"));
-        }
-        later(3000, function () { close(true); });
-        callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "SayOnce", "focusPolicy",
-                 guard("focus note", function (first) { close(!!first); }));
-    }
-
     // The setting turned on: each monitor showing a workspace that lives on another one (left
     // by the switches made while it was off) gets its own, as the setting takes effect where it
     // is set: the lowest workspace living there and shown nowhere, else an unused one. Windows
@@ -5176,7 +5150,6 @@ var KI3 = (function () {
         checkOldIgnores();
         checkOldColours();
         checkPerOutput(true);
-        checkFocusPolicy();
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
             checkPerOutput(false);
             if (options.perOutputVirtualDesktops) reshowHomes();

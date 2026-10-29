@@ -111,26 +111,5 @@ check "back to US alone: refitted"          fitted "layouts us, current us"
 check "Move to Workspace 2 is Meta+@ again" plan_has "kwin-i3 Move to Workspace 2 (symbol) = Meta+@"
 check "US: Meta+Shift+2 moves to 2"         runs "Meta+Shift+2" "Move to Workspace 2"
 
-# The focus note (plan.md (e), OPEN.md 56): under Plasma's click to focus, kwin-i3 names focus
-# follows mouse once per install; the helper keeps the mark (SayOnce), so the next load is quiet.
-kwriteconfig6 --file kwinrc --group Windows --key FocusPolicy ClickToFocus
-busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-click_focus() { [[ "$(kjs 'log(String(options.focusPolicy))')" == 0 ]]; }   # reconfigure applies on a timer
-check "KWin is click to focus"              poll click_focus
-notes_now() { [[ $(notes) == "$1" ]]; }
-n=$(notes)
-busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
-m=$(mark); load_kwin_i3
-check "click to focus: reloaded"            wait_log 'kwin-i3 loaded$' "$m"
-check "the focus note is said"              wait_log '^.{9}FOCUS note said$' "$m"
-check "  in a notification"                 poll notes_now $((n + 1))
-check "  as Plasma's setting"               grep -q "This is a Plasma setting, not kwin-i3" "$KI3_TMP/notify.out"
-busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
-m=$(mark); load_kwin_i3
-check "reloaded again"                      wait_log 'kwin-i3 loaded$' "$m"
-check "said before: not again"              wait_log '^.{9}FOCUS note said before$' "$m"
-sleep 1
-check "  no second notification"            notes_now $((n + 1))
-
 check "no invariant failures or errors"     clean_log
 finish
