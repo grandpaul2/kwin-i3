@@ -5,8 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, eleventh session** (item 40, i3's rules, done: all ten stages live,
-stage 4's check included, Paul's word; main's `package/` is what KWin runs).
+Last reconciled: **2026-10-28, eleventh session** (item 40 done; item 47's refinement built and live;
+main's `package/` is what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -49,23 +49,17 @@ alone), so it now runs alone (~29 s on the alone tail; green in its first full `
 stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
 session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
-**47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again, as a
-refinement. (1) Four agents poked holes in the foundations (59 findings, 17 calls, Paul: "all
-good", his role lightened: `philosophy.md`, "How a decision is made"). (2) **Done**: the three
-docs rewritten (531b86b), a fresh agent's second round (10 findings, none high) closed (a3951fb).
-(3) **Done**: four agents read the code against them (46 findings, none high); the doc side is
-fixed (behaviour.md's rows, README, the style guide; each row still wrong in code says **Being
-fixed**). Paul's calls: the 1 px frame and 4/2 gaps kept (L2, L5: reason (b) and "Paul, live");
-Meta+Shift+drag stays a float modifier (G5), **with float to tile planned** (a floating window
-Meta+Shift+dragged onto a tile tiles there; not specced yet); floating windows over a fullscreen
-one (V6b): decided by the docs as i3 (asked by mistake: the docs' hole, what "style and feel"
-covers and that it is judged after building, is now filled in `philosophy.md`). (4) The build plan, `spec-refine-build.md`, shaped as
-`spec-i3-redo-build.md`: outputs (primary order, i3's direction and wrap, login numbering, no
-desktops made on plug), kinds (`for_window` over sticky, X11 notifications, desktops past 10), the
-tree (floating list order, fullscreen focus, 1 px floor), the effect following the tree, settings
-and words (page, form, notification, help text, `holdTimeoutMs` off, popup grace's 300 ms), input
-(a close mid-drag, letter keys by position), and stage 7, floating windows over fullscreen as i3. **Written** (`docs/spec-refine-build.md`).
-Next: Paul's go on the order, then stage 1.
+**47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
+foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
+lightened: `philosophy.md`, "How a decision is made"; i3 means 4.24, `plan.md`); the code read
+against them (46 findings) and brought into line by `docs/spec-refine-build.md`'s seven stages,
+**all live 2026-10-28** (outputs in i3's order and directions, the effect following the tree, the
+words and settings, kinds, the tree, a close mid-drag, the letter keys by position, floating
+windows behind fullscreen); no "Being fixed" left in `behaviour.md`. Left: (a) stage 3's i3-directive
+help beside each control, **held**: wrapping a form control moves its label off it and 37's keyboard
+path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) **Float to tile**, Paul's
+planned feature (Meta+Shift+drag a floating window onto a tile tiles it, G5's other half): a spec
+when he wants it. (c) Paul's "it works" on stages 1-7. Next: (c), then (a) when Paul wants it.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
