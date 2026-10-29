@@ -137,3 +137,10 @@ globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins
 (2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
 on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
 2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
+
+**58. System Settings opens floating on the laptop, tiled on the desktop** (Paul, 2026-10-29; not
+a problem, only unexplained). i3 floats a window by its hints (`manage.c`: dialog type, transient,
+min = max size) and `for_window`; kwin-i3 does the same (`behaviour.md` §3), so one of those must
+differ between the machines (or the laptop's 1366x768 against the window's minimum size). Next,
+read-only over ssh on the laptop with System Settings open: its class, type, transient, resizable
+and min/max size, and kwin-i3's reason for floating it (Dump State's log), against the desktop's.
