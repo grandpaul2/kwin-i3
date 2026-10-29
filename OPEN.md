@@ -47,7 +47,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
 stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
-session: 60/60, 222 s; eleventh: green, 228 s; twelfth: not run, the changes covered by their scenarios); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
+session: 60/60, 222 s; eleventh: green, 228 s; twelfth: not run, the changes covered by their scenarios; thirteenth: 59/60, 231 s, 25 red as a stale expectation from refinement stage 5's floating order, fixed); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
 foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
@@ -71,6 +71,7 @@ inside kwini3hold's hold or after its release. Next: `tools/capture-read` on bot
 session, a diagnosis for Paul (no fix without his go); the captures stay until then.
 
 **49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
-"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: an
-inventory, a glossary of about 18 core words, tone rules, a page-by-page rewrite, then the Window
-Rules layout. Done: the inventory and the glossary (Paul agreed every row). Tone rules agreed and in the style guide. Main page's before/after agreed (§5). Next: his call on the sub-pages' (§6), then the build.
+"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: steps 1-4
+(inventory, glossary, tone rules, every page's new words) decided and live (a211562, `make
+kcm-install`). Left: the help buttons naming i3's directives, with item 47 (a); step 5, the Window
+Rules layout. Next: step 5's design, when Paul wants it.

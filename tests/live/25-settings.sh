@@ -25,18 +25,19 @@ key "Reload Settings"
 check "reload: floatingClass changed"       wait_log '^.{9}SETTINGS floatingClass$' "$m"
 check "c floats now"                        wait_tree 1 "H[a b] ~c*" "$m"
 
-# 3. b floated by hand; an unrelated rule change and a reload leave both floating (b's verdict
+# 3. b floated by hand, raised to the floating list's tail as it takes the focus (i3's
+#    floating_raise_con, floating.c:478); an unrelated rule change and a reload leave both floating (b's verdict
 #    did not change; c's did not either).
 key "Focus Left"; key "Focus Mode Toggle"
 m=$(mark)
 key "Floating Toggle"
-check "b floated by hand"                   wait_tree 1 "H[a] ~b* ~c" "$m"
+check "b floated by hand"                   wait_tree 1 "H[a] ~c ~b*" "$m"
 m=$(mark)
 set_key floatingTitle "STAGE (streamed),nothing-has-this-title"
 key "Reload Settings"
 check "reload: floatingTitle changed"       wait_log '^.{9}SETTINGS floatingTitle$' "$m"
 sleep 0.5
-check "b stays floating, c too"             _tree_is 1 "H[a] ~b* ~c"
+check "b stays floating, c too"             _tree_is 1 "H[a] ~c ~b*"
 
 # 4. The rule removed: i3 applies rules and never undoes them (§3 X2, redo stage 3), so c stays
 #    floating; a forWindow rule with floating disable tiles it, and b, floated by hand, stays.
@@ -45,7 +46,7 @@ del_key floatingClass
 key "Reload Settings"
 check "reload: floatingClass changed back"  wait_log '^.{9}SETTINGS floatingClass$' "$m"
 sleep 0.5
-check "c stays floating (a rule only applies), b too" _tree_is 1 "H[a] ~b* ~c"
+check "c stays floating (a rule only applies), b too" _tree_is 1 "H[a] ~c ~b*"
 m=$(mark)
 set_key forWindow '[class="^ki3\.probe$"] floating disable'
 key "Reload Settings"
@@ -58,7 +59,7 @@ m=$(mark)
 set_key ignoreClass "krunner,ki3.probe"
 del_key forWindow
 key "Reload Settings"
-check "ignoreClass entry: c floats instead" poll eval '[[ "$(tree 1)" == "H[a] ~c ~b*" || "$(tree 1)" == "H[a] ~b* ~c" ]]'
+check "ignoreClass entry: c floats instead" poll eval '[[ "$(tree 1)" == "H[a] ~b* ~c" || "$(tree 1)" == "H[a] ~c ~b*" ]]'
 m=$(mark)
 del_key ignoreClass
 set_key forWindow '[class="^ki3\.probe$"] floating disable'
