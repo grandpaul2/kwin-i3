@@ -67,12 +67,8 @@ Release-road snags so far, for the README: the repo is private; its package name
 `plugin/build` caching Qt 5 (delete it); `run.sh` alone doesn't build `tools/bin/ei-send`.
 Also fixed: the test terminals read the user's own alacritty config (the laptop's cursor colour
 sat on 78's corner pixels); 59's arc pixel is the GPU's antialiasing (NVIDIA 55,48,48, AMD
-68,33,33), judged as 78 judges it. Next: **53-hold**, the one red left on the laptop, shows two
-behaviours a slower machine reveals (screenshots 2026-10-29): (1) a slow new window (c, 0.8 s
-to redraw) is on screen at KWin's centre placement, floating, title bar and shadow, before
-kwin-i3 tiles it (its shadow is the 224 red); (2) a closing window is drawn by KWin's close
-animation (Scale: shrunk, darkened, 0,160,0) instead of held as it was while its neighbour
-grows. On the desktop the captures fall early enough to pass; neither is proven absent there.
-Both are the atomic-layout effect's business (`docs/spec-atomic-layout.md`): the cause, i3's
-view (i3 has no animations; a new window appears tiled), then a proposal for Paul. Then the rest of the suite once more, the HiDPI four, and stage (a)'s live install
-with Paul at the laptop (the by-hand list above).
+68,33,33), judged as 78 judges it. 53-hold's two laptop findings fixed 2026-10-29 (6dd3a82: a
+new window stays hidden until it lands; a kept closing window grabbed from Scale), 53 green on
+both machines; on main, not yet installed live (`make plugin-install`, Paul's go). Next: the
+rest of the suite once more on the laptop, the HiDPI four, and stage (a)'s live install with
+Paul at the laptop (the by-hand list above).
