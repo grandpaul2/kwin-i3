@@ -27,13 +27,18 @@ var Rules = (function () {
     var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
                             "kwin_wayland", "ksmserver-logout-greeter"];
     var SPECTACLE = ["spectacle", "org.kde.spectacle"];
+    var PLASMASHELL = /^(org\.kde\.)?plasmashell$/;
     function i3Kind(w) {
         if (w.dock) return "dock";
         if (w.desktopWindow) return "root";
         // kwini3helper's strips over the gaps are kwin-i3's own, as i3's frames: no client.
         if (String(w.caption) === "kwin-i3 gap") return "override-redirect";
-        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip || w.notification ||
-            w.criticalNotification || w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip ||
+            w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        // Plasma's notifications are Plasma's (philosophy.md), by class as the default rule names
+        // plasmashell; another app's notification-type window (an X11 toast) floats, as i3's
+        // manage.c:466. KWin shows a script no X11-only property to tell them apart by.
+        if ((w.notification || w.criticalNotification) && PLASMASHELL.test(String(w.resourceClass))) return "override-redirect";
         if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";
         if (w.fullScreen && (has(SPECTACLE, w.resourceClass) || has(SPECTACLE, w.resourceName))) return "override-redirect";
         return null;
@@ -63,7 +68,7 @@ var Rules = (function () {
     // types too: R2), a transient, a modal, a fixed size; and tools/capture's note (R8).
     function floatsByDefault(w) {
         if (w.transient || w.modal || fixedSize(w)) return true;
-        if (w.dialog || w.utility || w.toolbar || w.splash) return true;
+        if (w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification) return true;
         return String(w.caption) === "kwin-i3 capture note";
     }
 
@@ -255,25 +260,29 @@ var Rules = (function () {
         if (w.deleted) return "override-redirect";
         var kept = i3Kind(w);
         if (kept) return kept;
-        if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash)) return "override-redirect";
+        if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification)) return "override-redirect";
         return null;
     }
     // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
-    // make it sticky"; redo stage 9): in the tree, floating, before any rule.
+    // make it sticky"; redo stage 9): in the tree, floating. The rules run after, as i3's
+    // for_window does (run_assignments, manage.c:588): `floating disable` tiles it, which here
+    // takes it off all desktops (KWin's tiles belong to one desktop, §3 X4; kwin.js adopts it so);
+    // `floating enable` leaves it sticky. ctx.current "sticky" for one in the tree already.
     function classify(w, ctx) {
         ctx = ctx || {};
         var kept = keptOut(w);
         if (kept) return kept;
         // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
         // kwin.js relocate): a caption change then floated a tiled window for good (review 2026-10-28).
-        if (w.onAllDesktops && !ctx.crossing) return "sticky";
-        var kind = ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
+        var sticky = w.onAllDesktops && !ctx.crossing;
+        var kind = sticky ? (ctx.current === "tiling" ? "tiling" : "sticky")
+                          : ctx.current === "sticky" ? "floating" : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
             if (ran[i]) continue;
-            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind })) continue;
+            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind })) continue;
             ran[i] = true;
-            kind = rules[i].floating ? "floating" : "tiling";
+            kind = rules[i].floating ? (sticky ? "sticky" : "floating") : "tiling";
         }
         return kind;
     }

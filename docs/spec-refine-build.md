@@ -1,7 +1,7 @@
 # Spec: building the refinement pass (OPEN.md item 47)
 
 **Now (2026-10-28):** Written from Phase 3's read of the code against the rewritten foundations
-(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 live** (2026-10-28, `refine-1` merged, Paul's go; unit 173/173, 40-49, 68, 84 green), waiting for his "it works". **Stage 2 live** (2026-10-28: merged, `make plugin-install`, reloaded; the effect reports the tree's focused window), waiting for his "it works". **Stage 3 live** but its held help-button item (merged; `make kcm-install`, `widget-install`, `plugin-install`; reloaded), waiting for his "it works". Stage 4 next.
+(46 findings, none high). Paul's go on the order (2026-10-28). **Stage 1 live** (2026-10-28, `refine-1` merged, Paul's go; unit 173/173, 40-49, 68, 84 green), waiting for his "it works". **Stage 2 live** (2026-10-28: merged, `make plugin-install`, reloaded; the effect reports the tree's focused window), waiting for his "it works". **Stage 3 live** but its held help-button item (merged; `make kcm-install`, `widget-install`, `plugin-install`; reloaded), waiting for his "it works". **Stage 4 built** on `refine-4` (unit 173/173; 20, 30, 32, 34, 40, 43, 62, 65, 66, 73 green; the probe not needed: KWin shows no X11-only property, Plasma's notifications told by class as the default rule names plasmashell), waiting for his go and a live check of one notification.
 
 Every change here brings the code to what `docs/definitions.md`, `docs/philosophy.md` and
 `docs/plan.md` already say, or to i3's source where they point there. Each one's row in

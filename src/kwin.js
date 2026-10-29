@@ -127,7 +127,9 @@ var KI3 = (function () {
         if (w.onAllDesktops && w.output) return wsModel(shownOn(w.output));
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
-        if (num < 1) return null;
+        // A virtual desktop past 10 (Plasma's Overview can add one) is not kwin-i3's (plan.md
+        // decision 9): a window there is in no workspace.
+        if (num < 1 || num > NAMES.length) return null;
         if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, w.output);
         return wsModel(num);
     }
@@ -1208,6 +1210,12 @@ var KI3 = (function () {
         }
         if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
                                      Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
+        // On, or asking for, a virtual desktop past 10: not kwin-i3's (decision 9), so the focused
+        // workspace, as any new window (C1).
+        if (t.ws > NAMES.length) {
+            if (!fws) return null;
+            t = { ws: fws.num, why: "focused" };
+        }
         var e = Placement.claim(pendingShown, w.output.name, desk);
         if (e && t.why !== "asked" && e.previous >= 1 && deskOf(e.previous)) {
             showOn(deskOf(e.previous), w.output);
@@ -1282,6 +1290,15 @@ var KI3 = (function () {
         if (!ws) { connectWindow(w); return; }
         if (!ruleRan[key]) ruleRan[key] = {};
         var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] });
+        // A window on all desktops that a rule tiles (`floating disable`, as i3's for_window over
+        // its sticky float): off all desktops onto its workspace first, KWin's tiles being one
+        // desktop's (§3 R3, X4).
+        if (kind === "tiling" && w.onAllDesktops && !crossing[key] && deskOf(ws.num)) {
+            placing[key] = true;
+            relocating++;
+            try { w.desktops = [deskOf(ws.num)]; } finally { delete placing[key]; relocating--; }
+            log("STICKY " + shortCaption(w) + " tiled by a rule: on workspace " + ws.num);
+        }
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
@@ -1417,9 +1434,10 @@ var KI3 = (function () {
         if (Rules.keptOut(w)) { dropWindow(w); return; }
         var floating = con.type === "floating";
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
         var wantFloating = kind !== "tiling";      // "sticky" floats too (redo stage 9)
         if (wantFloating === floating) return;
+        if (!wantFloating && con.sticky) unstick(w, con);     // a rule tiles it: off all desktops first (X4)
         model.toggleFloating(con);
         setFloatingLook(w, wantFloating);
         if (wantFloating) { untile(w); floatAtRecord(w); clampFloating(w); }
@@ -1499,6 +1517,9 @@ var KI3 = (function () {
                 log("STICKY " + shortCaption(w) + " off: on workspace " + deskNum(w.desktops[0]));
             }
             if (placing[key] || dragging) return;   // ours, or settled when the drag ends
+            // Moved to a virtual desktop past 10 (the Overview): not a workspace (decision 9), so it
+            // leaves the tree, as one on two desktops does (R13).
+            if (deskNum(w.desktops[0]) > NAMES.length) { dropWindow(w); return; }
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
             // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
@@ -3210,7 +3231,16 @@ var KI3 = (function () {
             names.some(function (n) { return !(n in lastShown); })) return;
         var num = e.current, output = null;
         workspace.screens.forEach(function (s) { if (s.name === e.output) output = s; });
-        if (!output || num < 1 || num > NAMES.length || !deskOf(num)) return;
+        if (!output || num < 1 || !deskOf(num)) return;
+        // A virtual desktop past 10 shown from outside (the Overview): not kwin-i3's (decision 9),
+        // so the output goes back to what it showed.
+        if (num > NAMES.length) {
+            if (e.previous >= 1 && e.previous <= NAMES.length && deskOf(e.previous)) {
+                showOn(deskOf(e.previous), output);
+                log("SHOWN " + num + " on " + output.name + " outside kwin-i3: past 10, not a workspace; " + e.previous + " again");
+            }
+            return;
+        }
         if (workspace.currentDesktopForScreen(output) !== deskOf(num)) return;    // switched again since
         var m = model.workspaces[num];
         var occupied = !!(m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(num));

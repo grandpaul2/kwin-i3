@@ -29,11 +29,15 @@ test("i3Kind: a panel is a dock, the desktop window is root", () => {
     assert.strictEqual(R.i3Kind(win({ desktopWindow: true, resourceClass: "plasmashell" })), "root");
 });
 
-test("i3Kind: popups, menus, tooltips, notifications, OSDs are override-redirect, by type", () => {
+test("i3Kind: popups, menus, tooltips, OSDs and Plasma's notifications are override-redirect, by type", () => {
     const { R } = rules();
-    for (const t of ["popupWindow", "menu", "dropdownMenu", "popupMenu", "tooltip", "notification",
-                     "criticalNotification", "onScreenDisplay", "comboBox", "dndIcon", "appletPopup"])
+    for (const t of ["popupWindow", "menu", "dropdownMenu", "popupMenu", "tooltip",
+                     "onScreenDisplay", "comboBox", "dndIcon", "appletPopup"])
         assert.strictEqual(R.i3Kind(win({ [t]: true })), "override-redirect", t);
+    for (const t of ["notification", "criticalNotification"]) {
+        assert.strictEqual(R.i3Kind(win({ [t]: true, resourceClass: "org.kde.plasmashell" })), "override-redirect", t + " of Plasma's");
+        assert.strictEqual(R.i3Kind(win({ [t]: true, resourceClass: "steam" })), null, t + " of another app: in the tree, as i3's manage.c:466");
+    }
     assert.strictEqual(R.i3Kind(win({ appletPopup: true, resourceClass: "plasmashell" })), "override-redirect", "a panel popup");
 });
 

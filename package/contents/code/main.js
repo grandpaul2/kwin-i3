@@ -1350,13 +1350,18 @@ var Rules = (function () {
     var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
                             "kwin_wayland", "ksmserver-logout-greeter"];
     var SPECTACLE = ["spectacle", "org.kde.spectacle"];
+    var PLASMASHELL = /^(org\.kde\.)?plasmashell$/;
     function i3Kind(w) {
         if (w.dock) return "dock";
         if (w.desktopWindow) return "root";
         // kwini3helper's strips over the gaps are kwin-i3's own, as i3's frames: no client.
         if (String(w.caption) === "kwin-i3 gap") return "override-redirect";
-        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip || w.notification ||
-            w.criticalNotification || w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip ||
+            w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        // Plasma's notifications are Plasma's (philosophy.md), by class as the default rule names
+        // plasmashell; another app's notification-type window (an X11 toast) floats, as i3's
+        // manage.c:466. KWin shows a script no X11-only property to tell them apart by.
+        if ((w.notification || w.criticalNotification) && PLASMASHELL.test(String(w.resourceClass))) return "override-redirect";
         if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";
         if (w.fullScreen && (has(SPECTACLE, w.resourceClass) || has(SPECTACLE, w.resourceName))) return "override-redirect";
         return null;
@@ -1386,7 +1391,7 @@ var Rules = (function () {
     // types too: R2), a transient, a modal, a fixed size; and tools/capture's note (R8).
     function floatsByDefault(w) {
         if (w.transient || w.modal || fixedSize(w)) return true;
-        if (w.dialog || w.utility || w.toolbar || w.splash) return true;
+        if (w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification) return true;
         return String(w.caption) === "kwin-i3 capture note";
     }
 
@@ -1578,25 +1583,29 @@ var Rules = (function () {
         if (w.deleted) return "override-redirect";
         var kept = i3Kind(w);
         if (kept) return kept;
-        if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash)) return "override-redirect";
+        if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification)) return "override-redirect";
         return null;
     }
     // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
-    // make it sticky"; redo stage 9): in the tree, floating, before any rule.
+    // make it sticky"; redo stage 9): in the tree, floating. The rules run after, as i3's
+    // for_window does (run_assignments, manage.c:588): `floating disable` tiles it, which here
+    // takes it off all desktops (KWin's tiles belong to one desktop, §3 X4; kwin.js adopts it so);
+    // `floating enable` leaves it sticky. ctx.current "sticky" for one in the tree already.
     function classify(w, ctx) {
         ctx = ctx || {};
         var kept = keptOut(w);
         if (kept) return kept;
         // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
         // kwin.js relocate): a caption change then floated a tiled window for good (review 2026-10-28).
-        if (w.onAllDesktops && !ctx.crossing) return "sticky";
-        var kind = ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
+        var sticky = w.onAllDesktops && !ctx.crossing;
+        var kind = sticky ? (ctx.current === "tiling" ? "tiling" : "sticky")
+                          : ctx.current === "sticky" ? "floating" : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
             if (ran[i]) continue;
-            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind })) continue;
+            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind })) continue;
             ran[i] = true;
-            kind = rules[i].floating ? "floating" : "tiling";
+            kind = rules[i].floating ? (sticky ? "sticky" : "floating") : "tiling";
         }
         return kind;
     }
@@ -2065,7 +2074,9 @@ var KI3 = (function () {
         if (w.onAllDesktops && w.output) return wsModel(shownOn(w.output));
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
-        if (num < 1) return null;
+        // A virtual desktop past 10 (Plasma's Overview can add one) is not kwin-i3's (plan.md
+        // decision 9): a window there is in no workspace.
+        if (num < 1 || num > NAMES.length) return null;
         if (!Workspaces.hasHome(num)) Workspaces.claimHome(num, w.output);
         return wsModel(num);
     }
@@ -3146,6 +3157,12 @@ var KI3 = (function () {
         }
         if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
                                      Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
+        // On, or asking for, a virtual desktop past 10: not kwin-i3's (decision 9), so the focused
+        // workspace, as any new window (C1).
+        if (t.ws > NAMES.length) {
+            if (!fws) return null;
+            t = { ws: fws.num, why: "focused" };
+        }
         var e = Placement.claim(pendingShown, w.output.name, desk);
         if (e && t.why !== "asked" && e.previous >= 1 && deskOf(e.previous)) {
             showOn(deskOf(e.previous), w.output);
@@ -3220,6 +3237,15 @@ var KI3 = (function () {
         if (!ws) { connectWindow(w); return; }
         if (!ruleRan[key]) ruleRan[key] = {};
         var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] });
+        // A window on all desktops that a rule tiles (`floating disable`, as i3's for_window over
+        // its sticky float): off all desktops onto its workspace first, KWin's tiles being one
+        // desktop's (§3 R3, X4).
+        if (kind === "tiling" && w.onAllDesktops && !crossing[key] && deskOf(ws.num)) {
+            placing[key] = true;
+            relocating++;
+            try { w.desktops = [deskOf(ws.num)]; } finally { delete placing[key]; relocating--; }
+            log("STICKY " + shortCaption(w) + " tiled by a rule: on workspace " + ws.num);
+        }
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
@@ -3355,9 +3381,10 @@ var KI3 = (function () {
         if (Rules.keptOut(w)) { dropWindow(w); return; }
         var floating = con.type === "floating";
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
         var wantFloating = kind !== "tiling";      // "sticky" floats too (redo stage 9)
         if (wantFloating === floating) return;
+        if (!wantFloating && con.sticky) unstick(w, con);     // a rule tiles it: off all desktops first (X4)
         model.toggleFloating(con);
         setFloatingLook(w, wantFloating);
         if (wantFloating) { untile(w); floatAtRecord(w); clampFloating(w); }
@@ -3437,6 +3464,9 @@ var KI3 = (function () {
                 log("STICKY " + shortCaption(w) + " off: on workspace " + deskNum(w.desktops[0]));
             }
             if (placing[key] || dragging) return;   // ours, or settled when the drag ends
+            // Moved to a virtual desktop past 10 (the Overview): not a workspace (decision 9), so it
+            // leaves the tree, as one on two desktops does (R13).
+            if (deskNum(w.desktops[0]) > NAMES.length) { dropWindow(w); return; }
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
             // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
@@ -5148,7 +5178,16 @@ var KI3 = (function () {
             names.some(function (n) { return !(n in lastShown); })) return;
         var num = e.current, output = null;
         workspace.screens.forEach(function (s) { if (s.name === e.output) output = s; });
-        if (!output || num < 1 || num > NAMES.length || !deskOf(num)) return;
+        if (!output || num < 1 || !deskOf(num)) return;
+        // A virtual desktop past 10 shown from outside (the Overview): not kwin-i3's (decision 9),
+        // so the output goes back to what it showed.
+        if (num > NAMES.length) {
+            if (e.previous >= 1 && e.previous <= NAMES.length && deskOf(e.previous)) {
+                showOn(deskOf(e.previous), output);
+                log("SHOWN " + num + " on " + output.name + " outside kwin-i3: past 10, not a workspace; " + e.previous + " again");
+            }
+            return;
+        }
         if (workspace.currentDesktopForScreen(output) !== deskOf(num)) return;    // switched again since
         var m = model.workspaces[num];
         var occupied = !!(m && (m.nodes.length || m.floating.length) && Workspaces.hasHome(num));
