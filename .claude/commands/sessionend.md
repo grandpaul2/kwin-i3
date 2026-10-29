@@ -15,7 +15,7 @@ what changed.
 ## 2. OPEN.md
 
 Rewrite `OPEN.md` to the state now: done items come out, new ones go in with a next action. Every
-finding from this session (a fuzz failure, a capture, a review comment) leaves **fixed**,
+finding from this session (a red test, a capture, a review comment) leaves **fixed**,
 **won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
 Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
 A change that went live this session is **done** unless Paul reported a problem with it: never
@@ -32,18 +32,11 @@ leave it waiting for his "it works" (Paul, 2026-10-28).
 - Captures handled this session (a test exists for each) are deleted from
   `~/.local/state/kwin-i3/captures/`. Ones not reached stay, and get a line in `OPEN.md`.
 
-## 4. Tests
-
-Report in a line which tests ran since the last change (CLAUDE.md, "Testing"). Start none, and
-write none into `OPEN.md` as owed: tests are tools, not debts (Paul, 2026-10-29, "they dont run
-the show"). A change that never had its P1 scenarios run is noted with the change itself, as
-unverified work, not as a test to run.
-
-## 5. The live desktop
+## 4. The live desktop
 
 If `package/` differs from what KWin last loaded, say so. Reload only on Paul's go.
 
-## 6. Commit and push
+## 5. Commit and push
 
 - This repo: commit what's left in related groups, with the *why*, and push.
 - `~/.dotfiles`, if this session touched it (launchers, setup.sh, health-check, README, `hotkeys`):
@@ -64,7 +57,7 @@ If `package/` differs from what KWin last loaded, say so. Reload only on Paul's 
   If the dotfiles repo is behind `origin`, the push is refused: don't pull. Say so (its CLAUDE.md:
   find out what landed there first).
 
-## 7. Report
+## 6. Report
 
 A few lines: what changed (with commit hashes), whether the desktop runs what is committed, what's in
 `OPEN.md`, and anything waiting on Paul. Then confirm both repos are clean and pushed.
