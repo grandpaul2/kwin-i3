@@ -11,8 +11,7 @@ client --title a
 client --title ruler --app-id org.kde.kruler
 client --title b
 check "KRuler floats (a default rule)"      wait_tree 1 "H[a b*] ~ruler"
-tb=$(titlebar ruler)
-check "and keeps its own size"              geom_is ruler "440,$(( (720 - 300 - tb) / 2 )) 400x$((300 + tb))"
+check "and keeps its own size"              geom_is ruler "440,196 400x328"
 kclose ruler
 # a managed window made sticky (on all desktops) floats, in the tree (§3 R3, X4, redo stage 9);
 # back on one desktop it stays floating there; Floating Toggle tiles it again

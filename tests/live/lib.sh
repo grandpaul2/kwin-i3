@@ -117,12 +117,6 @@ wait_tree() {
 geom() {
     kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(Math.round(g.x) + \",\" + Math.round(g.y) + \" \" + Math.round(g.width) + \"x\" + Math.round(g.height)); } });"
 }
-# The title bar's height on a decorated window: Breeze's grows with the system's font (28 px on
-# Fedora 44, 36 on the Arch laptop, the same Breeze 6.7.5, 2026-10-29), so a check that counts it
-# measures it.
-titlebar() {
-    kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(Math.round(w.frameGeometry.height - w.clientGeometry.height)); });"
-}
 _geom_is() { [[ "$(geom "$1")" == "$2" ]]; }
 wait_geom() {
     poll _geom_is "$1" "$2" && return 0

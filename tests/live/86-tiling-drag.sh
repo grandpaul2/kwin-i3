@@ -43,9 +43,8 @@ m=$(mark)
 check "a title-bar click: a focused, nothing moved" poll eval '[[ "$(active)" == a && "$(fc a)" == "0,0 427x720" ]]'
 check "  no drag"                           eval '! after $m | grep -q "^.\{9\}DRAG"'
 
-# A button still clicks: the decoration takes its press first (minimize, 62 px from a's right
-# with a 28 px title bar; Breeze's buttons grow with it).
-"$INJECT" "abs $((427 - 62 * $(titlebar a) / 28)) 14" "wait 30" "btn left down" "wait 30" "btn left up"
+# A button still clicks: the decoration takes its press first (minimize, 62 px from a's right).
+"$INJECT" "abs 365 14" "wait 30" "btn left down" "wait 30" "btn left up"
 check "a's minimize button"                 poll eval '[[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"a\") log(w.minimized); })")" == true ]]'
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "a") { w.minimized = false; workspace.activeWindow = w; } });'
 poll eval '[[ "$(fc a)" == "0,0 427x720" && "$(active)" == a ]]'

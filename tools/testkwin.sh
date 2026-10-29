@@ -40,6 +40,11 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     tmp=$(mktemp -d /tmp/kwin-i3-test.XXXXXX)
     trap 'rm -rf "$tmp"' EXIT
     export KI3_TMP=$tmp KI3_INNER=1
+    # A Plasma session's own variables, whoever starts the test: without them Qt loads no KDE
+    # platform theme, and KWin and the apps get Qt's fonts and style (over ssh on the Arch laptop,
+    # 2026-10-29: Breeze's title bar 36 px, not 28, and the settings page's spin boxes took no
+    # typing). The desktop's tests had them only by inheriting Paul's session.
+    export XDG_CURRENT_DESKTOP=KDE KDE_FULL_SESSION=true KDE_SESSION_VERSION=6
     export XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data XDG_STATE_HOME=$tmp/state XDG_CACHE_HOME=$tmp/cache
     export WAYLAND_DISPLAY=ki3test-${tmp##*.}
     unset DISPLAY XAUTHORITY
