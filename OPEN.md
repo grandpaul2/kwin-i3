@@ -5,11 +5,10 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-29, eighteenth session** (item 50: 53-hold's and the suite's laptop
-reds fixed, kwin-i3 installed on the laptop by the README and set to `plan.md` (e)'s list; live on
-both machines: the hold's new-window and close fixes, Show Desktop and activity hit tests, the
-effect after Slide; notifications found never to arrive, deferred as 56). Both machines run what
-main holds: script and plugins installed and reloaded at the session's end.
+Last reconciled: **2026-10-29, nineteenth session** (item 57 closed: every panel setting probed
+with plasmashell in the test KWin is followed; Plasma's one lag, a floating panel switched to
+auto-hide, kept as a note in `behaviour.md` Y1 and a README line, Paul's call). Both machines run
+what main holds (the session changed docs only).
 
 ## Stage (Paul, 2026-10-24, late)
 
