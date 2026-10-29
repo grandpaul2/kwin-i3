@@ -53,5 +53,21 @@ kwin-i3's keys, the wallpaper flash on Intel/AMD, and the workspace widget on th
 the same day. On the laptop, those four again at its own scale (1.5 is the likely one, and
 fractional rounding is where a 1 px frame could break) with `KI3_OUTPUTS=1`. Worked over ssh from here (one repo, one
 `OPEN.md`); the laptop's live session under the same "nothing goes live without Paul's go".
-Next: Paul at the laptop for the first session: ssh access from the desktop, and the ALA snapshot
-date.
+**Done 2026-10-29**: the laptop (`pauls-laptop`, Tailscale; HP, AMD Radeon Vega, 2 cores, 17 GB)
+on Plasma 6.7.5 Wayland from the 2026-10-14 snapshot (pinned; later pacman runs need
+`--disable-download-timeout`), SDDM offering Plasma and i3; the clone, `make plugin`, `make kcm`
+and the suite there, in four runs under 5 minutes (`run.sh` on two cores: ~11 minutes in all).
+Fixed from it: the plugins' and settings page's ECM version (Qt 5's cmake files made ECM pick
+Qt 5); KWin's unnamed `""` layout counted as US (a false notice where the system sets none);
+Arch's AT-SPI paths; the test KWin given a Plasma session's variables (over ssh Qt loaded no
+KDE platform theme: other fonts and style, a 36 px title bar, spin boxes that took no typing).
+Release-road snags so far, for the README: the repo is private; its package names are Fedora's
+(`kwin` holds the headers on Arch, `libei`, `python-dbus`, `nodejs`); missing from its list:
+`vulkan-headers` (KWin's cmake config) and `python-xlib` (the tests); a failed configure leaves
+`plugin/build` caching Qt 5 (delete it); `run.sh` alone doesn't build `tools/bin/ei-send`.
+Next: on the laptop, three scenarios red on pixel colours, all green on the desktop: 78-rounded-
+corners (7: a light grey, 216, where a window's colour should be), 59-xwayland-frame (1: the
+arc's antialiased pixel 68,33,33 against 51,51,51 ±16), 53-hold (2, red alone too: colours
+read mid-change, 224 and 188 for 255); likely the AMD driver's rendering or timing, cause not
+yet known. Then the rest of the suite once more, the HiDPI four, and stage (a)'s live install
+with Paul at the laptop (the by-hand list above).
