@@ -160,6 +160,18 @@ function formatRules(rows) {
 // The criteria the page escapes for a picked or typed name, matched whole.
 function escapeRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 function wholeClass(cls) { return "^" + escapeRe(cls) + "$"; }
+// A whole-name pattern (^…$, its specials escaped) as the plain name the page shows; else null.
+function plainName(pattern) {
+    const m = /^\^((?:[^.*+?^${}()|[\]\\]|\\[.*+?^${}()|[\]\\])*)\$$/.exec(String(pattern || ""));
+    return m ? m[1].replace(/\\(.)/g, "$1") : null;
+}
+// What the application field stores for what was typed (docs/spec-settings-words.md, step 5): a
+// plain name matched whole, or, with any of * + ? ^ $ { } ( ) | [ ] \ in it, i3's regular
+// expression as typed.
+function classFromField(text) {
+    const t = String(text || "").trim();
+    return t === "" ? "" : /[*+?^${}()|[\]\\]/.test(t) ? t : wholeClass(t);
+}
 
 // A workspace whose new windows float (the Workspaces sub-page): the rule
 // [workspace="^N$"] floating enable in forWindow, as src/rules.js reads the old floatingWorkspaces.

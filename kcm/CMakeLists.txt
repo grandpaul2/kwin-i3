@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml DBus)
-find_package(KF6 REQUIRED COMPONENTS CoreAddons Config KCMUtils I18n)
+find_package(KF6 REQUIRED COMPONENTS CoreAddons Config KCMUtils I18n Service)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)    # the layout's keys, keys.cpp
 
@@ -38,4 +38,4 @@ file(CONFIGURE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kwini3settings.kcfgc @ONLY CON
 
 kcmutils_add_qml_kcm(kcm_kwin_i3 SOURCES kcm.cpp keys.cpp)
 kconfig_add_kcfg_files(kcm_kwin_i3 ${CMAKE_CURRENT_BINARY_DIR}/kwini3settings.kcfgc GENERATE_MOC)
-target_link_libraries(kcm_kwin_i3 PRIVATE Qt6::DBus Qt6::Gui Qt6::Qml KF6::KCMUtilsQuick KF6::ConfigCore KF6::ConfigGui KF6::I18n KF6::CoreAddons PkgConfig::XKBCOMMON)
+target_link_libraries(kcm_kwin_i3 PRIVATE Qt6::DBus Qt6::Gui Qt6::Qml KF6::KCMUtilsQuick KF6::ConfigCore KF6::ConfigGui KF6::I18n KF6::CoreAddons KF6::Service PkgConfig::XKBCOMMON)

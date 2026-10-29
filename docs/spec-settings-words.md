@@ -2,7 +2,7 @@
 
 **Status: steps 1-4 decided (Paul, 2026-10-28) and built on branch `words`** (main page, the four
 sub-pages, the key commands with a `note` role for the resize mode's keys, and the cog's labels);
-the help buttons wait for `OPEN.md` item 47 (a); step 5, the Window Rules layout, is next
+the help buttons wait for `OPEN.md` item 47 (a); step 5 (§7) built on branch `rules-layout`
 
 The steps: (1) inventory every string a user reads; (2) a glossary of the core words, each decided
 once; (3) tone rules, replacing `docs/style-settings-page.md` §2's "super descriptive and explicit"
@@ -181,3 +181,19 @@ Numbered on from §5. Today's text in the inventory; only what changes is listed
 | 45 | not saved until it has a pattern | not saved: needs a pattern |
 | 46 | No rules: every window tiles unless it is a dialog, a utility window, a splash screen or of a fixed size. | No rules. Dialogs and fixed-size windows float; the rest tile. |
 | 47 | all outputs together / 75 × 50 px (i3's) / no limit / a size | All screens together / 75 × 50 px / No limit / Custom |
+
+## 7. Step 5: the Window Rules layout (Paul, 2026-10-28: layout 1, "we don't need the icons")
+
+- **One line per rule**: the application, its launcher name in grey ("Spectacle", from its
+  desktop file: `kcm.appName`, KService), "→", what the rule does and its value, the More toggle
+  and Remove. Title, role and type on a second line, shown when one is set or More is open. Fits
+  the style guide's 34-unit column, and half a 1280 px screen.
+- **The application field**: a whole-name pattern (`^…$`, its specials escaped) shows as the plain
+  name; any other pattern shows as typed, in monospace. Typing a plain name stores it whole (as
+  Pick a Window does); typing any of `* + ? ^ $ { } ( ) | [ ] \` stores i3's regular expression
+  as typed. Title and role stay patterns as typed. kwinrc and the cog keep i3's syntax.
+- **The defaults a group of their own, above yours**, not below as first drafted: rules run top
+  to bottom and the last float or tile wins, so a group shown below would misstate the order.
+  The group shows only when the defaults run first (as shipped); otherwise each is marked
+  "default" in place, as before.
+- **"For float or tile, the last matching rule wins."** in small grey text under the list.

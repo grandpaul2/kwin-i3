@@ -68,8 +68,8 @@ read -r px py pw ph <<<"$(geom pickme | tr ',x' '  ')"
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "kwin-i3") workspace.activeWindow = w; });' >/dev/null; sleep 0.3
 open_named kwin-i3 "Configure Window Rules…"
 shot window-rules
-check "the rules are there to edit, one row each" eval 'named "Window Rules" "Rule 1: application pattern" && named "Window Rules" "Add a rule"'
-check "  the shipped rules marked default"  eval '$A11Y dump kcmshell6 | grep -q "default"'
+check "the rules are there to edit, one row each" eval 'named "Window Rules" "Rule 1: application" && named "Window Rules" "Add a rule"'
+check "  the shipped rules a group of their own" eval '$A11Y dump kcmshell6 | grep -q "Your rules"'
 # KWin starts its window selection when the D-Bus call arrives; a click before that only focuses
 # the window, and nothing says when it has started.
 click_named "Window Rules" "Pick a window: add a rule for its application"; sleep 1

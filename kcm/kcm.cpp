@@ -6,9 +6,11 @@
 #include "keys.h"
 #include "kwini3settings.h"
 
+#include <KApplicationTrader>
 #include <KConfigGroup>
 #include <KPluginFactory>
 #include <KQuickManagedConfigModule>
+#include <KService>
 #include <KSharedConfig>
 
 #include <QDBusConnection>
@@ -86,6 +88,26 @@ public:
     {
         const KConfigSkeletonItem *item = m_settings->findItem(key);
         return item ? item->getDefault() : QVariant();
+    }
+
+    // An application's name as its launcher shows it ("Spectacle"), for a rule matching a window
+    // class whole: the desktop file of that name (a Wayland app id), else the one whose
+    // StartupWMClass it is (an X11 class). Empty when none is installed.
+    Q_INVOKABLE QString appName(const QString &cls) const
+    {
+        if (cls.isEmpty())
+            return {};
+        KService::Ptr s = KService::serviceByDesktopName(cls);
+        if (!s)
+            s = KService::serviceByDesktopName(cls.toLower());
+        if (!s) {
+            const auto found = KApplicationTrader::query([&cls](const KService::Ptr &p) {
+                return p->property<QString>(QStringLiteral("StartupWMClass")).compare(cls, Qt::CaseInsensitive) == 0;
+            });
+            if (!found.isEmpty())
+                s = found.first();
+        }
+        return s ? s->name() : QString();
     }
 
     // Pick a Window (the Window Rules sub-page): KWin's interactive selection, as Window Rules'
