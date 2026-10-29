@@ -5,8 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, twelfth session** (item 48 fixed and live; item 47's float to tile
-live and its seven stages done; main's `package/` and plugins are what KWin runs).
+Last reconciled: **2026-10-28, thirteenth session** (item 49, the settings page's words and the
+Window Rules layout, live; main's `package/` and plugins are what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -72,6 +72,7 @@ session, a diagnosis for Paul (no fix without his go); the captures stay until t
 
 **49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
 "friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: steps 1-5
-(inventory, glossary, tone rules, every page's new words, the Window Rules layout) decided and live
-(a211562, b0f222d; `make kcm-install`). Left: the help buttons naming i3's directives, with item
-47 (a), when Paul wants them.
+(inventory, glossary, tone rules, every page's new words, the Window Rules layout with an
+application chooser) done and live (a211562, b0f222d, 9792a13, 9648229; `make kcm-install`).
+Left: the help buttons naming i3's directives, with item 47 (a). Next: with 47 (a), when Paul
+wants it.
