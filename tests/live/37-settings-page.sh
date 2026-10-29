@@ -119,14 +119,17 @@ check "the page says so"                    test "$(count_near keys-failed 0 76 
 
 # 3. Back on the main page: a gap typed, and from the floating step Tab reaches the focus choice,
 #    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
-#    with no plugin loaded.
+#    with no plugin loaded. Each control's help button is the next Tab stop after it, as on
+#    Plasma's own pages.
 click_named - "Navigate Back"; sleep 0.5
 shot main
 click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
-check "Tab from the resize step reaches the floating step" test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
+check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell6)" == "More about the resize step"
 press Tab
-# A combo box is named by its current choice (its label comes through labelled-by).
+check "then the floating step"              test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
+press Tab; press Tab
+# A combo box is named by its current choice.
 check "then the focus choice" test "$($A11Y focused kcmshell6)" == "Next screen, then wrap"
 press Down
 shot main-set

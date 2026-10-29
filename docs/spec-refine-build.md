@@ -1,6 +1,6 @@
 # Spec: building the refinement pass (OPEN.md item 47)
 
-**Now (2026-10-28):** Done: all seven stages live, and Paul's "it works" on stages 1-7 (twelfth session). Only stage 3's directive help beside each control is left, held (`OPEN.md` item 47 (a)). Written from Phase 3's read of the code against the rewritten foundations (46 findings, none high).
+**Now (2026-10-28):** Done: all seven stages live, and Paul's "it works" on stages 1-7 (twelfth session). Stage 3's directive help beside each control, held for a design, built 2026-10-29: the control names itself, the row's label points at it (`buddyFor`), the help is a Tab stop. Written from Phase 3's read of the code against the rewritten foundations (46 findings, none high).
 
 Every change here brings the code to what `docs/definitions.md`, `docs/philosophy.md` and
 `docs/plan.md` already say, or to i3's source where they point there. Each one's row in

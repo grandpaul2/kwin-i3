@@ -2,7 +2,7 @@
 
 **Status: steps 1-4 decided (Paul, 2026-10-28) and built on branch `words`** (main page, the four
 sub-pages, the key commands with a `note` role for the resize mode's keys, and the cog's labels);
-the help buttons wait for `OPEN.md` item 47 (a); step 5 (§7) live
+step 5 (§7) live; the help buttons live 2026-10-29 (`kcm/ui/main.qml` `Help`)
 
 The steps: (1) inventory every string a user reads; (2) a glossary of the core words, each decided
 once; (3) tone rules, replacing `docs/style-settings-page.md` §2's "super descriptive and explicit"

@@ -26,25 +26,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 Work for now.
 
-**47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
-foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
-lightened: `philosophy.md`, "How a decision is made"; i3 means 4.24, `plan.md`); the code read
-against them (46 findings) and brought into line by `docs/spec-refine-build.md`'s seven stages,
-**all live 2026-10-28** (outputs in i3's order and directions, the effect following the tree, the
-words and settings, kinds, the tree, a close mid-drag, the letter keys by position, floating
-windows behind fullscreen); no "Being fixed" left in `behaviour.md`. Left: (a) stage 3's i3-directive
-help beside each control, **held**: wrapping a form control moves its label off it and 37's keyboard
-path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) Float to tile: done
-2026-10-28, twelfth session (b2fa04d, §9 G13; Paul: "works well"). (c) Stages 1-7: done (Paul,
-2026-10-28, twelfth session). Next: (a) when Paul wants it.
-
-**49. The settings page's words** (Paul, 2026-10-28, thirteenth session, from `LATER.md` item 22:
-"friendly, cohesive and still descriptive"; less wordy). `docs/spec-settings-words.md`: steps 1-5
-(inventory, glossary, tone rules, every page's new words, the Window Rules layout with an
-application chooser) done and live (a211562, b0f222d, 9792a13, 9648229; `make kcm-install`).
-Left: the help buttons naming i3's directives, with item 47 (a). Next: with 47 (a), when Paul
-wants it.
-
 **50. Paul's Arch laptop as the second machine, then the 6.8 test bed** (Paul, 2026-10-28,
 fourteenth session). No release before Plasma 6.8 (out 2026-10-14, Wayland only) has been lived
 through: Fedora 44 gets it only after Fedora 45's release; Arch already has it (6.8.0 in Extra

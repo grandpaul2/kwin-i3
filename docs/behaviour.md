@@ -919,7 +919,10 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   Workspaces sub-page), Frame (`tiledLook`, width; the two colour classes (§7 L3), a row each with the
   frame's colour and the next-window side's, the latter "same as the frame" when empty;
   `hideEdgeBorders`; corners; frame on floating windows; greyed without the effect), Window
-  Rules, Keys (the sub-page, and `warnTakenKeys`).
+  Rules, Keys (the sub-page, and `warnTakenKeys`). **A help button** beside each setting with an
+  i3 counterpart (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
+  focus_wrapping"); the sub-pages' help names theirs. Each is the next Tab stop after its
+  control, as on Plasma's pages (2026-10-29, `OPEN.md` items 47 (a) and 49 in git history).
 - **Workspaces sub-page**: for each of the ten, its monitors in order (the first, and a second
   used when the first isn't connected; any, a connected one, or a stored one listed as not
   connected; a longer list in kwinrc keeps its tail) and new windows tiling or floating (the
