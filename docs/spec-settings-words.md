@@ -184,8 +184,9 @@ Numbered on from §5. Today's text in the inventory; only what changes is listed
 
 ## 7. Step 5: the Window Rules layout (Paul, 2026-10-28: layout 1, "we don't need the icons")
 
-- **One line per rule**: the application, its launcher name in grey ("Spectacle", from its
-  desktop file: `kcm.appName`, KService), "→", what the rule does and its value, the More toggle
+- **One line per rule**: the application (its launcher name, "Spectacle", from its desktop file
+  through `kcm.appName` and KService, as the field's tooltip: in grey on the line it felt
+  shoehorned, Paul), "→", what the rule does and its value, the More toggle
   and Remove. Title, role and type on a second line, shown when one is set or More is open. Fits
   the style guide's 34-unit column, and half a 1280 px screen.
 - **The application field**: a whole-name pattern (`^…$`, its specials escaped) shows as the plain

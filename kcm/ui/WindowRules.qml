@@ -267,16 +267,11 @@ KCM.SimpleKCM {
                             placeholderText: i18nc("@info:placeholder an application field left empty", "any application")
                             onEditingFinished: if (!ruleRow.isRaw && text !== shown) page.set(ruleRow.index, "cls", Logic.classFromField(text))
                             Accessible.name: i18nc("@label:textbox", "Rule %1: application", ruleRow.index + 1)
+                            // The launcher's name ("Spectacle"): a tooltip, not on the line (Paul, 2026-10-28).
                             Accessible.description: ruleRow.appName
+                            QQC2.ToolTip.text: ruleRow.appName
+                            QQC2.ToolTip.visible: hovered && ruleRow.appName !== ""
                             KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
-                        }
-                        QQC2.Label {
-                            visible: !ruleRow.isRaw && ruleRow.appName !== ""
-                            text: ruleRow.appName
-                            color: Kirigami.Theme.disabledTextColor
-                            elide: Text.ElideRight
-                            Layout.maximumWidth: Kirigami.Units.gridUnit * 6
-                            Accessible.ignored: true             // the field's description
                         }
                         QQC2.Label { visible: !ruleRow.isRaw; text: "→"; Accessible.ignored: true }
                         QQC2.ComboBox {
