@@ -61,6 +61,14 @@ no threshold and no activation (as G1: i3 starts a drag before it focuses anythi
   being one of them). The helper can't count targets when the press comes, so a press with none
   does nothing (Meta alone still moves the window). Rare: every shown workspace would have to
   hold only floating windows.
+- **One toggle per press of the keys** (Paul, 2026-10-28): after a Meta+Shift drag ends, either
+  way (G5's float or this drop), a further Meta+Shift+left press **does nothing** (swallowed)
+  until Meta or Shift is released; releasing either one is enough. Holding the keys, a window
+  just floated can't be tiled back by pressing it again, nor the reverse. i3 has nothing to copy
+  (`route_click` reads each press's modifiers afresh, and no modifier-drag there changes a
+  window's floating state), so this is part of the same +, reason (c). The helper keeps the
+  latch and clears it on `InputRedirection::keyboardModifiersChanged` (KWin 6.7.5 `input.h:273`),
+  so a release is seen with the pointer still. Plain Meta drags are untouched.
 
 **B. During the drag.** As G6-G9, unchanged: the indicator (drawn over everything, so it shows
 over the floating window), the move cursor, the pointer reaching no window, any button's release
@@ -100,7 +108,8 @@ G13, and the hotkeys cheat sheet's Meta+Shift+drag line (dotfiles, `localbin/.lo
 The scenario that drives the tiling drag (`tests/live/51-input.sh`) gets the new case, which
 needs **Paul's go** (`testing.md` rule 5): a floating window Meta+Shift-dragged onto a tiled
 window's right edge, then the centre of another, then a key's cancel, with the tree checked
-after each. And `64-plugin-reload.sh` for the plugin change (P1, step 3). No new scenario.
+after each; and the repress rule: a second Meta+Shift drag with the keys still held changes
+nothing, one after Shift is released and pressed again does. And `64-plugin-reload.sh` for the plugin change (P1, step 3). No new scenario.
 
 ## Not in this
 
