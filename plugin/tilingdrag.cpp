@@ -488,7 +488,7 @@ Window *TilingDrag::gapWindow(const QPointF &pos) const
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         Window *w = *it;
-        if (!w->isClient() || w->isDeleted() || w->isMinimized() || w->isHidden() || !w->isOnCurrentDesktop() || w->isFullScreen()
+        if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || w->isFullScreen()
             || w->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
             continue;
         }

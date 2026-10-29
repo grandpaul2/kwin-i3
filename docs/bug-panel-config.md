@@ -26,7 +26,7 @@ case 2 is Plasma's order ten times and passes either way, the pass winning the r
 KWin). Learned on the way: KWin's D-Bus `showDesktop(bool)` lasts only while the caller stays on
 the bus (`dbusinterface.cpp` watches the service), so the test toggles the Show Desktop shortcut.
 
-**Left over, won't-fix (Paul, 2026-10-25; was OPEN.md item 16):** in the test KWin, Show Desktop turned on within the first second after a
+**Left over, reopened 2026-10-29 as OPEN.md item 53 (won't-fix 2026-10-25, was item 16):** with the plugins, 74's case 1 falls in it. in the test KWin, Show Desktop turned on within the first second after a
 kwin-i3 load, with no frame effect, is turned off again by an activation of the tile that is not
 the pass (traced: the pass asked and stopped; the activation came with no JavaScript caller
 visible, in the same millisecond as the frame check's 1 s miss timer, before that timer's

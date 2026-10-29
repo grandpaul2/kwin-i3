@@ -86,3 +86,12 @@ follows mouse (i3's default, `focus_follows_mouse yes`; the desktop's setting), 
 doesn't set. Next: once kwin-i3 is loaded on the laptop, the same popup under click to focus, then
 under focus follows mouse with and without the helper; then whether the spec's cause, the README's
 helper row and `behaviour.md` §9 describe it right, and a proposal for Paul.
+
+**53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
+`docs/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
+kwin-i3 load, KWin activates the tile Show Desktop hides, which ends Show Desktop; no kwin-i3 pass
+or JavaScript caller is behind it (the 2026-10-25 trace), and the helper's pointer log shows
+nothing. With the plugins, 74's case 1 fell in it (red in both builds, green after a 3 s settle);
+74 now waits 3 s, labelled for this item. Next: trace where the activation comes from (KWin's
+source for activations with no script caller, then a test-KWin trace of `windowActivated` with
+its stack), then the cause, a fix, and 74's wait removed.

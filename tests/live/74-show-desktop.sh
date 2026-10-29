@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # needs: xwayland
+# needs: plugin
 # Paul, 2026-10-25: "Show Panel Configuration" in the panel's menu did nothing
 # (docs/bug-panel-config.md). Plasma turns Show Desktop on for its edit mode as the menu closes.
 # The menu closing is a window removed, so kwin-i3 ran a passive focus pass; the pass found the
@@ -35,6 +36,11 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 
 # 1. A popup has the focus (the panel's menu) and Show Desktop goes on; then the popup closes.
 #    Show Desktop stays on and the desktop keeps the focus.
+# The load's leftover (docs/bug-panel-config.md, OPEN.md item 53): within about a second of a
+# kwin-i3 load, an activation of unknown origin takes the tile Show Desktop hides, which ends Show
+# Desktop. With the plugins the FRAME line above comes at once, before it, so case 1 fell in it
+# (2026-10-29). This wait is for that leftover only; remove it when item 53 is solved.
+sleep 3
 stand_in pop popup 300x200+100+400; pop=$sid
 activate pop
 check "1. the popup is active"              poll active_is pop
@@ -69,6 +75,19 @@ kclose b; sleep 0.5
 check "3. b closed: Show Desktop is still on" showing_is true
 show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
+
+# 5. A click where a tile hidden by Show Desktop sits reaches the desktop beneath (Plasma's edit
+#    mode: Exit Edit Mode, Paul's capture 2026-10-29): the helper's frame and gap clicks skip a
+#    window Show Desktop hides (KWin's isShown; isHidden doesn't count it), as i3 routes a click
+#    to mapped windows only.
+show_desktop true
+m=$(mark)
+"$INJECT" "abs 640 300" "wait 30" "btn left down" "wait 30" "btn left up"
+sleep 0.5
+check "5. a click over the hidden tile: not taken as a resize" eval '! after "$m" | grep -q "RESIZE"'
+check "5. Show Desktop is still on"         showing_is true
+show_desktop false
+check "5. Show Desktop off: a has the focus" poll active_is a
 
 # 4. A click on the desktop with Show Desktop off (i3's root click, §5 B4, redo stage 2): the focus
 #    goes to that output's workspace at once; the desktop doesn't keep the keyboard.
