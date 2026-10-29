@@ -38,7 +38,18 @@ suspend, touchpad gestures, Intel/AMD graphics (is the wallpaper flash NVIDIA's?
 names for the plugin build (headers in `kwin`, no `kwin-devel`). (b) Once it runs well there, the
 mirrorlist back to current and `pacman -Syu` to 6.8: the laptop becomes the test bed for changes
 (a few missing system apps are fine; 6.8 brings Plasma Login Manager in place of SDDM). (c) Regroup:
-what was learned, and how to work with it on the desktop. Worked over ssh from here (one repo, one
+what was learned, and how to work with it on the desktop.
+**The cross-system check** (Paul, 2026-10-29: the same suite on a second machine, not a bigger
+one; i3 too runs one suite everywhere, `testcases/complete-run.pl` under Xephyr): `make plugin`
+and one `make test` on the laptop at the end of (a), and again after the 6.8 update in (b); a
+scenario red there and green on the desktop is a finding (Arch's build in (a), 6.8 in (b)).
+**By hand on the laptop**, what the headless KWin can't reach, each noted as works / snag: the
+lid closed and opened (with and without an external monitor), suspend and resume, docking and
+undocking (windows home again, as on a replug), the internal screen at its HiDPI scale (frame
+1 px, gaps, the margins' focus), touchpad scrolling and gestures (Overview, desktop switch) beside
+kwin-i3's keys, the wallpaper flash on Intel/AMD, and the workspace widget on the laptop's panel.
+Not yet decided: a test-KWin option for one output and a scale (the suite has only two 1280x720
+outputs at scale 1, `tools/testkwin.sh:178`), to run a few scenarios at the laptop's HiDPI. Worked over ssh from here (one repo, one
 `OPEN.md`); the laptop's live session under the same "nothing goes live without Paul's go".
 Next: Paul at the laptop for the first session: ssh access from the desktop, and the ALA snapshot
 date.
