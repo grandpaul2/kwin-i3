@@ -37,13 +37,13 @@ test("homesAfterLoss: every workspace goes to the first output, assignments not 
     assert.deepStrictEqual(O.homesAfterLoss("B", s), { 2: "A", 3: "A", 5: "A" }, "the focused empty 3 moves (i3 shows it there)");
 });
 
-test("movingTo: an output appearing takes the workspaces whose first connected assigned output it is (init_ws_for_output)", () => {
+test("movingTo: an output appearing takes the existing workspaces whose first connected assigned output it is (init_ws_for_output)", () => {
     const s = st();
     s.outputs = ["A", "B", "C"];
-    assert.deepStrictEqual(O.movingTo("C", s), [7], "5's list starts with B, which is here: it stays; 7 has no home yet");
+    assert.deepStrictEqual(O.movingTo("C", s), [], "5's list starts with B, which is here: it stays; 7 doesn't exist (no home): i3 loops existing workspaces only");
     s.outputs = ["A", "C"];
     s.homes = { 1: "A", 2: "A", 4: "A", 5: "A" };     // after B's loss
-    assert.deepStrictEqual(O.movingTo("C", s), [5, 7]);
+    assert.deepStrictEqual(O.movingTo("C", s), [5]);
     assert.deepStrictEqual(O.movingTo("A", s), [], "nothing moves to an output it lives on already");
 });
 

@@ -42,7 +42,7 @@ var Workspaces = (function () {
         if (h) return h;
         var s = showing(num);
         if (!home[num] && s) home[num] = s.name;
-        return s || workspace.screens[0];
+        return s || ordered()[0];
     }
 
     function setHome(num, screen) { home[num] = screen.name; }
@@ -63,47 +63,74 @@ var Workspaces = (function () {
     // A workspace's first home: its assigned output if connected, else the screen it is used on.
     function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
 
-    // The nearest screen in a direction (i3ws screenToward; i3's get_output_next, CLOSEST_OUTPUT).
-    function screenToward(s, dir) {
-        var a = s.geometry, best = null, bestDist = Infinity, all = workspace.screens;
+    // KWin's outputs, the primary first (System Settings > Display's order): `screenOrder`, the
+    // order KWin's own "Switch to Screen N" counts in (useractions.cpp). `screens` is the backend's
+    // order (DRM connectors), which only matches by luck. i3's outputs list starts at the primary
+    // too (get_first_output, randr.c:80-98).
+    function ordered() {
+        var o = workspace.screenOrder;
+        return o && o.length ? o : workspace.screens;
+    }
+
+    // i3's get_output_next (randr.c:259-317): an output that way by origin, overlapping s on the
+    // other axis, the closest (far: the farthest). With wrap, get_output_next_wrap: none that way,
+    // the farthest the other way (randr.c:225-247), as the commands do (output.c
+    // get_output_from_string); the tree's edge crossing doesn't wrap (tree.c, move.c).
+    var OPPOSITE = { left: "right", right: "left", up: "down", down: "up" };
+    function outputNext(s, dir, far) {
+        var a = s.geometry, best = null, all = ordered();
         for (var i = 0; i < all.length; i++) {
             if (all[i] === s) continue;
-            var b = all[i].geometry, dist;
-            if (dir === "left")  dist = a.x - (b.x + b.width);
-            if (dir === "right") dist = b.x - (a.x + a.width);
-            if (dir === "up")    dist = a.y - (b.y + b.height);
-            if (dir === "down")  dist = b.y - (a.y + a.height);
-            if (dist >= 0 && dist < bestDist) { bestDist = dist; best = all[i]; }
+            var o = all[i].geometry;
+            if (dir === "left" || dir === "right") {
+                if (dir === "right" ? !(o.x > a.x) : !(o.x < a.x)) continue;
+                if (o.y + o.height <= a.y || a.y + a.height <= o.y) continue;
+            } else {
+                if (dir === "down" ? !(o.y > a.y) : !(o.y < a.y)) continue;
+                if (o.x + o.width <= a.x || a.x + a.width <= o.x) continue;
+            }
+            if (!best) { best = all[i]; continue; }
+            var b = best.geometry;
+            var nearer = dir === "right" ? o.x < b.x : dir === "left" ? o.x > b.x : dir === "down" ? o.y < b.y : o.y > b.y;
+            var farther = dir === "right" ? o.x > b.x : dir === "left" ? o.x < b.x : dir === "down" ? o.y > b.y : o.y < b.y;
+            if (far ? farther : nearer) best = all[i];
         }
         return best;
     }
+    function screenToward(s, dir, wrap) {
+        return outputNext(s, dir, false) || (wrap ? outputNext(s, OPPOSITE[dir], true) : null);
+    }
 
-    // i3's numbering at login: each screen, primary first (KWin lists it first), shows the
-    // lowest-numbered workspace that is free and not assigned to another output
-    // (create_workspace_on_output); with no assignments, 1 on the primary, 2 on the next, ...
-    // Assigned workspaces get their homes first. i3ws did this on every load, so reloading it
+    // i3's numbering at login (init_ws_for_output, randr.c:456-520): each output, primary first,
+    // shows its first assigned workspace (the lowest number set to it: the setting is keyed by
+    // number, where i3 takes its config's first), else the lowest-numbered workspace that is free
+    // and not set to another output (create_workspace_on_output); with none set, 1 on the
+    // primary, 2 on the next, ... Workspaces set to an output get their homes first. i3ws did this on every load, so reloading it
     // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
     // no windows (a login).
     // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens() {
-        var s = workspace.screens, n = workspace.desktops.length, taken = {};
+        var s = ordered(), n = workspace.desktops.length, taken = {};
         var a = Settings.get("workspaceOutputs");
         Object.keys(a).forEach(function (k) { if (+k <= n && assigned(+k)) home[k] = assigned(+k); });
         for (var i = 0; i < s.length; i++) {
-            for (var num = 1; num <= MAX; num++) {
-                if (taken[num] || (assigned(num) && assigned(num) !== s[i].name)) continue;
-                ensure(num);
-                taken[num] = true;
-                workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
-                home[num] = s[i].name;
-                break;
-            }
+            var pick = 0, num;
+            for (num = 1; num <= MAX && !pick; num++)
+                if (!taken[num] && assigned(num) === s[i].name) pick = num;
+            for (num = 1; num <= MAX && !pick; num++)
+                if (!taken[num] && !(assigned(num) && assigned(num) !== s[i].name)) pick = num;
+            if (!pick) continue;
+            ensure(pick);
+            taken[pick] = true;
+            workspace.setCurrentDesktopForScreen(deskOf(pick), s[i]);
+            home[pick] = s[i].name;
         }
     }
 
     return {
         deskOf: deskOf, deskNum: deskNum, ensure: ensure, showing: showing, outputOf: outputOf,
         setHome: setHome, setHomeName: setHomeName, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
+        ordered: ordered,
         assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen, claimHome: claimHome,
         homes: function () { return home; },
         reset: function () { home = {}; },      // the model rebuilt (docs/spec-desktop-changes.md)

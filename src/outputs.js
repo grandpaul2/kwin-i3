@@ -33,12 +33,11 @@ var Outputs = (function () {
     }
 
     // C1. An output X appearing (init_ws_for_output): the workspaces that move to it: every one
-    // whose first connected assigned output is X and whose home isn't X already, lowest first.
+    // that exists (has a home) whose first connected assigned output is X and whose home isn't X
+    // already, lowest first. i3 loops over its existing workspaces only (randr.c:462-486); an
+    // assigned one not made yet is made when it is shown (C3) or first used.
     function movingTo(X, st) {
-        var all = {};
-        nums(st.homes).forEach(function (n) { all[n] = true; });
-        nums(st.assigned).forEach(function (n) { all[n] = true; });
-        return nums(all).filter(function (n) { return firstAssigned(n, st) === X && st.homes[n] !== X; });
+        return nums(st.homes).filter(function (n) { return firstAssigned(n, st) === X && st.homes[n] !== X; });
     }
 
     // C2. What a source output shows once the workspace it showed has moved away (i3's focus

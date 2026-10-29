@@ -1677,7 +1677,7 @@ var Workspaces = (function () {
         if (h) return h;
         var s = showing(num);
         if (!home[num] && s) home[num] = s.name;
-        return s || workspace.screens[0];
+        return s || ordered()[0];
     }
 
     function setHome(num, screen) { home[num] = screen.name; }
@@ -1698,47 +1698,74 @@ var Workspaces = (function () {
     // A workspace's first home: its assigned output if connected, else the screen it is used on.
     function claimHome(num, screen) { home[num] = assigned(num) || screen.name; }
 
-    // The nearest screen in a direction (i3ws screenToward; i3's get_output_next, CLOSEST_OUTPUT).
-    function screenToward(s, dir) {
-        var a = s.geometry, best = null, bestDist = Infinity, all = workspace.screens;
+    // KWin's outputs, the primary first (System Settings > Display's order): `screenOrder`, the
+    // order KWin's own "Switch to Screen N" counts in (useractions.cpp). `screens` is the backend's
+    // order (DRM connectors), which only matches by luck. i3's outputs list starts at the primary
+    // too (get_first_output, randr.c:80-98).
+    function ordered() {
+        var o = workspace.screenOrder;
+        return o && o.length ? o : workspace.screens;
+    }
+
+    // i3's get_output_next (randr.c:259-317): an output that way by origin, overlapping s on the
+    // other axis, the closest (far: the farthest). With wrap, get_output_next_wrap: none that way,
+    // the farthest the other way (randr.c:225-247), as the commands do (output.c
+    // get_output_from_string); the tree's edge crossing doesn't wrap (tree.c, move.c).
+    var OPPOSITE = { left: "right", right: "left", up: "down", down: "up" };
+    function outputNext(s, dir, far) {
+        var a = s.geometry, best = null, all = ordered();
         for (var i = 0; i < all.length; i++) {
             if (all[i] === s) continue;
-            var b = all[i].geometry, dist;
-            if (dir === "left")  dist = a.x - (b.x + b.width);
-            if (dir === "right") dist = b.x - (a.x + a.width);
-            if (dir === "up")    dist = a.y - (b.y + b.height);
-            if (dir === "down")  dist = b.y - (a.y + a.height);
-            if (dist >= 0 && dist < bestDist) { bestDist = dist; best = all[i]; }
+            var o = all[i].geometry;
+            if (dir === "left" || dir === "right") {
+                if (dir === "right" ? !(o.x > a.x) : !(o.x < a.x)) continue;
+                if (o.y + o.height <= a.y || a.y + a.height <= o.y) continue;
+            } else {
+                if (dir === "down" ? !(o.y > a.y) : !(o.y < a.y)) continue;
+                if (o.x + o.width <= a.x || a.x + a.width <= o.x) continue;
+            }
+            if (!best) { best = all[i]; continue; }
+            var b = best.geometry;
+            var nearer = dir === "right" ? o.x < b.x : dir === "left" ? o.x > b.x : dir === "down" ? o.y < b.y : o.y > b.y;
+            var farther = dir === "right" ? o.x > b.x : dir === "left" ? o.x < b.x : dir === "down" ? o.y > b.y : o.y < b.y;
+            if (far ? farther : nearer) best = all[i];
         }
         return best;
     }
+    function screenToward(s, dir, wrap) {
+        return outputNext(s, dir, false) || (wrap ? outputNext(s, OPPOSITE[dir], true) : null);
+    }
 
-    // i3's numbering at login: each screen, primary first (KWin lists it first), shows the
-    // lowest-numbered workspace that is free and not assigned to another output
-    // (create_workspace_on_output); with no assignments, 1 on the primary, 2 on the next, ...
-    // Assigned workspaces get their homes first. i3ws did this on every load, so reloading it
+    // i3's numbering at login (init_ws_for_output, randr.c:456-520): each output, primary first,
+    // shows its first assigned workspace (the lowest number set to it: the setting is keyed by
+    // number, where i3 takes its config's first), else the lowest-numbered workspace that is free
+    // and not set to another output (create_workspace_on_output); with none set, 1 on the
+    // primary, 2 on the next, ... Workspaces set to an output get their homes first. i3ws did this on every load, so reloading it
     // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
     // no windows (a login).
     // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens() {
-        var s = workspace.screens, n = workspace.desktops.length, taken = {};
+        var s = ordered(), n = workspace.desktops.length, taken = {};
         var a = Settings.get("workspaceOutputs");
         Object.keys(a).forEach(function (k) { if (+k <= n && assigned(+k)) home[k] = assigned(+k); });
         for (var i = 0; i < s.length; i++) {
-            for (var num = 1; num <= MAX; num++) {
-                if (taken[num] || (assigned(num) && assigned(num) !== s[i].name)) continue;
-                ensure(num);
-                taken[num] = true;
-                workspace.setCurrentDesktopForScreen(deskOf(num), s[i]);
-                home[num] = s[i].name;
-                break;
-            }
+            var pick = 0, num;
+            for (num = 1; num <= MAX && !pick; num++)
+                if (!taken[num] && assigned(num) === s[i].name) pick = num;
+            for (num = 1; num <= MAX && !pick; num++)
+                if (!taken[num] && !(assigned(num) && assigned(num) !== s[i].name)) pick = num;
+            if (!pick) continue;
+            ensure(pick);
+            taken[pick] = true;
+            workspace.setCurrentDesktopForScreen(deskOf(pick), s[i]);
+            home[pick] = s[i].name;
         }
     }
 
     return {
         deskOf: deskOf, deskNum: deskNum, ensure: ensure, showing: showing, outputOf: outputOf,
         setHome: setHome, setHomeName: setHomeName, hasHome: hasHome, screenToward: screenToward, numberScreens: numberScreens,
+        ordered: ordered,
         assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen, claimHome: claimHome,
         homes: function () { return home; },
         reset: function () { home = {}; },      // the model rebuilt (docs/spec-desktop-changes.md)
@@ -1780,12 +1807,11 @@ var Outputs = (function () {
     }
 
     // C1. An output X appearing (init_ws_for_output): the workspaces that move to it: every one
-    // whose first connected assigned output is X and whose home isn't X already, lowest first.
+    // that exists (has a home) whose first connected assigned output is X and whose home isn't X
+    // already, lowest first. i3 loops over its existing workspaces only (randr.c:462-486); an
+    // assigned one not made yet is made when it is shown (C3) or first used.
     function movingTo(X, st) {
-        var all = {};
-        nums(st.homes).forEach(function (n) { all[n] = true; });
-        nums(st.assigned).forEach(function (n) { all[n] = true; });
-        return nums(all).filter(function (n) { return firstAssigned(n, st) === X && st.homes[n] !== X; });
+        return nums(st.homes).filter(function (n) { return firstAssigned(n, st) === X && st.homes[n] !== X; });
     }
 
     // C2. What a source output shows once the workspace it showed has moved away (i3's focus
@@ -3519,7 +3545,7 @@ var KI3 = (function () {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
             // needs no guard of its own (a fault here alone changed nothing, 73-places-itself).
-            if (workspace.activeScreen !== s) invoke("Switch to Screen " + workspace.screens.indexOf(s));
+            if (workspace.activeScreen !== s) invoke("Switch to Screen " + Workspaces.ordered().indexOf(s));
             if (warp) invoke("MoveMouseToCenter");
             // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
             // it with the window just moved away, hidden on another workspace (fuzzer, I8); the
@@ -4159,26 +4185,26 @@ var KI3 = (function () {
         if (!t) return;
         if (con) moveToWorkspace(t, con); else gotoWorkspace(t);
     }
-    // The output a direction names from `from` (i3's get_output_next), or "next" (KWin's order,
-    // wrapping: get_output_next_wrap) or "primary" (the first in that order); null for none, or
-    // the same output.
+    // The output a direction names from `from` (i3's get_output_next_wrap, as the commands'
+    // get_output_from_string), or "next" (the outputs' order, wrapping) or "primary" (the first in
+    // it, Workspaces.ordered); null for none, or the same output.
     // i3's get_output_from_string (output.c) for an `assign … output X`: current, a direction from
-    // the current output, primary (KWin's first screen), nonprimary, or a name, case-insensitive
+    // the current output (wrapping), primary (the first output), nonprimary, or a name, case-insensitive
     // (randr.c get_output_by_name; review 2026-10-28: the exact name only).
     function outputNamed(name, current) {
-        var n = String(name).toLowerCase(), all = workspace.screens;
+        var n = String(name).toLowerCase(), all = Workspaces.ordered();
         if (n === "current") return current;
-        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n);
+        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n, true);
         if (n === "primary") return all[0] || null;
         if (n === "nonprimary") return all.length > 1 ? all[1] : null;
         for (var i = 0; i < all.length; i++) if (String(all[i].name).toLowerCase() === n) return all[i];
         return null;
     }
     function screenBy(spec, from) {
-        var all = workspace.screens, i = all.indexOf(from), t = null;
+        var all = Workspaces.ordered(), i = all.indexOf(from), t = null;
         if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;
         else if (spec === "primary") t = all[0];
-        else t = Workspaces.screenToward(from, spec);
+        else t = Workspaces.screenToward(from, spec, true);
         return t && t !== from ? t : null;
     }
     // The screen next to the focused workspace's, in a direction (or next, primary).
@@ -5114,7 +5140,7 @@ var KI3 = (function () {
     // focus (§5 D5), the pointer following (A2). src/outputs.js decides from a snapshot; the
     // reconcile's relocate carries the windows, over KWin's own moves (plan.md decision 10).
     function outputState() {
-        var st = { outputs: workspace.screens.map(function (s) { return s.name; }), homes: {}, assigned: {}, occupied: {}, focused: null };
+        var st = { outputs: Workspaces.ordered().map(function (s) { return s.name; }), homes: {}, assigned: {}, occupied: {}, focused: null };
         var homes = Workspaces.homes();
         Object.keys(homes).forEach(function (n) { st.homes[n] = homes[n]; });
         for (var n = 1; n <= NAMES.length; n++) {
@@ -5133,14 +5159,14 @@ var KI3 = (function () {
     }
     function screensChanged() {
         checkPerOutput(false);
-        var names = workspace.screens.map(function (s) { return s.name; });
+        var names = Workspaces.ordered().map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
         var added = names.filter(function (n) { return !(n in lastShown); });
         // Desktop changes queued this turn are the outputs' own (KWin giving a new or a lost
         // output's desktop away), not a user's `workspace N`: shownOutside, a turn later, would
         // see the refreshed lastShown below and take them for one (review 2026-10-28).
         if (lost.length || added.length) pendingShown = [];
-        var first = workspace.screens[0], fws = focusedWs();
+        var first = Workspaces.ordered()[0], fws = focusedWs();
         // B. Lost outputs: their workspaces move for good; the focused one is shown on the first
         // output (i3's workspace_show(next) in move_content; 84-unplug-focus).
         lost.forEach(function (name) {
@@ -5171,6 +5197,7 @@ var KI3 = (function () {
                 }
             });
             var show = Outputs.newShows(name, outputState()) || unusedWorkspace(X);
+            if (show) Workspaces.ensure(show);      // its first assigned one may not exist yet (i3 makes it)
             if (show && deskOf(show)) {
                 if (!Workspaces.hasHome(show)) Workspaces.setHome(show, X);
                 if (workspace.currentDesktopForScreen(X) !== deskOf(show)) showOn(deskOf(show), X);

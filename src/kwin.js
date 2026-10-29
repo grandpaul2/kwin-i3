@@ -1607,7 +1607,7 @@ var KI3 = (function () {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
             // needs no guard of its own (a fault here alone changed nothing, 73-places-itself).
-            if (workspace.activeScreen !== s) invoke("Switch to Screen " + workspace.screens.indexOf(s));
+            if (workspace.activeScreen !== s) invoke("Switch to Screen " + Workspaces.ordered().indexOf(s));
             if (warp) invoke("MoveMouseToCenter");
             // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
             // it with the window just moved away, hidden on another workspace (fuzzer, I8); the
@@ -2247,26 +2247,26 @@ var KI3 = (function () {
         if (!t) return;
         if (con) moveToWorkspace(t, con); else gotoWorkspace(t);
     }
-    // The output a direction names from `from` (i3's get_output_next), or "next" (KWin's order,
-    // wrapping: get_output_next_wrap) or "primary" (the first in that order); null for none, or
-    // the same output.
+    // The output a direction names from `from` (i3's get_output_next_wrap, as the commands'
+    // get_output_from_string), or "next" (the outputs' order, wrapping) or "primary" (the first in
+    // it, Workspaces.ordered); null for none, or the same output.
     // i3's get_output_from_string (output.c) for an `assign … output X`: current, a direction from
-    // the current output, primary (KWin's first screen), nonprimary, or a name, case-insensitive
+    // the current output (wrapping), primary (the first output), nonprimary, or a name, case-insensitive
     // (randr.c get_output_by_name; review 2026-10-28: the exact name only).
     function outputNamed(name, current) {
-        var n = String(name).toLowerCase(), all = workspace.screens;
+        var n = String(name).toLowerCase(), all = Workspaces.ordered();
         if (n === "current") return current;
-        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n);
+        if (n === "left" || n === "right" || n === "up" || n === "down") return Workspaces.screenToward(current, n, true);
         if (n === "primary") return all[0] || null;
         if (n === "nonprimary") return all.length > 1 ? all[1] : null;
         for (var i = 0; i < all.length; i++) if (String(all[i].name).toLowerCase() === n) return all[i];
         return null;
     }
     function screenBy(spec, from) {
-        var all = workspace.screens, i = all.indexOf(from), t = null;
+        var all = Workspaces.ordered(), i = all.indexOf(from), t = null;
         if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;
         else if (spec === "primary") t = all[0];
-        else t = Workspaces.screenToward(from, spec);
+        else t = Workspaces.screenToward(from, spec, true);
         return t && t !== from ? t : null;
     }
     // The screen next to the focused workspace's, in a direction (or next, primary).
@@ -3202,7 +3202,7 @@ var KI3 = (function () {
     // focus (§5 D5), the pointer following (A2). src/outputs.js decides from a snapshot; the
     // reconcile's relocate carries the windows, over KWin's own moves (plan.md decision 10).
     function outputState() {
-        var st = { outputs: workspace.screens.map(function (s) { return s.name; }), homes: {}, assigned: {}, occupied: {}, focused: null };
+        var st = { outputs: Workspaces.ordered().map(function (s) { return s.name; }), homes: {}, assigned: {}, occupied: {}, focused: null };
         var homes = Workspaces.homes();
         Object.keys(homes).forEach(function (n) { st.homes[n] = homes[n]; });
         for (var n = 1; n <= NAMES.length; n++) {
@@ -3221,14 +3221,14 @@ var KI3 = (function () {
     }
     function screensChanged() {
         checkPerOutput(false);
-        var names = workspace.screens.map(function (s) { return s.name; });
+        var names = Workspaces.ordered().map(function (s) { return s.name; });
         var lost = Object.keys(lastShown).filter(function (n) { return names.indexOf(n) < 0; });
         var added = names.filter(function (n) { return !(n in lastShown); });
         // Desktop changes queued this turn are the outputs' own (KWin giving a new or a lost
         // output's desktop away), not a user's `workspace N`: shownOutside, a turn later, would
         // see the refreshed lastShown below and take them for one (review 2026-10-28).
         if (lost.length || added.length) pendingShown = [];
-        var first = workspace.screens[0], fws = focusedWs();
+        var first = Workspaces.ordered()[0], fws = focusedWs();
         // B. Lost outputs: their workspaces move for good; the focused one is shown on the first
         // output (i3's workspace_show(next) in move_content; 84-unplug-focus).
         lost.forEach(function (name) {
@@ -3259,6 +3259,7 @@ var KI3 = (function () {
                 }
             });
             var show = Outputs.newShows(name, outputState()) || unusedWorkspace(X);
+            if (show) Workspaces.ensure(show);      // its first assigned one may not exist yet (i3 makes it)
             if (show && deskOf(show)) {
                 if (!Workspaces.hasHome(show)) Workspaces.setHome(show, X);
                 if (workspace.currentDesktopForScreen(X) !== deskOf(show)) showOn(deskOf(show), X);

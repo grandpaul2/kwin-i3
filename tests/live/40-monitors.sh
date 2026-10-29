@@ -78,7 +78,9 @@ on_output() { [[ "$(output_of "$1")" == "$2" ]]; }
 check "b is on the remaining monitor"       poll on_output b Virtual-0
 check "the first monitor keeps showing 1, with the focus" poll active_is c
 m=$(mark)
-timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
+# A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
+# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
+timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 two_screens() { [[ "$(kjs 'log(workspace.screens.length)')" == 2 ]]; }
 check "it is back"                          poll two_screens
 check "the returning monitor shows a free workspace (4), not 2" poll shows Virtual-1 4
@@ -106,7 +108,9 @@ check "unplugged again"                     poll one_screen
 key "Workspace 2"
 check "Meta+2 shows 2 on the remaining monitor" poll shows Virtual-0 2
 m=$(mark)
-timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
+# A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
+# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
+timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 check "replugged"                           poll two_screens
 # After kwin-i3 has reconciled, not the first moment: KWin itself briefly puts b back on its old
 # monitor, and a wrong home moves it away again a moment later (fault battery, 2026-10-22).
