@@ -4,7 +4,9 @@
 cmake_minimum_required(VERSION 3.22)
 project(kcm_kwin_i3 LANGUAGES CXX)
 
-find_package(ECM REQUIRED NO_MODULE)
+# The version makes ECM pick Qt 6: without one it guesses Qt 5 wherever Qt 5's cmake files are
+# installed (Arch with qt5-base, 2026-10-29), and Qt 6's QML macros then refuse to load.
+find_package(ECM 6.0.0 REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs)
 include(KDECMakeSettings)

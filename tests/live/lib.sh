@@ -117,6 +117,12 @@ wait_tree() {
 geom() {
     kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(Math.round(g.x) + \",\" + Math.round(g.y) + \" \" + Math.round(g.width) + \"x\" + Math.round(g.height)); } });"
 }
+# The title bar's height on a decorated window: Breeze's grows with the system's font (28 px on
+# Fedora 44, 36 on the Arch laptop, the same Breeze 6.7.5, 2026-10-29), so a check that counts it
+# measures it.
+titlebar() {
+    kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(Math.round(w.frameGeometry.height - w.clientGeometry.height)); });"
+}
 _geom_is() { [[ "$(geom "$1")" == "$2" ]]; }
 wait_geom() {
     poll _geom_is "$1" "$2" && return 0
@@ -187,8 +193,10 @@ drag() {   # drag <mods> <button> x1 y1 x2 y2
 A11Y="python3 -I $root/tools/a11y.py"
 a11y_start() {
     mkdir -p "$KI3_TMP/run"
-    XDG_RUNTIME_DIR=$KI3_TMP/run /usr/libexec/at-spi-bus-launcher --launch-immediately >/dev/null 2>&1 &
+    # Fedora keeps them in /usr/libexec, Arch in /usr/lib.
+    local dir; for dir in /usr/libexec /usr/lib; do [[ -x $dir/at-spi-bus-launcher ]] && break; done
+    XDG_RUNTIME_DIR=$KI3_TMP/run $dir/at-spi-bus-launcher --launch-immediately >/dev/null 2>&1 &
     poll eval 'busctl --user status org.a11y.Bus >/dev/null 2>&1' || return 1
-    /usr/libexec/at-spi2-registryd --use-gnome-session=false >/dev/null 2>&1 &
+    $dir/at-spi2-registryd --use-gnome-session=false >/dev/null 2>&1 &
     export QT_LINUX_ACCESSIBILITY_ALWAYS_ON=1
 }

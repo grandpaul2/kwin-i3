@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # A floated window comes back at the geometry it opened with, as i3's con->geometry
-# (docs/spec-float-size.md). Clients open at 400x300: 400x328 framed with the title bar.
+# (docs/spec-float-size.md). Clients open at 400x300, framed with the title bar (SIZE, measured).
 source "$(dirname "$0")/lib.sh"
-SIZE=400x328
 act() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
 _size_is() { [[ "$(geom "$1")" == *" $2" ]]; }
 size_is() { poll _size_is "$1" "$2" && return 0; echo "    $1 is at $(geom "$1"), wanted size $2"; return 1; }
@@ -18,6 +17,7 @@ client --title a --size 400x300 --color red
 check "a opens alone, at its size"          poll _size_is a 1280x720
 client --title b --size 300x200 --color blue
 check "a and b tile"                        wait_tree 1 "H[a b*]"
+tb=$(titlebar a); SIZE=400x$((300 + tb))
 act a; key "Floating Toggle"
 check "a floats"                            poll floating a 1
 check "  at its size"                       size_is a $SIZE
@@ -71,7 +71,7 @@ check "d tiles"                             poll eval '[[ "$(tree 3)" == *"d*"* 
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 # 7's window opens while kwin-i3 is away, off-centre, so its record shows i3's relative rule.
 client --title e --size 400x300 --color red
-kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "e") w.frameGeometry = { x: 100, y: 100, width: 400, height: 328 }; });' >/dev/null
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "e") w.frameGeometry = { x: 100, y: 100, width: 400, height: '$((300 + tb))' }; });' >/dev/null
 check "e open untiled, at 100,100"          wait_geom e "100,100 $SIZE"
 m=$(mark); load_kwin_i3
 check "reloaded"                            wait_log '^.{9}ADOPTED' "$m"

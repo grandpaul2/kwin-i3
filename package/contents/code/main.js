@@ -4582,7 +4582,9 @@ var KI3 = (function () {
                  guard("layout keys", function (loaded) {
             if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); close("", []); return; }
             callDBus("org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts", "getLayoutsList", guard("layout keys", function (list) {
-                var names = (list || []).map(function (l) { return String(l[0]); });
+                // "" is KWin's xkb default, US, where the system sets no layout (Arch's own
+                // default, 2026-10-29: the long name still says English (US)).
+                var names = (list || []).map(function (l) { return String(l[0]) || "us"; });
                 var other = names.filter(function (n) { return n !== "us"; });
                 log("LAYOUTS " + names.join(",") + (other.length ? ", not fitted (no helper)" : ""));
                 close("its keys may not fit the keyboard layout (" + other.join(", ") + ")", other.length ? [

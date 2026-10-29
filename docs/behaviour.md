@@ -1033,7 +1033,8 @@ One notification per load (app "kwin-i3"), its parts collected first:
 - **Taken keys** (`warnTakenKeys`): kwin-i3's keys another active component holds, with how to free
   them (System Settings > Shortcuts, or `make take-keys`).
 - **Layout keys** (`warnTakenKeys`): without the helper, any keyboard layout other than US, as
-  kwin-i3's position keys are set for US. Its part waits at most 3 s for KWin's answer, so a D-Bus call
+  kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default where the
+  system sets none, counts as US). Its part waits at most 3 s for KWin's answer, so a D-Bus call
   that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
   becomes a problem; never set.
