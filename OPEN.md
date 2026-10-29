@@ -45,13 +45,13 @@ and one `make test` on the laptop at the end of (a), and again after the 6.8 upd
 scenario red there and green on the desktop is a finding (Arch's build in (a), 6.8 in (b)).
 **By hand on the laptop**, what the headless KWin can't reach, each noted as works / snag: the
 lid closed and opened (with and without an external monitor), suspend and resume, docking and
-undocking (windows home again, as on a replug), the internal screen at its HiDPI scale (frame
+undocking (windows home again, as on a replug), the internal screen (frame
 1 px, gaps, the margins' focus), touchpad scrolling and gestures (Overview, desktop switch) beside
 kwin-i3's keys, the wallpaper flash on Intel/AMD, and the workspace widget on the laptop's panel.
 **HiDPI in the test KWin** (Paul's go, 2026-10-29): `KI3_OUTPUTS` and `KI3_SCALE`
 (`tools/testkwin.sh`); 10-tiling, 26-gaps, 54-frame and 85-tiled-look green at `KI3_SCALE=2`
-the same day. On the laptop, those four again at its own scale (1.5 is the likely one, and
-fractional rounding is where a 1 px frame could break) with `KI3_OUTPUTS=1`. Worked over ssh from here (one repo, one
+the same day. The laptop adds no HiDPI: its panel is 1366x768 at scale 1 (read 2026-10-29), so
+fractional scales stay untested on real hardware. Worked over ssh from here (one repo, one
 `OPEN.md`); the laptop's live session under the same "nothing goes live without Paul's go".
 **Done 2026-10-29**: the laptop (`pauls-laptop`, Tailscale; HP, AMD Radeon Vega, 2 cores, 17 GB)
 on Plasma 6.7.5 Wayland from the 2026-10-14 snapshot (pinned; later pacman runs need
@@ -70,5 +70,5 @@ sat on 78's corner pixels); 59's arc pixel is the GPU's antialiasing (NVIDIA 55,
 68,33,33), judged as 78 judges it. 53-hold's two laptop findings fixed 2026-10-29 (6dd3a82: a
 new window stays hidden until it lands; a kept closing window grabbed from Scale), 53 green on
 both machines; on main, not yet installed live (`make plugin-install`, Paul's go). Next: the
-rest of the suite once more on the laptop, the HiDPI four, and stage (a)'s live install with
+rest of the suite once more on the laptop, and stage (a)'s live install with
 Paul at the laptop (the by-hand list above).
