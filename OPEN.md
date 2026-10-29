@@ -76,3 +76,19 @@ session, a diagnosis for Paul (no fix without his go); the captures stay until t
 application chooser) done and live (a211562, b0f222d, 9792a13, 9648229; `make kcm-install`).
 Left: the help buttons naming i3's directives, with item 47 (a). Next: with 47 (a), when Paul
 wants it.
+
+**50. Paul's Arch laptop as the second machine, then the 6.8 test bed** (Paul, 2026-10-28,
+fourteenth session). No release before Plasma 6.8 (out 2026-10-14, Wayland only) has been lived
+through: Fedora 44 gets it only after Fedora 45's release; Arch already has it (6.8.0 in Extra
+2026-10-15). Stages: (a) Plasma 6.7 on the laptop (Arch + i3, X11 today; i3 stays as the fallback
+session) from an Arch Linux Archive snapshot dated before 2026-10-15, the whole system at one date
+(no partial downgrade); kwin-i3 installed by following the README as a stranger would, every snag
+noted for the release road; what a laptop adds: one internal output, docking, HiDPI, lid and
+suspend, touchpad gestures, Intel/AMD graphics (is the wallpaper flash NVIDIA's?), Arch's package
+names for the plugin build (headers in `kwin`, no `kwin-devel`). (b) Once it runs well there, the
+mirrorlist back to current and `pacman -Syu` to 6.8: the laptop becomes the test bed for changes
+(a few missing system apps are fine; 6.8 brings Plasma Login Manager in place of SDDM). (c) Regroup:
+what was learned, and how to work with it on the desktop. Worked over ssh from here (one repo, one
+`OPEN.md`); the laptop's live session under the same "nothing goes live without Paul's go".
+Next: Paul at the laptop for the first session: ssh access from the desktop, and the ALA snapshot
+date.
