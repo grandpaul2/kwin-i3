@@ -204,11 +204,29 @@ echo "    $(dropped $m) / $(tree 1)"
 sleep 0.3
 check "  the keys held, a second press did nothing: still tiled" tiled_c
 check "  no move after the drop"            eval '! after "$m" | grep -qE "^.{9}DRAG start move"'
-read -r cx cy <<<"$(centre c)"
+# Over b and released there with Shift held: KWin's move reads Shift as its custom-tile drop (an
+# outline window over b, c tiled into b's tile at the release; Paul's capture, 2026-10-29). The
+# helper takes Shift out of that move, so no window appears mid-drag and c never fills a tile.
+# d keeps two windows tiled once c is out: a lone window is in the root tile, which KWin's
+# RootTile::pick never picks (6.7.5 customtile.cpp:461), so there would be nothing to drop into.
+term d "#ffff00"
+wait_tree 1 "V[H[b c d*]]" >/dev/null
+read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
+n0=$(kjs 'log(workspace.windowList().length)')
+m=$(mark)
 "$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
-    "abs $((cx - 40)) $((cy - 40))" "wait 60" "abs $((cx - 200)) $((cy - 100))" "wait 60" "btn left up" "wait 60" \
-    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up"
+    "abs $((cx - 40)) $((cy - 40))" "wait 60" "abs $bx $by" "wait 900" "btn left up" "wait 60" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" &
+held=$!
+sleep 0.7
+n1=$(kjs 'log(workspace.windowList().length)')
+wait $held
 check "  the keys pressed again: G5 floats c" poll floating_c
+check "  no tile outline over b mid-drag"   eval '[[ "$n1" == "$n0" ]]' || echo "    windows: $n0 before, $n1 mid-drag"
+check "  released with Shift: c never tiled by KWin" eval '! after "$m" | grep -qE "^.{9}GEOM c .* -> [0-9]+,[0-9]+ [0-9]+x718$"' \
+    || after "$m" | grep -E '^.{9}GEOM c ' | cut -c10- | sed 's/^/    /'
+kclose d
+poll eval '[[ "$(tree 1)" != *d* ]]'
 read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
 m=$(mark)
 drag Meta+Shift left "$cx" "$cy" "$bx" "$by"

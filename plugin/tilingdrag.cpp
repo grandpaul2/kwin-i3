@@ -102,6 +102,61 @@ bool TilingDragGrab::keyboardKey(KeyboardKeyEvent *event)
     return m_drag->dragging() && m_drag->keyboardKey(event);
 }
 
+TilingDragFloat::TilingDragFloat()
+    : InputEventFilter(InputFilterOrder::InteractiveMoveResize)
+{
+}
+
+void TilingDragFloat::start(Window *window)
+{
+    m_window = window;
+}
+
+Window *TilingDragFloat::active() const
+{
+    Window *window = workspace()->moveResizeWindow();
+    return window && window == m_window ? window : nullptr;
+}
+
+// KWin 6.7.5 input.cpp MoveResizeFilter, with Shift taken out of the modifiers.
+bool TilingDragFloat::pointerMotion(PointerMotionEvent *event)
+{
+    Window *window = active();
+    if (!window) {
+        return false;
+    }
+    window->updateInteractiveMoveResize(event->position, event->modifiers & ~Qt::ShiftModifier);
+    return true;
+}
+
+bool TilingDragFloat::pointerButton(PointerButtonEvent *event)
+{
+    Window *window = active();
+    if (!window) {
+        return false;
+    }
+    if (event->state == PointerButtonState::Released && event->buttons == Qt::NoButton) {
+        m_window.clear();
+        window->endInteractiveMoveResize();
+    }
+    return true;
+}
+
+bool TilingDragFloat::keyboardKey(KeyboardKeyEvent *event)
+{
+    Window *window = active();
+    if (!window) {
+        return false;
+    }
+    if (event->state == KeyboardKeyState::Repeated || event->state == KeyboardKeyState::Pressed) {
+        window->keyPressEvent(QKeyCombination{event->modifiers & ~Qt::ShiftModifier, event->key});
+        if (window->isInteractiveMove() || window->isInteractiveResize()) {
+            window->updateInteractiveMoveResize(input()->globalPointer(), input()->keyboardModifiers() & ~Qt::ShiftModifier);
+        }
+    }
+    return true;
+}
+
 TilingDrag::TilingDrag()
     : InputEventFilter(InputFilterOrder::Decoration)
     , m_bus(this)
@@ -381,6 +436,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return true;
         }
         m_shiftLatched = true;
+        m_float.start(window);      // the move without Shift: no custom-tile drop (TilingDragFloat)
         window->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
         return true;
     }

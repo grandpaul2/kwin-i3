@@ -88,6 +88,27 @@ private:
     TilingDrag *m_drag;
 };
 
+// G5's float (Meta+Shift+left on a tiled window) is KWin's own move, and Shift held during a KWin
+// move is its "drop into a custom tile": an outline over each tile passed, and the window tiled at
+// a release with Shift down (KWin 6.7.5 window.cpp:1245, :1108). kwin-i3's windows all sit in
+// custom tiles, so every window passed showed it (Paul's capture, 2026-10-29). Just ahead of
+// KWin's move filter (same weight, installed after it), and only for a move G5 started: what that
+// filter does, with Shift taken out (docs/mouse-plugin-design.md, ChordMoveFilter, 2026-10-22).
+class TilingDragFloat : public KWin::InputEventFilter
+{
+public:
+    TilingDragFloat();
+    void start(KWin::Window *window);
+
+    bool pointerMotion(KWin::PointerMotionEvent *event) override;
+    bool pointerButton(KWin::PointerButtonEvent *event) override;
+    bool keyboardKey(KWin::KeyboardKeyEvent *event) override;
+
+private:
+    KWin::Window *active() const;
+    QPointer<KWin::Window> m_window;
+};
+
 class TilingDrag : public KWin::InputEventFilter
 {
 public:
@@ -115,6 +136,7 @@ public:
     void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
     TilingDragGrab *grab() { return &m_grab; }
+    TilingDragFloat *floatMove() { return &m_float; }
     // A left or right press on a tiled window's ring (FrameFocus; i3's tiling_resize on a border,
     // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
     void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
@@ -133,6 +155,7 @@ private:
 
     TilingDragBus m_bus;
     TilingDragGrab m_grab;
+    TilingDragFloat m_float;
     TilingDragKeys m_keys;
     bool m_keysInstalled = false;
     bool m_on = false;
