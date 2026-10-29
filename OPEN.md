@@ -61,15 +61,6 @@ path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) **Float
 planned feature (Meta+Shift+drag a floating window onto a tile tiles it, G5's other half): a spec
 when he wants it. (c) Paul's "it works" on stages 1-7. Next: (c), then (a) when Paul wants it.
 
-**48. A fullscreen window kept inside its tile after a reload** (Paul's capture
-`2026-10-28_200649.316`, eleventh session, note "reloads still causing full screen to stay within the
-tiled window": pressed after one of the session's reloads of kwin-i3, with a fullscreen Firefox on
-DP-6). "Still": seen before. **Fixed and live 2026-10-28, twelfth session** (e995595): the pass's
-check read Firefox's frame before its answer to the reload's second padding; now the frame's change
-is checked too, a moment later. Not every reload (only one whose first pass beats the effect's
-answer). Next: Paul's "it works", or a capture if it comes back (a `REFIT … fullscreen` line in the
-log is the fix at work).
-
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
 `2026-10-28_062151.334`, ninth session, note "wallpaper flash with just two terminals": a close on
