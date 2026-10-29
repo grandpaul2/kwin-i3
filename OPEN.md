@@ -5,8 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, eleventh session** (item 40 done; item 47's refinement built and live;
-main's `package/` is what KWin runs).
+Last reconciled: **2026-10-28, twelfth session** (item 48 fixed and live; item 47's float to tile
+live and its seven stages done; main's `package/` and plugins are what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -47,7 +47,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
 stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
-session: 60/60, 222 s; eleventh: green, 228 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
+session: 60/60, 222 s; eleventh: green, 228 s; twelfth: not run, the changes covered by their scenarios); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
 foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
