@@ -5,7 +5,7 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-29, sixteenth session** (item 50 stage (a) begun: the laptop on
+Last reconciled: **2026-10-29, seventeenth session** (a housekeeping session: tests are tools, not debts, so none is listed as owed; before it, the sixteenth: item 50 stage (a) begun: the laptop on
 Plasma 6.7.5, the suite run there and its differences fixed; the test KWin's HiDPI option. Main's
 `package/` differs from what KWin runs only by 0a1e1c0's `""`-layout fix, which changes nothing on
 Paul's desktop (its layout is `us`): it loads at his next login or reload, no reload needed.
