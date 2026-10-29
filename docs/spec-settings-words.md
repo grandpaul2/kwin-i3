@@ -1,6 +1,7 @@
 # Spec: the settings page's words (a vocabulary, then a rewrite)
 
-**Status: draft, step 2 of 5; nothing decided yet** (Paul, 2026-10-28, thirteenth session: "I like
+**Status: step 3 of 5. The glossary (§3) is decided** (Paul, 2026-10-28: "agree", every row as
+recommended); the tone rules (§4) are a draft (Paul, 2026-10-28, thirteenth session: "I like
 explicit, but I think we are a little too wordy … develop a vocabulary that is friendly, cohesive
 and still descriptive"). `OPEN.md` item 49.
 
@@ -50,7 +51,7 @@ labels when step 4 is built (style guide §8) and its tooltips stay i3's.
   Window Properties", "Minimum Size" / "Maximum Size". **"Screen Edges"** is a Plasma page of its
   own (hot corners and edges).
 
-## 3. The glossary (draft, with a recommendation each)
+## 3. The glossary (decided 2026-10-28, every row as recommended)
 
 Each word checked three ways (`feedback`: user words): true of what the code does; no implied
 opposite the user would hunt for; no collision with another word on the page or in Plasma.
@@ -76,5 +77,26 @@ opposite the user would hunt for; no collision with another word on the page or 
 | 17 | kwin-i3's plugins | — (+) | "plug-ins" (HIG) | "kwin-i3's plugins", "helper plugin" | **kwin-i3's plugins**, never which one | the user installs both together; a banner says what is missing, in a short list |
 | 18 | a workspace | workspace | virtual desktop | workspace | **workspace** (keep) | i3's; Plasma users meet it in kwin-i3's widget. Help may say "a virtual desktop" once |
 
-Open questions for step 2, beyond the table: none yet; each row is Paul's to take, change or
-refuse.
+## 4. Tone rules (draft; they replace style guide §2's "super descriptive and explicit")
+
+The style guide's other §2 rules stay (sentence case, colons, "Configure …", `i18nc`, the kinds).
+
+1. **A field label is a noun phrase, about 3 words**: "Focus wrapping:", "Resize step:". The
+   section heading gives its subject, so the label doesn't repeat it ("Focused:" under Frame).
+2. **A checkbox says what is on, in about 6 words**: imperative ("Show layout changes all at
+   once") or a plain statement, as Plasma's pages do ("Navigation wraps around"). One idea, no
+   "when … returns …" sentence.
+3. **A choice is 1-4 words** and never repeats its label ("Focus wrapping: [Next screen, then
+   wrap]").
+4. **No parenthesis in a control's text.** What it means goes in the help button (the resize
+   mode's own keys, "J, Left", in the Resize group's help).
+5. **Help (`ContextualHelpButton`): one or two sentences** saying what it does, then i3's directive
+   in code ("i3: `focus_wrapping`"), as `philosophy.md` asks.
+6. **A sub-page's top note is one sentence, or none**; the rest goes in its help button.
+7. **A banner says what is wrong and what to do, in one sentence each**; what is missing is a
+   short list of at most three, the rest in its help.
+8. **A key command is a verb and its object, about 30 characters at most**: the group gives the
+   rest ("Screens" group: "Move window to left screen").
+9. **The glossary's words, and only them**; a new word joins the glossary first.
+10. **No "you", and no "kwin-i3" in a control's text** (the page is kwin-i3's); a banner may name it.
+11. **Units as now** ("4 px", "100 ms"; "×" in sizes, as the HIG asks).
