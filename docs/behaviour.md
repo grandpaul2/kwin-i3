@@ -576,7 +576,7 @@ given back. It reasserts this every pass (the window menu, `borderlessMaximizedW
 `kwini3hold`, `docs/spec-atomic-layout.md`. When a tiling window on a visible workspace is about to
 move or resize, the effect snapshots it and draws the snapshot at the old place. Every other
 window moving within 3 ms joins. When every held window's frame geometry equals what it was asked for, all
-switch at once in one frame; after `holdTimeoutMs` (default 100) they switch regardless. A held
+switch at once in one frame; after `holdTimeoutMs` (default 200, Sway's `txn_timeout_ms`) they switch regardless. A held
 window that is no longer visible counts as settled.
 
 - **A tiling window closing** stays drawn: inside an open hold it joins it; otherwise it waits 20 ms
@@ -780,11 +780,15 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
   window behind the fullscreen one, which KWin then shows above it.
 - **Focus mode toggle under a fullscreen window** (Meta+Space) focuses the other kind and leaves
   the fullscreen flag on, where i3 drops it (`con_activate_unblock`). Accepted, Paul 2026-10-27.
-- **A rare wallpaper flash** for a frame, after closing a tiling window beside another or on a
-  workspace switch (three on 2026-10-25, cause not found: kwin-i3's trees and kwini3hold's holds
-  were right). Accepted, Paul 2026-10-27: extremely rare since. If it comes back, a capture
-  (Meta+Shift+B) says whether it falls inside kwini3hold's hold or after its release; the work
-  so far is `OPEN.md` item 21 in git history.
+- **A rare wallpaper flash** for a few frames, after closing a tiling window beside another, at
+  or after kwini3hold's release (i3 has it on every close: it pushes the new layout to X at once,
+  `x_push_changes`, and nothing waits for the clients). Two causes, from Paul's captures
+  (2026-10-27, 2026-10-28; `OPEN.md` items 21 and 41 in git history): **a slow client** outlasting
+  `holdTimeoutMs` (an Alacritty busy with a terminal UI took ~250 ms, the hold released at 200,
+  the wallpaper showed for 37 ms), and, likely, **Firefox's content subsurface** resizing after its
+  toplevel: the hold checks only the toplevel's frame geometry (Sway hit the same, Mozilla bug
+  1585314). Accepted, Paul 2026-10-29: 200 ms (Sway's) catches nearly every close cleanly, and
+  longer would feel stale.
 - **Frame focus** with `frameOnFloating` takes the clicks around any borderless normal window,
   including one the user made borderless, as the helper can't read the effect's floating set.
   A floating window's border taken or given back may move it by the border's height (untested).
@@ -861,7 +865,7 @@ again.
 | `frameOnFloating` | off | | ring on floating windows, in the same classes (§7 L11) | next pass |
 | `roundedCorners` | on | | §7 | the effect at once |
 | `holdEnabled` | on | | §7 | the effect at once |
-| `holdTimeoutMs` | 100 | 10-2000 ms | §7 | the effect at once |
+| `holdTimeoutMs` | 200 | 10-2000 ms | §7 | the effect at once |
 | `warnTakenKeys` | on | | the load-time key reports (§13) | next load |
 | `debugLog` | off | | the D-Bus log, the debug actions; no control on either form | at once (debug actions: next load) |
 

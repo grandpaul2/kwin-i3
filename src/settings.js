@@ -70,7 +70,7 @@ var Settings = (function () {
         // Tiled windows' corners, rounded by kwini3hold (docs/spec-rounded-corners.md).
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
-        holdTimeoutMs: { type: "int", def: "100", min: 10, max: 2000 },
+        holdTimeoutMs: { type: "int", def: "200", min: 10, max: 2000 },
     };
     var values = {};
 

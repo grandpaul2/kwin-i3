@@ -72,7 +72,7 @@ for d in 0.17 0.18 0.19; do
     sleep 0.04
     kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdTimeoutMs --delete
     sleep 1.5
-    check "undone within the debounce ($d s after a reconfigure): back to 100" test "$(timeout_ms)" = 100
+    check "undone within the debounce ($d s after a reconfigure): back to 200" test "$(timeout_ms)" = 200
     busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5   # put it right for the next
 done
 

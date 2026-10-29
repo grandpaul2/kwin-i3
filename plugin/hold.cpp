@@ -150,8 +150,8 @@ void Hold::loadConfig()
     config->reparseConfiguration();
     const KConfigGroup group = config->group(s_group), old = config->group(s_oldGroup);
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
-    m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 100)
-                                                : old.readEntry("TimeoutMs", 100);   // tests raise it to capture mid-hold
+    m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 200)
+                                                : old.readEntry("TimeoutMs", 200);   // tests raise it to capture mid-hold
     // A layout never waits longer than 2 s, nor not at all (a negative timer never fires: the
     // hold would wait on a window for good; review 2026-10-28).
     m_timeoutMs = std::clamp(m_timeoutMs, 1, 2000);

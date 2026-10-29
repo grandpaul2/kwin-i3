@@ -220,7 +220,7 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] warnTakenKeys` | `true` | at load, one notification naming each of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't); `make take-keys` frees them |
 | `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 2000 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
-| `[Script-kwin-i3] holdTimeoutMs` | `100` | how long the old layout may be held for a slow window, 10-2000 ms (Sway: 200) |
+| `[Script-kwin-i3] holdTimeoutMs` | `200` | how long the old layout may be held for a slow window, 10-2000 ms (Sway's too) |
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the focused window (i3's `client.focused`) |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on every other window, the other output's focused one included (i3's `client.unfocused`; its `focused_inactive` is left out) |
