@@ -191,7 +191,8 @@ function setWorkspaceFloating(forWindow, n, on) {
 // 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0, right: 0, bottom: 0, left: 0 } }. The page
 // sets inner and outer (all four sides) per workspace and writes them back as "N gaps inner M,
 // N gaps outer M"; sides set one by one in kwinrc are kept as they are while the page doesn't
-// touch that workspace.
+// touch that workspace. A value set replaces the main page's (as i3's), 0 included; one not set
+// is the main page's.
 function parseWorkspaceGaps(text) {
     const ws = {};
     String(text || "").split(/[\n;,]/).forEach((e) => {
@@ -207,22 +208,26 @@ function formatWorkspaceGaps(map) {
     const out = [];
     Object.keys(map).map(Number).sort((a, b) => a - b).forEach((n) => {
         const g = map[n];
-        if (g.inner) out.push(n + " gaps inner " + g.inner);
-        const sides = ["top", "right", "bottom", "left"].filter((s) => g[s]);
+        if (g.inner !== undefined) out.push(n + " gaps inner " + g.inner);
+        const sides = ["top", "right", "bottom", "left"].filter((s) => g[s] !== undefined);
         if (sides.length === 4 && g.top === g.right && g.top === g.bottom && g.top === g.left) out.push(n + " gaps outer " + g.top);
         else sides.forEach((s) => out.push(n + " gaps " + s + " " + g[s]));
     });
     return out.join(", ");
 }
-// A workspace's outer gap as one number: the four sides when equal, else null (shown as "mixed").
+// A workspace's outer gap as one number: the four sides when equal (undefined: not set, the main
+// page's), else null (set per side in kwinrc).
 function outerOf(g) {
-    const v = ["top", "right", "bottom", "left"].map((s) => g[s] || 0);
+    const v = ["top", "right", "bottom", "left"].map((s) => g[s]);
     return v.every((x) => x === v[0]) ? v[0] : null;
 }
+// value undefined: not set, back to the main page's.
 function setWorkspaceGap(text, n, which, value) {
     const map = parseWorkspaceGaps(text), g = map[n] || (map[n] = {});
     if (which === "inner") g.inner = value;
     else ["top", "right", "bottom", "left"].forEach((s) => { g[s] = value; });
+    Object.keys(g).forEach((k) => { if (g[k] === undefined) delete g[k]; });
+    if (!Object.keys(g).length) delete map[n];
     return formatWorkspaceGaps(map);
 }
 // The Gaps button's summary.

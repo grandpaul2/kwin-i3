@@ -40,13 +40,13 @@ var Settings = (function () {
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
-        gapsOuter: { type: "int", def: "2", min: 0, max: 200 },                 // px more at the screen edge
+        gapsOuter: { type: "int", def: "2", min: -100, max: 200 },              // px more at the screen edge; negative takes from it (down to half the inner gap)
         // i3's gaps top|right|bottom|left (§11 N2; redo stage 7): that side's outer gap, -1 for gapsOuter.
         gapsTop: { type: "int", def: "-1", min: -1, max: 200 },
         gapsRight: { type: "int", def: "-1", min: -1, max: 200 },
         gapsBottom: { type: "int", def: "-1", min: -1, max: 200 },
         gapsLeft: { type: "int", def: "-1", min: -1, max: 200 },
-        workspaceGaps: { type: "wsgaps", def: "" },                             // i3's "workspace N gaps inner|outer|… M", added to the global ones
+        workspaceGaps: { type: "wsgaps", def: "" },                             // i3's "workspace N gaps inner|outer|… M", in place of the global ones
         smartGaps: { type: "choice", def: "off", choices: ["off", "on", "inverse_outer"] },   // i3's smart_gaps
         // i3's hide_edge_borders (§7 L6): smart and smart_no_gaps drop a lone window's ring; the
         // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
@@ -90,10 +90,11 @@ var Settings = (function () {
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
         // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
-        // added to the global ones), one per line or separated by ";" or ",", "workspace" optional:
-        // "3 gaps inner 10, 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0, right: 0, bottom: 0, left: 0 } }.
-        // A negative M takes from the global gap (the sum stops at 0: KWin's root tile can't leave
-        // its output). A malformed entry is skipped (and logged), the rest still apply.
+        // in place of the global ones, as gaps_for_workspace), one per line or separated by ";" or ",",
+        // "workspace" optional: "3 gaps inner 10, 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0,
+        // right: 0, bottom: 0, left: 0 } }. An outer side may be negative, as the global one
+        // (computeGaps holds it at half the inner gap). A malformed entry is skipped (and logged),
+        // the rest still apply.
         if (type === "wsgaps") {
             var ws = {};
             text.split(/[\n;,]/).forEach(function (e) {

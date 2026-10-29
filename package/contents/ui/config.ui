@@ -88,11 +88,14 @@
        <property name="suffix">
         <string> px</string>
        </property>
+       <property name="minimum">
+        <number>-100</number>
+       </property>
        <property name="maximum">
         <number>200</number>
        </property>
        <property name="toolTip">
-        <string>i3's gaps outer: added to the gap between windows at the output's edge.</string>
+        <string>i3's gaps outer: added to the gap between windows at the output's edge; below 0 takes from it, down to half that gap.</string>
        </property>
       </widget>
      </item>
@@ -214,7 +217,7 @@
         <string>3 gaps inner 10, 5 gaps outer 0</string>
        </property>
        <property name="toolTip">
-        <string>i3's workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, one per entry separated by commas: added to the gaps above on that workspace (a negative M takes from them, down to 0).</string>
+        <string>i3's workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, one per entry separated by commas: in place of the gaps above on that workspace, as in i3.</string>
        </property>
       </widget>
      </item>

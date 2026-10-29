@@ -208,7 +208,7 @@ KCM.SimpleKCM {
             Item { implicitWidth: Kirigami.Units.largeSpacing }
             UnitSpinBox {
                 unit: "px"
-                from: 0; to: 200
+                from: -100; to: 200       // negative: a thinner edge, down to half the inner gap
                 value: root.settings.gapsOuter
                 onValueModified: root.settings.gapsOuter = value
                 Accessible.name: i18nc("@label:spinbox", "Extra gap at screen edges")
@@ -217,7 +217,7 @@ KCM.SimpleKCM {
             QQC2.Label { text: i18nc("@label after a gap's size", "extra at edges"); Accessible.ignored: true }
             Help {
                 topic: i18nc("@item help topic", "gaps")
-                toolTipText: i18n("The space between tiling windows, and what is added to it at the screen's edges. i3: gaps inner, gaps outer")
+                toolTipText: i18n("The space between tiling windows, and what is added to it at the screen's edges; below 0 takes from it, down to half the space between windows. i3: gaps inner, gaps outer")
             }
         }
         SubPageButton {

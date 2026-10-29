@@ -452,8 +452,13 @@ i3's `gaps.c` `calculate_effective_gaps`, per workspace (`gaps(ws)`, worked out 
   either look, as i3's borders sit inside its rects (Paul's capture, 2026-10-29: 2 px of a 4 px
   gap showed).
 - The **outer gap per side**: `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft`, each `gapsOuter`
-  unless set (-1), plus the workspace's own lines (`workspaceGaps`: i3's `workspace N gaps …`,
-  **added**, the sum stopping at 0: KWin's root tile can't leave its output, reason (a)).
+  unless set (-1); a workspace's own lines (`workspaceGaps`: i3's `workspace N gaps …`)
+  **replace** the global values there, as i3's `gaps_for_workspace` (`gaps.c:124-160`; Paul,
+  2026-10-29: before, added). **A negative outer gap** takes from the edge as i3's, but only down
+  to half the inner gap, where i3 goes to 0 and past: KWin gives a tile at least half its padding
+  against the screen (`tile.cpp` `windowGeometry`) and its root can't leave the output, reason
+  (a); below that it is held, logged once (`WARN gaps`). The per-side keys stay 0 and up, as -1
+  means "as `gapsOuter`" there.
 - **`smartGaps`** (i3's `smart_gaps`): `on`, no gaps at all on a workspace with one visible tiling
   window (i3's `con_num_visible_children <= 1`: the projection is one leaf); `inverse_outer`,
   the outer gaps only on such a workspace. The ring keeps its room either way.
@@ -841,9 +846,9 @@ again.
 | setting | default | range | effect | applies |
 |---|---|---|---|---|
 | `gapsInner` | 4 | 0-100 | gap between tiling windows (even; an odd value counts as the one below) | next pass |
-| `gapsOuter` | 2 | 0-200 | added at the output's edges | next pass |
+| `gapsOuter` | 2 | -100-200 | added at the output's edges; below 0 taken, down to half the inner gap (§6) | next pass |
 | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` | -1 | -1 (as `gapsOuter`), 0-200 | that edge's outer gap (i3's `gaps top` …; §6) | next pass |
-| `workspaceGaps` | empty | `N gaps inner \| outer \| horizontal \| vertical \| top \| right \| bottom \| left M`, one per line or `;`- or `,`-separated, `workspace` optional | i3's `workspace N gaps …`: added to the global gaps on that workspace, M negative allowed, the sum stopping at 0 (§6) | next pass |
+| `workspaceGaps` | empty | `N gaps inner \| outer \| horizontal \| vertical \| top \| right \| bottom \| left M`, one per line or `;`- or `,`-separated, `workspace` optional | i3's `workspace N gaps …`: in place of the global gaps on that workspace, as i3; an outer M below 0 as `gapsOuter`'s (§6) | next pass |
 | `smartGaps` | `off` | `off`, `on`, `inverse_outer` | i3's `smart_gaps` (§6) | next pass |
 | `hideEdgeBorders` | `none` | `none`, `vertical`, `horizontal`, `both`, `smart`, `smart_no_gaps` | i3's `hide_edge_borders` (§7 L6) | next pass |
 | `defaultOrientation` | `auto` | `auto`, `horizontal`, `vertical` | a new workspace's direction | new workspaces |
@@ -887,7 +892,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | # | i3 option | Here | i3 | Note |
 |---|---|---|---|---|
 | N1 | `gaps inner \| outer` | `gapsInner`, `gapsOuter` (outer added to inner at the edges, as i3) | = | the defaults differ: §7 L5 |
-| N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (each `gapsOuter` unless set), and `workspaceGaps` in i3's words, added (§6) | = | Built 2026-10-28 (redo stage 7); on the settings page with stage 10 |
+| N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (each `gapsOuter` unless set), and `workspaceGaps` in i3's words and meaning, in place of the global values (§6) | = (≠ for a negative edge: down to half the inner gap, §6; the per-side keys from 0) | Built 2026-10-28 (redo stage 7); on the settings page with stage 10 |
 | N3 | `default_orientation` | `defaultOrientation` | = | |
 | N4 | `workspace_layout default \| stacking \| tabbed` | none | ≠ | kept: tabbed and stacked are out (§8 K7) |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |

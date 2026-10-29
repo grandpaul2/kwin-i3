@@ -1,7 +1,7 @@
 // The Gaps sub-page (docs/spec-redo-10-settings-page.md): i3's outer gap per side of the screen
 // (gapsTop, gapsRight, gapsBottom, gapsLeft; -1 means the outer gap of the main page), smart gaps
 // (smartGaps), and each workspace's own gaps (workspaceGaps: "3 gaps inner 10, 3 gaps outer 0",
-// added to the main page's), one row per workspace. settings.js reads and writes the strings.
+// in place of the main page's, as i3's), one row per workspace. settings.js reads and writes the strings.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -30,17 +30,19 @@ KCM.SimpleKCM {
         Accessible.name: i18nc("@label:spinbox", "Extra gap at the %1 edge of the screen", side)
         KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
     }
-    // A workspace's own gap, added to the main page's: 0 shows as "same".
+    // A workspace's own gap, in place of the main page's (as i3's): the step below the range,
+    // "same", is none set. Inner 0-100 and outer -100-200, as the main page.
     component WorkspaceSpinBox: QQC2.SpinBox {
         property int num
         property string which          // "inner" or "outer"
-        property int stored: 0
-        from: -200; to: 200
-        value: stored
-        onValueModified: page.settings.workspaceGaps = Logic.setWorkspaceGap(page.settings.workspaceGaps, num, which, value)
-        textFromValue: (v) => v === 0 ? i18nc("@item:valuesuffix a workspace's gap is the usual one", "same")
-                                      : v > 0 ? i18nc("@item:valuesuffix pixels added", "+%1 px", v) : i18nc("@item:valuesuffix pixels taken", "%1 px", v)
-        valueFromText: (text) => { const m = /-?\d+/.exec(text); return m ? parseInt(m[0]) : 0; }
+        property var stored            // undefined: not set
+        readonly property int same: from
+        from: which === "inner" ? -1 : -101; to: which === "inner" ? 100 : 200
+        value: stored === undefined || stored === null ? same : stored
+        onValueModified: page.settings.workspaceGaps = Logic.setWorkspaceGap(page.settings.workspaceGaps, num, which, value === same ? undefined : value)
+        textFromValue: (v) => v === same ? i18nc("@item:valuesuffix a workspace's gap is the main page's", "same")
+                                         : i18nc("@item:valuesuffix a gap in pixels", "%1 px", v)
+        valueFromText: (text) => { const m = /-?\d+/.exec(text); return m ? parseInt(m[0]) : same; }
         Layout.preferredWidth: Kirigami.Units.gridUnit * 6
         KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceGaps" }
     }
@@ -55,7 +57,7 @@ KCM.SimpleKCM {
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("A workspace's gaps add to the main page's; the sum never goes below 0. i3: gaps top|right|bottom|left, smart_gaps, workspace N gaps")
+            toolTipText: i18n("A workspace's gaps replace the main page's. An outer gap below 0 makes the edge thinner, down to half the gap between windows. i3: gaps top|right|bottom|left, smart_gaps, workspace N gaps")
         }
     }
 
@@ -101,14 +103,14 @@ KCM.SimpleKCM {
                 spacing: Kirigami.Units.smallSpacing
                 WorkspaceSpinBox {
                     num: row.num; which: "inner"
-                    stored: row.own.inner || 0
+                    stored: row.own.inner
                     Accessible.name: i18nc("@label:spinbox", "Workspace %1 gap between windows", row.num)
                 }
                 QQC2.Label { text: i18nc("@label after a gap's size", "between windows"); Accessible.ignored: true }
                 Item { implicitWidth: Kirigami.Units.largeSpacing }
                 WorkspaceSpinBox {
                     num: row.num; which: "outer"
-                    stored: Logic.outerOf(row.own) === null ? 0 : Logic.outerOf(row.own)
+                    stored: Logic.outerOf(row.own)
                     Accessible.name: i18nc("@label:spinbox", "Workspace %1 extra gap at screen edges", row.num)
                 }
                 QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "at edges, set per side") : i18nc("@label after a gap's size", "at edges"); Accessible.ignored: true }

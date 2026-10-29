@@ -345,8 +345,12 @@ var KI3 = (function () {
     // a side, so an odd padding put every window half a pixel off, its text shifting when
     // anything redrew it (Paul, 2026-10-25, gap 5; docs/spec-settings.md).
     // Per workspace since redo stage 7 (§11 N2, §7 L6): i3's gaps.c calculate_effective_gaps.
-    // The outer gap per side (gapsTop … gapsLeft, else gapsOuter) plus the workspace's own lines
-    // (workspaceGaps, added; the sum stops at 0), then smart_gaps: `on` drops every gap on a
+    // The outer gap per side (gapsTop … gapsLeft, else gapsOuter); a workspace's own lines
+    // (workspaceGaps) replace the global values, as i3's gaps_for_workspace (gaps.c:124-160).
+    // A negative outer gap takes from the edge, as i3's, but only down to half the inner gap: KWin
+    // gives a tile at least half its padding against the screen (tile.cpp windowGeometry) and its
+    // root can't leave the output, where i3 goes to 0 and past. Below that it is held there, and
+    // logged once. Then smart_gaps: `on` drops every gap on a
     // workspace with one visible tiling window, `inverse_outer` keeps the outer ones only there.
     // hide_edge_borders `smart` (and `smart_no_gaps` with no outer gap) takes a lone window's ring
     // and its room away. "One visible tiling window" is i3's con_num_visible_children <= 1: the
@@ -358,19 +362,25 @@ var KI3 = (function () {
         if (ws && gapCache[ws.num]) return gapCache[ws.num];
         return computeGaps(ws, ws ? project(ws) : undefined);
     }
+    var gapFloorLogged = {};   // each held case once (a pass computes every workspace in turn)
     function computeGaps(ws, p) {
         var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), fw = Settings.get("frameWidth");
         var side = { top: Settings.get("gapsTop"), right: Settings.get("gapsRight"), bottom: Settings.get("gapsBottom"), left: Settings.get("gapsLeft") };
         var own = ws && Settings.get("workspaceGaps")[ws.num] || {};
-        if (own.inner !== undefined) i += own.inner;
+        if (own.inner !== undefined) i = own.inner;
         i = Math.max(0, i);
         i -= i % 2;
-        var inset = {};
+        var inset = {}, held = [];
         Object.keys(side).forEach(function (s) {
-            var v = side[s] < 0 ? o : side[s];
-            if (own[s] !== undefined) v += own[s];
-            inset[s] = Math.max(0, v);
+            var v = own[s] !== undefined ? own[s] : side[s] < 0 ? o : side[s];
+            if (v < -i / 2) held.push(s + " " + v);
+            inset[s] = Math.max(-i / 2, v);
         });
+        var floorKey = held.length ? (ws ? ws.num : "") + ": " + held.join(", ") : "";
+        if (floorKey && !gapFloorLogged[floorKey]) {
+            gapFloorLogged[floorKey] = true;
+            log("WARN gaps: an edge goes no thinner than half the inner gap (KWin's tile padding), held at -" + i / 2 + ": " + (ws ? "workspace " + floorKey : floorKey.slice(2)));
+        }
         var one = !!(p && p.win !== undefined), smart = Settings.get("smartGaps"), hide = Settings.get("hideEdgeBorders");
         if (ws && (smart === "on" && one || smart === "inverse_outer" && !one)) inset = { top: 0, right: 0, bottom: 0, left: 0 };
         if (ws && smart === "on" && one) i = 0;

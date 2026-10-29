@@ -76,7 +76,7 @@
     </entry>
     <entry name="gapsOuter" type="Int">
       <default>2</default>
-      <min>0</min>
+      <min>-100</min>
       <max>200</max>
     </entry>
     <entry name="gapsTop" type="Int">

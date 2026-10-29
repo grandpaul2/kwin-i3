@@ -82,14 +82,15 @@ check "kwin-i3 re-read it"                  wait_log '^.{9}SETTINGS .*forWindow'
 client --title pickme2 --app-id net.local.pickme --color blue
 check "pickme2 floats by the rule"          poll eval '[[ "$(tree 1)" == *"~pickme2"* ]]'
 
-# 2b. Gaps (redo stage 10, item 68): workspace 2's own gap between windows, two steps up on the
-#     sub-page, reaches workspaceGaps on Apply. The test clients go first: the floating one sat
+# 2b. Gaps (redo stage 10, item 68): workspace 2's own gap between windows, three steps up on the
+#     sub-page (from "same", then 0 and 1: a workspace's gap replaces the main page's, as i3's,
+#     2026-10-29), reaches workspaceGaps on Apply. The test clients go first: the floating one sat
 #     over the page, and they held the keyboard.
 kclose pickme2; kclose pickme; sleep 0.3
 click_named - "Navigate Back"; sleep 0.5
 open_named kwin-i3 "Configure Gaps…"
 check "the Gaps page: each workspace's row" named Gaps "Workspace 2 gap between windows"
-$A11Y focus kcmshell6 Gaps "Workspace 2 gap between windows"; press Up; press Up; sleep 0.3
+$A11Y focus kcmshell6 Gaps "Workspace 2 gap between windows"; press Up; press Up; press Up; sleep 0.3
 shot gaps
 m=$(mark); click_named - Apply
 check "kwinrc: workspaceGaps=2 gaps inner 2" poll conf_is workspaceGaps "2 gaps inner 2"
