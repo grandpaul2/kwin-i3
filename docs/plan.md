@@ -83,6 +83,11 @@ i3 users (`docs/philosophy.md`, "Who it is for").
 another Plasma component already holds stays that component's (reason (e)); the load notification
 names each one and how to free it (§13), and taking them is the user's choice.
 
+**Popup grace** (the helper) is kwin-i3's own, for the Plasma audience: with focus follows
+mouse, crossing the gap between a floating panel and its popup would focus the window beneath
+and close the popup (KDE bug 511162), so the helper lengthens KWin's focus delay while a popup is
+up and puts the user's value back; it changes no saved setting (reason (e); `behaviour.md` F10).
+
 **Plasma's own tiling** (quick tile, the tile editor) on a kwin-i3 workspace is the user untiling
 the window: it floats (decision 7).
 
@@ -136,8 +141,9 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    focus-after-close (`tree_close_internal`), in `src/tree.js`. Flatten removes only the redundant
    shape (`docs/definitions.md`, "flatten"); a split holding one window stays, as in i3. KWin
    collapses those itself; the projection must tolerate that.
-   **One deliberate break, tidy (Paul, 2026-10-23)**: every other one-child split whose child is a
-   split is removed, after anything that changes the tree. i3 keeps them, and each one costs a
+   **One deliberate break, tidy (Paul, 2026-10-23)**: every one-child split whose child is a split is
+   removed, flatten's shape included, after anything that changes the tree (so after a close it
+   removes at once what i3's flatten would remove only at the next move). i3 keeps them, and each one costs a
    move key press. They only matter in i3 because of `focus parent` and tabbed/stacked, both out
    (reason (d)); adding either means revisiting this first. `docs/spec-nested-boxes.md` has the
    reasoning, i3's side and the risks.
@@ -145,7 +151,9 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    holds the old layout on screen until every moved window has its new frame, as Sway's
    transactions do; i3 on X11 never had the gap. `docs/spec-atomic-layout.md`.
 9. **Workspaces are KWin's virtual desktops** (`src/workspaces.js`): virtual desktop N is
-   workspace N, 1 to 10, made on demand and never removed; a workspace lives on one output, kept
+   workspace N, 1 to 10, made on demand and never removed (a virtual desktop past 10, which
+   Plasma's Overview can add, is not kwin-i3's: a window opened there goes to the focused
+   workspace, as C1, and a switch to it is undone); a workspace lives on one output, kept
    by number; workspace outputs, login numbering, the pointer following focus across outputs
    (`docs/behaviour.md` §4). **≠ i3** (named, unbounded workspaces, an empty one closed when left,
    `workspace.c:526-535`), reason (a): Plasma's pager, Overview and the workspace widget show
@@ -154,12 +162,14 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
 10. **Outputs come and go as in i3's `randr.c`** (Paul, 2026-10-27, replacing the 2026-10-25
     "every workspace goes back": a remembered output that isn't there was the state behind most
     replug bugs, scenarios 42, 45-48, fuzzer I2):
-    - **an output goes away**: its workspaces all move to the first output, in KWin's order, for
-      good (Paul, 2026-10-28, as i3's `randr.c` "Move the content of an outputs container to the
+    - **an output goes away**: its workspaces all move to the first output, the primary first
+      (KWin's `workspace.screenOrder`), for good, except an empty one that isn't focused, which i3
+      closes and here simply stops having an output (`behaviour.md` W4) (Paul, 2026-10-28, as i3's `randr.c` "Move the content of an outputs container to the
       first output");
     - **an output appears**: it takes the workspaces whose workspace output names it (moving
       them back, the one exception to "for good"); else the lowest-numbered
-      workspace whose workspace output names it; else the first free number (`randr.c` `init_ws_for_output`, 444-520);
+      workspace whose workspace output names it (i3 takes the first in its config; the setting is
+      keyed by number, so the lowest stands in); else the first free number (`randr.c` `init_ws_for_output`, 444-520);
     - **no output left**: as i3, which falls back to one output covering the root window
       (`randr.c:931`); here KWin's placeholder output, until one returns;
     - windows KWin moves on its own during a hotplug are ignored: the tree, not KWin's move, says
@@ -208,9 +218,10 @@ table is the home of the rules; this is the why.
 - **KWin's tile API is young** (`tilingForScreen` deprecated in 6.3, `window.tile =` in 6.7,
   per-output desktops new in 6.7). The live tests run against the installed KWin, so `make test` after
   a `dnf upgrade` says whether it still holds.
-- **Effect repaints**: on NVIDIA, an effect repaint KWin makes only for the effect's sake (a timer,
-  a fade) can stay stale on screen (2026-10-28, the indicator's fade). The effect draws only on
-  repaints that happen anyway; no timer-driven animation.
+- **Effect repaints**: on NVIDIA, a repaint of a region the effect asks for on its own (a timer,
+  a fade) can stay stale on screen (2026-10-28, the indicator's fade). The look (the ring, the
+  indicator, the banner) is drawn only on repaints that happen anyway; no timer-driven animation.
+  The hold's own full repaints, at its release and while it holds, are the layout's, by design.
 - **Reconcile churn**: windows jumping or resizing twice. The diff keeps it to what changed; the live
   tests count geometry changes per operation.
 - **Apps not met yet** (what Krohnkite handled: Steam, Minecraft, Electron apps that re-parent,

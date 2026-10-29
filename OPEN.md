@@ -50,21 +50,20 @@ stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no f
 session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again, as a
-refinement. (1) Four agents poked holes in the foundations (59 findings, merged into 17 calls,
-Paul: "all good", with his role lightened: `philosophy.md`, "How a decision is made"). (2) **Done**:
-the three docs rewritten (531b86b); round 2's fresh agent found 10, none high, each fixed in the
-docs or carried to (3). (3) The code against the docs, by `src/` area, each mismatch labelled
-code / `behaviour.md` / docs wrong; carried in: every ≠ row's reason one of `plan.md`'s (a)-(e)
-(L2's 1 px and L5's gaps rest on "Paul's old config"; N6 focus follows mouse becomes ≠ (e));
-T12's i3 side (`commands.c:505`, a resize spreads over all siblings); Z1 against i3's climb
-(`resize.c:72-120`); i3 hiding floating windows behind a fullscreen one (`render.c:253`); a
-virtual desktop 11; no output left (decision 10); px logical in the code; internal settings off
-the page; the i3-syntax fields below the plain controls; the README pointing laptop users at the
-workspace output setting; "adopt" against i3's "manage"; an on-all-desktops window kept sticky
-before any `for_window` rule runs (`src/rules.js:269`, where i3 runs rules last; R3 says =); an
-X11 notification-type window kept out where i3 floats it (`manage.c:466`); behaviour.md's kinds
-table (sticky, root) against definitions.md's four. (4) A build plan, `spec-refine-build.md`,
-shaped as `spec-i3-redo-build.md`. Next: (3), its batch sized for Paul first.
+refinement. (1) Four agents poked holes in the foundations (59 findings, 17 calls, Paul: "all
+good", his role lightened: `philosophy.md`, "How a decision is made"). (2) **Done**: the three
+docs rewritten (531b86b), a fresh agent's second round (10 findings, none high) closed (a3951fb).
+(3) **Done**: four agents read the code against them (46 findings, none high); the doc side is
+fixed (behaviour.md's rows, README, the style guide; each row still wrong in code says **Being
+fixed**). Paul's calls: the 1 px frame and 4/2 gaps kept (L2, L5: reason (b) and "Paul, live");
+Meta+Shift+drag stays a float modifier (G5), **with float to tile planned** (a floating window
+Meta+Shift+dragged onto a tile tiles there; not specced yet); floating windows over a fullscreen
+one (V6b): i3 hides them, his call pending. (4) The build plan, `spec-refine-build.md`, shaped as
+`spec-i3-redo-build.md`: outputs (primary order, i3's direction and wrap, login numbering, no
+desktops made on plug), kinds (`for_window` over sticky, X11 notifications, desktops past 10), the
+tree (floating list order, fullscreen focus, 1 px floor), the effect following the tree, settings
+and words (page, form, notification, help text, `holdTimeoutMs` off, popup grace's 300 ms), input
+(a close mid-drag, letter keys by position). Next: (4), written for Paul's go.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and

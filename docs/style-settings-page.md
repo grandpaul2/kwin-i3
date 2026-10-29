@@ -26,7 +26,7 @@ nothing, do what Plasma's own pages do.
   window in Frame has its colours on one line and its option on the next. Don't pack a checkbox,
   its long label and other controls onto one line.
 - **Compound rows** are a `RowLayout`, `spacing: Kirigami.Units.smallSpacing`, with a
-  `largeSpacing` gap between groups ("[4 px] between windows   [2 px] more at screen edges").
+  `largeSpacing` gap between groups ("[4 px] between windows   [2 px] more at the edges").
 - **A checkbox with its value** sits on one row, as Virtual Desktops does: "[x] Wait for every
   window to resize, at most [100 ms]".
 - **Grids are even** (*Paul's screenshot*, 2026-10-25): uniform cells, rows of equal length. A
@@ -40,7 +40,7 @@ nothing, do what Plasma's own pages do.
 - **Field labels end in a colon** and are short ("Gaps:", "Resize step:", "Each workspace:").
   Several checkboxes go under one label, "Options:".
 - **Checkboxes are imperative and positive**: "Draw the frame on floating windows too", "Round
-  the corners of tiled windows"; never "When disabled, …".
+  the corners of tiling windows"; never "When disabled, …".
 - **Name a thing for what it does**, not for how it's built: "Wait for every window to resize",
   not "Atomic layout".
 - **No label longer than "Configure Keyboard Shortcuts"** (HIG). A label shortened by its context
@@ -52,7 +52,7 @@ nothing, do what Plasma's own pages do.
 - **A window is named by its i3 kind, and only these** (Paul, 2026-10-27/28; redo stage 10
   supersedes `docs/spec-window-words.md`, which `docs/behaviour.md` §3 now holds): **tiling**
   ("tiles", "a tiling window"), **floating** ("floats", "a floating window"), **sticky
-  floating** (floating, on every workspace of its monitor), and where a page ever names them,
+  floating** (floating, on every workspace of its output), and where a page ever names them,
   **dock**, **root**, **override-redirect**. Super descriptive and explicit: "floats (a floating
   window)" in a choice, not "float". "Plasma" describes a look ("its own title bar, as a Plasma
   window"), never a mode. Never "places itself", "leave alone", "don't manage" or "unmanaged":
@@ -63,13 +63,13 @@ nothing, do what Plasma's own pages do.
 ## 3. Controls
 
 - **The control that can't be wrong** (HIG: a text field only where a validating control can't
-  be used). A monitor is a ComboBox of the connected ones, not typed `1=DP-4`; a rule is a list
+  be used). An output is a ComboBox of the connected ones, not typed `1=DP-4`; a rule is a list
   with Pick a Window, not comma-separated text.
 - **A control never accepts a value that means something else** (*Paul*, 2026-10-25: "so people
   don't feel deceived"): the gap between windows steps by 2 because an odd one would be drawn as
   the even one below.
 - **Numbers show their unit** ("4 px", "100 ms", "5%"), through `UnitSpinBox`.
-- **Choices show plain words, store the script's words** ("Tiled" / "Floating"; "auto" /
+- **Choices show plain words, store the script's words** ("Tiling" / "Floating"; "auto" /
   "force"), through `ChoiceBox`. Up to 10 choices in a ComboBox.
 - **Colours** are `ColorButton`s (`org.kde.kquickcontrols`).
 
@@ -77,10 +77,10 @@ nothing, do what Plasma's own pages do.
 
 - **Rarely needed or long settings go behind a sub-page named for what it holds** (HIG,
   progressive disclosure), opened by a button that pushes it (`kcm.push`).
-- **A sub-page button shows a one-line summary** beside it in grey ("2 on a set monitor, 1
+- **A sub-page button shows a one-line summary** beside it in grey ("2 on a set output, 1
   floating"), through `SubPageButton`; a screen reader reads it as the button's
   description.
-- **One row per item** with its settings side by side (Workspaces: monitor and new windows per
+- **One row per item** with its settings side by side (Workspaces: output and new windows per
   workspace). Each row's controls name their row (§6).
 - **Defaults are shown, not hidden**: the window rules Plasma ships are listed like any other,
   marked "default", so Defaults visibly restores them.
@@ -97,13 +97,13 @@ nothing, do what Plasma's own pages do.
 - **Disabled, not hidden.** A control that can't apply (no plugins, its checkbox off) stays
   visible and greyed: `KCM.SettingStateBinding` with `extraEnabledConditions`, and its side
   labels greyed with it by the same condition. The one exception is a note that only applies
-  in one state (the "bare" tiled look's note), shown only then.
+  in one state (the "bare" tiling look's note), shown only then.
 
 ## 6. Accessibility
 
 - **Every control has a name of its own, distinct in its window.** Through its form label
   (Kirigami gives it as labelled-by), else an `Accessible.name` in full: "Frame colour of the
-  focused tiled window", "Workspace 3 monitor", "Focus left, key 2: Meta+J".
+  focused tiling window", "Workspace 3 output", "Focus left, key 2: Meta+J".
 - **Visual-only side labels** ("focused", "others", "between windows") are `Accessible.ignored`,
   the control carrying the full name.
 - **No empty headings**: Kirigami makes a heading for every row's label, so a row with no label
@@ -118,8 +118,8 @@ nothing, do what Plasma's own pages do.
   groups, in `kcm/ui/commands.json`; every action the script registers has a row
   (`tests/unit/kcm.test.js`). An action with no default key gets a row with an empty slot.
 - **A command's label** is sentence case and says what it does from the user's side ("Next
-  workspace on this monitor", "Move to workspace 3"); it goes in the group for what it acts on
-  (focus, move, workspaces, move to workspace, monitors, …), next to its twin form (a go-to's
+  workspace on this output", "Move to workspace 3"); it goes in the group for what it acts on
+  (focus, move, workspaces, move to workspace, outputs, …), next to its twin form (a go-to's
   move form in "Move to workspace", in the same order).
 - **A command's label fits the label column**: about 40 characters at the default font, or it is
   cut off with "…" (2026-10-26: seven rows were). Checked on a screenshot of the group.

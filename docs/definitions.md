@@ -48,7 +48,8 @@ output (i3: the X root window; KWin/Plasma: the **desktop window**, Plasma's wal
 `desktopWindow`).
 
 **Manage** (i3's word): to put a window in the tree when it appears, deciding its kind and
-workspace (i3's `manage_window`). The code and older docs say **adopt** for it; same thing.
+workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (+), because
+"manage" is already KWin's for putting a window in a tile (`Tile.manage`, decision 6).
 
 **Not used any more:** "places itself" (now: override-redirect, or floating), "unmanaged" and
 "managed" as a kind, "Plasma window(s)" for a kind, "left alone", "tiled" (Paul, 2026-10-27:
@@ -67,7 +68,7 @@ workspace (i3's `manage_window`). The code and older docs say **adopt** for it; 
 | **focus stack** | each container's children, most recently focused first | `focus_head` |
 | **the focus** | the one container the tree has focused: a window, or an empty workspace | `focused` |
 | **flatten** | i3's removal of a redundant split: a one-child split whose child is a split of the other orientation, where the child's orientation matches the grandparent's (`tree.c:657-690`) | `tree_flatten` |
-| **tidy** | removing every other one-child split whose only child is a split, the shapes flatten keeps (≠ i3, `plan.md` decision 8) | — |
+| **tidy** | removing every one-child split whose only child is a split, flatten's shape included; run after every change, flatten only where i3 calls `tree_flatten` (≠ i3, `plan.md` decision 8) | — |
 
 ## Workspaces and outputs
 
@@ -113,7 +114,7 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **the effect** | the `kwini3hold` KWin effect: the frame, rounded corners, the split indicator, the hold |
 | **the frame** (ring) | the line the effect draws round a tiling window (`frameWidth`); i3's `pixel` border. "Frame" here never means KWin's `frameGeometry` or i3's X frame window; say those in full |
 | **the hold** | the effect freezing a layout change until every window has its new size |
-| **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's, as in i3 (whose frame windows own every pixel round a client): a press there is kwin-i3's, never the app's |
+| **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:410-426`; here a press there resizes, `behaviour.md` Z3) |
 | **gap strip** | the helper's input-only window over a gap, so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
 | **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with Paul's note (`docs/debugging.md`) |
 | **the Stage** | the development period (`OPEN.md`), capitalised; not the test app ("the test stage", a Xephyr window) |

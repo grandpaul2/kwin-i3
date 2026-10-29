@@ -26,8 +26,9 @@ DE"). Its windows live beside an ordinary Plasma session, with all the support t
    working with a desktop that just works. Many i3 users don't take to Hyprland or niri, and sway
    lacks i3's reach and doesn't work for everyone; with X11 going away, they need somewhere stable
    to land (Paul, 2026-10-27). They know i3's words and keys, and kwin-i3 keeps both. They carry
-   their i3 config over by hand: the settings page names each setting as i3's directive, and its
-   rule fields (`for_window`, `assign`, `workspace … gaps`) take i3's own syntax, on purpose.
+   their i3 config over by hand: the settings page has plain controls, each one's help naming its
+   i3 directive, and shows as i3's own text a rule its rows can't hold; the Configure form and
+   `kwinrc` take i3's syntax (`for_window`, `assign`, `workspace … gaps`), on purpose.
 2. **Second, and still important: Plasma users** who want a full-powered window manager without
    changing much. With what kwin-i3 adds and what Plasma already has, most of the experience is
    reachable with the Meta key and any two-button pointer alone (Paul: "pretty much 90 percent"):
@@ -36,7 +37,7 @@ DE"). Its windows live beside an ordinary Plasma session, with all the support t
 
 What follows from the order: i3's behaviour and words win a tie, and nothing a Plasma user
 meets first should need i3 knowledge to undo (a floating window looks like any Plasma window;
-the settings page says what each word means; the i3-syntax fields sit below the plain controls).
+the settings page says what each word means; i3's syntax is in the Configure form, not the page).
 
 ## How a decision is made (Paul, 2026-10-28)
 
