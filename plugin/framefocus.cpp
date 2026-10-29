@@ -126,6 +126,9 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
         if (Window *owner = tiledFrameAt(event->position); owner && owner != hover && owner != m_raised) {
             m_raised = owner;
             workspace()->raiseWindow(owner);
+            if (options->focusPolicy() != Options::ClickToFocus) {   // PROBE: the hypothesis
+                workspace()->requestDelayFocus(owner);
+            }
         }
     } else {
         m_raised = nullptr;
