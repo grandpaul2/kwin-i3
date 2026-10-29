@@ -1051,6 +1051,11 @@ One notification per load (app "kwin-i3"), its parts collected first:
   Apply (§8 K4, K18); without the effect, the frame, the drag highlight and the hold. The helper
   from KWin's loaded plugins, the effect from its loaded effects. Refinement stage 3; before,
   only the two keys.
+- **Click to focus** (KWin's focus policy, Plasma's setting): named once per install, as a Plasma
+  setting with where to change it (focus follows mouse with mouse precedence, no delay), since
+  i3's default is focus follows mouse (`plan.md` (e)). The helper keeps the mark (`SayOnce`,
+  `kwini3helperrc [Said]`): a script can't write config; without the helper it is named at every
+  load. Never set by kwin-i3.
 - **Ignore entries now float**: a user's own `ignoreClass`/`ignoreRole` entries, read as floating
   rules since redo stage 3 (§3 R5), named once (Paul's call 43).
 

@@ -137,6 +137,17 @@ KConfigGroup stored()
 }
 }
 
+bool LayoutKeys::SayOnce(const QString &what)
+{
+    KConfigGroup said = KSharedConfig::openConfig(QStringLiteral("kwini3helperrc"))->group(QStringLiteral("Said"));
+    if (said.readEntry(what, false)) {
+        return false;
+    }
+    said.writeEntry(what, true);
+    said.sync();
+    return true;
+}
+
 LayoutKeys::LayoutKeys()
 {
     qDBusRegisterMetaType<KeySeq>();
