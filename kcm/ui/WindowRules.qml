@@ -114,7 +114,7 @@ KCM.SimpleKCM {
             }
             Kirigami.ContextualHelpButton {
                 Layout.rightMargin: Kirigami.Units.largeSpacing
-                toolTipText: i18n("i3's for_window and assign rules. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. A rule with other criteria (instance, workspace, floating, tiling, all) is shown as text and edited there. Rules run in this order; a window takes the first that matches it, each rule at most once.")
+                toolTipText: i18n("i3's for_window and assign rules. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. A rule with other criteria (instance, workspace, floating, tiling, all) is shown as text and edited there. Rules run in this order, each at most once: for floating or tiling, the last that matches a window decides; for its workspace or output, the first.")
             }
         }
     }
@@ -150,7 +150,7 @@ KCM.SimpleKCM {
             valueRole: "value"
             Layout.preferredWidth: Kirigami.Units.gridUnit * 12
             model: maximum ? [
-                { text: i18nc("@item:inlistbox a floating window's largest size", "all monitors together"), value: "default" },
+                { text: i18nc("@item:inlistbox a floating window's largest size", "all outputs together"), value: "default" },
                 { text: i18nc("@item:inlistbox", "no limit"), value: "none" },
                 { text: i18nc("@item:inlistbox", "a size"), value: "size" },
             ] : [
@@ -261,7 +261,7 @@ KCM.SimpleKCM {
                             { text: i18nc("@item:inlistbox what a rule does", "floats (a floating window)"), value: "float" },
                             { text: i18nc("@item:inlistbox what a rule does", "tiles (a tiling window)"), value: "tile" },
                             { text: i18nc("@item:inlistbox what a rule does", "opens on workspace…"), value: "workspace" },
-                            { text: i18nc("@item:inlistbox what a rule does", "opens on monitor…"), value: "output" },
+                            { text: i18nc("@item:inlistbox what a rule does", "opens on output…"), value: "output" },
                         ]
                         readonly property string stored: ruleRow.rule.kind
                         function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
@@ -285,9 +285,9 @@ KCM.SimpleKCM {
                         valueRole: "name"
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 10
                         // The connected monitors, and the one set if it isn't connected now.
-                        model: Qt.application.screens.map((s) => ({ name: s.name, text: s.model ? i18nc("monitor name — model", "%1 — %2", s.name, s.model) : s.name }))
+                        model: Qt.application.screens.map((s) => ({ name: s.name, text: s.model ? i18nc("output name — model", "%1 — %2", s.name, s.model) : s.name }))
                             .concat(ruleRow.rule.output && !Qt.application.screens.some((s) => s.name === ruleRow.rule.output)
-                                ? [{ name: ruleRow.rule.output, text: i18nc("@item:inlistbox monitor name", "%1 (not connected)", ruleRow.rule.output) }] : [])
+                                ? [{ name: ruleRow.rule.output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", ruleRow.rule.output) }] : [])
                         readonly property string stored: ruleRow.rule.output || ""
                         // A row just switched to "opens on monitor" takes the first monitor; reading never writes.
                         function sync() { currentIndex = Math.max(0, indexOfValue(stored)); if (ruleRow.rule.kind === "output" && stored === "" && count) page.set(ruleRow.index, "output", currentValue) }
@@ -295,7 +295,7 @@ KCM.SimpleKCM {
                         onModelChanged: sync()
                         Component.onCompleted: sync()
                         onActivated: page.set(ruleRow.index, "output", currentValue)
-                        Accessible.name: i18nc("@label:listbox", "Rule %1: the monitor it opens on", ruleRow.index + 1)
+                        Accessible.name: i18nc("@label:listbox", "Rule %1: the output it opens on", ruleRow.index + 1)
                         KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
                     }
                     // A row with no pattern is not written (it would match every window): said, not

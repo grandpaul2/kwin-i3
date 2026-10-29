@@ -19,7 +19,7 @@ KCM.SimpleKCM {
     readonly property var plasma: Logic.floatingWorkspaceList(settings.forWindow)
     // Connected monitors, by name and model ("DP-4 — DELL U2723QE").
     readonly property var screens: Qt.application.screens.map((s) => ({
-        name: s.name, text: s.model ? i18nc("monitor name — model", "%1 — %2", s.name, s.model) : s.name }))
+        name: s.name, text: s.model ? i18nc("output name — model", "%1 — %2", s.name, s.model) : s.name }))
 
     // The page sets the first two monitors of a workspace's list; a longer list from kwinrc
     // keeps its tail.
@@ -44,10 +44,10 @@ KCM.SimpleKCM {
         property string first: ""
         property bool applies: true
         readonly property string output: page.outputAt(num, slot)
-        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second monitor", "No other") : i18nc("@item:inlistbox", "Any monitor") }]
+        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second output", "No other") : i18nc("@item:inlistbox", "Any output") }]
             .concat(page.screens.filter((s) => s.name !== first))
             .concat(output && !page.screens.some((s) => s.name === output)
-                ? [{ name: output, text: i18nc("@item:inlistbox monitor name", "%1 (not connected)", output) }] : [])
+                ? [{ name: output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", output) }] : [])
         textRole: "text"
         valueRole: "name"
         Layout.preferredWidth: Kirigami.Units.gridUnit * 13
@@ -59,8 +59,8 @@ KCM.SimpleKCM {
         onModelChanged: sync()
         Component.onCompleted: sync()
         onActivated: page.setOutput(num, slot, currentValue)
-        Accessible.name: slot ? i18nc("@label:listbox", "Workspace %1 second monitor, used when the first is not connected", num)
-                              : i18nc("@label:listbox", "Workspace %1 monitor", num)
+        Accessible.name: slot ? i18nc("@label:listbox", "Workspace %1 second output, used when the first is not connected", num)
+                              : i18nc("@label:listbox", "Workspace %1 output", num)
         KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceOutputs"; extraEnabledConditions: parent.applies }
     }
 
@@ -70,11 +70,11 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("A workspace with a monitor set starts there, or on its second monitor when the first is not connected; the others start on the first free monitor. On one set to Floating, new windows float, with their own title bar, as Plasma windows do (a rule in Window Rules).")
+            text: i18n("A workspace with an output set starts there, or on its second output when the first is not connected; the others start on the first free output. On one set to Floating, new windows float, with their own title bar, as Plasma windows do (a rule in Window Rules).")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("Meta+Shift+Space tiles a floating window or floats a tiled one. A window keeps its mode when it moves to another workspace. A monitor that is set but not connected now is kept for when it comes back.")
+            toolTipText: i18n("Meta+Shift+Space tiles a floating window or floats a tiling one. A window keeps its mode when it moves to another workspace. An output that is set but not connected now is kept for when it comes back.")
         }
     }
 
@@ -91,10 +91,10 @@ KCM.SimpleKCM {
 
                 MonitorBox { num: row.num; slot: 0 }
                 // The second box is there on every row (the rows share one shape), greyed with no first.
-                QQC2.Label { text: i18nc("@label between two monitor boxes", "else"); Accessible.ignored: true; enabled: page.outputAt(row.num, 0) !== "" }
+                QQC2.Label { text: i18nc("@label between two output boxes", "else"); Accessible.ignored: true; enabled: page.outputAt(row.num, 0) !== "" }
                 MonitorBox { num: row.num; slot: 1; first: page.outputAt(row.num, 0); applies: page.outputAt(row.num, 0) !== "" }
                 QQC2.ComboBox {
-                    model: [{ value: false, text: i18nc("@item:inlistbox new windows are", "Tiled") },
+                    model: [{ value: false, text: i18nc("@item:inlistbox new windows are", "Tiling") },
                             { value: true, text: i18nc("@item:inlistbox new windows are", "Floating") }]
                     textRole: "text"
                     valueRole: "value"

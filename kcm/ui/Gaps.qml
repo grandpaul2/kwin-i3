@@ -27,7 +27,7 @@ KCM.SimpleKCM {
                                     : i18nc("@item:valuesuffix a side's gap in pixels", "%1: %2 px", side, v)
         valueFromText: (text) => { const m = /-?\d+/.exec(text); return m ? parseInt(m[0]) : -1; }
         Layout.preferredWidth: Kirigami.Units.gridUnit * 8
-        Accessible.name: i18nc("@label:spinbox", "Extra gap at the %1 edge of the screen", side)
+        Accessible.name: i18nc("@label:spinbox", "Extra gap at the %1 edge of the output", side)
         KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
     }
     // A workspace's own gap, added to the main page's: 0 shows as "same".
@@ -51,7 +51,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("The main page's gaps apply everywhere. Here a screen edge can have its own extra gap, and a workspace can add to (or take from) the gaps on it alone.")
+            text: i18n("The main page's gaps apply everywhere. Here an output edge can have its own extra gap, and a workspace can add to (or take from) the gaps on it alone.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
@@ -63,10 +63,10 @@ KCM.SimpleKCM {
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Screen edges:")
             spacing: Kirigami.Units.smallSpacing
-            SideSpinBox { settingName: "gapsTop"; side: i18nc("@item side of the screen", "top") }
-            SideSpinBox { settingName: "gapsRight"; side: i18nc("@item side of the screen", "right") }
-            SideSpinBox { settingName: "gapsBottom"; side: i18nc("@item side of the screen", "bottom") }
-            SideSpinBox { settingName: "gapsLeft"; side: i18nc("@item side of the screen", "left") }
+            SideSpinBox { settingName: "gapsTop"; side: i18nc("@item side of the output", "top") }
+            SideSpinBox { settingName: "gapsRight"; side: i18nc("@item side of the output", "right") }
+            SideSpinBox { settingName: "gapsBottom"; side: i18nc("@item side of the output", "bottom") }
+            SideSpinBox { settingName: "gapsLeft"; side: i18nc("@item side of the output", "left") }
         }
         QQC2.ComboBox {
             Kirigami.FormData.label: i18nc("@label:listbox", "One window on a workspace:")
@@ -109,9 +109,9 @@ KCM.SimpleKCM {
                 WorkspaceSpinBox {
                     num: row.num; which: "outer"
                     stored: Logic.outerOf(row.own) === null ? 0 : Logic.outerOf(row.own)
-                    Accessible.name: i18nc("@label:spinbox", "Workspace %1 extra gap at screen edges", row.num)
+                    Accessible.name: i18nc("@label:spinbox", "Workspace %1 extra gap at output edges", row.num)
                 }
-                QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "at screen edges (set per side)") : i18nc("@label after a gap's size", "at screen edges"); Accessible.ignored: true }
+                QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "at output edges (set per side)") : i18nc("@label after a gap's size", "at output edges"); Accessible.ignored: true }
             }
         }
     }

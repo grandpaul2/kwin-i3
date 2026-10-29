@@ -55,7 +55,7 @@
     ]
    },
    {
-    "label": "Focus between tiled and floating",
+    "label": "Focus between tiling and floating",
     "actions": [
      [
       "kwin-i3 Focus Mode Toggle",
@@ -212,7 +212,7 @@
     ]
    },
    {
-    "label": "Show the window on every workspace of its monitor, or stop (sticky)",
+    "label": "Show the window on every workspace of its output, or stop (sticky)",
     "actions": [
      [
       "kwin-i3 Sticky Toggle",
@@ -361,7 +361,7 @@
     ]
    },
    {
-    "label": "Next workspace on this monitor",
+    "label": "Next workspace on this output",
     "actions": [
      [
       "kwin-i3 Workspace Next on Output",
@@ -370,7 +370,7 @@
     ]
    },
    {
-    "label": "Previous workspace on this monitor",
+    "label": "Previous workspace on this output",
     "actions": [
      [
       "kwin-i3 Workspace Prev on Output",
@@ -591,7 +591,7 @@
     ]
    },
    {
-    "label": "Move to the next on this monitor",
+    "label": "Move to the next on this output",
     "actions": [
      [
       "kwin-i3 Move to Workspace Next on Output",
@@ -600,7 +600,7 @@
     ]
    },
    {
-    "label": "Move to the previous on this monitor",
+    "label": "Move to the previous on this output",
     "actions": [
      [
       "kwin-i3 Move to Workspace Prev on Output",
@@ -701,10 +701,10 @@
   ]
  },
  {
-  "group": "Monitors",
+  "group": "Outputs",
   "commands": [
    {
-    "label": "Focus the monitor to the left",
+    "label": "Focus the output to the left",
     "actions": [
      [
       "kwin-i3 Focus Output Left",
@@ -713,7 +713,7 @@
     ]
    },
    {
-    "label": "Focus the monitor to the right",
+    "label": "Focus the output to the right",
     "actions": [
      [
       "kwin-i3 Focus Output Right",
@@ -722,7 +722,7 @@
     ]
    },
    {
-    "label": "Focus the monitor above",
+    "label": "Focus the output above",
     "actions": [
      [
       "kwin-i3 Focus Output Up",
@@ -731,7 +731,7 @@
     ]
    },
    {
-    "label": "Focus the monitor below",
+    "label": "Focus the output below",
     "actions": [
      [
       "kwin-i3 Focus Output Down",
@@ -740,7 +740,7 @@
     ]
    },
    {
-    "label": "Move the window to the left monitor",
+    "label": "Move the window to the left output",
     "actions": [
      [
       "kwin-i3 Move to Output Left",
@@ -749,7 +749,7 @@
     ]
    },
    {
-    "label": "Move the window to the right monitor",
+    "label": "Move the window to the right output",
     "actions": [
      [
       "kwin-i3 Move to Output Right",
@@ -758,7 +758,7 @@
     ]
    },
    {
-    "label": "Move the window to the monitor above",
+    "label": "Move the window to the output above",
     "actions": [
      [
       "kwin-i3 Move to Output Up",
@@ -767,7 +767,7 @@
     ]
    },
    {
-    "label": "Move the window to the monitor below",
+    "label": "Move the window to the output below",
     "actions": [
      [
       "kwin-i3 Move to Output Down",
@@ -776,7 +776,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the left monitor",
+    "label": "Move the workspace to the left output",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Left",
@@ -785,7 +785,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the right monitor",
+    "label": "Move the workspace to the right output",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Right",
@@ -794,7 +794,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the monitor above",
+    "label": "Move the workspace to the output above",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Up",
@@ -803,7 +803,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the monitor below",
+    "label": "Move the workspace to the output below",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Down",
@@ -812,7 +812,7 @@
     ]
    },
    {
-    "label": "Focus the next monitor",
+    "label": "Focus the next output",
     "actions": [
      [
       "kwin-i3 Focus Output Next",
@@ -821,7 +821,7 @@
     ]
    },
    {
-    "label": "Focus the primary monitor",
+    "label": "Focus the primary output",
     "actions": [
      [
       "kwin-i3 Focus Output Primary",
@@ -830,7 +830,7 @@
     ]
    },
    {
-    "label": "Move the window to the next monitor",
+    "label": "Move the window to the next output",
     "actions": [
      [
       "kwin-i3 Move to Output Next",
@@ -839,7 +839,7 @@
     ]
    },
    {
-    "label": "Move the window to the primary monitor",
+    "label": "Move the window to the primary output",
     "actions": [
      [
       "kwin-i3 Move to Output Primary",
@@ -848,7 +848,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the next monitor",
+    "label": "Move the workspace to the next output",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Next",
@@ -857,7 +857,7 @@
     ]
    },
    {
-    "label": "Move the workspace to the primary monitor",
+    "label": "Move the workspace to the primary output",
     "actions": [
      [
       "kwin-i3 Move Workspace to Output Primary",

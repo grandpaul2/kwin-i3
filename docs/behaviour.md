@@ -719,7 +719,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | F7 | Mouse bindings (i3's `bindsym button1`, `--whole-window`, `--border`, `--release`) | none | ≠ | KWin's window actions (System Settings) set what Meta+buttons do, and the Meta+left/right ones must stay as kwin-i3 needs them. **Kept** (Paul, 2026-10-27): none; i3's are commands bound to buttons, and kwin-i3 has no command language (§8: a key takes no arguments) |
 | F8 | No drag or resize starts while a game holds the pointer or shortcuts are inhibited | the press is the app's | + | |
 | F9 | **Without the helper** | Meta+drag is KWin's own move: the window leaves its tile and floats where dropped | + | |
-| F10 | **Popup grace**: a panel popup active | KWin's focus delay is 1.5 s, so crossing the gap between a floating panel and its popup doesn't focus the window beneath (KDE bug 511162); any other activation puts back the user's `DelayFocusInterval`, read fresh from kwinrc | + | i3's popups grab the pointer (§5 B7) |
+| F10 | **Popup grace**: a panel popup active | KWin's focus delay is 1.5 s, so crossing the gap between a floating panel and its popup doesn't focus the window beneath (KDE bug 511162); any other activation puts back the user's `DelayFocusInterval`, read fresh from kwinrc (KWin's default, 300 ms, when the key isn't there; refinement stage 3, before: 0) | + | i3's popups grab the pointer (§5 B7) |
 
 ---
 
@@ -891,7 +891,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`; `hideEdgeBorders` and `smartGaps` as i3's; `client.focused`, `client.unfocused` as the two frame colours and two indicator colours (`client.focused_inactive` left out, §7 L3) | ≠ | §7 L1-L11; the look's differences kept, the settings built 2026-10-28 (redo stage 7) |
 | N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out |
 | N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
-| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | kwin-i3's own (§7, §13) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings); the page still shows `holdTimeoutMs`: **Being fixed** (`spec-refine-build.md`) |
+| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | kwin-i3's own (§7, §13) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), on neither the page nor the form (refinement stage 3; before, `holdTimeoutMs` was on both) |
 
 ### The settings page
 
@@ -1014,8 +1014,12 @@ One notification per load (app "kwin-i3"), its parts collected first:
   that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
   becomes a problem; never set.
-- **Two keys need the plugins**: without the helper, Meta+R (the resize mode) and Meta+Return
-  (the terminal) do nothing (§8 K4, K18).
+- **kwin-i3's plugins aren't loaded**: what goes without each, named (`plan.md`: the product is the
+  script and both plugins): without the helper, the tiling drag and resize, frame focus, the
+  resize mode (Meta+R), the terminal key (Meta+Return), the layout-fitted keys and the form's
+  Apply (§8 K4, K18); without the effect, the frame, the drag highlight and the hold. The helper
+  from KWin's loaded plugins, the effect from its loaded effects. Refinement stage 3; before,
+  only the two keys.
 - **Ignore entries now float**: a user's own `ignoreClass`/`ignoreRole` entries, read as floating
   rules since redo stage 3 (§3 R5), named once (Paul's call 43).
 

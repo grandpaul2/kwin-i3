@@ -69,14 +69,14 @@
         <number>2</number>
        </property>
        <property name="toolTip">
-        <string>i3's gaps inner: the space between two tiled windows. Even: an odd number counts as the one below.</string>
+        <string>i3's gaps inner: the space between two tiling windows. Even: an odd number counts as the one below.</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="gapsOuterLabel">
        <property name="text">
-        <string>Extra gap at screen edges:</string>
+        <string>Extra gap at output edges:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_gapsOuter</cstring>
@@ -92,7 +92,7 @@
         <number>200</number>
        </property>
        <property name="toolTip">
-        <string>i3's gaps outer: added to the gap between windows at the screen's edge.</string>
+        <string>i3's gaps outer: added to the gap between windows at the output's edge.</string>
        </property>
       </widget>
      </item>
@@ -234,7 +234,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's smart_gaps. on: no gaps on a workspace with one tiled window. inverse_outer: the edge gaps only on a workspace with one tiled window. off: gaps always.</string>
+        <string>i3's smart_gaps. on: no gaps on a workspace with one tiling window. inverse_outer: the edge gaps only on a workspace with one tiling window. off: gaps always.</string>
        </property>
        <item>
         <property name="text">
@@ -269,7 +269,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's default_orientation. auto: side by side, unless the monitor is taller than wide. For workspaces created after the change.</string>
+        <string>i3's default_orientation. auto: side by side, unless the output is taller than wide. For workspaces created after the change.</string>
        </property>
        <item>
         <property name="text">
@@ -356,7 +356,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's focus_wrapping. yes: at the edge, to the next monitor, else wrap around. no: never wrap, but cross to the next monitor. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
+        <string>i3's focus_wrapping. yes: at the edge, to the next output, else wrap around. no: never wrap, but cross to the next output. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
        </property>
        <item>
         <property name="text">
@@ -397,32 +397,6 @@
        </property>
        <property name="toolTip">
         <string>Holds the old picture while windows resize, so the wallpaper doesn't flash through.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="0">
-      <widget class="QLabel" name="holdTimeoutMsLabel">
-       <property name="text">
-        <string>Wait at most:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_holdTimeoutMs</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
-      <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
-       <property name="suffix">
-        <string> ms</string>
-       </property>
-       <property name="minimum">
-        <number>10</number>
-       </property>
-       <property name="maximum">
-        <number>2000</number>
-       </property>
-       <property name="toolTip">
-        <string>How long to wait for a slow window before showing the new layout anyway.</string>
        </property>
       </widget>
      </item>
@@ -467,7 +441,7 @@
      <item row="14" column="0">
       <widget class="QLabel" name="workspaceOutputsLabel">
        <property name="text">
-        <string>Workspace monitors:</string>
+        <string>Workspace outputs:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_workspaceOutputs</cstring>
@@ -486,7 +460,7 @@
         <string>1=DP-4, 2=DP-6</string>
        </property>
        <property name="toolTip">
-        <string>i3's "workspace N output X": a workspace lives on that monitor, by its connector name (kscreen-doctor -o lists them). Applies at login, when the monitor appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary monitor, then the next free one.</string>
+        <string>i3's "workspace N output X": a workspace lives on that output, by its connector name (kscreen-doctor -o lists them). Applies at login, when the output appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary output, then the next free one.</string>
        </property>
       </widget>
      </item>
@@ -531,7 +505,7 @@
      <item row="17" column="0" colspan="2">
       <widget class="QLabel" name="frameNote">
        <property name="text">
-        <string>Needs the kwin-i3 plugins. Without them, tiled windows keep their title bars. Colours are #rrggbb; i3's classes focused and unfocused.</string>
+        <string>Needs the kwin-i3 plugins. Without them, tiling windows keep their title bars. Colours are #rrggbb; i3's classes focused and unfocused.</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignHCenter</set>
@@ -541,7 +515,7 @@
      <item row="18" column="0">
       <widget class="QLabel" name="tiledLookLabel">
        <property name="text">
-        <string>Tiled windows:</string>
+        <string>Tiling windows:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_tiledLook</cstring>
@@ -554,7 +528,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>frame: i3's frame, no title bars. titlebars: each window keeps its own title bar. bare: neither. Without the plugins, tiled windows keep their title bars whatever this says.</string>
+        <string>frame: i3's frame, no title bars. titlebars: each window keeps its own title bar. bare: neither. Without the plugins, tiling windows keep their title bars whatever this says.</string>
        </property>
        <item>
         <property name="text">
@@ -616,7 +590,7 @@
      <item row="22" column="0">
       <widget class="QLabel" name="frameInactiveLabel">
        <property name="text">
-        <string>Other tiled windows (unfocused):</string>
+        <string>Other tiling windows (unfocused):</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_frameInactive</cstring>
@@ -666,14 +640,14 @@
         <string>as the frame</string>
        </property>
        <property name="toolTip">
-        <string>The indicator on other tiled windows. Empty: that frame colour.</string>
+        <string>The indicator on other tiling windows. Empty: that frame colour.</string>
        </property>
       </widget>
      </item>
      <item row="26" column="0">
       <widget class="QLabel" name="hideEdgeBordersLabel">
        <property name="text">
-        <string>Hide the frame at screen edges:</string>
+        <string>Hide the frame at output edges:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_hideEdgeBorders</cstring>
@@ -686,7 +660,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's hide_edge_borders. none: the frame all round. vertical: not the left and right sides of a window at the screen's edge (with no gap between windows); horizontal: not the top and bottom; both: neither. smart: no frame on a window alone on its workspace; smart_no_gaps: the same, only without edge gaps. A hidden side leaves the frame's width empty (KWin's tiles).</string>
+        <string>i3's hide_edge_borders. none: the frame all round. vertical: not the left and right sides of a window at the output's edge (with no gap between windows); horizontal: not the top and bottom; both: neither. smart: no frame on a window alone on its workspace; smart_no_gaps: the same, only without edge gaps. A hidden side leaves the frame's width empty (KWin's tiles).</string>
        </property>
        <item>
         <property name="text">
@@ -723,7 +697,7 @@
      <item row="27" column="1">
       <widget class="QCheckBox" name="kcfg_roundedCorners">
        <property name="text">
-        <string>Round the corners of tiled windows</string>
+        <string>Round the corners of tiling windows</string>
        </property>
       </widget>
      </item>
@@ -797,7 +771,7 @@
         <cstring>plainText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's assign rules, one per line: [criteria] → 5 opens matching windows on workspace 5 (shown or not, without switching a monitor); [criteria] output DP-6 opens them on that monitor's visible workspace. The same criteria as the rules above.</string>
+        <string>i3's assign rules, one per line: [criteria] → 5 opens matching windows on workspace 5 (shown or not, without switching an output); [criteria] output DP-6 opens them on that output's visible workspace. The same criteria as the rules above.</string>
        </property>
        <property name="minimumSize">
         <size>
@@ -840,7 +814,7 @@
      <item row="33" column="1">
       <widget class="QLineEdit" name="kcfg_floatingMaximumSize">
        <property name="toolTip">
-        <string>i3's floating_maximum_size, width x height in px: a window becoming floating is made at most this big. 0x0 means all monitors together; -1x-1 no maximum.</string>
+        <string>i3's floating_maximum_size, width x height in px: a window becoming floating is made at most this big. 0x0 means all outputs together; -1x-1 no maximum.</string>
        </property>
        <property name="placeholderText">
         <string>0x0</string>
@@ -990,7 +964,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's tiling_drag: which presses drag a tiled window to a new place in the layout (plugins). modifier: Meta+left anywhere in it. titlebar: a left press on its title bar. modifier titlebar: both. off: neither (a tiled window stays put).</string>
+        <string>i3's tiling_drag: which presses drag a tiling window to a new place in the layout (plugins). modifier: Meta+left anywhere in it. titlebar: a left press on its title bar. modifier titlebar: both. off: neither (a tiling window stays put).</string>
        </property>
        <item>
         <property name="text">
@@ -1030,7 +1004,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's mouse_warping. output: when the focus moves to another monitor (a key, a workspace switch, an activation), the pointer goes to the focused window's centre, unless it is on that monitor already. none: the pointer never moves by itself.</string>
+        <string>i3's mouse_warping. output: when the focus moves to another output (a key, a workspace switch, an activation), the pointer goes to the focused window's centre, unless it is on that output already. none: the pointer never moves by itself.</string>
        </property>
        <item>
         <property name="text">
@@ -1082,6 +1056,21 @@
          <string>all</string>
         </property>
        </item>
+      </widget>
+     </item>
+     <item row="41" column="1">
+      <!-- Hidden, as on the page: an internal value, kwinrc only (plan.md, "Settings"); kept so
+           Defaults still resets it, as debugLog's below. -->
+      <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
+       <property name="visible">
+        <bool>false</bool>
+       </property>
+       <property name="minimum">
+        <number>10</number>
+       </property>
+       <property name="maximum">
+        <number>2000</number>
+       </property>
       </widget>
      </item>
      <item row="40" column="1">

@@ -42,5 +42,5 @@ void PopupGrace::restore()
     m_raised = false;
     KSharedConfigPtr config = KSharedConfig::openConfig(QStringLiteral("kwinrc"), KConfig::NoGlobals);
     config->reparseConfiguration();
-    KWin::options->setDelayFocusInterval(config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 0));
+    KWin::options->setDelayFocusInterval(config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 300));     // kwin.kcfg's default
 }

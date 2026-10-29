@@ -194,7 +194,7 @@ PlasmoidItem {
                     mainText: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name)
                                             : i18n("Workspace %1", space.modelData.num)
                     subText: space.modelData.focused ? i18n("Shown, with the focus")
-                           : space.modelData.shown ? i18n("Shown on its monitor") : ""
+                           : space.modelData.shown ? i18n("Shown on its output") : ""
                 }
             }
         }

@@ -4507,17 +4507,35 @@ var KI3 = (function () {
     var perOutputBad = false, perOutputLater = false;
     // The resize mode (Meta+R) and the terminal (Meta+Return) are the helper's (§8 K4, K18): without
     // it, said once at load (§13).
+    // The product is the script and its two plugins (plan.md, "Scope"): without either, say what
+    // goes. The helper from KWin's loaded plugins, the effect from its loaded effects (each loaded
+    // under a hashed name: kwini3helper-<hash>, kwini3hold-<hash>).
     function checkHelperKeys() {
         if (!Settings.get("warnTakenKeys")) return;
         reportOpen();
-        var closed = false;
-        function close(lines) { if (!closed) { closed = true; reportClose("two keys need the plugins", lines); } }
-        later(3000, function () { close([]); });
+        var closed = false, helper = null, effect = null;
+        function close() {
+            if (closed) return;
+            closed = true;
+            var lines = [];
+            if (helper === false) lines.push("Without the helper: no tiling drag or resize with the mouse, no focus from the frame, no resize mode (Meta+R), no terminal key (Meta+Return), no keys fitted to your keyboard layout, and the Configure form's Apply needs Meta+Shift+C.");
+            if (effect === false) lines.push("Without the effect: no frame (tiling windows keep their title bars), no drag highlight, no atomic layout changes.");
+            if (lines.length) lines.push("make plugin-install builds and loads them.");
+            reportClose("kwin-i3's plugins aren't loaded", lines);
+        }
+        function heard() { if (helper !== null && effect !== null) close(); }
+        later(3000, close);
         callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
                  guard("helper keys", function (loaded) {
-            if (String(loaded).indexOf("kwini3helper") >= 0) { close([]); return; }
-            log("HELPER not loaded: the resize mode and the terminal key do nothing");
-            close(["Meta+R (i3's resize mode) and Meta+Return (the default terminal) need kwin-i3's plugins: make plugin-install."]);
+            helper = String(loaded).indexOf("kwini3helper") >= 0;
+            if (!helper) log("HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing");
+            heard();
+        }));
+        callDBus("org.kde.KWin", "/Effects", "org.freedesktop.DBus.Properties", "Get", "org.kde.kwin.Effects", "loadedEffects",
+                 guard("effect loaded", function (loaded) {
+            effect = String(loaded).indexOf("kwini3hold") >= 0;
+            if (!effect) log("EFFECT not loaded: no frame, no hold");
+            heard();
         }));
     }
     // The old ignore lists' own entries are read as floating rules now (§3 R5; Paul's call 43):
@@ -4535,21 +4553,21 @@ var KI3 = (function () {
         var set = ["frameFloatingActive", "frameFloatingInactive"].filter(function (k) { return String(readConfig(k, "")).trim() !== ""; });
         reportOpen();
         reportClose("floating colours no longer read", set.length ? [set.join(" and ") + " in kwinrc " +
-            (set.length > 1 ? "are" : "is") + " no longer read: a floating window's frame uses the tiled colours now (as i3). Delete the key" + (set.length > 1 ? "s" : "") + " when you like."] : []);
+            (set.length > 1 ? "are" : "is") + " no longer read: a floating window's frame uses the tiling colours now (as i3). Delete the key" + (set.length > 1 ? "s" : "") + " when you like."] : []);
         if (set.length) log("SETTINGS old floating colours set, not read: " + set.join(", "));
     }
     function checkPerOutput(atLoad) {
         var was = perOutputBad, n = workspace.screens.length;
         perOutputBad = n >= 2 && !options.perOutputVirtualDesktops;
         log("PEROUTPUT " + (perOutputBad ? "off, " + n + " screens" : "ok"));
-        var lines = ["With more than one monitor, kwin-i3 needs System Settings > Virtual Desktops > " +
+        var lines = ["With more than one output, kwin-i3 needs System Settings > Virtual Desktops > " +
                      "\"Switch desktops independently for each screen\" on. With it off, a desktop switch " +
-                     "changes every monitor, and windows tile on the wrong one."];
-        if (atLoad) { reportOpen(); reportClose("per-screen desktops are off", perOutputBad ? lines : []); return; }
+                     "changes every output, and windows tile on the wrong one."];
+        if (atLoad) { reportOpen(); reportClose("per-output desktops are off", perOutputBad ? lines : []); return; }
         if (!perOutputBad || was || perOutputLater) return;
         perOutputLater = true;
         reportOpen();
-        reportClose("per-screen desktops are off", lines);
+        reportClose("per-output desktops are off", lines);
     }
 
     // The setting turned on: each monitor showing a workspace that lives on another one (left

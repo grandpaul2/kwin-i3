@@ -20,13 +20,13 @@ reload() {
 poll grep -q READY "$KI3_TMP/notify.out"
 
 # 1. US: logged, nothing to say about the layout. (Without the helper the load report has one
-#    part all the same since redo stage 5: Meta+R and Meta+Return need the plugins.)
+#    part all the same since redo stage 5: what goes without the plugins, refinement stage 3.)
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "US: logged, no notice"               wait_log '^.{9}LAYOUTS us$'
-check "one notification, the plugins' keys" poll notes_are 1
-check "  which says so"                     grep -q "need kwin-i3's plugins" "$KI3_TMP/notify.out"
-check "  and nothing about the layout"      bash -c "! grep -q 'keyboard layout' '$KI3_TMP/notify.out'"
+check "one notification, the missing plugins" poll notes_are 1
+check "  which says so"                     grep -q "Without the helper: no tiling drag" "$KI3_TMP/notify.out"
+check "  and nothing about the layout"      bash -c "! grep -qi 'may not fit the keyboard layout' '$KI3_TMP/notify.out'"
 
 # 2. German, at the next load: one notification naming the layout and the fix.
 layout de

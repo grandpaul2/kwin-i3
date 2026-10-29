@@ -42,7 +42,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && !kcm.holdLoaded
-            text: i18n("The frame and waiting for windows to resize need kwin-i3's plugins. Without them, tiled windows keep their title bars.")
+            text: i18n("The frame and waiting for windows to resize need kwin-i3's plugins. Without them, tiling windows keep their title bars.")
         }
         // The helper plugin (redo stage 10, Paul's call 40): what goes without it.
         Kirigami.InlineMessage {
@@ -50,7 +50,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && !kcm.helperLoaded
-            text: i18n("kwin-i3's helper plugin isn't loaded: no dragging or resizing tiled windows with the mouse, no focus from the frame, no resize mode, no layout-dependent keys, and the Configure form's Apply doesn't reach kwin-i3 (make plugin-install).")
+            text: i18n("kwin-i3's helper plugin isn't loaded: no dragging or resizing tiling windows with the mouse, no focus from the frame, no resize mode, no layout-dependent keys, and the Configure form's Apply doesn't reach kwin-i3 (make plugin-install).")
         }
     }
 
@@ -201,15 +201,15 @@ KCM.SimpleKCM {
                 from: 0; to: 200
                 value: root.settings.gapsOuter
                 onValueModified: root.settings.gapsOuter = value
-                Accessible.name: i18nc("@label:spinbox", "Extra gap at screen edges")
+                Accessible.name: i18nc("@label:spinbox", "Extra gap at output edges")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsOuter" }
             }
-            QQC2.Label { text: i18nc("@label after a gap's size", "more at screen edges"); Accessible.ignored: true }
+            QQC2.Label { text: i18nc("@label after a gap's size", "more at output edges"); Accessible.ignored: true }
         }
         SubPageButton {
             text: i18nc("@action:button", "Configure Gaps…")
             readonly property var g: Logic.gapsSummary(root.settings)
-            summary: [g.sides ? i18np("1 screen edge set", "%1 screen edges set", g.sides) : "",
+            summary: [g.sides ? i18np("1 output edge set", "%1 output edges set", g.sides) : "",
                       g.workspaces ? i18np("1 workspace differs", "%1 workspaces differ", g.workspaces) : "",
                       g.smart === "on" ? i18n("none with one window") : g.smart === "inverse_outer" ? i18n("edges only with one window") : ""]
                      .filter(s => s).join(", ") || i18n("Same on every side and workspace")
@@ -219,7 +219,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces split:")
             settingName: "defaultOrientation"
             model: [
-                { text: i18nc("@item:inlistbox", "Side by side, or stacked on a tall monitor"), value: "auto" },
+                { text: i18nc("@item:inlistbox", "Side by side, or stacked on a tall output"), value: "auto" },
                 { text: i18nc("@item:inlistbox", "Side by side"), value: "horizontal" },
                 { text: i18nc("@item:inlistbox", "Stacked"), value: "vertical" },
             ]
@@ -246,31 +246,22 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label:listbox", "Focus at an edge:")
             settingName: "focusWrapping"
             model: [
-                { text: i18nc("@item:inlistbox", "Next monitor, else wrap around"), value: "yes" },
-                { text: i18nc("@item:inlistbox", "Next monitor, never wrap"), value: "no" },
+                { text: i18nc("@item:inlistbox", "Next output, else wrap around"), value: "yes" },
+                { text: i18nc("@item:inlistbox", "Next output, never wrap"), value: "no" },
                 { text: i18nc("@item:inlistbox", "Always wrap inside the container"), value: "force" },
                 { text: i18nc("@item:inlistbox", "Wrap, never leave the workspace"), value: "workspace" },
             ]
         }
-        // holdEnabled and holdTimeoutMs, as Virtual Desktops lays out its on-screen display.
+        // holdEnabled; holdTimeoutMs is an internal value, kwinrc only (plan.md, "Settings").
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Layout changes:")
             spacing: Kirigami.Units.smallSpacing
             QQC2.CheckBox {
                 id: holdBox
-                text: i18nc("@option:check followed by a time", "Wait for every window to resize, at most")
+                text: i18nc("@option:check", "Wait for every window to resize")
                 checked: root.settings.holdEnabled
                 onToggled: root.settings.holdEnabled = checked
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "holdEnabled"; extraEnabledConditions: kcm.holdLoaded }
-            }
-            UnitSpinBox {
-                unit: "ms"
-                from: 10; to: 2000
-                stepSize: 10
-                value: root.settings.holdTimeoutMs
-                onValueModified: root.settings.holdTimeoutMs = value
-                Accessible.name: i18nc("@label:spinbox", "Longest wait for windows to resize")
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "holdTimeoutMs"; extraEnabledConditions: kcm.holdLoaded && root.settings.holdEnabled }
             }
             Kirigami.ContextualHelpButton {
                 toolTipText: i18n("Shows a new layout all at once, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
@@ -283,7 +274,7 @@ KCM.SimpleKCM {
         }
         QQC2.CheckBox {
             Kirigami.FormData.label: i18nc("@label", "Pointer:")
-            text: i18nc("@option:check", "Move the pointer to a monitor that gets the focus")
+            text: i18nc("@option:check", "Move the pointer to an output that gets the focus")
             checked: root.settings.mouseWarping === "output"
             onToggled: root.settings.mouseWarping = checked ? "output" : "none"
             KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
@@ -324,8 +315,8 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label", "Each workspace:")
             text: i18nc("@action:button", "Configure Workspaces…")
             readonly property var counts: { "pinned": Object.keys(Logic.parseOutputs(root.settings.workspaceOutputs)).length, "plasma": Logic.floatingWorkspaceList(root.settings.forWindow).length }
-            summary: counts.pinned === 0 && counts.plasma === 0 ? i18n("All tiled, on any monitor")
-                : [counts.pinned ? i18np("1 on a set monitor", "%1 on a set monitor", counts.pinned) : "",
+            summary: counts.pinned === 0 && counts.plasma === 0 ? i18n("All tiling, on any output")
+                : [counts.pinned ? i18np("1 on a set output", "%1 on a set output", counts.pinned) : "",
                    counts.plasma ? i18np("1 floating", "%1 floating", counts.plasma) : ""].filter(s => s).join(", ")
             onClicked: kcm.push("Workspaces.qml")
         }
@@ -338,7 +329,7 @@ KCM.SimpleKCM {
         // the choice needs them as the frame does.
         ChoiceBox {
             id: tiledLook
-            Kirigami.FormData.label: i18nc("@label:listbox", "Tiled windows:")
+            Kirigami.FormData.label: i18nc("@label:listbox", "Tiling windows:")
             settingName: "tiledLook"
             applies: kcm.frameAvailable
             model: [
@@ -380,9 +371,9 @@ KCM.SimpleKCM {
             applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
             model: [
                 { text: i18nc("@item:inlistbox", "Never"), value: "none" },
-                { text: i18nc("@item:inlistbox", "At the screen's left and right edges"), value: "vertical" },
-                { text: i18nc("@item:inlistbox", "At the screen's top and bottom edges"), value: "horizontal" },
-                { text: i18nc("@item:inlistbox", "At every screen edge"), value: "both" },
+                { text: i18nc("@item:inlistbox", "At the output's left and right edges"), value: "vertical" },
+                { text: i18nc("@item:inlistbox", "At the output's top and bottom edges"), value: "horizontal" },
+                { text: i18nc("@item:inlistbox", "At every output edge"), value: "both" },
                 { text: i18nc("@item:inlistbox", "All of it, when a workspace has one window"), value: "smart" },
                 { text: i18nc("@item:inlistbox", "The same, only with no gap at the edges"), value: "smart_no_gaps" },
             ]
@@ -390,7 +381,7 @@ KCM.SimpleKCM {
         // Drawn by kwini3hold (docs/spec-rounded-corners.md), so it needs the plugins too; a
         // title bar brings its theme's corners. Under the tiled colours, unlabelled.
         QQC2.CheckBox {
-            text: i18nc("@option:check under Tiled frame", "Round the corners of tiled windows")
+            text: i18nc("@option:check under Tiling frame", "Round the corners of tiling windows")
             checked: root.settings.roundedCorners
             onToggled: root.settings.roundedCorners = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
@@ -413,7 +404,7 @@ KCM.SimpleKCM {
             text: i18nc("@action:button", "Configure Window Rules…")
             readonly property var counts: Logic.ruleCounts(root.settings)
             summary: i18np("1 rule", "%1 rules", counts.rules + counts.assigns)
-                   + (counts.assigns ? ", " + i18np("1 sending to a workspace or monitor", "%1 sending to a workspace or monitor", counts.assigns) : "")
+                   + (counts.assigns ? ", " + i18np("1 sending to a workspace or output", "%1 sending to a workspace or output", counts.assigns) : "")
             onClicked: kcm.push("WindowRules.qml")
         }
 
