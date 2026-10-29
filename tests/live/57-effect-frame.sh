@@ -14,7 +14,9 @@ row() { local y=$1 xy=() c i; shift; for i in "$@"; do xy+=("$i" "$y"); done; re
 pix() { "$shot" same "$png" "$1" "$2" "$3" 8; }
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, c = w.clientGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height+' client '+c.x+','+c.y+' '+c.width+'x'+c.height); } });"; }
 # Alacritty, solid colour (the GTK 4 test client stops short of a tiled height without a border).
-term() { alacritty --title "$1" -o "colors.primary.background=\"$2\"" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
+# No user config (alacritty falls back to ~/.config/alacritty, whose padding and colours
+# differ per machine), and the cursor in the window's colour: its block sits on the corner pixels.
+term() { alacritty --config-file /dev/null --title "$1" -o "colors.primary.background=\"$2\"" -o "colors.cursor={cursor=\"$2\",text=\"$2\"}" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 term a "#ff0000"; term b "#00ff00"

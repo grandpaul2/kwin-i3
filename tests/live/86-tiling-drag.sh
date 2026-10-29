@@ -16,7 +16,9 @@
 # - kwin.js pollDrag: no second State() call while one is in flight.
 source "$(dirname "$0")/lib.sh"
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height); } });"; }
-term() { alacritty --title "$1" -o "colors.primary.background=\"$2\"" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
+# No user config (alacritty falls back to ~/.config/alacritty, whose padding and colours
+# differ per machine), and the cursor in the window's colour: its block sits on the corner pixels.
+term() { alacritty --config-file /dev/null --title "$1" -o "colors.primary.background=\"$2\"" -o "colors.cursor={cursor=\"$2\",text=\"$2\"}" -o "window.padding={x=0,y=0}" -e sleep 600 >/dev/null 2>&1 & poll _has_window "$1"; }
 set_key() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5; }
 active() { kjs "log(workspace.activeWindow ? workspace.activeWindow.caption : 'none')"; }
 dropped() { wait_log "^.{9}DRAG (dropped|no drop|cancelled|not started)" "$1" && after "$1" | grep -E '^.{9}DRAG ' | tail -1 | cut -c10-; }
