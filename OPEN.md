@@ -63,7 +63,8 @@ one (V6b): i3 hides them, his call pending. (4) The build plan, `spec-refine-bui
 desktops made on plug), kinds (`for_window` over sticky, X11 notifications, desktops past 10), the
 tree (floating list order, fullscreen focus, 1 px floor), the effect following the tree, settings
 and words (page, form, notification, help text, `holdTimeoutMs` off, popup grace's 300 ms), input
-(a close mid-drag, letter keys by position). Next: (4), written for Paul's go.
+(a close mid-drag, letter keys by position), and stage 7 for call 35. **Written** (`docs/spec-refine-build.md`).
+Next: Paul's go on the order, then stage 1.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
