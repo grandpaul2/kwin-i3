@@ -14,6 +14,15 @@ px() { "$shot" probe "$png" "$1" "$2"; }
 pix() { "$shot" same "$png" "$1" "$2" "$3" 2; }
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
+# near <x> <y> <frame> <app>: an antialiased arc pixel, nearer the frame's colour than the app's
+# or the background's (78's): how far it leans to the app is the GPU's (55,48,48 on the desktop's
+# NVIDIA, 68,33,33 on the laptop's AMD, 2026-10-29)
+near() {
+    python3 -c 'import sys
+p, f, a = (tuple(map(int, v.split(","))) for v in sys.argv[1:4])
+d = lambda c: sum((x - y) ** 2 for x, y in zip(p, c))
+sys.exit(0 if d(f) < min(d(a), d((0, 0, 0))) else 1)' "$(px "$1" "$2")" "$3" "$4"
+}
 x11() { GDK_BACKEND=x11 "$root/tools/testclient.py" "$@" >/dev/null 2>&1 & }
 
 load_kwin_i3
@@ -32,7 +41,7 @@ check "x's frame and app"                   eval 'pix 0 360 $INACT && pix 1 360 
 # Rounded as Wayland windows are (docs/spec-rounded-corners.md; 78 has the arithmetic): its
 # corner pixel neither app nor frame, the frame on the arc, the app 4 px in.
 echo "    x's corner: $(px 1 1) $(px 3 1) $(px 5 5)"
-check "x rounded, the frame along it"       eval '! pix 1 1 $RED && ! pix 1 1 $INACT && "$shot" same "$png" 3 1 $INACT 16 && pix 5 5 $RED'
+check "x rounded, the frame along it"       eval '! pix 1 1 $RED && ! pix 1 1 $INACT && near 3 1 $INACT $RED && pix 5 5 $RED'
 key "Focus Left"
 key "Floating Toggle"
 check "x floats"                            wait_tree 1 "H[y] ~x*"
