@@ -160,6 +160,23 @@ Left:
   that such a rule leaves tiling alone (`docs/spec-float-size.md`);
 - bug reports from other people: what a capture holds and how to send one (`docs/debugging.md`).
 
+**51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
+surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
+was not kept, its findings are here). Ranked: works after Plasma upgrades with a visible
+maintainer (Bismuth died of that; Polonium nearly); auto-tiling on Wayland; multi-monitor right;
+one-click install, no re-login, no duplicate instances; defaults with no clashes and a key table;
+misbehaving windows handled (games, mpv, Electron, 1x1 helpers) with a "window X won't tile" FAQ;
+changelog, troubleshooting, a supported-Plasma line. kwin-i3 is ahead on multi-monitor, clash
+handling, live Apply and the Window Rules page; behind on: (a) the install (store users get the
+script alone: title bars, no drag; the plugins need a per-KWin-version build: a COPR/AUR package as
+PlasmaZones ships, automated rebuilds, decided after item 50's 6.8 upgrade); (b) a user README
+(screenshot, FAQ, supported versions, uninstall), with item 4's README pass; (c) activities (item 5);
+(d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out as unused
+by Paul, but the audience is not Paul): a foundation question for Paul, cheap on floating plus a
+hidden workspace, i3's `src/scratchpad.c` first. Tabbed/stacked stay out (KWin's tiles can't show
+tabs without much work). Our niche's only other entry: krohnkite-i3 (4 stars, no releases). Next:
+when the Stage ends, (d) asked as a foundation change, (a) after item 50.
+
 **Not decided: a release** and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; not an item until he decides.
 

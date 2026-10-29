@@ -5,7 +5,8 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-28, thirteenth session** (item 49, the settings page's words and the
+Last reconciled: **2026-10-28, fourteenth session** (no code change: the survey of other tilers,
+LATER.md item 51; item 50, the laptop plan; before that, item 49, the settings page's words and the
 Window Rules layout, live; main's `package/` and plugins are what KWin runs).
 
 ## Stage (Paul, 2026-10-24, late)
