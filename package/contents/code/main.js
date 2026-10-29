@@ -2558,6 +2558,24 @@ var KI3 = (function () {
             w.frameGeometry = a;
         }
     }
+    // The pass's look reads the frame from before the resize: KWin changes it only when the client
+    // answers (XdgSurfaceWindow::moveResizeInternal schedules a configure), so Firefox, resized by
+    // a reload's two paddings, reached its tile's size after the pass and kept it (Paul's capture
+    // 2026-10-28 20:06). So the frame's change is looked at too, as i3 renders a fullscreen con at
+    // its output's rect on every pass (render.c:132). A moment later: KWin applies a commit's frame
+    // before its fullscreen state (handleNextWindowGeometry, then handleStatesAcknowledged), so a
+    // window leaving fullscreen still reads fullScreen when its frame shrinks. Once per frame, as
+    // lastFit: a client that answers the monitor with another size is not asked without end.
+    var fsFit = {};
+    function refitFullscreenLater(w) {
+        var key = id(w), t = expected[key], f = w.frameGeometry;
+        if (!t || w.tile !== t || !w.output || fsFit[key] === rectKey(f)) return;
+        later(0, function () {
+            if (!wins[key] || !w.fullScreen || w.tile !== expected[key] || w.move || w.resize) return;
+            fsFit[key] = rectKey(w.frameGeometry);
+            fitFullscreen(w);
+        });
+    }
 
     // When a monitor returns, KWin's PlacementTracker asks every window for the geometry it had in
     // that layout (workspace.cpp updateOutputs). A window whose tile changed meanwhile looks
@@ -2603,6 +2621,7 @@ var KI3 = (function () {
     function atBounds(have, want, bound) { return have < want - 1 && Math.abs(have - bound) <= 1; }
     function refitOnFrameChange(w, old, dragging) {
         var key = id(w), t = expected[key];
+        if (w.fullScreen && !dragging) refitFullscreenLater(w);
         var b = borderGone[key];
         if (b && !reconciling && t && w.tile === t) {
             var first = b.first, g = w.frameGeometry, r = windowRect(t);
@@ -3363,7 +3382,7 @@ var KI3 = (function () {
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key]; delete ringTold[key];
-        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
         schedule(ws);
     }
@@ -4933,7 +4952,7 @@ var KI3 = (function () {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
                 model = Tree.create({ outputNeighbour: outputNeighbour });
-                wins = {}; expected = {}; armed = {}; lastFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
+                wins = {}; expected = {}; armed = {}; lastFit = {}; fsFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
                 borderGone = {};
                 lastShown = {}; shownBefore = {};   // numbers by the old positions
                 Workspaces.reset();

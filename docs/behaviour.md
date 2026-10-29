@@ -486,7 +486,9 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
   fitted again (KWin's placement tracker and slow clients answer late).
 - **A fullscreen window KWin keeps in its tile** (no rebuild since it went fullscreen) is resized
   to the tile by KWin whenever the tile's padding or geometry is written (a reload's first pass,
-  a gap or frame-width change); each pass puts it back on its whole output.
+  a gap or frame-width change); each pass puts it back on its whole output, and so does its frame
+  changing to anything else while it is still fullscreen (a client answering the resize after the
+  pass, as on a reload).
 - **A GTK 4 window short of its tile** after its border was taken is asked for 0 × 0, then its tile,
   so KWin resends its bounds.
 

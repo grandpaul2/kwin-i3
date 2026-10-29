@@ -190,6 +190,9 @@ key "Workspace 1"
 # keeps the inset does the same.
 fills_output() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, o = w.output.geometry; log(f.x === o.x && f.y === o.y && f.width === o.width && f.height === o.height); } })")" == "true" ]]; }
 in_tile() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.tile !== null); })")" == "true" ]]; }
+# The padding goes on the root tile of f2's own monitor: KWin resizes only the windows of a tile
+# on a shown desktop (Tile::isActive), so the wrong monitor's tile tested nothing.
+pad_f2_root() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"f2\") workspace.rootTile(w.output, workspace.desktops[3]).padding = $1; })" >/dev/null; }
 key "Workspace 4"
 client --title f1; client --title f2
 check "two windows on 4"                    wait_tree 4 "H[f1 f2*]"
@@ -199,9 +202,19 @@ check "f2 fills its monitor"                poll fills_output f2
 check "f2 is still in its tile"             in_tile f2
 # What the reloaded instance did: another padding on the tiles (it wrote 4 over 6, KWin resizing
 # every window in them), then a pass of kwin-i3's that writes its own back.
-kjs 'var r = workspace.rootTile(workspace.screens[1], workspace.desktops[3]); r.padding = 10;' >/dev/null
+pad_f2_root 10
 m=$(mark); key "Focus Mode Toggle"; wait_log '^.{9}TREE 4 ' "$m"; sleep 0.5
 check "kwin-i3's padding back: f2 still fills its monitor" fills_output f2
+# The same with f2 answering after the pass, as Firefox did on a reload (Paul's capture
+# 2026-10-28 20:06): KWin changes the frame only when the client answers, so the pass saw the
+# monitor-sized frame, and f2 reached its tile's size afterwards. Stopped, it answers only at -CONT.
+f2pid=$(pgrep -f "testclient.py --title f2" | head -1)
+kill -STOP "$f2pid"
+pad_f2_root 10
+m=$(mark); key "Focus Mode Toggle"; wait_log '^.{9}TREE 4 ' "$m"; sleep 0.3
+kill -CONT "$f2pid"
+sleep 0.5
+check "answering after the pass: f2 still fills its monitor" poll fills_output f2
 on f2 'w.fullScreen = false;'
 check "out of fullscreen: two halves again" wait_tree 4 "H[f1 f2*]"
 
