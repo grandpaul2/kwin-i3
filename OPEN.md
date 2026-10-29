@@ -119,12 +119,22 @@ bar back, then tiled again, can read frame = client until its app commits, and a
 moment skips it with no later pass to retry. Next: a probe of the float-then-tile toggle under
 load, logging frame and client at each pass; then the cause, a fix, and 54 under load.
 
-**56. The load notification names the Plasma settings kwin-i3 is designed around** (Paul,
-2026-10-29, `plan.md` (e): named, never set unasked). Today it names taken keys and per-output
-desktops off (`behaviour.md` §13); click to focus joins them, worded as Plasma's own setting with
-where to change it (System Settings > Window Management > Window Behavior), silenced by the same
-switch. Next: the wording shown to Paul, then the change (`src/kwin.js`, the report),
-the report's scenario updated, and the reload on his go.
+**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; Paul: not urgent, decide
+once the setup is hardened). The load report (`behaviour.md` §13: taken keys, layouts, per-output
+desktops, missing plugins) is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`;
+KWin's callDBus converts by `QJSValue::toVariant()` (`scripting.cpp:345`), so Plasma receives
+`sisssava{sv}i` for `susssasa{sv}i` and refuses it ("no slot matched": the laptop 2026-10-29
+16:48:53, the desktop 2026-10-28 05:10:30). JavaScript can't make an unsigned int or a typed array
+here. The tests missed it: `tools/fakenotify.py` declares the signature but dbus-python doesn't
+enforce it (a strict version, `message_keyword` and a signature check, refused it in a probe).
+Routes probed: the desktop portal (`AddNotification`, `sa{sv}`) refuses KWin ("Unable to open
+/proc/<kwin>/root"); a QML (declarative) script's KNotification sends it correctly, with a
+`kwin-i3.notifyrc` of ours showing as "kwin-i3" (test KWin, strict stand-in), but a JS script
+can't hand a QML one the report. Options: (1) kwin-i3 as a QML script hosting `main.js`, with the
+globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins, a spike first;
+(2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
+on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
+2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
 
 **57. Panel friendliness** (Paul, 2026-10-29). Plasma's panel has settings that may clash with
 kwin-i3 (known so far: a floating panel's gap and its popups, the popup grace's reason). i3's
