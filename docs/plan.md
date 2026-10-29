@@ -22,6 +22,12 @@ author's (`OPEN.md`), not adding more of i3.
 be common"). What kwin-i3 does on an older Plasma, and how the plugins reach a user: `LATER.md`,
 "Release prep".
 
+**i3 means the 4.24 release** (its tag `4.24`: `https://raw.githubusercontent.com/i3/i3/4.24/src/<file>.c`,
+`etc/config.keycodes` for the keys), the version an i3 user meets in their distribution. Its `next`
+branch differs in places (a drag ends only on its own button's release there): a citation of
+`next` is checked against 4.24 before it decides anything (2026-10-28: every function this pass
+cited was).
+
 **The test for anything new**, in this order:
 1. **In the "In" list below: i3's**, as i3 does it, even where Plasma has something similar
    (`assign` though KWin has Window Rules, Exit though Plasma has logout).

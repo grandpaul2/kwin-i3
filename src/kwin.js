@@ -1474,10 +1474,13 @@ var KI3 = (function () {
             var con = model.byWin[key];
             closingTree = w;
             if (con && model.focused === con && con.parent) closingNext[key] = model.nextFocused(con);
-            // i3's drain_drag_events: a window unmapping on the focused workspace aborts a drag (§9 G7).
+            // i3 4.24's drain_drag_events: a window unmapping on the focused workspace ends a drag at
+            // once (DRAG_ABORT, drag.c:77-87), and it is no revert: the drop or the resize happens
+            // where the pointer last was, unless the dragged window or its target is the one
+            // going (tiling_drag.c:325 con_exists, resize.c:274) (§9 G7, Z7).
             if (drag && con && focusedWs() === Tree.wsOf(con)) {
                 callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel");
-                endDrag("cancelled: " + shortCaption(w) + " closed on the focused workspace");
+                endDragAtClose(con, shortCaption(w));
             }
         }));
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
@@ -1842,23 +1845,46 @@ var KI3 = (function () {
             if (model.byWin[f[1]] !== con || con.type !== "con") { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
             if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
-            var from = Tree.wsOf(con), plan = drag.plan, to = plan && Tree.wsOf(plan.target);
-            // A centre drop onto a window swaps the two, Shift or not (Paul, 2026-10-26: i3 moves
-            // it after the target, which without tabs is the same as the side drop; "I love swap").
-            // Onto an empty workspace it is a move: nothing there to swap with.
-            var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws";
-            var dropped = model.drop(con, plan, swap);
-            endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (swap ? " (swap)" : "") +
-                              " at " + x + "," + y : "no drop at " + x + "," + y);
-            if (dropped) {
-                schedule(from);
-                if (to && to !== from) schedule(to);
-                schedule(Tree.wsOf(con));
-                wantFocus();
-            }
+            dropOn(drag.plan, " at " + x + "," + y);
             return;
         }
         endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    // The drop, by plan (the drag's last, or the release's).
+    function dropOn(plan, where) {
+        var con = drag.con, from = Tree.wsOf(con), to = plan && Tree.wsOf(plan.target);
+        // A centre drop onto a window swaps the two, Shift or not (Paul, 2026-10-26: i3 moves
+        // it after the target, which without tabs is the same as the side drop; "I love swap").
+        // Onto an empty workspace it is a move: nothing there to swap with.
+        var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws";
+        var dropped = model.drop(con, plan, swap);
+        endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (swap ? " (swap)" : "") +
+                          where : "no drop" + where);
+        if (dropped) {
+            schedule(from);
+            if (to && to !== from) schedule(to);
+            schedule(Tree.wsOf(con));
+            wantFocus();
+        }
+    }
+    // A window closing on the focused workspace mid-drag (closed, above): the drag ends now and
+    // does what it would at the release, from where the pointer last was.
+    function endDragAtClose(closing, caption) {
+        var why = " (" + caption + " closed on the focused workspace)";
+        if (drag.resize) {
+            var rz = drag.resize, part = rz.part;
+            var now = model.resizeParticipants(drag.con, rz.dir);
+            if (drag.lastPos === undefined || closing === part.first || closing === part.second || closing === drag.con ||
+                !now || now.first !== part.first || now.second !== part.second) { endDrag("ended, no resize" + why); return; }
+            var px = Math.round(drag.lastPos - rz.start), ws = Tree.wsOf(part.first);
+            var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
+            endDrag((done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px" : "no resize") + why);
+            if (done) schedule(ws);
+            return;
+        }
+        var plan = drag.plan;
+        if (closing === drag.con || !plan || plan.target === closing || drag.con.type !== "con") { endDrag("ended, no drop" + why); return; }
+        dropOn(plan, why);
     }
     function endDrag(why) {
         var tag = drag.resize ? "RESIZE " : "DRAG ";
@@ -1977,6 +2003,7 @@ var KI3 = (function () {
         if (phase === "resize" || phase === "drop") {
             if (model.byWin[f[1]] !== drag.con) { endDrag("its window is gone"); return; }
             var pos = resizePos(rz, x, y);
+            drag.lastPos = pos;
             if (phase === "resize") { indicate(resizeBar(rz, pos)); return; }
             var px = Math.round(pos - rz.start), part = rz.part, ws = Tree.wsOf(part.first);
             // The tree changed under the drag (a participant closed, a window opened between):
