@@ -47,7 +47,7 @@ rather than another guess. 69 did (2026-10-28: "the helper fitted French" red in
 alone), so it now runs alone (~29 s on the alone tail; green in its first full `make test` that way,
 2026-10-28, eighth session: 60/60, 213 s; ninth session: 57/60, the three red (30, 70, 73)
 stale expectations from stages 3 and 9, fixed in `1801897`, so 70's red was no flake; tenth
-session: 60/60, 222 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
+session: 60/60, 222 s; eleventh: green, 228 s); 39, 57, 70, 80 still watched. 53-hold's `--notify` kill switch: closed unless it comes back.
 
 **47. The refinement pass** (Paul, 2026-10-28, eleventh session): the redo's method again. The
 foundations rewritten from four agents' review and a second round (531b86b, a3951fb; Paul's role
@@ -60,6 +60,12 @@ help beside each control, **held**: wrapping a form control moves its label off 
 path fails; a design and one diagnostic run of 37 (Paul's go) first. (b) **Float to tile**, Paul's
 planned feature (Meta+Shift+drag a floating window onto a tile tiles it, G5's other half): a spec
 when he wants it. (c) Paul's "it works" on stages 1-7. Next: (c), then (a) when Paul wants it.
+
+**48. A fullscreen window kept inside its tile after a reload** (Paul's capture
+`2026-10-28_200649.316`, eleventh session, note "reloads still causing full screen to stay within the
+tiled window": pressed after one of the session's reloads of kwin-i3, with a fullscreen Firefox on
+DP-6). "Still": seen before. Next: `tools/capture-read` at the start of a session, a diagnosis for
+Paul (i3 first; no fix without his go); the capture stays until then.
 
 **41. A wallpaper flash again: with Firefox, and with just two terminals** (Paul's captures
 `2026-10-27_233113.474`, note "Another wallpaper flash involving ff", not yet read; and
