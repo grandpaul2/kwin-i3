@@ -83,12 +83,12 @@ laptop: the script, plugins, settings page and widget by the README, `make take-
 works: tiling and the frame, popups, the widget, touchpad scrolling and Overview, lid, suspend.
 Found: (1) **Meta+N with KWin's Slide** (Plasma's default desktop-switch animation; the desktop has
 animations off): the frames stay in their old spots while the desktops slide; i3 has no animation
-(`workspace_show`). (2) **A small flash when Firefox closes**, not terminals: Firefox's buffer or
-the hold, unknown; a capture at the moment. (3) **Frames "not following the mouse"**: Paul's
+(`workspace_show`). (3) **Frames "not following the mouse"**: Paul's
 capture 2026-10-29 16:09, the laptop is click to focus, so the focus (and the frame) moves only
 on a click; correct, and item 52's question. (4) Frames seen **flashing**, not yet captured.
-Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Next: (1) a
-diagnosis; (2) and (4) captures at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
+A small flash as Firefox closes is the hold's accepted trade (200 ms, Paul's decision), not
+carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Next:
+(1) a diagnosis; (4) a capture at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
 docking, lid-with-monitor and wallpaper-flash checks still to do.
 
 **52. Panel popups on a fresh install: the popup grace's premise** (Paul, 2026-10-29, at the
