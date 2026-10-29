@@ -103,7 +103,11 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    transaction. Not "the next event-loop turn": KWin reports the close (`Window::closed`) before
    kwin-i3 hears of it (`windowRemoved`, then its own zero-delay timer, kwin.js `schedule`), so a
    zero-delay drop would usually fire before kwin-i3 rearranges. Cost: closing the last window on
-   a screen leaves it visible up to 20 ms longer (under 5 frames at 240 Hz).
+   a screen leaves it visible up to 20 ms longer (under 5 frames at 240 Hz). A kept window (pending
+   or held) is **grabbed** (`WindowClosedGrabRole`), so a close animation leaves it alone: Plasma's
+   default Scale effect shrank and darkened it while held (found on the laptop, 2026-10-29), and
+   Scale cancels a running one when another effect grabs (`scale/.../main.js:133`, `:165`). So a
+   closing tiling window gets no close animation, as in i3; a floating one keeps it.
 5. **Paint while held.** The effect subclasses `CrossFadeEffect`. For a held window,
    `prePaintWindow` sets `data.setTransformed()`, so KWin neither clips the window to its current
    bounds nor culls what lies under it (workspacescene.cpp:737). `paintWindow` sets cross-fade
@@ -121,6 +125,10 @@ and 6 get the same result from timing alone, with no change to kwin-i3.)
    `aboutToChange`), it **joins the transaction without a snapshot** and stays hidden until the
    release, which then shows it in its tile; if its first `aboutToChange` comes without a tile
    (kwin-i3 floated and placed it), or no tile comes within **20 ms**, it is shown where it is.
+   A joined window still unsettled at the release (a timeout) **stays hidden until it settles**, at
+   most 1 s more: shown then, it would be drawn at KWin's first placement, floating with a title
+   bar, since KWin moves it only with the app's new frame (found on the laptop, 2026-10-29, a
+   0.8 s client). Its tile shows wallpaper meanwhile, as i3's frame shows before the app draws.
    Dialogs, modal and transient windows are never hidden (on Wayland a transient is still
    "Normal" by KWin's type, so the effect checks `isDialog`, `isModal` and `transientFor`). Without this, it would flash at its default
    spot for a frame. Cost: a window kwin-i3 floats appears up to 20 ms later. This applies whether

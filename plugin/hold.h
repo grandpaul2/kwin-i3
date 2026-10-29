@@ -115,6 +115,7 @@ private:
         QElapsedTimer since;
         int limitMs = 0;                                 // shown after this long without a tile
         bool named = false;                              // kwin-i3 moves it (HoldNew): other moves keep it hidden
+        bool landing = false;                            // tiled, released, its app still drawing the tile
     };
 
     void loadConfig();
@@ -122,6 +123,7 @@ private:
     void watchWindow(KWin::EffectWindow *w);
     void onAdded(KWin::EffectWindow *w);
     void onClosed(KWin::EffectWindow *w);
+    void grabClose(KWin::EffectWindow *w);
     void onDeleted(KWin::EffectWindow *w);
     void onAboutToChange(KWin::EffectWindow *w);
 

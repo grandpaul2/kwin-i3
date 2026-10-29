@@ -588,10 +588,14 @@ window moving within 3 ms joins. When every held window's frame geometry equals 
 switch at once in one frame; after `holdTimeoutMs` (default 200, Sway's `txn_timeout_ms`) they switch regardless. A held
 window that is no longer visible counts as settled.
 
-- **A tiling window closing** stays drawn: inside an open hold it joins it; otherwise it waits 20 ms
-  for a neighbour to start moving, then goes.
+- **A tiling window closing** stays drawn as it was: inside an open hold it joins it; otherwise it
+  waits 20 ms for a neighbour to start moving, then goes. The effect grabs its close, so no close
+  animation (Plasma's Scale) shrinks it meanwhile, nor after: as i3, a closed tiling window just goes.
 - **A new normal window** (not a dialog, modal or transient) is hidden for up to 20 ms; if a tile
-  places it, it joins the hold and appears at its place.
+  places it, it joins the hold and appears at its place. If its app hasn't drawn the tile when the
+  hold releases (a timeout), it stays hidden until it has, up to 1 s more, its tile empty meanwhile:
+  shown sooner, KWin would draw it where it first put it, floating (i3 maps a new window already in
+  its tile, `x.c:1107` then `:1156`).
 - Direct scan-out is blocked while holding.
 - `holdEnabled` off stops only the hold and the hiding; the ring, corners and drop indicator stay.
 

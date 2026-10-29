@@ -63,7 +63,8 @@ struct BlendState {
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
-static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
+static const int s_quietMs = 3;
+static const int s_landMs = 1000;  // a new window still drawing its tile at the release: hidden this long at most    // kwin-i3's second pass comes microseconds after the first
 // Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
 // scales and rounds a window's radius per output (itemrenderer_opengl.cpp:190).
 static const qreal s_radius = 5.0;
@@ -266,6 +267,7 @@ void Hold::onClosed(EffectWindow *w)
         if (!it->closed) {
             it->closed = true;             // keeps its snapshot; counts as settled
             w->refWindow();
+            grabClose(w);
             note(QStringLiteral("close %1: kept, held already").arg(name(w)));
         }
         queueCheck();
@@ -275,6 +277,7 @@ void Hold::onClosed(EffectWindow *w)
         return;
     }
     w->refWindow();
+    grabClose(w);
     if (m_open) {
         Held h;
         h.closed = true;
@@ -296,6 +299,17 @@ void Hold::onClosed(EffectWindow *w)
             qp->unrefWindow();
         }
     });
+}
+
+// Kept as it was, not shrunk and faded by a close animation (Scale, Plasma's default) while its
+// neighbours grow: an effect that grabs the close has the others leave it alone, and Scale cancels
+// one already running (scale/package/contents/code/main.js:133, :165 in 6.7.5). One another
+// effect already grabbed stays that effect's.
+void Hold::grabClose(EffectWindow *w)
+{
+    if (!w->data(WindowClosedGrabRole).value<void *>()) {
+        w->setData(WindowClosedGrabRole, QVariant::fromValue(static_cast<void *>(this)));
+    }
 }
 
 void Hold::onDeleted(EffectWindow *w)
@@ -441,7 +455,8 @@ void Hold::armHidden(EffectWindow *w, int ms)
             armHidden(qp, left);
             return;
         }
-        note(QStringLiteral("new %1: shown, no tile in %2 ms").arg(name(qp)).arg(it->limitMs));
+        note(it->landing ? QStringLiteral("new %1: shown, not landed in %2 ms").arg(name(qp)).arg(it->limitMs)
+                         : QStringLiteral("new %1: shown, no tile in %2 ms").arg(name(qp)).arg(it->limitMs));
         unhide(qp);
     });
 }
@@ -539,6 +554,13 @@ void Hold::queueCheck()
 // window's aboutToChange): queued, after whatever caused it has returned.
 void Hold::check()
 {
+    const auto hidden = m_hidden.keys();
+    for (EffectWindow *w : hidden) {
+        if (m_hidden[w].landing && settled(w)) {
+            note(QStringLiteral("new %1: landed in its tile").arg(name(w)));
+            unhide(w);
+        }
+    }
     if (!m_open) {
         return;
     }
@@ -603,10 +625,23 @@ void Hold::release(bool timedOut)
             unredirect(it.key());
         }
     }
+    // A new window shown before its app has drawn its tile would be drawn where KWin first put it
+    // (floating, title bar and all: KWin moves it only with the new frame). i3 shows a new window
+    // in its tile from the start (x.c:1107, then the map at :1156); one still drawing stays hidden
+    // until it lands, its tile empty meanwhile, as i3's frame is before the app draws.
     for (auto it = held.cbegin(); it != held.cend(); ++it) {
-        if (it->joined) {
-            unhide(it.key());
+        if (!it->joined) {
+            continue;
         }
+        auto hidden = m_hidden.find(it.key());
+        if (hidden == m_hidden.end() || settled(it.key())) {
+            unhide(it.key());
+            continue;
+        }
+        hidden->landing = true;
+        hidden->limitMs = int(hidden->since.elapsed()) + s_landMs;
+        note(QStringLiteral("new %1: still drawing its tile, hidden up to %2 ms more").arg(name(it.key())).arg(s_landMs));
+        armHidden(it.key(), s_landMs);
     }
     // Visible refs before the closed windows' refs: unrefWindow can delete the window and its
     // item, and a visible ref dying later would touch it (a window sent away, then closed, in
