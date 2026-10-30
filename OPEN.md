@@ -9,8 +9,7 @@ Last reconciled: **2026-10-30, twentieth session** (closed: 62, the desktop port
 by a default rule; 54(a) and (b), the window menu's flags put back at once and focus follows mouse
 across outputs under Show Desktop; 55, a title bar that lands late is taken; 53, KWin's Slide ending
 Show Desktop, upstream in `LATER.md`). The desktop runs main (886732b's script; later commits docs
-only). The laptop's checkout is at 038959d: none of today's fixes; `git pull` and the reload there
-with Paul's go, before his use in item 50.
+only). The laptop runs main too (pulled and reloaded 2026-10-30, twenty-first session, Paul's go).
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -92,9 +91,10 @@ Manager is installed but not enabled: SDDM stays until PLM has been seen to reac
 enables no service on install). 6.8 findings, all fixed (main 8dec0da): kwini3hold's paint hooks
 return bool in 6.8 (it didn't compile); ScreenShot2 sends RGBX8888 (`shot.py` refused it: 11 of
 13 reds); `GLShader::setUniform(QColor)` premultiplies (the drop indicator at a quarter). The
-suite then: green but 86 and 53, item 61. Next: Paul signs in, `make plugin-install` and
-`make kcm-install` there (his go, 2026-10-29), his use with Meta+Shift+B; then switching SDDM to
-Plasma Login Manager, with his go.
+suite then: green but 86 and 53, item 61. Installed there the same night (the plugins and the
+settings page, 6.8 builds; Meta+Shift+B bound); main pulled and reloaded 2026-10-30. Next: Paul's
+use with Meta+Shift+B, its captures diagnosed from the desktop; then switching SDDM to Plasma
+Login Manager, with his go.
 
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
