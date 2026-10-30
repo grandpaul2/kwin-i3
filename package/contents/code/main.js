@@ -2031,6 +2031,7 @@ var KI3 = (function () {
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
+    var moved = [];           // the tiles setSizes changed in its latest pass, for setSizesStable's warning
     var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
     // Apply model focus after the next reconcile; from: the monitor a key action moved focus
     // from, so the pointer follows to the new one (i3 warps only from commands: x_set_warp_to in
@@ -2429,10 +2430,20 @@ var KI3 = (function () {
         // exactly KWin's: CustomTile::setRelativeGeometry forces a changed edge with no tile
         // beyond it to the screen's border (0 or 1), and it compares exactly.
         var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };
-        for (var pass = 0; pass < 4; pass++)
+        for (var pass = 0; pass < 4; pass++) {
+            moved = [];
             if (!setSizes(root, p, r)) return;
-        log("WARN sizes did not settle after 4 passes");
+        }
+        // Which tiles were still moving on the last pass, and what KWin kept of what was asked:
+        // the cause, the next time it happens (Paul's capture 2026-10-29; not reproduced in the test KWin).
+        log("WARN sizes did not settle after 4 passes: " + moved.join("; "));
     }
+
+    function tileNames(t) {
+        if (!t.tiles.length) return t.windows.map(shortCaption).join("+") || "empty";
+        return (t.layoutDirection === 2 ? "V[" : "H[") + t.tiles.map(tileNames).join(" ") + "]";
+    }
+    function relLog(r) { return [r.x, r.y, r.width, r.height].map(function (v) { return v.toFixed(5); }).join(","); }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
     // decoration, when it has one (Breeze's title bar and borders). KeePassXC, minimum 800, needs an 802 px tile
@@ -2507,6 +2518,7 @@ var KI3 = (function () {
                 Math.abs(g.width - r.width) > 1e-4 || Math.abs(g.height - r.height) > 1e-4) {
                 child.relativeGeometry = r;
                 changed = true;
+                moved.push(tileNames(child) + " asked " + relLog(r) + " kept " + relLog(child.relativeGeometry));
             }
             if (setSizes(child, k.p, r)) changed = true;
         }
