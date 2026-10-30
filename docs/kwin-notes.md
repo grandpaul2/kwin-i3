@@ -196,6 +196,18 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - The helper sees modifier releases via `InputRedirection::keyboardModifiersChanged` (`input.h:273`).
 - kconfig_compiler: a newline inside a kcfg `<default>` isn't safe.
 
+## KWin 6.8 (found on Arch's 6.8.2, 2026-10-29)
+
+- `Effect::paintScreen`, `paintWindow` and `drawWindow` return `bool` (`[[nodiscard]]`): false
+  when painting failed (a GPU reset), and the effect then stops at once (`effect/effect.h`).
+  No header macro gives KWin's version; CMake's `find_package(KWin)` sets `KWin_VERSION`.
+- `GLShader::setUniform(QColor)` premultiplies RGB by alpha (`glshader.cpp:465`; 6.7.5 passed it
+  as is, `:478`): blend a translucent uniform colour with `GL_ONE`, not `GL_SRC_ALPHA`.
+- ScreenShot2 sends QImage format 16 (RGBX8888, bytes R,G,B,X) where 6.7 sent ARGB32 (B,G,R,A),
+  and no longer checks the caller's permission in the D-Bus interface itself.
+- Plasma's X11 session is gone. On Arch, `plasma-meta` pulls in Plasma Login Manager but enables
+  no service: SDDM stays until switched by hand.
+
 ## Plasma
 
 - plasmashell's panel configuration view is a layer-shell surface in scope `dock`; the desktop view
