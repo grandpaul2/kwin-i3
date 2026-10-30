@@ -1,0 +1,17 @@
+# Plasma 6.8's KWin for the test KWin on a desktop whose distribution doesn't have it yet
+# (OPEN.md item 67; tools/box.sh builds and runs it). Arch pinned to one day of the Arch Linux
+# Archive, so a rebuild gets the same KWin (6.8.2, as on the laptop). kwin_wayland's file
+# capability (cap_sys_nice, realtime scheduling) is removed: rootless podman refuses to exec it.
+FROM docker.io/library/archlinux:latest
+ARG ARCHIVE_DATE=2026/10/30
+RUN echo "Server = https://archive.archlinux.org/repos/${ARCHIVE_DATE}/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist \
+ && pacman -Syyuu --noconfirm --disable-download-timeout \
+      base-devel cmake extra-cmake-modules pkgconf vulkan-headers \
+      kwin kglobalacceld kde-cli-tools kconfig breeze plasma-integration \
+      mesa vulkan-swrast xorg-xwayland dbus procps-ng \
+      libei python python-gobject gtk4 python-dbus python-xlib python-pillow nodejs \
+      alacritty noto-fonts ttf-dejavu \
+ && pacman -Scc --noconfirm \
+ && dbus-uuidgen --ensure \
+ && setcap -r /usr/bin/kwin_wayland \
+ && mkdir -m 1777 /work

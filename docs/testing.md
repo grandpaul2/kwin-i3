@@ -80,3 +80,12 @@ In `LATER.md`, "Reliability": fault runs (`make mutate-live`, `make mutate`, fau
 fuzz campaign (`make fuzz`), `make live-stock`. When they come back, each is split into runs of 5
 minutes or less. `tests/live/mutate.py` keeps the faults already written (86-tiling-drag's 59) for
 then.
+
+## P5. Another KWin (`tools/box.sh`, `OPEN.md` item 67)
+
+A question about KWin 6.8 (a beta user's bug there, a red seen only on 6.8): the scenarios P1 or
+P2 would run, in an Arch container with KWin 6.8.2 on the desktop (`tools/box.sh build` once, then
+`tools/box.sh run bash -c 'make tools plugin && tests/live/run.sh NN-name.sh'`, in the
+background; `KI3_BOX_OUT=<dir>` keeps a red's output). It copies the checkout and writes nothing
+to it. It renders on the AMD iGPU through Mesa, so its pixels are AMD's, as the laptop's are.
+Nothing in it reaches a live desktop: a 6.8 fix still goes live by P3.

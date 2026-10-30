@@ -243,6 +243,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   and no longer checks the caller's permission in the D-Bus interface itself.
 - Plasma's X11 session is gone. On Arch, `plasma-meta` pulls in Plasma Login Manager but enables
   no service: SDDM stays until switched by hand.
+- `kwin_wayland --virtual` needs a GPU render node in 6.8: with none it logs "Found no render
+  device!" and runs with compositing off (supportInformation: "Compositing is not active"), and
+  no window is ever resized to its tile, only placed (a container with no `/dev/dri`, 2026-10-30:
+  10-tiling 18 of 33 red). Arch's `kwin_wayland` carries `cap_sys_nice=ep`, which rootless podman
+  won't exec. Both handled in `tools/box.sh`.
 
 ## Plasma
 

@@ -35,16 +35,13 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 Suggested order: 67, then 61 and 56, then 4 with 51(a), then 22, then 68.
 
-**67. Plasma 6.8 and PikaOS in a container on the desktop** (Paul's go, 2026-10-30). Fedora 44
-has KWin 6.7.5 only (6.8 comes after Fedora 45's release, `docs/records/laptop-test-bed.md`), and
-the test KWin runs whatever `kwin_wayland` is installed. A podman image of Arch (KWin 6.8) runs
-`make plugin` and `tools/testkwin.sh` scenarios headless inside it: 6.8 builds and behaviour on
-this fast machine, item 61 among them. Software rendering (llvmpipe) unless the host's NVIDIA
-libraries are mounted at the same version: logic tests hold, pixel checks may differ from a GPU
-run. A PikaOS image, the same way: whether it ships KWin's headers at its own version, and the
-Debian package names for the README. What no container gives: NVIDIA on 6.8 on a real output
-(6.8 turned on triple buffering for NVIDIA), only a friend's session. Next: the smallest version,
-one script under `tools/` that builds the Arch image and runs one named scenario in it.
+**67. PikaOS in a container on the desktop** (Paul's go, 2026-10-30). The Arch half is done:
+`tools/box.sh` (`docs/testing.md` P5) runs the test KWin on KWin 6.8.2 here, on the AMD iGPU (KWin
+6.8's virtual backend needs a render node, `docs/kwin-notes.md`); 10-tiling and 86-tiling-drag
+green in it with fresh plugins (2026-10-30, 27 s). Left: a PikaOS image the same way, for whether
+it ships KWin's headers at its own version and the Debian package names for the README. What no
+container gives: NVIDIA on 6.8 on a real output (6.8 turned on triple buffering for NVIDIA), only
+a friend's session. Next: `tools/box/Containerfile.pika`, then `make plugin` in it.
 
 **61. Two intermittent reds on KWin 6.8** (the laptop, 2026-10-29; a friend runs 6.8 now).
 (a) **86-tiling-drag**: red twice right after a plugin rebuild (21 and ~25 checks; in one, window a
@@ -53,8 +50,8 @@ seven runs in a row, alone and beside 64; green on 6.7 on both machines. (b) **5
 has landed there": c (a 0.8 s client) still black 1.2 s after the move, once; green alone after.
 Neither log was kept; `run.sh` keeps a red's output and kwin-i3's log in `tests/live/out/` since
 8195ea5. Both green on the laptop 2026-10-30, after the code review's plugin rebuild (one run
-each). Next: 86 in a loop in item 67's container after a plugin rebuild (or on the laptop), its
-log read for what removed a.
+each). Next: 86 in a loop in `tools/box.sh` (each run builds the plugins fresh), runs of 5 minutes or
+less, a red's log read for what removed a.
 
 **56. kwin-i3's notifications never reach Plasma** (found 2026-10-29). The load report
 (`behaviour.md` §13: taken keys, layouts, per-output desktops, missing plugins) is what tells a
