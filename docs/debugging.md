@@ -56,7 +56,7 @@ kept with the `OPEN.md` item that names it.
   its own proposal), or a reproduction in the test KWin read with `tools/shot.py`.
 - **What is at a point now**: not a record but a question, `tools/pointer-map` (`docs/pointer.md`).
 - **KWin's reasons**: why it activated or moved a window. Read KWin's source for the installed
-  version (CLAUDE.md, "Finding bugs"), or trace it from a helper probe in a worktree.
+  version (AGENTS.md, "Finding bugs"), or trace it from a helper probe in a worktree.
 
 ## Changing what is recorded
 

@@ -77,7 +77,7 @@ building: a behaviour the steps above decide is built as they decide it, and Pau
 the C5 precedent already decided it).
 
 This is about deciding *what* kwin-i3 does. Putting anything on Paul's desktop still needs his go
-for that change (`CLAUDE.md`, "Nothing goes live").
+for that change (`AGENTS.md`, "Nothing goes live").
 
 **The foundations stay true.** Work that changes a rule, the scope or a word edits the foundation
 doc in the same commit, as a behaviour change edits `behaviour.md`. (The redo of 2026-10-27/28
@@ -109,7 +109,7 @@ did not, and left `plan.md` contradicting what it built.)
 
 ## How it treats i3
 
-- **Copy i3 by default**, ported from i3's source, not from memory (`CLAUDE.md`): "ride i3, hard"
+- **Copy i3 by default**, ported from i3's source, not from memory (`AGENTS.md`): "ride i3, hard"
   (Paul, 2026-10-27). i3's word for anything i3 has (`docs/definitions.md`).
 - **Check i3's real behaviour before calling something a gap**: twice on 2026-10-26/27 what looked
   like a gap was i3 itself (a resize key changes a container's share against its siblings; a

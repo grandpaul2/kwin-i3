@@ -16,7 +16,7 @@ home and point there from the other. (Paul, 2026-10-27.)
 | i3's features against kwin-i3, KWin and Plasma (a study, 2026-10-25, cited as "finding N", "row X") | `i3-feature-map.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
-| how an agent works here, and how work lands (pull requests) | `../CLAUDE.md` |
+| how an agent works here, and how work lands (pull requests) | `../AGENTS.md` (`../CLAUDE.md` loads it for Claude Code) |
 | the same, short, for a person | `../CONTRIBUTING.md` |
 | what changed, by release | `../CHANGELOG.md` |
 

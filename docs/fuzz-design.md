@@ -82,7 +82,7 @@ last probe, and which invariant failed, under `tests/fuzz/out/<seed>/`. Then:
 
 Failures are grouped by invariant + first log line so 20 seeds hitting one bug are one report.
 
-**How we know it works** (CLAUDE.md: trusted once a fault turns it red): the fuzzer must find the
+**How we know it works** (AGENTS.md: trusted once a fault turns it red): the fuzzer must find the
 historical bugs it was built for. Run it against `ae6867f^` (the 1 px hole) and `c0d6183^`
 (minimum sizes) in a worktree; both must fail on I4 / I5 within the default budget. Plus
 `make mutate` style faults for I3 (overlap), I6 (lose a window), I8 (focus to a hidden desktop).

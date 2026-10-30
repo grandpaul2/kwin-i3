@@ -1017,7 +1017,7 @@ where no frame replaces them.
 
 Unloading the script runs nothing: tiles, paddings, taken borders and Keep Above stay as they
 are, and the next load adopts them (step 3; the floating set from the effect; borders sorted at
-the first answer). Paul's reload is CLAUDE.md's.
+the first answer). Paul's reload is AGENTS.md's.
 
 ### Release (Meta+Ctrl+Shift+Q)
 

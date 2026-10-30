@@ -5,7 +5,7 @@ allowed-tools: Read, Bash, Glob, Grep
 
 Starting a kwin-i3 session. Please:
 
-1. Read `OPEN.md` (and `LATER.md`'s headings: work held until the Stage ends), and the status line at the top of `README.md` (CLAUDE.md is already loaded).
+1. Read `OPEN.md` (and `LATER.md`'s headings: work held until the Stage ends), and the status line at the top of `README.md` (AGENTS.md is already loaded).
 2. Check this repo: `git fetch -q`, then `git status -sb` (uncommitted changes, ahead/behind
    `origin`), and `git worktree list` (a leftover worktree from a trace or the battery). Also the
    open pull requests: `gh pr list` (one line each: number, branch, author, the `OPEN.md` item).
@@ -19,7 +19,7 @@ Starting a kwin-i3 session. Please:
 4. **Bug captures on this machine** (if the directory exists): `ls -t ~/.local/state/kwin-i3/captures/`. Each is a Meta+Shift+B
    press, that is, something the person at this desk saw go wrong. Say how many there are and when the newest is from, and offer
    to diagnose them. Diagnosing one starts with `tools/capture-read DIR`: the timeline before the
-   press, with their note (`docs/debugging.md`). A fix needs the go (CLAUDE.md, "Nothing goes live"). Captures already
+   press, with their note (`docs/debugging.md`). A fix needs the go (AGENTS.md, "Nothing goes live"). Captures already
    worked on are deleted at the end of the session that handled them, so all of these are new,
    except those an `OPEN.md` item names as kept.
 

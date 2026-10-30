@@ -266,7 +266,7 @@ sends real input through libei; `tools/shot.py` reads pixels. A bug seen on the 
 file with `tools/capture` (the recent log and kwini3hold's events, the state, a screenshot, a
 note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, watched red, then a fix.
 A red scenario leaves its output and kwin-i3's log in `tests/live/out/`. `CONTRIBUTING.md` is how
-to start and how a change lands (pull requests); `CLAUDE.md` has the working rules in full.
+to start and how a change lands (pull requests); `AGENTS.md` has the working rules in full.
 
 Docs: `docs/README.md` is the map. `docs/philosophy.md` (what it is for), `docs/plan.md` (scope
 and decisions), `docs/behaviour.md` (what it does, exactly), the specs (`docs/records/spec-*.md`, one

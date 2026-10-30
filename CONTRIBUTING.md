@@ -2,7 +2,8 @@
 
 kwin-i3 is Paul's project: i3's window management as a KWin script for Plasma 6 on Wayland. He
 runs it as his only window manager, so a broken change breaks a real desktop. Most of the work
-here is done through Claude Code; `CLAUDE.md` is the full rulebook, for agents and people alike.
+here is done through coding agents (Claude Code and others); `AGENTS.md` is the full rulebook, for
+agents and people alike.
 This page is the short version.
 
 ## Getting set up

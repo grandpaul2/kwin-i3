@@ -19,12 +19,12 @@ change; the reload of a desktop is its owner's go.
    **Anything over a few seconds runs in the background** (Paul, 2026-10-26: "I need you available
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
-   timer from the moment it starts, `CLAUDE.md`'s "Long runs": at each firing
+   timer from the moment it starts, `AGENTS.md`'s "Long runs": at each firing
    read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset); a red scenario's output and kwin-i3's log are kept in `tests/live/out/` after the run
    and `.status`) and give Paul one line; delete the timer when it ends and
    give him the outcome. A notification or silence is not a check.
 3. **A case not covered here: ask Paul** before running anything for it.
-4. **Paul's "it works" ends it** (CLAUDE.md): drop what's left, and don't chase him for results.
+4. **Paul's "it works" ends it** (AGENTS.md): drop what's left, and don't chase him for results.
 5. **No new test without Paul's go, and it must be super justified** (Paul, 2026-10-26: "if you
    give an agent a handle, it will grab it"). A new test is any new scenario, check, unit test,
    fault, probe or test tool. Before writing one, tell Paul in a few lines what catastrophic
@@ -66,7 +66,7 @@ then the fix and P1. A check for the bug only under rule 5.
 3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
    (`# timing: alone`), as 69 did (2026-10-28), not another guessed fix. Red: report
    to Paul, don't fix it.
-4. Paul's go to merge, then the desktop owner's go to reload (CLAUDE.md, "Nothing goes live").
+4. Paul's go to merge, then the desktop owner's go to reload (AGENTS.md, "Nothing goes live").
 
 ## P4. A probe
 

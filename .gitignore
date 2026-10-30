@@ -5,3 +5,5 @@ plugin/build/
 kcm/build/
 __pycache__/
 tests/live/out/
+CLAUDE.local.md
+.claude/settings.local.json

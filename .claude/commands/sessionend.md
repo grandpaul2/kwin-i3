@@ -10,7 +10,7 @@ repo clean and pushed, and everything still open written in `OPEN.md`.
 
 A fact about this repo that came up goes **into the repo**, where both people's agents read it: a
 KWin trap in `docs/kwin-notes.md`, a decision in its home (`docs/README.md`), a working rule in
-`CLAUDE.md`. Private memory holds only what is about the person you work with. Routine fixes need
+`AGENTS.md`. Private memory holds only what is about the person you work with. Routine fixes need
 nothing; the commit says what changed.
 
 ## 2. OPEN.md
