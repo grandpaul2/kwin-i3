@@ -6,11 +6,12 @@ allowed-tools: Read, Write, Edit, Bash
 End of a kwin-i3 session. **A wrap-up: it starts no work**, not even a short test run. Leave the
 repo clean and pushed, and everything still open written in `OPEN.md`.
 
-## 1. Memory
+## 1. What was learned
 
-If a fact about this repo came up (a KWin trap, a decision of Paul's), update
-`~/.claude/projects/-home-paul-kwin-i3/memory/` now. Routine fixes need no memory; the commit says
-what changed.
+A fact about this repo that came up goes **into the repo**, where both people's agents read it: a
+KWin trap in `docs/kwin-notes.md`, a decision in its home (`docs/README.md`), a working rule in
+`CLAUDE.md`. Private memory holds only what is about the person you work with. Routine fixes need
+nothing; the commit says what changed.
 
 ## 2. OPEN.md
 
@@ -18,8 +19,9 @@ Rewrite `OPEN.md` to the state now: done items come out, new ones go in with a n
 finding from this session (a red test, a capture, a review comment) leaves **fixed**,
 **won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
 Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
-A change that went live this session is **done** unless Paul reported a problem with it: never
-leave it waiting for his "it works" (Paul, 2026-10-28).
+A change that went live this session is **done** unless a problem was reported with it: never
+leave it waiting for Paul's "it works" (Paul, 2026-10-28). On a pull-request branch, edit only the
+item the PR is for.
 
 ## 3. Tidy
 
@@ -34,14 +36,16 @@ leave it waiting for his "it works" (Paul, 2026-10-28).
 
 ## 4. The live desktop
 
-If `package/` differs from what KWin last loaded, say so. Reload only on Paul's go.
+If `package/` differs from what KWin last loaded, say so. Reload only on the desktop owner's go.
 
 ## 5. Commit and push
 
-- This repo: commit what's left in related groups, with the *why*, and push.
-- `~/.dotfiles`, if this session touched it (launchers, setup.sh, health-check, README, `hotkeys`):
+- This repo: commit what's left in related groups, with the *why*, and push (on main in Paul's
+  sessions; on its branch in a pull request's, rebased on `main`, and say whether the PR is ready
+  for review).
+- **On Paul's machines only** (`~/.dotfiles` exists): `~/.dotfiles`, if this session touched it (launchers, setup.sh, health-check, README, `hotkeys`):
   commit and push there too. Its `CLAUDE.md` rules apply to those files.
-- Back up this project's memories into the dotfiles repo now. Its own `/sessionend` does it too,
+- On Paul's machines, back up this project's memories into the dotfiles repo now. Its own `/sessionend` does it too,
   but Paul may work only here for days. Copy live to repo only (never the reverse), mirroring
   deletions, and skip an empty dir:
 
@@ -60,4 +64,4 @@ If `package/` differs from what KWin last loaded, say so. Reload only on Paul's 
 ## 6. Report
 
 A few lines: what changed (with commit hashes), whether the desktop runs what is committed, what's in
-`OPEN.md`, and anything waiting on Paul. Then confirm both repos are clean and pushed.
+`OPEN.md`, any pull request opened or waiting, and anything waiting on Paul. Then confirm both repos are clean and pushed.

@@ -11,11 +11,13 @@ home and point there from the other. (Paul, 2026-10-27.)
 | what the code does today, exactly, with its known limits; each difference from i3 (its ≠ rows are the list) | `behaviour.md` |
 | how to test, and which runs are the only runs | `testing.md` |
 | how to read a bug capture | `debugging.md` |
+| what KWin and Plasma actually do where they surprised us (the traps, from source and probes) | `kwin-notes.md` |
 | how the settings page looks and reads | `style-settings-page.md` |
 | i3's features against kwin-i3, KWin and Plasma (a study, 2026-10-25, cited as "finding N", "row X") | `i3-feature-map.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
-| how an agent works here | `../CLAUDE.md` |
+| how an agent works here, and how work lands (pull requests) | `../CLAUDE.md` |
+| the same, short, for a person | `../CONTRIBUTING.md` |
 | what changed, by release | `../CHANGELOG.md` |
 
 ## Standing docs: kept true
@@ -31,6 +33,8 @@ Edited in place whenever what they describe changes, in the same commit as the c
 - **`behaviour.md`**: the behaviour as built, from the code. Where a spec disagrees, the code
   decides and this page follows it.
 - **`testing.md`**, **`debugging.md`**, **`style-settings-page.md`**: procedures.
+- **`kwin-notes.md`**: KWin's behaviour as found, by topic; a new trap gets a line, a wrong one is
+  corrected in place.
 - **`fuzz-design.md`**: the fuzzer and the capture key (tools still in use).
 - **`input-tests-design.md`**: the real-input live tests (libei; scenarios 50, 51).
 - **`i3-feature-map.md`**: dated, but its row ids are cited across the docs; a row that goes stale
