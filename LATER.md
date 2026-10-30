@@ -74,8 +74,10 @@ assumptions), then one campaign per configuration.
 pixels (watched red with the effect unloaded unseen); the effect unloaded and loaded; a desktop
 added, removed or moved; the unbound keys; Meta+Shift+N's id (its moves had invoked nothing since
 2026-10-24). I4 already allowed for the frame. Still missing: a workspace of Plasma windows and
-`frameOnFloating` (settings, so a per-seed configuration, with the ones above). Two smoke seeds of
-60 s ran, one clean, one red on I11 (`OPEN.md`); no campaign yet.
+`frameOnFloating` (settings, so a per-seed configuration, with the ones above). Three 5-minute
+campaigns ran that night (Paul's go): the first two found two bugs (63, 64) and I11's false reds
+(shadows, sticky and cross-output windows, the resize badge, the screen lagging the dumps), the
+third 23 of 24 clean and one more bug (minimums filling a split exactly); all fixed live.
 
 **10. Window modes** (`docs/records/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
