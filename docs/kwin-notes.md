@@ -256,6 +256,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
   pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. Paul leaves it as Fedora
   ships it (2026-10-27; a keep-below workaround was declined).
+- On NVIDIA (Paul's desktop, driver with kernel suspend notifiers), waking from suspend can
+  reset the GPU: the kernel logs `nvidia-drm … Failed to register auto-value-update`, and seconds
+  later Firefox logs `[GFX1-]: Handle DeviceReset` and redraws its windows from scratch, a flash on
+  every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
+  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (2026-10-30; 1 in 8
+  resumes that boot).
 
 ## The test KWin (`tools/testkwin.sh`)
 
