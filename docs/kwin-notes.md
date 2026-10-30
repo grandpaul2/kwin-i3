@@ -42,8 +42,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   it to 0 or 1. Resizing a layout rewrites its children's sides, and the stored doubles differ
   in the last digit (probed 2026-10-30, `V[a b H[c d e]]` after Move Up and a new window: c and d's
   bottoms 1.0, e's 0.9999982222222221 against the root's ...222), so under a root inset by the
-  hair some children land at exactly 1 and get the full padding. No write takes them off;
-  kwin-i3 judges the edge by the root instead (`windowRect`, `pinned`).
+  hair some children land at exactly 1 and get the full padding. No write takes them off, and a
+  rebuild pins them again: kwin-i3 judges the edge by the root instead (`windowRect`, `pinned`),
+  `edgesIntact` counts such a side as intact (it rebuilt the tree on every pass, a focus change
+  too), and KWin's own request for the short rect lands after the pass, so the window is put
+  back when its frame changes (`refitOnFrameChange`).
 - App minimum sizes exclude the decoration.
 
 ## Windows and Wayland clients (`window.cpp`, `xdgshellwindow.cpp`)

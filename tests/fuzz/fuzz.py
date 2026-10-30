@@ -261,16 +261,31 @@ def frame_pixels(k, d, o, tiled, wins):
     """I11: each tiled window's frame is drawn, in its focus class, at the middle of each side of
     its tile's padding (tile minus want; corners left out, they may be rounded). A point under a
     floating window or a dialog is skipped: the frame is below it."""
+    # A window on all desktops (sticky) has none listed: it covers every desktop.
+    covers = [w["frame"] for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
+              and not w["minimized"] and w["caption"] != "kwin-i3 gap"
+              and (not w["desktops"] or set(w["desktops"]) & {o["shows"]})]
+    # The settle is the dumps'; the screen can lag them (the hold's old picture, up to its 200 ms
+    # timeout; a desktop switch's slide): a frame wrong in one capture is captured again 0.6 s on.
+    bad = frame_check(capture(o), o, tiled, covers)
+    if bad:
+        time.sleep(0.6)
+        bad = frame_check(capture(o), o, tiled, covers)
+    return bad
+
+
+def capture(o):
     import shot
+    from PIL import Image
     path = os.path.join(TMP, "fz-%d.png" % os.getpid())
     try:
         shot.capture(o["name"], path)
     except Exception as e:
         raise Harness("screenshot failed: %s" % e)
-    from PIL import Image
-    img = Image.open(path).convert("RGB")
-    covers = [w["frame"] for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
-              and not w["minimized"] and w["caption"] != "kwin-i3 gap" and set(w["desktops"]) & {o["shows"]}]
+    return Image.open(path).convert("RGB")
+
+
+def frame_check(img, o, tiled, covers):
     bad = []
     for w in tiled:
         t, a = w["tile"], w.get("want")

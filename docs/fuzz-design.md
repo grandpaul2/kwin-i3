@@ -72,7 +72,10 @@ latest `TREE` line of each workspace:
 - **I11 frame drawn** (2026-10-30): with the effect loaded, a screenshot of each output (`tools/shot.py`)
   has each tiled window's frame in its focus class at the middle of each side of its tile's padding:
   the focused colour, or the split indicator on the right and bottom, for the active window; the
-  unfocused colour for the rest. Points under a floating window or a dialog are skipped.
+  unfocused colour for the rest. Points under a floating window or a dialog (a sticky one too,
+  whose desktop list is empty) are skipped. A capture that fails is taken again 0.6 s on: the
+  settle is the dumps', and the screen can lag them (the hold's old picture, a desktop's slide;
+  the first campaign's seeds 3 and 8, green on the second look).
 
 Fullscreen windows are excluded from I3/I4 for their output; a "tiled" window is one TREE names
 without `~`.

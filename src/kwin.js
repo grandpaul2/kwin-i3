@@ -424,11 +424,16 @@ var KI3 = (function () {
         if (!t.tiles.length) return true;
         var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
         var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
-        var eq = function (a, b) { return Math.abs(a - b) < 1e-7; };   // below the hair (1e-6)
+        // Below the hair (1e-6); and a side KWin pinned to the border where the layout's side is
+        // only the hair is intact: no gap is lost there, windowRect gives it half the padding, and
+        // a rebuild pins it again (OPEN 63: every pass rebuilt the tree, a focus change too).
+        var eq = function (a, b) {
+            return Math.abs(a - b) < 1e-7 || (a <= 0 && b > 0 && b < 1e-4) || (a >= 1 && b < 1 && b > 1 - 1e-4);
+        };
         if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
         return t.tiles.every(function (c) {
             var r = c.relativeGeometry;
-            return (h ? eq(r.y, g.y) && eq(r.height, g.height) : eq(r.x, g.x) && eq(r.width, g.width)) && edgesIntact(c);
+            return (h ? eq(r.y, g.y) && eq(r.y + r.height, g.y + g.height) : eq(r.x, g.x) && eq(r.x + r.width, g.x + g.width)) && edgesIntact(c);
         });
     }
 
@@ -448,7 +453,9 @@ var KI3 = (function () {
         return { x: a.x + l, y: a.y + tp, width: a.width - l - rt, height: a.height - tp - b };
     }
     // A side KWin pinned to the border under an inset root: KWin puts the window P/2 short there
-    // at every change of the tile, so fitToTile puts it back even inside fits()'s 1 px.
+    // at every change of the tile, so it is put back even inside fits()'s 1 px: in the pass, and
+    // when the frame changes (refitOnFrameChange), as KWin's request lands after the pass and
+    // asking in the pass for the size the client has sends nothing (moveResizeInternal).
     function pinned(t) {
         var r = t.relativeGeometry, g = rootOf(t).relativeGeometry;
         return (r.x <= 0 && g.x > 0) || (r.y <= 0 && g.y > 0) ||
@@ -681,7 +688,7 @@ var KI3 = (function () {
     // armed[key] is "pending" until the drag's reconcile, then that tile's rect, and dropped by a
     // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
     // slow client's answer to the old one only doubled the request (53-hold, a closing window).
-    var reconciling = false, armed = {}, lastFit = {};
+    var reconciling = false, armed = {}, lastFit = {}, pinFit = {};
     // Plain GTK 4 (spec-window-modes "why" 5): KWin tells a client its largest size only in a
     // configure with no size (sendRoleConfigure), in practice its first, with the title bar,
     // and GTK 4 keeps within it. borderGone holds those bounds, worked out when the border goes
@@ -720,6 +727,17 @@ var KI3 = (function () {
                 log("BOUNDS " + w.caption + ": short of its tile after the border went; bounds asked again");
                 w.frameGeometry = { x: g.x, y: g.y, width: 0, height: 0 };
                 later(5, function () { if (wins[key] && w.tile === t) w.frameGeometry = windowRect(t); });
+                return;
+            }
+        }
+        // A pinned tile's window put P/2 short by KWin's request landing after the pass (pinned()).
+        // Once per frame and rect, as lastFit: a client that keeps the short size isn't asked forever.
+        if (t && w.tile === t && !reconciling && !dragging && !w.fullScreen && !w.move && !w.resize && pinned(t)) {
+            var pf = w.frameGeometry, pr = windowRect(t), seenPin = rectKey(pf) + "|" + rectKey(pr);
+            if (!exactly(pf, pr) && pinFit[key] !== seenPin) {
+                pinFit[key] = seenPin;
+                log("REFIT " + shortCaption(w) + ": a side KWin pinned to the border");
+                w.frameGeometry = pr;
                 return;
             }
         }
@@ -1478,7 +1496,7 @@ var KI3 = (function () {
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key]; delete ringTold[key]; delete dragTold[key];
-        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
         schedule(ws);
     }
@@ -3108,7 +3126,7 @@ var KI3 = (function () {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
                 model = Tree.create({ outputNeighbour: outputNeighbour });
-                wins = {}; expected = {}; armed = {}; lastFit = {}; fsFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
+                wins = {}; expected = {}; armed = {}; lastFit = {}; pinFit = {}; fsFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
                 borderGone = {};
                 lastShown = {}; shownBefore = {};   // numbers by the old positions
                 Workspaces.reset();
