@@ -64,7 +64,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   moves both and briefly gives them two desktops. Give a modal dialog a desktop directly.
 - GTK maps a dialog child before its parent window (the dialog's `windowAdded` comes first).
 - `isHidden()` leaves Show Desktop out; `isShown()` counts it (`window.cpp:4518/4521`). A hit test
-  needs `isShown()` and `isOnCurrentActivity()`. `isOnCurrentDesktop` is per output.
+  needs `isShown()` and `isOnCurrentActivity()`. A script has neither `isShown` nor the Show Desktop
+  flag, but hears `hiddenByShowDesktopChanged` (no argument; probe 97). Show Desktop hides every
+  window but docks, desktops, their transients, unmanaged and input-method ones
+  (`breaksShowingDesktop`, `workspace.cpp:1743`), and one of those opening ends it. `isOnCurrentDesktop` is per output.
 - A window given a desktop its monitor doesn't show is hidden.
 - `Window`'s delayed-move API (`dontInteractiveMoveResize`, `start/stopDelayedInteractiveMoveResize`)
   is `protected`: a plugin can't cancel a move KWin armed, and a title-bar press arms one by a timer.

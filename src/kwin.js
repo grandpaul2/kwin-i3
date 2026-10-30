@@ -1536,6 +1536,7 @@ var KI3 = (function () {
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
         w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
+        w.hiddenByShowDesktopChanged.connect(guard("show desktop", readShowing));
         w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
         // The window menu's No Border and Keep Above (useractions.cpp, setNoBorder, setKeepAbove):
         // both flags are kwin-i3's on its windows, as i3 owns the border and ignores a request
@@ -2178,12 +2179,27 @@ var KI3 = (function () {
         log("POINTER onto " + s.name + (under ? " over " + shortCaption(under) : "") + ": the focus follows to workspace " + num);
         wantFocus();
     }
+    // Show Desktop, kept for windowUnder: it hides every window kwin-i3 manages and none it keeps
+    // out (breaksShowingDesktop, workspace.cpp:1743), yet `hidden` stays false (isHidden leaves it
+    // out). A script reads neither the window's flag nor the mode, but hears each window's
+    // hiddenByShowDesktopChanged (probe 97, 2026-10-30): each one asks KWin for the mode, and
+    // only the answer to the last question counts.
+    var desktopShowing = false, showingAsked = 0;
+    function readShowing() {
+        var n = ++showingAsked;
+        callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
+                 "showingDesktop", guard("showing desktop", function (showing) {
+            if (n === showingAsked) desktopShowing = !!showing;
+        }));
+    }
     // The topmost window under a point, on the output's visible desktop; null for the bare root.
+    // A tile Show Desktop hides is no window there: the pointer is over the desktop (§5 B1).
     function windowUnder(x, y, s) {
         var order = workspace.stackingOrder, desk = workspace.currentDesktopForScreen(s);
         for (var i = order.length - 1; i >= 0; i--) {
             var w = order[i];
             if (w.deleted || w.minimized || w.hidden || w.output !== s) continue;
+            if (desktopShowing && wins[id(w)]) continue;
             if (!w.onAllDesktops && w.desktops.indexOf(desk) < 0) continue;
             var g = w.frameGeometry;
             if (x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height) return w;
@@ -3171,6 +3187,7 @@ var KI3 = (function () {
         }));
         workspace.cursorPosChanged.connect(guard("pointer", pointerMoved));
         seedPointer();
+        readShowing();
         workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
             log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
                 (current ? deskNum(current) : "-") + (switching ? " (kwin-i3)" : " (outside)"));

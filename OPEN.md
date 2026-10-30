@@ -105,10 +105,7 @@ its stack), then the cause, a fix, and 74's wait removed.
 
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
-leaves out windows Show Desktop hides). Left, each with its next action: (b) **Focus
-follows mouse under Show Desktop**, two outputs: `windowUnder` (`kwin.js:2156`) counts a hidden
-tile, so the early return at `:2146` leaves the focus behind on an output crossing; next, a probe.
-(c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before
+leaves out windows Show Desktop hides). Left, with its next action: (c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before
 `Effects`, `tilingdrag.cpp:71`); very low risk; next, a probe. Not read: fullscreen Kickoff's
 window type and the display settings' "keep these settings?" dialog (sources not found).
 
