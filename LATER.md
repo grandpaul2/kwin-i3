@@ -70,13 +70,12 @@ kactivitymanagerd can run on a test KWin's bus, then that hole confirmed or not 
 can't run there, they are won't-fix here, with the reason), then a spec for the harness
 pieces (`KI3_OUTPUTS`, a scale per output, `run.py --no-plugins`, the invariants' two-output
 assumptions), then one campaign per configuration.
-**No campaign has run since 2026-10-24's changes** (window modes, desktop changes, the key
-cleanup) nor 2026-10-25's at the KWin seam (focus passes that spare unmanaged windows, focus
-following desktops switched outside kwin-i3, the pointer moved only by keys, the popup grace, the
-layout keys, the flight recorder's GEOM/TILE lines), and the fuzzer needs updating first: its I4
-"no hole" check must allow the frame's 1 px (the plugins load in its KWins, so the frame is on), a
-frame-pixel invariant would catch lost or stale frames, and new actions: a workspace of Plasma
-windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved.
+**The fuzzer is up to date with the code of 2026-10-30** (that session, Paul's go): I11, the frame's
+pixels (watched red with the effect unloaded unseen); the effect unloaded and loaded; a desktop
+added, removed or moved; the unbound keys; Meta+Shift+N's id (its moves had invoked nothing since
+2026-10-24). I4 already allowed for the frame. Still missing: a workspace of Plasma windows and
+`frameOnFloating` (settings, so a per-seed configuration, with the ones above). Two smoke seeds of
+60 s ran, one clean, one red on I11 (`OPEN.md`); no campaign yet.
 
 **10. Window modes** (`docs/records/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;

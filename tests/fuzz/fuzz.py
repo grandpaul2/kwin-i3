@@ -16,11 +16,21 @@ if os.environ.get("KI3_INNER") != "1" or "/tmp/dbus-" not in os.environ.get("DBU
     sys.exit("fuzz.py: only inside tools/testkwin.sh (this would drive the real desktop)")
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "tools"))     # shot.py, the screenshots I11 reads
 LOG = os.environ["KI3_LOG"]
 TMP = os.environ["KI3_TMP"]
 MAX_WINDOWS = 8
 KEYS = list(json.load(open(os.path.join(ROOT, "tests", "keys.json"))))   # never the Selftest ones
-KEYS += ["Workspace %d" % n for n in range(1, 5)] + ["Move to Workspace %d" % n for n in range(1, 5)]
+# Meta+Shift+N's action id kept its "(symbol)" (src/kwin.js registerKeys): without it, from
+# 2026-10-24 until 2026-10-30, the fuzzer's moves to a workspace invoked nothing.
+KEYS += ["Workspace %d" % n for n in range(1, 5)] + ["Move to Workspace %d (symbol)" % n for n in range(1, 5)]
+# The unbound ones, as in i3 (docs/records/spec-workspace-commands.md): sticky, back-and-forth,
+# next/prev, the outputs. A quarter of the key draws, so the bound keys keep most of them.
+UNBOUND = ["Sticky Toggle", "Workspace Back and Forth", "Move to Workspace Back and Forth"]
+UNBOUND += ["%s %s%s" % (v, d, o) for v in ("Workspace", "Move to Workspace") for d in ("Next", "Prev") for o in ("", " on Output")]
+UNBOUND += ["%s %s" % (v, d) for v in ("Focus Output", "Move to Output", "Move Workspace to Output")
+            for d in ("Left", "Right", "Up", "Down", "Next", "Primary")]
+UNBOUND += ["%s %d (no back-and-forth)" % (v, n) for v in ("Workspace", "Move to Workspace") for n in (1, 2)]
 EVDEV = {"Meta": 125, "Shift": 42, "Ctrl": 29, "Alt": 56}
 
 
@@ -41,6 +51,12 @@ class Kwin:
         self.clients = {}           # --title name -> Popen
         self.log_seen = 0           # KI3_LOG lines already checked by I1
         self.jsn = 0
+        # The frame is drawn (I11) while the plugins are there and the effect is loaded.
+        self.plugins = bool(os.environ.get("KI3_PLUGIN"))
+        self.effect = self.plugins
+        # The desktops, counted here (the dump doesn't say); kwin-i3 adds one for Meta+N past the
+        # last (34-desktops-on-demand), so the count is only a guide for the desktop action.
+        self.desktops = int(os.environ.get("KI3_DESKTOPS", "10"))
         for _ in range(50):
             if busctl("status", "net.local.kwini3.dump").returncode == 0:
                 break
@@ -188,6 +204,20 @@ class Kwin:
                 time.sleep(0.1)
             # KWin briefly puts windows on the old monitor; wait for kwin-i3's pass after it (review 10).
             time.sleep(0.5)
+        elif op == "effect":
+            # The effect gone and back (a Plasma update, the user's Desktop Effects page): kwin-i3
+            # turns the frame off and on (FRAME lines), and I11 expects it drawn again.
+            busctl("call", "org.kde.KWin", "/Effects", "org.kde.kwin.Effects", a["state"] + "Effect", "s", "kwini3hold")
+            self.effect = a["state"] == "load"
+            time.sleep(0.3)
+        elif op == "desktop":
+            # A desktop added, removed or moved outside kwin-i3 (Plasma's pager, System Settings;
+            # docs/records/spec-desktop-changes.md): the workspaces are adopted again.
+            self.js({"add": 'workspace.createDesktop(%d, "fz");',
+                     "remove": "workspace.removeDesktop(workspace.desktops[%d]);",
+                     "move": "workspace.moveDesktop(workspace.desktops[%d], %d);"}[a["do"]] % tuple(a["at"]))
+            self.desktops += {"add": 1, "remove": -1, "move": 0}[a["do"]]
+            time.sleep(0.3)
         else:
             raise Harness("unknown action " + op)
         return self.settle(pointer=op in ("point", "drag", "output"))
@@ -218,6 +248,48 @@ def overlap(a, b):
 
 
 MAX_PAD = 8     # the most a tile's padding takes off one side: the fuzzer's settings' gap and frame
+# The frame's colours at their defaults (src/settings.js; 54-frame.sh): focused, unfocused, and the
+# focused split indicator, drawn on the right or bottom side of a window alone in its split.
+ACTIVE, INACTIVE, INDICATOR = (76, 120, 153), (51, 51, 51), (61, 174, 233)
+
+
+def same(px, rgb, tol=24):
+    return all(abs(a - b) <= tol for a, b in zip(px, rgb))
+
+
+def frame_pixels(k, d, o, tiled, wins):
+    """I11: each tiled window's frame is drawn, in its focus class, at the middle of each side of
+    its tile's padding (tile minus want; corners left out, they may be rounded). A point under a
+    floating window or a dialog is skipped: the frame is below it."""
+    import shot
+    path = os.path.join(TMP, "fz-%d.png" % os.getpid())
+    try:
+        shot.capture(o["name"], path)
+    except Exception as e:
+        raise Harness("screenshot failed: %s" % e)
+    from PIL import Image
+    img = Image.open(path).convert("RGB")
+    covers = [w["frame"] for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
+              and not w["minimized"] and w["caption"] != "kwin-i3 gap" and set(w["desktops"]) & {o["shows"]}]
+    bad = []
+    for w in tiled:
+        t, a = w["tile"], w.get("want")
+        if not (t and a):
+            continue
+        sides = {"left": (t[0], a[1] + a[3] // 2) if a[0] > t[0] else None,
+                 "top": (a[0] + a[2] // 2, t[1]) if a[1] > t[1] else None,
+                 "right": (t[0] + t[2] - 1, a[1] + a[3] // 2) if a[0] + a[2] < t[0] + t[2] else None,
+                 "bottom": (a[0] + a[2] // 2, t[1] + t[3] - 1) if a[1] + a[3] < t[1] + t[3] else None}
+        for side, p in sides.items():
+            if not p or any(inside([p[0], p[1], 1, 1], c) for c in covers):
+                continue
+            px = img.getpixel((p[0] - o["geom"][0], p[1] - o["geom"][1]))
+            ok = [ACTIVE, INDICATOR] if w["active"] and side in ("right", "bottom") else [ACTIVE] if w["active"] else [INACTIVE]
+            if not any(same(px, c) for c in ok):
+                bad.append(("I11", "%s %s frame at %s is %s, not %s" % (
+                    w["caption"], side, list(p), list(px), "active" if w["active"] else "inactive")))
+                break
+    return bad
 
 
 def grown(w):
@@ -284,6 +356,8 @@ def check(k, d, prev):
             covered = sum(overlap(grown(w), o["geom"])[0] for w in tiled)
             if covered < o["geom"][2] * o["geom"][3]:
                 bad.append(("I4", "%s: tiled windows cover %d of %d px (a hole)" % (o["name"], covered, o["geom"][2] * o["geom"][3])))
+        if tiled and k.effect:
+            bad += frame_pixels(k, d, o, tiled, wins)
         for i in ws["floating"]:
             w = wins.get(i)
             # not one with a fullscreen request KWin can't apply: a known limit (plan, policies)
@@ -319,7 +393,8 @@ def generate(rng, k, d, n_open):
     choices = [("key", 40), ("point", 12), ("close", 8 if mine else 0), ("kill", 2 if alive else 0),
                ("fullscreen", 3), ("resize", 6 if tiled_vis else 0), ("move", 4 if visible else 0),
                ("selfresize", 4 if tiled_vis else 0),
-               ("output", 2), ("open", 18 if len(alive) < MAX_WINDOWS else 0)]
+               ("output", 2), ("open", 18 if len(alive) < MAX_WINDOWS else 0),
+               ("effect", 1 if k.plugins else 0), ("desktop", 2)]
     op = rng.choices([c for c, _ in choices], [w for _, w in choices])[0]
     if op == "open":
         name = "w%d" % n_open
@@ -334,7 +409,7 @@ def generate(rng, k, d, n_open):
     if op == "kill":
         return {"op": "kill", "name": rng.choice(alive)}
     if op == "key":
-        return {"op": "key", "name": rng.choice(KEYS)}
+        return {"op": "key", "name": rng.choice(UNBOUND if rng.random() < 0.25 else KEYS)}
     if op == "fullscreen":
         return {"op": "fullscreen"}
     if op == "point":
@@ -358,6 +433,14 @@ def generate(rng, k, d, n_open):
         return {"op": "drag", "button": "left", "from": c, "to": [o[0] + rng.randrange(o[2]), o[1] + rng.randrange(o[3])]}
     if op == "output":
         return {"op": "output", "state": "disable" if len(d["outputs"]) == 2 else "enable"}
+    if op == "effect":
+        return {"op": "effect", "state": "unload" if k.effect else "load"}
+    if op == "desktop":
+        n = k.desktops
+        do = rng.choice(["add"] * (n < 12) + ["remove"] * (n > 2) + ["move"])
+        at = {"add": [rng.randrange(n + 1)], "remove": [rng.randrange(n)],
+              "move": [rng.randrange(n), rng.randrange(n)]}[do]
+        return {"op": "desktop", "do": do, "at": at}
 
 
 def main():

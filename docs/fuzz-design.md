@@ -1,9 +1,10 @@
 # The fuzzer and the capture key: design and as built
 
-**Now (2026-10-27):** both built 2026-10-22. **The fuzzer is not run during the Stage** (Paul,
-2026-10-26; `LATER.md` item 36), then in runs of 5 minutes or less; before its next campaign it
-needs the updates listed in `LATER.md` item 5 (I4's allowance for the frame, a frame-pixel
-invariant, new actions). The capture key is how Paul reports bugs: `docs/debugging.md`. The design
+**Now (2026-10-30):** both built 2026-10-22. The fuzzer is held for the Stage (Paul, 2026-10-26;
+`LATER.md` item 36) and runs in runs of 5 minutes or less; Paul lifted the hold for one session on
+2026-10-30, which brought it up to date: I11 (the frame's pixels), the effect and desktop actions,
+the unbound keys, and Meta+Shift+N's action id (its moves to a workspace had invoked nothing since
+2026-10-24). I4 already allowed for the frame (its padding, below). The capture key is how Paul reports bugs: `docs/debugging.md`. The design
 below is kept for its reasons; "As built" at the end is what the code does where they differ.
 
 Paul has been finding bugs one at a time in daily use. Two tools to find them faster:
@@ -39,6 +40,8 @@ One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in para
 | move by drag | Meta+drag a tiled window onto another (with the helper loaded, as in the fuzzer's KWins, that is the tiling drag) | low |
 | a window resizing itself | a tiled test client asks for another size (`docs/records/spec-self-resize.md`) | low |
 | monitor unplug / replug | `kscreen-doctor output.Virtual-1.disable/enable` (as 40-monitors.sh) | rare |
+| the effect unloaded / loaded | `org.kde.kwin.Effects` `unloadEffect`/`loadEffect kwini3hold` (as 53-hold.sh); only with the plugins | rare |
+| a desktop added, removed or moved | `workspace.createDesktop` / `removeDesktop` / `moveDesktop` at a random index (as 65, 66) | rare |
 
 Real key presses are covered by 51-input.sh; the fuzzer uses `invokeShortcut` for speed and
 determinism. Pointer and drags must be real input (there is no other way).
@@ -66,6 +69,10 @@ latest `TREE` line of each workspace:
 - **I8 focus visible**: the active window, if any, is on a desktop its output is showing and not
   minimized.
 - **I9 floating reachable**: a floating window overlaps some output by at least 50x50 px.
+- **I11 frame drawn** (2026-10-30): with the effect loaded, a screenshot of each output (`tools/shot.py`)
+  has each tiled window's frame in its focus class at the middle of each side of its tile's padding:
+  the focused colour, or the split indicator on the right and bottom, for the active window; the
+  unfocused colour for the rest. Points under a floating window or a dialog are skipped.
 
 Fullscreen windows are excluded from I3/I4 for their output; a "tiled" window is one TREE names
 without `~`.
@@ -122,7 +129,9 @@ The review (24 findings) changed these; the code is `tests/fuzz/fuzz.py` and `te
   follows the mouse after 150 ms), caps at 10 s, and a run that never settles is a *harness*
   result, reported apart from invariant failures. So is an inject failure, after which every
   modifier and button is released.
-- **Keys** come from `tests/keys.json` plus Workspace / Move to Workspace 1–4, never from the
+- **Keys** come from `tests/keys.json` plus Workspace / Move to Workspace 1–4 (the latter's id ends
+  in "(symbol)"), and a quarter of the time from the unbound ones (sticky, back-and-forth, next/prev,
+  the output moves, no-back-and-forth), never from the
   registered list (Selftest Throw, Selftest Break Reconcile and Release are excluded). Fullscreen is
   KWin's own "Window Fullscreen", so the fullscreen exclusion is exercised. A Meta+left drag was a
   move-drag that floated the window; with the helper loaded it is now the tiling drag. A resize drag is only drawn when a tiled
