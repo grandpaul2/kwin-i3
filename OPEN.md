@@ -7,9 +7,9 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "Paul's use"; Paul, 2026-10-30): such
 an item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-30, twenty-first session** (closed: 50, the laptop as test bed,
-`docs/records/laptop-test-bed.md`; 54, (c) can't happen, `docs/kwin-notes.md`; 59, its facts in
-`docs/kwin-notes.md` "Tiles"; 61 and 56 to `LATER.md`). The desktop runs main (33dd87d's script,
+Last reconciled: **2026-10-30, twenty-second session** (the fuzzer brought up to date and run
+three times, Paul lifting the Stage's hold for the night; fixed live: 63, 64 and minimums filling a
+split exactly; `LATER.md` item 5). The desktop runs main (33dd87d's script,
 2026-10-30, the fuzzer's three fixes); the laptop runs 886732b's. The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24, late)
