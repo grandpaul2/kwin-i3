@@ -258,7 +258,7 @@ note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, wa
 `CLAUDE.md` has the working rules.
 
 Docs: `docs/README.md` is the map. `docs/philosophy.md` (what it is for), `docs/plan.md` (scope
-and decisions), `docs/behaviour.md` (what it does, exactly), the specs (`docs/spec-*.md`, one
+and decisions), `docs/behaviour.md` (what it does, exactly), the specs (`docs/records/spec-*.md`, one
 decision each) and the test tools' designs (`docs/fuzz-design.md`, `docs/input-tests-design.md`).
 
 ## License

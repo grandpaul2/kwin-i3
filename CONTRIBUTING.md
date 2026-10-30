@@ -12,8 +12,12 @@ This page is the short version.
    optional plugins and the settings page.
 2. Read `docs/philosophy.md` (what it is for), `docs/plan.md` (scope and the decisions) and
    `docs/behaviour.md` (what the code does). `docs/README.md` maps the rest.
-3. `make unit`, then `make test`: the live scenarios, each in its own headless KWin
-   (`tools/testkwin.sh`). Nothing touches your desktop.
+3. `make unit`, then one scenario to see the harness work: `make tools`, then
+   `tests/live/run.sh 10-tiling.sh` (each scenario runs in its own headless KWin,
+   `tools/testkwin.sh`; nothing touches your desktop). Its log is `$TMPDIR/tmp.*/10-tiling.sh.log`.
+   The whole suite (`make test`, several minutes) runs at most once a session, when the work needs
+   it: `docs/testing.md` is deliberately lean.
+4. `gh` installed and logged in (`gh auth login`): the session commands list pull requests with it.
 
 If you run kwin-i3 yourself, the checkout your `~/.local/share/kwin/scripts/kwin-i3` links to is what
 your KWin loads: do your work in a git worktree, never on a branch there.
@@ -22,13 +26,25 @@ your KWin loads: do your work in a git worktree, never on a branch there.
 
 - Pick an item from `OPEN.md` (work for now) or propose something new. `LATER.md` is held until
   the current development Stage ends.
-- Work on a branch in a worktree, push it, and open a pull request to `main`. One item per PR;
+- Work on a branch in a worktree (`git worktree add ../kwin-i3-<branch> -b <branch>`, then
+  `make tools` there), push it, and open a pull request to `main`
+  (`gh pr create --base main --title "OPEN.md 54: ..."`). One item per PR;
   say which `OPEN.md` item it is, and update that item (only) in the PR.
 - A behaviour change updates `docs/behaviour.md` in the same PR. Run what `docs/testing.md` P1
   lists for the change (it is deliberately lean). No new tests without Paul's agreement.
 - `package/contents/code/main.js` is built by `make build` and committed: after rebasing on
   `main`, rebuild it rather than merging it by hand.
+- A new test, a scope change or a foundation-doc change needs Paul's agreement: ask in the PR.
 - Paul reviews and merges. A merge is his go; going live on his desktop is a separate step he takes.
+
+## Which command for which change
+
+| you changed | build | test (`docs/testing.md` P1) |
+|---|---|---|
+| `src/` (the script) | `make build` (commit `package/`) | `make unit`, the scenario(s) that drive it: `tests/live/run.sh NN-name.sh` |
+| `plugin/` | `make plugin` | the scenarios, and `64-plugin-reload.sh` |
+| `kcm/` (settings page) | `make kcm` | the settings scenarios |
+| `widget/` | nothing (QML) | its scenario |
 
 ## What we care about
 
@@ -37,7 +53,7 @@ your KWin loads: do your work in a git worktree, never on a branch there.
   specific reason.
 - **The cause before a fix.** `docs/kwin-notes.md` holds what KWin really does where it surprised
   us; add to it when you find something.
-- **Bug captures**: Meta+Shift+B saves the last minute of kwin-i3's, the plugins' and the pointer's
+- **Bug captures**: a key bound to `tools/capture` (README, Install step 4; Paul's is Meta+Shift+B) saves the last minute of kwin-i3's, the plugins' and the pointer's
   events with a screenshot; `tools/capture-read DIR` reads it (`docs/debugging.md`).
 
 Licence: GPL-2.0-or-later (`LICENSE`, `NOTICE`).

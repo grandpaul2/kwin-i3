@@ -9,13 +9,14 @@ Starting a kwin-i3 session. Please:
 2. Check this repo: `git fetch -q`, then `git status -sb` (uncommitted changes, ahead/behind
    `origin`), and `git worktree list` (a leftover worktree from a trace or the battery). Also the
    open pull requests: `gh pr list` (one line each: number, branch, author, the `OPEN.md` item).
-3. Check the live desktop, read-only:
+3. Check the live desktop, read-only (skip this step if this machine doesn't run kwin-i3: no
+   `~/.local/share/kwin/scripts/kwin-i3`):
    - kwin-i3 is running: `busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting isScriptLoaded s kwin-i3`
    - KWin errors from it since boot: `journalctl --user -b --no-pager -o short-iso _COMM=kwin_wayland | grep -E 'kwin-i3|main.js' | grep -v kwin-i3-test | tail -5`
      (`/tmp/kwin-i3-test.*` lines are test KWins). Compare the times with `git log`: a warning
      logged before the commit that fixed it is history, not a finding (2026-10-22: stale "used
      before its declaration" lines from before 2dacb58).
-4. **Bug captures on this machine**: `ls -t ~/.local/state/kwin-i3/captures/`. Each is a Meta+Shift+B
+4. **Bug captures on this machine** (if the directory exists): `ls -t ~/.local/state/kwin-i3/captures/`. Each is a Meta+Shift+B
    press, that is, something the person at this desk saw go wrong. Say how many there are and when the newest is from, and offer
    to diagnose them. Diagnosing one starts with `tools/capture-read DIR`: the timeline before the
    press, with their note (`docs/debugging.md`). A fix needs the go (CLAUDE.md, "Nothing goes live"). Captures already

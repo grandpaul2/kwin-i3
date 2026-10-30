@@ -14,9 +14,12 @@ that each cost a session: read the section for the part of KWin you touch before
 add a line when you find one. `docs/records/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
 the way it does. **`OPEN.md` is this repo's list of unfinished work for now, and `LATER.md` of work
 held until the Stage ends**: no other file carries an open list (state, not history; the rules are
-in their headers). `CONTRIBUTING.md` is the short version for a person.
+in their headers; `LATER.md` shares `OPEN.md`'s numbering). `CONTRIBUTING.md` is the short version
+for a person. Words like **the Stage** (the current 4-6 week development period, `OPEN.md`),
+**the hold** (kwini3hold, the effect that holds the old layout until the new one is drawn) and the
+rest are in `docs/definitions.md`; `behaviour.md`'s row ids (X7, Y1) are its own table rows.
 
-If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestions and delete it.
+The rules below quote Paul and date his decisions; they are the project's rules, not suggestions.
 
 ## How work lands
 
@@ -24,7 +27,7 @@ If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestion
   asking, and don't announce it. Group related changes; say *why* in the message; never commit
   unverified work. Push when you commit.
 - **The collaborator's sessions** work on a branch in a worktree (`git worktree add
-  ../kwin-i3-<branch> -b <branch>`, then `cp -r tools/bin` into it), push the branch, and open a
+  ../kwin-i3-<branch> -b <branch>`, then `make tools` and, for plugin work, `make plugin` in it), push the branch, and open a
   pull request to main. One `OPEN.md` item (or one new thing) per PR; the PR names the item, and
   its own edits to `OPEN.md` touch that item only. Rebase on main before asking for review.
   `package/contents/code/main.js` is generated: after a rebase run `make build` and commit the
@@ -50,7 +53,7 @@ If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestion
   kwin-i3; never enable another tiling script beside it (Paul's i3ws and Krohnkite stay disabled).
 - **`package/` in a checkout that `~/.local/share/kwin/scripts/kwin-i3` links to is what that
   machine's KWin loads.** So anything not merged, and anything that builds a fault or a debug trace,
-  runs in a worktree (`git worktree add`, then `cp -r tools/bin` into it), never on a branch in that
+  runs in a worktree (`git worktree add`, then `make tools` in it), never on a branch in that
   checkout: `make build` there rewrites what KWin loads (2026-10-28 slip). Never start a build
   while `make test` runs from the same tree. `make mutate-live` refuses to run there. `make fuzz`
   and `make test` build `src/` as it stands, so don't leave trace lines in `src/`. A new worktree
@@ -102,7 +105,7 @@ If **`CONTROL-TOWER-NOTES.md`** exists in the repo root, consider its suggestion
 
 ## Finding bugs
 
-- **Captures**: Meta+Shift+B (`tools/capture`) saves the flight recorder (kwin-i3's log, kwini3hold's
+- **Captures**: a key bound to `tools/capture` (Paul's is Meta+Shift+B; README, Install step 4) saves the flight recorder (kwin-i3's log, kwini3hold's
   events, the pointer's, the state, a screenshot, a note) to `~/.local/state/kwin-i3/captures/<time>/`.
   **Read it with `tools/capture-read DIR` first**: one timeline to the millisecond, the press last.
   kwin-i3's log never reaches the journal, and `debugLog` does nothing live (`docs/debugging.md`).
@@ -128,7 +131,8 @@ justified** (its rule 5: "if you give an agent a handle, it will grab it").
   be able to talk to you. Find where the run writes its results first (often not its console: the
   fuzzer once failed every seed for 20 minutes while a watcher read a console it never writes to).
   Then a 2-minute recurring timer (`CronCreate`, never `sleep`), and at each firing **read those
-  results yourself** and give a one-line status. A notification or silence is not a check. Results
+  results yourself** and give a one-line status. (`CronCreate` where the harness has it; any
+  recurring wake-up otherwise.) A notification or silence is not a check. Results
   that all fail the same way early: stop the run and say so. Delete the timer at the end.
 - **Before a rerun**: is what's under test rebuilt (`make build` for the script, `make plugin` for
   the plugins, `make kcm` for the settings page's QML)? Name the cause from the evidence first; one
@@ -158,3 +162,5 @@ these from here when a change spans both, and commit there too:
 - His desktop runs the defaults a new user gets during the Stage; a new setting stays at its default
   there unless he says otherwise.
 - The second machine, `pauls-laptop` (Arch, over ssh/Tailscale), is `OPEN.md` item 50's test bed.
+- If **`CONTROL-TOWER-NOTES.md`** exists in the repo root (left by Paul's coordinating session),
+  consider its suggestions and delete it.

@@ -1,11 +1,17 @@
 # Testing: the procedure (lean, for the Stage)
 
 Paul, 2026-10-26: kwin-i3 runs on his desktop and nowhere else, and he uses it all day: he will
-find what's wrong. Testing during the Stage has one job: **don't break his desktop
+find what's wrong. (Since 2026-10-29 it also runs on his laptop and a collaborator's machine; the
+rules hold for all three.) Testing during the Stage has one job: **don't break his desktop
 catastrophically.** Everything beyond that waits for the Stage's end (`LATER.md`, "Reliability").
 And: "we DO NOT improvise when it comes to testing": the runs below are the only runs.
 
 ## Rules
+
+**"Paul's go"** below: in Paul's own sessions, his word; for a collaborator, asked in the pull
+request (its description, or a comment) and given by Paul there. His merge is his go for the
+change; the reload of a desktop is its owner's go.
+
 
 1. **Only the runs listed here.** No extra run "to be sure", no whole-suite run but P3's, no run
    to chase a flake.
@@ -13,7 +19,7 @@ And: "we DO NOT improvise when it comes to testing": the runs below are the only
    **Anything over a few seconds runs in the background** (Paul, 2026-10-26: "I need you available
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
-   timer (`CronCreate`) from the moment it starts, the global "Long runs" rule: at each firing
+   timer from the moment it starts, `CLAUDE.md`'s "Long runs": at each firing
    read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset)
    and `.status`) and give Paul one line; delete the timer when it ends and
    give him the outcome. A notification or silence is not a check.
@@ -60,7 +66,7 @@ then the fix and P1. A check for the bug only under rule 5.
 3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
    (`# timing: alone`), as 69 did (2026-10-28), not another guessed fix. Red: report
    to Paul, don't fix it.
-4. Paul's go to merge, then his go to reload (CLAUDE.md, "Nothing goes live").
+4. Paul's go to merge, then the desktop owner's go to reload (CLAUDE.md, "Nothing goes live").
 
 ## P4. A probe
 
