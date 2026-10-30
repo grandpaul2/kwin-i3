@@ -27,32 +27,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-**65. Ship the gaps at 2 and 0** (Paul, 2026-10-30, after living with them on large and small
-screens: his desktop already runs `gapsInner=2`, `gapsOuter=0`). The defaults are 4 and 2 today
-(`behaviour.md` L5, whose reason "the inner 4 is KWin's own tile padding" changes with it).
-Next: change the default wherever it is written (`src/settings.js`, `package/contents/config/main.xml`,
-`package/contents/ui/config.ui`, the settings page `kcm/ui/main.qml`, README's settings table,
-`behaviour.md` L5); check what `tools/testkwin.sh` and the live scenarios that read the gaps
-(26, 37, 55, 58, 78, 86) assume about the default, and run those.
-
-**66. The pre-release code review's fixes** (review 2026-10-30, five agents, each finding checked
-against the code; Paul's go for all of them the same day). Next: build, test and commit each
-group; one reload at the end. (1) A newcomer's hold released by an unrelated pass before its move
-(`kwin.js` `showHeld`): release only holds whose pass ran. (2) Release mid-drag leaves the drop
-indicator. (3) Minimized windows in `tree.js`: a move swaps with one, a close's focus lands on a
-split of them, a resize shares with them, floating toggles forget the flag. (4) The "closed
-outside" hook missing for windows there at load. (5) Floating resize by key unclamped (i3's
-`floating_check_size`). (6) `warnTakenKeys` silences the plugin and layout notices; the taken-key
-check has no timeout; the report can split. (7) Unquoted criteria values (i3 accepts them).
-(8) Two fullscreen flags after a move to an output; `moveToWorkspace` misses i3's
-fullscreen-permits check. (9) A floating nudge whose centre is on no output: the largest overlap
-(`randr.c`). (10) The resize mode stuck on after a helper unload. (11) Release mid-crossing leaves
-a window on all desktops. (12) The Stats reply unguarded. (13) The page misreads "75 x 50".
-(14) "Drag tiling windows" not greyed without the helper. (15) Probe: does an empty `forWindow`
-bring the default rules back? (16) Tooltips naming Meta+Ctrl+arrow resize; T12. (17) The rules
-help text and README on criteria; `notification`. (18) `holdTimeoutMs` 10 vs 1; `settings.js`'s
-header. (19) Stale comments (`kwin.js` 865, 1819, 2157, 2485; `hold.h` 100 ms; `tree.js` and
-`behaviour.md` "next at be04c853ee"). (20) Cuts: `sameLaunch`, the `reachable` and
-`firstAssigned` exports, `m_pendingClose`'s timer, Qt Widgets, `connected` never cleared, the
-five-times "focus what this output shows". (21) Drop the old list settings, their notices and the
-migration.
+Work for now. None open (2026-10-30; fixed live: 65, the gaps shipped at 2 and 0, and 66, the
+pre-release code review's fixes, 9482919 and 3f90388): the next capture or request starts the
+next item.
