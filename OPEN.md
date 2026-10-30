@@ -27,6 +27,10 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Work for now. None open (2026-10-30; fixed live from the fuzzer: 63, a frame side missing at the
-output's edge, 64, GTK 4 bounds lost in a model rebuild, and minimums that fill a split exactly:
-`docs/kwin-notes.md`, `docs/behaviour.md`): the next capture or request starts the next item.
+**65. Ship the gaps at 2 and 0** (Paul, 2026-10-30, after living with them on large and small
+screens: his desktop already runs `gapsInner=2`, `gapsOuter=0`). The defaults are 4 and 2 today
+(`behaviour.md` L5, whose reason "the inner 4 is KWin's own tile padding" changes with it).
+Next: change the default wherever it is written (`src/settings.js`, `package/contents/config/main.xml`,
+`package/contents/ui/config.ui`, the settings page `kcm/ui/main.qml`, README's settings table,
+`behaviour.md` L5); check what `tools/testkwin.sh` and the live scenarios that read the gaps
+(26, 37, 55, 58, 78, 86) assume about the default, and run those.
