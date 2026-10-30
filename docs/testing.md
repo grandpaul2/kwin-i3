@@ -20,7 +20,7 @@ change; the reload of a desktop is its owner's go.
    to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
    timer from the moment it starts, `CLAUDE.md`'s "Long runs": at each firing
-   read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset)
+   read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset); a red scenario's output and kwin-i3's log are kept in `tests/live/out/` after the run
    and `.status`) and give Paul one line; delete the timer when it ends and
    give him the outcome. A notification or silence is not a check.
 3. **A case not covered here: ask Paul** before running anything for it.

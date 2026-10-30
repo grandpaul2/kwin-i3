@@ -45,7 +45,7 @@ launch() {
     local package=""; grep -q '^# needs: kcm' "$t" && package=1
     local xwayland=""; grep -q '^# needs: xwayland' "$t" && xwayland=1
     local t0=$EPOCHREALTIME
-    KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
+    KI3_KEEP_LOG="$out/$t.ki3.log" KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
     echo "$t0 $EPOCHREALTIME" >"$out/$t.time"
 }
 needs_missing() {
@@ -73,6 +73,11 @@ for t in "${scenarios[@]}"; do
     if [[ $s != 0 ]] || ! grep -qE '^  [0-9]+ passed, 0 failed$' "$out/$t.log"; then
         [[ $s == 124 ]] && echo "  FAIL timed out"
         [[ $s != 0 && $s != 124 && $s != 1 ]] && echo "  FAIL exited $s"
+        # Kept: kwin-i3's log and the scenario's output, so a red that doesn't come back can
+        # still be read (the laptop's 86 on KWin 6.8, 2026-10-29: twice red, its logs gone).
+        keep=out/$(date +%Y%m%d-%H%M%S)-${t%.sh}
+        mkdir -p out && cp "$out/$t.log" "$keep.out" && { [[ -f $out/$t.ki3.log ]] && cp "$out/$t.ki3.log" "$keep.ki3.log"; }
+        echo "  kept: tests/live/$keep.out, .ki3.log"
         status=1
     fi
 done

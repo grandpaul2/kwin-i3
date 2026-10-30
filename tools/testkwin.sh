@@ -18,6 +18,8 @@
 #   KI3_FOCUS=mouse                      with KI3_STOCK=1: focus follows mouse after all
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 #   KI3_PACKAGE=1                        kwin-i3 installed as a package (off), as KWin Scripts sees it
+#   KI3_KEEP_LOG=<file>                  kwin-i3's log copied there at teardown (run.sh: a red
+#                                        scenario's log is kept)
 #   KI3_PLUGIN=<dir>                     a Qt plugin dir holding kwin/plugins/kwini3helper.so and
 #                                        kwin/effects/plugins/kwini3hold.so (make plugin:
 #                                        plugin/build/bin) for the test KWin to load
@@ -85,6 +87,7 @@ on_bus() {   # pids attached to the test bus, except this script
     done
 }
 teardown() {
+    [[ -n ${KI3_KEEP_LOG:-} && -f ${KI3_LOG:-} ]] && cp "$KI3_LOG" "$KI3_KEEP_LOG"
     # 1: the command's clients (everything on the bus but KWin and the log sink)
     for p in $(on_bus); do [[ $p == "$kwin" || $p == "${sink:-}" ]] || kill "$p" 2>/dev/null || true; done
     # 2: KWin itself, and wait for it to finish

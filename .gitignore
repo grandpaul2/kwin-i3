@@ -4,3 +4,4 @@ tests/fuzz/out.*/
 plugin/build/
 kcm/build/
 __pycache__/
+tests/live/out/
