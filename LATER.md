@@ -216,3 +216,9 @@ transient only from `set_parent` or the portal's `parent_window` through xdg-for
 `xdgshellwindow.cpp:1165`), so it isn't attached to Firefox on any compositor. kwin-i3 floats the
 portal's dialogs by a default rule (`behaviour.md` §3); a Mozilla bug report, once Firefox's
 source confirms it passes `""`.
+
+**A full-screen effect's end turns Show Desktop off** (found 2026-10-30, `OPEN.md` item 53, probe
+99): `EffectsHandler::setActiveFullScreenEffect` calls `setShowingDesktop(false)` when an effect
+starts and when it ends (`effecthandler.cpp:451`), so Show Desktop turned on during a desktop
+switch's Slide is undone when the slide finishes, and the hidden window activated. Ending it when
+an effect starts makes sense (Overview); when one ends, a KWin bug report.

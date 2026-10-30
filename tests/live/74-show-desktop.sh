@@ -36,10 +36,10 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 
 # 1. A popup has the focus (the panel's menu) and Show Desktop goes on; then the popup closes.
 #    Show Desktop stays on and the desktop keeps the focus.
-# The load's leftover (docs/records/bug-panel-config.md, OPEN.md item 53): within about a second of a
-# kwin-i3 load, an activation of unknown origin takes the tile Show Desktop hides, which ends Show
-# Desktop. With the plugins the FRAME line above comes at once, before it, so case 1 fell in it
-# (2026-10-29). This wait is for that leftover only; remove it when item 53 is solved.
+# The load switches the second output to desktop 2, and KWin's Slide animates it: a full-screen
+# effect, and its end turns Show Desktop off and activates the tile (effecthandler.cpp
+# setActiveFullScreenEffect; probe 99, 2026-10-30, docs/records/bug-panel-config.md). KWin's, as it
+# is after any desktop switch; the wait lets the slide end.
 sleep 3
 stand_in pop popup 300x200+100+400; pop=$sid
 activate pop

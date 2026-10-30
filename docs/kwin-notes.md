@@ -103,6 +103,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   it on. Scripts can't read Show Desktop (no property), but `callDBus` to `/KWin`
   `org.freedesktop.DBus.Properties.Get` works. D-Bus `showDesktop(bool)` lasts only while the caller
   stays on the bus; tests toggle the "Show Desktop" shortcut instead.
+- **A full-screen effect starting or ending turns Show Desktop off** (`setActiveFullScreenEffect`,
+  `effecthandler.cpp:440-454`), and the off activates the focus chain's window. Slide is one while it
+  animates: Show Desktop turned on during a desktop switch's slide ends when the slide does (probe 99,
+  gdb on the test KWin, 2026-10-30: the load's own switch, `OPEN.md` item 53).
 - `Workspace::switchToOutput` focuses a window on that screen (or the desktop); it doesn't move the pointer.
 - A brand-new output shows `initialDesktopForNewOutput`: the activity's last desktop for it, else 1.
 
@@ -259,3 +263,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - The journal mixes test KWins' lines with the live one's: split by `_PID=$(pgrep -xo kwin_wayland)`.
 - zsh doesn't split an unquoted variable (a scenario list in one variable runs as one name).
 - `check "msg" VAR=x cmd` in a live test runs `VAR=x` as a command: wrap it in a function.
+- **gdb on KWin**: `kwin_wayland` has `cap_sys_nice`, so it isn't dumpable and refuses `gdb -p`
+  (ptrace_scope 0 or not), and a copy without the capability aborts (no Qt platform plugin from
+  another directory). Start it under gdb instead: exec under ptrace drops file capabilities. For a
+  probe, `testkwin.sh`'s `kwin_wayland` as `gdb -q -batch -x CMDS --args kwin_wayland`, with
+  `set breakpoint pending on`, a `break KWin::...` with `commands` / `bt 30` / `continue`, then
+  `run`; the stacks land in `$KI3_TMP/kwin.out`. `libkwin`'s exported names are enough (probe 99).

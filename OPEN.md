@@ -94,15 +94,6 @@ suite then: green but 86 and 53, item 61. Next: Paul signs in, `make plugin-inst
 `make kcm-install` there (his go, 2026-10-29), his use with Meta+Shift+B; then switching SDDM to
 Plasma Login Manager, with his go.
 
-**53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
-`docs/records/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
-kwin-i3 load, KWin activates the tile Show Desktop hides, which ends Show Desktop; no kwin-i3 pass
-or JavaScript caller is behind it (the 2026-10-25 trace), and the helper's pointer log shows
-nothing. With the plugins, 74's case 1 fell in it (red in both builds, green after a 3 s settle);
-74 now waits 3 s, labelled for this item. Next: trace where the activation comes from (KWin's
-source for activations with no script caller, then a test-KWin trace of `windowActivated` with
-its stack), then the cause, a fix, and 74's wait removed.
-
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
 leaves out windows Show Desktop hides). Left, with its next action: (c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before

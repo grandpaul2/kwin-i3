@@ -26,6 +26,16 @@ case 2 is Plasma's order ten times and passes either way, the pass winning the r
 KWin). Learned on the way: KWin's D-Bus `showDesktop(bool)` lasts only while the caller stays on
 the bus (`dbusinterface.cpp` watches the service), so the test toggles the Show Desktop shortcut.
 
+**Solved 2026-10-30 (OPEN.md item 53): KWin's Slide.** gdb on the test KWin (probe 99; KWin started
+under gdb, as `cap_sys_nice` makes it refuse an attach) caught the stack: the load's desktop switch
+starts Slide (`SlideEffect::desktopChanged` → `setActiveFullScreenEffect`); when it ends
+(`SlideEffect::finishedSwitching` → `setActiveFullScreenEffect(nullptr)`), KWin turns Show Desktop
+off (`effecthandler.cpp:451`) and `setShowingDesktop(false)` activates the focus chain's window, the
+tile. Any full-screen effect starting or ending does this, after any desktop switch, kwin-i3 or not;
+a reload whose outputs already show their workspaces switches nothing. The "1 s timer" below was a
+coincidence of timing. Not kwin-i3's: 74 waits for the slide, and the upstream question is in
+`LATER.md`. What was written before:
+
 **Left over, reopened 2026-10-29 as OPEN.md item 53 (won't-fix 2026-10-25, was item 16):** with the plugins, 74's case 1 falls in it. in the test KWin, Show Desktop turned on within the first second after a
 kwin-i3 load, with no frame effect, is turned off again by an activation of the tile that is not
 the pass (traced: the pass asked and stopped; the activation came with no JavaScript caller
