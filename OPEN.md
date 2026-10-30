@@ -109,14 +109,6 @@ leaves out windows Show Desktop hides). Left, with its next action: (c) **Meta+r
 `Effects`, `tilingdrag.cpp:71`); very low risk; next, a probe. Not read: fullscreen Kickoff's
 window type and the display settings' "keep these settings?" dialog (sources not found).
 
-**55. A tile can keep its title bar after floating and tiling again** (2026-10-29, one red of
-54-frame's "and loses it again" in a batch of six scenarios; green alone on both builds and in
-the same batch on main's). Hypothesis: `takeBorder` (`src/kwin.js:1179`) takes a border only from
-a window whose frame and client sizes differ (`serverDecorated`); a window just given its title
-bar back, then tiled again, can read frame = client until its app commits, and a pass in that
-moment skips it with no later pass to retry. Next: a probe of the float-then-tile toggle under
-load, logging frame and client at each pass; then the cause, a fix, and 54 under load.
-
 **56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; Paul: not urgent, decide
 once the setup is hardened). The load report (`behaviour.md` §13: taken keys, layouts, per-output
 desktops, missing plugins) is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`;

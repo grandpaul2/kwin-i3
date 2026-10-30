@@ -572,6 +572,8 @@ decoration is its own (client-side), and records a window already without a bord
 given back. It reasserts this every pass (the window menu, `borderlessMaximizedWindows`), and at
 once when the window menu's No Border or Keep Above flips the flag on a window of the tree (on
 Wayland, once the title bar has come back: KWin adds it at the app's answer to the configure).
+A title bar that hasn't landed yet when a pass wants it gone (a window floated and tiled again
+before its app answered) is taken when it lands (2026-10-30, probe 98).
 
 ### Floating windows
 

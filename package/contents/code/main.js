@@ -1973,8 +1973,9 @@ var KI3 = (function () {
     // The frame (docs/records/spec-window-modes.md): with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
     // effect last said (asked at load and on every reconfigure; the effect asks for a
-    // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took.
-    var frameOn = false, tookBorder = {};
+    // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took;
+    // borderDue: those it would take but whose title bar isn't there yet (takeBorder).
+    var frameOn = false, tookBorder = {}, borderDue = {};
     var borderGone = {};                             // window id -> its GTK 4 bounds (refitOnFrameChange)
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
     var gapCache = {}, passWs = null;                // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
@@ -3156,12 +3157,16 @@ var KI3 = (function () {
             // Only a border that exists: a window drawing its own title bar has frame = client,
             // and KWin would store "no border" for it all the same (setDecorationPolicy), which
             // the effect reads as a border taken (review of (iii)+(iv), finding 2).
-            if (!serverDecorated(w)) return;
+            // A title bar just given back (floated, then tiled again before the app answered) isn't
+            // there yet either: noted, and the pass that takes it comes when it lands (OPEN.md 55,
+            // probe 98: a 0.5 s client kept its title bar for good).
+            if (!serverDecorated(w)) { borderDue[key] = true; return; }
             // The bounds KWin sent with the border (refitOnFrameChange): the placement area less
             // the border, as sendRoleConfigure has it.
             var f = w.frameGeometry, c = w.clientGeometry, area = workspace.clientArea(KWin.PlacementArea, w);
             var bounds = { width: area.width - (f.width - c.width), height: area.height - (f.height - c.height), first: true };
             w.noBorder = true;
+            delete borderDue[key];
             if (!w.noBorder) return;            // a rule forces the border
             if (!isX11(w)) borderGone[key] = bounds;
         }
@@ -3174,6 +3179,7 @@ var KI3 = (function () {
     function giveBorder(w) {
         var key = id(w);
         delete borderGone[key];
+        delete borderDue[key];
         if (!tookBorder[key]) return;
         delete tookBorder[key];
         if (!w.deleted && w.noBorder) w.noBorder = false;
@@ -3416,7 +3422,7 @@ var KI3 = (function () {
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
         delete told[key]; delete ringTold[key]; delete dragTold[key];
-        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderGone[key]; delete placing[key];
+        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
         schedule(ws);
     }
@@ -3612,12 +3618,12 @@ var KI3 = (function () {
             if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
             refitOnFrameChange(w, old, dragging);
         }));
-        // A border kwin-i3 took, given back by the window menu: on Wayland the title bar comes
-        // with the client's answer to the configure (configureDecoration), after the pass
-        // decorationPolicyChanged scheduled read frame = client and skipped it (takeBorder). The
+        // A border kwin-i3 took, given back by the window menu, or one due (borderDue): on Wayland
+        // the title bar comes with the client's answer to the configure (configureDecoration),
+        // after the pass that wanted it read frame = client and skipped it (takeBorder). The
         // frame keeps its tile's size and the client shrinks by the title bar (probe 96, 2026-10-30).
         w.clientGeometryChanged.connect(guard("client", function () {
-            if (tookBorder[key] && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
+            if ((tookBorder[key] || borderDue[key]) && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
         }));
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {
