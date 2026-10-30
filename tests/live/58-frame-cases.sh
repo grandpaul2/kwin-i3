@@ -32,7 +32,7 @@ client --title b --color lime
 check "H[V[a b] c]"                         wait_tree 1 "H[V[a b*] c]"
 form_set gapsOuter 10
 check "an outer gap: a inset"               poll eval '[[ "$(geom a)" == 11,11* ]]'
-form_set gapsOuter 0       # the test KWin's pinned value (testkwin.sh); deleting it would give the default 3
+form_set gapsOuter 0       # the test KWin's pinned value (testkwin.sh); deleting it would give the default 0 too
 check "and back: a 1 px from the edge"      poll eval '[[ "$(geom a)" == 1,1* ]]'
 check "b likewise, at the left edge"        poll eval '[[ "$(geom b)" == 1,* ]]'
 sleep 0.3; capture

@@ -57,8 +57,8 @@ var Settings = (function () {
         tilingDrag: { type: "choice", def: "modifier titlebar", choices: ["off", "modifier", "titlebar", "modifier titlebar"] },
         workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
-        gapsInner: { type: "int", def: "4", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
-        gapsOuter: { type: "int", def: "2", min: -100, max: 200 },              // px more at the screen edge; negative takes from it (down to half the inner gap)
+        gapsInner: { type: "int", def: "2", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
+        gapsOuter: { type: "int", def: "0", min: -100, max: 200 },              // px more at the screen edge; negative takes from it (down to half the inner gap)
         // i3's gaps top|right|bottom|left (§11 N2; redo stage 7): that side's outer gap, -1 for gapsOuter.
         gapsTop: { type: "int", def: "-1", min: -1, max: 200 },
         gapsRight: { type: "int", def: "-1", min: -1, max: 200 },
