@@ -9,8 +9,8 @@ an item goes, its facts kept in their homes, and a capture or a red brings it ba
 
 Last reconciled: **2026-10-30, twenty-first session** (closed: 50, the laptop as test bed,
 `docs/records/laptop-test-bed.md`; 54, (c) can't happen, `docs/kwin-notes.md`; 59, its facts in
-`docs/kwin-notes.md` "Tiles"; 61 and 56 to `LATER.md`). Both machines run main (886732b's script;
-later commits docs only). The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
+`docs/kwin-notes.md` "Tiles"; 61 and 56 to `LATER.md`). The desktop runs main (4158084's script,
+2026-10-30, the fix for 63); the laptop runs 886732b's. The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24, late)
 
@@ -27,11 +27,5 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Work for now.
-
-**63. A frame side missing at the output's edge: a tile pinned to the border** (the fuzzer's I11,
-2026-10-30). KWin pins a tile's side to the border when a rebuild's float noise "changes" it, and
-gave it the full padding under the hair: a 1 px line with no frame under some windows of a bottom
-row (`docs/kwin-notes.md`). Fixed on branch `fuzz-update` (`windowRect` judges an edge by the root;
-`fitToTile` writes a pinned tile's window back); the 9-step trace and seed 1 green, 26, 54, 58, 85
-green. Next: Paul's go to merge it to main and reload.
+Work for now. None open (2026-10-30; 63, a frame side missing at the output's edge, fixed live:
+`docs/kwin-notes.md`): the next capture or request starts the next item.
