@@ -81,15 +81,19 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
 
 ## Requirements
 
-- Plasma 6.7 or later, Wayland. Tested on Fedora 44 / Plasma 6.7.5, one activity, two outputs.
-- For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`, a C++23
-  compiler.
+- Plasma 6.7 or later, Wayland. Tested on Fedora 44 / Plasma 6.7.5 (NVIDIA, two outputs) and on
+  Arch / Plasma 6.8.2 (AMD, a laptop's one output), one activity.
+- For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`,
+  `vulkan-headers` (KWin's cmake files need them), a C++23 compiler. On Arch, KWin's headers are
+  in `kwin` itself (no `-devel` packages).
 - For the tests: `libei-devel` (real input), `python3-gobject` + `gtk4` (the test client),
-  `python3-dbus`, `python3-pillow` (screenshots), `node` (unit tests).
+  `python3-dbus`, `python3-xlib`, `python3-pillow` (screenshots), `node` (unit tests). On Arch:
+  `libei`, `python-gobject`, `gtk4`, `python-dbus`, `python-xlib`, `python-pillow`, `nodejs`.
 
 ## Install
 
-1. Link the script and enable it: `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`,
+1. Link the script and enable it: `mkdir -p ~/.local/share/kwin/scripts` (a fresh account has
+   none), `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`,
    then `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`, then log out and
    in (KWin reads the scripts' packages at login: one linked while it runs can't be turned on
    before that).
@@ -113,7 +117,8 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
    for good, as in i3. To keep a workspace on the external output, give it a workspace output
    (the Workspaces page, or `workspaceOutputs` below); it goes back when that output returns.
 4. Bug captures: bind a key to `tools/capture` (System Settings > Shortcuts, a command); it saves
-   what kwin-i3 saw just before (`docs/debugging.md`). The author's is Meta+Shift+B, from his
+   what kwin-i3 saw just before (`docs/debugging.md`). It asks for a note with `kdialog` (Arch's
+   Plasma doesn't install it). The author's is Meta+Shift+B, from his
    dotfiles.
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again; to remove
@@ -136,11 +141,15 @@ notification names what is missing without them.
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
 systemd drop-in for KWin's unit (`QT_PLUGIN_PATH`). The drop-in takes effect at the next login,
-once. Loading the effect re-tiles every window once (the frame's room).
+once. Loading the effect re-tiles every window once (the frame's room). The first install can
+also print "KWin did not load the effect … (not seen yet, or built for another KWin version?)":
+KWin finds the effect only through the drop-in, so it loads at that next login. If `cmake` fails to configure (a missing package), delete
+`plugin/build` before trying again: it keeps what it found, Qt 5 included.
 
 **The upkeep**: both plugins are refused by any KWin version other than the one they were built
 against, so after every Plasma update they are off until `make plugin-install` runs again; until
-then tiling windows have their title bars.
+then tiling windows have their title bars. One source builds against 6.7 and 6.8 (6.8 changed the
+effects' paint calls), so the update needs only that.
 
 **Plain GTK 4 apps** (GTK 4 without libadwaita, with Plasma's title bar) learn their largest size
 from KWin only when they first appear, with the title bar counted; kwin-i3 asks KWin to tell them
@@ -247,6 +256,7 @@ make build       # src/ -> package/contents/code/main.js (edit src/, never the b
 make plugin      # the two plugins, into plugin/build
 make fuzz        # 5 min of random actions with pixel invariants (docs/fuzz-design.md; held during the Stage)
 make mutate      # the unit tests against deliberate faults; mutate-live from a worktree
+make tools       # tools/bin/ei-send, the input tool (make test builds it; tests/live/run.sh alone doesn't)
 ```
 
 The live tests never touch the running desktop: `tools/testkwin.sh` starts a private KWin with two
@@ -255,7 +265,8 @@ awkward windows (fixed size, large minimum, dialog, slow to appear, retitled); `
 sends real input through libei; `tools/shot.py` reads pixels. A bug seen on the desktop becomes a
 file with `tools/capture` (the recent log and kwini3hold's events, the state, a screenshot, a
 note; read with `tools/capture-read`, `docs/debugging.md`), then a live test, watched red, then a fix.
-`CLAUDE.md` has the working rules.
+A red scenario leaves its output and kwin-i3's log in `tests/live/out/`. `CONTRIBUTING.md` is how
+to start and how a change lands (pull requests); `CLAUDE.md` has the working rules in full.
 
 Docs: `docs/README.md` is the map. `docs/philosophy.md` (what it is for), `docs/plan.md` (scope
 and decisions), `docs/behaviour.md` (what it does, exactly), the specs (`docs/records/spec-*.md`, one
