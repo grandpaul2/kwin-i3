@@ -34,9 +34,12 @@ def capture(output, path):
             if not chunk:
                 break
             data += chunk
-    if fmt not in (4, 5, 6):                    # QImage RGB32, ARGB32, ARGB32_Premultiplied
+    # QImage RGB32, ARGB32, ARGB32_Premultiplied (KWin 6.7) are B,G,R,A in memory;
+    # RGBX8888, RGBA8888, RGBA8888_Premultiplied (KWin 6.8) are R,G,B,A.
+    order = {4: "BGRA", 5: "BGRA", 6: "BGRA", 16: "RGBA", 17: "RGBA", 18: "RGBA"}.get(fmt)
+    if order is None:
         sys.exit("shot: unexpected image format %d" % fmt)
-    img = Image.frombuffer("RGBA", (width, height), data, "raw", "BGRA", stride, 1)
+    img = Image.frombuffer("RGBA", (width, height), data, "raw", order, stride, 1)
     img.convert("RGB").save(path)
 
 
