@@ -1,4 +1,4 @@
-// Where workspaces live when outputs come and go (docs/spec-redo-4-outputs.md, B and C; i3's
+// Where workspaces live when outputs come and go (docs/records/spec-redo-4-outputs.md, B and C; i3's
 // randr.c move_content and init_ws_for_output). Pure functions of a snapshot, so they are
 // unit-tested (tests/unit/outputs.test.js); src/kwin.js screensChanged takes the snapshot and acts.
 //

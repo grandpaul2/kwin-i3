@@ -6,7 +6,7 @@
 `docs/style-settings-page.md`. This spec is the history of the 2026-10-25 reorganization; where they differ (the frame section's wording and shape, `tiledLook` and `floatingStep` since added, no column headings on the Workspaces sub-page, no Troubleshooting section),
 the guide and the code win.
 
-Requested by Paul, 2026-10-25: the page (`kcm/ui/main.qml`, `docs/spec-settings-page.md`) "a bit
+Requested by Paul, 2026-10-25: the page (`kcm/ui/main.qml`, `docs/records/spec-settings-page.md`) "a bit
 more accessible and better organized", the cleanup being general rather than a list of his own.
 Status: **decisions 1-5 approved by Paul (2026-10-25), built**; see "As built" at the end.
 

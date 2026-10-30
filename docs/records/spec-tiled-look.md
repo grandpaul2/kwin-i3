@@ -14,8 +14,8 @@ first; part B (the drag) needs it and comes second.
 Sources: KWin 6.7.5 (`window.cpp` `processDecorationButtonPress`, `handleInteractiveMoveResize`;
 `tiles/tile.cpp` `windowGeometry`), i3 `next` (`src/tiling_drag.c`, `src/click.c`,
 `src/config.c`, `etc/config`, `docs/userguide` "Moving tiling containers with the mouse"),
-`src/kwin.js`, `plugin/hold.cpp`, `plugin/framefocus.cpp`, `docs/spec-window-modes.md`,
-`docs/spec-rounded-corners.md`.
+`src/kwin.js`, `plugin/hold.cpp`, `plugin/framefocus.cpp`, `docs/records/spec-window-modes.md`,
+`docs/records/spec-rounded-corners.md`.
 
 ## How it is now
 

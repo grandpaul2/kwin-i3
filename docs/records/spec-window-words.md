@@ -61,7 +61,7 @@ themselves.
 
 **Docs**: `docs/style-settings-page.md` gains the three names as a rule (§2, Wording);
 `docs/plan.md` "Window modes" says "floating" where it says Plasma's mode;
-`docs/spec-window-modes.md` gets a superseded-in-part line pointing here.
+`docs/records/spec-window-modes.md` gets a superseded-in-part line pointing here.
 
 **Tests**: `76-settings-subpages` finds the rule list by its accessible name, so its six
 "Leave alone" names change with it (not new checks); 37 only if it names "Plasma windows" (it

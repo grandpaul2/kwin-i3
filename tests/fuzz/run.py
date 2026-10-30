@@ -49,7 +49,7 @@ def inner(args, out, budget):
     shutil.rmtree(out, ignore_errors=True)
     env = dict(os.environ, KI3_TIMEOUT=str(int(budget + 40)))
     # The plugins too, when built (make fuzz builds them): the kwini3hold effect runs under the
-    # same random actions as kwin-i3 (docs/spec-atomic-layout.md, test 26).
+    # same random actions as kwin-i3 (docs/records/spec-atomic-layout.md, test 26).
     plugins = os.path.join(ROOT, "plugin", "build", "bin")
     if os.path.isdir(plugins):
         env["KI3_PLUGIN"] = plugins

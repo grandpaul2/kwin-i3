@@ -2,7 +2,7 @@
 
 **Now (2026-10-27):** Built and live 2026-10-25/26; renamed from `spec-unmanaged-windows.md` 2026-10-27. What it does: `behaviour.md` §5 and §3. **Superseded in part** (Paul, 2026-10-27, `OPEN.md` item 40): windows are named by i3's kinds (`behaviour.md` §3), and while an override-redirect window holds the keyboard kwin-i3's keys do nothing, as in i3 (§5, A3-A5): a focus key no longer takes the keyboard from it. Not built yet.
 
-(Renamed 2026-10-27 from `spec-unmanaged-windows.md`, for the words in `docs/spec-window-words.md`.)
+(Renamed 2026-10-27 from `spec-unmanaged-windows.md`, for the words in `docs/records/spec-window-words.md`.)
 
 Paul's go 2026-10-25, after two focus bugs in five minutes (the start menu sending the pointer to
 the other monitor, fixed first: only key actions move the pointer; tray popups closing at once) and

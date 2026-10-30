@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Floating windows move and resize by key, floatingStep px (docs/spec-float-keys.md, i3's
+# Floating windows move and resize by key, floatingStep px (docs/records/spec-float-keys.md, i3's
 # cmd_move_direction / cmd_resize_floating): Move shifts the frame, Grow/Shrink change its right or
 # bottom edge, a centre crossing onto the other monitor joins that monitor's workspace, a move that
 # would leave every monitor is refused. Tiled windows keep the tree's moves (10-tiling).

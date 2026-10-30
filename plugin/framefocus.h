@@ -1,9 +1,9 @@
 // Focus on a tiled window's frame as i3 does: the frame kwini3hold draws in the tile's padding
-// (docs/spec-window-modes.md) is outside every window, so KWin would give a press there to
+// (docs/records/spec-window-modes.md) is outside every window, so KWin would give a press there to
 // whatever is beneath, the desktop (its menu on a right-click, a rubber band on a drag). This
 // filter makes the frame part of its window for focus and clicks, with KWin's own calls.
 // (It did the same for kwini3frame's decoration until that was retired, 2026-10-24; and modifier
-// + mouse button chords until earlier that day, docs/mouse-plugin-design.md.) Installed by the
+// + mouse button chords until earlier that day, docs/records/mouse-plugin-design.md.) Installed by the
 // helper plugin (helper.cpp).
 #pragma once
 

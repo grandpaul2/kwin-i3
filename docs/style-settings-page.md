@@ -3,7 +3,7 @@
 How the System Settings page (`kcm/ui/`) and the cog's form (`package/contents/ui/config.ui`)
 look, read and behave. A change to either follows this; a rule that needs changing is changed
 here first, with Paul's go. Gathered 2026-10-26 from the sessions that built and reworked the
-page (2026-10-24 to 26), `docs/spec-settings-page.md`, `docs/spec-settings-cleanup.md` and the
+page (2026-10-24 to 26), `docs/records/spec-settings-page.md`, `docs/records/spec-settings-cleanup.md` and the
 code as it stands.
 
 **Where it comes from.** Paul gave few style rules of his own (the ones he did are marked
@@ -36,7 +36,7 @@ nothing, do what Plasma's own pages do.
 ## 2. Wording
 
 - **The page's words and their tone** (Paul, 2026-10-28: "friendly, cohesive and still
-  descriptive"): the glossary and the eleven tone rules in `docs/spec-settings-words.md` §3 and §4
+  descriptive"): the glossary and the eleven tone rules in `docs/records/spec-settings-words.md` §3 and §4
   (they move here when its rewrite is built). Short over explicit; the explaining goes in help.
 - **Sentence case** everywhere: headings, labels, buttons, list entries ("Next workspace",
   "Move to workspace 1").
@@ -53,7 +53,7 @@ nothing, do what Plasma's own pages do.
 - **Twins are told apart by their words**, not a long parenthesis: "Move back and forth
   (previous workspace)" beside "Move to the previous workspace".
 - **A window is named by its i3 kind, and only these** (Paul, 2026-10-27/28; redo stage 10
-  supersedes `docs/spec-window-words.md`, which `docs/behaviour.md` §3 now holds): **tiling**
+  supersedes `docs/records/spec-window-words.md`, which `docs/behaviour.md` §3 now holds): **tiling**
   ("tiles", "a tiling window"), **floating** ("floats", "a floating window"), **sticky
   floating** (floating, on every workspace of its output), and where a page ever names them,
   **dock**, **root**, **override-redirect**. A rule's action is "Float" or "Tile". "Plasma" describes a look ("its own title bar, as a Plasma
@@ -126,7 +126,7 @@ nothing, do what Plasma's own pages do.
 - **A command's label fits the label column**: about 40 characters at the default font, or it is
   cut off with "…" (2026-10-26: seven rows were). Checked on a screenshot of the group.
 - **A shifted symbol is named by its keys** beside its button, in muted text: "Meta+! →
-  Meta+Shift+1" (`docs/spec-keys-shifted-labels.md`).
+  Meta+Shift+1" (`docs/records/spec-keys-shifted-labels.md`).
 - **Clashes are shown in the row, never prompted**: "Meta+E is used by Dolphin (Launch); it will
   be taken from it on Apply." No modal dialog.
 - **Keys apply with Apply**, so Reset and Defaults cover them like any setting.

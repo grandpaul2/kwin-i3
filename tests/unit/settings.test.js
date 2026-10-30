@@ -1,6 +1,6 @@
 // The settings table (src/settings.js), the form's entries (package/contents/config/main.xml) and
 // its widgets (package/contents/ui/config.ui) name the same keys with the same types and defaults,
-// and Settings parses what the form writes (docs/spec-settings.md). A key added to one and not the
+// and Settings parses what the form writes (docs/records/spec-settings.md). A key added to one and not the
 // others would be a setting nobody can set, or a field that does nothing.
 const test = require("node:test");
 const assert = require("node:assert");

@@ -1,5 +1,5 @@
-// kwini3hold: atomic layout changes (docs/spec-atomic-layout.md), and i3's frame around tiled
-// windows (docs/spec-window-modes.md). When tiled windows are
+// kwini3hold: atomic layout changes (docs/records/spec-atomic-layout.md), and i3's frame around tiled
+// windows (docs/records/spec-window-modes.md). When tiled windows are
 // rearranged, each one is snapshotted just before it moves and drawn at its old place until every
 // moved window has its new frame (or 100 ms), then they all switch in one frame: no wallpaper
 // between, as Sway's transactions give. A closing window is kept on screen while its neighbours
@@ -53,10 +53,10 @@ public Q_SLOTS:
     // D-Bus: the last events (holds opened and released, closes kept, snapshots, new windows
     // hidden), stamped HH:mm:ss.zzz and with the frame count; tools/capture saves them.
     QStringList Events() const;
-    // kwin-i3 says which windows it floats (docs/spec-window-modes.md, decision 5c): the set
+    // kwin-i3 says which windows it floats (docs/records/spec-window-modes.md, decision 5c): the set
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
-    // kwin-i3 says how a window's ring is drawn (docs/spec-redo-7-look.md A-C; i3's x.c): its
+    // kwin-i3 says how a window's ring is drawn (docs/records/spec-redo-7-look.md A-C; i3's x.c): its
     // colour class, "focused" or "unfocused" ("" forgets the window: KWin's
     // active window colours it, as before the first call); the indicator side, "right" or
     // "bottom", drawn in the class's indicator colour on a window alone in its split, else "";
@@ -65,7 +65,7 @@ public Q_SLOTS:
     // from Stats ("rings") after a reload of either side.
     void SetRing(const QString &id, const QString &cls, const QString &indicator, const QString &hidden);
     // kwin-i3 says whether tiled windows get the ring (tiledLook "frame"; not "bare", where they
-    // stay borderless and rounded without it: docs/spec-tiled-look.md). Told by the script, not
+    // stay borderless and rounded without it: docs/records/spec-tiled-look.md). Told by the script, not
     // read from kwinrc, so the ring and the tiles' frame room change in the same pass.
     void SetTiledRing(bool on);
     // kwin-i3 says a split key was pressed on this window (Split H, Split V, Toggle Split; Paul,
@@ -73,7 +73,7 @@ public Q_SLOTS:
     // activated or SetRing says it is no longer focused or alone (the split happened). No timer:
     // it goes with a repaint that happens anyway. Without it, the side is in the frame's colour.
     void ShowIndicator(const QString &id);
-    // kwin-i3's tiling drag (docs/spec-tiled-look.md, item 8): where the dragged window would
+    // kwin-i3's tiling drag (docs/records/spec-tiled-look.md, item 8): where the dragged window would
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
     // or height of 0 clears it. In logical pixels, global.
     void SetDropIndicator(int x, int y, int width, int height);
@@ -82,16 +82,16 @@ public Q_SLOTS:
     // helper's drag filter sits ahead of KWin's effects filter and keeps the drag's input. Renewed
     // by every poll of kwin-i3's: unrenewed for 500 ms (kwin-i3 gone), the grab ends by itself,
     // never leaving the pointer dead. `shape`: 0 the move cursor, 1 left-right and 2 up-down for
-    // the tiling resize (docs/spec-tiling-resize.md).
+    // the tiling resize (docs/records/spec-tiling-resize.md).
     void SetDragCursor(bool on, int shape);
-    // The helper's resize mode (plugin/resizemode.cpp; docs/spec-redo-5-keys.md A, Paul's call 34):
+    // The helper's resize mode (plugin/resizemode.cpp; docs/records/spec-redo-5-keys.md A, Paul's call 34):
     // "resize" draws the mode's banner at the top of the focused window, "" takes it away.
     void SetMode(const QString &mode);
     // kwin-i3's focused window (the tree's focus), by internal id; "" for none (an empty
     // workspace, a release). The banner is drawn on it, an untold ring takes its class from it,
     // and a split key's indicator goes when it changes (plan.md, "Focus").
     void SetFocused(const QString &id);
-    // kwin-i3 moves a new window to another output or desktop (docs/spec-redo-1-new-windows.md,
+    // kwin-i3 moves a new window to another output or desktop (docs/records/spec-redo-1-new-windows.md,
     // A): keep it hidden until its tile places it, or `ms` at most, instead of the 20 ms a new
     // window gets by itself; a geometry change that isn't its tile's leaves it hidden meanwhile.
     // ms 0: kwin-i3 has placed it (a floating window); shown now unless its tile holds it.
@@ -133,7 +133,7 @@ private:
     bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
     bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)
     bool ringed(KWin::EffectWindow *w) const;               // drawn with a ring: framed with the tiled ring, or floatingFramed; not one hidden on every side
-    void updateRadius(KWin::EffectWindow *w);               // rounded while framed (docs/spec-rounded-corners.md)
+    void updateRadius(KWin::EffectWindow *w);               // rounded while framed (docs/records/spec-rounded-corners.md)
     void updateRadii();
     void resetRadii();
     // One window's ring as kwin-i3 last said (SetRing); without an entry, by KWin's active window.

@@ -11,7 +11,7 @@ page, whose drawing isn't ours, nor the `hotkeys` cheat sheet, which already say
 
 ## Why it reads Meta+!
 
-A KDE shortcut is the symbol the keys type, not the keys held (`docs/spec-keyboard-layouts.md`):
+A KDE shortcut is the symbol the keys type, not the keys held (`docs/records/spec-keyboard-layouts.md`):
 Meta+Shift+1 on a US keyboard *is* Meta+! to kglobalaccel, and Plasma's own shortcut editor
 records it so. The page shows each key in KDE's key button (`KQC.KeySequenceItem`, `Keys.qml:71`),
 which draws the key's own text and has no way to set another. A button of our own that looks like

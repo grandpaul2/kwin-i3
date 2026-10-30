@@ -301,7 +301,7 @@ var Tree = (function () {
         return node;
     };
 
-    // i3's con->sticky (cmd_sticky; redo stage 9, docs/spec-redo-9-sticky.md): a floating window
+    // i3's con->sticky (cmd_sticky; redo stage 9, docs/records/spec-redo-9-sticky.md): a floating window
     // visible on every workspace of its output. Only floating nodes carry it here: a sticky
     // window made tiling is taken off all desktops first (C, KWin's tiles belong to one desktop).
     M.setSticky = function (con, on) {
@@ -453,7 +453,7 @@ var Tree = (function () {
     // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
     // every operation that can leave one: move (via flatten), close, float (not tile), send to
-    // workspace, drop, adopt. docs/spec-nested-boxes.md has the reasons and when to revisit.
+    // workspace, drop, adopt. docs/records/spec-nested-boxes.md has the reasons and when to revisit.
     function tidyCon(con) {
         while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
             var parent = con.parent, child = con.nodes[0];
@@ -667,7 +667,7 @@ var Tree = (function () {
     };
 
     // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
-    // docs/spec-tiled-look.md, part B. Rects come from the caller (kwin.js has the tiles):
+    // docs/records/spec-tiled-look.md, part B. Rects come from the caller (kwin.js has the tiles):
     // rectOf(con) gives { x, y, width, height } for a leaf, a split or a workspace.
 
     var SIBLING = "sibling", CENTER = "center", PARENT = "parent";

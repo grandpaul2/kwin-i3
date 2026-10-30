@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The workspace commands with no default key (docs/spec-workspace-commands.md), on the two virtual
+# The workspace commands with no default key (docs/records/spec-workspace-commands.md), on the two virtual
 # monitors (Virtual-0 at x 0, Virtual-1 at x 1280): back-and-forth, its auto form, next/prev and
 # on-output, focus output, move to output (focus stays), move workspace to output (the source
 # shows the one it showed before, else an unused one; a floating window goes along).

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # focus: mouse
-# Gaps (docs/spec-settings.md): i3's inner gap between windows and inner + outer at the screen's
+# Gaps (docs/records/spec-settings.md): i3's inner gap between windows and inner + outer at the screen's
 # edge, by KWin's tile padding (= inner) and an inset root (outer + inner/2). Exact frames on the
 # first monitor (1280x720), pixels for the gap itself, and the seams: minimums, fullscreen, a
 # resize drag, a reload with gaps set, a hidden workspace, a monitor unplugged, release. No plugin

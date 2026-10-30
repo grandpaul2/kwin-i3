@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # A floated window comes back at the geometry it opened with, as i3's con->geometry
-# (docs/spec-float-size.md). Clients open at 400x300: 400x328 framed with the title bar.
+# (docs/records/spec-float-size.md). Clients open at 400x300: 400x328 framed with the title bar.
 source "$(dirname "$0")/lib.sh"
 SIZE=400x328
 act() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }

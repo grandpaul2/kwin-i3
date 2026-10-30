@@ -17,7 +17,7 @@ not all of i3: from here the work is making it configurable and reliable, not ad
 
 Why one script rather than a tiling script plus a workspace script: i3's tree has to be the single
 truth, so that windows move *among each other* instead of being contents of fixed divisions.
-`docs/plan.md` has the scope and the decisions, `docs/behaviour.md` what it does, row by row; `docs/spike-kwin-tiles.md` is why it
+`docs/plan.md` has the scope and the decisions, `docs/behaviour.md` what it does, row by row; `docs/records/spike-kwin-tiles.md` is why it
 builds on KWin's own tile tree.
 
 ## Keys
@@ -225,9 +225,9 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the focused window (i3's `client.focused`) |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on every other window, the other output's focused one included (i3's `client.unfocused`; its `focused_inactive` is left out) |
 | `[Script-kwin-i3] frameIndicatorActive`, `frameIndicatorInactive` | `#3daee9`, empty | on a window alone in its split (or on its workspace), the side where the next window opens, right or bottom, in this colour per class (i3's `indicator`); empty: the class's frame colour |
-| `[Script-kwin-i3] tiledLook` | `frame` | how tiling windows look: `frame` (i3's frame, no title bar), `titlebars` (each keeps its own title bar, as a Plasma window; the maximize button does nothing, as in sway), `bare` (neither; nothing marks the focused window, KWin's Dim Inactive effect can). Plugins: without them, `titlebars` whatever this says (`docs/spec-tiled-look.md`) |
+| `[Script-kwin-i3] tiledLook` | `frame` | how tiling windows look: `frame` (i3's frame, no title bar), `titlebars` (each keeps its own title bar, as a Plasma window; the maximize button does nothing, as in sway), `bare` (neither; nothing marks the focused window, KWin's Dim Inactive effect can). Plugins: without them, `titlebars` whatever this says (`docs/records/spec-tiled-look.md`) |
 | `[Script-kwin-i3] roundedCorners` | `true` | tiling windows' corners rounded 5 px, as Breeze's, the frame following them, in `frame` and `bare` (plugins: without them tiling windows keep their title bars, and with them their theme's corners). Floating windows keep their theme's corners either way |
-| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/spec-window-modes.md`) |
+| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/records/spec-window-modes.md`) |
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the same colours (plugins; not a window that draws its own title bar). How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a

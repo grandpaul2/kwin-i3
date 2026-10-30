@@ -1,4 +1,4 @@
-// Where a new window goes, and which outside desktop switch it caused (docs/spec-redo-1-new-windows.md,
+// Where a new window goes, and which outside desktop switch it caused (docs/records/spec-redo-1-new-windows.md,
 // A and B). Pure functions of recorded state, so they are unit-tested (tests/unit/placement.test.js);
 // src/kwin.js gathers the facts and acts on the answers. Workspaces are numbers, outputs names.
 

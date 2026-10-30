@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Desktops removed or moved mid-session (docs/spec-desktop-changes.md, (a)): workspace N is
+# Desktops removed or moved mid-session (docs/records/spec-desktop-changes.md, (a)): workspace N is
 # desktop N by position, so kwin-i3 rebuilds its model from KWin's state and the workspaces follow
 # KWin's new order; desktops only appended change nothing.
 source "$(dirname "$0")/lib.sh"

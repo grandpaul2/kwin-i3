@@ -13,7 +13,7 @@
 #                                        pixels grow, each output stays 1280x720 logical, so the
 #                                        scenarios' geometry holds (OPEN.md item 50)
 #   KI3_STOCK=1                          Plasma's stock settings instead of the author's: stock
-#                                        shortcuts and focus (docs/spec-stock-mode.md); the caller
+#                                        shortcuts and focus (docs/records/spec-stock-mode.md); the caller
 #                                        sets KI3_DESKTOPS and KI3_PEROUTPUT (run.sh: 1, true)
 #   KI3_FOCUS=mouse                      with KI3_STOCK=1: focus follows mouse after all
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
@@ -128,7 +128,7 @@ RC
 # Gaps pinned at 0, kwin-i3's default until 2026-10-25 (now 5 and 3): the scenarios' geometry is
 # written for no gaps. 26-gaps deletes the keys to check the defaults.
 # The decoration is Breeze, KWin's default; with the plugins the effect draws the frame around
-# tiled windows (docs/spec-window-modes.md).
+# tiled windows (docs/records/spec-window-modes.md).
 # The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
 # locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom). The focus settings above are that desktop's too.
@@ -162,7 +162,7 @@ RecordRegion=none
 SC
 export KI3_LOG=$tmp/ki3.log
 # Screenshots (tools/shot.py) without KWin's per-caller permission check: a test is not a
-# desktop app with a .desktop file (docs/spec-atomic-layout.md, test 1).
+# desktop app with a .desktop file (docs/records/spec-atomic-layout.md, test 1).
 export KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1
 "$here/logsink.py" "$KI3_LOG" &
 sink=$!

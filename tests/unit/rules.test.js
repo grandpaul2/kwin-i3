@@ -1,5 +1,5 @@
 // Unit tests for src/rules.js (node --test; approved by Paul, 2026-10-28): the i3 kind of each
-// window (docs/behaviour.md §3; docs/spec-redo-3-kinds-rules.md A), the rule parser (B), the
+// window (docs/behaviour.md §3; docs/records/spec-redo-3-kinds-rules.md A), the rule parser (B), the
 // once-per-window record (X2), `assign` (N12), and the old list settings read as rules (C), with
 // Paul's two titles as a case. Windows are stubs with KWin's window properties (window.h).
 const test = require("node:test");

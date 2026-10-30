@@ -19,7 +19,7 @@
             windows apart by a pixel
 --csd       draw its own title bar (a GTK header bar), as GNOME apps do: no server decoration
 --resize-delay  sleep this long whenever the window's size changes, like an app slow to redraw:
-            its frame at the new size reaches KWin that much later (docs/spec-atomic-layout.md)
+            its frame at the new size reaches KWin that much later (docs/records/spec-atomic-layout.md)
 
 Runs until killed. Software rendering, so it works in the headless test KWin.
 """

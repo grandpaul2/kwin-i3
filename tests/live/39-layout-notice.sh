@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Without the plugins kwin-i3's keys stay US symbols: on another keyboard layout the load
-# notification says so (docs/spec-keyboard-layouts.md). On US, nothing; with warnTakenKeys off,
+# notification says so (docs/records/spec-keyboard-layouts.md). On US, nothing; with warnTakenKeys off,
 # nothing. No "# needs: plugin": the helper is not loaded here.
 source "$(dirname "$0")/lib.sh"
 notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }

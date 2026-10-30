@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- kwin-i3's settings form (KWin's generic scripted KCM). Plain Qt widgets only: QUiLoader
      needs no designer plugin for them. Each kcfg_<name> is an entry of ../config/main.xml.
-     Laid out as Plasma's own pages are (docs/spec-settings-page.md, "The tidied form"): one
+     Laid out as Plasma's own pages are (docs/records/spec-settings-page.md, "The tidied form"): one
      centred form, so every label shares one right-aligned column, and bold section headings
      instead of group boxes. -->
 <ui version="4.0">

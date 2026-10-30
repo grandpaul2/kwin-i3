@@ -1,4 +1,4 @@
-// kwin-i3 Workspaces (docs/spec-workspace-widget.md): every workspace in use on one panel, each
+// kwin-i3 Workspaces (docs/records/spec-workspace-widget.md): every workspace in use on one panel, each
 // at its own monitor's shape with its windows, the shown ones marked; a click is kwin-i3's Meta+N.
 // Everything comes from Plasma's task manager, which follows per-monitor desktops; the logic is
 // in workspaces.js.

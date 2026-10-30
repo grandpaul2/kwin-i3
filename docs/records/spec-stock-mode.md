@@ -13,7 +13,7 @@ Three runs of every live scenario, each a step closer to what the install tells 
 
 1. **Pure stock** (one desktop, per-output desktops off, stock shortcuts, stock focus): almost
    everything fails from the first window. That is (b)'s known break: with two monitors and
-   per-output off, a desktop switch changes both monitors (`docs/spec-per-output-desktops.md`),
+   per-output off, a desktop switch changes both monitors (`docs/records/spec-per-output-desktops.md`),
    and kwin-i3 already reports it at load. Nothing new.
 2. **Stock + per-output on**: 22 of 30 pass. 50-keys misses every key from Meta+L on: stock
    Meta+L is Lock Session, which locks the test KWin, and nothing fires after it. The keys

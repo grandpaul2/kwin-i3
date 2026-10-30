@@ -1,5 +1,5 @@
-// The Window Rules sub-page (docs/spec-redo-10-settings-page.md; Paul's call 39: rows with
-// fields; docs/spec-settings-words.md step 5: one line each): one rule of i3's for_window and
+// The Window Rules sub-page (docs/records/spec-redo-10-settings-page.md; Paul's call 39: rows with
+// fields; docs/records/spec-settings-words.md step 5: one line each): one rule of i3's for_window and
 // assign per line, in the order the script runs them: its application (a whole name shown plain)
 // and what it does (floats, tiles, opens on a workspace, opens on a monitor), its title, role and
 // type on a second line when set or asked for. The defaults are a group of their own when they
@@ -193,7 +193,7 @@ KCM.SimpleKCM {
     }
 
     // The defaults, when they run first (as kwin-i3 ships them): their own group above yours, as
-    // they run; else no groups, each default only marked (docs/spec-settings-words.md, step 5).
+    // they run; else no groups, each default only marked (docs/records/spec-settings-words.md, step 5).
     // The installed applications, [{ name, id }] by name (kcm.applications); id is the class.
     readonly property var apps: kcm.applications()
     function appOf(id) { return apps.find((a) => a.id === id) || null; }
@@ -260,7 +260,7 @@ KCM.SimpleKCM {
                         }
                         // The application: chosen by name from the installed ones, or typed. A
                         // whole name shows as the application's name if installed, else plain; any
-                        // other pattern as typed, in monospace (docs/spec-settings-words.md §7).
+                        // other pattern as typed, in monospace (docs/records/spec-settings-words.md §7).
                         QQC2.ComboBox {
                             id: appBox
                             visible: !ruleRow.isRaw

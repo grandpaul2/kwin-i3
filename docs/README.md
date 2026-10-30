@@ -42,7 +42,7 @@ Edited in place whenever what they describe changes, in the same commit as the c
 
 ## Records: why it is the way it is
 
-Frozen once built: **only their status line changes**, saying what happened and where the
+In `records/`. Frozen once built: **only their status line changes**, saying what happened and where the
 current truth is (`behaviour.md`, or the spec that superseded it). Read one for the reasons, the
 alternatives weighed, the probes, Paul's words; not for what the code does now.
 
@@ -59,7 +59,7 @@ Reviews are not kept as files: a review's findings land in the spec, the code, `
 
 ## Writing one
 
-- A new decision: a `spec-<subject>.md`, with Paul's go at its top. When built, its behaviour goes
+- A new decision: a `records/spec-<subject>.md`, with Paul's go at its top. When built, its behaviour goes
   into `behaviour.md` and the spec's status line says so.
-- The words a user reads: `spec-window-words.md` and `philosophy.md`, "How it presents itself".
+- The words a user reads: `records/spec-window-words.md` and `philosophy.md`, "How it presents itself".
 - State, not history, in the standing docs and the open lists; history is git's.

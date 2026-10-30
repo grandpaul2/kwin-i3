@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# make take-keys / make restore-keys (docs/spec-taken-keys.md): free the keys kwin-i3 registered
+# make take-keys / make restore-keys (docs/records/spec-taken-keys.md): free the keys kwin-i3 registered
 # that another shortcut holds (that one fires, kwin-i3's doesn't), and put them back.
 #   take     for each kwin-i3 key whose firing holder (KGlobalAccel.action) is another action,
 #            of a component that is active (an inactive one's key doesn't block kwin-i3's):

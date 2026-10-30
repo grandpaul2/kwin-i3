@@ -1,8 +1,8 @@
-// i3's tiling drag (docs/spec-tiled-look.md, part B): a left press on a tiled window's title bar,
+// i3's tiling drag (docs/records/spec-tiled-look.md, part B): a left press on a tiled window's title bar,
 // or Meta+left anywhere in it, is taken before KWin's decoration and
 // window-action filters can arm a move: the window stays put and kwin-i3 drops it where the
 // pointer is released. Meta+right on a tiled window, or in the gap beside one, is i3's resize of
-// the boundary (docs/spec-tiling-resize.md): taken the same way, kwin-i3 draws the bar and
+// the boundary (docs/records/spec-tiling-resize.md): taken the same way, kwin-i3 draws the bar and
 // resizes at the release. The helper only carries the drag: a hidden kwin-i3 action says it began,
 // and kwin-i3 polls State() over D-Bus until it ends (a script has no inbound D-Bus). kwin-i3
 // works out the target and the zone, tells kwini3hold the indicator, and moves the window in its
@@ -93,7 +93,7 @@ private:
 // a release with Shift down (KWin 6.7.5 window.cpp:1245, :1108). kwin-i3's windows all sit in
 // custom tiles, so every window passed showed it (Paul's capture, 2026-10-29). Just ahead of
 // KWin's move filter (same weight, installed after it), and only for a move G5 started: what that
-// filter does, with Shift taken out (docs/mouse-plugin-design.md, ChordMoveFilter, 2026-10-22).
+// filter does, with Shift taken out (docs/records/mouse-plugin-design.md, ChordMoveFilter, 2026-10-22).
 class TilingDragFloat : public KWin::InputEventFilter
 {
 public:

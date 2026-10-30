@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # focus: mouse
 # needs: plugin
-# The i3 frame (docs/spec-window-modes.md): tiled windows have no decoration and kwini3hold draws
+# The i3 frame (docs/records/spec-window-modes.md): tiled windows have no decoration and kwini3hold draws
 # the frame in the tiles' padding, outside the window; kwini3helper makes it part of its window for
 # focus and clicks (review R1-12). Floating windows keep Breeze. Real input through inject.py.
 source "$(dirname "$0")/lib.sh"

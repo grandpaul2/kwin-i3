@@ -12,7 +12,7 @@ var Workspaces = (function () {
     var MAX = 10;           // kwin-i3's keys: Meta+1..0
 
     // i3 creates a workspace when it is first used: KWin's desktops up to num, appended so none
-    // moves, never removed (KWin saves the count; docs/spec-desktops-on-demand.md). A stock
+    // moves, never removed (KWin saves the count; docs/records/spec-desktops-on-demand.md). A stock
     // Plasma has one.
     function ensure(num) {
         var from = workspace.desktops.length + 1;
@@ -133,6 +133,6 @@ var Workspaces = (function () {
         ordered: ordered,
         assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen, claimHome: claimHome,
         homes: function () { return home; },
-        reset: function () { home = {}; },      // the model rebuilt (docs/spec-desktop-changes.md)
+        reset: function () { home = {}; },      // the model rebuilt (docs/records/spec-desktop-changes.md)
     };
 })();

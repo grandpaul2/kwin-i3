@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# A fullscreen window stays in the tree (docs/spec-fullscreen-tree.md, from Paul's capture of
+# A fullscreen window stays in the tree (docs/records/spec-fullscreen-tree.md, from Paul's capture of
 # 2026-10-23 23:25: Firefox fullscreen, a terminal opened there, "nothing happened"). KWin refuses
 # to tile a fullscreen window, and the rebuild of the tiles for the newcomer lost it its tile, so
 # kwin-i3 floated it, monitor-sized and above the tiles. Now (A) it stays in the tree, out of the

@@ -30,7 +30,7 @@ kwin-i3:
 - **The previous workspace** is recorded in `Tree.activate` (`src/tree.js`, the one place
   global focus changes): when the focused workspace changes, the old one's number is kept.
   That covers every cause above, as i3's `workspace_show` does. Cleared by the model's
-  rebuild (`docs/spec-desktop-changes.md`); a number past the desktops that exist is ignored.
+  rebuild (`docs/records/spec-desktop-changes.md`); a number past the desktops that exist is ignored.
 - **Actions**: "Workspace Back and Forth" (`gotoWorkspace(prev)`; nothing if none) and
   "Move to Workspace Back and Forth" (`moveToWorkspace(prev, focused)`).
 - **Setting** `workspaceAutoBackAndForth` (bool, default false) in `[Script-kwin-i3]`, the

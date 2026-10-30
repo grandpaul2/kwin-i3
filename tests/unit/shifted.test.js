@@ -1,4 +1,4 @@
-// The settings page's names for shifted symbols (kcm/ui/shifted.js, docs/spec-keys-shifted-labels.md),
+// The settings page's names for shifted symbols (kcm/ui/shifted.js, docs/records/spec-keys-shifted-labels.md),
 // with the top rows of real layouts as KWin's keymap gives them: [unshifted, shifted, typed].
 const test = require("node:test");
 const assert = require("node:assert");

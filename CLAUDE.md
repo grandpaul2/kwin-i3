@@ -11,7 +11,7 @@ Read `docs/philosophy.md`, `docs/plan.md` and `docs/behaviour.md` first: what th
 and who for, the scope and Paul's decisions, then what the code does, exactly; `docs/README.md` says
 which doc is the home of which fact. **`docs/kwin-notes.md`** is KWin's behaviour as found, the traps
 that each cost a session: read the section for the part of KWin you touch before you touch it, and
-add a line when you find one. `docs/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
+add a line when you find one. `docs/records/spike-kwin-tiles.md` and `docs/fuzz-design.md` are why it looks
 the way it does. **`OPEN.md` is this repo's list of unfinished work for now, and `LATER.md` of work
 held until the Stage ends**: no other file carries an open list (state, not history; the rules are
 in their headers). `CONTRIBUTING.md` is the short version for a person.

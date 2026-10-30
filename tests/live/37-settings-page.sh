@@ -2,11 +2,11 @@
 # needs: kcm
 # stock: own
 # timing: alone
-# kwin-i3's own settings page (docs/spec-settings-page.md), driven as a person would: injected
+# kwin-i3's own settings page (docs/records/spec-settings-page.md), driven as a person would: injected
 # clicks and keys on kcmshell6 in the test KWin. No plugins are loaded, so what Apply does here it
 # does without them. Controls are found by their accessible names (tools/a11y.py, on the test's own
 # accessibility bus) and clicked at their on-screen box, so a relayout doesn't move the clicks
-# (docs/spec-settings-cleanup.md); the pixel checks look at the header and the Keys rows, at
+# (docs/records/spec-settings-cleanup.md); the pixel checks look at the header and the Keys rows, at
 # 1280x720 with the window filling Virtual-0. KI3_SHOTS=<dir> keeps every screenshot.
 # Alone, after the batch: it clicks after the page's slide animations, and in the batch (~30 test
 # KWins at once) kcmshell6 took longer than 5 s to show its window (2026-10-24).
@@ -72,7 +72,7 @@ check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 click_named kwin-i3 "Configure Keys…"
 sleep 0.5                                   # the sub-page slides in
 shot keys
-# A shifted symbol is named by its keys beside its button (docs/spec-keys-shifted-labels.md):
+# A shifted symbol is named by its keys beside its button (docs/records/spec-keys-shifted-labels.md):
 # Move right's Meta+: gets "Meta+Shift+;", Focus right's Meta+; nothing.
 inked() {   # inked <shot> <x1> <y1> <x2> <y2>: pixels clearly not the white background
     python3 -I -c 'import sys; from PIL import Image

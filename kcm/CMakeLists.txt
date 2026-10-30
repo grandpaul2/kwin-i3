@@ -1,4 +1,4 @@
-# kcm_kwin_i3: kwin-i3's own page in System Settings > Window Management (docs/spec-settings-page.md).
+# kcm_kwin_i3: kwin-i3's own page in System Settings > Window Management (docs/records/spec-settings-page.md).
 # Apart from plugin/: it links no KWin library, so a KWin update doesn't refuse it. It needs
 # kf6-kcmutils-devel and kf6-ki18n-devel.
 cmake_minimum_required(VERSION 3.22)

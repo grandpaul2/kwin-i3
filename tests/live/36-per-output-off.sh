@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Per-output desktops off (Plasma's default), with two monitors: kwin-i3 says so, once at load
-# and once more if it becomes a problem later; never sets it (docs/spec-per-output-desktops.md).
+# and once more if it becomes a problem later; never sets it (docs/records/spec-per-output-desktops.md).
 # peroutput: false
 # stock: own
 source "$(dirname "$0")/lib.sh"

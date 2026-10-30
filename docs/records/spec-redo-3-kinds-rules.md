@@ -131,7 +131,7 @@ assign=[class="^steam$"] → 5
   `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]`, each `floating enable`; the
   classes confirmed by the live read below before building. **plasmashell stays on the built-in
   override-redirect list until the live read** has seen its panel configuration and edit-mode
-  windows: adopting those into the tree is what `docs/bug-panel-config.md` warns about. A user can delete one and see the
+  windows: adopting those into the tree is what `docs/records/bug-panel-config.md` warns about. A user can delete one and see the
   tool tile.
 
 ### C. The old settings (`ignoreClass`, `ignoreRole`, `floatingClass`, `floatingTitle`, `floatingWorkspaces`)

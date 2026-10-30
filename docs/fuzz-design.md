@@ -37,7 +37,7 @@ One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in para
 | focus by pointer | `inject.py abs` to the centre of a random window (focus follows mouse) | medium |
 | resize by drag | drag the shared edge of two adjacent tiled windows by a random amount (as 51-input.sh does) | low |
 | move by drag | Meta+drag a tiled window onto another (with the helper loaded, as in the fuzzer's KWins, that is the tiling drag) | low |
-| a window resizing itself | a tiled test client asks for another size (`docs/spec-self-resize.md`) | low |
+| a window resizing itself | a tiled test client asks for another size (`docs/records/spec-self-resize.md`) | low |
 | monitor unplug / replug | `kscreen-doctor output.Virtual-1.disable/enable` (as 40-monitors.sh) | rare |
 
 Real key presses are covered by 51-input.sh; the fuzzer uses `invokeShortcut` for speed and

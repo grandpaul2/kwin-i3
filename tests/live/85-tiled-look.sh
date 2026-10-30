@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# How tiled windows look (docs/spec-tiled-look.md): tiledLook frame (i3's ring, room for it in the
+# How tiled windows look (docs/records/spec-tiled-look.md): tiledLook frame (i3's ring, room for it in the
 # tiles), bare (no border, no ring, no room; still rounded), titlebars (each its own decoration,
 # no ring, no room). Switched live, back and forth; the maximize button does nothing in
 # titlebars (as in sway), and a minimize keeps the window's place. No gaps (testkwin.sh), so the

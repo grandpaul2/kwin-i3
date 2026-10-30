@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # needs: plugin
-# Window modes, pieces (iii)+(iv) (docs/spec-window-modes.md): a workspace of Plasma windows
+# Window modes, pieces (iii)+(iv) (docs/records/spec-window-modes.md): a workspace of Plasma windows
 # (floatingWorkspaces), the floating mark kept by the effect (decision 5c), the frame on floating
 # windows (frameOnFloating).
 source "$(dirname "$0")/lib.sh"

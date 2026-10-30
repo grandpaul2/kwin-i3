@@ -54,7 +54,7 @@ kclose as
 set_key forWindow --delete; set_key assign --delete; key "Reload Settings"
 # A window floated by hand stays floating through a caption change: the rules act when their
 # verdict changes (a floatingTitle word appearing, above), not whenever it differs from what
-# Paul set (docs/spec-reload-keepabove.md; review finding 1: Firefox retitles in seconds).
+# Paul set (docs/records/spec-reload-keepabove.md; review finding 1: Firefox retitles in seconds).
 client --title hand --retitle "1.5:hand2"
 check "hand tiles"                          wait_tree 1 "H[a main hand*]"
 key "Floating Toggle"

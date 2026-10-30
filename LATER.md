@@ -69,7 +69,7 @@ layout keys, the flight recorder's GEOM/TILE lines), and the fuzzer needs updati
 frame-pixel invariant would catch lost or stale frames, and new actions: a workspace of Plasma
 windows, `frameOnFloating`, the effect unloaded and loaded, a desktop removed or moved.
 
-**10. Window modes** (`docs/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
+**10. Window modes** (`docs/records/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
 `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
 the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-24.md`, `-2-`, `-change-`)). Left:
@@ -77,14 +77,14 @@ the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-2
   (tools/ei-send can't scroll), a forcing window rule (desktop, maximize, size or no titlebar:
   each may ping-pong with kwin-i3's placement or frame, i3 feature map finding 10), `borderlessMaximizedWindows`, a window
   added or closed in the 250 ms at load; rounded corners on a libadwaita app (one that may draw
-  its own corners and shadow, unverified; `docs/spec-rounded-corners.md`);
+  its own corners and shadow, unverified; `docs/records/spec-rounded-corners.md`);
 - the known limits written in the spec.
 
 **11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager,
-`docs/spec-workspace-widget.md`; working, Paul, 2026-10-25). The widget's test gaps: a scroll
+`docs/records/spec-workspace-widget.md`; working, Paul, 2026-10-25). The widget's test gaps: a scroll
 test (tools/ei-send can't scroll), vertical panels and "Numbers only" untested live.
 
-**13. Workspace commands** (`docs/spec-workspace-commands.md`: back-and-forth, next/prev, the
+**13. Workspace commands** (`docs/records/spec-workspace-commands.md`: back-and-forth, next/prev, the
 output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: live tests for the
 source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
 after an unplug; the widget's names on a vertical panel.
@@ -107,7 +107,7 @@ floating set) can leave both flags to the user, and the plain script document it
 
 **22. The settings page, finished for a release** (Paul, 2026-10-25: "not perfect, but fine for
 the dev phase; it will need more attention as we end it"). Today's state: reorganized
-(`docs/spec-settings-cleanup.md`), the frame section given one shape and the debug-log checkbox
+(`docs/records/spec-settings-cleanup.md`), the frame section given one shape and the debug-log checkbox
 removed (2026-10-25). Next, at the end of the Stage: a pass over the whole page with Paul,
 screenshot by screenshot, on his desktop with the plugins (the test KWin's page has none, so its
 frame section is all greyed); by hand, whether arrow keys move the highlight in an open dropdown
@@ -122,7 +122,7 @@ labelled as Plasma's, with the words that changing it here is the same as in Sys
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
 tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
-`docs/spec-settings-cleanup.md`'s build) audited every page through `tools/a11y.py`: names, no
+`docs/records/spec-settings-cleanup.md`'s build) audited every page through `tools/a11y.py`: names, no
 duplicates, no empty headings, Tab order. Bring it back as `make a11y`, run when the page changes
 rather than in `make test`.
 
@@ -142,11 +142,11 @@ moment; if not, a plugin hook in KWin's activation, or won't-fix.
 
 
 **4. No dependence on Paul's dotfiles.** (a)-(d) done and live 2026-10-24: workspaces created on
-demand (`docs/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
-turned on (`docs/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /
-`restore-keys` (`docs/spec-taken-keys.md`), kwin-i3's own Meta+F / Meta+Shift+Q
-(`docs/spec-own-keys.md`); (b) and (c) share one notification at load. The stock test mode is
-done (`make live-stock`, `docs/spec-stock-mode.md`, 2026-10-24): the install as written
+demand (`docs/records/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
+turned on (`docs/records/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /
+`restore-keys` (`docs/records/spec-taken-keys.md`), kwin-i3's own Meta+F / Meta+Shift+Q
+(`docs/records/spec-own-keys.md`); (b) and (c) share one notification at load. The stock test mode is
+done (`make live-stock`, `docs/records/spec-stock-mode.md`, 2026-10-24): the install as written
 (per-output on, `make take-keys`) works on a stock Plasma with click-to-focus; no real finding.
 Left:
 - the default keys against a stock Plasma (finding 13: R1-R7): 22 clash until `make take-keys`;
@@ -162,11 +162,11 @@ Left:
   Plasma settings kwin-i3 is designed around and where each lives in System Settings, said to be
   Plasma's (`plan.md` (e), Paul 2026-10-29); the install snags found on the laptop (`OPEN.md`
   item 50); a package linked while KWin runs can't be turned
-  on until the next login (KPackage's cache, `docs/spec-settings-page.md`); and an app's floating
+  on until the next login (KPackage's cache, `docs/records/spec-settings-page.md`); and an app's floating
   size: a floated window comes back at the size it opened with, but an app that last closed tiled
   opens at that tiled size, as in i3. The fix is a Plasma window rule (Size/Position, "Apply
   Initially"), i3's `for_window` resize done through Plasma: README steps, after a test-KWin check
-  that such a rule leaves tiling alone (`docs/spec-float-size.md`);
+  that such a rule leaves tiling alone (`docs/records/spec-float-size.md`);
 - bug reports from other people: what a capture holds and how to send one (`docs/debugging.md`).
 
 **51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
@@ -191,7 +191,7 @@ when the Stage ends, (d) asked as a foundation change, (a) after item 50.
 
 ## Upstream
 
-**2. Settings**: done and hand-checked (`docs/spec-settings.md`, 2026-10-24). Left: the one-line
+**2. Settings**: done and hand-checked (`docs/records/spec-settings.md`, 2026-10-24). Left: the one-line
 KWin fix upstream (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`), so the Configure
 form's Apply applies without the plugins too (the settings page's Apply already does).
 

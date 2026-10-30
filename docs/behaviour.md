@@ -103,7 +103,7 @@ function names the i3 function it ports.
 - **A split left empty closes**, and so on upward (`onRemoveChild`).
 - **`flatten`** is i3's `tree_flatten`: a split whose only child is a split of the other
   direction, inside a parent of that same direction, is dissolved into the parent.
-- **`tidy`** **≠** i3 (`docs/spec-nested-boxes.md`; `plan.md` decision 8): a split whose only child is a split is
+- **`tidy`** **≠** i3 (`docs/records/spec-nested-boxes.md`; `plan.md` decision 8): a split whose only child is a split is
   replaced by that child, repeatedly: every such shape, flatten's included, so after a close it
   removes at once what i3's flatten would remove only at the next move. A one-child split holding
   a window stays. Run after a move (`flatten` calls it), a close, floating a window, sending one to a workspace, a drop and the
@@ -228,7 +228,7 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
   `floating_fix_coordinates`); a rect that doesn't fit is centred. On a hidden workspace, KWin's
   own restore applies instead.
 - **An app that last closed tiling** opens at its tiling size and floats at that size, as in i3
-  (`docs/spec-float-size.md`).
+  (`docs/records/spec-float-size.md`).
 
 ### What each kind gets
 
@@ -265,7 +265,7 @@ reports when it is off with two or more outputs and never sets it (§13).
 | # | Rule | i3 | Note |
 |---|---|---|---|
 | W1 | Workspace N is desktop N, numbers only, 1 to 10; Plasma's desktop names are display only. A virtual desktop past 10 (the Overview can add one) is not a workspace: a window opened on it, or asking for it, goes to the focused workspace (C1); one moved there leaves the tree; the Overview showing it is undone (refinement stage 4; before, windows there were half in a workspace no key reached) | ≠ | i3 has named, unbounded workspaces: `plan.md` decision 9, reason (a) |
-| W2 | Desktops are created on demand up to the one asked for (Meta+7 on one desktop makes 2 to 7), never removed; KWin saves the count (`docs/spec-desktops-on-demand.md`) | + | i3 creates a workspace when asked and closes it when empty and hidden; here the desktop stays, and W4 gives the same effect |
+| W2 | Desktops are created on demand up to the one asked for (Meta+7 on one desktop makes 2 to 7), never removed; KWin saves the count (`docs/records/spec-desktops-on-demand.md`) | + | i3 creates a workspace when asked and closes it when empty and hidden; here the desktop stays, and W4 gives the same effect |
 | W3 | **A workspace with windows** lives on a connected output: when its output goes, it moves to the first output (the primary first: KWin's `workspace.screenOrder`, as i3's `get_first_output`; `Workspaces.ordered`), workspace outputs not read, for good; one whose workspace output names a returning output comes back (W5, M2) | = | i3's `move_content` (`randr.c:860`); `src/outputs.js` `homesAfterLoss`. Built 2026-10-28 (redo stage 4); until the review that day it went to its next connected assigned output, marked = but not i3's (Paul: follow i3); before, the output's name was kept while it was away and the workspace went back |
 | W4 | **An empty workspace** has no lasting output: it takes the output it is next visible on (S3) | = | i3 closes an empty workspace when it is hidden, and makes it again where asked |
 | W5 | **Assignment** (`workspaceOutputs`, i3's `workspace N output A B …`): a list of outputs per number, space-separated (`1=DP-4 HDMI-A-1, 2=DP-6`), the first connected one wins; when it appears, its workspaces go there. An output name can't contain a space (i3's can't either) | = | i3's `get_assigned_output`. Built 2026-10-28; before, one output per number, kept while away |
@@ -280,7 +280,7 @@ reports when it is off with two or more outputs and never sets it (§13).
 | S3 | Meta+N, N hidden, with windows | N shows on its output; focus to its fullscreen window, else its last focus | = | |
 | S4 | Meta+N, N hidden and empty | N shows on its assigned output, else the **focused output** (the focused workspace's; KWin's active output only with nothing focused), which becomes its output | = | `workspace_show`. Built 2026-10-28 (redo stage 1); before, KWin's active output, which follows the pointer |
 | S5 | Meta+Shift+N | the window goes to N on N's output; focus stays behind, on i3's next focus there. An empty hidden N takes the window's output as its own. Auto back-and-forth applies; the unbound **Workspace N (no back-and-forth)** and **Move to Workspace N (no back-and-forth)** actions skip it | = | i3's `--no-auto-back-and-forth` flag, as actions (a key takes no arguments). Built 2026-10-28 (redo stage 5) |
-| S6 | Back-and-forth, and moving a window there (unbound) | the previous workspace, if it still exists | = | Unbound by default, as in i3 (`docs/spec-workspace-commands.md`) |
+| S6 | Back-and-forth, and moving a window there (unbound) | the previous workspace, if it still exists | = | Unbound by default, as in i3 (`docs/records/spec-workspace-commands.md`) |
 | S7 | Next and previous, overall or on this output, and moving a window there (unbound) | over workspaces with windows or visible, wrapping | = | |
 | S8 | Focus the output in a direction (S11, wrapping), or **next** (the outputs' order, primary first, wrapping) or **primary** (the first in that order) (unbound) | its visible workspace, at its last focus | = | i3's `focus output left|right|up|down|next|primary`; by name stays out: KWin's shortcuts are registered once, at load, under fixed names. Built 2026-10-28 (redo stage 5) |
 | S9 | Move a window to the output in a direction, next or primary (unbound) | to the workspace visible there; focus stays | = | as S8; Move Workspace to Output takes next and primary too (Paul's call 35) |
@@ -298,7 +298,7 @@ reports when it is off with two or more outputs and never sets it (§13).
 | M5 | **An output never seen before** | as M4: its assigned workspaces go to it, and it shows its lowest, else its first assigned, else the lowest free one, over whatever KWin picked (the desktop it last showed in the activity, else desktop 1) | = | Built 2026-10-28; before, KWin's choice stood, which could be a workspace another output showed |
 | M6 | After any output change | every window is re-fitted to its tile as its geometry settles (`armRefit`) | + | |
 | M7 | A desktop switched outside kwin-i3 (the Overview, a pager, KWin's own desktop keys, an activation) | §5 D2/D3 | | |
-| M8 | Desktops removed or reordered (`desktopListChanged`) | appending changes nothing; anything else rebuilds the model from KWin's tiles and windows, as at load, and with per-output desktops each output showing another's workspace switches to one of its own (`docs/spec-desktop-changes.md`). Nothing is placed while it rebuilds. A removed desktop's windows join the workspace KWin moved them to. The numbered settings stay positions: after a removal, "3" names whatever is now workspace 3 | + | |
+| M8 | Desktops removed or reordered (`desktopListChanged`) | appending changes nothing; anything else rebuilds the model from KWin's tiles and windows, as at load, and with per-output desktops each output showing another's workspace switches to one of its own (`docs/records/spec-desktop-changes.md`). Nothing is placed while it rebuilds. A removed desktop's windows join the workspace KWin moved them to. The numbered settings stay positions: after a removal, "3" names whatever is now workspace 3 | + | |
 | M9 | Per-output desktops turned on | each output showing another's workspace switches to one of its own (`showHomes`): the lowest living there and visible nowhere, else an unused one | + | |
 
 ---
@@ -334,7 +334,7 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | A2 | A key moves focus to another output (an edge, Meta+N on the other, focus/move workspace to output); also an outside desktop switch (D2) or an activation (Alt+Tab, the task manager, an app); not KWin's own pick at a close (i3 sets no warp at a close, `tree.c`; review 2026-10-28) | kwin-i3 | the workspace's fullscreen window, else its last focus | to the focused window's centre, an empty workspace's output centre, **unless the pointer is on that output already**; `mouseWarping none` (§11 N7): never | = | i3's `x_set_warp_to` from `workspace_show` and the focus commands, `x_push_changes` warping only if the pointer isn't there (`workspace.c`, `x.c`). Never from a close (`applyFocus`'s `byKey`; the start menu closing sent the pointer across, Paul, 2026-10-25). Built 2026-10-28 (redo stage 2); before, from keys only, whenever the focus changed output |
 | A3 | Any key of kwin-i3's while an **override-redirect** window has the keyboard (KRunner, a menu, a panel popup, a notification; §3 `i3Kind`) | — | nothing: the key does nothing (`KEY … ignored` in the log); Escape first | stays | = | i3's bindings don't fire while dmenu holds the keyboard; panel popups included (Paul's call 59). Built 2026-10-28 (redo stage 2); before, a focus key took the keyboard from it |
 | A4 | A key that doesn't move focus while a window in no tree and not override-redirect has the keyboard (R13: on two or more desktops) | — | that window keeps it | stays | ≠ | reason (a), as R13; an override-redirect window's keyboard is A3's |
-| A5b | Meta+F, Meta+Shift+Q | KWin | unchanged; acts on KWin's active window, whatever its kind, unless it is override-redirect (A3) | stays | = | i3 acts on its focused container; `docs/spec-own-keys.md` |
+| A5b | Meta+F, Meta+Shift+Q | KWin | unchanged; acts on KWin's active window, whatever its kind, unless it is override-redirect (A3) | stays | = | i3 acts on its focused container; `docs/records/spec-own-keys.md` |
 
 | A6 | Move window to workspace N / to an output | kwin-i3 | stays on the source workspace, i3's next focus there | stays | = | |
 | A7 | Any key, first | kwin-i3 | the model takes KWin's active window, if it is in the tree | — | + | Not stale-checked: a key in the millisecond after an output unplug takes a stale activation (accepted, 2026-10-26) |
@@ -349,7 +349,7 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 | B4 | A click on the root window or a dock | KWin, then kwin-i3 (`desktopActivated`) | the desktop: that output's visible workspace at its last focus (or the empty workspace), the desktop window given up at once; a panel: unchanged (KWin never activates a dock), what it opens is override-redirect (A3); with Show Desktop on, the desktop keeps the keyboard (+, Plasma's edit mode) | — | = | i3's root click (`click.c`). Known limit kept: typing into the desktop itself (an icon rename) loses the keyboard on the next pass. Built 2026-10-28 (redo stage 2) |
 | B5 | The pointer still, a window grows under it (after a close, a resize) | — | unchanged | — | = | i3 ignores enter events its own re-layout caused (`add_ignore_event`); KWin acts only on motion |
 | B6 | A tiling drag drops | kwin-i3 | the dropped window | stays | = | |
-| B7 | The pointer crosses the gap to a panel popup (override-redirect) | helper | the popup keeps it (KWin's delay 1.5 s) | — | + | i3's popups grab the pointer; `docs/spec-popup-grace.md` |
+| B7 | The pointer crosses the gap to a panel popup (override-redirect) | helper | the popup keeps it (KWin's delay 1.5 s) | — | + | i3's popups grab the pointer; `docs/records/spec-popup-grace.md` |
 
 **C. Windows opening and closing**
 
@@ -422,7 +422,7 @@ then waits for the next real event.
 
 ### Projection onto KWin's tiles
 
-kwin-i3 places tiling windows with KWin's own custom tiles (`docs/spike-kwin-tiles.md`); KWin's
+kwin-i3 places tiling windows with KWin's own custom tiles (`docs/records/spike-kwin-tiles.md`); KWin's
 tiles are the display, the model is the truth. `project` turns the model into a shape KWin's tiles
 can hold:
 
@@ -490,7 +490,7 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
   ends (`readBack`).
 - **A tiling window that resizes itself** (Firefox's session restore) is put back in its tile, as
   i3 refuses a tiling window's own resize; at most once a second per window, and a frame geometry filling
-  the output waits 150 ms in case it is going fullscreen (`docs/spec-self-resize.md`).
+  the output waits 150 ms in case it is going fullscreen (`docs/records/spec-self-resize.md`).
 - **After an output change or a resize drag**, a window whose geometry lands on its old place is
   fitted again (KWin's placement tracker and slow clients answer late).
 - **A fullscreen window KWin keeps in its tile** (no rebuild since it went fullscreen) is resized
@@ -533,7 +533,7 @@ that it fits Plasma better.
 | L5 | Gaps (`gapsInner`, `gapsOuter`) | 4 px between, 2 px more at the edges | ≠ | i3: 0 and 0 (`config.c:218-222`). Reasons (b) (the inner 4 is KWin's own tile padding, `tile.h:181`) and (c): **Paul, live, 2026-10-28**, as L2 |
 | L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | `hideEdgeBorders` (`none` default): `smart` draws no ring on a workspace with one visible tiling window, and its tile leaves no room for it; `smart_no_gaps` the same when that workspace has no outer gap; `vertical`, `horizontal`, `both` leave out the ring's left and right, top and bottom, or all sides where the window's tile is at the root's edge and the inner gap is 0 (i3's `con_adjacent_borders` on the rendered rects: an outer gap moves the workspace's rect, an inner gap moves the window off it). `smartGaps`: §6. Floating windows never | ≠ | i3's `con.c:1821-1879`. Built 2026-10-28 (redo stage 7). `vertical`, `horizontal`, `both` leave a strip of the ring's width where the side was: ≠, KWin's tiles have one padding for all sides and a root inside its output (Paul's call 41, 2026-10-28) |
 | L7 | A window's own look (i3's `border normal \| pixel N \| none`, `border toggle`, `for_window … border`) | one look for all tiling windows | ≠ | kept: no command language (§8 K22), and §3 R9's criteria set floating only |
-| L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway (`docs/spec-tiled-look.md` B) |
+| L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway (`docs/records/spec-tiled-look.md` B) |
 | L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **Kept** (Paul, 2026-10-27): rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded |
 | L10 | A floating window | its own decoration (KWin's title bar and border) | ≠ | i3's `default_floating_border normal 2`: i3's title bar and border; here Plasma's, reason (b), as L1 |
 | L11 | A floating window's ring (`frameOnFloating`, off) | L3's classes: `focused`, else `unfocused` (i3's would be `focused_inactive`, left out as L3); no indicator | ≠ | i3's `x.c`. Built 2026-10-28 (redo stage 7): `frameFloatingActive` and `frameFloatingInactive` are no longer read (the load report says so once to a user who set them); by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
@@ -552,7 +552,7 @@ that it fits Plasma better.
   its colour class's colour (L3) with the indicator side, after a split key, in the class's indicator colour (L4), and
   the tiles leave room for it;
 - `titlebars`: the window's own decoration; its maximize button and a title-bar double-click do
-  nothing, as in sway (decided, `docs/spec-tiled-look.md` B: the tree places it);
+  nothing, as in sway (decided, `docs/records/spec-tiled-look.md` B: the tree places it);
 - `bare`: no title bar and no ring (nothing marks the focused window; the page suggests Dim
   Inactive).
 
@@ -576,13 +576,13 @@ given back. It reasserts this every pass (the window menu, `borderlessMaximizedW
   the ring in the colour classes (L11), except on a window that draws its own title bar: no
   border is taken, so no ring and no frame focus (`takeBorder`, `floatingFramed`).
 - Are **kept above** tiling windows (kwin-i3 owns their Keep Above flag, including one left by a
-  previous instance; `docs/spec-reload-keepabove.md`), except on a Floating workspace while the
+  previous instance; `docs/records/spec-reload-keepabove.md`), except on a Floating workspace while the
   effect marks floating windows. Keep Below is overwritten (`LATER.md` item 27).
 - The effect knows which windows are floating (`SetFloating`); the set survives a script reload.
 
 ### The hold (atomic layout)
 
-`kwini3hold`, `docs/spec-atomic-layout.md`. When a tiling window on a visible workspace is about to
+`kwini3hold`, `docs/records/spec-atomic-layout.md`. When a tiling window on a visible workspace is about to
 move or resize, the effect snapshots it and draws the snapshot at the old place. Every other
 window moving within 3 ms joins. When every held window's frame geometry equals what it was asked for, all
 switch at once in one frame; after `holdTimeoutMs` (default 200, Sway's `txn_timeout_ms`) they switch regardless. A held
@@ -664,7 +664,7 @@ refits, reason (a): KWin matches the current layout's symbol, and a fit done onc
 first switch. A key is changed only if it still holds the US default or what the helper set
 last (recorded in `~/.config/kwini3helperrc`, `[LayoutKeys]`); a key the user bound is theirs. A
 key with no symbol on the layout is emptied. A key set by hand to the US default counts as kwin-i3's. One fit runs
-at a time; a change during one queues another (`docs/spec-keyboard-layouts.md`).
+at a time; a change during one queues another (`docs/records/spec-keyboard-layouts.md`).
 
 ### Taken keys
 
@@ -683,7 +683,7 @@ component holds, and reports them (§13); a holder that launches what the kwin-i
 (`TAKEN-SAME`), not reported: both fire the same thing (Paul's call 63, redo stage 5). `make take-keys` frees them, recording the holders in
 `~/.local/state/kwin-i3/taken-keys.json`; `make restore-keys` gives them back. The settings page's
 Keys page takes a key the same way on Apply, recording it in the same file
-(`docs/spec-taken-keys.md`).
+(`docs/records/spec-taken-keys.md`).
 
 ---
 
@@ -703,7 +703,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | G1 | Meta+left anywhere in a tiling window | the drag starts at once, **without activating** the window; after the drop the focus stays where it was unless the dragged window had it (`Tree.drop`) | = | i3 starts the drag before it focuses anything (step 2 before 3; `tiling_drag`, `set_focus`). A title-bar drag still activates first (step 3 then 8). Built 2026-10-28 (redo stage 6) |
 | G2 | Left on a tiling window's title bar (the title-bar look), no modifier | activated and raised as KWin's title-bar click; the drag starts after the **drag distance**; a title-bar button keeps its click | ≠ | i3: focuses (step 3), then drags after **15 logical px** in a straight line (`drag.c`, `threshold_exceeded`); here Plasma's drag distance (System Settings, default 10 px), measured along the axes added together. **Kept** (Paul, 2026-10-27): Plasma's own setting, so it follows what the user set |
 | G3 | Which presses start a drag | `tilingDrag`: `modifier titlebar` (default, i3's shipped config), `modifier`, `titlebar`, `off`; read by the helper from kwinrc. A press the setting leaves out still activates and is swallowed on a tiling window; floating windows are KWin's, but for Meta+Shift+left (G13) | ≠ | i3's `tiling_drag` (=); i3 replays the left-out press to the app (`click.c`, `allow_replay_pointer`). Swallowed for G4's reason: KWin's window-action filter runs after the helper's, and a Meta press let through would be KWin's move, floating the window (review 2026-10-28: was marked =). Built 2026-10-28 (redo stage 6) |
-| G4 | Nowhere to drop (`has_drop_targets`: fewer than two tiling windows and empty visible workspaces, all outputs counted) | no drag; a Meta press is **swallowed** | ≠ | the count is i3's (=). i3 then focuses the window and passes the press on to the app (steps 3 and 10, `allow_replay_pointer`). Decided as i3 on 2026-10-27, then **kept** (Paul, 2026-10-28): KWin's window-action filter runs after the helper's, so a Meta press let through would be KWin's move, floating the window (`docs/spec-redo-6-clicks-closes.md`) |
+| G4 | Nowhere to drop (`has_drop_targets`: fewer than two tiling windows and empty visible workspaces, all outputs counted) | no drag; a Meta press is **swallowed** | ≠ | the count is i3's (=). i3 then focuses the window and passes the press on to the app (steps 3 and 10, `allow_replay_pointer`). Decided as i3 on 2026-10-27, then **kept** (Paul, 2026-10-28): KWin's window-action filter runs after the helper's, so a Meta press let through would be KWin's move, floating the window (`docs/records/spec-redo-6-clicks-closes.md`) |
 | G5 | Meta+Shift+left | not a tiling drag: KWin's own move pulls the window out of its tile, and it floats where dropped. **That move runs without Shift**: Shift held during a KWin move is its drop into a custom tile (6.7.5 `window.cpp:1245` draws an outline over each tile passed, `:1108` tiles the window at a release with Shift down), and every kwin-i3 window sits in one; the helper's `TilingDragFloat`, just ahead of KWin's move filter, passes the move's motions, keys and release with Shift taken out (Paul's capture, 2026-10-29: the gray outlines over each window passed) | ≠ | i3's Shift there is the swap modifier (`tiling_drag swap_modifier`, default Shift, `tiling_drag.c:341`); here it is a **float modifier**, as the centre drop swaps anyway (G11). Reason (c): **Paul, live, 2026-10-28**, a deliberate mouse feature for the Plasma audience, working both ways: its other half is G13. Once per press of the keys, as G13 |
 | G6 | While dragging | the effect draws the drop indicator, the cursor is the move cursor, the pointer reaches no window and focus doesn't follow it | = | i3 masks enter events and maps an indicator window with the move cursor. The indicator's colour, `frameActive` at half opacity (i3: `client.focused.indicator`, opaque), is §7's |
 | G7 | How a drag ends | **any button's release** drops at the pointer (another button's press is swallowed); **any key press** cancels and the key goes on (its binding still runs): a key filter ahead of KWin's shortcuts, installed while a press is held (`TilingDragKeys`); **a window closing on the focused workspace** ends it at once and drops where the pointer last was (kwin-i3 tells the helper `Cancel`, then drops), unless the dragged window or the target is the one closing | = | i3 4.24 drops on any button's release (`drag.c:61-65`; i3's `next` branch only on the drag button's), and its grab hides another button's press, as here; a key is `DRAG_REVERT`, as here; an unmap on the focused workspace is `DRAG_ABORT` (`drag.c:77-87`), no revert, so the drop happens at the last target if it exists (`tiling_drag.c:325`). Refinement stage 6; before, a close cancelled. Built 2026-10-28 (redo stage 6); before, Escape and another button's press cancelled. Z7's resize the same |
@@ -712,7 +712,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | G10 | A side or parent drop | as i3: a split where the orientation differs (or the two-window parent flips), then inserted; a parent drop moves it out with i3's move | = | `DT_SIBLING`, `DT_PARENT` |
 | G11 | A centre drop onto a window | the two **swap**, Shift or not; onto an empty workspace it moves there | ≠ | i3 moves it after the target (`con_move_to_target`), and swaps with the swap modifier. Kept (Paul, 2026-10-26: "I love swap"): without tabs, i3's centre move is the same as a side drop, so the centre would add nothing |
 | G12 | The dragged window fullscreen | it leaves fullscreen for the drop and gets it back, unless the target workspace has a fullscreen window and it didn't have focus | = | the end of `tiling_drag` |
-| G13 | **Float to tile**: Meta+Shift+left on a floating window of kwin-i3's (with `tilingDrag`'s `modifier`; otherwise KWin's move) | a tiling drag of it, as G1 and G6-G10, G12: no activation, the indicator, any key cancels; dropped, it is tiled first (as the floating toggle, T17: unstuck, the floating look gone), then placed as a tiled window would be; **a centre drop puts it after the target**, no swap. Cancelled: it stays floating where it was. **Once per press of the keys**: after a Meta+Shift drag ends, either way (this or G5), a further Meta+Shift+left press does nothing until Meta or Shift is released. With nowhere to drop (no tiled window or empty workspace shown), the press does nothing | + | i3 never tiles a floating window by dragging (`click.c:251-258` guards the tiling drag with `!floatingcon`; Shift only means `proportional`, `:221`). Reason (c): **Paul, 2026-10-28**, G5's other half (`docs/spec-float-to-tile.md`). The centre is i3's own centre drop (`con_move_to_target`): G11's swap is for two tiled windows, and here it would float the target |
+| G13 | **Float to tile**: Meta+Shift+left on a floating window of kwin-i3's (with `tilingDrag`'s `modifier`; otherwise KWin's move) | a tiling drag of it, as G1 and G6-G10, G12: no activation, the indicator, any key cancels; dropped, it is tiled first (as the floating toggle, T17: unstuck, the floating look gone), then placed as a tiled window would be; **a centre drop puts it after the target**, no swap. Cancelled: it stays floating where it was. **Once per press of the keys**: after a Meta+Shift drag ends, either way (this or G5), a further Meta+Shift+left press does nothing until Meta or Shift is released. With nowhere to drop (no tiled window or empty workspace shown), the press does nothing | + | i3 never tiles a floating window by dragging (`click.c:251-258` guards the tiling drag with `!floatingcon`; Shift only means `proportional`, `:221`). Reason (c): **Paul, 2026-10-28**, G5's other half (`docs/records/spec-float-to-tile.md`). The centre is i3's own centre drop (`con_move_to_target`): G11's swap is for two tiled windows, and here it would float the target |
 
 **Z. Tiling resize (Meta+right-drag)**
 
@@ -724,9 +724,9 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | Z4 | Right press on a tiling window's title bar (title-bar look); or a left press there with no drag | KWin's: the window menu; the title-bar click | ≠ | i3 resizes against the neighbour above (`CLICK_DECORATION`, `BORDER_TOP`). **Kept** (Paul, 2026-10-27): the window menu is how Plasma reaches its window actions (keep above, KWin rules, activities), which i3 has none of |
 | Z5 | While resizing | the pointer is warped onto the boundary (the middle of the gap between the two descended-focused leaves), the cursor shows the direction, a 2 px bar follows the pointer; nothing moves until release | ≠ | `resize_graphical_handler`. The bar stays within both participants' minimum sizes: ≠ kept, KWin's tiles refuse a tile below its window's minimum (i3 keeps it 25 px inside the output) |
 | Z6 | A fullscreen window on the workspace | refused | = | i3 refuses between containers of different fullscreen modes, which is the same here: the fullscreen window covers the rest |
-| Z7 | Release | the two shares change by the distance (`resize_neighboring_cons`); if the layout changed meanwhile, nothing (`docs/spec-tiling-resize.md`). Ending otherwise: as G7 (any key cancels, any release drops, a close on the focused workspace ends it and resizes from where the pointer last was, unless a participant is the one closing) | = | as G7 (`resize.c:274` reverts only on `DRAG_REVERT`); the layout check is + (KWin's tiles are rewritten under the drag, reason (a)) |
+| Z7 | Release | the two shares change by the distance (`resize_neighboring_cons`); if the layout changed meanwhile, nothing (`docs/records/spec-tiling-resize.md`). Ending otherwise: as G7 (any key cancels, any release drops, a close on the focused workspace ends it and resizes from where the pointer last was, unless a participant is the one closing) | = | as G7 (`resize.c:274` reverts only on `DRAG_REVERT`); the layout check is + (KWin's tiles are rewritten under the drag, reason (a)) |
 | Z8 | A drag on a tiling window's edge in the title-bar look (KWin's resize) | KWin resizes, and the result is read back into the shares (§6) | + | |
-| Z9 | **The gaps are kwin-i3's** (the pointer over a gap or a ring, anywhere between tiled windows and at the outer edges, within Z2's reach) | the arrow; a press there is Z2/Z3's, never an app's: transparent strips of kwini3helper's own (`gapstrips.h`) cover the gaps, above every app's invisible resize band (VS Code's default title bar, Chromium, Electron, GTK header bars hold the pointer up to 10 px past their frame); never over a floating window, panel, popup or notification, none on an output with a fullscreen window. A tiled window under the pointer is raised among the tiled ones (invisible; floating windows stay above; no focus change), so a neighbour's band can't take its own frame's pixels; a press there before the raise lands does nothing | = | i3 reparents each client into its frame window (`manage.c:554`): clipped by X11, no client takes a pixel of the gap, the arrow on frames and root (`x.c:171`), a resize cursor only once a resize has started (`resize.c:238`). Built 2026-10-28 (`docs/spec-gap-ownership.md`, OPEN.md item 43) |
+| Z9 | **The gaps are kwin-i3's** (the pointer over a gap or a ring, anywhere between tiled windows and at the outer edges, within Z2's reach) | the arrow; a press there is Z2/Z3's, never an app's: transparent strips of kwini3helper's own (`gapstrips.h`) cover the gaps, above every app's invisible resize band (VS Code's default title bar, Chromium, Electron, GTK header bars hold the pointer up to 10 px past their frame); never over a floating window, panel, popup or notification, none on an output with a fullscreen window. A tiled window under the pointer is raised among the tiled ones (invisible; floating windows stay above; no focus change), so a neighbour's band can't take its own frame's pixels; a press there before the raise lands does nothing | = | i3 reparents each client into its frame window (`manage.c:554`): clipped by X11, no client takes a pixel of the gap, the arrow on frames and root (`x.c:171`), a resize cursor only once a resize has started (`resize.c:238`). Built 2026-10-28 (`docs/records/spec-gap-ownership.md`, OPEN.md item 43) |
 
 **F. Floating windows, the ring, and the rest**
 
@@ -757,7 +757,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
-| V1 | A window goes fullscreen (Meta+F is KWin's, or the app asks) | it stays in the tree (`docs/spec-fullscreen-tree.md`) and covers its output, panels too; KWin takes it out of its tile, its siblings fill the space; it gets the focus; it rejoins when fullscreen ends. No ring, no gaps | = | i3's `fullscreen` (`CF_OUTPUT`): the container keeps its place, covers the output and the bar, gets the focus (`con_enable_fullscreen`), no border |
+| V1 | A window goes fullscreen (Meta+F is KWin's, or the app asks) | it stays in the tree (`docs/records/spec-fullscreen-tree.md`) and covers its output, panels too; KWin takes it out of its tile, its siblings fill the space; it gets the focus; it rejoins when fullscreen ends. No ring, no gaps | = | i3's `fullscreen` (`CF_OUTPUT`): the container keeps its place, covers the output and the bar, gets the focus (`con_enable_fullscreen`), no border |
 | V2 | A second window goes fullscreen on the same workspace | the first one's fullscreen ends | = | "disable any fullscreen container that would conflict". KWin itself allows several |
 | V3 | Fullscreen across all outputs (i3's `fullscreen enable global`) | none | ≠ | kept: KWin's fullscreen is one output's area |
 | V4 | A floating window fullscreen (a game, `mpv --fs`) | its workspace's fullscreen window, as a tiling one; a tiling one at the top level wins a tie | = | `con_get_fullscreen_con` searches the floating windows too |
@@ -789,7 +789,7 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
 - **Keep Above as the floating mark**: a window kept out of the tree at first and adopted later
   with Keep Above set comes in floating where the rules would tile it; at a login, a window whose
   session restored Keep Above and that arrives after kwin-i3 loaded is tiled with the flag left
-  on (`docs/spec-reload-keepabove.md`, "The login edge").
+  on (`docs/records/spec-reload-keepabove.md`, "The login edge").
 - **Focus keys over a fullscreen window** are judged per workspace: with a floating window focused
   over a fullscreen app, a focus key is refused where i3 (which judges from the focused window's
   own fullscreen ancestor) allows it. Kept, Paul 2026-10-27: i3's form would let a key focus a
@@ -822,11 +822,11 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
   kwin-i3 takes the workspace's floating.
 - **Keep Above is kwin-i3's on its windows**: a user's own Keep Above is cleared when the window is
   tiled, and unticking it on a floating window doesn't stick (won't-fix, i3 has no such flag;
-  `docs/spec-windows-placing-themselves.md`, `LATER.md` item 27).
+  `docs/records/spec-windows-placing-themselves.md`, `LATER.md` item 27).
 - **Release leaves the effect's floating marks**: after a release and a reload, the windows that
   were floating come back floating.
 - **After a reload a fullscreen window comes back at the end of its row** (accepted, pinned by a
-  test; `docs/spec-fullscreen-tree.md`). A fullscreen request not yet applied reads as a fixed
+  test; `docs/records/spec-fullscreen-tree.md`). A fullscreen request not yet applied reads as a fixed
   size, so such a window opens floating.
 - **A window kept out of the tree, quick-tiled by KWin into one of kwin-i3's tiles**, loses that
   tile at the next pass.

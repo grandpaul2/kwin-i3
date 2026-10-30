@@ -1,5 +1,5 @@
 // The settings page's reading and writing of the script's setting strings
-// (docs/spec-settings-cleanup.md): the page edits rows and lists, kwinrc keeps the strings the
+// (docs/records/spec-settings-cleanup.md): the page edits rows and lists, kwinrc keeps the strings the
 // script parses (src/settings.js). Pure functions, unit-tested in tests/unit/kcm-settings.test.js.
 
 // "1=DP-4 HDMI-A-1, 2=DP-6" -> { 1: "DP-4 HDMI-A-1", 2: "DP-6" }: each workspace's list of outputs
@@ -34,7 +34,7 @@ function formatWorkspaces(list) {
     return parseWorkspaces(list.join(",")).join(", ");
 }
 
-// The window rules (docs/spec-redo-3-kinds-rules.md, E): i3's for_window and assign rules as text,
+// The window rules (docs/records/spec-redo-3-kinds-rules.md, E): i3's for_window and assign rules as text,
 // one rule per line or `;`-separated (the script's reading, src/rules.js split), until stage 10's
 // redesign. splitRules gives the rules, trimmed, empty ones dropped.
 function splitRules(text) {
@@ -74,7 +74,7 @@ function workspaceCounts(outputsText, floatingText) {
     return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
 }
 
-// ---- the rules as rows (redo stage 10, docs/spec-redo-10-settings-page.md) -------------------
+// ---- the rules as rows (redo stage 10, docs/records/spec-redo-10-settings-page.md) -------------------
 // A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
 // workspace (N) or output (name), src }, when the rule's criteria are among the four the page
 // shows (class, title, window_role, window_type; src/rules.js parseCriteria's grammar); any
@@ -165,7 +165,7 @@ function plainName(pattern) {
     const m = /^\^((?:[^.*+?^${}()|[\]\\]|\\[.*+?^${}()|[\]\\])*)\$$/.exec(String(pattern || ""));
     return m ? m[1].replace(/\\(.)/g, "$1") : null;
 }
-// What the application field stores for what was typed (docs/spec-settings-words.md, step 5): a
+// What the application field stores for what was typed (docs/records/spec-settings-words.md, step 5): a
 // plain name matched whole, or, with any of * + ? ^ $ { } ( ) | [ ] \ in it, i3's regular
 // expression as typed.
 function classFromField(text) {

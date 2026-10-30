@@ -1,6 +1,6 @@
 // Unit tests for src/outputs.js (node --test; approved by Paul, 2026-10-28): where workspaces go
 // when an output is lost or appears, against i3 4.24's randr.c (move_content, init_ws_for_output,
-// get_assigned_output); docs/spec-redo-4-outputs.md B and C.
+// get_assigned_output); docs/records/spec-redo-4-outputs.md B and C.
 const test = require("node:test");
 const assert = require("node:assert");
 const O = require("../../src/outputs.js");

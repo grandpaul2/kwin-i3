@@ -26,7 +26,7 @@ FrameFocus::FrameFocus(TilingDrag *drag)
         const KConfigGroup group = config->group(QStringLiteral("Script-kwin-i3"));
         m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
         m_frameOnFloating = group.readEntry("frameOnFloating", false);
-        // Tiled windows have a ring in i3's frame look only (docs/spec-tiled-look.md).
+        // Tiled windows have a ring in i3's frame look only (docs/records/spec-tiled-look.md).
         m_tiledRing = group.readEntry("tiledLook", QStringLiteral("frame")) == QLatin1String("frame");
     };
     load();

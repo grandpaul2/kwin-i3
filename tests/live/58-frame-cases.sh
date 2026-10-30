@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# The frame's harder cases (docs/spec-window-modes.md, review 1): the hair at the screen edges of
+# The frame's harder cases (docs/records/spec-window-modes.md, review 1): the hair at the screen edges of
 # a nested layout after the root changes (R1-7), a floating window over a frame while the frame
 # repaints (R1-1), a client that draws its own title bar (R1-5), release and reload (R4), and a
 # monitor at 125 % (R1-6). Pixels from tools/shot.py: the test KWin's background is black.

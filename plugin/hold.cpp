@@ -58,7 +58,7 @@ struct BlendState {
 };
 }
 
-// The config form's group (docs/spec-settings.md); the old [kwin-i3-hold] keys are still read
+// The config form's group (docs/records/spec-settings.md); the old [kwin-i3-hold] keys are still read
 // where the new ones are missing.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
@@ -1106,7 +1106,7 @@ void Hold::resetRadii()
 // that side full height (x.c:591). With a radius (device px) each bar reaches that far inside
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
 // A hidden side is left out, its corners with it (hide_edge_borders: the side at the output's
-// edge; the strip stays empty, docs/spec-redo-7-look.md C).
+// edge; the strip stays empty, docs/records/spec-redo-7-look.md C).
 QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, double radius, const Ring &how) const
 {
     const double f = m_frameWidth, r = radius;

@@ -3,7 +3,7 @@
 **Now (2026-10-27):** All four pieces built and live 2026-10-24/25; kwini3frame retired; the "nothing built" line below is history. What it does: `behaviour.md` §3, §6, §7.
 
 **Words superseded** (2026-10-27): a "Plasma window" is now a **floating** window, and the
-ignore list's windows **place themselves** (`docs/spec-window-words.md`).
+ignore list's windows **place themselves** (`docs/records/spec-window-words.md`).
 
 From Paul, 2026-10-24: "what we call a floating window [should] feel more like a [Plasma] window
 ... Full headers on the windows that they can click to drag around ... Then they tap
@@ -23,7 +23,7 @@ Sources: KWin 6.7.5 (`tiles/tile.cpp` `Tile::windowGeometry`, `window.cpp` `requ
 `setNoBorder`, `pointerEnterEvent`, `xdgshellwindow.cpp` `configureDecoration`,
 `sendRoleConfigure`, `moveResizeInternal`, `initialDecorationPolicy`), `src/kwin.js`,
 `src/rules.js`, `src/settings.js`, `plugin/hold.cpp`, `plugin/frame.cpp`, `plugin/framefocus.cpp`,
-`docs/spec-decoration.md`, `docs/spec-reload-keepabove.md`, the probes and prototype of
+`docs/records/spec-decoration.md`, `docs/records/spec-reload-keepabove.md`, the probes and prototype of
 2026-10-24 (`OPEN.md` item 10).
 
 ## The idea
@@ -146,7 +146,7 @@ compares the hair separately so float noise elsewhere keeps the old tolerance).
    i3. Alternative: take the workspace's mode on arrival. Recommendation: keep it (the setting is
    about where windows open, not a property of the place).
 5. **The durable "floating" marker.** Today a floating window is kept above, which is also how a
-   reload knows a hand-floated window (`docs/spec-reload-keepabove.md`). On a Plasma-mode
+   reload knows a hand-floated window (`docs/records/spec-reload-keepabove.md`). On a Plasma-mode
    workspace every window would be kept above, which a Plasma user sees: the window menu's "Keep
    above others" ticked, and no way to put one Plasma window under a tiled one. Options:
    (a) keep it: i3's layering (floating above tiled), and the marker stays;

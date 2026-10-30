@@ -32,7 +32,7 @@ kcm=$(cd ../../kcm/build/bin 2>/dev/null && [[ -f plasma/kcms/systemsettings/kcm
 skipped=()
 # "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10);
 # "# peroutput: false": with per-output desktops off (default on).
-# KI3_STOCK=1 (make live-stock, docs/spec-stock-mode.md): Plasma's stock settings, one desktop,
+# KI3_STOCK=1 (make live-stock, docs/records/spec-stock-mode.md): Plasma's stock settings, one desktop,
 # per-output on, and those two headers ignored; "# focus: mouse" gives the scenario focus follows
 # mouse, and "# stock: own" runs it as the default mode does.
 launch() {

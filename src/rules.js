@@ -1,4 +1,4 @@
-// Which kind each window is (docs/behaviour.md §3, docs/spec-redo-3-kinds-rules.md): i3's kinds,
+// Which kind each window is (docs/behaviour.md §3, docs/records/spec-redo-3-kinds-rules.md): i3's kinds,
 // decided as i3's manage.c decides them, then the user's rules in i3's own syntax (`forWindow`:
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
 // kwinrc's [Script-kwin-i3] group (src/settings.js). The old list settings (`floatingClass`,
@@ -47,7 +47,7 @@ var Rules = (function () {
     // KWin calls every fullscreen window not resizeable (XdgToplevelWindow::isResizable), so one
     // is judged by its own size limits, KWin's own last test (min < max on either axis; no max
     // is INT_MAX). Read as "fixed size", a caption change while fullscreen floated a tiled
-    // browser (docs/spec-fullscreen-tree.md, part B). A fullscreen request not yet applied
+    // browser (docs/records/spec-fullscreen-tree.md, part B). A fullscreen request not yet applied
     // (resizeable false, fullScreen false) still reads "float": the plan's known limit.
     function fixedSize(w) {
         if (!w.fullScreen) return !w.resizeable;

@@ -47,7 +47,7 @@ All from Plasma's own data, which already follows per-monitor desktops: `Virtual
 (`desktopIds`, `desktopNames`, `currentDesktopByScreenName`, `currentDesktopForScreenChanged`),
 `TasksModel` (each window's `VirtualDesktops`, `Geometry`, `ScreenGeometry`), and the screens Qt
 knows. kwin-i3 needs no new code: workspace N is desktop N, and desktop changes are already
-followed (`docs/spec-desktop-changes.md`), so the widget's numbers are kwin-i3's.
+followed (`docs/records/spec-desktop-changes.md`), so the widget's numbers are kwin-i3's.
 
 The logic (which workspaces, which monitor each lives on, each thumbnail's size and windows)
 lives in one plain JS file the QML imports, so it is unit-tested in node like `src/`.

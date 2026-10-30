@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Window modes without the plugins (docs/spec-window-modes.md, decision 5c): a workspace of
+# Window modes without the plugins (docs/records/spec-window-modes.md, decision 5c): a workspace of
 # Plasma windows still opens them floating, and with no effect to keep the floating mark the
 # kept-above flag is the mark, so a reload keeps them floating.
 source "$(dirname "$0")/lib.sh"

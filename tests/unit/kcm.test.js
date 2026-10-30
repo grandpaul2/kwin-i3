@@ -1,4 +1,4 @@
-// The settings page's Keys table (kcm/ui/commands.json, docs/spec-settings-page.md) against what the
+// The settings page's Keys table (kcm/ui/commands.json, docs/records/spec-settings-page.md) against what the
 // script registers: registerKeys() from src/kwin.js run with stubs, plus the two actions start()
 // registers. A key added to the script and not to the page would be a key nobody can rebind there.
 const test = require("node:test");
@@ -51,7 +51,7 @@ test("the retired actions are not registered", () => {
     for (const a of ["kwin-i3 Move Right (;)", "kwin-i3 Move to Workspace 1"]) assert.ok(!names.includes(a), a);
 });
 
-test("the workspace commands are registered with no key (docs/spec-workspace-commands.md)", () => {
+test("the workspace commands are registered with no key (docs/records/spec-workspace-commands.md)", () => {
     const r = Object.fromEntries(registered());
     const want = ["Workspace Back and Forth", "Move to Workspace Back and Forth", "Workspace Next", "Workspace Prev",
                   "Workspace Next on Output", "Workspace Prev on Output", "Move to Workspace Next", "Move to Workspace Prev",
@@ -76,7 +76,7 @@ test("every command has a label and a group", () => {
 });
 
 // The helper plugin's table of keys that mean a position (plugin/layoutkeys.cpp,
-// docs/spec-keyboard-layouts.md): each action exists, and its US key is the one registered, so a
+// docs/records/spec-keyboard-layouts.md): each action exists, and its US key is the one registered, so a
 // key the user hasn't changed is recognised as kwin-i3's default.
 test("the layout keys' table names registered actions with their registered US keys", () => {
     const cpp = fs.readFileSync(path.join(root, "plugin/layoutkeys.cpp"), "utf8");

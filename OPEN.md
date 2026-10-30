@@ -93,7 +93,7 @@ to `plan.md` (e)'s list as a user following the install would (2026-10-29): focu
 docking, lid-with-monitor and wallpaper-flash checks still to do.
 
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
-`docs/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
+`docs/records/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
 kwin-i3 load, KWin activates the tile Show Desktop hides, which ends Show Desktop; no kwin-i3 pass
 or JavaScript caller is behind it (the 2026-10-25 trace), and the helper's pointer log shows
 nothing. With the plugins, 74's case 1 fell in it (red in both builds, green after a 3 s settle);

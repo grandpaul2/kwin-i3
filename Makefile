@@ -11,7 +11,7 @@ unit:
 KCM_IF := $(if $(wildcard /usr/lib*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake /usr/lib/*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake),kcm)
 live: build tools $(PLUGIN_IF) $(KCM_IF)
 	tests/live/run.sh
-# Plasma's stock settings, as a stranger's install has them (docs/spec-stock-mode.md).
+# Plasma's stock settings, as a stranger's install has them (docs/records/spec-stock-mode.md).
 live-stock: build tools $(PLUGIN_IF) $(KCM_IF)
 	KI3_STOCK=1 tests/live/run.sh
 test: unit live
@@ -36,16 +36,16 @@ plugin:
 	cmake --build plugin/build -j8
 plugin-install: plugin
 	tools/plugin-install.sh
-# kwin-i3's System Settings page (kcm/, docs/spec-settings-page.md), against kf6-kcmutils-devel.
+# kwin-i3's System Settings page (kcm/, docs/records/spec-settings-page.md), against kf6-kcmutils-devel.
 kcm:
 	cmake -S kcm -B kcm/build -DCMAKE_BUILD_TYPE=RelWithDebInfo >/dev/null
 	cmake --build kcm/build -j8
 kcm-install: kcm
 	tools/kcm-install.sh
-# The workspace widget (widget/, docs/spec-workspace-widget.md): QML only, nothing to build.
+# The workspace widget (widget/, docs/records/spec-workspace-widget.md): QML only, nothing to build.
 widget-install:
 	kpackagetool6 -t Plasma/Applet -u widget >/dev/null 2>&1 || kpackagetool6 -t Plasma/Applet -i widget
-# Free kwin-i3's keys that other shortcuts hold, and put them back (docs/spec-taken-keys.md).
+# Free kwin-i3's keys that other shortcuts hold, and put them back (docs/records/spec-taken-keys.md).
 take-keys:
 	python3 -I tools/take-keys.py take
 restore-keys:

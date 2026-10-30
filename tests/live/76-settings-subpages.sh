@@ -2,7 +2,7 @@
 # needs: kcm
 # stock: own
 # timing: alone
-# The settings page's Workspaces and Window Rules sub-pages (docs/spec-settings-cleanup.md),
+# The settings page's Workspaces and Window Rules sub-pages (docs/records/spec-settings-cleanup.md),
 # driven as a person would, controls found by their accessible names (tools/a11y.py) as in
 # 37-settings-page. Alone, as 37: kcmshell6 is slow to show in the parallel batch.
 source "$(dirname "$0")/lib.sh"

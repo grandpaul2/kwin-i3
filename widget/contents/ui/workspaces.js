@@ -1,4 +1,4 @@
-// The workspace widget's logic (docs/spec-workspace-widget.md): from Plasma's data, which
+// The workspace widget's logic (docs/records/spec-workspace-widget.md): from Plasma's data, which
 // workspaces to show, the monitor each lives on, and its windows. Plain JS, no QML: main.qml
 // imports it, and tests/unit/widget.test.js loads it in node.
 //
@@ -78,7 +78,7 @@ function step(list, dir, from) {
     return list[(at + (dir > 0 ? 1 : list.length - 1)) % list.length].num;
 }
 
-// A workspace's label (docs/spec-workspace-commands.md, 4): "2 mail" when its desktop has a name
+// A workspace's label (docs/records/spec-workspace-commands.md, 4): "2 mail" when its desktop has a name
 // of its own, else "2". An unnamed desktop carries KWin's default, "Desktop 2" in the user's
 // language, which the caller passes as defaultName.
 function named(num, name, defaultName) {

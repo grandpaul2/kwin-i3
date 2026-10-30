@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# Rounded corners on tiled windows (docs/spec-rounded-corners.md): kwini3hold gives each tiled
+# Rounded corners on tiled windows (docs/records/spec-rounded-corners.md): kwini3hold gives each tiled
 # window KWin's 5 px radius and draws the frame along it; floating windows keep Breeze's; square
 # when fullscreen and with roundedCorners off. Pixels from tools/shot.py.
 # At scale 1, a window at 1,1 with r=5 and a 1 px frame: the arc's centre is 6,6, its inner edge

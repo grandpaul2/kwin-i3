@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# Window modes (docs/spec-window-modes.md): tiled windows without a decoration, the 1 px frame drawn by
+# Window modes (docs/records/spec-window-modes.md): tiled windows without a decoration, the 1 px frame drawn by
 # kwini3hold in the tile's padding; floating windows keep Breeze. Pixels from tools/shot.py.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py

@@ -162,7 +162,7 @@ class Kwin:
                    "invokeShortcut", "s", "kwin-i3 " + a["name"])
         elif op == "selfresize":
             # A frame change kwin-i3 didn't ask for, as a client resizing itself (Firefox's
-            # session restore; docs/spec-self-resize.md). It is asked back at most once a second
+            # session restore; docs/records/spec-self-resize.md). It is asked back at most once a second
             # per window, so wait that out: a settle inside it would catch the refit half done.
             self.js('workspace.windowList().forEach(function (w) { if (w.caption === %s) '
                     'w.frameGeometry = { x: w.x, y: w.y, width: %d, height: %d }; });'

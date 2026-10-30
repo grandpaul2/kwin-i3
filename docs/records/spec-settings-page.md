@@ -80,7 +80,7 @@ tested by `tests/live/37-settings-page.sh` (30 checks, `# needs: kcm`) and
    on `/component/kwin` lists kwin-i3's actions with their current and default keys (only while
    the script is loaded: its actions exist then), and `org.kde.KGlobalAccel.setForeignShortcutKeys`
    changes them with no conflict check (`kglobalacceld.cpp:541`); both are used by
-   `make take-keys` (`docs/spec-taken-keys.md`). QML's `KeySequenceItem`
+   `make take-keys` (`docs/records/spec-taken-keys.md`). QML's `KeySequenceItem`
    (`org.kde.kquickcontrols`, installed) records a key. Its own conflict check is **not** usable
    here (*review*): on a clash it opens a modal dialog and, on Continue, removes the key from the
    other holders at once (`KGlobalAccel::stealShortcutSystemwide`), before Apply and beyond
@@ -151,7 +151,7 @@ generated at build time from a copy of `package/contents/config/main.xml` (fact 
 and the script can't drift apart. Defaults then Apply removes a default-valued entry from the
 file rather than writing it (KConfigSkeleton), which the script reads as the default.
 **Apply** writes the file, then calls KWin's `reconfigure`. As with Meta+Shift+C, that reaches the
-script and the plugins (`docs/spec-settings.md`, "Applying a change"). **So Apply takes effect
+script and the plugins (`docs/records/spec-settings.md`, "Applying a change"). **So Apply takes effect
 on the page, with or without the plugins**, which closes the gap left in OPEN.md item 2 for
 anyone using the page.
 
@@ -161,7 +161,7 @@ colours and high-contrast scheme. Checked in the test (below), not assumed.
 
 ## The tidied form (`package/contents/ui/config.ui`)
 
-It stays plain Qt widgets, with no designer plugins (`docs/spec-settings.md`, "The form"). It
+It stays plain Qt widgets, with no designer plugins (`docs/records/spec-settings.md`, "The form"). It
 looks as close to the page as widgets allow: no group boxes; one `QFormLayout` per section with
 labels right-aligned, centred between spacers; bold section headings with a line under each; the
 same section order and wording as the page; and shorter tooltips. Its top line says how to apply

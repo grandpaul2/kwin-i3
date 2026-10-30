@@ -1,5 +1,5 @@
 // Unit tests for the settings page's reading and writing of the setting strings
-// (kcm/ui/settings.js, docs/spec-settings-cleanup.md).
+// (kcm/ui/settings.js, docs/records/spec-settings-cleanup.md).
 const test = require("node:test");
 const assert = require("node:assert");
 const K = require("../../kcm/ui/settings.js");

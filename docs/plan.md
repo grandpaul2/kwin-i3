@@ -159,11 +159,11 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    removed, flatten's shape included, after anything that changes the tree (so after a close it
    removes at once what i3's flatten would remove only at the next move). i3 keeps them, and each one costs a
    move key press. They only matter in i3 because of `focus parent` and tabbed/stacked, both out
-   (reason (d)); adding either means revisiting this first. `docs/spec-nested-boxes.md` has the
+   (reason (d)); adding either means revisiting this first. `docs/records/spec-nested-boxes.md` has the
    reasoning, i3's side and the risks.
    **Atomic layout changes (Paul, 2026-10-23)**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
    holds the old layout on screen until every moved window has its new frame, as Sway's
-   transactions do; i3 on X11 never had the gap. `docs/spec-atomic-layout.md`.
+   transactions do; i3 on X11 never had the gap. `docs/records/spec-atomic-layout.md`.
 9. **Workspaces are KWin's virtual desktops** (`src/workspaces.js`): virtual desktop N is
    workspace N, 1 to 10, made on demand and never removed (a virtual desktop past 10, which
    Plasma's Overview can add, is not kwin-i3's: a window opened there goes to the focused

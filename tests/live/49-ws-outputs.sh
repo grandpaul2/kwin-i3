@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# workspaceOutputs, i3's "workspace N output X" (docs/spec-settings.md), on the two virtual
+# workspaceOutputs, i3's "workspace N output X" (docs/records/spec-settings.md), on the two virtual
 # monitors (Virtual-0 at x 0, Virtual-1 at x 1280): at login each monitor shows the lowest
 # workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor;
 # a monitor that appears takes its workspaces back; a reload moves no existing workspace.

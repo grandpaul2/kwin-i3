@@ -1,4 +1,4 @@
-// The Workspaces sub-page (docs/spec-settings-cleanup.md; redo stage 10): each workspace's
+// The Workspaces sub-page (docs/records/spec-settings-cleanup.md; redo stage 10): each workspace's
 // monitors in order (workspaceOutputs, "1=DP-4 HDMI-A-1": the first connected one is used, as
 // i3's workspace N output A B), and whether its new windows open floating (the rule
 // [workspace="^N$"] floating enable in forWindow, as the old floatingWorkspaces is read), one

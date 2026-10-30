@@ -29,7 +29,7 @@ if (!on && keptAbove[id(w)]) { w.keepAbove = false; delete keptAbove[id(w)]; }
 ```
 
 So un-floating cleared nothing: the window stayed above everything, which was invisible before
-and is green since the frame colours (`docs/spec-frame-colours.md`). Every reload leaves every
+and is green since the frame colours (`docs/records/spec-frame-colours.md`). Every reload leaves every
 floating window's flag orphaned the same way; `release` (Meta+Ctrl+Shift+Q) clears only the
 recorded ones, so it leaves them too.
 

@@ -2,7 +2,7 @@
 # needs: xwayland
 # needs: plugin
 # Paul, 2026-10-25: "Show Panel Configuration" in the panel's menu did nothing
-# (docs/bug-panel-config.md). Plasma turns Show Desktop on for its edit mode as the menu closes.
+# (docs/records/bug-panel-config.md). Plasma turns Show Desktop on for its edit mode as the menu closes.
 # The menu closing is a window removed, so kwin-i3 ran a passive focus pass; the pass found the
 # desktop active, which it took for "nothing has the focus", and gave the focus back to the tile.
 # Activating a window hidden by Show Desktop turns Show Desktop off (kwin activation.cpp), which
@@ -36,7 +36,7 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 
 # 1. A popup has the focus (the panel's menu) and Show Desktop goes on; then the popup closes.
 #    Show Desktop stays on and the desktop keeps the focus.
-# The load's leftover (docs/bug-panel-config.md, OPEN.md item 53): within about a second of a
+# The load's leftover (docs/records/bug-panel-config.md, OPEN.md item 53): within about a second of a
 # kwin-i3 load, an activation of unknown origin takes the tile Show Desktop hides, which ends Show
 # Desktop. With the plugins the FRAME line above comes at once, before it, so case 1 fell in it
 # (2026-10-29). This wait is for that leftover only; remove it when item 53 is solved.

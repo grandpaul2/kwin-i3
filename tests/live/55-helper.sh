@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # needs: plugin
-# kwini3helper's settings watch (plugin/settingswatch.cpp, docs/spec-settings.md): a save of
+# kwini3helper's settings watch (plugin/settingswatch.cpp, docs/records/spec-settings.md): a save of
 # kwinrc [Script-kwin-i3] (the config form's Apply: a plain write, no --notify) has KWin
 # reconfigure once, and kwin-i3 takes the new value without Meta+Shift+C. A write elsewhere in
 # kwinrc, KWin's own included, reconfigures nothing. A probe script counts the reconfigures.
@@ -76,7 +76,7 @@ for d in 0.17 0.18 0.19; do
     busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; sleep 0.5   # put it right for the next
 done
 
-# 6. i3's resize mode (plugin/resizemode.cpp, docs/spec-redo-5-keys.md; redo stage 5): Meta+R
+# 6. i3's resize mode (plugin/resizemode.cpp, docs/records/spec-redo-5-keys.md; redo stage 5): Meta+R
 #    enters it and the effect shows its banner; J shrinks the width (the helper runs kwin-i3's
 #    action by key code); Meta+1 is kglobalaccel's but kwin-i3 ignores it in the mode; a plain
 #    letter fires no kwin-i3 action (it reaches the window); Escape leaves.

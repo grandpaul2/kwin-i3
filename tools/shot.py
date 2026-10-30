@@ -7,7 +7,7 @@
 
 KWin answers only callers it trusts; the test KWin runs with KWIN_SCREENSHOT_NO_PERMISSION_CHECKS=1
 (tools/testkwin.sh). The capture renders through the effect chain, so it shows what an effect is
-drawing (docs/spec-atomic-layout.md, test 1).
+drawing (docs/records/spec-atomic-layout.md, test 1).
 
 A probe is a process start, two imports and a PNG decode (~45 ms): a test reading many pixels of
 one capture asks for them in one probe (78-rounded-corners read 734 one at a time, 44 s).

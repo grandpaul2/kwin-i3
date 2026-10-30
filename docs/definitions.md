@@ -74,7 +74,7 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **output** | a monitor (Paul, 2026-10-27: i3's word; not "monitor" or "screen"). ≠ on the settings page, which says **screen**, Plasma's word on its window pages (Paul, 2026-10-28; `spec-settings-words.md` row 1) | output | KWin's output (`LogicalOutput`); the script API's **screen** |
+| **output** | a monitor (Paul, 2026-10-27: i3's word; not "monitor" or "screen"). ≠ on the settings page, which says **screen**, Plasma's word on its window pages (Paul, 2026-10-28; `records/spec-settings-words.md` row 1) | output | KWin's output (`LogicalOutput`); the script API's **screen** |
 | **workspace** | workspace N, 1 to 10; it is virtual desktop N (≠ i3: numbers only, `plan.md` decision 9) | workspace | **virtual desktop** |
 | **virtual desktop** | KWin's object behind a workspace; said only when KWin's side matters | — | virtual desktop (`workspace.desktops`) |
 | **per-output desktops** | KWin showing a different virtual desktop on each output; kwin-i3 needs it | (i3's normal) | `perOutputVirtualDesktops` |

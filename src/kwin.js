@@ -9,7 +9,7 @@ var KI3 = (function () {
     var wins = {};          // window id -> KWin window, for every window we manage
     var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
-    // The frame (docs/spec-window-modes.md): with kwini3hold loaded, tiled windows have no
+    // The frame (docs/records/spec-window-modes.md): with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
     // effect last said (asked at load and on every reconfigure; the effect asks for a
     // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took.
@@ -35,22 +35,22 @@ var KI3 = (function () {
     var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];    // the workspace keys, Meta+1..0
     // >0 while kwin-i3 itself changes what a monitor shows (showOn, an activation that may switch
     // a desktop): currentDesktopChanged tells those from switches made outside it (the Overview,
-    // Plasma), which kwin-i3's focus follows (shownOutside; docs/spec-windows-placing-themselves.md).
+    // Plasma), which kwin-i3's focus follows (shownOutside; docs/records/spec-windows-placing-themselves.md).
     var switching = 0;
     function showOn(desk, s) {
         switching++;
         try { workspace.setCurrentDesktopForScreen(desk, s); } finally { switching--; }
     }
     // Desktop switches made outside kwin-i3, recorded as they come and handled a turn later
-    // (docs/spec-redo-1-new-windows.md, B and D): KWin emits windowAdded in the same call as the
+    // (docs/records/spec-redo-1-new-windows.md, B and D): KWin emits windowAdded in the same call as the
     // activation that switched an output to the new window's desktop (workspace.cpp
     // addWaylandWindow), so adoptWindow runs first and claims that switch (Placement.claim); what
     // is left is i3's `workspace N` on that output (shownOutside).
     var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
-    // The helper's tiling drag (docs/spec-tiled-look.md B; startDrag below).
+    // The helper's tiling drag (docs/records/spec-tiled-look.md B; startDrag below).
     var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
     var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
-    // i3's resize mode (docs/spec-redo-5-keys.md A): the helper owns the state and tells kwin-i3
+    // i3's resize mode (docs/records/spec-redo-5-keys.md A): the helper owns the state and tells kwin-i3
     // through the hidden action Mode Changed, then Mode(); asked once at load, so a reload of this
     // script can't lose step. While it is on, every key of kwin-i3's does nothing but the four
     // resize actions the mode itself runs (i3: only the mode's bindings are active).
@@ -220,7 +220,7 @@ var KI3 = (function () {
     // refuses to tile a fullscreen window (Tile::manage: not resizable). One dragged to the
     // other monitor arrives without a tile (fuzzer I9); one that had a tile loses it when the
     // tiles are rebuilt for a newcomer, and the refusal then floated it, monitor-sized, over
-    // everything opened after (Paul's capture, 2026-10-23 23:25; docs/spec-fullscreen-tree.md).
+    // everything opened after (Paul's capture, 2026-10-23 23:25; docs/records/spec-fullscreen-tree.md).
     // Both stay in the tree and join the layout when fullscreen ends. w.tile is KWin's
     // *requested* tile (window.h: READ requestedTile), cleared by the unmanage itself, not on
     // the client's acknowledgement, so it is safe to decide from (probed with a stopped client).
@@ -334,7 +334,7 @@ var KI3 = (function () {
         return out;
     }
 
-    // ---- gaps (docs/spec-settings.md) ------------------------------------------------------
+    // ---- gaps (docs/records/spec-settings.md) ------------------------------------------------------
     // i3's gaps (render.c): inner between windows, inner + outer at the screen's edge. KWin gives
     // a tile's window P/2 towards a neighbour and P at the screen's edge, judged by the tile's
     // relative edge being exactly 0 or 1 (tile.cpp windowGeometry): with padding = inner on
@@ -343,7 +343,7 @@ var KI3 = (function () {
     // The inner gap is even (the pickers step by 2; an odd one from kwinrc counts as the even one
     // below): KWin rounds tile edges to whole pixels (absoluteGeometry) and takes half the padding
     // a side, so an odd padding put every window half a pixel off, its text shifting when
-    // anything redrew it (Paul, 2026-10-25, gap 5; docs/spec-settings.md).
+    // anything redrew it (Paul, 2026-10-25, gap 5; docs/records/spec-settings.md).
     // Per workspace since redo stage 7 (§11 N2, §7 L6): i3's gaps.c calculate_effective_gaps.
     // The outer gap per side (gapsTop … gapsLeft, else gapsOuter); a workspace's own lines
     // (workspaceGaps) replace the global values, as i3's gaps_for_workspace (gaps.c:124-160).
@@ -708,7 +708,7 @@ var KI3 = (function () {
     }
     // A tiled window that resizes itself (Firefox's session restore: Paul's capture 2026-10-25)
     // is asked back into its tile, as i3 refuses a tiled window's own resize (handlers.c
-    // handle_configure_request; docs/spec-self-resize.md). It had reached its tile and left it:
+    // handle_configure_request; docs/records/spec-self-resize.md). It had reached its tile and left it:
     // the frame before the change fitted. A slow client answering kwin-i3's own resize in steps
     // never starts from a fitting frame, so it isn't asked twice (53-hold). At most once a
     // second per window, so a client that flips back each time isn't asked without end; a second
@@ -813,7 +813,7 @@ var KI3 = (function () {
     }
 
     // A floated window takes the geometry it opened with, as i3's con->geometry (manage.c,
-    // floating_enable; docs/spec-float-size.md): recorded once, when kwin-i3 first sees the
+    // floating_enable; docs/records/spec-float-size.md): recorded once, when kwin-i3 first sees the
     // window untiled, with the output it was on. KWin's own restore was lost by a move to a
     // hidden workspace: recorded when that workspace is shown, from the tiled frame unmanageFrom
     // kept. With no record (tiled already at a load), fullscreen or hidden: KWin's restore.
@@ -1049,7 +1049,7 @@ var KI3 = (function () {
     // A window kwin-i3 floats owns its keep-above flag, set here or not: after a reload the flag
     // the old instance set is still on the window, and recording it only when setting it left
     // the window kept above (and green, since the frame colours) for good once un-floated
-    // (docs/spec-reload-keepabove.md, 2026-10-24).
+    // (docs/records/spec-reload-keepabove.md, 2026-10-24).
     function setFloatingLook(w, on) {
         var key = id(w);
         if (on) { var con = model.byWin[key]; lookFloating(w, con ? Tree.wsOf(con) : null); return; }
@@ -1156,7 +1156,7 @@ var KI3 = (function () {
         focusTold = null;
     }
 
-    // How tiled windows look (docs/spec-tiled-look.md), with the effect there: without their
+    // How tiled windows look (docs/records/spec-tiled-look.md), with the effect there: without their
     // border in "frame" and "bare", and the ring and its room in the tiles in "frame" only.
     // Without the effect, title bars whatever tiledLook says.
     function tiledBorderless() { return frameOn && Settings.get("tiledLook") !== "titlebars"; }
@@ -1211,7 +1211,7 @@ var KI3 = (function () {
         var f = model.focused;
         return f ? (f.type === "ws" ? f : Tree.wsOf(f)) : null;
     }
-    // The workspace a window that just appeared gets (docs/spec-redo-1-new-windows.md, A and B;
+    // The workspace a window that just appeared gets (docs/records/spec-redo-1-new-windows.md, A and B;
     // the rules in Placement.target): a modal dialog goes with its parent (C3), one that asked for
     // a hidden desktop keeps it (C4), any other opens on the focused workspace (C1), wherever
     // KWin's active output put it. The switch KWin made to activate it is undone (C2), unless it
@@ -1339,7 +1339,7 @@ var KI3 = (function () {
         if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
         // The workspace first (placeNew, `assign` included), then the kind: a `workspace`
         // criterion sees the workspace the window opens on, as i3's run_assignments runs after
-        // the window is placed (docs/spec-redo-3-kinds-rules.md, A).
+        // the window is placed (docs/records/spec-redo-3-kinds-rules.md, A).
         var fws = focusedWs(), placed = fresh ? placeNew(w) : null;
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
@@ -1356,7 +1356,7 @@ var KI3 = (function () {
         }
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
-        // so it stays floating whatever the rules say (docs/spec-reload-keepabove.md).
+        // so it stays floating whatever the rules say (docs/records/spec-reload-keepabove.md).
         if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "floating";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
@@ -1482,7 +1482,7 @@ var KI3 = (function () {
     // rules not yet run on the window run now, each at most once, only to apply it (ruleRan): a
     // window whose title stops matching stays as it is, and so does one floated or tiled by hand
     // (a window floated with Meta+Shift+Space used to tile again at its next caption change, which
-    // for a browser is seconds: docs/spec-reload-keepabove.md, review finding 1, 2026-10-24).
+    // for a browser is seconds: docs/records/spec-reload-keepabove.md, review finding 1, 2026-10-24).
     function reclassify(w) {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
@@ -1648,7 +1648,7 @@ var KI3 = (function () {
 
     // Make KWin show what the model has focused: its workspace on its monitor, the window
     // active; and the pointer follows when the focus changed output and the pointer isn't there
-    // already (i3's x_push_changes with mouse_warping output; docs/spec-redo-2-pointer.md D):
+    // already (i3's x_push_changes with mouse_warping output; docs/records/spec-redo-2-pointer.md D):
     // only for a pass a key or an outside switch asked for (byKey), as i3 warps from workspace_show
     // and the focus commands, never from a close (the start menu closing sent the pointer across,
     // Paul, 2026-10-25; 72-pointer-stays). checked: this pass has KWin's answer that Show Desktop
@@ -1669,7 +1669,7 @@ var KI3 = (function () {
         // Except with Show Desktop on: then the desktop holds the focus on purpose (Plasma's edit
         // mode turns it on as the panel's menu closes, and the menu closing is this pass), and
         // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
-        // the edit mode before its window showed (docs/bug-panel-config.md). Scripts can't read
+        // the edit mode before its window showed (docs/records/bug-panel-config.md). Scripts can't read
         // the state, so a pass that finds the desktop (or the panel) active asks KWin, and a pass
         // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
         // window is left to focus on a monitor is also the desktop: that pass still brings the
@@ -1742,7 +1742,7 @@ var KI3 = (function () {
     function step() { return Settings.get("resizeStep") / 100; }
 
     // A floating window moves and resizes by floatingStep px, as i3's 10 px (cmd_move_direction,
-    // cmd_resize_floating; docs/spec-float-keys.md). The window, or null when the keys are the
+    // cmd_resize_floating; docs/records/spec-float-keys.md). The window, or null when the keys are the
     // tree's: a tiled con, or a floating window KWin holds fullscreen or maximized.
     function floatingWin(c) {
         var w = c && c.type === "floating" ? wins[c.win] : null;
@@ -1791,7 +1791,7 @@ var KI3 = (function () {
         return true;
     }
 
-    // ---- i3's tiling drag (tiling_drag.c; docs/spec-tiled-look.md, part B) ---------------------
+    // ---- i3's tiling drag (tiling_drag.c; docs/records/spec-tiled-look.md, part B) ---------------------
     // The helper takes the press (plugin/tilingdrag.cpp) and runs the hidden "Tiling Drag" action;
     // from there kwin-i3 polls its State() until the drop or the cancel, shows the drop on
     // kwini3hold's indicator, and drops in the tree (Tree drop). The window stays put meanwhile.
@@ -1991,7 +1991,7 @@ var KI3 = (function () {
         }));
     }
 
-    // ---- i3's mouse resize of tiled windows (click.c, resize.c; docs/spec-tiling-resize.md) ------
+    // ---- i3's mouse resize of tiled windows (click.c, resize.c; docs/records/spec-tiling-resize.md) ------
     // Meta+right on a tiled window, or in the gap beside one: the helper takes the press and runs
     // the hidden "Tiling Resize" action. As in i3, nothing changes while the pointer moves: a 2 px
     // bar follows it along the boundary, and the shares change once at the release.
@@ -2103,7 +2103,7 @@ var KI3 = (function () {
         }));
     }
 
-    // ---- the pointer (docs/spec-redo-2-pointer.md, A) --------------------------------------
+    // ---- the pointer (docs/records/spec-redo-2-pointer.md, A) --------------------------------------
 
     // i3's check_crossing_screen_boundary (handlers.c): with focus follows mouse, the pointer
     // moving onto another output over the root window or a dock focuses that output's visible
@@ -2215,7 +2215,7 @@ var KI3 = (function () {
             scheduleAll();
             // A key that left kwin-i3's focus where it was (a split, a resize, a layout toggle)
             // takes no focus from an open window kwin-i3 doesn't manage (Yakuake, KRunner, a
-            // dialog): only keys that move the focus do, as in i3 (docs/spec-windows-placing-themselves.md).
+            // dialog): only keys that move the focus do, as in i3 (docs/records/spec-windows-placing-themselves.md).
             var a = workspace.activeWindow;
             var keep = model.focused === focusBefore && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock;
             if (!keep) wantFocus(true);
@@ -2241,7 +2241,7 @@ var KI3 = (function () {
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
         // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
-        // not; a stock Plasma binds neither key (docs/spec-own-keys.md).
+        // not; a stock Plasma binds neither key (docs/records/spec-own-keys.md).
         "Fullscreen": function () { invoke("Window Fullscreen"); },
         "Close": function () { invoke("Window Close"); },
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the load
@@ -2257,7 +2257,7 @@ var KI3 = (function () {
         "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
         "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
-        // new values. The config form saves without telling KWin (docs/spec-settings.md).
+        // new values. The config form saves without telling KWin (docs/records/spec-settings.md).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
@@ -2289,13 +2289,13 @@ var KI3 = (function () {
         // focusWin takes into the model before this line; under a fullscreen window that is a
         // newcomer sent there while hidden, and activating it drops the fullscreen window
         // from the top layer. As in i3, a fullscreen window keeps the focus on its workspace
-        // (con_fullscreen_permits_focusing; docs/spec-fullscreen-tree.md).
+        // (con_fullscreen_permits_focusing; docs/records/spec-fullscreen-tree.md).
         var fs = model.fullscreenOn(ws);
         model.activate(fs || model.descendFocused(ws));
         pushSticky(outputOf(ws), old);
     }
 
-    // i3's output_push_sticky_windows (output.c:83-120; redo stage 9, docs/spec-redo-9-sticky.md
+    // i3's output_push_sticky_windows (output.c:83-120; redo stage 9, docs/records/spec-redo-9-sticky.md
     // B): after a change of what output s shows, every sticky floating window on its other
     // workspaces moves to the shown one, in the model only (KWin draws a window on all desktops
     // wherever its output is). `old`, the focus before the switch: a sticky window that had it
@@ -2356,7 +2356,7 @@ var KI3 = (function () {
         // (Paul, 2026-10-28: follow i3).
     }
 
-    // ---- workspace commands with no default key (docs/spec-workspace-commands.md) -------------
+    // ---- workspace commands with no default key (docs/records/spec-workspace-commands.md) -------------
 
     // The focused workspace's number: the focused con's, else what the active monitor shows.
     function focusedWsNum() {
@@ -2563,7 +2563,7 @@ var KI3 = (function () {
             registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
                              "kwin-i3: move to workspace " + n, "Meta+" + SHIFTED[i], mv);
         });
-        // No default key, as in i3 (docs/spec-workspace-commands.md): bound by the user in
+        // No default key, as in i3 (docs/records/spec-workspace-commands.md): bound by the user in
         // System Settings > Shortcuts.
         Object.keys(UNBOUND).forEach(function (name) {
             registerShortcut("kwin-i3 " + name, "kwin-i3: " + name.toLowerCase(), "", act(name, UNBOUND[name]));
@@ -2583,7 +2583,7 @@ var KI3 = (function () {
         }
     }
 
-    // ---- the load-time report (docs/spec-taken-keys.md) ---------------------------------------
+    // ---- the load-time report (docs/records/spec-taken-keys.md) ---------------------------------------
 
     // One notification per load for what the user should fix in their setup. Each check opens a
     // part and closes it with its lines once its D-Bus replies are in; the last close sends it.
@@ -2607,7 +2607,7 @@ var KI3 = (function () {
     }
 
     // Without the helper plugin the keys stay US symbols: a layout that isn't US is reported
-    // (docs/spec-keyboard-layouts.md). Its part closes once, on the answer or after 3 s, so a
+    // (docs/records/spec-keyboard-layouts.md). Its part closes once, on the answer or after 3 s, so a
     // D-Bus call that never answers can't hold back the rest of the report.
     function checkLayoutKeys() {
         if (!Settings.get("warnTakenKeys")) return;
@@ -2696,7 +2696,7 @@ var KI3 = (function () {
 
     // Plasma's "Switch desktops independently for each screen" (off by default): with it off a
     // desktop switch changes every monitor, so with two or more, login numbering alone puts
-    // both on workspace 2 and windows tile on the wrong one (docs/spec-per-output-desktops.md).
+    // both on workspace 2 and windows tile on the wrong one (docs/records/spec-per-output-desktops.md).
     // Reported, never set: a script's value would last only to the next reconfigure. At load in
     // the report; later, when it becomes a problem (a second monitor, the setting turned off),
     // once per load on its own.
@@ -3016,7 +3016,7 @@ var KI3 = (function () {
         });
     }
 
-    // A desktop removed or moved (docs/spec-desktop-changes.md, (a)): workspace N is desktop N by
+    // A desktop removed or moved (docs/records/spec-desktop-changes.md, (a)): workspace N is desktop N by
     // position, so the numbers now name other desktops. Desktops only appended: nothing. Else
     // the model is rebuilt from KWin's state as at a load: nothing is reconciled meanwhile
     // (`rebuilding`: a pass now would move windows to their old numbers), and the rebuild waits
@@ -3182,7 +3182,7 @@ var KI3 = (function () {
         }));
         registerKeys();
         // The helper plugin fits the keys that mean a key position to the keyboard layout
-        // (docs/spec-keyboard-layouts.md). No reply asked: without the plugin, nothing happens.
+        // (docs/records/spec-keyboard-layouts.md). No reply asked: without the plugin, nothing happens.
         callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
         // All open their part of the report before any can close it: one notification.
         checkTakenKeys();
@@ -3273,7 +3273,7 @@ var KI3 = (function () {
         if (!changed.length) return;
         log("SETTINGS " + changed.join(" "));
         // The rules changed: every rule runs anew on every window (each window's record cleared),
-        // as a reload would in i3 (docs/spec-redo-3-kinds-rules.md, B); a window a rule doesn't
+        // as a reload would in i3 (docs/records/spec-redo-3-kinds-rules.md, B); a window a rule doesn't
         // reach stays as it is, floated or tiled by hand included (reclassify).
         if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; })) {
             ruleRan = {};
@@ -3383,7 +3383,7 @@ var KI3 = (function () {
         wantFocus(true);
         rememberShown();
     }
-    // Outputs came or went (docs/spec-redo-4-outputs.md; i3's randr.c): a lost output's workspaces
+    // Outputs came or went (docs/records/spec-redo-4-outputs.md; i3's randr.c): a lost output's workspaces
     // move to the first output for good, assignments not read (i3's move_content);
     // a new output takes the workspaces assigned to it and shows its lowest, else its first
     // assigned, else the lowest free one; then the first output's visible workspace gets the

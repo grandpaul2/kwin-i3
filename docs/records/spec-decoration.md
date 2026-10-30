@@ -57,7 +57,7 @@ null; R1-1), so neither hover nor click on the line focuses today under Aurorae 
 decoration API has no way to ask for activation. The frame itself stays "nothing"; **kwini3mouse**,
 which already runs before KWin's decoration filter, does the focusing (below).
 
-**Deliberate break from i3, like the nested boxes** (`docs/spec-nested-boxes.md`): no resize by
+**Deliberate break from i3, like the nested boxes** (`docs/records/spec-nested-boxes.md`): no resize by
 dragging the border (i3's `tiling_resize`, `click.c` step 10) and no move or resize of a floating
 window from its border (steps 5 and 6). That is what Paul wants gone.
 

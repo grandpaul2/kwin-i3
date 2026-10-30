@@ -1,5 +1,5 @@
 // Settings: every key kwin-i3 reads from kwinrc's [Script-kwin-i3] group, with its type and
-// default (docs/spec-settings.md). The one table the config form (package/contents/config/
+// default (docs/records/spec-settings.md). The one table the config form (package/contents/config/
 // main.xml) and the README follow; tests/unit/settings.test.js holds the three together.
 //
 // Read at load and again on every KWin reconfigure (options.configChanged; Meta+Shift+C asks for
@@ -60,14 +60,14 @@ var Settings = (function () {
         frameInactive: { type: "colour", def: "#333333" },
         frameIndicatorActive: { type: "colour", def: "#3daee9" },
         frameIndicatorInactive: { type: "colour", def: "" },
-        // Window modes (docs/spec-window-modes.md): workspaces whose new windows open floating, as
+        // Window modes (docs/records/spec-window-modes.md): workspaces whose new windows open floating, as
         // Plasma windows; and the frame on floating windows too, in the same colour classes (L11).
         floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
         frameOnFloating: { type: "bool", def: "false" },
-        // How tiled windows look (docs/spec-tiled-look.md): i3's frame, their own title bars, or
+        // How tiled windows look (docs/records/spec-tiled-look.md): i3's frame, their own title bars, or
         // neither. Without kwini3hold every one is "titlebars".
         tiledLook: { type: "choice", def: "frame", choices: ["frame", "titlebars", "bare"] },
-        // Tiled windows' corners, rounded by kwini3hold (docs/spec-rounded-corners.md).
+        // Tiled windows' corners, rounded by kwini3hold (docs/records/spec-rounded-corners.md).
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "200", min: 10, max: 2000 },

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # needs: plugin
-# i3's tiling drag (docs/spec-tiled-look.md, part B): a tiled window's title bar dragged, or
+# i3's tiling drag (docs/records/spec-tiled-look.md, part B): a tiled window's title bar dragged, or
 # Meta+drag anywhere in it, drops by tiling_drag.c's zones while the window stays put: sibling
 # beside the target, parent out to the workspace's edge, center swapped with it (Paul's choice
 # over i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
-# Meta+right (docs/spec-tiling-resize.md) is i3's resize of the boundary: the bar shows mid-drag
+# Meta+right (docs/records/spec-tiling-resize.md) is i3's resize of the boundary: the bar shows mid-drag
 # and the shares change at the release only; Escape leaves it; a press in the gap takes it too;
 # a floating window's Meta+right stays KWin's resize.
 # Not covered (docs/testing.md P3.5, only saves work or restores unreadable state):

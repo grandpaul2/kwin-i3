@@ -1,4 +1,4 @@
-// Settings that apply on Apply (docs/spec-settings.md, Paul 2026-10-24). KWin's generic script
+// Settings that apply on Apply (docs/records/spec-settings.md, Paul 2026-10-24). KWin's generic script
 // config form saves kwinrc [Script-kwin-i3] and tells KWin nothing (genericscriptedconfig.cpp
 // ScriptingConfig::reload is a TODO in 6.7.5), and a running script sees new values only after
 // a KWin reconfigure. This watches kwinrc and, when that group's entries change, asks KWin to

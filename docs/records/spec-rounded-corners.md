@@ -160,5 +160,5 @@ item 5's harness work (`KI3_OUTPUTS`, a scale per output). The device-pixel arit
 
 `plugin/hold.cpp`, `plugin/hold.h`, `src/settings.js`, `package/contents/config/main.xml`,
 `kcm/ui/main.qml` and the kcm's kcfg, `tests/live/78-rounded-corners.sh`, `tests/live/54-frame.sh`;
-`docs/spec-settings-cleanup.md`'s page listing; the README pass gets the option in its settings
+`docs/records/spec-settings-cleanup.md`'s page listing; the README pass gets the option in its settings
 list (OPEN.md item 4).

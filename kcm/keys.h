@@ -1,5 +1,5 @@
 #pragma once
-// The Keys sub-page's model (docs/spec-settings-page.md, "The Keys sub-page"): one row per command,
+// The Keys sub-page's model (docs/records/spec-settings-page.md, "The Keys sub-page"): one row per command,
 // each with the one to three kwin-i3 actions that are its keys. Edits are pending until save();
 // a key another shortcut holds is named in its row and taken from that holder on save, recorded
 // where make take-keys records (so make restore-keys gives it back).
@@ -16,7 +16,7 @@ class KeysModel : public QAbstractListModel
     // Set by save() when a key couldn't be taken or set; cleared by the next save.
     Q_PROPERTY(QString error MEMBER m_error NOTIFY changed)
     // The current keyboard layout's keys, [unshifted, shifted, typed] each, for naming a shifted
-    // symbol by its keys (ui/shifted.js, docs/spec-keys-shifted-labels.md). Read at load.
+    // symbol by its keys (ui/shifted.js, docs/records/spec-keys-shifted-labels.md). Read at load.
     Q_PROPERTY(QVariantList layoutTable MEMBER m_layoutTable NOTIFY changed)
 
 public:

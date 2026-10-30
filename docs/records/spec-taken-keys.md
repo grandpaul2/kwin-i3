@@ -9,7 +9,7 @@ take at load; the fix is opt-in, beside `plugin-install`; one notification share
 
 `registerShortcut` always returns true. When another action already holds a key, kglobalaccel
 gives kwin-i3's action the key too (`shortcutKeys` shows it on both), but a press runs only the
-first holder's action (probed 2026-10-24, `docs/spec-own-keys.md`). On a stock Plasma that is
+first holder's action (probed 2026-10-24, `docs/records/spec-own-keys.md`). On a stock Plasma that is
 21 of kwin-i3's keys (Meta+arrows, Meta+Ctrl+arrows, Meta+Shift+Left/Right, Meta+1..9, Meta+0,
 Meta+V) plus Meta+E (Dolphin) and Meta+L (lock). Nothing says so: the key just does Plasma's thing.
 
