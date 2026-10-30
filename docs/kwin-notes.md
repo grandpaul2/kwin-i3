@@ -286,3 +286,6 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   probe, `testkwin.sh`'s `kwin_wayland` as `gdb -q -batch -x CMDS --args kwin_wayland`, with
   `set breakpoint pending on`, a `break KWin::...` with `commands` / `bt 30` / `continue`, then
   `run`; the stacks land in `$KI3_TMP/kwin.out`. `libkwin`'s exported names are enough (probe 99).
+- The same non-dumpable flag refuses `/proc/PID/smaps_rollup`; `/proc/PID/status` (VmRSS, RssAnon,
+  RssFile, RssShmem) and `/proc/PID/stat` still read. The test log (`$KI3_LOG`) has whole seconds:
+  the milliseconds are only in kwin-i3's in-memory log (a capture).
