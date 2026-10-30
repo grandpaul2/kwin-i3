@@ -28,6 +28,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Setting one tile's `relativeGeometry` moves its neighbours' shared edges: one pass in order can
   leave a stale edge. `CustomTile::setRelativeGeometry` pins a changed edge with no tile beyond it
   to 0 or 1 and compares exactly, and clamps a root to (0,0,1,1): no negative inset.
+  `setSizesStable` repeats up to four passes; "Sizes did not settle after 4 passes" was seen live
+  (Paul, 2026-10-29, after drags left one-window splits; the windows still landed right) and never
+  in probe 95 (branch `probe-settle`: his trees, Firefox's minimum, FFM, 2560x1440; untried: the
+  panel's strut, real apps). The warning names each tile still moving, the rect asked and the one
+  KWin kept: read those in a capture to name the cause.
 - Padding is one number per tile (`tile.h:33`). `windowGeometry` gives an edge at the screen's
   border (relative 0 or 1) the full padding, others half (`tile.cpp:171-178`). Edges are rounded to
   whole logical pixels first, so an odd padding puts every window on a half pixel (text shifts on

@@ -14,6 +14,15 @@ Moved out of `OPEN.md` 2026-10-25 (Paul). When the Stage ends, suggested order: 
 
 ## Reliability
 
+**61. Two intermittent reds on KWin 6.8** (the laptop, 2026-10-29; from `OPEN.md`, 2026-10-30).
+(a) **86-tiling-drag**: red twice right after a plugin rebuild (21 and ~25 checks; in one, window a
+was gone from kwin-i3's tree after the swap drag, `V[H[b] c*]` for `V[H[a b] c*]`), then green
+seven runs in a row, alone and beside 64; green on 6.7 on both machines. (b) **53-hold** "after: c
+has landed there": c (a 0.8 s client) still black 1.2 s after the move, once; green alone after.
+Neither log was kept; `run.sh` keeps a red's output and kwin-i3's log in `tests/live/out/` since
+8195ea5. A red of either before then comes back to `OPEN.md` with that log. Next: when the Stage
+ends, 86 in a loop on the laptop after a plugin rebuild, its log read for what removed a.
+
 **45. A press past a monitor edge disagreed with the probe** (tenth session, 2026-10-28, test
 KWin). VS Code's invisible band reached 1-3 px across the edge onto the other monitor: the probe
 said `margin`, the real press passed (`FrameFocus pass`). Suspected, not proven: per-output

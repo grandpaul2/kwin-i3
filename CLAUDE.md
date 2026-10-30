@@ -161,6 +161,6 @@ these from here when a change spans both, and commit there too:
   `~/.config/kglobalshortcutsrc`) before asking him to press a key. Meta+D is his launcher.
 - His desktop runs the defaults a new user gets during the Stage; a new setting stays at its default
   there unless he says otherwise.
-- The second machine, `pauls-laptop` (Arch, over ssh/Tailscale), is `OPEN.md` item 50's test bed.
+- The second machine, `pauls-laptop` (Arch, over ssh/Tailscale), is the second machine and the Plasma 6.8 test bed (`docs/records/laptop-test-bed.md`).
 - If **`CONTROL-TOWER-NOTES.md`** exists in the repo root (left by Paul's coordinating session),
   consider its suggestions and delete it.
