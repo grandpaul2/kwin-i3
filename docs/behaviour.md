@@ -569,7 +569,9 @@ hidden sides)` for each window on a shown workspace at the end of a pass, when i
 kwin-i3 takes a tiling window's border by setting `noBorder`, and gives it back when the window
 floats (unless `frameOnFloating`: then a floating window's border is taken too), leaves the tree, closes or kwin-i3 releases. It doesn't take the border of a window whose
 decoration is its own (client-side), and records a window already without a border so it can be
-given back. It reasserts this every pass (the window menu, `borderlessMaximizedWindows`).
+given back. It reasserts this every pass (the window menu, `borderlessMaximizedWindows`), and at
+once when the window menu's No Border or Keep Above flips the flag on a window of the tree (on
+Wayland, once the title bar has come back: KWin adds it at the app's answer to the configure).
 
 ### Floating windows
 

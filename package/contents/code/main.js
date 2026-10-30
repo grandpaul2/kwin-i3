@@ -3498,6 +3498,17 @@ var KI3 = (function () {
         w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
         w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
+        // The window menu's No Border and Keep Above (useractions.cpp, setNoBorder, setKeepAbove):
+        // both flags are kwin-i3's on its windows, as i3 owns the border and ignores a request
+        // to keep a window above (handlers.c:683-707 acts on fullscreen, attention, sticky
+        // only), so a pass puts them back at once. noBorder notifies as decorationPolicyChanged.
+        // A pass's own writes are skipped.
+        function reassert() {
+            var con = model.byWin[key];
+            if (con && !reconciling) schedule(Tree.wsOf(con));
+        }
+        w.decorationPolicyChanged.connect(guard("noborder", reassert));
+        w.keepAboveChanged.connect(guard("above", reassert));
         w.minimizedChanged.connect(guard("minimized", function () {
             var focusedBefore = model.focused;
             var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
@@ -3599,6 +3610,13 @@ var KI3 = (function () {
             // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
             if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
             refitOnFrameChange(w, old, dragging);
+        }));
+        // A border kwin-i3 took, given back by the window menu: on Wayland the title bar comes
+        // with the client's answer to the configure (configureDecoration), after the pass
+        // decorationPolicyChanged scheduled read frame = client and skipped it (takeBorder). The
+        // frame keeps its tile's size and the client shrinks by the title bar (probe 96, 2026-10-30).
+        w.clientGeometryChanged.connect(guard("client", function () {
+            if (tookBorder[key] && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
         }));
         w.tileChanged.connect(guard("tileChanged", function (tile) {
             if (key in expected) {

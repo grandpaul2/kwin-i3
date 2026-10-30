@@ -105,10 +105,7 @@ its stack), then the cause, a fix, and 74's wait removed.
 
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
-leaves out windows Show Desktop hides). Left, each with its next action: (a) the window menu's
-**No Border** and **Keep Above** aren't watched (`src/kwin.js` has no `noBorderChanged` /
-`keepAboveChanged`): "No Border" off on a tile brings its title bar back and drops the frame until
-a reclassify; next, a test-KWin probe, then listening to both and scheduling a pass. (b) **Focus
+leaves out windows Show Desktop hides). Left, each with its next action: (b) **Focus
 follows mouse under Show Desktop**, two outputs: `windowUnder` (`kwin.js:2156`) counts a hidden
 tile, so the early return at `:2146` leaves the focus behind on an output crossing; next, a probe.
 (c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before

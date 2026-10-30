@@ -71,6 +71,14 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Shift held during KWin's interactive move means "drop into a custom tile" on release.
 - Spectacle's region overlay is a Normal fullscreen window per output, class `org.kde.spectacle`.
 - KWin shows a script no X11-only property: Plasma's notifications are told by class `org.kde.plasmashell`.
+- `noBorder`'s change signal is `decorationPolicyChanged`; there is no `noBorderChanged` (`window.h:504`).
+  On Wayland the title bar arrives with the client's answer to the configure
+  (`configureDecoration`, `xdgshellwindow.cpp:1635`): right after the flag flips, frame = client. A
+  tile's frame then keeps its size and the client shrinks by the title bar, so only
+  `clientGeometryChanged` shows it, not `frameGeometryChanged` (probe 96, 2026-10-30).
+- A Wayland window is transient only when its app names a parent (`set_parent`, or a portal's
+  `parent_window` through xdg-foreign, `xdgshellwindow.cpp:1165`). There is no dialog type, so a
+  parentless portal dialog (Firefox's screen-share picker) arrives as a plain `Normal` window.
 
 ## Activation and focus (`activation.cpp`, `workspace.cpp`)
 
