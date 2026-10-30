@@ -38,7 +38,7 @@ noted for the release road; what a laptop adds: one internal output, docking, Hi
 suspend, touchpad gestures, Intel/AMD graphics (is the wallpaper flash NVIDIA's?), Arch's package
 names for the plugin build (headers in `kwin`, no `kwin-devel`). (b) Once it runs well there, the
 mirrorlist back to current and `pacman -Syu` to 6.8: the laptop becomes the test bed for changes
-(a few missing system apps are fine; 6.8 brings Plasma Login Manager in place of SDDM). (c) Regroup:
+(a few missing system apps are fine). (c) Regroup:
 what was learned, and how to work with it on the desktop.
 **The cross-system check** (Paul, 2026-10-29: the same suite on a second machine, not a bigger
 one; i3 too runs one suite everywhere, `testcases/complete-run.pl` under Xephyr): `make plugin`
@@ -86,15 +86,16 @@ carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Sh
 to `plan.md` (e)'s list as a user following the install would (2026-10-29): focus follows mouse
 (mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Stage (a) is done.
 **Stage (b), 2026-10-29**: the laptop on Plasma 6.8.2 (KWin 6.8.2, Qt 6.12; `pacman -Syu` from
-current mirrors, the pinned list kept as `/etc/pacman.d/mirrorlist.pin-20261014`). Plasma Login
-Manager is installed but not enabled: SDDM stays until PLM has been seen to reach a desktop (Arch
-enables no service on install). 6.8 findings, all fixed (main 8dec0da): kwini3hold's paint hooks
+current mirrors, the pinned list kept as `/etc/pacman.d/mirrorlist.pin-20261014`). The laptop
+stays on SDDM (Paul, 2026-10-30): kwin-i3's setup (KWin's drop-in, `environment.d`) is read by the
+systemd user session whichever login manager starts it, and Arch's 6.8 enables Plasma Login
+Manager for no one, so switching would test nothing of ours; it returns only with a user's
+login-manager problem. 6.8 findings, all fixed (main 8dec0da): kwini3hold's paint hooks
 return bool in 6.8 (it didn't compile); ScreenShot2 sends RGBX8888 (`shot.py` refused it: 11 of
 13 reds); `GLShader::setUniform(QColor)` premultiplies (the drop indicator at a quarter). The
 suite then: green but 86 and 53, item 61. Installed there the same night (the plugins and the
 settings page, 6.8 builds; Meta+Shift+B bound); main pulled and reloaded 2026-10-30. Next: Paul's
-use with Meta+Shift+B, its captures diagnosed from the desktop; then switching SDDM to Plasma
-Login Manager, with his go.
+use with Meta+Shift+B, its captures diagnosed from the desktop.
 
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
