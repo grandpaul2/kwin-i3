@@ -44,10 +44,11 @@ one; i3 too runs one suite everywhere, `testcases/complete-run.pl` under Xephyr)
 and one `make test` on the laptop at the end of (a), and again after the 6.8 update in (b); a
 scenario red there and green on the desktop is a finding (Arch's build in (a), 6.8 in (b)).
 **By hand on the laptop**, what the headless KWin can't reach, each noted as works / snag: the
-lid closed and opened (with and without an external monitor), suspend and resume, docking and
-undocking (windows home again, as on a replug), the internal screen (frame
-1 px, gaps, the margins' focus), touchpad scrolling and gestures (Overview, desktop switch) beside
-kwin-i3's keys, the wallpaper flash on Intel/AMD, and the workspace widget on the laptop's panel.
+lid, suspend and resume, the internal screen (frame 1 px, gaps, the margins' focus), touchpad
+scrolling and gestures (Overview, desktop switch) beside kwin-i3's keys, and the workspace widget
+on the laptop's panel. The checks that need an external monitor on the laptop (docking, the lid
+with a monitor) and the wallpaper flash on AMD moved to `LATER.md` item 60 (Paul, 2026-10-29: a
+tedious desk setup, one session toward release; his two monitors cover the rest).
 **HiDPI in the test KWin** (Paul's go, 2026-10-29): `KI3_OUTPUTS` and `KI3_SCALE`
 (`tools/testkwin.sh`); 10-tiling, 26-gaps, 54-frame and 85-tiled-look green at `KI3_SCALE=2`
 the same day. The laptop adds no HiDPI: its panel is 1366x768 at scale 1 (read 2026-10-29), so
@@ -88,8 +89,9 @@ on a click; correct, and item 52's question. (4) Frames seen **flashing** once, 
 moment reopens it). A small flash as Firefox closes is the hold's accepted trade (200 ms, Paul's decision), not
 carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Then the laptop set
 to `plan.md` (e)'s list as a user following the install would (2026-10-29): focus follows mouse
-(mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Next: the
-docking, lid-with-monitor and wallpaper-flash checks still to do.
+(mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Stage (a) is done.
+Next: stage (b), the laptop to Plasma 6.8 (`pacman -Syu` from current mirrors, Plasma Login
+Manager in place of SDDM), with Paul's go; then `make plugin`, one `make test` there, and his use.
 
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
 `docs/records/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a

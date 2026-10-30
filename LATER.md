@@ -128,6 +128,15 @@ rather than in `make test`.
 
 ## Release prep
 
+**60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50, Paul,
+2026-10-29: the desk setup is tedious, and his two monitors test most of it). On `pauls-laptop`
+with an external monitor, each noted works / snag, Meta+Shift+B at any fault: docking and
+undocking with windows open (i3 `randr.c`: an output's workspaces move to one that remains, and
+return to it; kwin-i3 `behaviour.md` §4, scenarios 42-48; real hardware timing against KWin's
+`PlacementTracker`); the lid closed and opened with the monitor attached; the wallpaper flash on
+AMD (seen on Paul's NVIDIA desktop: if never on the laptop, it points at NVIDIA). On Plasma 6.8 by
+then, which is where it matters for a release.
+
 **28. Launch workspace, a maybe** (finding 2: C19; from OPEN.md 2026-10-26, Paul: "park it as a
 maybe"). i3 puts a window on the workspace it was launched from only when i3 started the program
 itself (`exec`, or dmenu run by it), the window carries the matching `_NET_STARTUP_ID`, and the
