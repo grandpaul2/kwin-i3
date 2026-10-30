@@ -165,6 +165,8 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - `callDBus` converts arguments by `QJSValue::toVariant()` (`scripting.cpp:345`): no unsigned ints,
   no typed arrays, so typed methods (kglobalaccel's `a(ai)`, `Notify`'s `susssasa{sv}i`) are refused.
   It calls back only on a reply: on an error or a dead service it logs and never calls; guard with a timeout.
+- `readConfig(key, def)` gives `def` only for a missing key: one present but empty reads as `""`
+  (probed 2026-10-30), so an emptied text setting stays empty.
 - `print()` goes nowhere readable on a desktop; read state through kwin-i3's dump (`docs/debugging.md`).
 - A JS `Error().stack` stops at the nearest native boundary: in a signal handler it never shows who
   caused the signal.
@@ -198,6 +200,8 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 ## Plugins and effects (`plugin/`)
 
 - Both plugins are version-locked to the installed KWin, which refuses a stale build after an update.
+- KWin's exported CMake targets name `Qt6::Widgets` (`KWinTargets.cmake`): a plugin that uses no
+  widget still finds the component, or its configure fails (2026-10-30).
   Unloading one in a running KWin leaves its library loaded: anything it connected must end with it.
   A filter left installed after its object dies crashes KWin on a later mouse move; only a relogin
   cleans it. Never install filters in a destructor.

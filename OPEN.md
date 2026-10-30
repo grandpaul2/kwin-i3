@@ -7,10 +7,11 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "Paul's use"; Paul, 2026-10-30): such
 an item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-30, twenty-second session** (the fuzzer brought up to date and run
-three times, Paul lifting the Stage's hold for the night; fixed live: 63, 64 and minimums filling a
-split exactly; `LATER.md` item 5). The desktop runs main (33dd87d's script,
-2026-10-30, the fuzzer's three fixes); the laptop runs 886732b's. The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
+Last reconciled: **2026-10-30, twenty-third session** (a performance probe, kwin-i3's cost to KWin
+in `plan.md` "Risks"; the pre-release code review, five reviewers, its fixes live as 66; the gaps
+shipped at 2 and 0 as 65; one capture, Alacritty's own padding, fixed in dotfiles). The desktop
+and the laptop both run main (e15a226: script, plugins and, on the laptop, the settings page;
+the laptop's 24 changed scenarios green on 6.8 after). The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24, late)
 
