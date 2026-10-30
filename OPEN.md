@@ -84,12 +84,11 @@ works: tiling and the frame, popups, the widget, touchpad scrolling and Overview
 Found: (1) Meta+N with KWin's Slide left the incoming windows' frames at their final places:
 fixed the same day (the effect's chain position, after Slide). (3) **Frames "not following the mouse"**: Paul's
 capture 2026-10-29 16:09, the laptop is click to focus, so the focus (and the frame) moves only
-on a click; correct, and item 52's question. (4) Frames seen **flashing**, not yet captured.
-A small flash as Firefox closes is the hold's accepted trade (200 ms, Paul's decision), not
+on a click; correct, and item 52's question. (4) Frames seen **flashing** once, not seen since: dropped (Paul, 2026-10-29; a capture at the
+moment reopens it). A small flash as Firefox closes is the hold's accepted trade (200 ms, Paul's decision), not
 carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Then the laptop set
 to `plan.md` (e)'s list as a user following the install would (2026-10-29): focus follows mouse
-(mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Next:
-(4) a capture at the moment (the laptop has Meta+Shift+B since 2026-10-29); the
+(mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Next: the
 docking, lid-with-monitor and wallpaper-flash checks still to do.
 
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
