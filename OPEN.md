@@ -62,16 +62,10 @@ Fixed from it: the plugins' and settings page's ECM version (Qt 5's cmake files 
 Qt 5); KWin's unnamed `""` layout counted as US (a false notice where the system sets none);
 Arch's AT-SPI paths; the test KWin given a Plasma session's variables (over ssh Qt loaded no
 KDE platform theme: other fonts and style, a 36 px title bar, spin boxes that took no typing).
-Release-road snags so far, for the README: the repo is private; its package names are Fedora's
-(`kwin` holds the headers on Arch, `libei`, `python-dbus`, `nodejs`); missing from its list:
-`vulkan-headers` (KWin's cmake config) and `python-xlib` (the tests); a failed configure leaves
-`plugin/build` caching Qt 5 (delete it); `run.sh` alone doesn't build `tools/bin/ei-send`; the
-install (2026-10-29): `~/.local/share/kwin/scripts` doesn't exist on a fresh account (`mkdir -p`
-first); `make take-keys` needs kwin-i3 loaded, so the log-out of step 1 comes before step 2;
-`plugin-install`'s first run also prints "KWin did not load the effect … another KWin version?",
-which reads as an error; a fresh panel with one desktop has no pager to right-click for the
-widget (*Add or Manage Widgets* has it); `tools/capture` needs `kdialog` (not in Arch's Plasma);
-Picture-in-Picture tiles (only Paul's own `floatingTitle` floats it).
+Release-road snags: in the README since 0a09562 (2026-10-30: versions, Arch's packages,
+`vulkan-headers`, `python3-xlib`, `mkdir -p`, `kdialog`, the first plugin-install's message, a
+cached failed configure, `make tools`). Left for the release pass (`LATER.md`): the repo is
+private; Picture-in-Picture tiles (only Paul's own `floatingTitle` floats it).
 Also fixed: the test terminals read the user's own alacritty config (the laptop's cursor colour
 sat on 78's corner pixels); 59's arc pixel is the GPU's antialiasing (NVIDIA 55,48,48, AMD
 68,33,33), judged as 78 judges it. 53-hold's two laptop findings fixed 2026-10-29 (6dd3a82: a
