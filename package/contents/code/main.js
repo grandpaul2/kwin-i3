@@ -2499,7 +2499,9 @@ var KI3 = (function () {
     // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
     function fitMinimums(want, mins, total) {
         var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
-        if (sumMin > total) return want;
+        // Half a pixel's slack: minimums that fill the space exactly (a split made just wide enough
+        // for them) came to 834 against a total of 833.99999 and gave up (fuzzer, seed 9, 2026-10-30).
+        if (sumMin > total + 0.5) return want;
         var out = want.slice(), locked = out.map(function () { return false; });
         for (var round = 0; round < out.length; round++) {
             var deficit = 0;

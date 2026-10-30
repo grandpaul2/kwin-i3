@@ -479,7 +479,9 @@ A leaf tile's minimum is its window's minimum size plus its decoration plus the 
 holds the ring's room); splits have none (KWin's default 15 % minimum would block i3's sizes). The
 display bends to fit minimums (the model keeps i3's shares, until a border drag KWin runs reads
 every share of the workspace back, §9); if they can't fit at all, the window with the largest
-minimum along the overflowing axis, width first, floats, repeatedly (§3 X7).
+minimum along the overflowing axis, width first, floats, repeatedly (§3 X7). Minimums that fill
+their split exactly count as fitting, to half a pixel (fuzzer, 2026-10-30: a split made just wide
+enough lost to float noise and gave a window half of it).
 
 ### Moving between desktops and outputs
 
