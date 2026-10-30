@@ -190,7 +190,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   Decoration, WindowAction … A filter at Effects never sees a bound key; key filters that must see
   shortcuts go before GlobalShortcut. An InputEventFilter can't hold an event and replay it.
 - An effect's override cursor shows only while it holds the mouse (`startMouseInterception`); then
-  the effects filter takes pointer events before Decoration-order filters.
+  the effects filter takes pointer events before Decoration-order filters. Overview, Grid and
+  Window View (`QuickSceneEffect`) hold it the whole time they run (`quickeffect.cpp` 6.7.5:564,
+  released at 637), so kwin-i3's Meta+click drag and resize never see a click under them.
 - An effect's paint hooks stop once `isActive()` is false: resets go on signals.
 - An effect with no `requestedEffectChainPosition` sits at 0, before Slide (50), and draws with data
   Slide never offset.

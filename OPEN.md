@@ -99,8 +99,8 @@ use with Meta+Shift+B, its captures diagnosed from the desktop.
 
 **54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
 source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
-leaves out windows Show Desktop hides). Left, with its next action: (c) **Meta+right-click in Overview** may resize a tile beneath (`TilingDrag` filters before
-`Effects`, `tilingdrag.cpp:71`); very low risk; next, a probe. Not read: fullscreen Kickoff's
+leaves out windows Show Desktop hides; (c), Meta+right-click in Overview, can't reach a tile:
+read 2026-10-30, `docs/kwin-notes.md` "Plugins and effects"). Not read: fullscreen Kickoff's
 window type and the display settings' "keep these settings?" dialog (sources not found).
 
 **56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; Paul: not urgent, decide
