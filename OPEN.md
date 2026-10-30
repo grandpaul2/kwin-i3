@@ -7,14 +7,10 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "Paul's use"; Paul, 2026-10-30): such
 an item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-30, twentieth session** (closed: 62, the desktop portal's dialogs float
-by a default rule; 54(a) and (b), the window menu's flags put back at once and focus follows mouse
-across outputs under Show Desktop; 55, a title bar that lands late is taken; 53, KWin's Slide ending
-Show Desktop, upstream in `LATER.md`). The desktop runs main (886732b's script; later commits docs
-only). The laptop runs main too (pulled and reloaded 2026-10-30, twenty-first session, Paul's go).
-Twenty-first session, closed: 50 (`docs/records/laptop-test-bed.md`), 54 ((c) can't happen,
-`docs/kwin-notes.md`), 59 (its facts in `docs/kwin-notes.md`, "Tiles"), 61 and 56 (to
-`LATER.md`).
+Last reconciled: **2026-10-30, twenty-first session** (closed: 50, the laptop as test bed,
+`docs/records/laptop-test-bed.md`; 54, (c) can't happen, `docs/kwin-notes.md`; 59, its facts in
+`docs/kwin-notes.md` "Tiles"; 61 and 56 to `LATER.md`). Both machines run main (886732b's script;
+later commits docs only). The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24, late)
 
