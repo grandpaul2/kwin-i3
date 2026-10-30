@@ -154,8 +154,8 @@ void Hold::loadConfig()
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 200)
                                                 : old.readEntry("TimeoutMs", 200);   // tests raise it to capture mid-hold
     // A layout never waits longer than 2 s, nor not at all (a negative timer never fires: the
-    // hold would wait on a window for good; review 2026-10-28).
-    m_timeoutMs = std::clamp(m_timeoutMs, 1, 2000);
+    // hold would wait on a window for good; review 2026-10-28). 10 ms: settings.js's minimum.
+    m_timeoutMs = std::clamp(m_timeoutMs, 10, 2000);
     // The frame's keys (src/settings.js); not affected by holdEnabled.
     m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
     const auto colour = [&group](const char *key, const QColor &def) {
@@ -289,8 +289,7 @@ void Hold::onClosed(EffectWindow *w)
     }
     // Pending: its neighbours' aboutToChange, if any, promotes it (ensureOpen); else let it go.
     note(QStringLiteral("close %1: kept %2 ms for a neighbour").arg(name(w)).arg(s_graceMs));
-    m_pendingClose.insert(w, QElapsedTimer());
-    m_pendingClose[w].start();
+    m_pendingClose.insert(w);
     QPointer<EffectWindow> qp(w);
     QTimer::singleShot(s_graceMs, this, [this, qp] {
         if (qp && m_pendingClose.remove(qp)) {
@@ -525,7 +524,7 @@ void Hold::ensureOpen()
     ++m_stats.transactions;
     note(QStringLiteral("open (%1 closing waited)").arg(m_pendingClose.size()));
     // Closing windows waiting for exactly this.
-    const auto pending = m_pendingClose.keys();
+    const auto pending = m_pendingClose.values();
     m_pendingClose.clear();
     for (EffectWindow *w : pending) {
         Held h;
@@ -663,7 +662,7 @@ void Hold::release(bool timedOut)
 void Hold::releaseAll()
 {
     release(false);
-    const auto pending = m_pendingClose.keys();
+    const auto pending = m_pendingClose.values();
     m_pendingClose.clear();
     for (EffectWindow *w : pending) {
         ++m_stats.closeHoldsDropped;

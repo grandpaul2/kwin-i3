@@ -87,12 +87,14 @@ function parseCriteria(text) {
     const crit = {};
     let rest = text.trim(), n = 0;
     while (rest.length) {
-        const m = /^(\w+)(?:\s*=\s*"((?:[^"\\]|\\.)*)")?\s*/.exec(rest);
+        // A value quoted, or bare as i3's `word` (src/rules.js parseCriteria).
+        const m = /^(\w+)(?:\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"\]]+)))?\s*/.exec(rest);
         if (!m) return null;
         rest = rest.slice(m[0].length);
-        if (m[1] === "floating" || m[1] === "tiling" || m[1] === "all") { if (m[2] !== undefined) return null; crit[m[1]] = true; }
-        else if (m[2] === undefined) return null;
-        else crit[m[1]] = unquote(m[2]);
+        const value = m[2] !== undefined ? unquote(m[2]) : m[3];
+        if (m[1] === "floating" || m[1] === "tiling" || m[1] === "all") { if (value !== undefined) return null; crit[m[1]] = true; }
+        else if (value === undefined) return null;
+        else crit[m[1]] = value;
         n++;
     }
     return n ? crit : null;
@@ -237,25 +239,10 @@ function gapsSummary(settings) {
     return { sides, workspaces: ws, smart: settings.smartGaps };
 }
 
-// The old list settings (ignoreClass, ignoreRole, floatingClass, floatingTitle,
-// floatingWorkspaces) as rules, exactly as src/rules.js oldRules reads them (stage 3's C), for
-// the migration the page makes at load (kcm.cpp): the old entries that were defaults are the
-// built-in kinds and give no rule. -> the rules to append to forWindow.
-const OLD_IGNORE_CLASS = ["krunner", "yakuake", "spectacle", "kded5", "xwaylandvideobridge", "plasmashell",
-                          "ksplashqml", "org.kde.plasmashell", "org.kde.polkit-kde-authentication-agent-1",
-                          "org.kde.kruler", "kruler", "kwin_wayland", "ksmserver-logout-greeter"];
-const OLD_IGNORE_ROLE = ["quake"];
-function list(text) { return String(text || "").split(",").map((s) => s.trim()).filter((s) => s); }
+// floatingWorkspaces as rules, exactly as src/rules.js workspaceRules reads it, for the
+// migration the page makes at load (main.qml). -> the rules to append to forWindow.
 function oldRules(settings) {
-    const out = [];
-    list(settings.floatingClass).forEach((c) => { out.push('[class=' + quote(wholeClass(c)) + '] floating enable'); out.push('[instance=' + quote(wholeClass(c)) + '] floating enable'); });
-    // quote(): a value holding " (a title, "Firefox "Private" Browsing") would end the
-    // criterion early, the script rejected it, and the migration had cleared the old key.
-    list(settings.floatingTitle).forEach((t) => out.push('[title=' + quote(escapeRe(t)) + '] floating enable'));
-    parseWorkspaces(settings.floatingWorkspaces).forEach((n) => out.push(workspaceRule(n)));
-    list(settings.ignoreClass).forEach((c) => { if (OLD_IGNORE_CLASS.indexOf(c) < 0) { out.push('[class=' + quote(wholeClass(c)) + '] floating enable'); out.push('[instance=' + quote(wholeClass(c)) + '] floating enable'); } });
-    list(settings.ignoreRole).forEach((r) => { if (OLD_IGNORE_ROLE.indexOf(r) < 0) out.push('[window_role=' + quote(wholeClass(r)) + '] floating enable'); });
-    return out;
+    return parseWorkspaces(settings.floatingWorkspaces).map(workspaceRule);
 }
 
 if (typeof module !== "undefined") module.exports = {

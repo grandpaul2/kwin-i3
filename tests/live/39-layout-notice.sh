@@ -36,12 +36,11 @@ check "a second notification"               poll notes_are 2
 check "it names the layout"                 grep -q "Its keys may not fit the keyboard layout (de)" "$KI3_TMP/notify.out"
 check "and the fix"                         grep -q "make plugin-install" "$KI3_TMP/notify.out"
 
-# 3. warnTakenKeys off: no check, no notification.
+# 3. warnTakenKeys off: only the taken keys go (review 2026-10-30); the layout is still said.
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key warnTakenKeys false
 m=$(mark); reload
-sleep 1
-check "off: no LAYOUTS line"                bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -q 'LAYOUTS'"
-check "and no new notification"             notes_are 2
+check "off: the layout still checked"       slow_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
+check "and said"                            poll notes_are 3
 
 check "no invariant failures or errors"     clean_log
 finish

@@ -79,13 +79,14 @@ check "Quick Tile Left has its keys back"   test "$(keys_of kwin "Window Quick T
 check "the stand-in has its keys back"      test "$(keys_of fakeapp Launch)" == "$before_fake"
 check "the save is gone"                    test ! -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
 
-# 5. warnTakenKeys off: reloaded, no check and no notification.
+# 5. warnTakenKeys off: reloaded, no check; the plugins' part (no helper here) comes alone.
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key warnTakenKeys false
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 m=$(mark); load_kwin_i3
 check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
 check "off: not checked"                    wait_log '^.{9}TAKEN not checked' "$m"
-sleep 0.5
-check "still one notification"              notes_are 1
+check "a second notification"               poll notes_are 2
+plugins_only() { grep '^NOTIFY' "$KI3_TMP/notify.out" | tail -1 | grep -q "plugins aren't loaded"; }
+check "  the plugins' part only"            plugins_only
 check "no invariant failures or errors"     clean_log
 finish

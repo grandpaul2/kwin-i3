@@ -12,6 +12,7 @@ prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
+reload_with forWindow '[title="STAGE \(streamed\)"] floating enable'      # Paul's stream stage
 
 client --title a
 client --title fixed --fixed
@@ -20,7 +21,7 @@ client --title main --dialog
 check "a dialog floats, its parent tiles"   wait_tree 1 "H[a main] ~fixed ~main_dialog*"
 kclose "main dialog"; kclose fixed
 client --title before --retitle "1:STAGE (streamed)"
-check "retitled to a floatingTitle word: floats" wait_tree 1 "H[a main] ~STAGE_(streamed)*"
+check "retitled to match a title rule: floats" wait_tree 1 "H[a main] ~STAGE_(streamed)*"
 kclose "STAGE (streamed)"
 check "back to two"                         wait_tree 1 "H[a main*]"
 # i3's rules run at most once per window, only to apply them (§3 X2): a window that opened matching

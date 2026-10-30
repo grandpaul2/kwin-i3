@@ -20,10 +20,14 @@ ResizeMode::ResizeMode()
 {
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3mode"), QStringLiteral("net.local.kwini3mode"),
                                                  this, QDBusConnection::ExportAllSlots);
+    // The script asks again (Mode): a helper replaced while the mode was on (make plugin-install)
+    // starts with it off, and the script would otherwise go on ignoring its keys (review 2026-10-30).
+    invoke(QStringLiteral("kwin-i3 Mode Changed"));
 }
 
 ResizeMode::~ResizeMode()
 {
+    leave();        // the effect's banner off; the script asks the next helper (above)
     if (m_installed && input()) {
         input()->uninstallInputEventFilter(this);
     }

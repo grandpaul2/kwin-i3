@@ -139,7 +139,7 @@ KCM.SimpleKCM {
         property string settingName
         property string what
         property bool maximum: false
-        readonly property var size: /^(-?\d+)x(-?\d+)$/.exec(page.settings[settingName] || "")
+        readonly property var size: /^\s*(-?\d+)\s*x\s*(-?\d+)\s*$/.exec(page.settings[settingName] || "")
         readonly property int w: size ? parseInt(size[1]) : 0
         readonly property int h: size ? parseInt(size[2]) : 0
         readonly property string mode: w < 0 || h < 0 ? "none" : w === 0 && h === 0 ? "default" : "size"

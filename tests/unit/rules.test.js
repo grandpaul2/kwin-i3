@@ -11,8 +11,8 @@ const path = require("node:path");
 // its WARN lines.
 const src = fs.readFileSync(path.join(__dirname, "../../src/rules.js"), "utf8");
 function rules(settings) {
-    const values = Object.assign({ forWindow: "", assign: "", floatingClass: [], floatingTitle: [], floatingWorkspaces: {},
-                                   ignoreClass: [], ignoreRole: [], floatingMinimumSize: "75x50", floatingMaximumSize: "0x0" }, settings);
+    const values = Object.assign({ forWindow: "", assign: "", floatingWorkspaces: {},
+                                   floatingMinimumSize: "75x50", floatingMaximumSize: "0x0" }, settings);
     const logs = [];
     const R = Function("Settings", "log", "module", src + "\nreturn Rules;")({ get: (k) => values[k] }, (l) => logs.push(l), undefined);
     return { R, logs };
@@ -91,7 +91,7 @@ test("classify: the default rules float Spectacle, the password prompt, KRuler, 
 
 // ---- the parser (B) -------------------------------------------------------------------------------
 
-test("parseForWindow: criteria in quotes, all must match, floating enable|disable; bad lines are skipped with a WARN", () => {
+test("parseForWindow: criteria quoted or bare (i3's word), all must match, floating enable|disable; bad lines are skipped with a WARN", () => {
     const { R, logs } = rules();
     const r = R.parseForWindow('[class="^org\\.kde\\.kate$" title="Find"] floating enable\n[all] floating disable\n[tiling] floating enable');
     assert.strictEqual(r.length, 3);
@@ -99,11 +99,16 @@ test("parseForWindow: criteria in quotes, all must match, floating enable|disabl
     assert.strictEqual(r[1].crit.all, true);
     assert.strictEqual(r[1].floating, false);
     assert.strictEqual(r[2].crit.tiling, true);
-    for (const bad of ['[class="a"] move left', 'floating enable', '[class=a] floating enable', '[class="(" ] floating enable',
+    for (const bad of ['[class="a"] move left', 'floating enable', '[class="(" ] floating enable',
                        '[floating="yes"] floating enable', '[bogus="x"] floating enable', '[] floating enable'])
         assert.strictEqual(R.parseForWindow(bad).length, 0, bad);
     assert.ok(logs.every((l) => l.startsWith("WARN setting forWindow")), logs.join("\n"));
-    assert.strictEqual(logs.length, 7);
+    assert.strictEqual(logs.length, 6);
+    // A bare value, as i3's config takes it (commands.spec `word`): up to a space or the `]`.
+    const bare = R.parseForWindow("[class=^Viewnior$ title=Find] floating enable");
+    assert.strictEqual(bare.length, 1);
+    assert.ok(bare[0].crit.class.test("Viewnior") && !bare[0].crit.class.test("Viewnior2") && bare[0].crit.title.test("Find"));
+    assert.strictEqual(logs.length, 6, "no WARN for it");
 });
 
 test("parseForWindow: rules separated by line breaks or ; outside quotes, and \\\" inside a value", () => {
@@ -169,27 +174,13 @@ test("assignFor: the first matching assign, as workspace or output; none without
     assert.strictEqual(R.assignFor(win({ resourceClass: "kate" })), null);
 });
 
-// ---- the old settings as rules (C) ---------------------------------------------------------------
+// ---- floatingWorkspaces as rules (R11) -----------------------------------------------------------
 
-test("old settings: floatingClass (class or instance, whole), floatingTitle (a substring, escaped), floatingWorkspaces, in the old order before forWindow", () => {
-    const { R } = rules({ floatingClass: ["gimp"], floatingTitle: ["STAGE (streamed)", "Picture-in-Picture"], floatingWorkspaces: { 3: true },
-                          forWindow: '[class="^gimp$"] floating disable' });
-    assert.strictEqual(kind(R, { resourceClass: "gimp" }), "tiling", "forWindow runs after the old lists: the user's disable wins");
-    assert.strictEqual(kind(R, { resourceName: "gimp", resourceClass: "Gimp-2.10" }), "floating", "by instance");
-    assert.strictEqual(kind(R, { resourceClass: "gimp2" }), "tiling", "matched whole, as before");
-    assert.strictEqual(kind(R, { caption: "STAGE (streamed)" }), "floating", "Paul's stream stage (parentheses escaped)");
-    assert.strictEqual(kind(R, { caption: "Firefox — Picture-in-Picture" }), "floating", "Paul's Picture-in-Picture, a substring");
+test("floatingWorkspaces: a rule per workspace, before forWindow", () => {
+    const { R } = rules({ floatingWorkspaces: { 3: true }, forWindow: '[class="^gimp$"] floating disable' });
     assert.strictEqual(kind(R, { caption: "Firefox" }, { ws: 3 }), "floating", "a Floating workspace");
     assert.strictEqual(kind(R, { caption: "Firefox" }, { ws: 1 }), "tiling");
-});
-
-test("old settings: a user's own ignore entries float (a user can't make a window override-redirect, R5), named once; the old defaults are not", () => {
-    const { R } = rules({ ignoreClass: ["krunner", "yakuake", "mytool"], ignoreRole: ["quake", "scratch"] });
-    assert.strictEqual(kind(R, { resourceClass: "mytool" }), "floating");
-    assert.strictEqual(kind(R, { windowRole: "scratch" }), "floating");
-    assert.deepStrictEqual(R.translated(), ["class mytool", "role scratch"]);
-    assert.strictEqual(kind(R, { resourceClass: "krunner" }), "override-redirect", "built in");
-    assert.strictEqual(kind(R, { resourceClass: "yakuake", onAllDesktops: true }), "sticky");
+    assert.strictEqual(kind(R, { resourceClass: "gimp" }, { ws: 3 }), "tiling", "forWindow runs after: the user's disable wins");
 });
 
 test("parseSize: WxH with 0 and -1; anything else null", () => {

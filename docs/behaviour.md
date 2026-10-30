@@ -78,7 +78,8 @@ lines in memory either way for `Dump State` (`src/log.js`; `docs/debugging.md`).
 
 ## 2. The tree
 
-`src/tree.js` is a pure model (no KWin calls), ported from i3 at be04c853ee (2026-10-12); each
+`src/tree.js` is a pure model (no KWin calls), ported from i3 (first read on `next` at
+be04c853ee, 2026-10-12; compared with the 4.24 release in the code review of 2026-10-30); each
 function names the i3 function it ports.
 
 ### The model
@@ -128,11 +129,11 @@ moves can end differently from i3's, and a replay in real i3 matches only with t
 | T7 | **Move** (`move`; Meta+Shift+direction), a leaf beside it in the same split | the two swap | = | `tree_move` |
 | T8 | Move, a split beside it | enters that split at the edge facing the move, then `flatten` (and tidy) | = | `tree_move` |
 | T9 | Move, no sibling that way | climbs out to the nearest ancestor of that direction, creating one at the top if none (`ws_force_orientation`) | = | `tree_move` |
-| T10 | Move at the workspace's edge; or a fullscreen window; or the workspace's only child; or the lone child of a split at the workspace's edge that way | to the workspace visible on the neighbouring output, at its top level, at the near edge (first when moving right or down); it keeps focus | = | `move_to_output_directed`, `attach_to_workspace` |
+| T10 | Move at the workspace's edge; or a fullscreen window; or the workspace's only child; or the lone child of a split at the workspace's edge that way | to the workspace visible on the neighbouring output, at its top level, at the near edge (first when moving right or down); it keeps focus. A fullscreen window arriving where one already is: that one's flag goes (one per workspace, as a move to a workspace) | = | `move_to_output_directed`, `attach_to_workspace` |
 | T11 | Move that would climb out across a fullscreen window | refused | = | `tree_move` checks only the climb-out path, as here; a swap inside the fullscreen window's own split isn't checked by either |
-| T12 | **Resize by key** (`resize`; Meta+Ctrl+arrows, J K L ;) on a tiling window | the nearest ancestor-or-self in a split of that direction with more than one child grows or shrinks by `resizeStep` percent of the split; every sibling gives up or gains an equal part, so which edge moves depends on its place (the last child growing moves its left or top edge); refused if any share would go below one pixel of the split (`percent_for_1px`, `resize.c:131-136`) | ≠ | `cmd_resize_tiling_width_height` (`commands.c:505`), in ppt, as i3's default config gives on a tiling window ("10 px or 10 ppt"). ≠ only in what can't be said: a px-only resize, as a key runs one fixed action (`plan.md` reason (d)). The 1 px floor since refinement stage 5 (before, 0.1 %) |
-| T13 | Resize by key on a floating window | by `floatingStep` px, if KWin lets it resize | = | `cmd_resize_floating`, 10 px (§8) |
-| T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on an output; landing on another output joins the workspace visible there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws` |
+| T12 | **Resize by key** (`resize`; the resize mode's J K L ;, K4) on a tiling window | the nearest ancestor-or-self in a split of that direction with more than one child grows or shrinks by `resizeStep` percent of the split; every sibling gives up or gains an equal part, so which edge moves depends on its place (the last child growing moves its left or top edge); refused if any share would go below one pixel of the split (`percent_for_1px`, `resize.c:131-136`) | ≠ | `cmd_resize_tiling_width_height` (`commands.c:505`), in ppt, as i3's default config gives on a tiling window ("10 px or 10 ppt"). ≠ only in what can't be said: a px-only resize, as a key runs one fixed action (`plan.md` reason (d)). The 1 px floor since refinement stage 5 (before, 0.1 %) |
+| T13 | Resize by key on a floating window | by `floatingStep` px, if KWin lets it resize, kept within `floatingMinimumSize` and `floatingMaximumSize` (§11 N15) | = | `cmd_resize_floating`, 10 px (§8), `floating_check_size` |
+| T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on an output; landing on another output (the one holding its centre, else the one it overlaps most) joins the workspace visible there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws`, `get_output_from_rect` |
 | T15 | **Swap** (`swap`) | two tiling windows exchange places, shares and fullscreen flags; the tiling drag's centre drop uses it (§9) | = | `con_swap` |
 | T16 | **Float** (`floatingEnable`; Meta+Shift+Space) | the leaf becomes a floating node at the top of the workspace's floating list, taking its branch's place in the focus stack; a fullscreen window stays fullscreen | = | `floating_enable` |
 | T17 | **Tile** (`floatingDisable`) | after the workspace's focused tiling container, or at the top level of an empty workspace; a fullscreen window stays fullscreen; no tidy afterwards | = | `floating_disable` |
@@ -191,11 +192,11 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | R2 | An X11 dialog, utility window, toolbar, splash screen or notification (an Xwayland app's) | floating | = | `manage.c`: dialog, utility, toolbar, splash; and another app's notification-type window (an X11 toast) floats too, as `manage.c:466`, Plasma's own being told apart by class (KWin shows a script no X11-only property; refinement stage 4, before: all kept out). Built 2026-10-28; before, kept out, as KWin's `normalWindow` is false for these types |
 | R3 | On all desktops | **sticky floating**: in the tree, floating, on whatever workspace its output shows (the model moves it there after every switch, i3's `output_push_sticky_windows`; KWin draws it there by itself; not after a move: sent to a hidden workspace it stays there until that output next shows a workspace, as i3; Move Workspace to Output pushes on both outputs, as its two workspace_show do); it keeps the focus across a switch if it had it, else joins without it | = | The `forWindow` rules run after, as i3's (`manage.c:588`): `floating disable` tiles it, taking it off all desktops onto its workspace (X4: KWin's tiles belong to one desktop, where i3 keeps the flag); `floating enable` leaves it sticky (refinement stage 4; before, the rules never reached it). Otherwise as i3: i3: `_NET_WM_DESKTOP` all: "float it and make it sticky" (`manage.c:486-490`); `output.c:83-120`. Built 2026-10-28 (redo stage 9); Yakuake comes in this way |
 | R4 | Skips the taskbar | decides nothing | = | i3 ignores the hint. Read on Paul's desktop 2026-10-28: the only Normal window that sets it is `xwaylandvideobridge`, on the built-in list. Built 2026-10-28 |
-| R5 | The built-in class list: `krunner`, `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland`, `ksmserver-logout-greeter` (class or instance); Spectacle's windows that are fullscreen | override-redirect | ≠ | On Wayland Plasma makes its system windows Normal windows, where i3 would never see them; not a setting (a user can't make a window override-redirect). A user's own `ignoreClass`/`ignoreRole` entries are read as `floating enable` rules (R9) and named once at load (Paul's call 43). Built 2026-10-28; before, the `ignoreClass`/`ignoreRole` lists with Krohnkite's defaults |
+| R5 | The built-in class list: `krunner`, `kded5`/`kded6`, `xwaylandvideobridge`, `ksplashqml`, `kwin_wayland`, `ksmserver-logout-greeter` (class or instance); Spectacle's windows that are fullscreen | override-redirect | ≠ | On Wayland Plasma makes its system windows Normal windows, where i3 would never see them; not a setting (a user can't make a window override-redirect). Built 2026-10-28; before, the `ignoreClass`/`ignoreRole` lists with Krohnkite's defaults, read as rules until the code review of 2026-10-30 dropped them |
 | R6 | Transient, modal, or a fixed size (not resizable; a fullscreen window: fixed unless its minimum and maximum differ) | floating | = | `manage.c`: transient_for (or a leader that is managed), `_NET_WM_STATE_MODAL`, min = max |
 | R7 | KWin's type is dialog, utility, toolbar or splash (R2) | floating | = | `floatsByDefault`; before stage 3 never reached |
 | R8 | Its title is exactly `kwin-i3 capture note` | floating | + | `tools/capture`'s box |
-| R9 | The `forWindow` rules, i3's `for_window [criteria] floating enable \| disable`, in order, each at most once per window (X2): `class`, `instance`, `title`, `window_role`, `window_type` (a keyword, case-insensitive, as i3's `match.c`: `normal`, `dialog`, `utility`, `toolbar`, `splash`; `notification` (another app's notification-type window, R2); i3's `menu`, `dropdown_menu`, `popup_menu`, `tooltip` are read but never match, those windows being kept out of the tree, R1; the page offers the five), `workspace` (the number it opens on), `floating`, `tiling`, `all`; the others regular expressions, case-sensitive, read as i3's PCRE2 as far as JavaScript can: JavaScript's strict syntax first, then a leading `(?i)` as case-insensitive and loose escapes (`\-`, `\ `); all in one rule must match | as the last matching rule says | = | `Rules.classify`; a pattern still unreadable (possessive quantifiers, atomic groups), or another command, skips the rule with a `WARN` (≠: i3 reads those). The old `floatingClass` (class or instance, whole), `floatingTitle` (a substring) and `floatingWorkspaces` (`[workspace="^N$"]`) are read on as rules before `forWindow`'s. Built 2026-10-28 |
+| R9 | The `forWindow` rules, i3's `for_window [criteria] floating enable \| disable`, in order, each at most once per window (X2): `class`, `instance`, `title`, `window_role`, `window_type` (a keyword, case-insensitive, as i3's `match.c`: `normal`, `dialog`, `utility`, `toolbar`, `splash`; `notification` (another app's notification-type window, R2); i3's `menu`, `dropdown_menu`, `popup_menu`, `tooltip` are read but never match, those windows being kept out of the tree, R1; the page offers the five), `workspace` (the number it opens on), `floating`, `tiling`, `all`; a value quoted (`\"` inside) or bare, as i3's `word` (up to a space, a quote or the `]`); the others regular expressions, case-sensitive, read as i3's PCRE2 as far as JavaScript can: JavaScript's strict syntax first, then a leading `(?i)` as case-insensitive and loose escapes (`\-`, `\ `); all in one rule must match | as the last matching rule says | = | `Rules.classify`; a pattern still unreadable (possessive quantifiers, atomic groups), or another command, skips the rule with a `WARN` (≠: i3 reads those). The old `floatingClass` (class or instance, whole), `floatingTitle` (a substring) and `floatingWorkspaces` (`[workspace="^N$"]`) are read on as rules before `forWindow`'s. Built 2026-10-28 |
 | R10 | Otherwise | tiling | = | |
 | R11 | A new window on a workspace in `floatingWorkspaces` | floating | = | read as `for_window [workspace="^N$"] floating enable` (R9, §11 N13); for the windows of Plasma's own tools (`plan.md` decision 1) |
 | R12 | After a reload: the rules say tiling, but it is in no tile and kept above (or in the effect's floating set) | floating | + | It was floating before the reload |
@@ -543,7 +544,7 @@ that it fits Plasma better.
 | L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway (`docs/records/spec-tiled-look.md` B) |
 | L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **Kept** (Paul, 2026-10-27): rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded |
 | L10 | A floating window | its own decoration (KWin's title bar and border) | ≠ | i3's `default_floating_border normal 2`: i3's title bar and border; here Plasma's, reason (b), as L1 |
-| L11 | A floating window's ring (`frameOnFloating`, off) | L3's classes: `focused`, else `unfocused` (i3's would be `focused_inactive`, left out as L3); no indicator | ≠ | i3's `x.c`. Built 2026-10-28 (redo stage 7): `frameFloatingActive` and `frameFloatingInactive` are no longer read (the load report says so once to a user who set them); by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
+| L11 | A floating window's ring (`frameOnFloating`, off) | L3's classes: `focused`, else `unfocused` (i3's would be `focused_inactive`, left out as L3); no indicator | ≠ | i3's `x.c`. Built 2026-10-28 (redo stage 7): `frameFloatingActive` and `frameFloatingInactive` are no longer read (the load report said so until the code review of 2026-10-30); by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring |
 | L12 | Floating above tiling | kept above (kwin-i3 owns Keep Above), except on a Floating workspace while the effect marks floating windows | = | i3 keeps floating windows above tiling ones. Keep Below overwritten: + |
 | L13 | No ring on a fullscreen window | none | = | i3 draws no border on a fullscreen window |
 | L14 | No ring on a minimized window, or on a floating one with a client-side decoration (a tiling one is framed like any other) | none | + | i3 refuses minimize; it borders every window, as X11 apps there draw no shadow |
@@ -775,7 +776,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 | V5 | A fullscreen window floated or tiled again, or moved | it stays fullscreen; focus and moves across it are blocked (§2, §5) | = | |
 | V6 | A new window on a workspace with a fullscreen window | `popupDuringFullscreen`: `smart` (default), `ignore`, `leave_fullscreen`, `all`, as §5 C5 says | ≠ | i3's setting and values; the fullscreen window's own modal dialog takes the focus under `ignore` too (C5: KWin's modal rule). Built 2026-10-28 (redo stage 8) |
 | V6b | The other floating windows of a workspace with a fullscreen window | an activation of one (Alt+Tab, the task manager, an app) is handed back: the fullscreen window keeps the focus and stays on top, as C5 for a new window; `popupDuringFullscreen` `all` lets every floating window over, `smart` the fullscreen window's own transients, and its modal dialog always (KWin's modal rule, C5) | = | i3 draws no floating window above a fullscreen one (`render.c:253-270`, `fullscreen_blocks_floating_render`, the same exceptions) and won't focus one (`con_fullscreen_permits_focusing`). Refinement stage 7; before, KWin raised the activated one over it |
-| V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored (the leaf stays in the tree, marked `_` in the tree log); never the focus's choice (§5 C9). Across a reload a minimized window loses its place | ≠ | i3's scratchpad leaves the layout too, but `scratchpad show` brings the window back floating (`scratchpad.c`). **Kept** (Paul, 2026-10-28): restored to its place; Plasma's minimize is a restore, not a scratchpad. Built 2026-10-28 (redo stage 6) |
+| V7 | Minimize | out of the layout, its share to its siblings; back where it was when restored (the leaf stays in the tree, marked `_` in the tree log); never the focus's choice (§5 C9), never what a move swaps with or counts as company (a window whose other siblings are all minimized moves as a lone child, T10), and no part of a resize's shares; a close that leaves a split holding only minimized windows sends the focus on up, as from that split. Across a reload a minimized window loses its place | ≠ | i3's scratchpad leaves the layout too, but `scratchpad show` brings the window back floating (`scratchpad.c`). **Kept** (Paul, 2026-10-28): restored to its place; Plasma's minimize is a restore, not a scratchpad. Built 2026-10-28 (redo stage 6) |
 | V8 | Maximize | no handler: it leaves its tile, the next pass puts it back, and that clears the maximize | = | i3 has no maximize and ignores the request |
 | V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
 | V10 | A window put on all desktops, or on two (outside kwin-i3's own relocate) | all: sticky floating (§3 R3, X4), an already floating one too; two: leaves the tree until it is on one (R13) | ≠ | i3 floats it and makes it sticky only if `floating_enable` succeeds (`handlers.c:890-895`), so an already floating window isn't made sticky. Kept (review 2026-10-28, the rule of `philosophy.md`: ride i3 unless KWin can't): KWin applies the request itself before kwin-i3 hears of it, so refusing it means undoing it, and KWin's own "On All Desktops" menu entry would snap back. Built 2026-10-28 (redo stage 9) |
@@ -882,9 +883,6 @@ again.
 | `floatingMinimumSize` | `75x50` | `WxH`, 0 i3's default, -1 none | §3 R20 | a window becoming floating |
 | `floatingMaximumSize` | `0x0` (all outputs together) | `WxH`, -1 none | §3 R20 | a window becoming floating |
 | `floatingWorkspaces` | empty | numbers 1-10 | read as `[workspace="^N$"] floating enable` (R11) | as `forWindow` |
-| `ignoreClass`, `ignoreRole` | empty (the old defaults are the built-in kinds now) | list | the old lists: a user's entries read as `floating enable` rules, named once at load (R5) | as `forWindow` |
-| `floatingClass` | empty | list | read as `[class="^X$"]` and `[instance="^X$"] floating enable` (R9) | as `forWindow` |
-| `floatingTitle` | empty | list | read as `[title="X"] floating enable`, X escaped: a substring (R9) | as `forWindow` |
 | `tiledLook` | `frame` | `frame`, `titlebars`, `bare` | §7 | next pass |
 | `frameWidth` | 1 | 1-10 px | the ring | next pass; the effect at once |
 | `frameActive`, `frameInactive` | `#4c7899`, `#333333` | `#rrggbb` | the ring's colour classes, i3's `focused`, `unfocused` (§7 L3) | the effect at once |
@@ -893,7 +891,7 @@ again.
 | `roundedCorners` | on | | §7 | the effect at once |
 | `holdEnabled` | on | | §7 | the effect at once |
 | `holdTimeoutMs` | 200 | 10-2000 ms | §7 | the effect at once |
-| `warnTakenKeys` | on | | the load-time key reports (§13) | next load |
+| `warnTakenKeys` | on | | the taken-keys part of the load report (§13) | next load |
 | `debugLog` | off | | the D-Bus log, the debug actions; no control on either form | at once (debug actions: next load) |
 
 The plugins accept any colour Qt parses; the script only `#rrggbb` (lowercased). A number out of
@@ -921,8 +919,8 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
 | N11 | `workspace N output X …` | `workspaceOutputs`, a list per number | = | Built 2026-10-28 (redo stage 4) |
 | N12 | `assign [criteria] → workspace N \| output X` | `assign` (§3 R19) | = | Built 2026-10-28 (redo stage 3) |
-| N13 | `for_window [criteria] floating enable \| disable` | `forWindow` (§3 R9); the old `floatingClass`, `floatingTitle`, `floatingWorkspaces` read as rules | = | Built 2026-10-28 |
-| N14 | (no i3 option) the ignore lists | `ignoreClass`, `ignoreRole`: empty, read as floating rules for a user's own entries (§3 R5) | + | the defaults went 2026-10-28; the settings page writes rules (redo stage 10) |
+| N13 | `for_window [criteria] floating enable \| disable` | `forWindow` (§3 R9); `floatingWorkspaces` read as rules (R11) | = | Built 2026-10-28 |
+| N14 | (no i3 option) the ignore lists | none: Plasma's system windows are built in (§3 R5) | + | the defaults went 2026-10-28; the lists, with `floatingClass` and `floatingTitle` and their load notices, in the code review of 2026-10-30 (the settings page had written rules since redo stage 10) |
 | N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | `floatingMinimumSize`, `floatingMaximumSize` (§3 R20) | = | Built 2026-10-28 |
 | N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7) |
 | N17 | `tiling_drag`, `swap_modifier` | `tilingDrag` (§9 G3); no swap modifier | = / ≠ | `tilingDrag` as i3's; Shift floats instead of swapping (G5, G11) |
@@ -960,10 +958,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   listed like any other, marked "default"; a rule with other criteria shown as text and edited
   there; Add Rule and Pick a Window… (KWin's window picker: a row with the clicked window's
   class, matched whole). Below, the floating sizes (`floatingMinimumSize`,
-  `floatingMaximumSize`). **The old list settings** (`ignoreClass`, `ignoreRole`,
-  `floatingClass`, `floatingTitle`, `floatingWorkspaces`) become rules when the page reads them,
-  as the script reads them (§3 R5, R9, R11), so the rows show them and the first Apply writes
-  the rules and takes the old keys out of kwinrc.
+  `floatingMaximumSize`). `floatingWorkspaces` becomes rules when the page reads it, as the
+  script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
+  the key out of kwinrc.
 - **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
   shifted symbol appears with the keys that type it on the current layout. Not visible while
@@ -1027,8 +1024,9 @@ the first answer). Paul's reload is AGENTS.md's.
 
 ### Release (Meta+Ctrl+Shift+Q)
 
-The safety valve, also run on a load or rebuild failure: turn the tiling drag off; every window
-out of its tile, Keep Above cleared where kwin-i3 set it, its border given back; every root tile
+The safety valve, also run on a load or rebuild failure: turn the tiling drag off, and end one
+that is under way (its drop indicator cleared); a window crossing to another output put on its
+workspace's desktop, not left on all of them; every window out of its tile, Keep Above cleared where kwin-i3 set it, its border given back; every root tile
 kwin-i3 touched, and any other not exactly the full screen (one a previous instance left inset
 by gaps), emptied and reset to the full screen with no padding; the effect told to drop the
 resize banner, every ring's class and the focused window. Logs `RELEASED`. After it
@@ -1049,8 +1047,9 @@ tiling drag off; the drag cursor ends by itself 500 ms after the script stops re
 One notification per load (app "kwin-i3"), its parts collected first:
 
 - **Taken keys** (`warnTakenKeys`): kwin-i3's keys another active component holds, with how to free
-  them (System Settings > Shortcuts, or `make take-keys`).
-- **Layout keys** (`warnTakenKeys`): without the helper, any keyboard layout other than US, as
+  them (System Settings > Shortcuts, or `make take-keys`). Its part waits at most 3 s for the
+  answers. `warnTakenKeys` off leaves out this part only.
+- **Layout keys**: without the helper, any keyboard layout other than US, as
   kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default where the
   system sets none, counts as US). Its part waits at most 3 s for KWin's answer, so a D-Bus call
   that never answers can't hold back the rest of the report.
@@ -1062,8 +1061,6 @@ One notification per load (app "kwin-i3"), its parts collected first:
   Apply (§8 K4, K18); without the effect, the frame, the drag highlight and the hold. The helper
   from KWin's loaded plugins, the effect from its loaded effects. Refinement stage 3; before,
   only the two keys.
-- **Ignore entries now float**: a user's own `ignoreClass`/`ignoreRole` entries, read as floating
-  rules since redo stage 3 (§3 R5), named once (Paul's call 43).
 
 i3 has no counterpart: it reports a config error with `i3-nagbar`; here a setting that doesn't
 parse logs a `WARN` and uses its default (§11).

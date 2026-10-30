@@ -124,7 +124,6 @@ $meta
 
 [Script-kwin-i3]
 debugLog=true
-floatingTitle=STAGE (streamed)
 gapsInner=0
 gapsOuter=0
 RC

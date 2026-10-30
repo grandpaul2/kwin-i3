@@ -58,11 +58,8 @@ test("metadata.json names the generic scripted config module", () => {
     assert.strictEqual(meta["X-KDE-ConfigModule"], "kwin/effects/configs/kcm_kwin4_genericscripted");
 });
 
-test("defaults: lists split on commas, debugLog off; the old ignore lists are empty (their kinds are built in, redo stage 3)", () => {
+test("defaults: debugLog off, the default rules", () => {
     const { S, debug } = loadSettings({});
-    assert.deepStrictEqual(S.get("ignoreRole"), []);
-    assert.deepStrictEqual(S.get("floatingClass"), []);
-    assert.deepStrictEqual(S.get("ignoreClass"), []);
     assert.ok(S.get("forWindow").indexOf("spectacle") >= 0, "the default rules float Plasma's tools");
     assert.strictEqual(S.get("floatingMinimumSize"), "75x50");
     assert.strictEqual(S.get("debugLog"), false);
@@ -70,9 +67,8 @@ test("defaults: lists split on commas, debugLog off; the old ignore lists are em
     assert.strictEqual(S.get("workspaceAutoBackAndForth"), false, "off, as i3's default");
 });
 
-test("what the form writes parses: a list with spaces, a bool as text", () => {
-    const { S, debug } = loadSettings({ floatingClass: " pavucontrol , ,gimp ", debugLog: "true" });
-    assert.deepStrictEqual(S.get("floatingClass"), ["pavucontrol", "gimp"]);
+test("what the form writes parses: a bool as text", () => {
+    const { S, debug } = loadSettings({ debugLog: "true" });
     assert.strictEqual(S.get("debugLog"), true);
     assert.strictEqual(debug(), true);
 });
@@ -86,10 +82,10 @@ test("a bool that doesn't parse is the default, with a warning", () => {
 test("load() reports exactly the keys that changed", () => {
     const { S, store } = loadSettings({});
     assert.deepStrictEqual(S.load(), []);
-    store.floatingTitle = "Picture-in-Picture";
+    store.floatingWorkspaces = "3";
     store.floatingMaximumSize = "0x0";       // the default, written out: no change
-    assert.deepStrictEqual(S.load(), ["floatingTitle"]);
-    assert.deepStrictEqual(S.get("floatingTitle"), ["Picture-in-Picture"]);
+    assert.deepStrictEqual(S.load(), ["floatingWorkspaces"]);
+    assert.deepStrictEqual(S.get("floatingWorkspaces"), { 3: true });
     assert.deepStrictEqual(S.load(), []);
 });
 

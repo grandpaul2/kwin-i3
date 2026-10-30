@@ -313,7 +313,7 @@
         <number>50</number>
        </property>
        <property name="toolTip">
-        <string>How far one press of Meta+Ctrl+arrow resizes a window.</string>
+        <string>How far one key in the resize mode (Meta+R) resizes a tiling window.</string>
        </property>
       </widget>
      </item>
@@ -339,7 +339,7 @@
         <number>200</number>
        </property>
        <property name="toolTip">
-        <string>How far one press of Meta+Shift+arrow moves, or Meta+Ctrl+arrow resizes, a floating window.</string>
+        <string>How far one press of Meta+Shift+arrow moves, or one key in the resize mode (Meta+R) resizes, a floating window.</string>
        </property>
       </widget>
      </item>
@@ -745,7 +745,7 @@
         <cstring>plainText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's for_window rules, one per line (or separated by ;): [criteria] floating enable, or floating disable. Criteria: class, instance, title, window_role, window_type (normal, dialog, utility, toolbar, splash, notification), workspace (the number), floating, tiling, all; each a regular expression in quotes, all in one rule must match. Each rule runs at most once per window, when it opens or changes title or class. Example: [class="^org\.kde\.kate$" title="Find"] floating enable</string>
+        <string>i3's for_window rules, one per line (or separated by ;): [criteria] floating enable, or floating disable. Criteria: class, instance, title, window_role, window_type (normal, dialog, utility, toolbar, splash, notification), workspace (the number), floating, tiling, all. A value is a regular expression, in quotes or bare as in i3 (window_type takes one of its words; floating, tiling and all take none); all in one rule must match. Each rule runs at most once per window, when it opens or changes title or class. Example: [class="^org\.kde\.kate$" title="Find"] floating enable</string>
        </property>
        <property name="maximumBlockCount">
         <number>200</number>
@@ -824,99 +824,7 @@
        </property>
       </widget>
      </item>
-     <item row="34" column="0">
-      <widget class="QLabel" name="ignoreClassLabel">
-       <property name="text">
-        <string>Old list, still read: classes that float:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_ignoreClass</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="34" column="1">
-      <widget class="QLineEdit" name="kcfg_ignoreClass">
-       <property name="minimumSize">
-        <size>
-         <width>360</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>The old setting, read as rules until the settings page writes rules: comma-separated window classes, each read as [class="^X$"] floating enable (kwin-i3 no longer keeps windows out by class; Plasma's system windows are built in).</string>
-       </property>
-      </widget>
-     </item>
-     <item row="35" column="0">
-      <widget class="QLabel" name="ignoreRoleLabel">
-       <property name="text">
-        <string>Old list, still read: roles that float:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_ignoreRole</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="35" column="1">
-      <widget class="QLineEdit" name="kcfg_ignoreRole">
-       <property name="minimumSize">
-        <size>
-         <width>360</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>The old setting, read as rules: comma-separated window roles, each read as [window_role="^X$"] floating enable.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="36" column="0">
-      <widget class="QLabel" name="floatingClassLabel">
-       <property name="text">
-        <string>Old list, still read: classes that float (floatingClass):</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_floatingClass</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="36" column="1">
-      <widget class="QLineEdit" name="kcfg_floatingClass">
-       <property name="minimumSize">
-        <size>
-         <width>360</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Comma-separated window classes that open floating (Meta+Shift+Space tiles them).</string>
-       </property>
-      </widget>
-     </item>
-     <item row="37" column="0">
-      <widget class="QLabel" name="floatingTitleLabel">
-       <property name="text">
-        <string>Old list, still read: titles containing (floatingTitle):</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_floatingTitle</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="37" column="1">
-      <widget class="QLineEdit" name="kcfg_floatingTitle">
-       <property name="minimumSize">
-        <size>
-         <width>360</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Comma-separated pieces of text: a window whose title contains one opens floating.</string>
-       </property>
-      </widget>
-     </item>
-     <item row="38" column="0" colspan="2">
+     <item row="34" column="0" colspan="2">
       <widget class="QLabel" name="keysHeading">
        <property name="text">
         <string>Keys</string>
@@ -934,7 +842,7 @@
        </property>
       </widget>
      </item>
-     <item row="39" column="0">
+     <item row="35" column="0">
       <widget class="QLabel" name="warnTakenKeysLabel">
        <property name="text">
         <string>Options:</string>
@@ -944,14 +852,14 @@
        </property>
       </widget>
      </item>
-     <item row="39" column="1">
+     <item row="35" column="1">
       <widget class="QCheckBox" name="kcfg_warnTakenKeys">
        <property name="text">
         <string>Warn about keys other shortcuts use</string>
        </property>
       </widget>
      </item>
-     <item row="42" column="0">
+     <item row="38" column="0">
       <widget class="QLabel" name="tilingDragLabel">
        <property name="text">
         <string>Drag tiling windows:</string>
@@ -961,7 +869,7 @@
        </property>
       </widget>
      </item>
-     <item row="42" column="1">
+     <item row="38" column="1">
       <widget class="QComboBox" name="kcfg_tilingDrag">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -991,7 +899,7 @@
        </item>
       </widget>
      </item>
-     <item row="41" column="0">
+     <item row="37" column="0">
       <widget class="QLabel" name="mouseWarpingLabel">
        <property name="text">
         <string>Pointer:</string>
@@ -1001,7 +909,7 @@
        </property>
       </widget>
      </item>
-     <item row="41" column="1">
+     <item row="37" column="1">
       <widget class="QComboBox" name="kcfg_mouseWarping">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -1021,7 +929,7 @@
        </item>
       </widget>
      </item>
-     <item row="43" column="0">
+     <item row="39" column="0">
       <widget class="QLabel" name="popupDuringFullscreenLabel">
        <property name="text">
         <string>New windows in fullscreen:</string>
@@ -1031,7 +939,7 @@
        </property>
       </widget>
      </item>
-     <item row="43" column="1">
+     <item row="39" column="1">
       <widget class="QComboBox" name="kcfg_popupDuringFullscreen">
        <property name="kcfg_property" stdset="0">
         <cstring>currentText</cstring>
@@ -1061,7 +969,7 @@
        </item>
       </widget>
      </item>
-     <item row="41" column="1">
+     <item row="37" column="1">
       <!-- Hidden, as on the page: an internal value, kwinrc only (plan.md, "Settings"); kept so
            Defaults still resets it, as debugLog's below. -->
       <widget class="QSpinBox" name="kcfg_holdTimeoutMs">
@@ -1076,7 +984,7 @@
        </property>
       </widget>
      </item>
-     <item row="40" column="1">
+     <item row="36" column="1">
       <!-- Hidden, as on the page (debugLog does nothing on a desktop, docs/debugging.md): kept so
            Defaults still resets the key the test KWin uses. -->
       <widget class="QCheckBox" name="kcfg_debugLog">

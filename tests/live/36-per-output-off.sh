@@ -59,11 +59,14 @@ m=$(mark); load_kwin_i3
 check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
 check "one monitor: ok"                     wait_log '^.{9}PEROUTPUT ok$' "$m"
 sleep 0.5
-check "no notification"                     notes_are 2
+# warnTakenKeys off leaves the plugins' part (no helper here): a notification, not about this.
+check "a notification, the plugins' only"   poll notes_are 3
+not_per_output() { ! grep '^NOTIFY' "$KI3_TMP/notify.out" | tail -1 | grep -q 'per-output'; }
+check "  nothing about per-output"          not_per_output
 
 # 5. The second monitor comes back: now it's a problem, said once.
 m=$(mark); timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
 check "two again: off, 2 screens"           wait_log '^.{9}PEROUTPUT off, 2 screens$' "$m"
-check "a notification for it"               poll notes_are 3
+check "a notification for it"               poll notes_are 4
 check "no invariant failures or errors"     clean_log
 finish

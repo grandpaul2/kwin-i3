@@ -1,7 +1,7 @@
 // kwini3hold: atomic layout changes (docs/records/spec-atomic-layout.md), and i3's frame around tiled
 // windows (docs/records/spec-window-modes.md). When tiled windows are
 // rearranged, each one is snapshotted just before it moves and drawn at its old place until every
-// moved window has its new frame (or 100 ms), then they all switch in one frame: no wallpaper
+// moved window has its new frame (or holdTimeoutMs, 200 ms by default), then they all switch in one frame: no wallpaper
 // between, as Sway's transactions give. A closing window is kept on screen while its neighbours
 // grow into its space; a new window is hidden until its tile has placed it (or 20 ms).
 // For the hold nothing is asked of kwin-i3: KWin says "about to change" before every geometry
@@ -196,7 +196,7 @@ private:
 
     KConfigWatcher::Ptr m_watcher;
     bool m_enabled = true;
-    int m_timeoutMs = 100;
+    int m_timeoutMs = 200;
     int m_frameWidth = 1;
     QString m_mode;                                          // the helper's mode: "resize" shows the banner
     struct Banner {
@@ -225,7 +225,7 @@ private:
 
     QHash<KWin::EffectWindow *, Held> m_held;
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
-    QHash<KWin::EffectWindow *, QElapsedTimer> m_pendingClose; // kept, waiting for a neighbour
+    QSet<KWin::EffectWindow *> m_pendingClose; // kept, waiting for a neighbour
     QList<QPointer<KWin::EffectWindow>> m_dragging;
     QStringList m_events;                                   // note(): the last 500, for Events
 

@@ -1,5 +1,6 @@
-// Settings: every key kwin-i3 reads from kwinrc's [Script-kwin-i3] group, with its type and
-// default (docs/records/spec-settings.md). The one table the config form (package/contents/config/
+// Settings: every key in kwinrc's [Script-kwin-i3] group, with its type and default
+// (docs/records/spec-settings.md). The plugins read theirs too (the frame's, the hold's,
+// tilingDrag), each with its own fallback for a value this table would refuse. The one table the config form (package/contents/config/
 // main.xml) and the README follow; tests/unit/settings.test.js holds the three together.
 //
 // Read at load and again on every KWin reconfigure (options.configChanged; Meta+Shift+C asks for
@@ -22,12 +23,6 @@ var Settings = (function () {
         assign: { type: "text", def: "" },                                      // assign [criteria] → N | output X
         floatingMinimumSize: { type: "size", def: "75x50" },                    // i3's floating_minimum_size
         floatingMaximumSize: { type: "size", def: "0x0" },                      // floating_maximum_size: 0x0 all outputs together, -1x-1 none
-        // The old list settings, read on as rules (src/rules.js oldRules) so nothing a user set
-        // changes at the update; the settings page writes the rules above (redo stage 10).
-        ignoreClass: { type: "list", def: "" },
-        ignoreRole: { type: "list", def: "" },
-        floatingClass: { type: "list", def: "" },
-        floatingTitle: { type: "list", def: "" },
         debugLog: { type: "bool", def: "false" },
         warnTakenKeys: { type: "bool", def: "true" },                         // the notice at load
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
@@ -136,8 +131,6 @@ var Settings = (function () {
             });
             return set;
         }
-        if (type === "list")
-            return text.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
         if (type === "bool") {
             if (text === "true") return true;
             if (text === "false") return false;

@@ -24,6 +24,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Widgets: no source here uses it, but KWin's exported targets name Qt6::Widgets (KWinTargets.cmake),
+# so the configure fails without it (code review, 2026-10-30).
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus)
 find_package(KF6 REQUIRED COMPONENTS CoreAddons Config)
 find_package(KWin REQUIRED COMPONENTS kwin)

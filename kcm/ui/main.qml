@@ -50,27 +50,22 @@ KCM.SimpleKCM {
         }
     }
 
-    // The old list settings (ignoreClass, ignoreRole, floatingClass, floatingTitle,
-    // floatingWorkspaces) become rules the moment the page reads them (redo stage 10): the
-    // rows show them, and Apply writes the rules and takes the old keys out of kwinrc (a
-    // setting at its default is removed). As src/rules.js reads them at load.
+    // floatingWorkspaces becomes rules the moment the page reads it (redo stage 10): the rows
+    // show them, and Apply writes the rules and takes the key out of kwinrc (a setting at its
+    // default is removed). As src/rules.js reads it at load.
     function migrateOld() {
         const s = root.settings;
         const rules = Logic.oldRules(s);
-        if (!rules.length && !s.floatingClass && !s.floatingTitle && !s.floatingWorkspaces && !s.ignoreClass && !s.ignoreRole) return;
+        if (!rules.length && !s.floatingWorkspaces) return;
         let text = s.forWindow;
         rules.forEach((r) => { text = Logic.addRule(text, r); });
         s.forWindow = text;
-        s.floatingClass = ""; s.floatingTitle = ""; s.floatingWorkspaces = ""; s.ignoreClass = ""; s.ignoreRole = "";
+        s.floatingWorkspaces = "";
     }
     Component.onCompleted: migrateOld()
     Connections {
         target: root.settings
-        function onFloatingClassChanged() { root.migrateOld() }
-        function onFloatingTitleChanged() { root.migrateOld() }
         function onFloatingWorkspacesChanged() { root.migrateOld() }
-        function onIgnoreClassChanged() { root.migrateOld() }
-        function onIgnoreRoleChanged() { root.migrateOld() }
     }
 
     // A setting's help, ending in its i3 directive (docs/records/spec-settings-words.md rule 5). It sits in
@@ -349,6 +344,7 @@ KCM.SimpleKCM {
             ChoiceBox {
                 id: dragBox
                 settingName: "tilingDrag"
+                applies: kcm.helperLoaded       // plugin/tilingdrag.cpp
                 model: [
                     { text: i18nc("@item:inlistbox", "Titlebar or Meta+drag"), value: "modifier titlebar" },
                     { text: i18nc("@item:inlistbox", "Meta+drag only"), value: "modifier" },

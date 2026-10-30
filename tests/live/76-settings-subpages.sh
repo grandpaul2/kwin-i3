@@ -24,11 +24,8 @@ shot() {   # a screenshot kept with KI3_SHOTS=<dir>, for the style guide's scree
     [[ -n ${KI3_SHOTS:-} ]] || return 0
     python3 "$root/tools/shot.py" capture Virtual-0 "$KI3_SHOTS/76-$((++n_shot))-$1.png"
 }
-# A workspace set to a monitor that isn't connected, from before: the page keeps it. And the old
-# floatingTitle list (Paul's two titles): the page reads it as rules and its first Apply writes
-# them and takes the key out (redo stage 10, item 68).
+# A workspace set to a monitor that isn't connected, from before: the page keeps it.
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "4=DP-9"
-kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key floatingTitle "Picture-in-Picture, Firefox — Sharing Indicator"
 
 check "an accessibility bus of the test's own" a11y_start
 QT_PLUGIN_PATH=$root/kcm/build/bin QT_QPA_PLATFORM=wayland kcmshell6 kcm_kwin_i3 >"$KI3_TMP/kcm.log" 2>&1 &
@@ -52,8 +49,6 @@ $A11Y focus kcmshell6 Workspaces "Workspace 3 new windows"; press Down; sleep 0.
 m=$(mark); click_named - Apply
 check "kwinrc: workspaceOutputs=2=Virtual-1, 4=DP-9" poll conf_is workspaceOutputs "2=Virtual-1, 4=DP-9"
 check "kwinrc: forWindow has workspace 3's floating rule" poll eval '[[ $(conf forWindow) == *\[workspace=\"^3\$\"\]\ floating\ enable* ]]'
-check "  and the two old titles as rules (migrated)" eval '[[ $(conf forWindow) == *\[title=\"Picture-in-Picture\"\]\ floating\ enable* && $(conf forWindow) == *\[title=\"Firefox\ —\ Sharing\ Indicator\"\]\ floating\ enable* ]]'
-check "  the old floatingTitle key is gone"  conf_is floatingTitle ""
 check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*(forWindow.*workspaceOutputs|workspaceOutputs.*forWindow)' "$m"
 click_named - "Navigate Back"; sleep 0.5
 check "the main page sums it up"            named kwin-i3 "Configure Workspaces…"

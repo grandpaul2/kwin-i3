@@ -1,6 +1,7 @@
 // The i3 tree: workspaces, split containers, leaves (windows), focus stacks, and the operations
-// on them. A port of i3's own code (github.com/i3/i3, branch next at be04c853ee, 2026-10-12);
-// each function names the i3 function it ports. No KWin calls here, so node can load and test
+// on them. A port of i3's own code (github.com/i3/i3: first read on `next` at be04c853ee,
+// 2026-10-12; compared function by function with the 4.24 release in the code review of
+// 2026-10-30); each function names the i3 function it ports. No KWin calls here, so node can load and test
 // this file directly (tests/unit).
 //
 // Shapes (i3's Con, reduced to what kwin-i3 needs):
@@ -101,6 +102,15 @@ var Tree = (function () {
         for (var i = 0; i < con.nodes.length; i++) if (reachable(con.nodes[i])) return true;
         return false;
     }
+    // The nearest reachable con in `list` from index i, stepping by d (-1 or 1); null for none.
+    function stepReachable(list, i, d) {
+        for (var j = i + d; j >= 0 && j < list.length; j += d) if (reachable(list[j])) return list[j];
+        return null;
+    }
+    // How many of p's children are reachable, counting `con` (the one moving) whatever it is.
+    function liveChildren(p, con) {
+        return p.nodes.filter(function (c) { return c === con || reachable(c); }).length;
+    }
     function firstReachable(list) {
         for (var i = 0; i < list.length; i++) if (reachable(list[i])) return list[i];
         return null;
@@ -162,6 +172,9 @@ var Tree = (function () {
     M.nextFocused = function (con) {
         var next = null, focus = con.parent.focus;
         for (var i = 0; i < focus.length && !next; i++) if (focus[i] !== con && reachable(focus[i])) next = focus[i];
+        // A split left with only minimized windows stays (they keep their place), where i3's
+        // scratchpad leaves an empty split that closes: the focus goes on up as from that split.
+        if (!next && con.parent.type !== "ws" && con.parent.nodes.length > 1) return this.nextFocused(con.parent);
         if (!next) next = con.parent;
         while (next.focus.length) {
             var child = firstReachable(next.focus.filter(function (c) { return c !== con; }));
@@ -571,6 +584,9 @@ var Tree = (function () {
         var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(con), dir) : null;
         if (!ws) return false;
         var movesFocus = this.focused === con;
+        // One fullscreen window per workspace (setFullscreen), as moveToWorkspace keeps it.
+        var fs = con.fullscreen ? fullscreenOn(ws) : null;
+        if (fs) fs.fullscreen = false;
         this.attachToWorkspace(con, ws, dir);
         if (movesFocus) this.activate(con);
         this.flatten();
@@ -581,7 +597,8 @@ var Tree = (function () {
     M.move = function (con, dir) {
         var position, target;
         if (!con || con.type === "ws" || isFloating(con)) return;
-        if (con.fullscreen || (con.parent.type === "ws" && con.parent.nodes.length === 1)) {
+        // Minimized windows are out of the layout (§10 V7): never swapped with, never company.
+        if (con.fullscreen || (con.parent.type === "ws" && liveChildren(con.parent, con) === 1)) {
             this.moveToOutputDirected(con, dir);
             return;
         }
@@ -594,7 +611,7 @@ var Tree = (function () {
             }
             if (same === con.parent) {
                 var siblings = con.parent.nodes, idx = siblings.indexOf(con);
-                var swap = isBefore(dir) ? siblings[idx - 1] : siblings[idx + 1];
+                var swap = stepReachable(siblings, idx, isBefore(dir) ? -1 : 1);
                 if (swap) {
                     if (!isLeaf(swap)) {
                         target = descendDirection(swap, dir);
@@ -619,13 +636,13 @@ var Tree = (function () {
         while (above.parent !== same) above = above.parent;
         if (!focusPermits(this, above.parent)) return;
         var aIdx = above.parent.nodes.indexOf(above);
-        var next = isBefore(dir) ? above.parent.nodes[aIdx - 1] : above.parent.nodes[aIdx + 1];
+        var next = stepReachable(above.parent.nodes, aIdx, isBefore(dir) ? -1 : 1);
         if (next && !isLeaf(next)) {
             target = descendDirection(next, dir);
             position = (target.parent.layout !== o || isBefore(dir)) ? "after" : "before";
             this.insertConInto(con, target, position);
         } else if (!next && con.parent.parent && con.parent.parent.type === "ws" &&
-                   con.parent.nodes.length === 1) {
+                   liveChildren(con.parent, con) === 1) {
             // i3: "the lone child of a non-default layout container at the edge of the
             // workspace". Its test is layout != L_DEFAULT, which every split passes.
             this.moveToOutputDirected(con, dir);
@@ -644,6 +661,7 @@ var Tree = (function () {
         if (!con || con.type === "ws") return;
         var source = wsOf(con);
         if (ws === source) return;
+        if (!ignoreFocus && !focusPermits(this, ws)) return;   // _con_move_to_con, con.c:1319
         var target = this.descendFocused(ws);
         var focusNext = null;
         if (!ignoreFocus && this.focused && wsOf(this.focused) === source) {
@@ -833,6 +851,7 @@ var Tree = (function () {
         fixPercent(parent);
         var node = newFloating(con.win);
         node.fullscreen = con.fullscreen;          // i3 leaves fullscreen_mode as it is, both ways
+        node.minimized = con.minimized;
         node.parent = ws;
         ws.floating.unshift(node);
         if (before) {
@@ -857,6 +876,7 @@ var Tree = (function () {
         var tilingFocused = this.descendTilingFocused(ws);
         var leaf = newCon("h", node.win);
         leaf.fullscreen = node.fullscreen;
+        leaf.minimized = node.minimized;
         // The leaf stands in for i3's floating wrapper: same place in the focus stack.
         remove(ws.floating, node);
         ws.focus[ws.focus.indexOf(node)] = leaf;
@@ -901,7 +921,6 @@ var Tree = (function () {
         if (con) con.minimized = !!on;
         return con || null;
     };
-    M.reachable = reachable;
 
     // ---- resize (commands.c cmd_resize_tiling_width_height) --------------------------------
 
@@ -917,24 +936,26 @@ var Tree = (function () {
         var current = con;
         // resize_find_tiling_participants(..., both_sides = true)
         while (current.type !== "ws") {
-            if (current.parent.layout === o && current.parent.nodes.length > 1) break;
+            if (current.parent.layout === o && liveChildren(current.parent, current) > 1) break;
             current = current.parent;
         }
         if (current.type === "ws") return false;
-        var parent = current.parent, children = parent.nodes.length;
-        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / children; });
+        var parent = current.parent;
+        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / parent.nodes.length; });
+        // The shares among what is shown: a minimized window's is out of the layout (§10 V7).
+        var live = parent.nodes.filter(function (c) { return c === current || reachable(c); });
         var next = current.percent + ppt;
-        var subtract = ppt / (children - 1);
+        var subtract = ppt / (live.length - 1);
         var px = sizeOf ? sizeOf(parent) : 0, floor = px > 0 ? 1 / px : MIN_SHARE;
         if (ppt < 0 && next < floor) return false;
         if (subtract >= 0) {
-            for (var i = 0; i < children; i++) {
-                var c = parent.nodes[i];
+            for (var i = 0; i < live.length; i++) {
+                var c = live[i];
                 if (c !== current && c.percent - subtract < floor) return false;
             }
         }
         current.percent = next;
-        parent.nodes.forEach(function (c) { if (c !== current) c.percent -= subtract; });
+        live.forEach(function (c) { if (c !== current) c.percent -= subtract; });
         return true;
     };
 

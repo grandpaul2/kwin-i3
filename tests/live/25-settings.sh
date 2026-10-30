@@ -14,15 +14,15 @@ check "three tiled"                         wait_tree 1 "H[a b c*]"
 
 # 1. A plain write alone does nothing: the script hears nothing until KWin reconfigures.
 m=$(mark)
-set_key floatingClass ki3.probe
+set_key forWindow '[class="^ki3\.probe$"] floating enable'
 sleep 1
 check "a plain write: no SETTINGS"          bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -qE '^.{9}SETTINGS'"
 check "and c still tiles"                   wait_tree 1 "H[a b c*]"
 
-# 2. Reload Settings: the new floatingClass applies to the window already open.
+# 2. Reload Settings: the new rule applies to the window already open.
 m=$(mark)
 key "Reload Settings"
-check "reload: floatingClass changed"       wait_log '^.{9}SETTINGS floatingClass$' "$m"
+check "reload: forWindow changed"           wait_log '^.{9}SETTINGS forWindow$' "$m"
 check "c floats now"                        wait_tree 1 "H[a b] ~c*" "$m"
 
 # 3. b floated by hand, raised to the floating list's tail as it takes the focus (i3's
@@ -33,18 +33,18 @@ m=$(mark)
 key "Floating Toggle"
 check "b floated by hand"                   wait_tree 1 "H[a] ~c ~b*" "$m"
 m=$(mark)
-set_key floatingTitle "STAGE (streamed),nothing-has-this-title"
+set_key forWindow '[class="^ki3\.probe$"] floating enable; [title="nothing-has-this-title"] floating enable'
 key "Reload Settings"
-check "reload: floatingTitle changed"       wait_log '^.{9}SETTINGS floatingTitle$' "$m"
+check "reload: a rule added"                wait_log '^.{9}SETTINGS forWindow$' "$m"
 sleep 0.5
 check "b stays floating, c too"             _tree_is 1 "H[a] ~c ~b*"
 
 # 4. The rule removed: i3 applies rules and never undoes them (§3 X2, redo stage 3), so c stays
 #    floating; a forWindow rule with floating disable tiles it, and b, floated by hand, stays.
 m=$(mark)
-del_key floatingClass
+set_key forWindow '[title="nothing-has-this-title"] floating enable'
 key "Reload Settings"
-check "reload: floatingClass changed back"  wait_log '^.{9}SETTINGS floatingClass$' "$m"
+check "reload: c's rule gone"               wait_log '^.{9}SETTINGS forWindow$' "$m"
 sleep 0.5
 check "c stays floating (a rule only applies), b too" _tree_is 1 "H[a] ~c ~b*"
 m=$(mark)
@@ -53,18 +53,7 @@ key "Reload Settings"
 check "reload: forWindow changed"           wait_log '^.{9}SETTINGS forWindow$' "$m"
 check "c tiles by the rule, b still floats" wait_tree 1 "H[a c] ~b*" "$m"
 
-# 5. ignoreClass no longer keeps a window out of the tree: a user's entry reads as a floating rule
-#    (§3 R5, Paul's call 43), so c floats; the entry gone and a disable rule back, c tiles.
-m=$(mark)
-set_key ignoreClass "krunner,ki3.probe"
-del_key forWindow
-key "Reload Settings"
-check "ignoreClass entry: c floats instead" poll eval '[[ "$(tree 1)" == "H[a] ~b* ~c" || "$(tree 1)" == "H[a] ~c ~b*" ]]'
-m=$(mark)
-del_key ignoreClass
-set_key forWindow '[class="^ki3\.probe$"] floating disable'
-key "Reload Settings"
-check "the entry gone, a disable rule: c tiles" wait_tree 1 "H[a c] ~b*" "$m"
+# 5. The default rules back: none of their windows is open, nothing changes.
 m=$(mark)
 del_key forWindow         # the default rules again; no window of theirs is open, nothing changes
 key "Reload Settings"

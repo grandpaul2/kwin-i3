@@ -60,7 +60,7 @@ check "c tiles beside b"                    wait_tree 1 "H[b c*]"
 key "Move to Workspace 3"
 key "Workspace 3"
 check "c tiled alone on 3"                  wait_tree 3 "H[c*]"
-kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key floatingClass ki3.probe
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key forWindow '[class="^ki3\.probe$"] floating enable'
 m=$(mark); key "Reload Settings"
 check "the rule floats c"                   wait_tree 3 "H[] ~c*" "$m"
 check "  at its size"                       size_is c $SIZE

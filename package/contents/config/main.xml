@@ -20,18 +20,6 @@
     <entry name="floatingMaximumSize" type="String">
       <default>0x0</default>
     </entry>
-    <entry name="ignoreClass" type="String">
-      <default></default>
-    </entry>
-    <entry name="ignoreRole" type="String">
-      <default></default>
-    </entry>
-    <entry name="floatingClass" type="String">
-      <default></default>
-    </entry>
-    <entry name="floatingTitle" type="String">
-      <default></default>
-    </entry>
     <entry name="debugLog" type="Bool">
       <default>false</default>
     </entry>

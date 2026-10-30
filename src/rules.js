@@ -1,9 +1,7 @@
 // Which kind each window is (docs/behaviour.md §3, docs/records/spec-redo-3-kinds-rules.md): i3's kinds,
 // decided as i3's manage.c decides them, then the user's rules in i3's own syntax (`forWindow`:
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
-// kwinrc's [Script-kwin-i3] group (src/settings.js). The old list settings (`floatingClass`,
-// `floatingTitle`, `floatingWorkspaces`, and a user's own `ignoreClass`/`ignoreRole` entries) are
-// read on as rules, so nothing a user set changes at the update (C).
+// kwinrc's [Script-kwin-i3] group (src/settings.js); `floatingWorkspaces` is read as rules too.
 //
 // Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
 // output, redo stage 9) are in the tree; "dock" (a panel), "root" (the desktop window) and
@@ -75,7 +73,6 @@ var Rules = (function () {
     // ---- the rules ------------------------------------------------------------------------------
 
     var CRITERIA = ["class", "instance", "title", "window_role", "window_type", "workspace", "floating", "tiling", "all"];
-    var escapeRe = function (s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); };
 
     // i3's window_type values (match.c); kwin-i3's windows only ever have the first six, the
     // rest are kept out of the tree, as Plasma's notifications are (philosophy.md).
@@ -94,28 +91,29 @@ var Rules = (function () {
     }
 
     // `[class="^x$" title="y"]` -> { class: RegExp, title: RegExp } (`floating`, `tiling`, `all`
-    // take no value); null with a logged WARN for anything else. Values are quoted, `\"` inside.
+    // take no value); null with a logged WARN for anything else. Values are quoted, `\"` inside,
+    // or bare as i3's `word` (commands.spec): up to a space, a quote or the `]`.
     function parseCriteria(text, where) {
         var crit = {}, rest = text.trim(), n = 0;
         while (rest.length) {
-            var m = /^(\w+)(?:\s*=\s*"((?:[^"\\]|\\.)*)")?\s*/.exec(rest);
+            var m = /^(\w+)(?:\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"\]]+)))?\s*/.exec(rest);
             if (!m || !has(CRITERIA, m[1])) { log("WARN setting " + where + ": can't read the criteria \"" + text + "\""); return null; }
             rest = rest.slice(m[0].length);
-            var key = m[1];
+            var key = m[1], value = m[2] !== undefined ? m[2].replace(/\\"/g, "\"") : m[3];
             if (key === "floating" || key === "tiling" || key === "all") {
-                if (m[2] !== undefined) { log("WARN setting " + where + ": " + key + " takes no value (\"" + text + "\")"); return null; }
+                if (value !== undefined) { log("WARN setting " + where + ": " + key + " takes no value (\"" + text + "\")"); return null; }
                 crit[key] = true;
-            } else if (m[2] === undefined) {
-                log("WARN setting " + where + ": " + key + " needs a quoted value (\"" + text + "\")");
+            } else if (value === undefined) {
+                log("WARN setting " + where + ": " + key + " needs a value (\"" + text + "\")");
                 return null;
             } else if (key === "window_type") {
                 // A keyword in i3, matched case-insensitively against the window's one type
                 // (match.c, strcasecmp), not a regular expression.
-                var type = m[2].toLowerCase();
-                if (!has(WINDOW_TYPES, type)) { log("WARN setting " + where + ": window_type \"" + m[2] + "\" isn't one of i3's (" + WINDOW_TYPES.join(", ") + ")"); return null; }
+                var type = value.toLowerCase();
+                if (!has(WINDOW_TYPES, type)) { log("WARN setting " + where + ": window_type \"" + value + "\" isn't one of i3's (" + WINDOW_TYPES.join(", ") + ")"); return null; }
                 crit[key] = { test: function (v) { return v === type; } };
             } else {
-                crit[key] = regex(m[2].replace(/\\"/g, "\""), where);
+                crit[key] = regex(value, where);
                 if (!crit[key]) return null;
             }
             n++;
@@ -184,51 +182,24 @@ var Rules = (function () {
         return out;
     }
 
-    // The old list settings as rules (C): a class or name matched whole, a title as a substring,
-    // a Floating workspace's number; a user's own ignore entries float too (R5: a user can't make
-    // a window override-redirect; Paul's call 43), reported once at load (`translated`).
-    var OLD_IGNORE_CLASS = ["krunner", "yakuake", "spectacle", "kded5", "xwaylandvideobridge", "plasmashell",
-                            "ksplashqml", "org.kde.plasmashell", "org.kde.polkit-kde-authentication-agent-1",
-                            "org.kde.kruler", "kruler", "kwin_wayland", "ksmserver-logout-greeter"];
-    var OLD_IGNORE_ROLE = ["quake"];
-    function oldRules() {
-        var out = [], ignored = [];
-        function rule(key, pattern, from) {
-            var crit = {}; crit[key] = new RegExp(pattern, "u");
-            out.push({ crit: crit, floating: true, src: from });
-        }
-        S("floatingClass").forEach(function (c) { rule("class", "^" + escapeRe(c) + "$", "floatingClass " + c); rule("instance", "^" + escapeRe(c) + "$", "floatingClass " + c); });
-        S("floatingTitle").forEach(function (t) { rule("title", escapeRe(t), "floatingTitle " + t); });
-        Object.keys(S("floatingWorkspaces")).forEach(function (n) { rule("workspace", "^" + n + "$", "floatingWorkspaces " + n); });
-        S("ignoreClass").forEach(function (c) {
-            if (has(OLD_IGNORE_CLASS, c)) return;       // the old default: its kind is built in now
-            ignored.push("class " + c);
-            rule("class", "^" + escapeRe(c) + "$", "ignoreClass " + c); rule("instance", "^" + escapeRe(c) + "$", "ignoreClass " + c);
+    // `floatingWorkspaces` as rules: `[workspace="^N$"] floating enable` each (R11), first.
+    function workspaceRules() {
+        return Object.keys(S("floatingWorkspaces")).map(function (n) {
+            return { crit: { workspace: new RegExp("^" + n + "$", "u") }, floating: true, src: "floatingWorkspaces " + n };
         });
-        S("ignoreRole").forEach(function (r) {
-            if (has(OLD_IGNORE_ROLE, r)) return;
-            ignored.push("role " + r);
-            rule("window_role", "^" + escapeRe(r) + "$", "ignoreRole " + r);
-        });
-        return { rules: out, ignored: ignored };
     }
 
     // Parsed once per text (the settings are re-read on every KWin reconfigure).
-    var cache = { key: null, forWindow: null, assign: null, ignored: null };
+    var cache = { key: null, forWindow: null, assign: null };
     function current() {
-        var key = JSON.stringify([S("forWindow"), S("assign"), S("floatingClass"), S("floatingTitle"),
-                                  S("floatingWorkspaces"), S("ignoreClass"), S("ignoreRole")]);
+        var key = JSON.stringify([S("forWindow"), S("assign"), S("floatingWorkspaces")]);
         if (cache.key !== key) {
-            var old = oldRules();
             cache.key = key;
-            cache.forWindow = old.rules.concat(parseForWindow(S("forWindow")));
+            cache.forWindow = workspaceRules().concat(parseForWindow(S("forWindow")));
             cache.assign = parseAssign(S("assign"));
-            cache.ignored = old.ignored;
         }
         return cache;
     }
-    // The user's old ignore entries read as floating rules, for the load report (C).
-    function translated() { return current().ignored.slice(); }
 
     // All of a rule's criteria must match (match.c). ctx: { ws: the workspace number the window
     // is on or opens on (null: unknown), kind: its kind before the rule }.
@@ -313,7 +284,7 @@ var Rules = (function () {
         return m && +m[1] >= -1 && +m[2] >= -1 ? { w: +m[1], h: +m[2] } : null;
     }
 
-    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, managed: managed, assignFor: assignFor, translated: translated,
+    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, managed: managed, assignFor: assignFor,
              parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType };
 })();
 
