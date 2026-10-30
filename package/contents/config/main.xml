@@ -9,7 +9,7 @@
   <kcfgfile name=""/>
   <group name="">
     <entry name="forWindow" type="String">
-      <default>[class="^org\.kde\.spectacle$"] floating enable; [class="^org\.kde\.polkit-kde-authentication-agent-1$"] floating enable; [class="^(org\.kde\.)?kruler$"] floating enable; [class="^(org\.kde\.)?plasmashell$" window_type="normal"] floating enable</default>
+      <default>[class="^org\.kde\.spectacle$"] floating enable; [class="^org\.kde\.polkit-kde-authentication-agent-1$"] floating enable; [class="^(org\.kde\.)?kruler$"] floating enable; [class="^(org\.kde\.)?plasmashell$" window_type="normal"] floating enable; [class="^org\.freedesktop\.impl\.portal\.desktop\.kde$"] floating enable</default>
     </entry>
     <entry name="assign" type="String">
       <default></default>

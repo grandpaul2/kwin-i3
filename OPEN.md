@@ -157,11 +157,3 @@ and beside 64; green on 6.7 on both machines. (b) **53-hold** "after: c has land
 lost with the test's temporary dir; since 8195ea5 `run.sh` keeps a red scenario's output and
 kwin-i3's log in `tests/live/out/`. Next: when either is red again, read the kept log (for 86,
 what removed a from the tree) and name the cause; Paul's live use of 6.8 is the other watch.
-
-**62. Firefox's screen-share picker opens in its own tile** (Paul's capture 2026-10-29 22:59,
-`~/.local/state/kwin-i3/captures/2026-10-29_225934.473`, kept with this item; his note:
-"firefoxes screen share selector screen comes up in its own tile"). i3 floats a window at manage
-by its hints (`manage.c:466-500`: dialog type, transient, modal, min = max); the picker (Plasma's
-portal dialog, `xdg-desktop-portal-kde`, or Firefox's own) evidently carries none kwin-i3 reads.
-Next: `tools/capture-read` on it, the window's class, type, transient and size limits from
-`state.txt`, i3's answer for the same hints, then the cause and a fix.

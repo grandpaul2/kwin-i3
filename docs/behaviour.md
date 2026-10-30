@@ -178,6 +178,7 @@ The i3 kind of each window Plasma shows, and how the code gets there:
 | the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the built-in class list |
 | `plasmashell`'s shell surfaces (panels, popups) | dock / override-redirect, by type | KWin's type |
 | `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating | the default rule `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]` |
+| the desktop portal's dialogs (`xdg-desktop-portal-kde`: the screen-share picker, the file chooser, the remote-control prompt) | floating | the default rule `[class="^org\.freedesktop\.impl\.portal\.desktop\.kde$"]`: Qt dialogs, which i3 floats by the X11 dialog type (`manage.c`); on Wayland they have no type, and are transient only when the app names a parent window (Firefox's screen share names none: `OPEN.md` item 62's capture, 2026-10-29) |
 
 ### How a window gets its kind
 
@@ -866,7 +867,7 @@ again.
 | `popupDuringFullscreen` | `smart` | `smart`, `ignore`, `leave_fullscreen`, `all` | §5 C5: what a new window may do on a workspace with a fullscreen window | new windows |
 | `workspaceOutputs` | empty | `N=OUTPUT [OUTPUT …], …`, N 1-10 | workspace outputs, the first connected wins (§4 W5) | at login, when an output appears, and for a workspace first used after |
 | `workspaceAutoBackAndForth` | off | | §4 | next press |
-| `forWindow` | Spectacle, the password prompt, KRuler, plasmashell's Normal windows: `floating enable` | i3's `for_window` rules, one per line or `;`-separated (§3 R9) | the kinds | every rule anew on every window |
+| `forWindow` | Spectacle, the password prompt, KRuler, plasmashell's Normal windows, the desktop portal's dialogs: `floating enable` | i3's `for_window` rules, one per line or `;`-separated (§3 R9) | the kinds | every rule anew on every window |
 | `assign` | empty | i3's `assign` rules (§3 R19) | where a new window opens | new windows |
 | `floatingMinimumSize` | `75x50` | `WxH`, 0 i3's default, -1 none | §3 R20 | a window becoming floating |
 | `floatingMaximumSize` | `0x0` (all outputs together) | `WxH`, -1 none | §3 R20 | a window becoming floating |

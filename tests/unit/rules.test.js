@@ -76,7 +76,7 @@ test("classify: i3's float at manage: transient, modal, fixed size, dialog, util
     assert.strictEqual(kind(R, { skipTaskbar: true }), "tiling", "skipping the taskbar decides nothing (R4)");
 });
 
-test("classify: the default rules float Spectacle, the password prompt, KRuler and plasmashell's ordinary windows", () => {
+test("classify: the default rules float Spectacle, the password prompt, KRuler, plasmashell's ordinary windows and the portal's dialogs", () => {
     const { R } = rules({ forWindow: fs.readFileSync(path.join(__dirname, "../../src/settings.js"), "utf8").match(/DEFAULT_RULES = ([\s\S]*?);\n    var TABLE/)[1]
         .split("+").map((p) => JSON.parse(p.trim())).join("") });
     assert.strictEqual(kind(R, { resourceClass: "org.kde.spectacle" }), "floating");
@@ -85,6 +85,7 @@ test("classify: the default rules float Spectacle, the password prompt, KRuler a
     assert.strictEqual(kind(R, { resourceClass: "org.kde.kruler" }), "floating");
     assert.strictEqual(kind(R, { resourceClass: "plasmashell" }), "floating", "Configure Desktop and Wallpaper");
     assert.strictEqual(kind(R, { resourceClass: "org.kde.plasmashell", dialog: true, normalWindow: false }), "floating");
+    assert.strictEqual(kind(R, { resourceClass: "org.freedesktop.impl.portal.desktop.kde" }), "floating", "the screen-share picker, no parent (OPEN.md 62)");
     assert.strictEqual(kind(R, { resourceClass: "org.kde.kate" }), "tiling");
 });
 

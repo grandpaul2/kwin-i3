@@ -31,11 +31,13 @@ function log(line) {
 var Settings = (function () {
     // The window rules in i3's syntax, one per line (src/rules.js parses them; docs/behaviour.md
     // §3, §11 N12-N15). The defaults float the Plasma tools i3 would float (Spectacle, the
-    // password prompt, KRuler, plasmashell's ordinary windows); the system windows are built in.
+    // password prompt, KRuler, plasmashell's ordinary windows, the desktop portal's dialogs: Qt
+    // dialogs on X11, typeless and often parentless on Wayland); the system windows are built in.
     var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
         "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
         "[class=\"^(org\\.kde\\.)?kruler$\"] floating enable; " +
-        "[class=\"^(org\\.kde\\.)?plasmashell$\" window_type=\"normal\"] floating enable";
+        "[class=\"^(org\\.kde\\.)?plasmashell$\" window_type=\"normal\"] floating enable; " +
+        "[class=\"^org\\.freedesktop\\.impl\\.portal\\.desktop\\.kde$\"] floating enable";
     var TABLE = {
         forWindow: { type: "text", def: DEFAULT_RULES },                        // for_window [criteria] floating enable|disable
         assign: { type: "text", def: "" },                                      // assign [criteria] → N | output X

@@ -209,3 +209,10 @@ form's Apply applies without the plugins too (the settings page's Apply already 
 and exits; on the slower laptop 4 writes in 30 reached the file but never the bus. A KConfig bug
 report (flush before exit). The tests send the signal with gdbus instead (`tests/live/lib.sh`,
 `set_layouts`).
+
+**Firefox's screen share names no parent window** (found 2026-10-30, `OPEN.md` item 62's capture):
+the portal's picker came up a plain Normal window, not transient (KWin makes a Wayland window
+transient only from `set_parent` or the portal's `parent_window` through xdg-foreign,
+`xdgshellwindow.cpp:1165`), so it isn't attached to Firefox on any compositor. kwin-i3 floats the
+portal's dialogs by a default rule (`behaviour.md` §3); a Mozilla bug report, once Firefox's
+source confirms it passes `""`.
