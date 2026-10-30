@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# The test KWin on another distribution's KWin, in a podman container (OPEN.md item 67): Plasma
+# The test KWin on another distribution's KWin, in a podman container (docs/testing.md P5): Plasma
 # 6.8 on a Fedora 44 desktop that has only 6.7. Headless, as tools/testkwin.sh always is. KWin 6.8's
 # virtual backend needs a render node (none: "Found no render device!", no compositing, no window
 # ever resized), so the Mesa-driven ones (AMD, Intel) are passed in; NVIDIA's would need the
 # host's driver libraries at its version. Paul's desktop: the AMD iGPU, renderD128.
-#   tools/box.sh build                   builds the image (tools/box/Containerfile.arch)
+#   KI3_BOX=arch|pika                    the distribution (default arch: KWin 6.8.2; pika: PikaOS,
+#                                        KWin 6.7.4, Debian's package names)
+#   tools/box.sh build                   builds the image (tools/box/Containerfile.$KI3_BOX)
 #   tools/box.sh run <command...>        runs it in /work/kwin-i3, a copy of this checkout's working tree,
 #                                        e.g. tools/box.sh run make tools plugin
 #   tools/box.sh shell                   a shell there
@@ -13,11 +15,12 @@
 #   KI3_BOX_OUT=<dir>                    /work/kwin-i3/tests/live/out (a red's output and log) copied there
 set -euo pipefail
 repo=$(cd "$(dirname "$0")/.." && pwd)
-image=kwin-i3-box-arch
+box=${KI3_BOX:-arch}
+image=kwin-i3-box-$box
 
 case ${1:-} in
 build)
-    exec podman build -t "$image" -f "$repo/tools/box/Containerfile.arch" "$repo/tools/box" ;;
+    exec podman build -t "$image" -f "$repo/tools/box/Containerfile.$box" "$repo/tools/box" ;;
 run|shell)
     [[ $1 == shell ]] && set -- bash || shift
     [[ $# -gt 0 ]] || { echo "usage: tools/box.sh run <command...>" >&2; exit 2; }

@@ -1,0 +1,17 @@
+# PikaOS (Debian unstable-based, its own Plasma: KWin 6.7.4 in "nest", 2026-10-30) for the test
+# KWin and the plugin build as a PikaOS user has them (docs/testing.md P5; tools/box.sh with
+# KI3_BOX=pika). The package names here are the README's for PikaOS and Debian: kwin-dev doesn't
+# pull in libdrm-dev, libkdecorations3-dev or libxkbcommon-dev, which KWin's cmake files need.
+FROM ghcr.io/pikaos-linux/pikaos-base:nestv3
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -q \
+ && apt-get install -y -q --no-install-recommends \
+      build-essential cmake extra-cmake-modules pkg-config kwin-dev libvulkan-dev libdrm-dev libkdecorations3-dev libxkbcommon-dev \
+      kwin-wayland kglobalacceld libkf6config-bin breeze plasma-integration \
+      libegl-mesa0 libgl1-mesa-dri mesa-vulkan-drivers xwayland dbus dbus-bin procps systemd libcap2-bin \
+      libei-dev python3 python3-gi gir1.2-gtk-4.0 python3-dbus python3-xlib python3-pil nodejs \
+      alacritty fonts-noto-core fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/* \
+ && dbus-uuidgen --ensure \
+ && (setcap -r /usr/bin/kwin_wayland 2>/dev/null || true) \
+ && mkdir -m 1777 /work

@@ -85,7 +85,9 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
   Arch / Plasma 6.8.2 (AMD, a laptop's one output), one activity.
 - For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`,
   `vulkan-headers` (KWin's cmake files need them), a C++23 compiler. On Arch, KWin's headers are
-  in `kwin` itself (no `-devel` packages).
+  in `kwin` itself (no `-devel` packages). On PikaOS (and Debian): `build-essential`, `cmake`,
+  `extra-cmake-modules`, `pkg-config`, `kwin-dev`, `libvulkan-dev`, and three `kwin-dev` doesn't
+  pull in but KWin's cmake files need: `libdrm-dev`, `libkdecorations3-dev`, `libxkbcommon-dev`.
 - For the tests: `libei-devel` (real input), `python3-gobject` + `gtk4` (the test client),
   `python3-dbus`, `python3-xlib`, `python3-pillow` (screenshots), `node` (unit tests). On Arch:
   `libei`, `python-gobject`, `gtk4`, `python-dbus`, `python-xlib`, `python-pillow`, `nodejs`.
