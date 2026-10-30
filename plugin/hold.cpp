@@ -1023,7 +1023,7 @@ PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderView
     binder.shader()->setUniform(GLShader::ColorUniform::Color, colour);
     const BlendState kept;
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(KI3_COLOUR_SRC_FACTOR, GL_ONE_MINUS_SRC_ALPHA);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
     KI3_PAINTED;
@@ -1202,7 +1202,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         const BlendState kept;
         if (opacity < 1.0) {
             glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendFunc(KI3_COLOUR_SRC_FACTOR, GL_ONE_MINUS_SRC_ALPHA);
         }
         for (int i = 0; i < 2; ++i) {
             if (verts[i].isEmpty()) {

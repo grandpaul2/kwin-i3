@@ -40,6 +40,15 @@ using PaintResult = void;
 #define KI3_PAINTED return
 #endif
 
+// A uniform colour with alpha below 1, blended: KWin 6.8's GLShader::setUniform hands the shader
+// the colour premultiplied (glshader.cpp:465), 6.7's as it is (:478). Multiplying by alpha again
+// drew the drop indicator at a quarter, not half (the laptop's 86-tiling-drag on 6.8.2).
+#ifdef KI3_PREMULTIPLIED_COLOUR
+constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 1;       // GL_ONE
+#else
+constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 0x0302;  // GL_SRC_ALPHA
+#endif
+
 class Hold : public KWin::CrossFadeEffect
 {
     Q_OBJECT
