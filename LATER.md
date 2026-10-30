@@ -137,6 +137,23 @@ rather than in `make test`.
 
 ## Release prep
 
+**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; from `OPEN.md`
+2026-10-30, Paul: toward release). The load report (`behaviour.md` §13: taken keys, layouts, per-output
+desktops, missing plugins) is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`;
+KWin's callDBus converts by `QJSValue::toVariant()` (`scripting.cpp:345`), so Plasma receives
+`sisssava{sv}i` for `susssasa{sv}i` and refuses it ("no slot matched": the laptop 2026-10-29
+16:48:53, the desktop 2026-10-28 05:10:30). JavaScript can't make an unsigned int or a typed array
+here. The tests missed it: `tools/fakenotify.py` declares the signature but dbus-python doesn't
+enforce it (a strict version, `message_keyword` and a signature check, refused it in a probe).
+Routes probed: the desktop portal (`AddNotification`, `sa{sv}`) refuses KWin ("Unable to open
+/proc/<kwin>/root"); a QML (declarative) script's KNotification sends it correctly, with a
+`kwin-i3.notifyrc` of ours showing as "kwin-i3" (test KWin, strict stand-in), but a JS script
+can't hand a QML one the report. Options: (1) kwin-i3 as a QML script hosting `main.js`, with the
+globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins, a spike first;
+(2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
+on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
+2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
+
 **60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50, Paul,
 2026-10-29: the desk setup is tedious, and his two monitors test most of it). On `pauls-laptop`
 with an external monitor, each noted works / snag, Meta+Shift+B at any fault: docking and
