@@ -27,6 +27,19 @@
 #include <memory>
 #include <optional>
 
+// KWin 6.8's paint hooks return false when painting failed (a GPU reset), and an effect then
+// stops at once (effect/effect.h); 6.7's return nothing. KI3_PAINT runs the chain's call and
+// stops on a failure; KI3_PAINTED ends a hook that painted.
+#ifdef KI3_PAINT_RESULT
+using PaintResult = bool;
+#define KI3_PAINT(call) do { if (!(call)) return false; } while (0)
+#define KI3_PAINTED return true
+#else
+using PaintResult = void;
+#define KI3_PAINT(call) call
+#define KI3_PAINTED return
+#endif
+
 class Hold : public KWin::CrossFadeEffect
 {
     Q_OBJECT
@@ -39,10 +52,10 @@ public:
     void reconfigure(ReconfigureFlags flags) override;   // a --notify write; KWin's own reconfigure arrives as Workspace::configChanged (hold.cpp)
     bool isActive() const override;
     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
-    void paintScreen(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, int mask, const KWin::Region &deviceRegion, KWin::LogicalOutput *screen) override;
+    PaintResult paintScreen(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, int mask, const KWin::Region &deviceRegion, KWin::LogicalOutput *screen) override;
     void prePaintWindow(KWin::RenderView *view, KWin::EffectWindow *w, KWin::WindowPrePaintData &data) override;
-    void paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
-    void drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
+    PaintResult paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
+    PaintResult drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
     void postPaintScreen() override;
     bool blocksDirectScanout() const override;
     int requestedEffectChainPosition() const override;

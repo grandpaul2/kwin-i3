@@ -735,7 +735,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
     effects->prePaintWindow(view, w, data);
 }
 
-void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
+PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
 {
     if (auto it = m_held.constFind(w); it != m_held.cend() && it->snapshot) {
         // CrossFadeEffect draws the snapshot over the window's current frame; put it back on
@@ -748,13 +748,14 @@ void Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &v
         }
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
-    effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+    KI3_PAINT(effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data));
     if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
     if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
         paintBanner(renderTarget, viewport, w, data);
     }
+    KI3_PAINTED;
 }
 
 // i3's bar shows the mode's name; here a banner in the focused window (Paul's call 34), in the
@@ -993,11 +994,11 @@ void Hold::SetDropIndicator(int x, int y, int width, int height)
 
 // The drop indicator over everything, clipped to the repainted region: blended again over
 // pixels this frame didn't repaint, it would darken them frame by frame.
-void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
+PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
 {
-    effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen);
+    KI3_PAINT(effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen));
     if (m_drop.isEmpty()) {
-        return;
+        KI3_PAINTED;
     }
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
@@ -1010,7 +1011,7 @@ void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &v
               << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
     }
     if (verts.isEmpty()) {
-        return;
+        KI3_PAINTED;
     }
     GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
     vbo->reset();
@@ -1025,6 +1026,7 @@ void Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &v
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     vbo->setVertices(verts);
     vbo->render(GL_TRIANGLES);
+    KI3_PAINTED;
 }
 
 void Hold::SetFloating(const QString &id, bool on)
@@ -1241,18 +1243,17 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     }
 }
 
-void Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
+PaintResult Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
 {
     if (m_snapshotting) {
         // redirect() renders the window through the chain: the live window, not our snapshot.
-        Effect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
-        return;
+        return Effect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
     }
     if (m_hidden.contains(w)) {
-        return;                         // not placed yet: nothing at all
+        KI3_PAINTED;                    // not placed yet: nothing at all
     }
     // Held: the snapshot only (progress 0). Anything else: live.
-    CrossFadeEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+    return CrossFadeEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
 }
 
 void Hold::postPaintScreen()

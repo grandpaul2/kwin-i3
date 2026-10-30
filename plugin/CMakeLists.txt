@@ -40,4 +40,9 @@ list(APPEND CMAKE_AUTOMOC_MACRO_NAMES "KWIN_EFFECT_FACTORY_SUPPORTED")
 kcoreaddons_add_plugin(kwini3hold INSTALL_NAMESPACE "kwin/effects/plugins")
 target_sources(kwini3hold PRIVATE holdmain.cpp hold.cpp)
 target_link_libraries(kwini3hold PRIVATE KWin::kwin Qt6::DBus KF6::ConfigCore)
+# KWin 6.8 (6.7.80 on) made the paint hooks return whether painting succeeded (a GPU reset):
+# hold.h picks the signatures, so one source builds against 6.7 and 6.8.
+if(KWin_VERSION VERSION_GREATER_EQUAL 6.7.80)
+    target_compile_definitions(kwini3hold PRIVATE KI3_PAINT_RESULT)
+endif()
 
