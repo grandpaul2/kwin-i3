@@ -74,9 +74,9 @@ them, with their tags.
 11. **Keep Above / Below** (R18, R19): kwin-i3 owns Keep Above on floating windows, so a user can't
    turn it off there; Keep Below is overwritten.
 
-**Stock-install gaps** (the README pass, `LATER.md` item 4)
+**Stock-install gaps** (the README pass, `OPEN.md` item 4)
 12. **Focus follows mouse comes from the dotfiles** (B48, C82): a stock Plasma is click-to-focus
-   (already `LATER.md` item 4(e)).
+   (already `OPEN.md` item 4(e)).
 13. **22 keys clash with Plasma's defaults until `make take-keys`** (R1-R7, A96): Meta+arrows,
    Meta+Ctrl+arrows (the resize keys, KWin's desktop switch), Meta+Shift+Left/Right, Meta+1..0,
    Meta+V, Meta+L, Meta+E. README overstates the zoom clash: only Meta+0 (R-rows).

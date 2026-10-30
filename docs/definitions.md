@@ -117,5 +117,6 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:410-426`; here a press there resizes, `behaviour.md` Z3) |
 | **gap strip** | the helper's input-only window over a gap, so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
 | **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with Paul's note (`docs/debugging.md`) |
-| **the Stage** | the development period (`OPEN.md`), capitalised; not the test app ("the test stage", a Xephyr window) |
+| **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised; not the test app ("the test stage", a Xephyr window) |
+| **the beta** | the Stage's second part (Paul, 2026-10-30): the repo public but unannounced, used by people who know Paul, their bugs fixed by him (`OPEN.md`) |
 | **decision N** | `plan.md`'s numbered decision N; a spec's own decisions are cited with the spec's name |

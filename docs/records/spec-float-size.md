@@ -1,6 +1,6 @@
 # Spec: a floated window comes back at its untiled size, as in i3
 
-**Now (2026-10-27):** Built and live 2026-10-25; the README's window-rule advice waits in `LATER.md` item 4. What it does: `behaviour.md` §3, "A floating window's size".
+**Now (2026-10-27):** Built and live 2026-10-25; the README's window-rule advice is `OPEN.md` item 4 (the beta). What it does: `behaviour.md` §3, "A floating window's size".
 
 Paul's go 2026-10-25; built, tested and live the same day. Paul asked: a window brought up as a floating (Plasma) window
 should have its untiled size, not its tiled one. Options weighed with a second agent's review

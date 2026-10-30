@@ -17,7 +17,7 @@ add a line when you find one. `docs/records/spike-kwin-tiles.md` and `docs/fuzz-
 the way it does. **`OPEN.md` is this repo's list of unfinished work for now, and `LATER.md` of work
 held until the Stage ends**: no other file carries an open list (state, not history; the rules are
 in their headers; `LATER.md` shares `OPEN.md`'s numbering). `CONTRIBUTING.md` is the short version
-for a person. Words like **the Stage** (the current 4-6 week development period, `OPEN.md`),
+for a person. Words like **the Stage** (the period before a release, now its beta, `OPEN.md`),
 **the hold** (kwini3hold, the effect that holds the old layout until the new one is drawn) and the
 rest are in `docs/definitions.md`; `behaviour.md`'s row ids (X7, Y1) are its own table rows.
 

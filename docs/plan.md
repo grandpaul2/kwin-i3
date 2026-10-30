@@ -19,8 +19,8 @@ author's (`OPEN.md`), not adding more of i3.
 
 **Supported:** Plasma and KWin 6.7 or later, in a Wayland session (per-output desktops and
 `Tile.manage` are 6.7's). Xwayland apps are in, first-class (Paul, 2026-10-24: "that's going to
-be common"). What kwin-i3 does on an older Plasma, and how the plugins reach a user: `LATER.md`,
-"Release prep".
+be common"). How the plugins reach a beta user: `OPEN.md` item 51; what kwin-i3 does on an older
+Plasma, and the plugins in a release: `LATER.md`, "Release prep".
 
 **i3 means the 4.24 release** (its tag `4.24`: `https://raw.githubusercontent.com/i3/i3/4.24/src/<file>.c`,
 `etc/config.keycodes` for the keys), the version an i3 user meets in their distribution. Its `next`
