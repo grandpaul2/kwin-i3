@@ -136,3 +136,12 @@ globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins
 (2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
 on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
 2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
+
+**59. "Sizes did not settle after 4 passes"** (Paul's demo capture 2026-10-29 19:34, ten times on
+one workspace after drags left one-window splits; the windows still landed right). i3 has no such
+step (`render.c` sets each child's rect once); kwin-i3 goes through KWin's tiles, where one tile's
+edge moves its neighbours', so `setSizesStable` repeats up to four passes. Probe 95 (branch
+`probe-settle`, six runs: his trees, Firefox's minimum, plugins, FFM, 2560x1440, default gaps)
+never reproduced it; left untried: Plasma's panel strut and real apps. Live since 2026-10-29
+(0d9d87c): the warning names each tile still moving, the rect asked and the one KWin kept. Next:
+when it shows in a capture or a Dump State, read those rects and name the cause.
