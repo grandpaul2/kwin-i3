@@ -5,10 +5,12 @@
 Every item leaves **done**, **won't-fix with a written reason**, or **as a line here with a next
 action** ("none" is not one: an accepted item goes, its reason kept where the decision lives).
 
-Last reconciled: **2026-10-29, nineteenth session** (item 57 closed: every panel setting probed
-with plasmashell in the test KWin is followed; Plasma's one lag, a floating panel switched to
-auto-hide, kept as a note in `behaviour.md` Y1 and a README line, Paul's call). Both machines run
-what main holds (the session changed docs only).
+Last reconciled: **2026-10-30, twentieth session** (closed: 62, the desktop portal's dialogs float
+by a default rule; 54(a) and (b), the window menu's flags put back at once and focus follows mouse
+across outputs under Show Desktop; 55, a title bar that lands late is taken; 53, KWin's Slide ending
+Show Desktop, upstream in `LATER.md`). The desktop runs main (886732b's script; later commits docs
+only). The laptop's checkout is at 038959d: none of today's fixes; `git pull` and the reload there
+with Paul's go, before his use in item 50.
 
 ## Stage (Paul, 2026-10-24, late)
 
