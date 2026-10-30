@@ -90,8 +90,15 @@ moment reopens it). A small flash as Firefox closes is the hold's accepted trade
 carried. Konsole's "New Tab / Split View" bar is Konsole's own toolbar (☰ > Show Toolbar). Then the laptop set
 to `plan.md` (e)'s list as a user following the install would (2026-10-29): focus follows mouse
 (mouse precedence, no delay), per-output desktops, animations off and Scale off; the keys taken earlier. Stage (a) is done.
-Next: stage (b), the laptop to Plasma 6.8 (`pacman -Syu` from current mirrors, Plasma Login
-Manager in place of SDDM), with Paul's go; then `make plugin`, one `make test` there, and his use.
+**Stage (b), 2026-10-29**: the laptop on Plasma 6.8.2 (KWin 6.8.2, Qt 6.12; `pacman -Syu` from
+current mirrors, the pinned list kept as `/etc/pacman.d/mirrorlist.pin-20261014`). Plasma Login
+Manager is installed but not enabled: SDDM stays until PLM has been seen to reach a desktop (Arch
+enables no service on install). 6.8 findings, all fixed (main 8dec0da): kwini3hold's paint hooks
+return bool in 6.8 (it didn't compile); ScreenShot2 sends RGBX8888 (`shot.py` refused it: 11 of
+13 reds); `GLShader::setUniform(QColor)` premultiplies (the drop indicator at a quarter). The
+suite then: green but 86 and 53, item 61. Next: Paul signs in, `make plugin-install` and
+`make kcm-install` there (his go, 2026-10-29), his use with Meta+Shift+B; then switching SDDM to
+Plasma Login Manager, with his go.
 
 **53. An activation of unknown origin ends Show Desktop just after a load** (reopened 2026-10-29,
 `docs/records/bug-panel-config.md`, "Left over"; Paul: dive until solved). Within about a second of a
@@ -147,3 +154,12 @@ edge moves its neighbours', so `setSizesStable` repeats up to four passes. Probe
 never reproduced it; left untried: Plasma's panel strut and real apps. Live since 2026-10-29
 (0d9d87c): the warning names each tile still moving, the rect asked and the one KWin kept. Next:
 when it shows in a capture or a Dump State, read those rects and name the cause.
+
+**61. Two intermittent reds on KWin 6.8** (the laptop, 2026-10-29). (a) **86-tiling-drag**: red
+twice right after a plugin rebuild (21 and ~25 checks; in one, window a was gone from kwin-i3's
+tree after the swap drag, `V[H[b] c*]` for `V[H[a b] c*]`), then green seven runs in a row, alone
+and beside 64; green on 6.7 on both machines. (b) **53-hold** "after: c has landed there": c (a
+0.8 s client) still black 1.2 s after the move, once; green alone after. Both reds' logs were
+lost with the test's temporary dir; since 8195ea5 `run.sh` keeps a red scenario's output and
+kwin-i3's log in `tests/live/out/`. Next: when either is red again, read the kept log (for 86,
+what removed a from the tree) and name the cause; Paul's live use of 6.8 is the other watch.
