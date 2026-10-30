@@ -503,7 +503,8 @@ its desktop. A window being dragged, or whose modal dialog is, waits for the dra
   changing to anything else while it is still fullscreen (a client answering the resize after the
   pass, as on a reload).
 - **A GTK 4 window short of its tile** after its border was taken is asked for 0 × 0, then its tile,
-  so KWin resends its bounds.
+  so KWin resends its bounds. The bounds it keeps within are remembered across a rebuild of the
+  model (a desktop removed or moved), as its taken border is (fuzzer, 2026-10-30).
 
 **Y. Against i3** (i3 4.24 `render.c`; the rest of this section is how KWin's tiles are driven, with
 no i3 counterpart)

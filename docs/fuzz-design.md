@@ -75,7 +75,9 @@ latest `TREE` line of each workspace:
   unfocused colour for the rest. Points under a floating window or a dialog (a sticky one too,
   whose desktop list is empty) are skipped. A capture that fails is taken again 0.6 s on: the
   settle is the dumps', and the screen can lag them (the hold's old picture, a desktop's slide;
-  the first campaign's seeds 3 and 8, green on the second look).
+  the first campaign's seeds 3 and 8, green on the second look). Also skipped: points within 64 px
+  of a floating window (its outline and shadow), one reaching across from the other output, and
+  the whole check while the resize mode is on (its badge on the focused window). Campaign 2.
 
 Fullscreen windows are excluded from I3/I4 for their output; a "tiled" window is one TREE names
 without `~`.

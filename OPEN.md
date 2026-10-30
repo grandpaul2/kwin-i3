@@ -27,5 +27,12 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Work for now. None open (2026-10-30; 63, a frame side missing at the output's edge, fixed live in
-ad7344a: `docs/kwin-notes.md`): the next capture or request starts the next item.
+Work for now. (63, a frame side missing at the output's edge, fixed live in ad7344a:
+`docs/kwin-notes.md`.)
+
+**64. A GTK 4 window 26 px short after a desktop removed or moved** (fuzzer campaign 2, seed 11,
+I10, 2026-10-30). The model's rebuild (`startRebuild`) emptied `borderGone`, the bounds a GTK 4
+window keeps within after its title bar is taken, though the windows and their taken borders
+outlive it: the next tile taller than those bounds left it short for good. Fixed on branch
+`fuzz-run` (the bounds kept, as `tookBorder` is); seed 11 green (the bounds asked again), 65, 66,
+85 green. Next: Paul's go to merge and reload.

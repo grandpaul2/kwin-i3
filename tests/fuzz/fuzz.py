@@ -54,6 +54,7 @@ class Kwin:
         # The frame is drawn (I11) while the plugins are there and the effect is loaded.
         self.plugins = bool(os.environ.get("KI3_PLUGIN"))
         self.effect = self.plugins
+        self.mode = False           # the resize mode, from kwin-i3's MODE lines (I11)
         # The desktops, counted here (the dump doesn't say); kwin-i3 adds one for Meta+N past the
         # last (34-desktops-on-demand), so the count is only a guide for the desktop action.
         self.desktops = int(os.environ.get("KI3_DESKTOPS", "10"))
@@ -251,6 +252,7 @@ MAX_PAD = 8     # the most a tile's padding takes off one side: the fuzzer's set
 # The frame's colours at their defaults (src/settings.js; 54-frame.sh): focused, unfocused, and the
 # focused split indicator, drawn on the right or bottom side of a window alone in its split.
 ACTIVE, INACTIVE, INDICATOR = (76, 120, 153), (51, 51, 51), (61, 174, 233)
+SHADOW = 64
 
 
 def same(px, rgb, tol=24):
@@ -261,10 +263,16 @@ def frame_pixels(k, d, o, tiled, wins):
     """I11: each tiled window's frame is drawn, in its focus class, at the middle of each side of
     its tile's padding (tile minus want; corners left out, they may be rounded). A point under a
     floating window or a dialog is skipped: the frame is below it."""
-    # A window on all desktops (sticky) has none listed: it covers every desktop.
-    covers = [w["frame"] for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
+    # A window on all desktops (sticky) has none listed: it covers every desktop. A floating
+    # window's outline and shadow reach past its frame (Breeze's shadow, up to SHADOW px) and
+    # cover the frame below, as a floating window is above the tiled ones (campaign 2: grey
+    # frames 1 px from a floating window's edge). Shown on its own output is shown: a floating
+    # window may reach across onto this one (campaign 2, seed 13).
+    shows = {x["name"]: x["shows"] for x in d["outputs"]}
+    covers = [[w["frame"][0] - SHADOW, w["frame"][1] - SHADOW, w["frame"][2] + 2 * SHADOW, w["frame"][3] + 2 * SHADOW]
+              for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
               and not w["minimized"] and w["caption"] != "kwin-i3 gap"
-              and (not w["desktops"] or set(w["desktops"]) & {o["shows"]})]
+              and (not w["desktops"] or set(w["desktops"]) & {o["shows"], shows.get(w["output"])})]
     # The settle is the dumps'; the screen can lag them (the hold's old picture, up to its 200 ms
     # timeout; a desktop switch's slide): a frame wrong in one capture is captured again 0.6 s on.
     bad = frame_check(capture(o), o, tiled, covers)
@@ -321,6 +329,11 @@ def check(k, d, prev):
     bad = []
     lines = k.log_lines()
     for l in lines[k.log_seen:]:
+        # The resize mode's badge ("Resize (Esc)", drawn by the effect on the focused window)
+        # covers frames: I11 waits it out (campaign 2, seed 18).
+        if l[9:].startswith("MODE "):
+            k.mode = l[14:] != "off"
+    for l in lines[k.log_seen:]:
         if re.match(r"^.{9}(INVARIANT|ERROR|WARN)", l):
             bad.append(("I1", l[9:]))
             break
@@ -371,7 +384,7 @@ def check(k, d, prev):
             covered = sum(overlap(grown(w), o["geom"])[0] for w in tiled)
             if covered < o["geom"][2] * o["geom"][3]:
                 bad.append(("I4", "%s: tiled windows cover %d of %d px (a hole)" % (o["name"], covered, o["geom"][2] * o["geom"][3])))
-        if tiled and k.effect:
+        if tiled and k.effect and not k.mode:
             bad += frame_pixels(k, d, o, tiled, wins)
         for i in ws["floating"]:
             w = wins.get(i)

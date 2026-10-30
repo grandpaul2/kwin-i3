@@ -5088,7 +5088,9 @@ var KI3 = (function () {
                 rebuiltFor = deskIds.join();
                 model = Tree.create({ outputNeighbour: outputNeighbour });
                 wins = {}; expected = {}; armed = {}; lastFit = {}; pinFit = {}; fsFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
-                borderGone = {};
+                // borderGone stays, as tookBorder: the windows and their taken borders outlive the
+                // model, and the GTK 4 bounds are learnt only when the border goes (campaign 2,
+                // seed 11: a desktop removed, then a taller tile stayed 26 px short).
                 lastShown = {}; shownBefore = {};   // numbers by the old positions
                 Workspaces.reset();
                 adoptTiled();
