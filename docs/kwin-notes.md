@@ -206,7 +206,8 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Wrapping a Kirigami `FormLayout` control in a `RowLayout` moves its label off it; give the control
   its own `Accessible.name` and the label `buddyFor` (Kirigami 6.31 sets `labelledBy` on the row).
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
-  pass through (KDE bugs 525007, 524544): a resize grab there moves nothing.
+  pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. Paul leaves it as Fedora
+  ships it (2026-10-27; a keep-below workaround was declined).
 
 ## The test KWin (`tools/testkwin.sh`)
 
