@@ -467,7 +467,10 @@ i3's `gaps.c` `calculate_effective_gaps`, per workspace (`gaps(ws)`, worked out 
   half the inner gap. So between windows: the inner gap; at the output's edge: that side's outer
   gap plus the inner gap (the root's inset plus the tile's own half), as i3.
 - A side with an inset of 0 and a padding to halve is inset by a hair, as KWin gives a full
-  padding at an edge it judges exactly 0 or 1.
+  padding at an edge it judges exactly 0 or 1. A tile KWin pins to the border anyway (a rebuild's
+  float noise, `docs/kwin-notes.md`) still gets half there: a side is at the edge only where the
+  root is, and its window is written back whenever KWin puts it a padding short (fuzzer I11,
+  2026-10-30: a 1 px line with no frame under a bottom row).
 - Edges are rounded to whole pixels (thirds of 2560 left a 1 px hole).
 
 ### Minimum sizes
@@ -1080,6 +1083,7 @@ the capture or fuzzer finding that showed it.
 | on a hidden desktop `w.tile` is null though the tile lists it | finds the tile from its own record |
 | an outer side dragged with gaps pins the tile to the output's edge for good | rebuilds the tiles when an outer edge isn't the layout's |
 | gives a full padding at an edge it judges exactly 0 or 1 | insets the root by a hair |
+| pins a tile's side to the border when float noise "changes" it | judges the edge by the root, writes the window back |
 | rounds tile position and width separately | rounds edges to whole pixels itself |
 | a 15 % default minimum per tile | sets minimums from the window |
 | moves a window only when its tile changes | writes the window to its tile when it's off |

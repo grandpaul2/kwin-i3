@@ -30,13 +30,8 @@ window management, with Plasma doing the rest. The scope and its reasons:
 Work for now.
 
 **63. A frame side missing at the output's edge: a tile pinned to the border** (the fuzzer's I11,
-2026-10-30, seed 1 at 60 s, red on every replay). In `V[w7r w12 H[w10 w11 Konsole]]` w10 and w11
-end 2 px above the output's bottom, Konsole 1 px: a 1 px line under them with no frame (the
-wallpaper, live). i3 has none (its borders sit inside integer rects, `render.c`). Probed: the root
-is inset by the hair (bottom 0.9999982) and Konsole's tile ends there, w10's and w11's at exactly
-1.0, so KWin's `Tile::windowGeometry` (and `windowRect`) give that side the full padding, 2 px, not
-half. It is the pinning `edgesIntact` mends (`CustomTile::setRelativeGeometry` forcing a changed
-edge to the border), but it happens inside the pass, after that check at its start, and no pass
-follows. The run (trace, log, dump) is kept in Paul's checkout, `tests/fuzz/out/1/` (ignored by
-git). Next: shrink it in a worktree (`FUZZ_SEEDS=1 make fuzz-shrink`), find which write in
-`setSizesStable` pins the edge, then a fix for Paul's go.
+2026-10-30). KWin pins a tile's side to the border when a rebuild's float noise "changes" it, and
+gave it the full padding under the hair: a 1 px line with no frame under some windows of a bottom
+row (`docs/kwin-notes.md`). Fixed on branch `fuzz-update` (`windowRect` judges an edge by the root;
+`fitToTile` writes a pinned tile's window back); the 9-step trace and seed 1 green, 26, 54, 58, 85
+green. Next: Paul's go to merge it to main and reload.

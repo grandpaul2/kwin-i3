@@ -432,14 +432,27 @@ var KI3 = (function () {
         });
     }
 
-    // Where KWin puts a tile's window (Tile::windowGeometry, which scripts can't read): the tile
-    // less P/2 on a side inside the screen, P on a side at its edge.
+    // Where a tile's window goes: as KWin's Tile::windowGeometry (which scripts can't read), the
+    // tile less P/2 on a side inside the screen, P on a side at its edge; but a side is at the
+    // edge only where the root is too. KWin pins a tile's side to the border when a rebuild's
+    // float noise "changes" it (CustomTile::setRelativeGeometry compares exactly), so under a
+    // root inset by the hair a pinned side got P, a 1 px line with no frame (fuzzer I11, OPEN 63).
+    function rootOf(t) { while (t.parent) t = t.parent; return t; }
     function windowRect(t) {
         var a = t.absoluteGeometry, r = t.relativeGeometry, p = t.padding;
         if (!p) return a;
-        var l = r.x > 0 ? p / 2 : p, tp = r.y > 0 ? p / 2 : p;
-        var rt = r.x + r.width < 1 ? p / 2 : p, b = r.y + r.height < 1 ? p / 2 : p;
+        var g = rootOf(t).relativeGeometry;
+        var l = r.x > 0 || g.x > 0 ? p / 2 : p, tp = r.y > 0 || g.y > 0 ? p / 2 : p;
+        var rt = r.x + r.width < 1 || g.x + g.width < 1 ? p / 2 : p;
+        var b = r.y + r.height < 1 || g.y + g.height < 1 ? p / 2 : p;
         return { x: a.x + l, y: a.y + tp, width: a.width - l - rt, height: a.height - tp - b };
+    }
+    // A side KWin pinned to the border under an inset root: KWin puts the window P/2 short there
+    // at every change of the tile, so fitToTile puts it back even inside fits()'s 1 px.
+    function pinned(t) {
+        var r = t.relativeGeometry, g = rootOf(t).relativeGeometry;
+        return (r.x <= 0 && g.x > 0) || (r.y <= 0 && g.y > 0) ||
+               (r.x + r.width >= 1 && g.x + g.width < 1) || (r.y + r.height >= 1 && g.y + g.height < 1);
     }
 
     // Padding = the inner gap, and minimum sizes that are the windows' own (plus the gap). KWin
@@ -616,7 +629,11 @@ var KI3 = (function () {
     function fitToTile(w, t) {
         if (w.tile !== t || w.move || w.resize || !wins[id(w)]) return;
         if (w.fullScreen) { fitFullscreen(w); return; }
-        if (!fits(w, t)) w.frameGeometry = windowRect(t);
+        if (!fits(w, t) || (pinned(t) && !exactly(w.frameGeometry, windowRect(t)))) w.frameGeometry = windowRect(t);
+    }
+    function exactly(g, a) {
+        return Math.abs(g.x - a.x) < 0.5 && Math.abs(g.y - a.y) < 0.5 &&
+               Math.abs(g.width - a.width) < 0.5 && Math.abs(g.height - a.height) < 0.5;
     }
     // A fullscreen window KWin keeps in its tile (none rebuilt since) is resized to the tile by
     // KWin whenever the tile's padding or geometry is written (Tile::setPadding and

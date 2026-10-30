@@ -37,6 +37,13 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   border (relative 0 or 1) the full padding, others half (`tile.cpp:171-178`). Edges are rounded to
   whole logical pixels first, so an odd padding puts every window on a half pixel (text shifts on
   redraw). A padded tile has no anchors, so apps are never told "tiled".
+- **A rebuild's float noise pins tiles to the border.** `CustomTile::setRelativeGeometry`
+  (`customtile.cpp:120-133`) compares each side exactly and sets a changed side with no tile beyond
+  it to 0 or 1. Resizing a layout rewrites its children's sides, and the stored doubles differ
+  in the last digit (probed 2026-10-30, `V[a b H[c d e]]` after Move Up and a new window: c and d's
+  bottoms 1.0, e's 0.9999982222222221 against the root's ...222), so under a root inset by the
+  hair some children land at exactly 1 and get the full padding. No write takes them off;
+  kwin-i3 judges the edge by the root instead (`windowRect`, `pinned`).
 - App minimum sizes exclude the decoration.
 
 ## Windows and Wayland clients (`window.cpp`, `xdgshellwindow.cpp`)
