@@ -97,12 +97,6 @@ suite then: green but 86 and 53, item 61. Installed there the same night (the pl
 settings page, 6.8 builds; Meta+Shift+B bound); main pulled and reloaded 2026-10-30. Next: Paul's
 use with Meta+Shift+B, its captures diagnosed from the desktop.
 
-**54. From the audit of Plasma's special states** (an agent, 2026-10-29, read from KWin 6.7.5's
-source; fixed the same day: the helper's hit tests skip windows on another activity, and the hold
-leaves out windows Show Desktop hides; (c), Meta+right-click in Overview, can't reach a tile:
-read 2026-10-30, `docs/kwin-notes.md` "Plugins and effects"). Not read: fullscreen Kickoff's
-window type and the display settings' "keep these settings?" dialog (sources not found).
-
 **56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; Paul: not urgent, decide
 once the setup is hardened). The load report (`behaviour.md` §13: taken keys, layouts, per-output
 desktops, missing plugins) is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`;
