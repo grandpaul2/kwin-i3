@@ -12,7 +12,7 @@ change or a larger issue turns up. Rules:
 
 Moved out of `OPEN.md` 2026-10-25; what the beta needs (4, 22, 51, 61) went back,
 51's rest and 22 returned
-2026-10-30. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
+2026-10-30; 56 and 26 went back 2026-10-31, with 70's README paragraph as item 71. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
 activities are the likeliest). When the Stage ends, suggested order: 5, 26.
 
 ## Reliability
@@ -93,15 +93,6 @@ output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: liv
 source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
 after an unplug; the widget's names on a vertical panel.
 
-**26. KWin's own tile tools act on kwin-i3's tiles** (i3 feature map, finding 9: R11, R12,
-R14). Meta+T's tile editor edits the tiles kwin-i3 owns (overwritten at the next pass);
-Shift+drag drops a window into one (two windows in a leaf); drag to a screen edge quick-tiles into
-KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on some
-desktops but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
-then whether to block, follow or document them (and whether `make take-keys` should free Meta+T).
-The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
-floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
-
 **27. Keep Above and Keep Below on floating windows** (finding 11: R18, R19). kwin-i3 owns Keep
 Above on floating windows (the plain script's way to keep them over tiled ones), so a user can't
 turn it off there, and Keep Below is overwritten. Next: whether the plugins' path (the effect's
@@ -135,8 +126,8 @@ matches nothing. i3 has only the config line: its users write it once, so anythi
 blending with Plasma, judged against `plan.md`'s scope. Ideas, none decided: (a) the README's
 paragraph for any monitor, not only docking; (b) a preset on the Workspaces page (alternate odd
 and even, split in halves, or keep where they are now); (c) a hint when an output returns and no
-workspace outputs are set (needs item 56's notifications). Next: the beta users' monitor setups
-and whether either has lost a layout, then a proposal among (a)-(c).
+workspace outputs are set (needs item 56's notifications). (a) is `OPEN.md` item 71. Next: the beta users'
+monitor setups and whether either has lost a layout, then a proposal between (b) and (c).
 
 **18. A standing accessibility check of the settings page** (parked: light tests while in
 development). `tests/live/75-settings-a11y.sh` (in git history) audited every page through `tools/a11y.py`: names, no
@@ -144,28 +135,6 @@ duplicates, no empty headings, Tab order. Bring it back as `make a11y`, run when
 rather than in `make test`.
 
 ## Release prep
-
-**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; back from `OPEN.md` 2026-10-30: a nice-to-have,
-not make or break for the beta). The load report
-(`behaviour.md` §13: taken keys, layouts, per-output desktops, missing plugins) is what tells a
-new user their keys clash or their plugins didn't load after a Plasma update, and it is lost. It
-is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`; KWin's callDBus converts by
-`QJSValue::toVariant()` (`scripting.cpp:345`), so Plasma receives `sisssava{sv}i` for
-`susssasa{sv}i` and refuses it ("no slot matched": the laptop 2026-10-29 16:48:53, the desktop
-2026-10-28 05:10:30). JavaScript can't make an unsigned int or a typed array here. The tests
-missed it: `tools/fakenotify.py` declares the signature but dbus-python doesn't enforce it (a
-strict version, `message_keyword` and a signature check, refused it in a probe). Routes probed:
-the desktop portal (`AddNotification`, `sa{sv}`) refuses KWin ("Unable to open
-/proc/<kwin>/root"); a QML (declarative) script's KNotification sends it correctly, with a
-`kwin-i3.notifyrc` of ours showing as "kwin-i3" (test KWin, strict stand-in), but a JS script
-can't hand a QML one the report. Options: (1) kwin-i3 as a QML script hosting `main.js`, with the
-globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins, a spike first;
-(2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
-on it: the focus note (`plan.md` (e)'s load-notification place; once per install,
-built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
-For the beta, `make take-keys`'s printout at install is the one-time list of the keys taken, and
-the settings page's banner says when the plugins aren't loaded. Next: how i3
-tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
 **60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50: the desk setup is
 tedious, and two monitors on a desktop test most of it). On a laptop running Plasma 6.8
