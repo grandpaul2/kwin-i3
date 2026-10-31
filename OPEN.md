@@ -54,9 +54,6 @@ update, updating, removing; every "the load notification says" made true. Left:
   (Size/Position, "Apply Initially"), i3's `for_window` resize done through Plasma: README steps,
   after a test-KWin check that such a rule leaves tiling alone (`docs/records/spec-float-size.md`;
   a probe, Paul's go);
-- the settings page's "Warn about keys other shortcuts use" checkbox changes nothing a user sees
-  while item 56 stands (`AGENTS.md`: words a user reads must be true): hide it until then, or keep
-  it (a `kcm/` change, Paul's call);
 - Paul's read of the new Install, as a stranger would.
 
 **51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents

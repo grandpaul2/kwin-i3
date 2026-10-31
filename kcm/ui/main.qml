@@ -543,13 +543,8 @@ KCM.SimpleKCM {
             icon.name: "configure-shortcuts"
             onClicked: kcm.push("Keys.qml")
         }
-        QQC2.CheckBox {
-            Kirigami.FormData.label: i18nc("@label", "Options:")
-            text: i18nc("@option:check", "Warn about keys other shortcuts use")
-            checked: root.settings.warnTakenKeys
-            onToggled: root.settings.warnTakenKeys = checked
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "warnTakenKeys" }
-        }
-        // debugLog has no control here: it only feeds the test KWin's log (docs/debugging.md).
+        // warnTakenKeys has no control here while kwin-i3's notifications don't reach Plasma
+        // (LATER.md item 56): the checkbox would change nothing a user sees (Paul, 2026-10-30).
+        // debugLog has none either: it only feeds the test KWin's log (docs/debugging.md).
     }
 }
