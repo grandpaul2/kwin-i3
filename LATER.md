@@ -10,7 +10,8 @@ turns up. Rules:
 - Like `OPEN.md`, state, not history: rewrite an item as it changes.
 - New finds that can wait for the end of the Stage go here, with what would be done and why it waits.
 
-Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 61) went back
+Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 61) went back,
+51's rest returned
 2026-10-30. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
 activities are the likeliest). When the Stage ends, suggested order: 5, 26.
 
@@ -158,6 +159,29 @@ straight from the launcher, then a switch before its window shows. Documented as
 (`docs/plan.md`, "Scope"; README, "Keys"). Next, if a user asks for it: whether KWin 6.7.5 gives a
 script the window's xdg-activation token (Wayland) or startup id (Xwayland) and the launch's
 moment; if not, a plugin hook in KWin's activation, or won't-fix.
+
+**51. What users of other KWin tilers expect** (back from `OPEN.md` 2026-10-30, Paul: (b)'s rest waits for a
+release; fourteenth session, 2026-10-28: three agents
+surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
+was not kept, its findings are here). Ranked: works after Plasma upgrades with a visible
+maintainer (Bismuth died of that; Polonium nearly); auto-tiling on Wayland; multi-monitor right;
+one-click install, no re-login, no duplicate instances; defaults with no clashes and a key table;
+misbehaving windows handled (games, mpv, Electron, 1x1 helpers) with a "window X won't tile" FAQ;
+changelog, troubleshooting, a supported-Plasma line. kwin-i3 is ahead on multi-monitor, clash
+handling, live Apply and the Window Rules page; behind on: (a) the install (store users get the
+script alone: title bars, no drag; the plugins need a per-KWin-version build); (b) a user README
+(screenshot, FAQ, supported versions, uninstall), with item 4's README pass; (c) activities (item
+5); (d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out as
+unused by Paul, but the audience is not Paul): a foundation question for Paul, cheap on floating
+plus a hidden workspace, i3's `src/scratchpad.c` first. Tabbed/stacked stay out (KWin's tiles
+can't show tabs without much work). Our niche's only other entry: krohnkite-i3 (4 stars, no
+releases). For the beta, (a) is a build from source on each friend's machine (a package, COPR/AUR
+as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
+plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what
+says the plugins are missing. (a) done in item 4's README pass (2026-10-30: per-distribution packages, rebuild after a Plasma
+update); of (b), supported versions and removal done. Next, toward a release: (b)'s screenshot and a
+"window X won't tile" FAQ, written from the beta's questions; (d) asked as a foundation change
+if a friend asks for it.
 
 **Not decided: a release** and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle). Paul, 2026-10-24: not settled yet; not an item until he decides. The beta

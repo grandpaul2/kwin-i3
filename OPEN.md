@@ -33,29 +33,7 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Suggested order: 51, then 22, then 68.
-
-**51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
-surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
-was not kept, its findings are here). Ranked: works after Plasma upgrades with a visible
-maintainer (Bismuth died of that; Polonium nearly); auto-tiling on Wayland; multi-monitor right;
-one-click install, no re-login, no duplicate instances; defaults with no clashes and a key table;
-misbehaving windows handled (games, mpv, Electron, 1x1 helpers) with a "window X won't tile" FAQ;
-changelog, troubleshooting, a supported-Plasma line. kwin-i3 is ahead on multi-monitor, clash
-handling, live Apply and the Window Rules page; behind on: (a) the install (store users get the
-script alone: title bars, no drag; the plugins need a per-KWin-version build); (b) a user README
-(screenshot, FAQ, supported versions, uninstall), with item 4's README pass; (c) activities (item
-5); (d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out as
-unused by Paul, but the audience is not Paul): a foundation question for Paul, cheap on floating
-plus a hidden workspace, i3's `src/scratchpad.c` first. Tabbed/stacked stay out (KWin's tiles
-can't show tabs without much work). Our niche's only other entry: krohnkite-i3 (4 stars, no
-releases). For the beta, (a) is a build from source on each friend's machine (a package, COPR/AUR
-as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
-plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what
-says the plugins are missing. (a) done in item 4's README pass (2026-10-30: per-distribution packages, rebuild after a Plasma
-update); of (b), supported versions and removal done. Next: whether the beta needs (b)'s
-screenshot and "window X won't tile" FAQ, or they wait for a release (Paul); (d) asked as a
-foundation change if a friend asks for it.
+Suggested order: 22, then 68.
 
 **22. The settings page, finished for the beta** (Paul, 2026-10-25: "not perfect, but fine for
 the dev phase; it will need more attention as we end it"). Today's state: reorganized
