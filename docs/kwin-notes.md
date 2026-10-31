@@ -275,6 +275,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 
 ## The test KWin (`tools/testkwin.sh`)
 
+- `tools/a11y.py box` finds a control only among the rows a list view has created: one far down
+  a long list (the Keys page's End session) isn't there until the list scrolls near it, so `box`
+  says "no control named". Set the page's scroll bar first (`a11y.scroll_bars`), then `box`
+  (2026-10-31).
 - It inherits the starting shell's environment: over ssh there is no `XDG_CURRENT_DESKTOP=KDE`, so Qt
   loads no KDE platform theme (other fonts and style, a 36 px title bar). `testkwin.sh` sets the
   session variables.

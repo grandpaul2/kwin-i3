@@ -7,13 +7,12 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "Paul's use"; Paul, 2026-10-30): such
 an item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-30, twenty-fourth session** (the beta decided and begun: the repo
-public; `tools/box.sh` runs the test KWin on Arch's KWin 6.8.2 and PikaOS's 6.7.4; the README's
-Install rewritten for strangers; items 4, 61, 67, 68 done, 22, 51, 56 back in `LATER.md`; one
-capture, a flash after resume, NVIDIA's GPU reset: `docs/kwin-notes.md`, "Plasma"). The desktop
-runs main's script and plugins (unchanged since e15a226); its installed settings page predates
-595a50c (the taken-keys checkbox still shows until `make kcm-install`). The rulebook is
-`AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
+Last reconciled: **2026-10-31, twenty-fifth session** (Meta+Shift+E's End session: the
+`endSession` setting, sleep, shut down, log out or Plasma's logout screen, on the Keys page beside
+its label, f39bbff and 9e57240; the Keys page's mode notes after their key, 2d6f557; "a key runs
+one fixed action" reworded to what it meant, 9c7f18e). The desktop runs main's script (reloaded at
+f39bbff; `package/` unchanged since) and plugins (unchanged since e15a226), and main's settings
+page (2d6f557). The rulebook is `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24; the beta 2026-10-30)
 
@@ -36,5 +35,6 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-None open: the repo went public 2026-10-30 (item 68, Paul's go), the beta's start; the next
-capture or request starts the next item.
+**69. A capture, "firefox issue, probably nothing"** (2026-10-31 01:30, Paul's desktop; kept in
+`~/.local/state/kwin-i3/captures/2026-10-31_013050.248`). Next: read it with `tools/capture-read`
+and diagnose, or delete it if Paul says it was nothing.
