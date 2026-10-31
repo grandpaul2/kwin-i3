@@ -12,8 +12,8 @@ change or a larger issue turns up. Rules:
 
 Moved out of `OPEN.md` 2026-10-25; what the beta needs (4, 22, 51, 61) went back,
 51's rest and 22 returned
-2026-10-30; 56 and 26 went back 2026-10-31, with 70's README paragraph as item 71. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
-activities are the likeliest). When the Stage ends, suggested order: 5, 26.
+2026-10-30; 56 and 26 went back 2026-10-31, with 70's README paragraph as item 71. A beta user's bug brings the matching item back (27, 30, 45, 60, and 5's
+activities are the likeliest). When the Stage ends, suggested order: 5, then 30.
 
 ## Reliability
 
