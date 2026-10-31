@@ -6,7 +6,7 @@ inside an ordinary Plasma session. The script runs the tree, the workspaces, the
 floating; the plugins do what a script cannot: the frame around tiling windows (drawn outside
 them, with floating windows keeping your own decoration), the mouse (i3's tiling drag and
 resize, focus on the frame), the resize mode, keys for your keyboard layout, and atomic layout
-changes. The script runs without them, and its load notification says what is missing.
+changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
 **Status: feature complete (v1.0.0, 2026-10-23), the author's window manager since 2026-10-22.**
 Everything of i3 the author used is here; what is left out is deliberate (tabbed and stacked
@@ -81,64 +81,90 @@ no title-bar move), and hover and a click on it focus the window, as i3's border
 
 ## Requirements
 
-- Plasma 6.7 or later, Wayland. Tested on Fedora 44 / Plasma 6.7.5 (NVIDIA, two outputs) and on
-  Arch / Plasma 6.8.2 (AMD, a laptop's one output), one activity.
-- For the plugins (optional, below): `cmake`, `extra-cmake-modules`, `kwin-devel`,
-  `vulkan-headers` (KWin's cmake files need them), a C++23 compiler. On Arch, KWin's headers are
-  in `kwin` itself (no `-devel` packages). On PikaOS (and Debian): `build-essential`, `cmake`,
-  `extra-cmake-modules`, `pkg-config`, `kwin-dev`, `libvulkan-dev`, and three `kwin-dev` doesn't
-  pull in but KWin's cmake files need: `libdrm-dev`, `libkdecorations3-dev`, `libxkbcommon-dev`.
-- For the tests: `libei-devel` (real input), `python3-gobject` + `gtk4` (the test client),
+- Plasma 6.7 or later, in a Wayland session. Tested on Fedora 44 / Plasma 6.7.5 (NVIDIA, two
+  outputs) and Arch / Plasma 6.8.2 (AMD, a laptop's one output); built and tested headless on
+  PikaOS / Plasma 6.7.4. One activity.
+- `git`, `make`, and the packages to build the plugins and the settings page:
+
+| distribution | packages |
+|---|---|
+| Fedora | `make gcc-c++ cmake extra-cmake-modules kwin-devel vulkan-headers kf6-kcmutils-devel kf6-ki18n-devel kdialog` |
+| Arch, CachyOS | `base-devel cmake extra-cmake-modules vulkan-headers kdialog` (KWin's headers come with `kwin` itself) |
+| PikaOS, Debian | `build-essential cmake extra-cmake-modules pkg-config kwin-dev libvulkan-dev libdrm-dev libkdecorations3-dev libxkbcommon-dev libkf6kcmutils-dev libkf6i18n-dev libkf6service-dev kdialog` (`kwin-dev` doesn't pull in `libdrm-dev`, `libkdecorations3-dev` or `libxkbcommon-dev`, though KWin's cmake files need them) |
+
+- For the tests only: `libei-devel` (real input), `python3-gobject` + `gtk4` (the test client),
   `python3-dbus`, `python3-xlib`, `python3-pillow` (screenshots), `node` (unit tests). On Arch:
   `libei`, `python-gobject`, `gtk4`, `python-dbus`, `python-xlib`, `python-pillow`, `nodejs`.
 
 ## Install
 
-1. Link the script and enable it: `mkdir -p ~/.local/share/kwin/scripts` (a fresh account has
-   none), `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`,
-   then `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`, then log out and
-   in (KWin reads the scripts' packages at login: one linked while it runs can't be turned on
-   before that).
-   **Never alongside another tiling script** (Krohnkite, i3ws, …): two scripts would place the
-   same windows.
-2. Plasma's own keys that collide with i3's: Meta+arrows (quick tiling), Meta+D (Peek at
-   Desktop), Meta+V (Klipper's clipboard at the pointer), Meta+R (Spectacle's region recording), Meta+Shift+Left/Right (window to previous/next screen), Meta+E (Dolphin),
-   Meta+L (lock), Meta+0 and Meta+plus/minus (zoom), Meta+1..9 if the task manager uses them. A
-   key another shortcut holds fires that one, not kwin-i3's, so at load kwin-i3 names every such
-   key in one notification (`warnTakenKeys` turns it off). **`make take-keys`** frees them: it
-   removes just that key from each holder and saves what it removed;
-   **`make restore-keys`** puts them back. Free them by hand in System Settings > Shortcuts if
-   you'd rather. The check runs at load: an app that registers a clashing key later is seen at
-   the next login.
-3. **With more than one output**: System Settings > Virtual Desktops > "Switch desktops
-   independently for each screen" on (off by default). With it off, a desktop switch changes every
-   output and windows tile on the wrong one; kwin-i3 says so in a notification at load, or when
-   a second output arrives. Turned on, it takes effect at once: each output shows its own
-   workspace again.
-   **On a laptop that docks**: when an output goes away, its workspaces move to the first output
-   for good, as in i3. To keep a workspace on the external output, give it a workspace output
-   (the Workspaces page, or `workspaceOutputs` below); it goes back when that output returns.
-4. Bug captures: bind a key to `tools/capture` (System Settings > Shortcuts, a command); it saves
-   what kwin-i3 saw just before (`docs/debugging.md`). It asks for a note with `kdialog` (Arch's
-   Plasma doesn't install it). The author's is Meta+Shift+B, from his
-   dotfiles.
+About ten minutes in a terminal, with one log-out in the middle. **Never alongside another tiling
+script** (Krohnkite, Polonium, …): two scripts would place the same windows, so turn the other one
+off first (System Settings > Window Management > KWin Scripts).
 
-**To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again; to remove
-it, `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled false`, log out, and delete
-the link. The optional pieces below leave `~/.local/lib/kwin-i3/`, the drop-in
+1. **Get it**, into `~/kwin-i3` (the steps below assume that path):
+   `git clone https://github.com/grandpaul2/kwin-i3 ~/kwin-i3 && cd ~/kwin-i3`
+2. **The script**: `mkdir -p ~/.local/share/kwin/scripts`, then
+   `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`, then
+   `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`.
+3. **The plugins**: `make plugin-install`. They draw the frame and run the mouse (the table
+   below). The first time it may say KWin didn't load them yet: they load at the next login.
+4. **The settings page**: `make kcm-install`. It shows in System Settings > Window Management
+   after the next login.
+5. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
+   paths, only at login. kwin-i3 is running when your windows tile.
+6. **Your keys**: `make take-keys`. Some of i3's keys are Plasma's too (Meta+arrows for quick
+   tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the
+   task manager uses them), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
+   takes each one that clashes from its Plasma shortcut and **prints the list of what it took**.
+   To give them back: `make restore-keys`, or Defaults in System Settings > Shortcuts. Rather keep
+   some of Plasma's? Skip this step and take keys one by one on kwin-i3's Keys page (a key Plasma
+   holds is named in its row and moved on Apply).
+7. **For i3's feel**: Plasma's own settings that kwin-i3 is designed around. These are **Plasma's
+   settings, not kwin-i3's**: kwin-i3 never changes them, and you change them back in the same
+   place.
+   - **Focus follows mouse**: System Settings > Window Management > Window Behavior > Focus,
+     *Window activation policy*: "Focus follows mouse (mouse precedence)", and *Delay focus by*:
+     0 ms. Under click to focus, the frame moves only when you click.
+   - **More than one monitor**: System Settings > Virtual Desktops, "Switch desktops independently
+     for each screen" on (off by default). With it off, a workspace switch changes every monitor
+     and windows tile on the wrong one. It takes effect at once.
+   - **Animations off** (optional; i3 has none): System Settings > Quick Settings, *Animation
+     speed* to "Instant".
+8. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
+   Applications > Terminal emulator).
+9. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
+   `~/kwin-i3/tools/capture`, on a key you don't use (the author's is Meta+Shift+B). Press it
+   right after something goes wrong: it asks for a note and saves what kwin-i3 saw in the seconds
+   before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
+
+**After a Plasma update**: the plugins work only with the KWin version they were built against,
+so after each Plasma update tiling windows have their title bars back until you run
+`cd ~/kwin-i3 && make plugin-install` (the settings page and the script need nothing). **To
+update kwin-i3**: `cd ~/kwin-i3 && git pull && make plugin-install kcm-install`, then the reload
+below.
+
+**On a laptop that docks**: when an output goes away, its workspaces move to the first output for
+good, as in i3. To keep a workspace on the external output, give it a workspace output (the
+settings page's Workspaces, or `workspaceOutputs` below); it goes back when that output returns.
+
+**To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
+it**: `make restore-keys` (if you ran `make take-keys`), then
+`kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled false`, log out, and delete
+`~/.local/share/kwin/scripts/kwin-i3`, `~/.local/lib/kwin-i3/`, the drop-in
 `~/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf` and
-`~/.config/environment.d/kwin-i3.conf`; `make restore-keys` gives back keys `make take-keys` took.
+`~/.config/environment.d/kwin-i3.conf`.
 
-With the script alone, windows keep Plasma's decoration (Breeze, title bars and all), and the
-keys, the tree, the workspaces and floating work. The plugins are part of kwin-i3; the load
-notification names what is missing without them.
+With the script alone (no plugins), windows keep Plasma's decoration (Breeze, title bars and all),
+and the keys, the tree, the workspaces and floating work; the settings page says at its top when
+the plugins aren't loaded.
 
 ### The plugins
 
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | the tiling drag's highlight and move cursor; i3's 1 px frame around tiling windows (width and colours in the settings), blue on the active one: tiling windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiling windows keep their title bars; on a fast output, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page (the load notification says so) |
+| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
@@ -161,7 +187,7 @@ To reload the script after a change: `busctl --user call org.kde.KWin /Scripting
 org.kde.kwin.Scripting unloadScript s kwin-i3`, then the `reconfigure` above. It re-tiles every
 window once.
 
-### Optional: the settings page
+### The settings page
 
 kwin-i3's own page in System Settings > Window Management: every setting, laid out as Plasma's
 pages are, and **Keys…**, where kwin-i3's keys are rebound in one list instead of KWin's. A key
@@ -227,7 +253,7 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] mouseWarping` | `output` | i3's `mouse_warping`: `output` (when the focus moves to another output by a key, a workspace switch or an activation, the pointer goes to the focused window's centre, unless it is on that output already), `none` (the pointer never moves by itself) |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output A B …`: `1=DP-4 HDMI-A-1, 2=DP-6` (connector names, `kscreen-doctor -o`; a list per workspace, the first connected output wins). At login each output shows the lowest workspace free and not set to another output; an empty workspace with a workspace output opens on its output; a output that appears takes the workspaces set to it and shows its lowest, else a free one. An output that goes away leaves its workspaces on the first output for good: only a workspace output brings one back, as in i3. A reload moves no workspace that exists |
 | `[Script-kwin-i3] workspaceAutoBackAndForth` | false | i3's `workspace_auto_back_and_forth`: Meta+N for the focused workspace shows the one focused before; Meta+Shift+N for it sends the window there |
-| `[Script-kwin-i3] warnTakenKeys` | `true` | at load, one notification naming each of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't); `make take-keys` frees them |
+| `[Script-kwin-i3] warnTakenKeys` | `true` | at load, check which of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't), for a notification naming them; Plasma doesn't show kwin-i3's notifications yet (`LATER.md` item 56), so for now `make take-keys` is the list |
 | `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 2000 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `200` | how long the old layout may be held for a slow window, 10-2000 ms (Sway's too) |

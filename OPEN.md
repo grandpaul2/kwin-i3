@@ -42,30 +42,22 @@ turned on (`docs/records/spec-per-output-desktops.md`), taken keys reported with
 (`docs/records/spec-own-keys.md`); (b) and (c) share one notification at load. The stock test mode is
 done (`make live-stock`, `docs/records/spec-stock-mode.md`, 2026-10-24): the install as written
 (per-output on, `make take-keys`) works on a stock Plasma with click-to-focus; no real finding.
-Left, all for the beta's README:
-- `make take-keys` as a plain install step: it prints each key it took, the one announcement a
-  user gets (Paul, 2026-10-30; item 56 is in `LATER.md`); undone by `make restore-keys` or Defaults
-  in System Settings > Shortcuts. README step 2 and the `warnTakenKeys` row say a notification at
-  load names the clashes: untrue while 56 stands, so those words go;
-- the default keys against a stock Plasma (finding 13: R1-R7): 22 clash until `make take-keys`;
-  README says zoom clashes, but only Meta+0 does; and no Meta+Return terminal outside the
-  dotfiles (finding 14, D74): say how to bind one;
-- (e) focus follows mouse and Meta-alone (also map finding 12): an install step, not only a table
-  (the laptop's stock install, 2026-10-29: under click to focus the frames look broken, they move
-  only on a click, and the popup grace has nothing to do); four scenarios assume it (`# focus: mouse`);
-- **the README pass**: install read as a stranger on a stock Plasma, the settings page
-  (`make kcm-install`) included, with **CachyOS and PikaOS** steps (their package names from item
-  67). It must cover: an install step, "For i3's feel", listing the Plasma settings kwin-i3 is
-  designed around and where each lives in System Settings, said to be Plasma's (`plan.md` (e),
-  Paul 2026-10-29); a package linked while KWin runs can't be turned on until the next login
-  (KPackage's cache, `docs/records/spec-settings-page.md`); and an app's floating size: a floated
-  window comes back at the size it opened with, but an app that last closed tiled opens at that
-  tiled size, as in i3. The fix is a Plasma window rule (Size/Position, "Apply Initially"), i3's
-  `for_window` resize done through Plasma: README steps, after a test-KWin check that such a rule
-  leaves tiling alone (`docs/records/spec-float-size.md`);
-- bug reports from other people: binding the capture key from the first day, what a capture holds
-  and how to send one (`docs/debugging.md`), and that a flash just after resume on NVIDIA is the
-  driver's (`docs/kwin-notes.md`, "Plasma").
+Done 2026-10-30, the README's Install rewritten for a stranger: the clone, each distribution's
+packages (Fedora, Arch/CachyOS, PikaOS/Debian; PikaOS's from `tools/box.sh`, the plugins and the
+settings page built there), the script, plugins and settings page in order with the one log-out,
+`make take-keys` as the step that prints the keys taken (Paul, 2026-10-30), "For i3's feel"
+(focus follows mouse with KWin 6.7.5's own labels, per-output desktops, animations; said to be
+Plasma's), Meta+Return's default terminal, the capture key and what to send, after a Plasma
+update, updating, removing; every "the load notification says" made true. Left:
+- an app's floating size: a floated window comes back at the size it opened with, but an app that
+  last closed tiled opens at that tiled size, as in i3. The fix is a Plasma window rule
+  (Size/Position, "Apply Initially"), i3's `for_window` resize done through Plasma: README steps,
+  after a test-KWin check that such a rule leaves tiling alone (`docs/records/spec-float-size.md`;
+  a probe, Paul's go);
+- the settings page's "Warn about keys other shortcuts use" checkbox changes nothing a user sees
+  while item 56 stands (`AGENTS.md`: words a user reads must be true): hide it until then, or keep
+  it (a `kcm/` change, Paul's call);
+- Paul's read of the new Install, as a stranger would.
 
 **51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
 surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
