@@ -45,9 +45,16 @@ at the tiled close. i3 does the same; its per-app answer is a `for_window` line 
 enable" (`floatingClass`, `floatingTitle`); for the size, **Plasma's window rules** (Size and
 Position, "Apply Initially") are the equivalent, applied by KWin before the window shows (a
 script would get it after, and resize it visibly). Not duplicated in kwin-i3. **For the README
-pass** (OPEN.md item 4): say so, with the steps. Before it is written, check in the test KWin that
-an "Apply Initially" size rule leaves tiling alone on an i3 workspace (untested; "Force" would
-fight the tiles).
+pass** (OPEN.md item 4): say so, with the steps (README, "Configuration", 2026-10-30). "Force"
+would fight the tiles.
+
+**Probe result** (2026-10-30, scenario 90 on a probe branch, not kept): a rule with
+Size and Position "Apply Initially" (`sizerule=3`, `positionrule=3`) leaves tiling alone: the
+window opened beside another tiled at its half, 640,0 640x720, and was still there a second
+later; floated, it came back at the rule's frame, 200,150 700x500 (kwin-i3's record is the frame
+KWin gave it at opening, the rule's); tiled again, at its tile, still there a second later. The
+probe's control (the rule placing a window with kwin-i3 unloaded) was red only because that
+window opened before KWin had reloaded the rules after `reconfigure`.
 
 ## What i3 does (`src/manage.c`, `src/floating.c`)
 

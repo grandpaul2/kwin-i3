@@ -266,6 +266,15 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 (`docs/records/spec-window-modes.md`) |
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the same colours (plugins; not a window that draws its own title bar). How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
+**An app that floats at its old tiled size**: a floated window comes back at the size it opened
+with, as in i3, but an app that saves its own size (most KDE apps) and last closed tiled opens
+asking for that tiled size. i3's answer is a `for_window … resize set` line; here it is a Plasma
+window rule, which KWin applies before the window shows: System Settings > Window Management >
+Window Rules > Add New…, *Window class* the app's (Detect Window Properties finds it), then Add
+Properties: *Size* and *Position*, each "Apply Initially" with the values you want. Tiling ignores
+it (the window still fills its tile); floated, the window comes back at that size and place. Not
+"Force": that would fight the tiles.
+
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
 window on all desktops is i3's sticky floating: it floats and follows the workspace its output shows (`docs/behaviour.md` §3; the unbound action Sticky Toggle, as i3's `sticky toggle`); panels, the desktop,
 popups and Plasma's system windows are never in it (i3's dock, root and override-redirect kinds). kwin-i3 assumes one activity: windows on other activities aren't

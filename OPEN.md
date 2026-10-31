@@ -48,12 +48,9 @@ settings page built there), the script, plugins and settings page in order with 
 `make take-keys` as the step that prints the keys taken (Paul, 2026-10-30), "For i3's feel"
 (focus follows mouse with KWin 6.7.5's own labels, per-output desktops, animations; said to be
 Plasma's), Meta+Return's default terminal, the capture key and what to send, after a Plasma
-update, updating, removing; every "the load notification says" made true. Left:
-- an app's floating size: a floated window comes back at the size it opened with, but an app that
-  last closed tiled opens at that tiled size, as in i3. The fix is a Plasma window rule
-  (Size/Position, "Apply Initially"), i3's `for_window` resize done through Plasma: README steps,
-  after a test-KWin check that such a rule leaves tiling alone (`docs/records/spec-float-size.md`;
-  a probe, Paul's go);
+update, updating, removing; every "the load notification says" made true; the window-rule advice
+for an app's floating size, after a probe (`docs/records/spec-float-size.md`); the settings page's
+taken-keys checkbox hidden while 56 stands. Left:
 - Paul's read of the new Install, as a stranger would.
 
 **51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
