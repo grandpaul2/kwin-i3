@@ -119,6 +119,25 @@ changes Plasma's own setting, labelled as Plasma's, with the words that changing
 same as in System Settings (`plan.md` (e)); for the beta the README's "For i3's
 feel" names them. Its accessibility check is item 18.
 
+**70. Workspace outputs for a fixed layout across monitors** (found 2026-10-31 from a capture:
+not a bug). A monitor that drops out for a moment (a hotplug, a sleep, a cable) sends its
+workspaces to the first output for good, as in i3 (`behaviour.md` W3, M3: `randr.c` `move_content`);
+when it returns it shows a fresh empty workspace (M4) and the layout is gone. A user who keeps
+one (odd numbers on the right, even on the left) gets it back only with workspace outputs, i3's
+`workspace N output A B`: each number set to its screen with the other as the second, it returns
+after a drop (M4), an empty workspace opens on its own screen (S4), and login lays it out (M1).
+Set that way, it works and feels right. Where a user meets it today: the README's "On a laptop
+that docks" (a desktop's monitor drops out the same way, but the paragraph reads as laptops
+only); the settings page's Workspaces sub-page (a screen and a second screen per workspace, ten
+rows by hand). Gaps: a desktop user learns of it only after losing a layout; a common pattern is
+twenty choices; connector names change with the port or a driver, and the assignment then
+matches nothing. i3 has only the config line: its users write it once, so anything beyond words is
+blending with Plasma, judged against `plan.md`'s scope. Ideas, none decided: (a) the README's
+paragraph for any monitor, not only docking; (b) a preset on the Workspaces page (alternate odd
+and even, split in halves, or keep where they are now); (c) a hint when an output returns and no
+workspace outputs are set (needs item 56's notifications). Next: the beta users' monitor setups
+and whether either has lost a layout, then a proposal among (a)-(c).
+
 **18. A standing accessibility check of the settings page** (parked: light tests while in
 development). `tests/live/75-settings-a11y.sh` (in git history) audited every page through `tools/a11y.py`: names, no
 duplicates, no empty headings, Tab order. Bring it back as `make a11y`, run when the page changes
