@@ -7,9 +7,12 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "Paul's use"; Paul, 2026-10-30): such
 an item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-30, twenty-fourth session** (the beta decided; one capture, a flash
-after resume, was NVIDIA's GPU reset: `docs/kwin-notes.md`, "Plasma"). The desktop and the laptop
-both run main (e15a226: script, plugins and, on the laptop, the settings page). The rulebook is
+Last reconciled: **2026-10-30, twenty-fourth session** (the beta decided and begun: the repo
+public; `tools/box.sh` runs the test KWin on Arch's KWin 6.8.2 and PikaOS's 6.7.4; the README's
+Install rewritten for strangers; items 4, 61, 67, 68 done, 22, 51, 56 back in `LATER.md`; one
+capture, a flash after resume, NVIDIA's GPU reset: `docs/kwin-notes.md`, "Plasma"). The desktop
+runs main's script and plugins (unchanged since e15a226); its installed settings page predates
+595a50c (the taken-keys checkbox still shows until `make kcm-install`). The rulebook is
 `AGENTS.md` since a3d21a2, `CLAUDE.md` imports it.
 
 ## Stage (Paul, 2026-10-24; the beta 2026-10-30)
