@@ -56,11 +56,51 @@ KCM.ScrollViewKCM {
             contentItem: ColumnLayout {
                 RowLayout {
                     // A fixed label column and fixed-width keys, so each command's first key sits
-                    // under the one above it.
-                    QQC2.Label {
+                    // under the one above it. A setting that shapes the command sits in the label
+                    // column, after the label.
+                    RowLayout {
                         Layout.preferredWidth: Kirigami.Units.gridUnit * 15
-                        text: row.label
-                        elide: Text.ElideRight
+                        Layout.maximumWidth: Kirigami.Units.gridUnit * 15
+                        spacing: Kirigami.Units.smallSpacing
+                        QQC2.Label {
+                            Layout.fillWidth: row.setting === ""
+                            text: row.setting === "" ? row.label : i18nc("@label:listbox command", "%1:", row.label)
+                            elide: Text.ElideRight
+                        }
+                        // docs/style-settings-page.md §7; only End session's so far.
+                        Loader {
+                            active: row.setting !== ""
+                            visible: active
+                            sourceComponent: QQC2.ComboBox {
+                                implicitContentWidthPolicy: QQC2.ComboBox.WidestTextWhenCompleted
+                                textRole: "text"
+                                valueRole: "value"
+                                // Sleep only where the machine can sleep, as Plasma's logout screen (or
+                                // where it is already the setting, so the box never shows another).
+                                model: [
+                                    ...(kcm.canSuspend || stored === "sleep" ? [{ text: i18nc("@item:inlistbox", "Sleep"), value: "sleep" }] : []),
+                                    { text: i18nc("@item:inlistbox", "Shut down"), value: "shutdown" },
+                                    { text: i18nc("@item:inlistbox", "Log out"), value: "logout" },
+                                    { text: i18nc("@item:inlistbox", "Show logout screen"), value: "ask" },
+                                ]
+                                // As main.qml's ChoiceBox: not a binding on indexOfValue, which runs before the model is set.
+                                readonly property string stored: kcm.settings[row.setting]
+                                function sync() { currentIndex = indexOfValue(stored) }
+                                onStoredChanged: sync()
+                                onCountChanged: sync()
+                                Component.onCompleted: sync()
+                                onActivated: kcm.settings[row.setting] = currentValue
+                                Accessible.name: i18nc("command", "%1: what its key does", row.label)
+                                Accessible.description: i18n("Log out and Shut down ask first, and go ahead after 30 seconds.")
+                                KCM.SettingStateBinding {
+                                    configObject: kcm.settings
+                                    settingName: row.setting
+                                }
+                            }
+                        }
+                        Item {
+                            Layout.fillWidth: row.setting !== ""
+                        }
                     }
                     Repeater {
                         model: row.keySlots
@@ -116,36 +156,6 @@ KCM.ScrollViewKCM {
                                     : i18n("Default: %1", slot.modelData.defaultText)
                                 QQC2.ToolTip.visible: hovered
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
-                            }
-                        }
-                    }
-                    // The setting that shapes the command, after its keys (docs/style-settings-page.md §7).
-                    Loader {
-                        active: row.setting !== ""
-                        visible: active
-                        sourceComponent: QQC2.ComboBox {
-                            textRole: "text"
-                            valueRole: "value"
-                            // Sleep only where the machine can sleep, as Plasma's logout screen (or
-                            // where it is already the setting, so the box never shows another).
-                            model: [
-                                ...(kcm.canSuspend || stored === "sleep" ? [{ text: i18nc("@item:inlistbox", "Sleep"), value: "sleep" }] : []),
-                                { text: i18nc("@item:inlistbox", "Shut down"), value: "shutdown" },
-                                { text: i18nc("@item:inlistbox", "Log out"), value: "logout" },
-                                { text: i18nc("@item:inlistbox", "Show logout screen"), value: "ask" },
-                            ]
-                            // As main.qml's ChoiceBox: not a binding on indexOfValue, which runs before the model is set.
-                            readonly property string stored: kcm.settings[row.setting]
-                            function sync() { currentIndex = indexOfValue(stored) }
-                            onStoredChanged: sync()
-                            onCountChanged: sync()
-                            Component.onCompleted: sync()
-                            onActivated: kcm.settings[row.setting] = currentValue
-                            Accessible.name: i18nc("command", "%1: what its key does", row.label)
-                            Accessible.description: i18n("Log out and Shut down ask first, and go ahead after 30 seconds.")
-                            KCM.SettingStateBinding {
-                                configObject: kcm.settings
-                                settingName: row.setting
                             }
                         }
                     }

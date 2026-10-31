@@ -965,7 +965,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 - **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
   shifted symbol appears with the keys that type it on the current layout; End session's row has
-  `endSession` as a dropdown after its key (Sleep only where logind's `CanSuspend` is "yes", or
+  `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and

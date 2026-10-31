@@ -130,9 +130,11 @@ nothing, do what Plasma's own pages do.
 - **Clashes are shown in the row, never prompted**: "Meta+E is used by Dolphin (Launch); it will
   be taken from it on Apply." No modal dialog.
 - **Keys apply with Apply**, so Reset and Defaults cover them like any setting.
-- **A setting that shapes a command** sits in its row as a dropdown after its keys (Paul,
-  2026-10-31: End session's), with an accessible name of its own ("End session: what its key
-  does"); its explanation in the accessible description.
+- **A setting that shapes a command** sits in its row as a dropdown beside its label, inside the
+  label column, the label then ending in a colon ("End session: [Log out]"), so the keys stay in
+  their column and the page no wider (Paul, 2026-10-31). The dropdown as wide as its widest
+  choice, with an accessible name of its own ("End session: what its key does"); its
+  explanation in the accessible description.
 
 ## 8. The cog's form (`config.ui`)
 
