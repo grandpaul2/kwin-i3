@@ -1,7 +1,7 @@
 # kwin-i3's docs: what each is for
 
 Each kind of fact has one home. A fact found in two places is a bug in the docs: keep it in its
-home and point there from the other. (Paul, 2026-10-27.)
+home and point there from the other.
 
 | a fact about | its home |
 |---|---|
@@ -14,6 +14,7 @@ home and point there from the other. (Paul, 2026-10-27.)
 | what KWin and Plasma actually do where they surprised us (the traps, from source and probes) | `kwin-notes.md` |
 | how the settings page looks and reads | `style-settings-page.md` |
 | i3's features against kwin-i3, KWin and Plasma (a study, 2026-10-25, cited as "finding N", "row X") | `i3-feature-map.md` |
+| why kwin-i3 builds on KWin's own tile tree (the probe that chose it) | `kwin-tiles.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
 | how an agent works here, and how work lands (pull requests) | `../AGENTS.md` (`../CLAUDE.md` loads it for Claude Code) |
@@ -30,7 +31,7 @@ Edited in place whenever what they describe changes, in the same commit as the c
 - **`plan.md`**: goal, scope (the test, In, Out, the reasons a difference may have, settings,
   plugins), the numbered decisions, the keys' origin, the focus design, the risks. Its history
   (the phases, the switch-over) is in git.
-- **`behaviour.md`**: the behaviour as built, from the code. Where a spec disagrees, the code
+- **`behaviour.md`**: the behaviour as built, from the code. Where a doc disagrees, the code
   decides and this page follows it.
 - **`testing.md`**, **`debugging.md`**, **`style-settings-page.md`**: procedures.
 - **`kwin-notes.md`**: KWin's behaviour as found, by topic; a new trap gets a line, a wrong one is
@@ -40,26 +41,17 @@ Edited in place whenever what they describe changes, in the same commit as the c
 - **`i3-feature-map.md`**: dated, but its row ids are cited across the docs; a row that goes stale
   is corrected in place.
 
-## Records: why it is the way it is
-
-In `records/`. Frozen once built: **only their status line changes**, saying what happened and where the
-current truth is (`behaviour.md`, or the spec that superseded it). Read one for the reasons, the
-alternatives weighed, the probes, Paul's words; not for what the code does now.
-
-- **`spec-*.md`**: one decision each, with Paul's go. The name says the subject. Its `**Now:**` line, under
-  the title, is the status. Item numbers inside are `OPEN.md`'s of the day: the item may since
-  have moved to `LATER.md` (same number) or closed.
-- **`spike-kwin-tiles.md`**: the 2026-10-21 probe that chose KWin's tiles.
-- **`bug-*.md`**: an investigation too long for a commit message.
-- **`mouse-plugin-design.md`**: the chord plugin, dropped 2026-10-24.
-
-Reviews are not kept as files: a review's findings land in the spec, the code, `behaviour.md`,
-`OPEN.md` or `LATER.md`, and the review itself is in git history (the ones before 2026-10-27:
-`git show 3d98bd2:docs/<name>`).
+- **`kwin-tiles.md`**: the probe that chose KWin's tiles; dated, kept for the reasons.
 
 ## Writing one
 
-- A new decision: a `records/spec-<subject>.md`, with Paul's go at its top. When built, its behaviour goes
-  into `behaviour.md` and the spec's status line says so.
-- The words a user reads: `records/spec-window-words.md` and `philosophy.md`, "How it presents itself".
+- A new decision goes straight into its home above (a standing decision in `plan.md`, a
+  behaviour in `behaviour.md`), with its reason in a clause. The proposal and the options weighed
+  belong in the pull request or the conversation, not in a file in the tree.
+- A review's findings land in the code, `behaviour.md`, `OPEN.md` or `LATER.md`; the review
+  itself is not kept as a file.
+- The words a user reads: `style-settings-page.md` (the glossary) and `philosophy.md`, "How it
+  presents itself".
 - State, not history, in the standing docs and the open lists; history is git's.
+- The voice: the project's, not a person's (`AGENTS.md`, "Working rules"): no names, quotes or
+  decision stamps.

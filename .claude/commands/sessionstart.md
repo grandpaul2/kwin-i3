@@ -29,7 +29,7 @@ Then a brief status:
 - captures waiting (count, newest), and the open items from `OPEN.md` in a line each
 - ready for tasks
 
-**If the repo is BEHIND `origin`, say what produced those commits before pulling**: Paul's own
+**If the repo is BEHIND `origin`, say what produced those commits before pulling**: the maintainer's
 pushes and merged pull requests (`git log HEAD..origin/main --merges`) are expected; anything
 else, ask first. On a feature branch, say whether it is behind `main` (a rebase before review).
 

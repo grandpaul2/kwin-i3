@@ -1,7 +1,7 @@
 # Contributing to kwin-i3
 
-kwin-i3 is Paul's project: i3's window management as a KWin script for Plasma 6 on Wayland. He
-runs it as his only window manager, so a broken change breaks a real desktop. Most of the work
+kwin-i3 is i3's window management as a KWin script for Plasma 6 on Wayland. People run it as
+their only window manager, so a broken change breaks a real desktop. Most of the work
 here is done through coding agents (Claude Code and others); `AGENTS.md` is the full rulebook, for
 agents and people alike.
 This page is the short version.
@@ -32,11 +32,12 @@ your KWin loads: do your work in a git worktree, never on a branch there.
   (`gh pr create --base main --title "OPEN.md 54: ..."`). One item per PR;
   say which `OPEN.md` item it is, and update that item (only) in the PR.
 - A behaviour change updates `docs/behaviour.md` in the same PR. Run what `docs/testing.md` P1
-  lists for the change (it is deliberately lean). No new tests without Paul's agreement.
+  lists for the change (it is deliberately lean). No new tests without the maintainer's agreement.
 - `package/contents/code/main.js` is built by `make build` and committed: after rebasing on
   `main`, rebuild it rather than merging it by hand.
-- A new test, a scope change or a foundation-doc change needs Paul's agreement: ask in the PR.
-- Paul reviews and merges. A merge is his go; going live on his desktop is a separate step he takes.
+- A new test, a scope change or a foundation-doc change needs the maintainer's agreement: ask in the PR.
+- The maintainer reviews and merges. A merge is the go for main; reloading a live desktop is a
+  separate step, taken by whoever's desktop it is.
 
 ## Which command for which change
 
@@ -54,7 +55,7 @@ your KWin loads: do your work in a git worktree, never on a branch there.
   specific reason.
 - **The cause before a fix.** `docs/kwin-notes.md` holds what KWin really does where it surprised
   us; add to it when you find something.
-- **Bug captures**: a key bound to `tools/capture` (README, Install step 4; Paul's is Meta+Shift+B) saves the last minute of kwin-i3's, the plugins' and the pointer's
+- **Bug captures**: a key bound to `tools/capture` (README, Install step 4) saves the last minute of kwin-i3's, the plugins' and the pointer's
   events with a screenshot; `tools/capture-read DIR` reads it (`docs/debugging.md`).
 
 Licence: GPL-2.0-or-later (`LICENSE`, `NOTICE`).

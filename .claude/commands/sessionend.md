@@ -20,7 +20,7 @@ finding from this session (a red test, a capture, a review comment) leaves **fix
 **won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
 Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
 A change that went live this session is **done** unless a problem was reported with it: never
-leave it waiting for Paul's "it works" (Paul, 2026-10-28). On a pull-request branch, edit only the
+leave it waiting for someone's "it works". On a pull-request branch, edit only the
 item the PR is for.
 
 ## 3. Tidy
@@ -40,28 +40,12 @@ If `package/` differs from what KWin last loaded, say so. Reload only on the des
 
 ## 5. Commit and push
 
-- This repo: commit what's left in related groups, with the *why*, and push (on main in Paul's
-  sessions; on its branch in a pull request's, rebased on `main`, and say whether the PR is ready
+- This repo: commit what's left in related groups, with the *why*, and push (on main in the
+  maintainer's sessions; on its branch in a pull request's, rebased on `main`, and say whether the PR is ready
   for review).
-- **On Paul's machines only** (`~/.dotfiles` exists): `~/.dotfiles`, if this session touched it (launchers, setup.sh, health-check, README, `hotkeys`):
-  commit and push there too. Its `CLAUDE.md` rules apply to those files.
-- On Paul's machines, back up this project's memories into the dotfiles repo now. Its own `/sessionend` does it too,
-  but Paul may work only here for days. Copy live to repo only (never the reverse), mirroring
-  deletions, and skip an empty dir:
-
-  ```bash
-  m=~/.claude/projects/-home-paul-kwin-i3/memory
-  d=~/.dotfiles/claude-config/project-memories/-home-paul-kwin-i3
-  [ -n "$(ls -A "$m")" ] && mkdir -p "$d" && rsync -a --delete "$m/" "$d/" &&
-    git -C ~/.dotfiles add "$d" && { git -C ~/.dotfiles diff --cached --quiet ||
-    git -C ~/.dotfiles commit -qm "state: kwin-i3 project memories" -- "$d"; } &&
-    timeout 30 git -C ~/.dotfiles push -q
-  ```
-
-  If the dotfiles repo is behind `origin`, the push is refused: don't pull. Say so (its CLAUDE.md:
-  find out what landed there first).
+- Anything your own `CLAUDE.local.md` adds to the session's end.
 
 ## 6. Report
 
 A few lines: what changed (with commit hashes), whether the desktop runs what is committed, what's in
-`OPEN.md`, any pull request opened or waiting, and anything waiting on Paul. Then confirm both repos are clean and pushed.
+`OPEN.md`, any pull request opened or waiting, and anything waiting on the maintainer. Then confirm the repo is clean and pushed.

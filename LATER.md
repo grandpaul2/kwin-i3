@@ -1,23 +1,23 @@
 # LATER — work held until the Stage ends
 
-**Added to as we go.** The Stage (`OPEN.md`) is development, then the beta (from 2026-10-30): Paul
-and a few people who know him use kwin-i3 daily, and he adjusts it. Reliability work, release prep and anything upstream wait here (upstream: Paul wants more
-experience with Plasma first, 2026-10-25), unless one informs a structural change or a larger issue
-turns up. Rules:
+**Added to as we go.** The Stage (`OPEN.md`) is development, then the beta: a few early users run
+kwin-i3 daily and it is adjusted as they go. Reliability work, release prep and anything upstream
+wait here (upstream reports wait for more experience with Plasma), unless one informs a structural
+change or a larger issue turns up. Rules:
 
-- An item lives in **one** file: it moves to `OPEN.md` when Paul brings it back, and comes out of
+- An item lives in **one** file: it moves to `OPEN.md` when the maintainer brings it back, and comes out of
   here then. Numbers are shared with `OPEN.md` (the next free one, never reused).
 - Like `OPEN.md`, state, not history: rewrite an item as it changes.
 - New finds that can wait for the end of the Stage go here, with what would be done and why it waits.
 
-Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 61) went back,
+Moved out of `OPEN.md` 2026-10-25; what the beta needs (4, 22, 51, 61) went back,
 51's rest and 22 returned
 2026-10-30. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
 activities are the likeliest). When the Stage ends, suggested order: 5, 26.
 
 ## Reliability
 
-**45. A press past a monitor edge disagreed with the probe** (tenth session, 2026-10-28, test
+**45. A press past a monitor edge disagreed with the probe** (2026-10-28, test
 KWin). VS Code's invisible band reached 1-3 px across the edge onto the other monitor: the probe
 said `margin`, the real press passed (`FrameFocus pass`). Suspected, not proven: per-output
 desktops, with the press making the other output active, so `isOnCurrentDesktop` drops VS Code
@@ -25,8 +25,8 @@ there. Rare (a custom-frame app's band at the monitor edge, the gap strips stop 
 output). Next: a test-KWin trace of that press with `pointer-map events` (the press line was not
 printed in the sweep). Waits: the Stage, nothing seen live.
 
-**36. The test depth held back during the Stage** (Paul, 2026-10-26: testing stays lean for the Stage;
-`docs/testing.md` is lean until the Stage ends). Then, each in runs of 5
+**36. The test depth held back during the Stage** (`docs/testing.md` is lean until
+the Stage ends). Then, each in runs of 5
 minutes or less (never one long run): the fault battery (`make mutate-live`, `make mutate`) and
 faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz campaign; `make
 live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 36 run
@@ -44,7 +44,7 @@ fails loudly on a locked KWin (a long run could lock).
 
 **30. Focus after a close on a stock install** (finding 8: B51, C26; from OPEN.md 2026-10-26).
 At a workspace's top level and when a floating window closes, KWin's choice stands (`docs/plan.md`,
-"Focus"). With Paul's `NextFocusPrefersMouse=true` that is the window under the pointer, the
+"Focus"). With `NextFocusPrefersMouse=true` that is the window under the pointer, the
 accepted pointer/keyboard choice; with a stock install's `false` it is KWin's most recently used,
 which should match i3's workspace focus order but may not (windows kwin-i3 doesn't manage, the
 per-monitor chain). i3's own rule, the yardstick (`con_next_focused`, `tree.c` `tree_close_internal`, read
@@ -64,16 +64,16 @@ kactivitymanagerd can run on a test KWin's bus, then that hole confirmed or not 
 can't run there, they are won't-fix here, with the reason), then a spec for the harness
 pieces (`KI3_OUTPUTS`, a scale per output, `run.py --no-plugins`, the invariants' two-output
 assumptions), then one campaign per configuration.
-**The fuzzer is up to date with the code of 2026-10-30** (that session, Paul's go): I11, the frame's
+**The fuzzer is up to date with the code of 2026-10-30** (2026-10-30): I11, the frame's
 pixels (watched red with the effect unloaded unseen); the effect unloaded and loaded; a desktop
 added, removed or moved; the unbound keys; Meta+Shift+N's id (its moves had invoked nothing since
 2026-10-24). I4 already allowed for the frame. Still missing: a workspace of Plasma windows and
 `frameOnFloating` (settings, so a per-seed configuration, with the ones above). Three 5-minute
-campaigns ran that night (Paul's go): the first two found two bugs (63, 64) and I11's false reds
+campaigns ran that night: the first two found two bugs (63, 64) and I11's false reds
 (shadows, sticky and cross-output windows, the resize badge, the screen lagging the dumps), the
 third 23 of 24 clean and one more bug (minimums filling a split exactly); all fixed live.
 
-**10. Window modes** (`docs/records/spec-window-modes.md`): all four pieces live 2026-10-24 (the frame
+**10. Window modes**: all four pieces live 2026-10-24 (the frame
 drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
 `floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
 the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-24.md`, `-2-`, `-change-`)). Left:
@@ -81,14 +81,14 @@ the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-2
   (tools/ei-send can't scroll), a forcing window rule (desktop, maximize, size or no titlebar:
   each may ping-pong with kwin-i3's placement or frame, i3 feature map finding 10), `borderlessMaximizedWindows`, a window
   added or closed in the 250 ms at load; rounded corners on a libadwaita app (one that may draw
-  its own corners and shadow, unverified; `docs/records/spec-rounded-corners.md`);
+  its own corners and shadow, unverified);
 - the known limits written in the spec.
 
-**11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager,
-`docs/records/spec-workspace-widget.md`; working, Paul, 2026-10-25). The widget's test gaps: a scroll
+**11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager;
+working). The widget's test gaps: a scroll
 test (tools/ei-send can't scroll), vertical panels and "Numbers only" untested live.
 
-**13. Workspace commands** (`docs/records/spec-workspace-commands.md`: back-and-forth, next/prev, the
+**13. Workspace commands** (back-and-forth, next/prev, the
 output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: live tests for the
 source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
 after an unplug; the widget's names on a vertical panel.
@@ -96,8 +96,8 @@ after an unplug; the widget's names on a vertical panel.
 **26. KWin's own tile tools act on kwin-i3's tiles** (i3 feature map, finding 9: R11, R12,
 R14). Meta+T's tile editor edits the tiles kwin-i3 owns (overwritten at the next pass);
 Shift+drag drops a window into one (two windows in a leaf); drag to a screen edge quick-tiles into
-KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on Paul's
-desktop but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
+KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on some
+desktops but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
 then whether to block, follow or document them (and whether `make take-keys` should free Meta+T).
 The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
 floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
@@ -109,26 +109,25 @@ floating set) can leave both flags to the user, and the plain script document it
 
 ## The settings page
 
-**22. The settings page, finished for a release** (back from `OPEN.md` 2026-10-30: Paul finds
-the page fine, and the beta's users are on US layouts; the screenshot pass and the dropdown's
+**22. The settings page, finished for a release** (back from `OPEN.md` 2026-10-30: the page
+is fine for the beta, whose users are on US layouts; the screenshot pass and the dropdown's
 arrow keys dropped). Left: (a) Defaults then Apply on a non-US layout writes the US keys until the
 next layout change or load: the page should call the helper's `FitKeys` after Apply, as i3's
-`bindsym` follows the keymap at once (found reading the code 2026-10-27, Paul's go to fix then);
+`bindsym` follows the keymap at once (found reading the code 2026-10-27);
 (b) a section showing the Plasma settings kwin-i3 is designed around, each with a control that
 changes Plasma's own setting, labelled as Plasma's, with the words that changing it here is the
-same as in System Settings (Paul, 2026-10-29, `plan.md` (e)); for the beta the README's "For i3's
+same as in System Settings (`plan.md` (e)); for the beta the README's "For i3's
 feel" names them. Its accessibility check is item 18.
 
-**18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
-tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
-`docs/records/spec-settings-cleanup.md`'s build) audited every page through `tools/a11y.py`: names, no
+**18. A standing accessibility check of the settings page** (parked: light tests while in
+development). `tests/live/75-settings-a11y.sh` (in git history) audited every page through `tools/a11y.py`: names, no
 duplicates, no empty headings, Tab order. Bring it back as `make a11y`, run when the page changes
 rather than in `make test`.
 
 ## Release prep
 
-**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; back from `OPEN.md` 2026-10-30, Paul: a nice-to-have, not
-make or break for the beta). The load report
+**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; back from `OPEN.md` 2026-10-30: a nice-to-have,
+not make or break for the beta). The load report
 (`behaviour.md` §13: taken keys, layouts, per-output desktops, missing plugins) is what tells a
 new user their keys clash or their plugins didn't load after a Plasma update, and it is lost. It
 is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`; KWin's callDBus converts by
@@ -143,36 +142,35 @@ the desktop portal (`AddNotification`, `sa{sv}`) refuses KWin ("Unable to open
 can't hand a QML one the report. Options: (1) kwin-i3 as a QML script hosting `main.js`, with the
 globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins, a spike first;
 (2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
-on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
-2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
+on it: the focus note (`plan.md` (e)'s load-notification place; once per install,
+built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
 For the beta, `make take-keys`'s printout at install is the one-time list of the keys taken, and
-the settings page's banner says when the plugins aren't loaded (Paul, 2026-10-30). Next: how i3
+the settings page's banner says when the plugins aren't loaded. Next: how i3
 tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
-**60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50, Paul,
-2026-10-29: the desk setup is tedious, and his two monitors test most of it). On `pauls-laptop`
+**60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50: the desk setup is
+tedious, and two monitors on a desktop test most of it). On a laptop running Plasma 6.8
 with an external monitor, each noted works / snag, Meta+Shift+B at any fault: docking and
 undocking with windows open (i3 `randr.c`: an output's workspaces move to one that remains, and
 return to it; kwin-i3 `behaviour.md` §4, scenarios 42-48; real hardware timing against KWin's
 `PlacementTracker`); the lid closed and opened with the monitor attached; the wallpaper flash on
-AMD (seen on Paul's NVIDIA desktop: if never on the laptop, it points at NVIDIA). On Plasma 6.8 by
+AMD (seen on an NVIDIA desktop: if never on the laptop, it points at NVIDIA). On Plasma 6.8 by
 then, which is where it matters for a release.
 
-**28. Launch workspace, a maybe** (finding 2: C19; from OPEN.md 2026-10-26, Paul: "park it as a
-maybe"). i3 puts a window on the workspace it was launched from only when i3 started the program
+**28. Launch workspace, a maybe** (finding 2: C19; from OPEN.md 2026-10-26, parked
+as a maybe). i3 puts a window on the workspace it was launched from only when i3 started the program
 itself (`exec`, or dmenu run by it), the window carries the matching `_NET_STARTUP_ID`, and the
 launch finished less than 30 s ago (`startup.c` 4.24). kwin-i3 puts it on the workspace current
-when the window appears. Paul uses that (start a Minecraft instance, then go to the workspace it
-should open on), and in i3 it was the same: the game's window comes from its launcher's Java
+when the window appears. That is useful too (start a game from its launcher, then go to the
+workspace it should open on), and in i3 it was the same: the game's window comes from its launcher's Java
 process, which i3 didn't start, and GLFW sets no startup id. The difference is only an app started
 straight from the launcher, then a switch before its window shows. Documented as a divergence
 (`docs/plan.md`, "Scope"; README, "Keys"). Next, if a user asks for it: whether KWin 6.7.5 gives a
 script the window's xdg-activation token (Wayland) or startup id (Xwayland) and the launch's
 moment; if not, a plugin hook in KWin's activation, or won't-fix.
 
-**51. What users of other KWin tilers expect** (back from `OPEN.md` 2026-10-30, Paul: (b)'s rest waits for a
-release; fourteenth session, 2026-10-28: three agents
-surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
+**51. What users of other KWin tilers expect** (back from `OPEN.md` 2026-10-30; (b)'s rest waits for a
+release. A survey, 2026-10-28, of Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
 was not kept, its findings are here). Ranked: works after Plasma upgrades with a visible
 maintainer (Bismuth died of that; Polonium nearly); auto-tiling on Wayland; multi-monitor right;
 one-click install, no re-login, no duplicate instances; defaults with no clashes and a key table;
@@ -181,25 +179,25 @@ changelog, troubleshooting, a supported-Plasma line. kwin-i3 is ahead on multi-m
 handling, live Apply and the Window Rules page; behind on: (a) the install (store users get the
 script alone: title bars, no drag; the plugins need a per-KWin-version build); (b) a user README
 (screenshot, FAQ, supported versions, uninstall), with item 4's README pass; (c) activities (item
-5); (d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out as
-unused by Paul, but the audience is not Paul): a foundation question for Paul, cheap on floating
+5); (d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out):
+a foundation question, cheap on floating
 plus a hidden workspace, i3's `src/scratchpad.c` first. Tabbed/stacked stay out (KWin's tiles
 can't show tabs without much work). Our niche's only other entry: krohnkite-i3 (4 stars, no
-releases). For the beta, (a) is a build from source on each friend's machine (a package, COPR/AUR
+releases). For the beta, (a) is a build from source on each user's machine (a package, COPR/AUR
 as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
 plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what
 says the plugins are missing. (a) done in item 4's README pass (2026-10-30: per-distribution packages, rebuild after a Plasma
 update); of (b), supported versions and removal done. Next, toward a release: (b)'s screenshot and a
 "window X won't tile" FAQ, written from the beta's questions; (d) asked as a foundation change
-if a friend asks for it.
+if a user asks for it.
 
 **Not decided: a release** and its timeline (KDE Store `.kwinscript`, issue template asking for a
-`tools/capture` bundle). Paul, 2026-10-24: not settled yet; not an item until he decides. The beta
-(2026-10-30, `OPEN.md`) comes first: the repo public, unannounced.
+`tools/capture` bundle): not settled; not an item until it is decided. The beta
+(`OPEN.md`) comes first: the repo public, unannounced.
 
 ## Upstream
 
-**2. Settings**: done and hand-checked (`docs/records/spec-settings.md`, 2026-10-24). Left: the one-line
+**2. Settings**: done and hand-checked. Left: the one-line
 KWin fix upstream (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`), so the Configure
 form's Apply applies without the plugins too (the settings page's Apply already does).
 

@@ -4,8 +4,8 @@
 which is exactly i3's "one tree per workspace", and a plain-JS script can build, change and fill
 it. KWin then does the placing (and, being its own tiles, the border resize and the padding).
 
-Everything below was run in the headless test KWin (`tools/testkwin.sh`), never in Paul's
-session, except one read-only dump of his live trees. The probe scripts were `spike/`, removed
+Everything below was run in the headless test KWin (`tools/testkwin.sh`), never in a live
+session, except one read-only dump of a live desktop's trees. The probe scripts were `spike/`, removed
 on 2026-10-23 once the project was feature complete; git history before that has them.
 
 ## API (KWin 6.7, `src/scripting/workspace_wrapper.h`, `src/tiles/{tile,customtile}.h`)
@@ -67,12 +67,12 @@ on 2026-10-23 once the project was feature complete; git history before that has
 ## Not shown (needs a real session)
 
 - Dragging the border between two tiled windows with the mouse. KWin supports it for its own
-  tiles; to be confirmed on Paul's desktop.
+  tiles; to be confirmed on a live desktop.
 - Behaviour across a monitor hotplug (2026-10-21's bug class) and across a logout.
 
 ## Tooling this produced
 
 - `tools/testkwin.sh`: private headless KWin, two 1280x720 virtual outputs, per-output desktops,
-  optional Xwayland. Its first version leaked portals and a `ksecretd` onto Paul's real session
-  (the private bus had been given his environment); see the comment at the top for the fix.
+  optional Xwayland. Its first version leaked portals and a `ksecretd` onto the real session
+  (the private bus had been given the desktop's environment); see the comment at the top for the fix.
 - `tools/logsink.py`: KWin drops script `print()` here, so scripts log over D-Bus to this.
