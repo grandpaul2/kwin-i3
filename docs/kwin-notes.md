@@ -29,8 +29,8 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   leave a stale edge. `CustomTile::setRelativeGeometry` pins a changed edge with no tile beyond it
   to 0 or 1 and compares exactly, and clamps a root to (0,0,1,1): no negative inset.
   `setSizesStable` repeats up to four passes; "Sizes did not settle after 4 passes" was seen live
-  (Paul, 2026-10-29, after drags left one-window splits; the windows still landed right) and never
-  in probe 95 (branch `probe-settle`: his trees, Firefox's minimum, FFM, 2560x1440; untried: the
+  (the windows still landed right) and never
+  in probe 95 (branch `probe-settle`: a live desktop's trees, Firefox's minimum, FFM, 2560x1440; untried: the
   panel's strut, real apps). The warning names each tile still moving, the rect asked and the one
   KWin kept: read those in a capture to name the cause.
 - Padding is one number per tile (`tile.h:33`). `windowGeometry` gives an edge at the screen's
@@ -259,9 +259,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Wrapping a Kirigami `FormLayout` control in a `RowLayout` moves its label off it; give the control
   its own `Accessible.name` and the label `buddyFor` (Kirigami 6.31 sets `labelledBy` on the row).
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
-  pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. Paul leaves it as Fedora
-  ships it (2026-10-27; a keep-below workaround was declined).
-- On NVIDIA (Paul's desktop, driver with kernel suspend notifiers), waking from suspend can
+  pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. kwin-i3 leaves it as the
+  distribution ships it (a keep-below workaround was declined).
+- On NVIDIA (a driver with kernel suspend notifiers), waking from suspend can
   reset the GPU: the kernel logs `nvidia-drm … Failed to register auto-value-update`, and seconds
   later Firefox logs `[GFX1-]: Handle DeviceReset` and redraws its windows from scratch, a flash on
   every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
@@ -312,4 +312,4 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   `run`; the stacks land in `$KI3_TMP/kwin.out`. `libkwin`'s exported names are enough (probe 99).
 - The same non-dumpable flag refuses `/proc/PID/smaps_rollup`; `/proc/PID/status` (VmRSS, RssAnon,
   RssFile, RssShmem) and `/proc/PID/stat` still read. The test log (`$KI3_LOG`) has whole seconds:
-  the milliseconds are only in kwin-i3's in-memory log (a capture).
+  the milliseconds are only in kwin-i3's in-memory log (A capture).

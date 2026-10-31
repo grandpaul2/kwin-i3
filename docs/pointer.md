@@ -1,6 +1,6 @@
 # The pointer: what is at each pixel, and what a press there does
 
-Paul, 2026-10-28 (OPEN.md item 43): "we can't be guessing anymore". The gap handle was changed
+No more guessing: the gap handle was once changed
 twice on guesses about which window gets a press. This file is the home of how a press travels
 through KWin 6.7.5 to kwin-i3, read from KWin's source, and of the tools that show it on a real
 screen. `behaviour.md` says what kwin-i3 does; this says why the pointer ends up where it does.
@@ -8,7 +8,7 @@ screen. `behaviour.md` says what kwin-i3 does; this says why the pointer ends up
 ## Asking: `tools/pointer-map`
 
 kwini3helper's pointer probe (`plugin/pointerprobe.h`), on D-Bus at `/kwini3helper/pointer`.
-Read-only: it moves nothing and presses nothing, so it runs on the live desktop without Paul.
+Read-only: it moves nothing and presses nothing, so it runs on the live desktop unattended.
 
 - `pointer-map windows`: every window on screen, top first, with frame and buffer.
 - `pointer-map probe X Y`: the windows over a point (frame, buffer, ring, their own hit test),
@@ -77,7 +77,7 @@ window), the task manager's Resize (`window.cpp:1778`), or Alt+F8. The probe log
 
 ## The live gaps
 
-First map, 2026-10-28, Paul's desktop (gapsInner 4, frame 1; Firefox alone on monitor 1,
+First map, 2026-10-28, a live desktop (gapsInner 4, frame 1; Firefox alone on monitor 1,
 Alacritty | VS Code on monitor 2). `pointer-map gaps 4`:
 
 - **Alacritty | VS Code** (x 3833-3846): the 6 px gap is all kwin-i3's resize: the ring column of
@@ -94,7 +94,7 @@ Alacritty | VS Code on monitor 2). `pointer-map gaps 4`:
 
 i3 shows the arrow on frames and in the gaps (`x.c:171`, `XCURSOR_CURSOR_POINTER`; the gap is the
 root window) and a resize cursor only on the window it puts up once a resize has started
-(`resize.c:238`). Alacritty | VS Code | Alacritty at Paul's gaps, the pointer moved across both
+(`resize.c:238`). Alacritty | VS Code | Alacritty at those gaps, the pointer moved across both
 gaps, no press:
 
 - Between two terminals' gaps the desktop has the pointer: the arrow, as i3.

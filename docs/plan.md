@@ -10,16 +10,15 @@ i3's window management inside a stock Plasma Wayland session: windows are entiti
 move among each other, not contents moved between fixed divisions. One KWin script and two KWin
 plugins, behaving as i3 does wherever KWin lets them (`docs/philosophy.md`).
 
-## Scope (Paul, 2026-10-24; the rule's order 2026-10-28)
+## Scope (the rule's order 2026-10-28)
 
 kwin-i3 gives Plasma i3's feel and basic window management, and leaves the rest to Plasma. It is
 not i3 on KWin: the more of i3 it takes on, the more of it duplicates Plasma. The work now is
-making what is here **configurable and reliable**, on a machine and a setup that are not the
-author's (`OPEN.md`), not adding more of i3.
+making what is here **configurable and reliable**, on any machine and setup (`OPEN.md`), not adding more of i3.
 
 **Supported:** Plasma and KWin 6.7 or later, in a Wayland session (per-output desktops and
-`Tile.manage` are 6.7's). Xwayland apps are in, first-class (Paul, 2026-10-24: "that's going to
-be common"). How the plugins reach a beta user: `OPEN.md` item 51; what kwin-i3 does on an older
+`Tile.manage` are 6.7's). Xwayland apps are in, first-class: they are
+common. How the plugins reach a beta user: `OPEN.md` item 51; what kwin-i3 does on an older
 Plasma, and the plugins in a release: `LATER.md`, "Release prep".
 
 **i3 means the 4.24 release** (its tag `4.24`: `https://raw.githubusercontent.com/i3/i3/4.24/src/<file>.c`,
@@ -31,7 +30,7 @@ cited was).
 **The test for anything new**, in this order:
 1. **In the "In" list below: i3's**, as i3 does it, even where Plasma has something similar
    (`assign` though KWin has Window Rules, Exit though Plasma has logout).
-2. **Anything else of i3's is out** unless Paul adds it to "In"; "not more of i3" means this list
+2. **Anything else of i3's is out** unless the maintainer adds it to "In"; "not more of i3" means this list
    does not grow by itself.
 3. **Not i3's at all** (a widget, a notification, a tool): in only if it shows or serves
    something of the "In" list that Plasma's own can't. The workspace widget is in because Plasma's
@@ -50,15 +49,15 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 
 | left out | why |
 |---|---|
-| tabbed and stacked layouts, `focus parent`, urgency | Paul, 2026-10-21: "I don't use tabbed", "never used this"; urgency was shown in i3's bar, and there is no bar |
-| marks, the scratchpad, i3's restart | features the author never used are not built (Paul, 2026-10-24); restart is for a new i3 binary, and an install reloads kwin-i3 |
+| tabbed and stacked layouts, `focus parent`, urgency | KWin's tiles can't show tabs without much work, and `focus parent` mostly serves them; urgency was shown in i3's bar, and there is no bar |
+| marks, the scratchpad, i3's restart | outside the core of i3's feel that kwin-i3 copies (the scratchpad is an open question for a release, `LATER.md` item 51); restart is for a new i3 binary, and an install reloads kwin-i3 |
 | i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
 | a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key leaves Plasma's way, as `endSession` says) |
 | i3's config file, `i3-msg` IPC and a command language (`bindsym`, `mode`, chains) | settings belong in System Settings (and `kwinrc`); a key's action takes no arguments, `mode` or chain (a setting may still shape what an action does, as `resizeStep` does for resize). No scripting surface is promised during the Stage (`LATER.md`, "Release prep") |
 | workspace names, and workspaces past 10 | decision 9 |
 | fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only |
-| the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace focused when it appears; for programs a launcher, Steam or a game client starts, i3 did the same (Paul, 2026-10-26: he relies on it). A maybe for the release: `LATER.md`, item 28 |
+| the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace focused when it appears; for programs a launcher, Steam or a game client starts, i3 did the same, and that is useful. A maybe for the release: `LATER.md`, item 28 |
 | mouse chords beyond i3's | one chord was ever used (2026-10-22 to 10-24); i3's own tiling drag and Meta+right-drag resize are in instead |
 
 **The reasons a difference from i3 may have** (each ≠ row in `docs/behaviour.md` names one):
@@ -66,15 +65,14 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   client can't be drawn below its minimum size, KWin's tiles can't hold a window that won't resize.
 - **(b) The look**: an i3 element (the frame, gaps, the indicator) drawn to sit in a Plasma
   desktop, where it costs no performance (`docs/philosophy.md`, "How it presents itself").
-- **(c) The feel in use**: Paul's verdict on the live desktop, after push back
-  (`docs/philosophy.md`, "How a decision is made"), recorded as "Paul, live".
+- **(c) The feel in use**: the verdict on the live desktop, after push back
+  (`docs/philosophy.md`, "How a decision is made"), recorded as "judged live".
 - **(d) Out of scope**: the "Out" list above, or what rests on it (tidy rests on `focus parent`
   and tabbed being out).
 - **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them, and where an i3
   directive is one of them, Plasma's setting stands in for it (focus follows mouse is KWin's
   focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
-  component's shortcut stays its own). **Named, never set unasked** (Paul, 2026-10-29, after the
-  laptop's stock install): the Plasma settings kwin-i3 is designed around (focus follows mouse with
+  component's shortcut stays its own). **Named, never set unasked** (a stock install showed why): the Plasma settings kwin-i3 is designed around (focus follows mouse with
   no delay and the next focus under the pointer; per-output desktops; kwin-i3's keys free;
   animations off, optional) are named in three places, as i3 asks once at first start
   (`i3-config-wizard`): a README install step, "For i3's feel"; the load notification, which names
@@ -83,7 +81,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   kwin-i3's**, and that changing it there is the same as changing it in System Settings (the same
   key, the same effect, undone the same way).
 
-Not reasons: "minor", "simpler", "Paul's old config", "it was already built that way". A row
+Not reasons: "minor", "simpler", "someone's old config", "it was already built that way". A row
 whose only reason is one of these goes back to i3's, or finds a real reason. **The list of
 differences is `docs/behaviour.md`'s ≠ rows**; there is no second copy here.
 
@@ -105,8 +103,8 @@ up and puts the user's value back; it changes no saved setting (reason (e); `beh
 **Plasma's own tiling** (quick tile, the tile editor) on a kwin-i3 workspace is the user untiling
 the window: it floats (decision 7).
 
-**The product is the script and its two plugins** (revised 2026-10-28; Paul, 2026-10-24: "if
-you want to really lock in that i3 feel completely, but it works fine without them"). The script
+**The product is the script and its two plugins** (the plugins lock
+in i3's feel completely, but it works fine without them). The script
 alone runs the tree, workspaces, keys and floating, and is tested alone (every scenario not
 marked `# needs: plugin` runs with no plugin and Breeze, `tests/live/run.sh`). The helper adds the
 mouse (tiling drag, resize, frame focus), the resize mode, the layout keys and the terminal key;
@@ -155,15 +153,14 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    focus-after-close (`tree_close_internal`), in `src/tree.js`. Flatten removes only the redundant
    shape (`docs/definitions.md`, "flatten"); a split holding one window stays, as in i3. KWin
    collapses those itself; the projection must tolerate that.
-   **One deliberate break, tidy (Paul, 2026-10-23)**: every one-child split whose child is a split is
+   **One deliberate break, tidy**: every one-child split whose child is a split is
    removed, flatten's shape included, after anything that changes the tree (so after a close it
    removes at once what i3's flatten would remove only at the next move). i3 keeps them, and each one costs a
    move key press. They only matter in i3 because of `focus parent` and tabbed/stacked, both out
-   (reason (d)); adding either means revisiting this first. `docs/records/spec-nested-boxes.md` has the
-   reasoning, i3's side and the risks.
-   **Atomic layout changes (Paul, 2026-10-23)**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
+   (reason (d)); adding either means revisiting this first.
+   **Atomic layout changes**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
    holds the old layout on screen until every moved window has its new frame, as Sway's
-   transactions do; i3 on X11 never had the gap. `docs/records/spec-atomic-layout.md`.
+   transactions do; i3 on X11 never had the gap.
 9. **Workspaces are KWin's virtual desktops** (`src/workspaces.js`): virtual desktop N is
    workspace N, 1 to 10, made on demand and never removed (a virtual desktop past 10, which
    Plasma's Overview can add, is not kwin-i3's: a window opened there goes to the focused
@@ -173,12 +170,12 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    `workspace.c:526-535`), reason (a): Plasma's pager, Overview and the workspace widget show
    KWin's desktops, which are numbered, and removing one renumbers every desktop after it; the
    keys reach 10.
-10. **Outputs come and go as in i3's `randr.c`** (Paul, 2026-10-27, replacing the 2026-10-25
-    "every workspace goes back": a remembered output that isn't there was the state behind most
+10. **Outputs come and go as in i3's `randr.c`** (replacing an earlier "every workspace goes
+    back": a remembered output that isn't there was the state behind most
     replug bugs, scenarios 42, 45-48, fuzzer I2):
     - **an output goes away**: its workspaces all move to the first output, the primary first
       (KWin's `workspace.screenOrder`), for good, except an empty one that isn't focused, which i3
-      closes and here simply stops having an output (`behaviour.md` W4) (Paul, 2026-10-28, as i3's `randr.c` "Move the content of an outputs container to the
+      closes and here simply stops having an output (`behaviour.md` W4) (as i3's `randr.c` "Move the content of an outputs container to the
       first output");
     - **an output appears**: it takes the workspaces whose workspace output names it (moving
       them back, the one exception to "for good"); else the lowest-numbered
@@ -206,10 +203,9 @@ own two (release, capture); each one, with how it differs, is `docs/behaviour.md
 **Action names are fixed** (they persist in `kglobalshortcutsrc`, and renaming leaves dead
 entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kwin-i3 Split V`.
 
-## Focus (the rules decided 2026-10-27)
+## Focus
 
-**Focus follows i3** (Paul, 2026-10-27, from a capture where a modal dialog took its parent to
-the other output): every way focus changes is a row of `behaviour.md` §5 set against i3. That
+**Focus follows i3** (a capture showed a modal dialog taking its parent to the other output): every way focus changes is a row of `behaviour.md` §5 set against i3. That
 table is the home of the rules; this is the why.
 
 - **Why i3's rules, not exceptions**: the earlier rules asked "does kwin-i3 manage it?" and grew

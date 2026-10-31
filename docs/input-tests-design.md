@@ -5,9 +5,8 @@ tiling drag's 86 and the hold's 52 use the same tools). Its review is in git his
 (`git show 3d98bd2:docs/input-tests-review-2026-10-22.md`); the fault battery that once named these
 scenarios waits in `LATER.md` item 36.
 
-They replaced plan phase 4 ("a nested KWin window with Paul"). Paul: *"I don't understand why this
-can't be automated ... there will be more features built in the future that will need similar
-testing too. So why not go ahead and set the precedent now?"*
+They replaced a plan to test by hand in a nested KWin window: input like this can be automated,
+and features built later will need the same kind of testing, so the precedent was set early.
 
 ## The tools
 
@@ -19,7 +18,7 @@ testing too. So why not go ahead and set the precedent now?"*
 - `tests/live/lib.sh`: `press "Meta+Shift+V"` (a chord as evdev codes; `:` is Shift+;), `drag`,
   `sdrag` and `point`. Waits stay event-driven: the `ACTION <name>` log line after a press, the
   next `TREE` line after a drag, then `wait_geom` / `wait_tree`.
-- The test KWin runs Paul's focus settings in a scenario marked `# focus: mouse`
+- The test KWin runs the focus settings kwin-i3 is designed around in a scenario marked `# focus: mouse`
   (`FocusPolicy=FocusFollowsMouse`, `NextFocusPrefersMouse=true`, `DelayFocusInterval=0`); the
   others keep KWin's click to focus.
 

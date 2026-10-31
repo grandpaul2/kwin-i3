@@ -1,11 +1,11 @@
 # kwin-i3's words: one name per thing
 
-**Paul's, 2026-10-27; revised 2026-10-28.** Every other doc, every commit message and every reply
-uses these words in these senses. (Paul, 2026-10-27: a day of rules went wrong on words that
-meant two things: "manage", "places itself", "active", "desktop", "home".)
+Every other doc, every commit message and every reply uses these words in these senses. Rules
+have gone wrong on words that meant two things ("manage", "places itself", "active", "desktop",
+"home"); this page is why they don't now.
 
 **The rules for words**
-- **i3's word wherever i3 has the thing** (Paul: "ride i3, hard"). KWin's word only for things that
+- **i3's word wherever i3 has the thing** (ride i3, hard). KWin's word only for things that
   are KWin's alone, and named as KWin's. Plasma's word only for Plasma's things.
 - **One name per thing, one thing per name.** A word that would mean two things gets qualified
   every time ("KWin's active window", never just "active").
@@ -52,7 +52,7 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 "manage" is already KWin's for putting a window in a tile (`Tile.manage`, decision 6).
 
 **Not used any more:** "places itself" (now: override-redirect, or floating), "unmanaged" and
-"managed" as a kind, "Plasma window(s)" for a kind, "left alone", "tiled" (Paul, 2026-10-27:
+"managed" as a kind, "Plasma window(s)" for a kind, "left alone", "tiled" (now:
 **tiling**, i3's).
 
 ## The tree (i3's)
@@ -74,12 +74,12 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **output** | a monitor (Paul, 2026-10-27: i3's word; not "monitor" or "screen"). ≠ on the settings page, which says **screen**, Plasma's word on its window pages (Paul, 2026-10-28; `records/spec-settings-words.md` row 1) | output | KWin's output (`LogicalOutput`); the script API's **screen** |
+| **output** | a monitor (i3's word; not "monitor" or "screen"). ≠ on the settings page, which says **screen**, Plasma's word on its window pages | output | KWin's output (`LogicalOutput`); the script API's **screen** |
 | **workspace** | workspace N, 1 to 10; it is virtual desktop N (≠ i3: numbers only, `plan.md` decision 9) | workspace | **virtual desktop** |
 | **virtual desktop** | KWin's object behind a workspace; said only when KWin's side matters | — | virtual desktop (`workspace.desktops`) |
 | **per-output desktops** | KWin showing a different virtual desktop on each output; kwin-i3 needs it | (i3's normal) | `perOutputVirtualDesktops` |
 | **a workspace's output** | the output a workspace is on | the workspace's output | — |
-| **visible** | the workspace an output is showing; one per output (Paul, 2026-10-27: i3's word; not "shown") | visible workspace | `currentDesktopForScreen(output)` |
+| **visible** | the workspace an output is showing; one per output (i3's word; not "shown") | visible workspace | `currentDesktopForScreen(output)` |
 | **the focused workspace / output** | the workspace (and its output) that holds the focus | focused workspace / output | — |
 | **workspace output** | `workspaceOutputs`: the output a workspace is set to live on, i3's `workspace N output X` (not "assignment", which would collide with i3's `assign`) | `workspace N output X` | — |
 | **assign** | a rule sending new windows matching its criteria to a workspace or output | `assign` | — |
@@ -116,7 +116,7 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **the hold** | the effect freezing a layout change until every window has its new size |
 | **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:410-426`; here a press there resizes, `behaviour.md` Z3) |
 | **gap strip** | the helper's input-only window over a gap, so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
-| **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with Paul's note (`docs/debugging.md`) |
+| **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with the user's note (`docs/debugging.md`) |
 | **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised; not the test app ("the test stage", a Xephyr window) |
-| **the beta** | the Stage's second part (Paul, 2026-10-30): the repo public but unannounced, used by people who know Paul, their bugs fixed by him (`OPEN.md`) |
-| **decision N** | `plan.md`'s numbered decision N; a spec's own decisions are cited with the spec's name |
+| **the beta** | the Stage's second part: the repo public but unannounced, used by a few early users, their bugs fixed as they come (`OPEN.md`) |
+| **decision N** | `plan.md`'s numbered decision N; not to be confused with a `behaviour.md` row id |

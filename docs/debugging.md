@@ -1,7 +1,7 @@
 # Debugging kwin-i3: the flight recorder
 
-Paul, 2026-10-25. Every bug report comes after the fact: Paul sees something, then presses
-Meta+Shift+B. So what matters is the recent past, kept cheaply all the time and saved only on the
+Every bug report comes after the fact: the user sees something, then presses the capture key
+(README, Install step 4). So what matters is the recent past, kept cheaply all the time and saved only on the
 press: a ring in memory, in kwin-i3 and in kwini3hold, stamped to the millisecond. Nothing is
 written to disk or sent over D-Bus until the press.
 
@@ -9,7 +9,7 @@ written to disk or sent over D-Bus until the press.
 
 One timeline, the SECONDS before the press (default 60; 0 for everything held): kwin-i3's lines
 (`i3`), kwini3hold's (`hold`, with its frame count `fN`) and the pointer's (`ptr`) merged by time, the gap to the line
-before, and the press with Paul's note last. Start every diagnosis here. The bug is in the lines
+before, and the press with the user's note last. Start every diagnosis here. The bug is in the lines
 before the press, often several seconds before it.
 
 What a layout change looks like (test KWin, a close of b beside a, 2026-10-25):
@@ -43,7 +43,7 @@ A release that says `TIMED OUT waiting for ...` names the windows that never got
 
 `~/.local/state/kwin-i3/captures/<date>_<HHMMSS.mmm>/` (the name is the press), mode 700 (captions
 can be private): `state.txt` (Dump State), `hold.txt` (when kwini3hold is loaded), `pointer.txt` (when kwini3helper is), `screen.png`
-(both monitors, a second or so after the press), `note.txt` (what Paul typed in the box that
+(both monitors, a second or so after the press), `note.txt` (what the user typed in the box that
 opens after the save; kwin-i3 floats it by its title, "kwin-i3 capture note"), `errors.txt` (only
 when kwin-i3 didn't answer). A capture is deleted at the end of the session that handled it, or
 kept with the `OPEN.md` item that names it.

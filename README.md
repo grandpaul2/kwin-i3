@@ -8,10 +8,9 @@ them, with floating windows keeping your own decoration), the mouse (i3's tiling
 resize, focus on the frame), the resize mode, keys for your keyboard layout, and atomic layout
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
-**Status: in beta**: public but unannounced, used by a few people who know the author; report bugs
-with a capture (Install, step 9). Feature complete (v1.0.0, 2026-10-23), the author's window
-manager since 2026-10-22.
-Everything of i3 the author used is here; what is left out is deliberate (tabbed and stacked
+**Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
+capture (Install, step 9). Feature complete (v1.0.0, 2026-10-23), in daily use since 2026-10-22.
+The core of i3 is here; what is left out is deliberate (tabbed and stacked
 layouts, `focus parent`, urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
 not all of i3: from here the work is making it configurable and reliable, not adding more of i3
 (the scope and its reasons are in `docs/plan.md`, "Scope"). `CHANGELOG.md` says what changed,
@@ -136,7 +135,7 @@ off first (System Settings > Window Management > KWin Scripts).
 8. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
    Applications > Terminal emulator).
 9. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
-   `~/kwin-i3/tools/capture`, on a key you don't use (the author's is Meta+Shift+B). Press it
+   `~/kwin-i3/tools/capture`, on a key you don't use (Meta+Shift+B is free on a stock Plasma). Press it
    right after something goes wrong: it asks for a note and saves what kwin-i3 saw in the seconds
    before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
 

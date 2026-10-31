@@ -7,19 +7,19 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 - A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
   resize: Firefox's session restore had left one window over its neighbour and one off the
-  monitor (Paul's capture, 2026-10-25). At most once a second per window, and never mid-answer to
-  kwin-i3's own resize (`docs/records/spec-self-resize.md`, `tests/live/82-self-resize.sh`).
+  monitor (A capture, 2026-10-25). At most once a second per window, and never mid-answer to
+  kwin-i3's own resize.
 - The dead Shift+symbol keys are gone: a Shift+key that types a symbol arrives as the symbol, so
   Meta+Shift+; and Meta+Shift+1..0 never fired; their twins Meta+: and Meta+!..) did (probed in
   the test KWin, 2026-10-24). Only the twins are registered now, and the old actions are
   unregistered at load, so the settings page's Keys list shows one box per key. The keys pressed
   are the same (`tests/live/38-retired-keys.sh`).
-- The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`): Paul's
-  pick in the settings page's colour button, 2026-10-24.
+- The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`),
+  picked in the settings page's colour button.
 - kwin-i3's own page in System Settings > Window Management (live 2026-10-24): every setting, laid
   out as Plasma's pages are, Apply that applies without the plugins, and a Keys sub-page where a
   key another shortcut holds is named and taken on Apply (`make restore-keys` gives it back);
-  `make kcm-install`. The Configure form is tidied to match (`docs/records/spec-settings-page.md`).
+  `make kcm-install`. The Configure form is tidied to match.
 - Settings, step 5: the plugins' settings move into the form (`frameWidth`, new; the frame's colours;
   the hold's kill switch and timeout), their old groups still read. **Apply applies** with the
   plugins: the KWin plugin, renamed `kwini3helper` (frame focus, settings apply), watches `kwinrc`
@@ -32,11 +32,11 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 - Settings, step 2: `resizeStep` (Meta+Ctrl+arrows, default 10 %), `defaultOrientation`
   (i3's `default_orientation`, default auto) and `focusWrapping` (i3's `focus_wrapping`, all four
   modes ported from `get_tree_next`, default yes), in the form and the README.
-- Settings, step 1 (`docs/records/spec-settings.md`): a Configure form in System Settings for the
+- Settings, step 1: a Configure form in System Settings for the
   script's keys, and i3's reload, **Meta+Shift+C**, which has KWin reparse its config and kwin-i3
   take the new values (the form itself tells KWin nothing on save). A changed rule re-judges the
   open windows; a window floated or tiled by hand under an unchanged verdict stays.
-- Mouse chords dropped (Paul, 2026-10-24): window move is KWin's own Meta+drag again, not
+- Mouse chords dropped: window move is KWin's own Meta+drag again, not
   Meta+Shift+drag; `[kwin-i3-mouse]` is no longer read. `kwini3mouse` stays for focus on the
   frame alone. The plugins are optional: README's install is the script, the plugins a section of
   their own, and `make test` without `kwin-devel` skips the three plugin scenarios, saying so.
@@ -46,7 +46,7 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   and in no tile stays floating instead of being re-tiled by the rules. Found by the review: a
   window floated by hand went back to tiled at its next caption change (seconds, for a browser),
   because the rules were re-applied on every change; they now act only when their verdict
-  changes (Paul, 2026-10-24; `docs/records/spec-reload-keepabove.md`; `tests/live/60-load.sh`,
+  changes (`tests/live/60-load.sh`,
   `20-rules.sh`).
 - Fix (live 2026-10-24): a window opened on a workspace whose focused window was fullscreen seemed not to open.
   The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused to
@@ -56,18 +56,17 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   size limits (a caption change floated it the same way); and, as in i3, the newcomer opens
   behind the fullscreen window without taking its focus (its own dialog excepted), also when
   sent there while the workspace is hidden or when the workspace is shown again with Meta+N.
-  Paul's capture of 2026-10-23 23:25; `docs/records/spec-fullscreen-tree.md` and its review;
-  `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test; six live mutants and
+  Found from a capture; `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test; six live mutants and
   one unit mutant.
 - The frame paints the active floating window green (live 2026-10-24) (`#4c995a`), so a floating window is told
   from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
-  (`[kwin-i3-frame]`, README), changed live with `--notify`. Paul's ask, 2026-10-24
-  (`docs/records/spec-frame-colours.md`; `tests/live/54-frame.sh` section 2b).
+  (`[kwin-i3-frame]`, README), changed live with `--notify`
+  (`tests/live/54-frame.sh` section 2b).
 - **kwini3frame** (live 2026-10-23), a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
   nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
   the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.
   `make plugin-install` selects it in kwinrc; `tools/frame-guard.sh` falls back to Breeze before a
-  KWin start if the build no longer matches the installed kdecoration (`docs/records/spec-decoration.md`).
+  KWin start if the build no longer matches the installed kdecoration.
 - Fix: after a monitor replug, activating a fullscreen window KWin could not move switched the
   other monitor to that window's workspace, so both monitors showed it and its tiled windows
   stood off-screen (fuzz I2, seed 7; `tests/live/46-replug-fullscreen.sh`).
@@ -80,20 +79,20 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   throw on once that tile was gone (fuzz I1, seed 2; `tests/live/48-replug-listed.sh`).
 - Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
   of KWin's `tile.cpp` removed from the tree (git history before 2026-10-23 has them).
-- The floating-title default is empty; the stage's title moved to the dotfiles' setup (it was a
-  default of the author's).
+- The floating-title default is empty; a streaming setup's title, once a
+  default, is a user's rule now.
 - Test client: the dialog starts at 200x160, above KWin's 150 px decorated minimum (fuzz I9,
   seed 28: a smaller dialog on a hidden desktop can't take the resize KWin sends with a move).
 
 ## 1.0.0 — 2026-10-23
 
-Feature complete for its author's use, after two nights' work (2026-10-21 to 2026-10-23), the
-window manager on his desktop since 2026-10-22. One KWin script plus two small KWin plugins:
+Feature complete for daily use, after two nights' work (2026-10-21 to 2026-10-23), and in
+daily use since 2026-10-22. One KWin script plus two small KWin plugins:
 
 - **The i3 tree** (`src/tree.js`), ported from i3's source: insertion after the focus, `tree_move`
   with every case, split and toggle-split, tree-based focus in a direction, close with i3's
   focus-after-close, shares (`percent`) with i3's rules. One deliberate break: a split that holds
-  only another split is removed (`docs/records/spec-nested-boxes.md`).
+  only another split is removed.
 - **KWin's own tiles as the display** (`src/kwin.js`): one idempotent reconcile per workspace,
   minimum sizes honoured with neighbours giving up room, edges snapped to whole pixels, start-up
   reads the live tiles back so a reload keeps the layout, a release key that hands everything
@@ -107,9 +106,9 @@ window manager on his desktop since 2026-10-22. One KWin script plus two small K
   in four directions, split h/v, toggle split, floating toggle, focus mode toggle, resize,
   release, dump state).
 - **kwini3mouse** (`plugin/`): modifier + mouse button chords, so window move is
-  Meta+Shift+drag (`docs/records/mouse-plugin-design.md`).
+  Meta+Shift+drag.
 - **kwini3hold** (`plugin/`): an effect that holds the old layout on screen until every moved
-  window has its new frame, like Sway's transactions (`docs/records/spec-atomic-layout.md`).
+  window has its new frame, like Sway's transactions.
 - **Tests**: unit tests of the tree (cases from i3's own testsuite), live scenarios in a private
   headless KWin with two virtual outputs and real hotplug, real input through libei, a fuzzer
   with pixel invariants and a shrinker, mutation batteries for the unit and live suites, and a

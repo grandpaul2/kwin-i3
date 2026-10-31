@@ -1,29 +1,29 @@
 # The fuzzer and the capture key: design and as built
 
-**Now (2026-10-30):** both built 2026-10-22. The fuzzer is held for the Stage (Paul, 2026-10-26;
-`LATER.md` item 36) and runs in runs of 5 minutes or less; Paul lifted the hold for one session on
-2026-10-30, which brought it up to date: I11 (the frame's pixels), the effect and desktop actions,
+**Now (2026-10-30):** both built 2026-10-22. The fuzzer is held for the Stage (`LATER.md`
+item 36) and runs in runs of 5 minutes or less; the hold was lifted once, on 2026-10-30, to bring
+it up to date: I11 (the frame's pixels), the effect and desktop actions,
 the unbound keys, and Meta+Shift+N's action id (its moves to a workspace had invoked nothing since
-2026-10-24). I4 already allowed for the frame (its padding, below). The capture key is how Paul reports bugs: `docs/debugging.md`. The design
+2026-10-24). I4 already allowed for the frame (its padding, below). The capture key is how a user reports bugs: `docs/debugging.md`. The design
 below is kept for its reasons; "As built" at the end is what the code does where they differ.
 
-Paul has been finding bugs one at a time in daily use. Two tools to find them faster:
+Bugs were being found one at a time in daily use. Two tools to find them faster:
 
 1. **`make fuzz`**: random action sequences in the headless test KWin, with pixel-level invariants
    checked after every step; a failing sequence is replayed and shrunk to a short repro.
-2. **Meta+Shift+B** on the live desktop: writes kwin-i3's state to a file, so a bug Paul sees
-   becomes a repro later without him describing it.
+2. **Meta+Shift+B** on the live desktop: writes kwin-i3's state to a file, so a bug the user sees
+   becomes a repro later without them describing it.
 
 ## Why the existing invariants are not enough
 
 `checkInvariants` (src/kwin.js) checks KWin's *relative* tile geometry (fractions) and tile
-membership. The last two bugs Paul found were in real pixels: a 1 px hole between windows
+membership. The last two bugs found by hand were in real pixels: a 1 px hole between windows
 (ae6867f) and windows below their minimum size (c0d6183, 58be5d9). Neither shows up in fractions.
 The fuzzer checks what is on screen, read from KWin: each window's `frameGeometry`.
 
 ## 1. The fuzzer (`tests/fuzz/fuzz.py`)
 
-Python, run inside `tools/testkwin.sh` (two virtual 1280x720 outputs, Paul's focus settings).
+Python, run inside `tools/testkwin.sh` (two virtual 1280x720 outputs, focus follows mouse).
 One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in parallel
 (`FUZZ_JOBS`, default 6) for `FUZZ_MINUTES` (default 5), each seed in its own test KWin.
 
@@ -38,7 +38,7 @@ One run = one seed = up to N steps (default 120). `make fuzz` runs seeds in para
 | focus by pointer | `inject.py abs` to the centre of a random window (focus follows mouse) | medium |
 | resize by drag | drag the shared edge of two adjacent tiled windows by a random amount (as 51-input.sh does) | low |
 | move by drag | Meta+drag a tiled window onto another (with the helper loaded, as in the fuzzer's KWins, that is the tiling drag) | low |
-| a window resizing itself | a tiled test client asks for another size (`docs/records/spec-self-resize.md`) | low |
+| a window resizing itself | a tiled test client asks for another size | low |
 | monitor unplug / replug | `kscreen-doctor output.Virtual-1.disable/enable` (as 40-monitors.sh) | rare |
 | the effect unloaded / loaded | `org.kde.kwin.Effects` `unloadEffect`/`loadEffect kwini3hold` (as 53-hold.sh); only with the plugins | rare |
 | a desktop added, removed or moved | `workspace.createDesktop` / `removeDesktop` / `moveDesktop` at a random index (as 65, 66) | rare |
@@ -116,12 +116,12 @@ What a capture holds now, and how to read one: `docs/debugging.md` (the flight r
   `~/.local/state/kwin-i3/captures/<timestamp>/`, starts a sink on `net.local.kwini3.dump` writing
   `state.txt` there, invokes "kwin-i3 Dump State", waits for END (2 s cap), stops the sink, adds
   `journalctl --user` lines from kwin_wayland for the last 10 minutes and a full-screen Spectacle
-  shot (`spectacle -b -n -f -o`). Silent: no notification (dotfiles rule).
+  shot (`spectacle -b -n -f -o`). Silent: no notification.
 - Captures are read later by an agent and turned into live tests.
 
-Making it live means rebuilding, reloading kwin-i3 in Paul's session (it re-tiles his windows
-once), and registering the launcher shortcut through kglobalaccel (dotfiles CLAUDE.md table, the
-App-launch row). That step is done with Paul's OK.
+Making it live means rebuilding, reloading kwin-i3 in the desktop's session (it re-tiles its
+windows once), and binding the launcher's key (README, Install step 4), with the desktop owner's
+go.
 
 ## As built (after the design review, 2026-10-22)
 
