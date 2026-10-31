@@ -201,7 +201,7 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 | A55 | `layout toggle split` (and `layout toggle`, `layout toggle default`) | flip the parent between splith and splitv | K (script) | | `Toggle Split`, Meta+E; `Tree.toggleSplit` `src/tree.js:352` | C | On a stock Plasma Meta+E is Dolphin's. Bare `layout toggle` in i3 cycles tabbed/stacking too; here splith/splitv only |
 | A56 | `layout splith` / `splitv` | set the parent's orientation explicitly | none | | no action (only the toggle) | C | Tiny gap; the toggle plus `Split H/V` reaches every state |
 | A57 | `layout default` | restore the default layout | none | | | C | Same |
-| A58 | `layout stacked` / `stacking`, `layout tabbed` | stacked / tabbed container | OOS | | plan Scope: "I don't use tabbed" | C | Largest i3 feature left out; deliberate |
+| A58 | `layout stacked` / `stacking`, `layout tabbed` | stacked / tabbed container | OOS | | plan Scope (tabbed and stacked out) | C | Largest i3 feature left out; deliberate |
 | A59 | `layout toggle all`, `layout toggle split <mode list>` | cycle through chosen layouts | OOS | | tabbed/stacked out | C | |
 | A60 | `layout toggle <a b c>` | user-defined cycle | none | | | C | |
 
@@ -335,7 +335,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 | B35 | `default_orientation vertical` | new workspaces split top-down | K script | | `defaultOrientation` = vertical | C | |
 | B36 | `default_orientation auto` | by monitor shape (wide = horizontal) | K script | | `defaultOrientation` = auto (default); README: side by side unless monitor taller than wide | C | Workspaces that exist keep theirs, as in i3. |
 | B37 | `workspace_layout default` | new workspaces start as splith/splitv | K script | | same as B34-B36 | C | |
-| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | OOS | | Scope: tabbed and stacked left out ("I don't use tabbed") | C | Decision. |
+| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | OOS | | Scope: tabbed and stacked left out | C | Decision. |
 
 **Floating**
 
