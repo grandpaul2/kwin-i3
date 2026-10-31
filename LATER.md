@@ -10,7 +10,7 @@ turns up. Rules:
 - Like `OPEN.md`, state, not history: rewrite an item as it changes.
 - New finds that can wait for the end of the Stage go here, with what would be done and why it waits.
 
-Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 56, 61) went back
+Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 61) went back
 2026-10-30. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
 activities are the likeliest). When the Stage ends, suggested order: 5, 26.
 
@@ -115,6 +115,28 @@ duplicates, no empty headings, Tab order. Bring it back as `make a11y`, run when
 rather than in `make test`.
 
 ## Release prep
+
+**56. kwin-i3's notifications never reach Plasma** (found 2026-10-29; back from `OPEN.md` 2026-10-30, Paul: a nice-to-have, not
+make or break for the beta). The load report
+(`behaviour.md` §13: taken keys, layouts, per-output desktops, missing plugins) is what tells a
+new user their keys clash or their plugins didn't load after a Plasma update, and it is lost. It
+is sent with `callDBus(... "Notify", "kwin-i3", 0, ..., [], {}, -1)`; KWin's callDBus converts by
+`QJSValue::toVariant()` (`scripting.cpp:345`), so Plasma receives `sisssava{sv}i` for
+`susssasa{sv}i` and refuses it ("no slot matched": the laptop 2026-10-29 16:48:53, the desktop
+2026-10-28 05:10:30). JavaScript can't make an unsigned int or a typed array here. The tests
+missed it: `tools/fakenotify.py` declares the signature but dbus-python doesn't enforce it (a
+strict version, `message_keyword` and a signature check, refused it in a probe). Routes probed:
+the desktop portal (`AddNotification`, `sa{sv}`) refuses KWin ("Unable to open
+/proc/<kwin>/root"); a QML (declarative) script's KNotification sends it correctly, with a
+`kwin-i3.notifyrc` of ours showing as "kwin-i3" (test KWin, strict stand-in), but a JS script
+can't hand a QML one the report. Options: (1) kwin-i3 as a QML script hosting `main.js`, with the
+globals mapped (`Workspace`, `DBusCall`, `ShortcutHandler`, `Timer`): no plugins, a spike first;
+(2) the helper sends it (plugins only), an OSD line (`osdService.showText`) without them. Waiting
+on it: the focus note (`plan.md` (e)'s load-notification place; once per install, Paul
+2026-10-29, built then reverted with this item, wording in git `5c32a73`), and the strict stand-in.
+For the beta, `make take-keys`'s printout at install is the one-time list of the keys taken, and
+the settings page's banner says when the plugins aren't loaded (Paul, 2026-10-30). Next: how i3
+tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
 **60. The laptop's monitor checks, one session toward release** (from `OPEN.md` item 50, Paul,
 2026-10-29: the desk setup is tedious, and his two monitors test most of it). On `pauls-laptop`
