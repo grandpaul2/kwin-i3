@@ -248,6 +248,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   no window is ever resized to its tile, only placed (a container with no `/dev/dri`, 2026-10-30:
   10-tiling 18 of 33 red). Arch's `kwin_wayland` carries `cap_sys_nice=ep`, which rootless podman
   won't exec. Both handled in `tools/box.sh`.
+- plasmawindowed (the widget in a window, 67) resizes itself once just after it tiles, to its whole
+  row of thumbnails (4936 px wide at x -548); kwin-i3's refit puts it back within milliseconds. A
+  test reading its geometry waits for it back in its tile (2026-10-31; 6.7 doesn't).
 
 ## Plasma
 
@@ -302,7 +305,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   waits for the `FRAME` log line first.
 - Real i3 runs off-screen for a comparison: Xvfb + i3 + xterm.
 - The journal mixes test KWins' lines with the live one's: split by `_PID=$(pgrep -xo kwin_wayland)`.
-- zsh doesn't split an unquoted variable (a scenario list in one variable runs as one name).
+- zsh doesn't split an unquoted variable (a scenario list in one variable runs as one name), and
+  has no `${!name}`: a script using either runs under `bash -c`.
+- The scenarios hide their tools' errors (`>/dev/null 2>&1`): a tool missing from a container shows
+  only as a check failing ("the second monitor is gone"). Arch's kwin pulls in kscreen-doctor,
+  plasmawindowed, gdbus and kpackagetool6; PikaOS's doesn't (`tools/box/Containerfile.pika`). A red
+  only in one container: `command -v` its tools first (2026-10-31).
 - `check "msg" VAR=x cmd` in a live test runs `VAR=x` as a command: wrap it in a function.
 - **gdb on KWin**: `kwin_wayland` has `cap_sys_nice`, so it isn't dumpable and refuses `gdb -p`
   (ptrace_scope 0 or not), and a copy without the capability aborts (no Qt platform plugin from

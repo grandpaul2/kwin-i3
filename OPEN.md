@@ -7,10 +7,10 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-31** (both of the day's captures diagnosed: a monitor dropping out,
-as i3, `LATER.md` item 70; a Firefox GPU reset, not kwin-i3's; 56 and 26 back from `LATER.md`, 71 new). The live desktop runs
-main's script as loaded at f39bbff; since then `main.js` and the plugins' sources changed in
-comments only, so no reload is needed.
+Last reconciled: **2026-10-31** (the `stable` branch started at v1.1.0, after `docs/testing.md`
+P6's gate: green on the host and on Arch and PikaOS, the PikaOS image given the scenarios' tools).
+The live desktop runs main's script as loaded at f39bbff; since then `main.js` and the plugins'
+sources changed in comments only and `metadata.json`'s version to 1.1.0, so no reload is needed.
 
 ## Stage
 
