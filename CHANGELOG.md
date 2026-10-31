@@ -5,6 +5,43 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+## v1.1.0 (2026-10-31): the first version on `stable`
+
+Install the `stable` branch from now on (README, Install step 1); `main` is where the work lands
+first.
+
+- **Workspaces and outputs as i3's `randr.c`**: a lost output's workspaces move to one that
+  remains for good, an appearing output takes the workspaces assigned to it (workspace outputs),
+  the first output gets the focus; outputs in i3's order and directions; a new window opens on the
+  focused workspace, a modal dialog with its parent.
+- **Kinds and rules as i3's**: `for_window` and `assign` in i3's syntax, the kinds decided in
+  `manage.c`'s order, sticky floating (a window on all desktops), `popup_during_fullscreen`, the
+  desktop portal's dialogs floating by a default rule, floating windows kept behind a fullscreen
+  one.
+- **The look**: i3's three colour classes, the split indicator after a split key,
+  `hide_edge_borders`, `smart_gaps`, gaps as i3's (inner 2 px and outer 0 by default; per side
+  and per workspace), title bars keeping the whole gap.
+- **The mouse**: drag a tiling window to move it (a centre drop swaps); Meta+Shift+drag floats a
+  tiling window or drops a floating one into the tiles; a press in a gap resizes, as i3's resize
+  on the nearest side; focus follows the mouse past a neighbour's margin and across outputs under
+  Show Desktop.
+- **Keys**: i3's resize mode with a "Resize (Esc)" banner; Exit, Terminal and Launcher; Move to
+  Workspace Next/Prev (on Output), unbound; the letter keys follow key position, as i3's keycode
+  config, on any keyboard layout; Meta+Shift+E set by the new End session setting.
+- **The settings page**: Window Rules as one line per rule, the application chosen from the
+  installed ones; a Gaps page, a Mouse and focus page; a help button beside each setting naming
+  its i3 directive; a banner when the plugins aren't loaded.
+- **Plasma 6.8**: the plugins build against KWin 6.8 (and the effect's translucent colours blend
+  right there).
+- **Fixes**: two KWin crashes (the helper's destructor reinstalling its filters; the pointer probe
+  asking a closed window); a fullscreen window resized by its tile put back on its monitor; GTK 4
+  windows' size limits kept across a rebuild; a frame side missing at an output's edge; No Border
+  and Keep Above from the window menu put back at once; a title bar that lands late taken; a new
+  window hidden until it lands and a closing one held through close animations; minimum sizes that
+  fill their split exactly counted as fitting.
+
+Before this (since v1.0.0):
+
 - A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
   resize: Firefox's session restore had left one window over its neighbour and one off the
   monitor (A capture, 2026-10-25). At most once a second per window, and never mid-answer to

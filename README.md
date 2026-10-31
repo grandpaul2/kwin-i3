@@ -9,7 +9,9 @@ resize, focus on the frame), the resize mode, keys for your keyboard layout, and
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
 **Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
-capture (Install, step 9). Feature complete (v1.0.0, 2026-10-23), in daily use since 2026-10-22.
+capture (Install, step 9). Install the `stable` branch: each version there has run on a
+desktop for a day and passed every test on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
+2026-10-23), in daily use since 2026-10-22.
 The core of i3 is here; what is left out is deliberate (tabbed and stacked
 layouts, `focus parent`, urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
 not all of i3: from here the work is making it configurable and reliable, not adding more of i3
@@ -104,7 +106,8 @@ script** (Krohnkite, Polonium, …): two scripts would place the same windows, s
 off first (System Settings > Window Management > KWin Scripts).
 
 1. **Get it**, into `~/kwin-i3` (the steps below assume that path):
-   `git clone https://github.com/grandpaul2/kwin-i3 ~/kwin-i3 && cd ~/kwin-i3`
+   `git clone -b stable https://github.com/grandpaul2/kwin-i3 ~/kwin-i3 && cd ~/kwin-i3`.
+   `stable` is the tested version; `main` is where the work lands first, a few days ahead.
 2. **The script**: `mkdir -p ~/.local/share/kwin/scripts`, then
    `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`, then
    `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`.
@@ -143,7 +146,9 @@ off first (System Settings > Window Management > KWin Scripts).
 so after each Plasma update tiling windows have their title bars back until you run
 `cd ~/kwin-i3 && make plugin-install` (the settings page and the script need nothing). **To
 update kwin-i3**: `cd ~/kwin-i3 && git pull && make plugin-install kcm-install`, then the reload
-below.
+below. `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
+`main`: `git checkout stable` once moves it. To go back to an earlier version:
+`git checkout v1.N.M` (the tags), then the same install and reload.
 
 **On a laptop that docks**: when an output goes away, its workspaces move to the first output for
 good, as in i3. To keep a workspace on the external output, give it a workspace output (the

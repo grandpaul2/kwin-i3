@@ -119,4 +119,6 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with the user's note (`docs/debugging.md`) |
 | **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised; not the test app ("the test stage", a Xephyr window) |
 | **the beta** | the Stage's second part: the repo public but unannounced, used by a few early users, their bugs fixed as they come (`OPEN.md`) |
+| **`stable`** | the branch users run: main as of its last promotion, tagged `v1.N.0` (`v1.N.M` for a fix since). main is the development line, ahead of it |
+| **a promotion** | moving `stable` to main after `docs/testing.md` P6's gate |
 | **decision N** | `plan.md`'s numbered decision N; not to be confused with a `behaviour.md` row id |

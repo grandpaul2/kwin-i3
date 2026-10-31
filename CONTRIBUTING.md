@@ -38,6 +38,9 @@ your KWin loads: do your work in a git worktree, never on a branch there.
 - A new test, a scope change or a foundation-doc change needs the maintainer's agreement: ask in the PR.
 - The maintainer reviews and merges. A merge is the go for main; reloading a live desktop is a
   separate step, taken by whoever's desktop it is.
+- Users run the `stable` branch, not main: a merged change reaches them at the next promotion,
+  after a day on the maintainer's desktop and every scenario on two other KWins
+  (`docs/testing.md` P6). README's install clones `stable`; for work here, `git checkout main`.
 
 ## Which command for which change
 

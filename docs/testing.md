@@ -67,6 +67,32 @@ then the fix and P1. A check for the bug only under rule 5.
 A question about KWin that blocks a design, with the go (rule 5): the smallest scenario that
 answers it, in a worktree on branch `probe-<name>`, numbered 90 and up, run alone. The answer goes into `docs/kwin-notes.md`; the branch is never merged.
 
+## P6. A promotion to `stable`
+
+Users run the `stable` branch; the work lands on main, which the maintainer's desktop runs first,
+so every change is used daily before anyone else gets it (`CONTRIBUTING.md`). A promotion, when
+main is ready rather than on a schedule, moves `stable` to main once all of these hold:
+
+1. **A day of use**: main's script and plugins have run on the maintainer's desktop for a day or
+   more since their last change, with no capture that is kwin-i3's.
+2. **`make test`** on the host, green (P3's one for the session).
+3. **Every scenario in both containers** (P5), `KI3_BOX=arch` and `KI3_BOX=pika`, green: one
+   container at a time, each in runs of 5 minutes or less (thirds by first digit: `0-4`, `5-6`,
+   `7-9`; PikaOS's halves took over 5), in the
+   background on rule 2's timer. A red: P3 steps 2-3. The images build no settings page, so its
+   scenarios (37, 76) run on the host only: it is QML, the same on every distribution.
+
+Then on main: `CHANGELOG.md`'s "Unreleased" gets the version and date, `package/metadata.json`'s
+`Version` the same (`1.N.0`); commit, tag `v1.N.0`, push, and `git push origin main:stable`.
+`stable` only moves forward: never a force-push, since users `git pull` it.
+
+**A fix for a beta user's bug** doesn't wait for the next promotion: it lands on main (P2), then
+goes onto `stable` in a worktree (`git worktree add ../kwin-i3-stable stable`, never the live
+checkout, whose `package/` KWin loads): cherry-pick it, `make build` for `main.js` rather than
+merging that file, run the changed scenarios in both containers, tag `v1.N.M`, push. The next
+promotion then merges main into `stable` in the same worktree (`git merge main`, `main.js` taken
+from main) instead of the plain push.
+
 ## Not during the Stage
 
 In `LATER.md`, "Reliability": fault runs (`make mutate-live`, `make mutate`, faults by hand), the

@@ -19,7 +19,10 @@ users can run it: people new to Plasma who found other tiling scripts buggy, on 
 (Plasma 6.8) and Debian-unstable-based (Plasma 6.7.4) distributions, on NVIDIA. Their bugs are
 fixed as they come, hardening kwin-i3. The Stage's rules hold through the beta (lean testing,
 `docs/testing.md`; fuzz and fault runs in `LATER.md`). Their desktops are theirs: their go to
-reload (`AGENTS.md`). A public release is not decided yet (`LATER.md`).
+reload (`AGENTS.md`). They run the `stable` branch, moved to main when main has passed
+`docs/testing.md` P6 (a day on the maintainer's desktop, every scenario on the host and in both
+containers), and tagged `v1.N.0`; a fix for their bug reaches `stable` sooner, as `v1.N.M`. A
+public release is not decided yet (`LATER.md`).
 
 ## Heading
 

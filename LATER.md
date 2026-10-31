@@ -181,7 +181,7 @@ if a user asks for it.
 
 **Not decided: a release** and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle): not settled; not an item until it is decided. The beta
-(`OPEN.md`) comes first: the repo public, unannounced.
+(`OPEN.md`) comes first: the repo public, unannounced, its users on the `stable` branch.
 
 ## Upstream
 
