@@ -33,21 +33,7 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Suggested order: 22, then 68.
-
-**22. The settings page, finished for the beta** (Paul, 2026-10-25: "not perfect, but fine for
-the dev phase; it will need more attention as we end it"). Today's state: reorganized
-(`docs/records/spec-settings-cleanup.md`), the frame section given one shape and the debug-log
-checkbox removed (2026-10-25). Next: a pass over the whole page with Paul, screenshot by
-screenshot, on his desktop with the plugins (the test KWin's page has none, so its frame section is
-all greyed); by hand, whether arrow keys move the highlight in an open dropdown (injected input
-didn't, in 76). A gap found reading the code (2026-10-27, Paul's go to fix then): Defaults then
-Apply on a non-US layout writes the US keys until the next layout change or load: the page calls
-the helper's `FitKeys` after Apply, as i3's `bindsym` follows the keymap at once. Also for the
-finished page (Paul, 2026-10-29, `plan.md` (e)): a section showing the Plasma settings kwin-i3 is
-designed around, each with a control that changes Plasma's own setting, labelled as Plasma's, with
-the words that changing it here is the same as in System Settings. Its accessibility check stays
-`LATER.md` item 18.
+Next: 68.
 
 **68. The repo public** (the beta, Paul 2026-10-30). Read-only so far: GPL-2 `LICENSE`, all 716
 commits under Paul's GitHub noreply address, the tree's personal details only host names, the

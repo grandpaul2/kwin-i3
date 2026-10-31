@@ -11,7 +11,7 @@ turns up. Rules:
 - New finds that can wait for the end of the Stage go here, with what would be done and why it waits.
 
 Moved out of `OPEN.md` 2026-10-25 (Paul); what the beta needs (4, 22, 51, 61) went back,
-51's rest returned
+51's rest and 22 returned
 2026-10-30. A beta user's bug brings the matching item back (26, 27, 30, 45, 60, and 5's
 activities are the likeliest). When the Stage ends, suggested order: 5, 26.
 
@@ -108,6 +108,16 @@ turn it off there, and Keep Below is overwritten. Next: whether the plugins' pat
 floating set) can leave both flags to the user, and the plain script document it.
 
 ## The settings page
+
+**22. The settings page, finished for a release** (back from `OPEN.md` 2026-10-30: Paul finds
+the page fine, and the beta's users are on US layouts; the screenshot pass and the dropdown's
+arrow keys dropped). Left: (a) Defaults then Apply on a non-US layout writes the US keys until the
+next layout change or load: the page should call the helper's `FitKeys` after Apply, as i3's
+`bindsym` follows the keymap at once (found reading the code 2026-10-27, Paul's go to fix then);
+(b) a section showing the Plasma settings kwin-i3 is designed around, each with a control that
+changes Plasma's own setting, labelled as Plasma's, with the words that changing it here is the
+same as in System Settings (Paul, 2026-10-29, `plan.md` (e)); for the beta the README's "For i3's
+feel" names them. Its accessibility check is item 18.
 
 **18. A standing accessibility check of the settings page** (parked by Paul, 2026-10-25: light
 tests while in development). `tests/live/75-settings-a11y.sh` (git history, commit after
