@@ -7,7 +7,10 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-10-31**. The live desktop runs main's script, plugins and settings page.
+Last reconciled: **2026-10-31** (the repo's voice: no names, quotes or decision stamps, and the
+design records out of the tree; the rule is `AGENTS.md`, "Working rules"). The live desktop runs
+main's script as loaded at f39bbff; since then `main.js` and the plugins' sources changed in
+comments only, so no reload is needed.
 
 ## Stage
 
