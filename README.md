@@ -8,7 +8,9 @@ them, with floating windows keeping your own decoration), the mouse (i3's tiling
 resize, focus on the frame), the resize mode, keys for your keyboard layout, and atomic layout
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
-**Status: feature complete (v1.0.0, 2026-10-23), the author's window manager since 2026-10-22.**
+**Status: in beta**: public but unannounced, used by a few people who know the author; report bugs
+with a capture (Install, step 9). Feature complete (v1.0.0, 2026-10-23), the author's window
+manager since 2026-10-22.
 Everything of i3 the author used is here; what is left out is deliberate (tabbed and stacked
 layouts, `focus parent`, urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
 not all of i3: from here the work is making it configurable and reliable, not adding more of i3

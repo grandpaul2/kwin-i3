@@ -33,14 +33,5 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Next: 68.
-
-**68. The repo public** (the beta, Paul 2026-10-30). Read-only so far: GPL-2 `LICENSE`, all 716
-commits under Paul's GitHub noreply address, the tree's personal details only host names, the
-laptop's specs and a KeePassXC rule. The whole history scanned 2026-10-30 (736 commits, every added
-line and the 115 files since removed): no keys, tokens, passwords, IP or Tailscale addresses,
-personal email (one KDE copyright line, Marco Martin's, from a KWin source header), images or
-captures; app names only as examples (Steam, Discord, KeePassXC, Minecraft); the removed
-`notes/control-tower-clipboard-laptop.md` holds clipboard commands only. Commit trailers name
-Claude. Next: the collaborator's OK (they have opened no pull request yet); README's status line;
-then `gh repo edit --visibility public` at Paul's go. Not announcing it is not private: GitHub search finds a public repo.
+None open: the repo went public 2026-10-30 (item 68, Paul's go), the beta's start; the next
+capture or request starts the next item.
