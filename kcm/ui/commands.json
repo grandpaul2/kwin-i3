@@ -893,7 +893,8 @@
     ]
    },
    {
-    "label": "Log out",
+    "label": "End session",
+    "setting": "endSession",
     "actions": [
      [
       "kwin-i3 Exit",

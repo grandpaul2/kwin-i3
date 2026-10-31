@@ -20,7 +20,7 @@ class KeysModel : public QAbstractListModel
     Q_PROPERTY(QVariantList layoutTable MEMBER m_layoutTable NOTIFY changed)
 
 public:
-    enum Roles { GroupRole = Qt::UserRole + 1, LabelRole, NoteRole, SlotsRole };
+    enum Roles { GroupRole = Qt::UserRole + 1, LabelRole, NoteRole, SlotsRole, SettingRole };
 
     explicit KeysModel(QObject *parent = nullptr);
 
@@ -52,6 +52,7 @@ private:
     };
     struct Row {
         QString group, label, note;      // note: muted text beside the keys ("in resize mode: J, Left")
+        QString setting;                 // a setting that shapes the command (endSession), shown after its keys
         QList<Slot> entries;
     };
     void findHolders();

@@ -45,6 +45,9 @@
     <entry name="mouseWarping" type="String">
       <default>output</default>
     </entry>
+    <entry name="endSession" type="String">
+      <default>logout</default>
+    </entry>
     <entry name="popupDuringFullscreen" type="String">
       <default>smart</default>
     </entry>

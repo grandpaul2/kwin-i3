@@ -49,6 +49,7 @@ KCM.ScrollViewKCM {
             required property string label
             required property string note
             required property var keySlots
+            required property string setting
             width: ListView.view.width
             down: false
             hoverEnabled: false
@@ -115,6 +116,36 @@ KCM.ScrollViewKCM {
                                     : i18n("Default: %1", slot.modelData.defaultText)
                                 QQC2.ToolTip.visible: hovered
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
+                            }
+                        }
+                    }
+                    // The setting that shapes the command, after its keys (docs/style-settings-page.md §7).
+                    Loader {
+                        active: row.setting !== ""
+                        visible: active
+                        sourceComponent: QQC2.ComboBox {
+                            textRole: "text"
+                            valueRole: "value"
+                            // Sleep only where the machine can sleep, as Plasma's logout screen (or
+                            // where it is already the setting, so the box never shows another).
+                            model: [
+                                ...(kcm.canSuspend || stored === "sleep" ? [{ text: i18nc("@item:inlistbox", "Sleep"), value: "sleep" }] : []),
+                                { text: i18nc("@item:inlistbox", "Shut down"), value: "shutdown" },
+                                { text: i18nc("@item:inlistbox", "Log out"), value: "logout" },
+                                { text: i18nc("@item:inlistbox", "Show logout screen"), value: "ask" },
+                            ]
+                            // As main.qml's ChoiceBox: not a binding on indexOfValue, which runs before the model is set.
+                            readonly property string stored: kcm.settings[row.setting]
+                            function sync() { currentIndex = indexOfValue(stored) }
+                            onStoredChanged: sync()
+                            onCountChanged: sync()
+                            Component.onCompleted: sync()
+                            onActivated: kcm.settings[row.setting] = currentValue
+                            Accessible.name: i18nc("command", "%1: what its key does", row.label)
+                            Accessible.description: i18n("Log out and Shut down ask first, and go ahead after 30 seconds.")
+                            KCM.SettingStateBinding {
+                                configObject: kcm.settings
+                                settingName: row.setting
                             }
                         }
                     }

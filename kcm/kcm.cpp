@@ -32,6 +32,7 @@ class KWinI3Kcm : public KQuickManagedConfigModule
     Q_PROPERTY(bool holdLoaded MEMBER m_holdLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool helperLoaded MEMBER m_helperLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool frameAvailable MEMBER m_frameAvailable NOTIFY stateChanged)
+    Q_PROPERTY(bool canSuspend MEMBER m_canSuspend NOTIFY stateChanged)
 
 public:
     KWinI3Kcm(QObject *parent, const KPluginMetaData &data)
@@ -164,6 +165,10 @@ public:
         m_helperLoaded = std::any_of(loaded.begin(), loaded.end(), [](const QString &p) {
             return p.startsWith(QLatin1String("kwini3helper"));
         });
+        // End session's Sleep shows only where the machine can sleep, as Plasma's logout screen.
+        auto canSuspend = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.login1"), QStringLiteral("/org/freedesktop/login1"),
+                                                         QStringLiteral("org.freedesktop.login1.Manager"), QStringLiteral("CanSuspend"));
+        m_canSuspend = QDBusConnection::systemBus().call(canSuspend).arguments().value(0).toString() == QLatin1String("yes");
         m_keys->load();
         Q_EMIT stateChanged();
         settingsChanged();
@@ -191,6 +196,7 @@ private:
     bool m_holdLoaded = false;
     bool m_helperLoaded = false;
     bool m_frameAvailable = false;
+    bool m_canSuspend = false;
 };
 
 K_PLUGIN_CLASS_WITH_JSON(KWinI3Kcm, "kcm_kwin_i3.json")

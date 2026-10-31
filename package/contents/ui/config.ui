@@ -969,6 +969,46 @@
        </item>
       </widget>
      </item>
+     <item row="40" column="0">
+      <widget class="QLabel" name="endSessionLabel">
+       <property name="text">
+        <string>End session:</string>
+       </property>
+       <property name="buddy">
+        <cstring>kcfg_endSession</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="40" column="1">
+      <widget class="QComboBox" name="kcfg_endSession">
+       <property name="kcfg_property" stdset="0">
+        <cstring>currentText</cstring>
+       </property>
+       <property name="toolTip">
+        <string>What Meta+Shift+E (i3's exit) does. logout: Plasma's log out prompt. sleep: sleep at once. shutdown: Plasma's shut down prompt. ask: Plasma's logout screen, with every choice. The prompts go ahead after 30 seconds unless cancelled.</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>logout</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>sleep</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>shutdown</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ask</string>
+        </property>
+       </item>
+      </widget>
+     </item>
      <item row="37" column="1">
       <!-- Hidden, as on the page: an internal value, kwinrc only (plan.md, "Settings"); kept so
            Defaults still resets it, as debugLog's below. -->

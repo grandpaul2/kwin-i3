@@ -2349,7 +2349,19 @@ var KI3 = (function () {
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the load
         // report says the mode needs the plugins (checkHelperKeys).
         "Resize Mode": function () { callDBus(MODE[0], MODE[1], MODE[2], "SetMode", mode ? "" : "resize"); },
-        "Exit": function () { callDBus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt", "promptLogout"); },
+        // i3's exit, Plasma's way to leave as endSession says (K17): its logout screen's prompts
+        // (log out and shut down ask, then go ahead after 30 s; docs/kwin-notes.md, "Plasma"), or
+        // PowerDevil's suspend, which asks nothing.
+        "Exit": function () {
+            var how = Settings.get("endSession");
+            if (how === "sleep") {
+                callDBus("org.kde.Solid.PowerManagement", "/org/kde/Solid/PowerManagement/Actions/SuspendSession",
+                    "org.kde.Solid.PowerManagement.Actions.SuspendSession", "suspendToRam");
+                return;
+            }
+            var prompt = { logout: "promptLogout", shutdown: "promptShutDown", ask: "promptAll" }[how];
+            callDBus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt", prompt);
+        },
         "Terminal": function () { callDBus(MODE[0], MODE[1], MODE[2], "LaunchTerminal"); },
         "Launcher": function () { callDBus("org.kde.krunner", "/App", "org.kde.krunner.App", "display"); },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
@@ -2588,8 +2600,8 @@ var KI3 = (function () {
         "Resize Mode": ["Meta+R"],
         "Shrink Width": [], "Grow Height": [], "Shrink Height": [], "Grow Width": [],
         "Reload Settings": ["Meta+Shift+C"],
-        // i3's exit, terminal and launcher (K17, K18): Plasma's logout prompt, the default
-        // terminal, KRunner.
+        // i3's exit, terminal and launcher (K17, K18): Plasma's way to leave (endSession), the
+        // default terminal, KRunner.
         "Exit": ["Meta+Shift+E"], "Terminal": ["Meta+Return"], "Launcher": ["Meta+D"],
     };
 

@@ -53,7 +53,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 | tabbed and stacked layouts, `focus parent`, urgency | Paul, 2026-10-21: "I don't use tabbed", "never used this"; urgency was shown in i3's bar, and there is no bar |
 | marks, the scratchpad, i3's restart | features the author never used are not built (Paul, 2026-10-24); restart is for a new i3 binary, and an install reloads kwin-i3 |
 | i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
-| a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key opens Plasma's) |
+| a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key leaves Plasma's way, as `endSession` says) |
 | i3's config file, `i3-msg` IPC and a command language (`bindsym`, `mode`, chains) | settings belong in System Settings (and `kwinrc`); a key's action takes no arguments, `mode` or chain (a setting may still shape what an action does, as `resizeStep` does for resize). No scripting surface is promised during the Stage (`LATER.md`, "Release prep") |
 | workspace names, and workspaces past 10 | decision 9 |
 | fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |

@@ -645,7 +645,7 @@ with `$mod` as the wizard's Win choice.
 | K14 | Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | = | the US Shift+digit symbols; refitted by position (below), as i3's `bindcode` |
 | K15 | Reload Settings | Meta+Shift+C | ≠ | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own |
 | K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **Kept** (Paul, 2026-10-27): none |
-| K17 | Exit | Meta+Shift+E | = | Plasma's logout prompt (`org.kde.LogoutPrompt` `promptLogout`), its confirmation as `i3-nagbar`'s. Built 2026-10-28 (redo stage 5) |
+| K17 | Exit | Meta+Shift+E | = | Leaving, Plasma's way, as `endSession` says (N22): `logout` (the default) Plasma's log out prompt (`org.kde.LogoutPrompt` `promptLogout`), its confirmation as `i3-nagbar`'s save that it goes ahead after 30 s; `shutdown` its shut down prompt (`promptShutDown`, the same countdown); `ask` its logout screen (`promptAll`, every choice, no countdown); `sleep` PowerDevil's `suspendToRam`, unasked. i3's exit ends the session because i3 is the session; inside Plasma, leaving has several forms, and picking one is still exit (Paul, 2026-10-31). Built 2026-10-28 (redo stage 5), `endSession` 2026-10-31 |
 | K18 | Terminal, Launcher | Meta+Return, Meta+D | = | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) is reported as a taken key; a holder that launches the same thing (KRunner's own `_launch`, the default terminal's) is not (call 63). Built 2026-10-28 |
 | K19 | Back-and-forth, next/prev, output moves (§4), the no-back-and-forth forms (S5), next and primary outputs (S8, S9) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
@@ -928,6 +928,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out |
 | N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
 | N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | kwin-i3's own (§7, §13) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), on neither the page nor the form (refinement stage 3; before, `holdTimeoutMs` was on both) |
+| N22 | `bindsym $mod+Shift+e exec i3-nagbar … exit` (in i3, rebinding the key) | `endSession` (`logout`, `sleep`, `shutdown`, `ask`), on the Keys page in End session's row | = | how Exit leaves, §8 K17 (Paul, 2026-10-31) |
 
 ### The settings page
 
@@ -963,8 +964,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   the key out of kwinrc.
 - **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
-  shifted symbol appears with the keys that type it on the current layout. Not visible while
-  kwin-i3 isn't running.
+  shifted symbol appears with the keys that type it on the current layout; End session's row has
+  `endSession` as a dropdown after its key (Sleep only where logind's `CanSuspend` is "yes", or
+  it is already the setting). Not visible while kwin-i3 isn't running.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and
   the US keys. A key whose holder can't be recorded or freed isn't given to kwin-i3 either.

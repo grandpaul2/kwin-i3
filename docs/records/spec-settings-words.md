@@ -168,7 +168,7 @@ Numbered on from §5. Today's text in the inventory; only what changes is listed
 | 36 | Workspace 3, no back-and-forth; Move to workspace 3, no back-and-forth | Workspace 3, no back and forth; Move to workspace 3, no back and forth (38 characters, over rule 8's 30 but inside the label column's 40; one word for one thing beats the count) |
 | 37 | … on this output; Move to the next workspace; Move to the next on this output | … on this screen; Move to next workspace; Move to next on this screen |
 | 38 | group "Outputs": Focus the output to the left; Move the window to the left output; Move the workspace to the left output; … the primary output | group "Screens": Focus left screen; Move window to left screen; Move workspace to left screen; … primary screen |
-| 39 | Open the default terminal; Open the launcher (KRunner); Exit (Plasma's logout prompt); Release every window (safety valve); Dump state for a bug report | Open terminal; Open launcher; Log out; Release all windows; Save state for a bug report |
+| 39 | Open the default terminal; Open the launcher (KRunner); Exit (Plasma's logout prompt); Release every window (safety valve); Dump state for a bug report | Open terminal; Open launcher; End session (2026-10-31, with its dropdown; was Log out); Release all windows; Save state for a bug report |
 
 **Window Rules**
 | # | today | after |
