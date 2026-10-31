@@ -22,9 +22,13 @@ Starting a kwin-i3 session. Please:
    press, with their note (`docs/debugging.md`). A fix needs the go (AGENTS.md, "Nothing goes live"). Captures already
    worked on are deleted at the end of the session that handled them, so all of these are new,
    except those an `OPEN.md` item names as kept.
+5. **A promotion due** (the maintainer's sessions only): `git log -1 --format=%cs origin/stable`
+   and `git log --oneline origin/stable..origin/main -- src plugin kcm widget package tools/capture | wc -l`.
+   A week or more since `stable` last moved, with code changed on main since: say a promotion is
+   due and offer to run `docs/testing.md` P6.
 
 Then a brief status:
-- repo: clean / dirty / ahead / behind, any leftover worktree, open pull requests
+- repo: clean / dirty / ahead / behind, any leftover worktree, open pull requests; a promotion due
 - live: kwin-i3 loaded, with any errors since login
 - captures waiting (count, newest), and the open items from `OPEN.md` in a line each
 - ready for tasks

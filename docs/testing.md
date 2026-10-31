@@ -71,7 +71,9 @@ answers it, in a worktree on branch `probe-<name>`, numbered 90 and up, run alon
 
 Users run the `stable` branch; the work lands on main, which the maintainer's desktop runs first,
 so every change is used daily before anyone else gets it (`CONTRIBUTING.md`). A promotion, when
-main is ready rather than on a schedule, moves `stable` to main once all of these hold:
+main is ready rather than on a schedule, and at least once a week while main has code changes
+`stable` lacks (session start says when one is due), moves `stable` to main once all of these
+hold:
 
 1. **A day of use**: main's script and plugins have run on the maintainer's desktop for a day or
    more since their last change, with no capture that is kwin-i3's.
