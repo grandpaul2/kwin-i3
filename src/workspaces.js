@@ -1,10 +1,10 @@
-// Workspaces and monitors, carried over from i3ws (~/.dotfiles, plasma/.../kwin/scripts/i3ws).
+// Workspaces and monitors, carried over from an earlier script, i3ws.
 // Workspace N is virtual desktop N. It lives on one monitor (its "home"), shown there or hidden;
 // Plasma 6.7's per-output desktops let each monitor show a different one.
 //
 // Homes are output *names*, always of a connected output: when a monitor goes away its workspaces
 // move to a remaining one for good, and a returning monitor gets back only the workspaces assigned
-// to it, as in i3 (randr.c; docs/plan.md decision 10, redo stage 4: src/outputs.js decides,
+// to it, as in i3 (randr.c; docs/plan.md decision 10: src/outputs.js decides,
 // src/kwin.js screensChanged acts).
 
 var Workspaces = (function () {
@@ -12,7 +12,7 @@ var Workspaces = (function () {
     var MAX = 10;           // kwin-i3's keys: Meta+1..0
 
     // i3 creates a workspace when it is first used: KWin's desktops up to num, appended so none
-    // moves, never removed (KWin saves the count; docs/records/spec-desktops-on-demand.md). A stock
+    // moves, never removed (KWin saves the count). A stock
     // Plasma has one.
     function ensure(num) {
         var from = workspace.desktops.length + 1;
@@ -133,6 +133,6 @@ var Workspaces = (function () {
         ordered: ordered,
         assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen, claimHome: claimHome,
         homes: function () { return home; },
-        reset: function () { home = {}; },      // the model rebuilt (docs/records/spec-desktop-changes.md)
+        reset: function () { home = {}; },      // the model rebuilt
     };
 })();

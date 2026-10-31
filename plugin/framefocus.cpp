@@ -26,7 +26,7 @@ FrameFocus::FrameFocus(TilingDrag *drag)
         const KConfigGroup group = config->group(QStringLiteral("Script-kwin-i3"));
         m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
         m_frameOnFloating = group.readEntry("frameOnFloating", false);
-        // Tiled windows have a ring in i3's frame look only (docs/records/spec-tiled-look.md).
+        // Tiled windows have a ring in i3's frame look only.
         m_tiledRing = group.readEntry("tiledLook", QStringLiteral("frame")) == QLatin1String("frame");
     };
     load();
@@ -123,7 +123,7 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
     // changed), and floating windows keep above. The raise is a stacking change, at which KWin
     // enters the owner at the position this motion has just stored, and pointerEnterEvent takes
     // that for a pointer that hasn't moved: focus follows mouse would never reach the owner, the
-    // pointer counting as in it from then on (probe 94, Paul's capture 2026-10-29). So the request
+    // pointer counting as in it from then on (probe 94, a capture 2026-10-29). So the request
     // its enter would have made, as for the ring below.
     Window *hover = input()->pointer()->hover();
     if (overTiledMargin(event->position, hover)) {
@@ -168,7 +168,7 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     m_taken &= ~event->button;
     // A press this filter doesn't act on goes on to KWin, except over a strip of kwin-i3's own
     // (gapstrips.h): KWin counts it a window (an InternalWindow is always a client) and would run
-    // its window actions on it, Meta+right resizing the strip itself (review 2026-10-28). There
+    // its window actions on it, Meta+right resizing the strip itself. There
     // the press goes nowhere, as on i3's root.
     const bool overStrip = GapStrips::isStrip(input()->pointer()->hover());
     const auto pass = [&](const QString &why) {
@@ -219,7 +219,7 @@ FrameFocus::Decision FrameFocus::decide(const QPointF &pos, Window *hover, Qt::M
         // A plain left or right press in the gap (over the desktop, or a tiled window's margin):
         // as on the ring of the nearest tiled window (TilingDrag::gapWindow, Z2's reach), on its
         // side facing the press. The gap is a handle, not a sliver of desktop: i3 shows none
-        // between windows (Paul, 2026-10-28, OPEN.md item 43).
+        // between windows.
         // Over a strip of kwin-i3's (gapstrips.h): the gap, as the root is in i3.
         const bool gap = !hover || hover->isDesktop() || GapStrips::isStrip(hover) || overTiledMargin(pos, hover);
         // Inside another tiled window's own frame, under this one's band: that window's pixel,

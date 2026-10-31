@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """What a screen reader gets from an app in the test KWin, through AT-SPI
-(docs/records/spec-settings-cleanup.md, "Tests"). Run inside tools/testkwin.sh after a11y_start
+. Run inside tools/testkwin.sh after a11y_start
 (tests/live/lib.sh), which gives the test its own accessibility bus.
 
   a11y.py dump APP                  the tree: [role] name, description, flags, labelled-by

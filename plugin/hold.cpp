@@ -32,7 +32,7 @@ using namespace KWin;
 
 // The blend state as found, put back whole when this goes out of scope: on or off, and the four
 // factors (KWin's item renderer sets its own per draw; anything later in the chain may not;
-// review 2026-10-28: two paths left the function changed, the others kept only RGB).
+// a path that leaves the function changed breaks the others, which keep only RGB).
 namespace
 {
 struct BlendState {
@@ -58,7 +58,7 @@ struct BlendState {
 };
 }
 
-// The config form's group (docs/records/spec-settings.md); the old [kwin-i3-hold] keys are still read
+// The config form's group; the old [kwin-i3-hold] keys are still read
 // where the new ones are missing.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
@@ -154,7 +154,7 @@ void Hold::loadConfig()
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 200)
                                                 : old.readEntry("TimeoutMs", 200);   // tests raise it to capture mid-hold
     // A layout never waits longer than 2 s, nor not at all (a negative timer never fires: the
-    // hold would wait on a window for good; review 2026-10-28). 10 ms: settings.js's minimum.
+    // hold would wait on a window for good). 10 ms: settings.js's minimum.
     m_timeoutMs = std::clamp(m_timeoutMs, 10, 2000);
     // The frame's keys (src/settings.js); not affected by holdEnabled.
     m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
@@ -465,7 +465,7 @@ void Hold::armHidden(EffectWindow *w, int ms)
 
 void Hold::HoldNew(const QString &id, int ms)
 {
-    ms = std::min(ms, 1000);    // kwin-i3 asks 200: a larger ask would keep a window unseen (review 2026-10-28)
+    ms = std::min(ms, 1000);    // kwin-i3 asks 200: a larger ask would keep a window unseen
     EffectWindow *w = nullptr;
     const auto windows = effects->stackingOrder();
     for (EffectWindow *x : windows) {
@@ -620,7 +620,7 @@ void Hold::release(bool timedOut)
              .arg(timedOut ? QStringLiteral(", TIMED OUT waiting for ") + late.join(QStringLiteral("; ")) : QString()));
     // Taken out whole: unrefWindow can delete a window, and windowDeleted then edits these lists.
     // One container only: a second copy would detach, and its visible refs (reset below) would
-    // not be these, which then outlived the window (review 2026-10-28: a use after free).
+    // not be these, which then outlived the window (a use after free).
     QHash<EffectWindow *, Held> held = std::exchange(m_held, {});
     for (auto it = held.cbegin(); it != held.cend(); ++it) {
         if (it->snapshot) {
@@ -757,7 +757,7 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
     KI3_PAINTED;
 }
 
-// i3's bar shows the mode's name; here a banner in the focused window (Paul's call 34), in the
+// i3's bar shows the mode's name; here a banner in the focused window, in the
 // look of the settings page's inline messages: the frame's active colour, white text, rounded.
 // Drawn once as an image at the output's scale and kept as a texture; placed at the top centre
 // of wherever the window is drawn, in device pixels, as the ring is. KWin 6.7.5 gives an effect
@@ -773,7 +773,7 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
     Banner &banner = m_banners[scale];
     if (!banner.texture) {
         // i3's bar shows only the mode's name ("resize", i3bar xcb.c draw_button); here with the
-        // way out (Paul, 2026-10-28, OPEN.md item 42).
+        // way out.
         const QString text = QStringLiteral("Resize (Esc)");
         QFont font = QGuiApplication::font();
         const QFontMetrics fm(font);
@@ -974,7 +974,7 @@ void Hold::SetDragCursor(bool on, int shape)
 
 void Hold::SetDropIndicator(int x, int y, int width, int height)
 {
-    // Far past any output, the rounding to device pixels would overflow (review 2026-10-28).
+    // Far past any output, the rounding to device pixels would overflow.
     const auto clamp = [](int v) { return std::clamp(v, -100000, 100000); };
     x = clamp(x), y = clamp(y), width = clamp(width), height = clamp(height);
     const RectF drop = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
@@ -1107,7 +1107,7 @@ void Hold::resetRadii()
 // that side full height (x.c:591). With a radius (device px) each bar reaches that far inside
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
 // A hidden side is left out, its corners with it (hide_edge_borders: the side at the output's
-// edge; the strip stays empty, docs/records/spec-redo-7-look.md C).
+// edge; the strip stays empty).
 QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, double radius, const Ring &how) const
 {
     const double f = m_frameWidth, r = radius;

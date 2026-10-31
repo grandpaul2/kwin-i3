@@ -1,6 +1,6 @@
 // Unit tests for src/placement.js (node --test): where a new window goes and which outside switch
-// it caused (docs/records/spec-redo-1-new-windows.md, A-C; approved by Paul, 2026-10-28). The cases are the
-// spec's and the 17:05 capture's (Prism Launcher's dialog), against i3 4.24's manage.c.
+// it caused . The cases include a
+// capture's (Prism Launcher's dialog), against i3 4.24's manage.c.
 const test = require("node:test");
 const assert = require("node:assert");
 const P = require("../../src/placement.js");

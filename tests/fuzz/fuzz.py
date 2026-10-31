@@ -24,7 +24,7 @@ KEYS = list(json.load(open(os.path.join(ROOT, "tests", "keys.json"))))   # never
 # Meta+Shift+N's action id kept its "(symbol)" (src/kwin.js registerKeys): without it, from
 # 2026-10-24 until 2026-10-30, the fuzzer's moves to a workspace invoked nothing.
 KEYS += ["Workspace %d" % n for n in range(1, 5)] + ["Move to Workspace %d (symbol)" % n for n in range(1, 5)]
-# The unbound ones, as in i3 (docs/records/spec-workspace-commands.md): sticky, back-and-forth,
+# The unbound ones, as in i3: sticky, back-and-forth,
 # next/prev, the outputs. A quarter of the key draws, so the bound keys keep most of them.
 UNBOUND = ["Sticky Toggle", "Workspace Back and Forth", "Move to Workspace Back and Forth"]
 UNBOUND += ["%s %s%s" % (v, d, o) for v in ("Workspace", "Move to Workspace") for d in ("Next", "Prev") for o in ("", " on Output")]
@@ -179,7 +179,7 @@ class Kwin:
                    "invokeShortcut", "s", "kwin-i3 " + a["name"])
         elif op == "selfresize":
             # A frame change kwin-i3 didn't ask for, as a client resizing itself (Firefox's
-            # session restore; docs/records/spec-self-resize.md). It is asked back at most once a second
+            # session restore). It is asked back at most once a second
             # per window, so wait that out: a settle inside it would catch the refit half done.
             self.js('workspace.windowList().forEach(function (w) { if (w.caption === %s) '
                     'w.frameGeometry = { x: w.x, y: w.y, width: %d, height: %d }; });'
@@ -212,8 +212,8 @@ class Kwin:
             self.effect = a["state"] == "load"
             time.sleep(0.3)
         elif op == "desktop":
-            # A desktop added, removed or moved outside kwin-i3 (Plasma's pager, System Settings;
-            # docs/records/spec-desktop-changes.md): the workspaces are adopted again.
+            # A desktop added, removed or moved outside kwin-i3 (Plasma's pager, System
+            # Settings): the workspaces are adopted again.
             self.js({"add": 'workspace.createDesktop(%d, "fz");',
                      "remove": "workspace.removeDesktop(workspace.desktops[%d]);",
                      "move": "workspace.moveDesktop(workspace.desktops[%d], %d);"}[a["do"]] % tuple(a["at"]))

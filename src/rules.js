@@ -1,10 +1,10 @@
-// Which kind each window is (docs/behaviour.md §3, docs/records/spec-redo-3-kinds-rules.md): i3's kinds,
+// Which kind each window is (docs/behaviour.md §3): i3's kinds,
 // decided as i3's manage.c decides them, then the user's rules in i3's own syntax (`forWindow`:
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
 // kwinrc's [Script-kwin-i3] group (src/settings.js); `floatingWorkspaces` is read as rules too.
 //
 // Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
-// output, redo stage 9) are in the tree; "dock" (a panel), "root" (the desktop window) and
+// output) are in the tree; "dock" (a panel), "root" (the desktop window) and
 // "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) are
 // kept out of it.
 
@@ -20,7 +20,7 @@ var Rules = (function () {
     // for one that may be in the tree. Plasma's system windows are Normal windows on Wayland,
     // where i3 would never see them: a built-in list, not a setting (R5). Spectacle's region
     // overlays (one Normal fullscreen window per output, probe 93) are override-redirect too
-    // (Paul's call 60): in the tree they would gather on the focused workspace. An
+    // in the tree they would gather on the focused workspace. An
     // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu in i3.
     var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
                             "kwin_wayland", "ksmserver-logout-greeter"];
@@ -45,7 +45,7 @@ var Rules = (function () {
     // KWin calls every fullscreen window not resizeable (XdgToplevelWindow::isResizable), so one
     // is judged by its own size limits, KWin's own last test (min < max on either axis; no max
     // is INT_MAX). Read as "fixed size", a caption change while fullscreen floated a tiled
-    // browser (docs/records/spec-fullscreen-tree.md, part B). A fullscreen request not yet applied
+    // browser. A fullscreen request not yet applied
     // (resizeable false, fullScreen false) still reads "float": the plan's known limit.
     function fixedSize(w) {
         if (!w.fullScreen) return !w.resizeable;
@@ -131,7 +131,7 @@ var Rules = (function () {
             if (c === "\\" && quoted && i + 1 < text.length) { cur += c + text.charAt(++i); continue; }
             if (c === "\"") quoted = !quoted;
             // A line break ends a rule whatever the quotes: one stray " (a typo) no longer joins
-            // the lines below into it, losing their ;-separated rules too (review 2026-10-28).
+            // the lines below into it, losing their ;-separated rules too.
             if (c === "\n" || c === "\r") { out.push(cur); cur = ""; quoted = false; continue; }
             if (c === ";" && !quoted) { out.push(cur); cur = ""; continue; }
             cur += c;
@@ -235,7 +235,7 @@ var Rules = (function () {
         return null;
     }
     // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
-    // make it sticky"; redo stage 9): in the tree, floating. The rules run after, as i3's
+    // make it sticky"): in the tree, floating. The rules run after, as i3's
     // for_window does (run_assignments, manage.c:588): `floating disable` tiles it, which here
     // takes it off all desktops (KWin's tiles belong to one desktop, §3 X4; kwin.js adopts it so);
     // `floating enable` leaves it sticky. ctx.current "sticky" for one in the tree already.
@@ -244,7 +244,7 @@ var Rules = (function () {
         var kept = keptOut(w);
         if (kept) return kept;
         // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
-        // kwin.js relocate): a caption change then floated a tiled window for good (review 2026-10-28).
+        // kwin.js relocate): a caption change then floated a tiled window for good.
         var sticky = w.onAllDesktops && !ctx.crossing;
         var kind = sticky ? (ctx.current === "tiling" ? "tiling" : "sticky")
                           : ctx.current === "sticky" ? "floating" : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
@@ -262,9 +262,9 @@ var Rules = (function () {
     // first rule that matches, else null. The window's kind before rules is what `floating` and
     // `tiling` criteria see (i3 runs assign at manage, before for_window).
     // No kind yet: i3 reads assignments before the con exists (manage.c), so a `floating` or
-    // `tiling` criterion never matches in an assign (match.c, window_mode; review 2026-10-28).
+    // `tiling` criterion never matches in an assign (match.c, window_mode).
     // Both kinds, as i3 applies both: the first matching workspace assignment, then the first
-    // matching output one on top of it (manage.c:289, :354; review 2026-10-28). -> null, or
+    // matching output one on top of it (manage.c:289, :354). -> null, or
     // { workspace, output } with one or both set.
     function assignFor(w) {
         var rules = current().assign, out = null;

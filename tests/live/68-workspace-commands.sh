@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The workspace commands with no default key (docs/records/spec-workspace-commands.md), on the two virtual
+# The workspace commands with no default key, on the two virtual
 # monitors (Virtual-0 at x 0, Virtual-1 at x 1280): back-and-forth, its auto form, next/prev and
 # on-output, focus output, move to output (focus stays), move workspace to output (the source
 # shows the one it showed before, else an unused one; a floating window goes along).
@@ -158,7 +158,7 @@ check "6 shows on the second monitor"       poll shows Virtual-1 6
 check "k fills the second monitor"          poll geom_is k "1280,0 1280x720"
 check "and is still fullscreen"             poll is_fs
 
-# 12. i3's --no-auto-back-and-forth (unbound, redo stage 5): with the auto setting on, Meta+6 on 6
+# 12. i3's --no-auto-back-and-forth (unbound): with the auto setting on, Meta+6 on 6
 #     would go back, "Workspace 6 (no back-and-forth)" stays; and the outputs by next (KWin's
 #     order, wrapping) and primary (the first).
 key "Fullscreen"

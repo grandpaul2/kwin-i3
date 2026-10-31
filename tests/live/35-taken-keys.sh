@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # stock: own
-# The keys kwin-i3 didn't get (docs/records/spec-taken-keys.md): a key another action holds is shown on
+# The keys kwin-i3 didn't get: a key another action holds is shown on
 # kwin-i3's action too, but only the first holder's fires. At load, one notification names the
 # taken ones; make take-keys frees them and make restore-keys gives them back.
 source "$(dirname "$0")/lib.sh"
@@ -30,13 +30,13 @@ wait_log 'kwin-i3 loaded$'
 # 1. One notification, naming exactly the two active holders' keys; the inactive one is logged.
 #    (The test KWin's config frees Plasma's stock Meta+D, Peek at Desktop, and Meta+R, Spectacle's
 #    region recording, which kwin-i3's Launcher and Resize Mode keys collide with on a stock
-#    Plasma, as it frees Meta+arrows: tools/testkwin.sh; redo stage 5.)
+#    Plasma, as it frees Meta+arrows: tools/testkwin.sh.)
 check "the check ran"                       wait_log '^.{9}TAKEN checked [0-9]+ keys, 2 taken$'
 check "one notification"                    poll notes_are 1
 taken=$(grep -E '^.{9}TAKEN [^c]' "$KI3_LOG" | cut -c16- | cut -d: -f1 | sort | tr '\n' ' ')
 check "it names Meta+E and Meta+Left: '$taken'" test "$taken" == "Meta+E Meta+Left "
 check "the notice says so"                  grep -q "Meta+Left: Quick Tile Window to the Left (KWin)" "$KI3_TMP/notify.out"
-# Two parts: the taken keys, and (no plugins here) the two keys that need them (redo stage 5).
+# Two parts: the taken keys, and (no plugins here) the two keys that need them.
 check "app, icon, summary (Plasma shows the app name: no prefix)" grep -qE "^NOTIFY 'kwin-i3' 'view-split-left-right' '2 things to fix in this setup'" "$KI3_TMP/notify.out"
 check "the taken keys are one part"         grep -q "keys are taken by other shortcuts:" "$KI3_TMP/notify.out"
 check "Meta+H's holder is inactive: logged, not reported" wait_log '^.{9}TAKEN-INACTIVE Meta\+H: Launch Ghost App'

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Meta+F and Meta+Shift+Q are kwin-i3's own keys, running KWin's own actions: a stock Plasma
-# binds neither, and the test KWin's config doesn't either (docs/records/spec-own-keys.md).
+# binds neither, and the test KWin's config doesn't either.
 source "$(dirname "$0")/lib.sh"
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
 load_kwin_i3

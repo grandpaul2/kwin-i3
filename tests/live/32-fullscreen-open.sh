@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# A fullscreen window stays in the tree (docs/records/spec-fullscreen-tree.md, from Paul's capture of
-# 2026-10-23 23:25: Firefox fullscreen, a terminal opened there, "nothing happened"). KWin refuses
+# A fullscreen window stays in the tree (from a capture: Firefox fullscreen, a terminal opened there, "nothing happened"). KWin refuses
 # to tile a fullscreen window, and the rebuild of the tiles for the newcomer lost it its tile, so
 # kwin-i3 floated it, monitor-sized and above the tiles. Now (A) it stays in the tree, out of the
 # tiles until fullscreen ends; (B) the rules judge a fullscreen window by its size limits, not by
@@ -133,7 +132,7 @@ check "after the reload z is still active"  active_is z
 # of the row (still in the tree, still fullscreen; it joins the tiles there when it ends).
 check "1 is as it was, p last"              wait_tree 1 "H[c e p!]"
 
-# i3's popup_during_fullscreen (§10 V6, redo stage 8), on workspace 5: for each value, f goes
+# i3's popup_during_fullscreen (§10 V6), on workspace 5: for each value, f goes
 # fullscreen (its own dialog 3 s after it opens), o opens behind it (its dialog 1 s after).
 # o's dialog: smart and ignore leave the focus with f; leave_fullscreen ends f's fullscreen
 # (the dialog opens without the focus); all gives the dialog (floating) the focus. Then f's own
@@ -185,7 +184,7 @@ key "Workspace 1"
 # A fullscreen window KWin keeps in its tile (no rebuild since, as Firefox alone on its
 # workspace) and a padding change: KWin's Tile::setPadding resizes every window in the tile,
 # fullscreen or not, and the refit skipped fullscreen windows, so it stayed fullscreen at its
-# tile's size, the wallpaper around it (Paul's capture 2026-10-27 03:45, after a reload: the new
+# tile's size, the wallpaper around it (A capture 2026-10-27 03:45, after a reload: the new
 # instance wrote padding 4, then 6 once the effect answered). A gap or frame-width change that
 # keeps the inset does the same.
 fills_output() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, o = w.output.geometry; log(f.x === o.x && f.y === o.y && f.width === o.width && f.height === o.height); } })")" == "true" ]]; }
@@ -205,7 +204,7 @@ check "f2 is still in its tile"             in_tile f2
 pad_f2_root 10
 m=$(mark); key "Focus Mode Toggle"; wait_log '^.{9}TREE 4 ' "$m"; sleep 0.5
 check "kwin-i3's padding back: f2 still fills its monitor" fills_output f2
-# The same with f2 answering after the pass, as Firefox did on a reload (Paul's capture
+# The same with f2 answering after the pass, as Firefox did on a reload (A capture
 # 2026-10-28 20:06): KWin changes the frame only when the client answers, so the pass saw the
 # monitor-sized frame, and f2 reached its tile's size afterwards. Stopped, it answers only at -CONT.
 f2pid=$(pgrep -f "testclient.py --title f2" | head -1)

@@ -21,7 +21,7 @@ ResizeMode::ResizeMode()
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3mode"), QStringLiteral("net.local.kwini3mode"),
                                                  this, QDBusConnection::ExportAllSlots);
     // The script asks again (Mode): a helper replaced while the mode was on (make plugin-install)
-    // starts with it off, and the script would otherwise go on ignoring its keys (review 2026-10-30).
+    // starts with it off, and the script would otherwise go on ignoring its keys.
     invoke(QStringLiteral("kwin-i3 Mode Changed"));
 }
 
@@ -36,7 +36,7 @@ ResizeMode::~ResizeMode()
 
 // Always told back, even when nothing changes: a helper loaded fresh (make plugin-install) while
 // the script still thought the mode on would otherwise never answer the script's "leave", and
-// kwin-i3's keys stayed ignored (review 2026-10-28).
+// kwin-i3's keys stayed ignored.
 void ResizeMode::SetMode(const QString &mode)
 {
     if (mode == QStringLiteral("resize")) {

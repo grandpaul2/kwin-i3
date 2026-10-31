@@ -1,9 +1,9 @@
 // The settings page's reading and writing of the script's setting strings
-// (docs/records/spec-settings-cleanup.md): the page edits rows and lists, kwinrc keeps the strings the
+// the page edits rows and lists, kwinrc keeps the strings the
 // script parses (src/settings.js). Pure functions, unit-tested in tests/unit/kcm-settings.test.js.
 
 // "1=DP-4 HDMI-A-1, 2=DP-6" -> { 1: "DP-4 HDMI-A-1", 2: "DP-6" }: each workspace's list of outputs
-// as the script reads it (the first connected one wins; redo stage 4), N 1-10, entries it can't
+// as the script reads it (the first connected one wins), N 1-10, entries it can't
 // read dropped. parseOutputs gives the first output of each list, what the page's monitor box shows.
 function parseOutputLists(text) {
     const out = {};
@@ -34,9 +34,9 @@ function formatWorkspaces(list) {
     return parseWorkspaces(list.join(",")).join(", ");
 }
 
-// The window rules (docs/records/spec-redo-3-kinds-rules.md, E): i3's for_window and assign rules as text,
-// one rule per line or `;`-separated (the script's reading, src/rules.js split), until stage 10's
-// redesign. splitRules gives the rules, trimmed, empty ones dropped.
+// The window rules: i3's for_window and assign rules as text,
+// one rule per line or `;`-separated (the script's reading, src/rules.js split).
+// splitRules gives the rules, trimmed, empty ones dropped.
 function splitRules(text) {
     const out = [];
     let cur = "", quoted = false;
@@ -74,7 +74,7 @@ function workspaceCounts(outputsText, floatingText) {
     return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
 }
 
-// ---- the rules as rows (redo stage 10, docs/records/spec-redo-10-settings-page.md) -------------------
+// ---- the rules as rows -------------------
 // A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
 // workspace (N) or output (name), src }, when the rule's criteria are among the four the page
 // shows (class, title, window_role, window_type; src/rules.js parseCriteria's grammar); any
@@ -101,7 +101,7 @@ function parseCriteria(text) {
 }
 const SHOWN = ["class", "title", "window_role", "window_type"];
 // A rule the page can't show as a row stays as its text, in the setting it came from (`assign`:
-// review 2026-10-28, an unreadable assign rule moved into forWindow at the next save and ran there).
+// an unreadable assign rule would otherwise move into forWindow at the next save and run there).
 function parseRule(src, assign) {
     const raw = Object.assign({ text: src, src, fromAssign: !!assign }, RAW);
     const m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(src);
@@ -110,7 +110,7 @@ function parseRule(src, assign) {
     const rest = m[2].trim();
     const row = { cls: crit.class || "", title: crit.title || "", role: crit.window_role || "", type: crit.window_type || "", src };
     // Nothing a row can show (`[class=""]`, every window): kept as its text, else the next save
-    // dropped it as an empty row (review 2026-10-28).
+    // dropped it as an empty row.
     if (!row.cls && !row.title && !row.role && !row.type) return raw;
     if (!assign) {
         const f = /^floating\s+(enable|disable)$/.exec(rest);
@@ -167,7 +167,7 @@ function plainName(pattern) {
     const m = /^\^((?:[^.*+?^${}()|[\]\\]|\\[.*+?^${}()|[\]\\])*)\$$/.exec(String(pattern || ""));
     return m ? m[1].replace(/\\(.)/g, "$1") : null;
 }
-// What the application field stores for what was typed (docs/records/spec-settings-words.md, step 5): a
+// What the application field stores for what was typed: a
 // plain name matched whole, or, with any of * + ? ^ $ { } ( ) | [ ] \ in it, i3's regular
 // expression as typed.
 function classFromField(text) {

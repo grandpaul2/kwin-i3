@@ -210,7 +210,7 @@ QString TilingDrag::state()
 {
     m_unanswered.stop();
     // kwin-i3 answering late (a busy script, past the 500 ms) is still there: the timeout's "gone"
-    // is undone, else every drag stayed off until the next reconfigure (review 2026-10-28).
+    // is undone, else every drag stayed off until the next reconfigure.
     if (m_offUnanswered) {
         m_offUnanswered = false;
         m_on = true;
@@ -408,7 +408,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     const bool metaShift = mods == (Qt::MetaModifier | Qt::ShiftModifier);
     const bool tiled = window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
     if (metaShift && !tiled && m_floating.contains(window->internalId().toString())) {
-        // Float to tile (beyond i3, Paul 2026-10-28, §9 G13): a floating window of kwin-i3's is
+        // Float to tile (beyond i3, §9 G13): a floating window of kwin-i3's is
         // dragged as a tiled one, with no activation (G1), and tiled where it is dropped. With
         // tiling_drag off or titlebar, KWin's move, as i3's floating_drag_window ignores Shift.
         if (m_shiftLatched) {
@@ -426,8 +426,8 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return false;
     }
     if (metaShift) {
-        // Meta+Shift: pull it out and float it (beyond i3, Paul 2026-10-26: the swap no longer
-        // needs Shift). KWin's own move, as Meta+drag was before the tiling drag: the window
+        // Meta+Shift: pull it out and float it (beyond i3; the swap
+        // needs no Shift). KWin's own move, as Meta+drag was before the tiling drag: the window
         // leaves its tile at its floating size and follows the pointer; kwin-i3 floats it where
         // it is dropped. KWin's move takes the motions and the release from here. Once per press
         // of the keys, as float to tile (G13): held, a second press does nothing.
@@ -444,7 +444,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     if (mods == Qt::MetaModifier) {
         // Anywhere in the window, with no threshold (i3's floating modifier, click.c), and no
         // activation: i3 starts the drag before it focuses anything (step 2 before 3), and after
-        // the drop the focus stays unless the dragged window had it (§9 G1; redo stage 6). With
+        // the drop the focus stays unless the dragged window had it (§9 G1). With
         // tiling_drag off or titlebar (G3): the press is swallowed all the same, or KWin's
         // window-action filter would float the window (G4's reason); it activates, as G4 does.
         if (!m_modifierDrag) {

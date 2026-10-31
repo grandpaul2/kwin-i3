@@ -1,4 +1,4 @@
-// Qt key codes as people read them, for the load-time notice (docs/records/spec-taken-keys.md):
+// Qt key codes as people read them, for the load-time notice:
 // kglobalaccel answers in codes, the notice speaks in "Meta+Shift+Left". The modifiers come in
 // kwin-i3's own order (its key table: Meta, Ctrl, Alt, Shift), then the key.
 

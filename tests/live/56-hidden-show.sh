@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Paul's capture, 2026-10-24 19:10: a terminal sent to a hidden workspace (Meta+Shift+3) showed,
+# A capture, 2026-10-24 19:10: a terminal sent to a hidden workspace (Meta+Shift+3) showed,
 # when that workspace was next shown (Meta+3), as a small box for a moment, then at its tile.
 # Every frame it shows on the way must be its tile.
 source "$(dirname "$0")/lib.sh"

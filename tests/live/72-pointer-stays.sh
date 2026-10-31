@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: xwayland
 # The pointer follows focus only when focus changes monitor (i3's mouse_warping output), never
-# because a window closed on the monitor the pointer is on (Paul, 2026-10-25: closing the start
+# because a window closed on the monitor the pointer is on (once, closing the start
 # menu sent the pointer to the middle of the left monitor). Virtual-0 at x 0, Virtual-1 at x 1280.
 # The panel popup is a stand-in (tools/popupclient.py: the test KWins have no Plasma panel).
 source "$(dirname "$0")/lib.sh"
@@ -19,7 +19,7 @@ client --title a
 client --title b
 check "a, b on the left monitor"            wait_tree 1 "H[a b*]"
 
-# 1. The pointer parked on the right monitor's empty workspace: i3's crossing (redo stage 2, §5
+# 1. The pointer parked on the right monitor's empty workspace: i3's crossing (§5
 #    B2) gives the focus to that workspace, nothing to activate there, and the pointer stays (no
 #    warp: it is there already). A panel popup opens and closes there: the focus stays on the
 #    workspace, the pointer stays.

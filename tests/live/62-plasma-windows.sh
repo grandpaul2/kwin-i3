@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # needs: plugin
-# Window modes, pieces (iii)+(iv) (docs/records/spec-window-modes.md): a workspace of Plasma windows
+# Window modes, pieces (iii)+(iv): a workspace of Plasma windows
 # (floatingWorkspaces), the floating mark kept by the effect (decision 5c), the frame on floating
 # windows (frameOnFloating).
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
-ACT=76,120,153     # the focused class (§7 L3; the floating colours went with redo stage 7)
+ACT=76,120,153     # the focused class (§7 L3; floating windows have no colours of their own)
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 floating() { [[ "$(tree "$2")" == *"~$1"* ]]; }
@@ -56,8 +56,7 @@ client --title t --color blue
 check "t tiles on workspace 1"              wait_tree 1 "H[t*]"
 
 # 6. The frame on floating windows: p loses its title bar, the frame in the colour classes (§7
-#    L11, redo stage 7: the floating colours went; p is the focused window). Found red here
-#    2026-10-28 (redo stage 9): stage 7 did not run 62.
+#    L11; p is the focused window).
 key "Workspace 3"
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "p") workspace.activeWindow = w; });' >/dev/null
 form_set frameOnFloating true

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # make kcm-install: put kwin-i3's System Settings page (kcm/, make kcm) where System Settings finds
-# it (docs/records/spec-settings-page.md, decision B).
+# it.
 #   KI3_KCM_ROOT   the Qt plugin dir (default ~/.local/lib/kwin-i3/kcm-plugins). Its own dir, not
 #                  the plugins' one: it goes on the whole session's QT_PLUGIN_PATH (environment.d),
 #                  and the plugins' dir is KWin's alone (version-locked KWin plugins; until

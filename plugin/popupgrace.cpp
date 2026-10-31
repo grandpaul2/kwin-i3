@@ -7,7 +7,7 @@
 #include <KConfigGroup>
 #include <KSharedConfig>
 
-// The grace a panel popup gets (Paul, 2026-10-25): long enough to forgive a pointer that strays
+// The grace a panel popup gets: long enough to forgive a pointer that strays
 // across the gap or onto a window and comes back.
 static const int s_graceMs = 1500;
 

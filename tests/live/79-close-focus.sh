@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
 # Closing the focused window focuses the one used before it, as i3 (con_next_focused, con.c:1651).
-# Paul, 2026-10-25 ("whenever I close a window, the focus always moves to the most left window"),
-# his capture at 17:28: H[A V[A A*]], the pointer over the left one and back (focus follows
+# Found from a capture, where closing a window always focused the leftmost one: H[A V[A A*]], the pointer over the left one and back (focus follows
 # mouse: both activated), Meta+Shift+Q: KWin activates the left one, the most recent in its
 # one-list focus chain (focuschain.cpp:252), and kwin-i3 followed. i3 looks in the closed
 # window's own container first: the one above.
@@ -27,7 +26,7 @@ echo "    after closing d: tree $(tree 1)  KWin active $(active)"; after "$m" | 
 check "closing d focuses b, the one above"  wait_tree 1 "H[a V[b*]]"
 check "  and KWin agrees"                   poll active_is b
 
-# i3's next focus for every close (§5 C7, redo stage 6): a top-level window, and a floating one,
+# i3's next focus for every close (§5 C7): a top-level window, and a floating one,
 # with the pointer resting on another window, which KWin's NextFocusPrefersMouse would pick.
 activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
 activate a

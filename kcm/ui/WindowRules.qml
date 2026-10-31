@@ -1,5 +1,5 @@
-// The Window Rules sub-page (docs/records/spec-redo-10-settings-page.md; Paul's call 39: rows with
-// fields; docs/records/spec-settings-words.md step 5: one line each): one rule of i3's for_window and
+// The Window Rules sub-page (rows with
+// fields): one rule of i3's for_window and
 // assign per line, in the order the script runs them: its application (a whole name shown plain)
 // and what it does (floats, tiles, opens on a workspace, opens on a monitor), its title, role and
 // type on a second line when set or asked for. The defaults are a group of their own when they
@@ -19,7 +19,7 @@ KCM.SimpleKCM {
 
     readonly property var settings: kcm.settings
     // Normalised as the page writes rules (formatRule), so the "default" mark doesn't depend on
-    // the order of the criteria in the shipped text (review 2026-10-28).
+    // the order of the criteria in the shipped text.
     readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow")).map((t) => Logic.formatRule(Logic.parseRule(t, false)))
     // The rows, read from the settings whenever they change from outside (Reset, Defaults), and
     // written back as one string each on every edit. `editing` stops the read-back mid-edit.
@@ -70,7 +70,7 @@ KCM.SimpleKCM {
         function onWindowPicked(info) {
             const value = info.resourceClass || info.resourceName || "";
             if (page.picking && value && page.rows.some((r) => r.cls === Logic.wholeClass(value))) {
-                // A second pick of the same application: no second row (review 2026-10-28).
+                // A second pick of the same application: no second row.
                 page.report(Kirigami.MessageType.Information, i18n("%1 already has a rule.", value));
             } else if (page.picking && value) {
                 page.add({ cls: Logic.wholeClass(value) });
@@ -165,7 +165,7 @@ KCM.SimpleKCM {
             Component.onCompleted: sync()
             onActivated: currentValue === "none" ? parent.write(-1, -1) : currentValue === "default" ? parent.write(0, 0) : parent.write(parent.w > 0 ? parent.w : Screen.width, parent.h > 0 ? parent.h : Screen.height)
             // A size starts from the screen's, never 1x1 (the largest size: every floating window
-            // shrunk to a pixel, review 2026-10-28).
+            // shrunk to a pixel).
             Accessible.name: i18nc("@label:listbox", "%1 floating window size", what)
             KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
         }
@@ -193,7 +193,7 @@ KCM.SimpleKCM {
     }
 
     // The defaults, when they run first (as kwin-i3 ships them): their own group above yours, as
-    // they run; else no groups, each default only marked (docs/records/spec-settings-words.md, step 5).
+    // they run; else no groups, each default only marked.
     // The installed applications, [{ name, id }] by name (kcm.applications); id is the class.
     readonly property var apps: kcm.applications()
     function appOf(id) { return apps.find((a) => a.id === id) || null; }
@@ -260,7 +260,7 @@ KCM.SimpleKCM {
                         }
                         // The application: chosen by name from the installed ones, or typed. A
                         // whole name shows as the application's name if installed, else plain; any
-                        // other pattern as typed, in monospace (docs/records/spec-settings-words.md §7).
+                        // other pattern as typed, in monospace.
                         QQC2.ComboBox {
                             id: appBox
                             visible: !ruleRow.isRaw
@@ -360,7 +360,7 @@ KCM.SimpleKCM {
                         }
                         Item { visible: !ruleRow.isRaw; Layout.fillWidth: true }
                         // A row with no pattern is not written (it would match every window): said, not
-                        // lost silently at the next reopening (review 2026-10-28).
+                        // lost silently at the next reopening.
                         QQC2.Label {
                             visible: !ruleRow.isRaw && Logic.formatRule(ruleRow.rule) === ""
                             text: i18nc("@info:status a rule with no pattern", "not saved: needs a pattern")

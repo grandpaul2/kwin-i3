@@ -1,4 +1,4 @@
-// The gaps are kwin-i3's, as i3's are i3's (docs/records/spec-gap-ownership.md, OPEN.md item 43). i3
+// The gaps are kwin-i3's, as i3's are i3's. i3
 // reparents every client into a frame window of its own, so X11 clips the client to its tile and
 // the space between tiles is the window manager's: the arrow there, and i3's press. On Wayland an
 // app that draws its own frame (VS Code, Chromium, GTK header bars) keeps an invisible resize band

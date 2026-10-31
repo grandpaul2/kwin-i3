@@ -6,14 +6,14 @@ on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
-# The kinds (docs/behaviour.md §3, redo stage 3): KRuler floats by a default rule, at its own size.
+# The kinds (docs/behaviour.md §3): KRuler floats by a default rule, at its own size.
 client --title a
 client --title ruler --app-id org.kde.kruler
 client --title b
 check "KRuler floats (a default rule)"      wait_tree 1 "H[a b*] ~ruler"
 check "and keeps its own size"              geom_is ruler "440,196 400x328"
 kclose ruler
-# a managed window made sticky (on all desktops) floats, in the tree (§3 R3, X4, redo stage 9);
+# a managed window made sticky (on all desktops) floats, in the tree (§3 R3, X4);
 # back on one desktop it stays floating there; Floating Toggle tiles it again
 on b 'w.onAllDesktops = true;'
 check "made sticky: floating, focused"      wait_tree 1 "H[a] ~b*"
@@ -68,7 +68,7 @@ back_in_tree() {
 }
 check "the minimized window comes back into the tree" poll back_in_tree
 
-# Minimizing the focused window (§5 C9, i3's move scratchpad; redo stage 6): the focus goes to i3's
+# Minimizing the focused window (§5 C9, i3's move scratchpad): the focus goes to i3's
 # next (the one used before), and a focus key never lands on the minimized one. The tree is
 # V[c a b] here (a came back after the focused c, the known limit above).
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")')" == "$1" ]]; }

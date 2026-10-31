@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # needs: xwayland
 # needs: plugin
-# Paul, 2026-10-25: "Show Panel Configuration" in the panel's menu did nothing
-# (docs/records/bug-panel-config.md). Plasma turns Show Desktop on for its edit mode as the menu closes.
+# "Show Panel Configuration" in the panel's menu once did nothing. Plasma turns Show Desktop on for its edit mode as the menu closes.
 # The menu closing is a window removed, so kwin-i3 ran a passive focus pass; the pass found the
 # desktop active, which it took for "nothing has the focus", and gave the focus back to the tile.
 # Activating a window hidden by Show Desktop turns Show Desktop off (kwin activation.cpp), which
@@ -38,7 +37,7 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 #    Show Desktop stays on and the desktop keeps the focus.
 # The load switches the second output to desktop 2, and KWin's Slide animates it: a full-screen
 # effect, and its end turns Show Desktop off and activates the tile (effecthandler.cpp
-# setActiveFullScreenEffect; probe 99, 2026-10-30, docs/records/bug-panel-config.md). KWin's, as it
+# setActiveFullScreenEffect; probe 99, 2026-10-30). KWin's, as it
 # is after any desktop switch; the wait lets the slide end.
 sleep 3
 stand_in pop popup 300x200+100+400; pop=$sid
@@ -53,7 +52,7 @@ show_desktop false
 check "1. Show Desktop off: a has the focus back" poll active_is a
 
 # 2. Plasma's order: the popup closes, and Show Desktop goes on right after. Ten times, as the
-#    two land either side of kwin-i3's pass (Paul saw it work twice in nine tries).
+#    two land either side of kwin-i3's pass (on a desktop it worked twice in nine tries).
 off=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
     stand_in pop popup 300x200+100+400; pop=$sid
@@ -77,7 +76,7 @@ show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
 
 # 5. A click where a tile hidden by Show Desktop sits reaches the desktop beneath (Plasma's edit
-#    mode: Exit Edit Mode, Paul's capture 2026-10-29): the helper's frame and gap clicks skip a
+#    mode: Exit Edit Mode, a capture 2026-10-29): the helper's frame and gap clicks skip a
 #    window Show Desktop hides (KWin's isShown; isHidden doesn't count it), as i3 routes a click
 #    to mapped windows only.
 show_desktop true
@@ -89,7 +88,7 @@ check "5. Show Desktop is still on"         showing_is true
 show_desktop false
 check "5. Show Desktop off: a has the focus" poll active_is a
 
-# 4. A click on the desktop with Show Desktop off (i3's root click, §5 B4, redo stage 2): the focus
+# 4. A click on the desktop with Show Desktop off (i3's root click, §5 B4): the focus
 #    goes to that output's workspace at once; the desktop doesn't keep the keyboard.
 activate desk
 check "4. the desktop clicked: a has the focus back" poll active_is a

@@ -1,4 +1,4 @@
-// i3's resize mode (docs/records/spec-redo-5-keys.md, A; behaviour.md §8 K4): entered by kwin-i3's Resize
+// i3's resize mode (behaviour.md §8 K4): entered by kwin-i3's Resize
 // Mode action (Meta+R) over D-Bus, left by Return, Escape or Meta+R. While it is on, a key filter
 // ahead of KWin's global shortcuts takes, by evdev code as i3's bindcode does (so no keyboard
 // layout matters): J and Left shrink the width, K and Down grow the height, L and Up shrink the

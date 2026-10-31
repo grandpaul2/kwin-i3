@@ -674,7 +674,7 @@ test("move to workspace: not focused under the target's fullscreen window", () =
     assert.deepStrictEqual(m.focusOrder(m.ws(2)), ["x", "b"]);
 });
 
-// ---- a fullscreen window stays in the tree (docs/records/spec-fullscreen-tree.md, 2026-10-24) --------------
+// ---- a fullscreen window stays in the tree --------------
 
 test("a window opened under a fullscreen one is second in the focus stack (manage.c: fs != NULL)", () => {
     const m = model();
@@ -733,7 +733,7 @@ test("no fullscreen window: a new window goes to the tail of the focus stack as 
     assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "a", "c"]);
 });
 
-// ---- focus_wrapping (tree.c get_tree_next, i3 4.24; docs/records/spec-settings.md) ------------------
+// ---- focus_wrapping (tree.c get_tree_next, i3 4.24) ------------------
 
 // V[a H[b V[c d]]] on workspace 1, c focused: Up from c has no sibling above it in the inner V
 // (the wrap would be d), but the outer V has a above the H. "force" wraps inside the inner V;
@@ -804,7 +804,7 @@ test("focus_wrapping: force, from a window that isn't fullscreen: the next is pe
     assert.strictEqual(m.focusDir(RIGHT, "force").win, "c", "the focus's ancestor is the workspace: c is permitted");
 });
 
-// ---- back_and_forth and workspace next/prev (workspace.c; docs/records/spec-workspace-commands.md) ----
+// ---- back_and_forth and workspace next/prev (workspace.c) ----
 
 test("previous workspace: set when the focused workspace changes (workspace_show), not within one", () => {
     const m = model(true); open(m, 1, "a", "b");
@@ -988,7 +988,7 @@ test("swap: not a container with its own child, not itself", () => {
     assert.strictEqual(m.swap(leaf(m, "a"), leaf(m, "a")), false);
 });
 
-// ---- minimize (i3's scratchpad rule, §5 C9, §10 V7; redo stage 6; approved by Paul, 2026-10-28) --
+// ---- minimize (i3's scratchpad rule, §5 C9, §10 V7) --
 
 test("minimize: the focus kwin-i3 chooses never lands on a minimized window: nextFocused, descendFocused, the focus keys, the mode toggle", () => {
     const m = model();
@@ -1015,7 +1015,7 @@ test("minimize: the focus kwin-i3 chooses never lands on a minimized window: nex
     assert.strictEqual(m.focusModeToggle(), null, "to floating: f is minimized, nothing");
 });
 
-// ---- sticky floating (i3's output_push_sticky_windows; redo stage 9; approved by Paul, 2026-10-28) --
+// ---- sticky floating (i3's output_push_sticky_windows) --
 
 test("sticky: the push moves a sticky floating con to the workspace its output shows; the focus stays with it only if it had it", () => {
     const m = model();

@@ -1,5 +1,5 @@
-// Where a new window goes, and which outside desktop switch it caused (docs/records/spec-redo-1-new-windows.md,
-// A and B). Pure functions of recorded state, so they are unit-tested (tests/unit/placement.test.js);
+// Where a new window goes, and which outside desktop switch it caused. Pure functions of recorded
+// state, so they are unit-tested (tests/unit/placement.test.js);
 // src/kwin.js gathers the facts and acts on the answers. Workspaces are numbers, outputs names.
 
 var Placement = (function () {
@@ -44,7 +44,7 @@ var Placement = (function () {
         var out = {};
         for (var i = 0; i < outputs.length; i++) out[outputs[i].name] = outputs[i].shows;
         // The earliest pending switch per output: two in one turn, the first's previous is what
-        // it showed before them (review 2026-10-28; the last overwrote it).
+        // it showed before them (not the last one's).
         var taken = {};
         for (var j = 0; j < pending.length; j++) {
             var o = pending[j].output;

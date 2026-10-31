@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # needs: plugin
-# i3's tiling drag (docs/records/spec-tiled-look.md, part B): a tiled window's title bar dragged, or
+# i3's tiling drag: a tiled window's title bar dragged, or
 # Meta+drag anywhere in it, drops by tiling_drag.c's zones while the window stays put: sibling
-# beside the target, parent out to the workspace's edge, center swapped with it (Paul's choice
-# over i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
+# beside the target, parent out to the workspace's edge, center swapped with it (beyond
+# i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
-# Meta+right (docs/records/spec-tiling-resize.md) is i3's resize of the boundary: the bar shows mid-drag
+# Meta+right is i3's resize of the boundary: the bar shows mid-drag
 # and the shares change at the release only; Escape leaves it; a press in the gap takes it too;
 # a floating window's Meta+right stays KWin's resize.
 # Not covered (docs/testing.md P3.5, only saves work or restores unreadable state):
@@ -114,7 +114,7 @@ drag Meta left 640 540 60 180
 check "frame: Meta+drag c to b's left side"  wait_tree 1 "V[H[c* b]]" "$m"
 echo "    $(dropped $m)"
 
-# i3's G1 (redo stage 6): a Meta-drag of a window that isn't focused leaves the focus where it was
+# i3's G1: a Meta-drag of a window that isn't focused leaves the focus where it was
 # (the drag starts before any focusing; the dropped window has focus only if it had it): b
 # focused, c dragged onto b's right side: after b, and b keeps the focus.
 centre() { local g; g=$(fc "$1"); local x=${g%%,*} r=${g#*,}; local y=${r%% *} sz=${r#* }; echo "$((x + ${sz%x*} / 2)) $((y + ${sz#*x} / 2))"; }
@@ -145,8 +145,8 @@ check "G7: another button's release drops: c before b, b keeps the focus" wait_t
 echo "    $(dropped $m)"
 
 # i3's Meta+right resize, in the frame look (a 2 px gap between c and b): pressed near c's right
-# edge, the one with b beyond it (i3's nearest edge, §9 Z1, redo stage 6: nearer the screen's edge
-# the press would do nothing, Paul's call 66).
+# edge, the one with b beyond it (i3's nearest edge, §9 Z1: nearer the screen's edge
+# the press would do nothing).
 # (Escape after Meta is let go: Meta+Esc is Plasma's System Monitor key, taken before the helper.)
 read -r cw bw < <(kjs 'var o = {}; workspace.windowList().forEach(function (w) { o[w.caption] = Math.round(w.frameGeometry.width); }); log(o.c + " " + o.b)')
 echo "    c ${cw}px, b ${bw}px"
@@ -189,7 +189,7 @@ drag Meta right 640 360 760 420
 check "  Meta+right resized it (KWin's), still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
 echo "    c $g0 -> $(fc c)"
 
-# Float to tile (§9 G13, Paul 2026-10-28): Meta+Shift+drag of the floating c onto b's right side,
+# Float to tile (§9 G13): Meta+Shift+drag of the floating c onto b's right side,
 # inside the sibling zone: tiled after b. With the keys still held, a second Meta+Shift press on
 # c does nothing (one toggle per press of the keys); Shift released and pressed again, it is G5's
 # float again. Then onto b's centre: after b, no swap (b stays tiled); and a key cancels.
@@ -207,7 +207,7 @@ sleep 0.3
 check "  the keys held, a second press did nothing: still tiled" tiled_c
 check "  no move after the drop"            eval '! after "$m" | grep -qE "^.{9}DRAG start move"'
 # Over b and released there with Shift held: KWin's move reads Shift as its custom-tile drop (an
-# outline window over b, c tiled into b's tile at the release; Paul's capture, 2026-10-29). The
+# outline window over b, c tiled into b's tile at the release; a capture, 2026-10-29). The
 # helper takes Shift out of that move, so no window appears mid-drag and c never fills a tile.
 # d keeps two windows tiled once c is out: a lone window is in the root tile, which KWin's
 # RootTile::pick never picks (6.7.5 customtile.cpp:461), so there would be nothing to drop into.
@@ -246,8 +246,7 @@ check "G13: a key cancels"                  wait_log '^.{9}DRAG cancelled' "$m"
 sleep 0.3
 check "  c still floating"                  floating_c
 
-# A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3, Paul
-# 2026-10-28). An app that draws its own frame keeps an invisible resize border past it (a GTK
+# A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3). An app that draws its own frame keeps an invisible resize border past it (a GTK
 # header bar here, VS Code live), as KWin reports no tiled edges for a padded tile: a press there
 # stays kwin-i3's (OPEN.md item 43), never the app's own resize, which KWin ran as its live tile
 # resize.
@@ -257,7 +256,7 @@ client --title L --csd
 check "L, drawing its own frame"            poll eval '[[ "$(tree 1)" == *L* ]]'
 key "Split H"; client --title R
 check "L | R"                               poll eval '[[ "$(tree 1)" == *"L R*"* ]]'
-# Focus follows the mouse out of L, through its margin, into R (B1; probe 94, Paul's capture
+# Focus follows the mouse out of L, through its margin, into R (B1; probe 94, a capture
 # 2026-10-29): the margin over R's frame raises R, and the raise must not cost R its focus. At a
 # 4 px gap, where L's margin reaches R's frame.
 set_key gapsInner 4

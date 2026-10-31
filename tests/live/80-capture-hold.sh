@@ -25,7 +25,7 @@ check "a release, not timed out"            eval 'ev "release after [0-9.]+ ms, 
 out=$("$root/tools/capture-read" "$dir")
 # "kept" or "chose": the pointer rests in the gap between a and b, over a strip of kwini3helper's
 # (gapstrips.h), so KWin's own pick after the close is none and kwin-i3 makes i3's choice
-# (Paul, 2026-10-28: either; this checks the merge, not the focus).
+# (either is right; this checks the merge, not the focus).
 check "capture-read: both sources"          eval 'grep -qE " hold f[0-9]+ close b: kept" <<<"$out" && grep -qE " i3   CLOSE b (kept|chose) a" <<<"$out"'
 # Not "last": capture-read prints the few lines logged after the press too, and under load
 # one lands there (item 34). The press is in the timeline, and the timeline is in time order.

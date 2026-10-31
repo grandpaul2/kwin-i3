@@ -1,10 +1,10 @@
-// Unit tests for the workspace widget's logic (widget/contents/ui/workspaces.js,
-// docs/records/spec-workspace-widget.md), from data shaped as Plasma's task manager gives it.
+// Unit tests for the workspace widget's logic (widget/contents/ui/workspaces.js),
+// from data shaped as Plasma's task manager gives it.
 const test = require("node:test");
 const assert = require("node:assert");
 const W = require("../../widget/contents/ui/workspaces.js");
 
-// Two 2560x1440 monitors side by side; DP-6 on the left, DP-4 on the right (Paul's).
+// Two 2560x1440 monitors side by side; DP-6 on the left, DP-4 on the right.
 const SCREENS = [{ name: "DP-6", x: 0, y: 0, width: 2560, height: 1440 },
                  { name: "DP-4", x: 2560, y: 0, width: 2560, height: 1440 }];
 const DESKS = ["d1", "d2", "d3", "d4", "d5", "d6", "d7"];
@@ -74,7 +74,7 @@ test("scroll: next and previous in use from the focused one, wrapping", () => {
     assert.strictEqual(W.step([{ num: 2, shown: false }, { num: 5, shown: true, focused: false }, { num: 6 }], 1), 6);
 });
 
-// docs/records/spec-workspace-commands.md, 4: "2 mail" for a desktop with a name of its own; KWin's
+// A workspace's label: "2 mail" for a desktop with a name of its own; KWin's
 // default ("Desktop 2", in the user's language) is no name.
 test("label: a name of its own is shown after the number; KWin's default or none is not", () => {
     assert.strictEqual(W.label(2, "mail", "Desktop 2"), "2 mail");

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Desktop changes, the harder cases (docs/records/spec-desktop-changes.md; the change review's findings
+# Desktop changes, the harder cases (the change review's findings
 # 2, 3 and its test gaps): a floating window and a layout on the desktops that move, the removed
 # desktop shown on the second monitor, two removals back to back, a desktop inserted in the middle.
 source "$(dirname "$0")/lib.sh"

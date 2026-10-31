@@ -2,7 +2,7 @@
 # needs: kcm
 # stock: own
 # timing: alone
-# The settings page's Workspaces and Window Rules sub-pages (docs/records/spec-settings-cleanup.md),
+# The settings page's Workspaces and Window Rules sub-pages,
 # driven as a person would, controls found by their accessible names (tools/a11y.py) as in
 # 37-settings-page. Alone, as 37: kcmshell6 is slow to show in the parallel batch.
 source "$(dirname "$0")/lib.sh"
@@ -17,7 +17,7 @@ click_named() {   # click_named <page title, or - for anywhere> <accessible name
 named() { $A11Y names kcmshell6 "$1" | grep -qxF "$2"; }
 # open_named <page> <button>: a sub-page button pressed by keyboard (focus, then Space): a click
 # at its box can land under the footer when the page scrolls it to the bottom edge, or on a test
-# window floating over it (redo stage 10, the main page grew).
+# window floating over it (the main page grew).
 open_named() { $A11Y focus kcmshell6 "$1" "$2"; press Space; sleep 0.7; }
 n_shot=0
 shot() {   # a screenshot kept with KI3_SHOTS=<dir>, for the style guide's screenshot pass
@@ -41,7 +41,7 @@ check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 # 1. Workspaces: 2 on Virtual-1 (Any monitor, Virtual-0, Virtual-1: two down), 3 for Plasma
 #    windows, by keyboard: a closed combo box steps its choice with Down (its open list didn't
 #    take arrow keys from injected input). One Apply writes both strings (the floating workspace
-#    as a rule in forWindow since redo stage 10), and 4's unconnected DP-9 is kept.
+#    as a rule in forWindow), and 4's unconnected DP-9 is kept.
 open_named kwin-i3 "Configure Workspaces…"
 $A11Y focus kcmshell6 Workspaces "Workspace 2 screen"; press Down; press Down; sleep 0.3
 shot workspaces
@@ -53,7 +53,7 @@ check "kwin-i3 re-read both"                wait_log '^.{9}SETTINGS .*(forWindow
 click_named - "Navigate Back"; sleep 0.5
 check "the main page sums it up"            named kwin-i3 "Configure Workspaces…"
 
-# 2. Window Rules (redo stage 3: i3's rules as text): Pick a Window on a test client adds a floating
+# 2. Window Rules (i3's rules): Pick a Window on a test client adds a floating
 #    rule for its class; after Apply a new window of that class floats.
 client --title pickme --app-id net.local.pickme --color red
 check "pickme tiles beside the page"        poll eval '[[ "$(tree 1)" == *pickme* ]]'
@@ -77,7 +77,7 @@ check "kwin-i3 re-read it"                  wait_log '^.{9}SETTINGS .*forWindow'
 client --title pickme2 --app-id net.local.pickme --color blue
 check "pickme2 floats by the rule"          poll eval '[[ "$(tree 1)" == *"~pickme2"* ]]'
 
-# 2b. Gaps (redo stage 10, item 68): workspace 2's own gap between windows, three steps up on the
+# 2b. Gaps (item 68): workspace 2's own gap between windows, three steps up on the
 #     sub-page (from "same", then 0 and 1: a workspace's gap replaces the main page's, as i3's,
 #     2026-10-29), reaches workspaceGaps on Apply. The test clients go first: the floating one sat
 #     over the page, and they held the keyboard.

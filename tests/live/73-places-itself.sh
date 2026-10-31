@@ -2,7 +2,7 @@
 # needs: xwayland
 # Windows kwin-i3 doesn't manage (tooltips, notifications, OSDs, panel popups, dialogs) coming and
 # going change nothing you can see: not the focus, not the pointer, not what a monitor shows
-# (Paul, 2026-10-25: a tray popup closing at once, the pointer jumping after the start menu).
+# (seen: a tray popup closing at once, the pointer jumping after the start menu).
 # Each case takes a snapshot, lets one come and go, and compares. The windows are stand-ins
 # (tools/popupclient.py, X11 windows of each type: the test KWins have no Plasma shell).
 # Virtual-0 at x 0, Virtual-1 at x 1280.
@@ -22,7 +22,7 @@ come_and_go() {   # come_and_go <type> <geometry> [--no-input]: one opens, then 
 }
 activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
 # kept_out <title>: a window of kwin-i3's put on two desktops, which leaves the tree until it is on
-# one (§3 R13; a sticky one stays in it, floating, since redo stage 9).
+# one (§3 R13; a sticky one stays in it, floating).
 kept_out() {
     client --title "$1"
     kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") w.desktops = [workspace.desktops[0], workspace.desktops[1]]; });" >/dev/null
@@ -37,7 +37,7 @@ client --title a
 check "a on the left monitor"               wait_tree 1 "H[a*]"
 
 # 1. The pointer parked on the right monitor (empty there): i3's crossing gives the focus to that
-#    empty workspace (redo stage 2, §5 B2), and each kind comes and goes.
+#    empty workspace (§5 B2), and each kind comes and goes.
 point 1900 600; sleep 0.3
 before=$(snap)
 for t in tooltip notification osd; do
@@ -90,7 +90,7 @@ kill "$pop"; poll _no_window pop
 kill "$desk"; poll _no_window desk
 
 # 5. A window kept out of the tree has the focus (one on two desktops; a sticky one, Yakuake's kind,
-#    is in the tree since redo stage 9, an X11 dialog since stage 3): a notification closing leaves it the focus.
+#    is in the tree, and so is an X11 dialog): a notification closing leaves it the focus.
 key "Workspace 1"
 check "5. back on 1 (a)"                    poll active_is a
 kept_out dlg
@@ -111,7 +111,7 @@ come_and_go notification 300x100+1700+400 --no-input
 check "6. a notification came and went: the left still shows 5" unchanged "$before"
 
 # 7. Keys with a window kwin-i3 doesn't manage active (one on two desktops standing in;
-#    KRunner's kind, override-redirect, holds every key since stage 2, 33-own-keys): one that leaves
+#    KRunner's kind, override-redirect, holds every key, 33-own-keys): one that leaves
 #    kwin-i3's focus where it was takes nothing; one that moves it does, as in i3.
 key "Workspace 1"
 check "7. back on 1 (a)"                    poll active_is a
@@ -120,7 +120,7 @@ client --title e
 check "7. a, e on 1"                        wait_tree 1 "H[a e*]"
 key "Focus Left"
 check "7. a focused"                        poll active_is a
-# The pointer stays on the left, over a (parked on the right it would focus that monitor, stage 2).
+# The pointer stays on the left, over a (parked on the right it would focus that monitor).
 kept_out dlg2
 activate dlg2
 check "7. the window kept out is active"      poll active_is dlg2

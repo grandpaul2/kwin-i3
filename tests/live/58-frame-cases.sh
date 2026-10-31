@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# The frame's harder cases (docs/records/spec-window-modes.md, review 1): the hair at the screen edges of
+# The frame's harder cases: the hair at the screen edges of
 # a nested layout after the root changes (R1-7), a floating window over a frame while the frame
 # repaints (R1-1), a client that draws its own title bar (R1-5), release and reload (R4), and a
 # monitor at 125 % (R1-6). Pixels from tools/shot.py: the test KWin's background is black.
@@ -42,7 +42,7 @@ check "b: frame at x=0, app at x=1"         eval 'pix 0 540 $ACT && pix 1 540 $L
 check "b: frame at the bottom row"          eval 'pix 300 719 $ACT && pix 300 718 $LIME'
 check "c: frame at the right edge"          eval 'pix 1279 360 $INACT && pix 1278 360 $BLUE'
 
-# i3's hide_edge_borders (§7 L6, redo stage 7) with no gaps: `both` leaves out the ring's sides
+# i3's hide_edge_borders (§7 L6) with no gaps: `both` leaves out the ring's sides
 # at the output's edges (the strip stays empty: the background) and keeps the seam between V[a b]
 # and c; `smart` with three windows hides nothing; `none` again.
 BG=0,0,0
@@ -55,7 +55,7 @@ check "smart, three windows: every side drawn" poll eval 'capture && pix 0 180 $
 form_del hideEdgeBorders
 check "none: as before"                     poll eval 'capture && pix 0 180 $INACT && pix 1 180 $RED'
 
-# i3's resize from a border (§9 Z3, redo stage 6): a left drag on c's left ring resizes c against
+# i3's resize from a border (§9 Z3): a left drag on c's left ring resizes c against
 # V[a b] on that side; the shares change at the release. (A ring scroll focusing, F4, isn't driven
 # here: tools/ei-send sends no scroll; a verb for it is a tool proposal.)
 wid() { local g; g=$(geom "$1"); g=${g#* }; echo "${g%x*}"; }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The workspace widget (widget/, docs/records/spec-workspace-widget.md) in plasmawindowed inside the test
+# The workspace widget (widget/) in plasmawindowed inside the test
 # KWin: every workspace in use, each at its own monitor's shape (1280x720 here, not both monitors'
 # 2560), the shown ones marked; a click is kwin-i3's Meta+N. The widget reports what it computed
 # on Qt's debug log (qml.debug on), which the checks read.

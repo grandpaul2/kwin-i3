@@ -1,4 +1,4 @@
-// The Gaps sub-page (docs/records/spec-redo-10-settings-page.md): i3's outer gap per side of the screen
+// The Gaps sub-page: i3's outer gap per side of the screen
 // (gapsTop, gapsRight, gapsBottom, gapsLeft; -1 means the outer gap of the main page), smart gaps
 // (smartGaps), and each workspace's own gaps (workspaceGaps: "3 gaps inner 10, 3 gaps outer 0",
 // in place of the main page's, as i3's), one row per workspace. settings.js reads and writes the strings.

@@ -1,4 +1,4 @@
-// kwin-i3's page (docs/records/spec-settings-page.md, laid out by docs/records/spec-settings-cleanup.md): the
+// kwin-i3's page: the
 // script's settings as Plasma's own pages lay theirs out, with three sub-pages: Workspaces,
 // Window Rules and Keys. Every control says what it is to a screen reader
 // (tests/live/75-settings-a11y.sh).
@@ -36,8 +36,8 @@ KCM.SimpleKCM {
             visible: kcm.scriptEnabled && !kcm.scriptLoaded
             text: i18n("kwin-i3 is on but not running. Its errors are in the system log: journalctl --user -b | grep kwin-i3")
         }
-        // One message for both plugins, never saying which (docs/records/spec-settings-words.md row 17):
-        // the frame needs kwini3hold, the mouse and the resize mode the helper (redo stage 10).
+        // One message for both plugins, never saying which:
+        // the frame needs kwini3hold, the mouse and the resize mode the helper.
         Kirigami.InlineMessage {
             Layout.fillWidth: true
             position: Kirigami.InlineMessage.Position.Header
@@ -50,7 +50,7 @@ KCM.SimpleKCM {
         }
     }
 
-    // floatingWorkspaces becomes rules the moment the page reads it (redo stage 10): the rows
+    // floatingWorkspaces becomes rules the moment the page reads it: the rows
     // show them, and Apply writes the rules and takes the key out of kwinrc (a setting at its
     // default is removed). As src/rules.js reads it at load.
     function migrateOld() {
@@ -68,7 +68,7 @@ KCM.SimpleKCM {
         function onFloatingWorkspacesChanged() { root.migrateOld() }
     }
 
-    // A setting's help, ending in its i3 directive (docs/records/spec-settings-words.md rule 5). It sits in
+    // A setting's help, ending in its i3 directive. It sits in
     // a RowLayout with its control; FormLayout then labels the row, not the control
     // (Kirigami 6.31 FormLayout.qml:471), so the control carries its own Accessible.name and the
     // row a buddyFor. Named for its topic, as Kirigami's own name is the same for every one.
@@ -189,7 +189,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
                 unit: "px"
-                // Even only (docs/records/spec-settings.md): split across two windows, an odd gap would
+                // Even only: split across two windows, an odd gap would
                 // put them on half pixels. An odd value from kwinrc shows as the even below, as
                 // kwin-i3 uses it.
                 from: 0; to: 100; stepSize: 2
@@ -260,7 +260,7 @@ KCM.SimpleKCM {
                 toolTipText: i18n("How far a resize key grows or shrinks a tiling window, as a share of its split. i3: resize grow width 10 px or 10 ppt")
             }
         }
-        // Floating windows move and resize by pixels, as in i3 (docs/records/spec-float-keys.md).
+        // Floating windows move and resize by pixels, as in i3.
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Floating step:")
             Kirigami.FormData.buddyFor: floatingStepBox
@@ -412,7 +412,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Frame")
         }
-        // docs/records/spec-tiled-look.md: without the plugins tiled windows keep their title bars, so
+        // Without the plugins tiled windows keep their title bars, so
         // the choice needs them as the frame does.
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:listbox", "Tiling windows:")
@@ -493,7 +493,7 @@ KCM.SimpleKCM {
                 toolTipText: i18n("Hides the frame at the screen's edges, or on a window alone on its workspace. i3: hide_edge_borders")
             }
         }
-        // Drawn by kwini3hold (docs/records/spec-rounded-corners.md), so it needs the plugins too; a
+        // Drawn by kwini3hold, so it needs the plugins too; a
         // title bar brings its theme's corners. Under the tiled colours, unlabelled.
         QQC2.CheckBox {
             text: i18nc("@option:check under Tiling frame", "Round corners of tiling windows")
@@ -501,7 +501,7 @@ KCM.SimpleKCM {
             onToggled: root.settings.roundedCorners = checked
             KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
         }
-        // A floating window's frame uses the same colour classes (redo stage 7, §7 L11).
+        // A floating window's frame uses the same colour classes (§7 L11).
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Floating windows:")
             Kirigami.FormData.buddyFor: floatingFrameBox
@@ -544,7 +544,7 @@ KCM.SimpleKCM {
             onClicked: kcm.push("Keys.qml")
         }
         // warnTakenKeys has no control here while kwin-i3's notifications don't reach Plasma
-        // (LATER.md item 56): the checkbox would change nothing a user sees (Paul, 2026-10-30).
+        // (LATER.md item 56): the checkbox would change nothing a user sees.
         // debugLog has none either: it only feeds the test KWin's log (docs/debugging.md).
     }
 }

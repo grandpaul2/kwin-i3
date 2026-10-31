@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Per-output desktops off (Plasma's default), with two monitors: kwin-i3 says so, once at load
-# and once more if it becomes a problem later; never sets it (docs/records/spec-per-output-desktops.md).
+# and once more if it becomes a problem later; never sets it.
 # peroutput: false
 # stock: own
 source "$(dirname "$0")/lib.sh"
@@ -28,7 +28,7 @@ wait_log 'kwin-i3 loaded$'
 check "logged: off, 2 screens"              wait_log '^.{9}PEROUTPUT off, 2 screens$'
 check "one notification"                    poll notes_are 1
 check "it names the setting"                grep -q 'Switch desktops independently for each screen' "$KI3_TMP/notify.out"
-check "three parts: '3 things to fix' (per-output, the taken key, and the two keys that need the plugins: no helper here, redo stage 5)" grep -q "'kwin-i3' 'view-split-left-right' '3 things to fix in this setup'" "$KI3_TMP/notify.out"
+check "three parts: '3 things to fix' (per-output, the taken key, and the two keys that need the plugins: no helper here)" grep -q "'kwin-i3' 'view-split-left-right' '3 things to fix in this setup'" "$KI3_TMP/notify.out"
 check "and the taken key"                   grep -q 'Meta+Left: Quick Tile Window to the Left' "$KI3_TMP/notify.out"
 
 # 2. Turned on: nothing more to say, and it takes effect there. While it was off, login

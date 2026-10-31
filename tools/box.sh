@@ -3,7 +3,7 @@
 # 6.8 on a Fedora 44 desktop that has only 6.7. Headless, as tools/testkwin.sh always is. KWin 6.8's
 # virtual backend needs a render node (none: "Found no render device!", no compositing, no window
 # ever resized), so the Mesa-driven ones (AMD, Intel) are passed in; NVIDIA's would need the
-# host's driver libraries at its version. Paul's desktop: the AMD iGPU, renderD128.
+# host's driver libraries at its version.
 #   KI3_BOX=arch|pika                    the distribution (default arch: KWin 6.8.2; pika: PikaOS,
 #                                        KWin 6.7.4, Debian's package names)
 #   tools/box.sh build                   builds the image (tools/box/Containerfile.$KI3_BOX)

@@ -1,4 +1,4 @@
-// The Workspaces sub-page (docs/records/spec-settings-cleanup.md; redo stage 10): each workspace's
+// The Workspaces sub-page: each workspace's
 // monitors in order (workspaceOutputs, "1=DP-4 HDMI-A-1": the first connected one is used, as
 // i3's workspace N output A B), and whether its new windows open floating (the rule
 // [workspace="^N$"] floating enable in forWindow, as the old floatingWorkspaces is read), one
@@ -29,7 +29,7 @@ KCM.SimpleKCM {
         const list = (map[n] || "").split(" ").filter((s) => s);
         if ((list[i] || "") === name) return;
         // "Any monitor" in the first slot is no assignment at all, its fallbacks with it; in a
-        // fallback slot, that fallback gone (review 2026-10-28: slot 0 promoted the fallback).
+        // fallback slot, that fallback gone (slot 0 promoted the fallback).
         if (name) list[i] = name; else if (i === 0) list.length = 0; else list.splice(i, 1);
         map[n] = list.filter((s) => s).join(" ");
         settings.workspaceOutputs = Logic.formatOutputs(map);

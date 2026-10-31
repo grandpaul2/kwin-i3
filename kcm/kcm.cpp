@@ -1,4 +1,4 @@
-// kcm_kwin_i3: kwin-i3's page in System Settings > Window Management (docs/records/spec-settings-page.md).
+// kcm_kwin_i3: kwin-i3's page in System Settings > Window Management.
 // The settings are the script's own (main.xml, kwinrc [Script-kwin-i3]); Apply writes them and
 // asks KWin to reconfigure, which reaches the script and the plugins, so it takes effect with or
 // without the plugins. The keys are on a sub-page (keys.cpp).
@@ -154,9 +154,9 @@ public:
         m_holdLoaded = std::any_of(effects.begin(), effects.end(), [](const QString &e) {
             return e.startsWith(QLatin1String("kwini3hold"));
         });
-        m_frameAvailable = m_holdLoaded;    // the effect draws the frame (docs/records/spec-window-modes.md)
+        m_frameAvailable = m_holdLoaded;    // the effect draws the frame
         // The helper (kwini3helper, a KWin plugin): the tiling drag and resize, frame focus, the
-        // resize mode, the layout keys, the Configure form's Apply (redo stage 10, call 40).
+        // resize mode, the layout keys, the Configure form's Apply.
         auto plugins = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Plugins"),
                                                       QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
         plugins << QStringLiteral("org.kde.KWin.Plugins") << QStringLiteral("LoadedPlugins");

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# Window modes (docs/records/spec-window-modes.md): tiled windows without a decoration, the 1 px frame drawn by
+# Window modes: tiled windows without a decoration, the 1 px frame drawn by
 # kwini3hold in the tile's padding; floating windows keep Breeze. Pixels from tools/shot.py.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
@@ -36,7 +36,7 @@ key "Focus Left"
 echo "    a: $(fc a)   b: $(fc b)"; kjs "var s = workspace.screens[0], r = workspace.rootTile(s, workspace.currentDesktopForScreen(s)); log(JSON.stringify(r.relativeGeometry) + \" pad \" + r.padding + \" kids \" + r.tiles.map(function (t) { return JSON.stringify(t.relativeGeometry) + \" p\" + t.padding; }).join(\" \"))"; sleep 0.3; capture
 check "focus moved: a active, b inactive"   eval 'pix 0 360 $ACT && pix 639 360 $ACT && pix 640 360 $INACT && pix 1279 360 $INACT'
 # A focus change kwin-i3 didn't make (focus follows mouse, a click, Alt+Tab): no pass follows,
-# the ring follows all the same (Paul's capture 2026-10-28_060215).
+# the ring follows all the same (A capture 2026-10-28_060215).
 kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"b\") workspace.activeWindow = w; });"
 # No pass follows, so no TREE line: KWin's activation, as logged.
 check "b activated from outside"            wait_log '^.{9}ACTIVE b \(KWin\)$'
@@ -51,7 +51,7 @@ sleep 0.5; capture
 echo "    row 360: $(row 360 0 1 639 640 641 1278 1279)"
 check "no stale frame where a and b met"    eval 'pix 639 360 $RED && pix 640 360 $RED'
 # i3's indicator (§7 L4): a alone in a horizontal workspace, its right side in the focused
-# indicator colour, only after a split key (Paul, 2026-10-28), until the focus leaves a.
+# indicator colour, only after a split key, until the focus leaves a.
 check "a alone, no split key: no indicator"  pix 1279 360 $ACT
 key "Split H"; sleep 0.3; capture
 check "Split H: the indicator at a's right"  pix 1279 360 $IND
@@ -59,8 +59,8 @@ check "  its other sides in the focused colour" eval 'pix 0 360 $ACT && pix 300 
 sleep 2; capture
 check "  still there 2 s later (no timer)"   pix 1279 360 $IND
 
-# The colour classes (§7 L3, redo stage 7): the second monitor's focused window is unfocused
-# from the first's point of view (i3's focused_inactive left out, Paul 2026-10-28), as is the rest.
+# The colour classes (§7 L3): the second monitor's focused window is unfocused
+# from the first's point of view (i3's focused_inactive left out), as is the rest.
 key "Workspace 2"
 term s "#0000ff"
 check "s alone on the second monitor"       wait_tree 2 "H[s*]"

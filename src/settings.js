@@ -1,5 +1,5 @@
 // Settings: every key in kwinrc's [Script-kwin-i3] group, with its type and default
-// (docs/records/spec-settings.md). The plugins read theirs too (the frame's, the hold's,
+//. The plugins read theirs too (the frame's, the hold's,
 // tilingDrag), each with its own fallback for a value this table would refuse. The one table the config form (package/contents/config/
 // main.xml) and the README follow; tests/unit/settings.test.js holds the three together.
 //
@@ -32,7 +32,7 @@ var Settings = (function () {
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
         // What Exit does (§8 K17): i3's exit is leaving the computer; Plasma has several ways to leave.
         endSession: { type: "choice", def: "logout", choices: ["logout", "sleep", "shutdown", "ask"] },
-        // i3's popup_during_fullscreen (§10 V6; redo stage 8): what a new window may do on a workspace with a fullscreen window.
+        // i3's popup_during_fullscreen (§10 V6): what a new window may do on a workspace with a fullscreen window.
         popupDuringFullscreen: { type: "choice", def: "smart", choices: ["smart", "ignore", "leave_fullscreen", "all"] },
         // i3's tiling_drag (§9 G3): which presses start the tiling drag; read by the helper from kwinrc.
         tilingDrag: { type: "choice", def: "modifier titlebar", choices: ["off", "modifier", "titlebar", "modifier titlebar"] },
@@ -40,7 +40,7 @@ var Settings = (function () {
         workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
         gapsInner: { type: "int", def: "2", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
         gapsOuter: { type: "int", def: "0", min: -100, max: 200 },              // px more at the screen edge; negative takes from it (down to half the inner gap)
-        // i3's gaps top|right|bottom|left (§11 N2; redo stage 7): that side's outer gap, -1 for gapsOuter.
+        // i3's gaps top|right|bottom|left (§11 N2): that side's outer gap, -1 for gapsOuter.
         gapsTop: { type: "int", def: "-1", min: -1, max: 200 },
         gapsRight: { type: "int", def: "-1", min: -1, max: 200 },
         gapsBottom: { type: "int", def: "-1", min: -1, max: 200 },
@@ -51,22 +51,21 @@ var Settings = (function () {
         // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
         hideEdgeBorders: { type: "choice", def: "none", choices: ["none", "vertical", "horizontal", "both", "smart", "smart_no_gaps"] },
         // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the form has them.
-        // i3's colour classes (§7 L3): focused and unfocused (focused_inactive left out, Paul
-        // 2026-10-28); the indicator is the side where the next window opens on a
+        // i3's colour classes (§7 L3): focused and unfocused (focused_inactive left out); the indicator is the side where the next window opens on a
         // window alone in its split (L4), an empty colour being the class's frame colour.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
         frameInactive: { type: "colour", def: "#333333" },
         frameIndicatorActive: { type: "colour", def: "#3daee9" },
         frameIndicatorInactive: { type: "colour", def: "" },
-        // Window modes (docs/records/spec-window-modes.md): workspaces whose new windows open floating, as
+        // Window modes: workspaces whose new windows open floating, as
         // Plasma windows; and the frame on floating windows too, in the same colour classes (L11).
         floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
         frameOnFloating: { type: "bool", def: "false" },
-        // How tiled windows look (docs/records/spec-tiled-look.md): i3's frame, their own title bars, or
+        // How tiled windows look: i3's frame, their own title bars, or
         // neither. Without kwini3hold every one is "titlebars".
         tiledLook: { type: "choice", def: "frame", choices: ["frame", "titlebars", "bare"] },
-        // Tiled windows' corners, rounded by kwini3hold (docs/records/spec-rounded-corners.md).
+        // Tiled windows' corners, rounded by kwini3hold.
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "200", min: 10, max: 2000 },
@@ -84,7 +83,7 @@ var Settings = (function () {
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
         // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces taken, given back
-        // without (review 2026-10-28: rejected, the default stood in silently).
+        // without (rejected, the default stood in silently).
         if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz ? sz[1] + "x" + sz[2] : null; }
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
@@ -108,7 +107,7 @@ var Settings = (function () {
             return ws;
         }
         // i3's "workspace N output A B …": { N: [output names] }, the first connected one wins
-        // (§4 W5; redo stage 4). "1=DP-4 HDMI-A-1, 2=DP-6": names space-separated, so an output
+        // (§4 W5). "1=DP-4 HDMI-A-1, 2=DP-6": names space-separated, so an output
         // name can't contain a space (i3's can't either). A malformed entry is skipped (and
         // logged), the rest still apply.
         if (type === "outputs") {

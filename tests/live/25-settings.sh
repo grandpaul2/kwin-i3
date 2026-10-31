@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Settings and the reload (docs/records/spec-settings.md): a plain write, as the config form makes, changes
+# Settings and the reload: a plain write, as the config form makes, changes
 # nothing until Reload Settings (Meta+Shift+C, i3's reload) has KWin reconfigure; then the script
 # takes the new values and acts only on what changed. The rules: a window follows a changed
 # verdict, one floated by hand under an unchanged verdict stays.
@@ -39,7 +39,7 @@ check "reload: a rule added"                wait_log '^.{9}SETTINGS forWindow$' 
 sleep 0.5
 check "b stays floating, c too"             _tree_is 1 "H[a] ~c ~b*"
 
-# 4. The rule removed: i3 applies rules and never undoes them (§3 X2, redo stage 3), so c stays
+# 4. The rule removed: i3 applies rules and never undoes them (§3 X2), so c stays
 #    floating; a forWindow rule with floating disable tiles it, and b, floated by hand, stays.
 m=$(mark)
 set_key forWindow '[title="nothing-has-this-title"] floating enable'

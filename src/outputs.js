@@ -1,4 +1,4 @@
-// Where workspaces live when outputs come and go (docs/records/spec-redo-4-outputs.md, B and C; i3's
+// Where workspaces live when outputs come and go (i3's
 // randr.c move_content and init_ws_for_output). Pure functions of a snapshot, so they are
 // unit-tested (tests/unit/outputs.test.js); src/kwin.js screensChanged takes the snapshot and acts.
 //
@@ -20,7 +20,7 @@ var Outputs = (function () {
     // With windows, or the focused one: the first output (i3's move_content, randr.c: every
     // workspace of a lost output to get_first_output(), the primary, assignments not read; they
     // bring it back when its output returns, movingTo); an empty unfocused one has no lasting
-    // output (i3 closes it): null. (Until 2026-10-28 its next assigned output; Paul: follow i3.)
+    // output (i3 closes it): null.
     // -> { num: new home or null } for every workspace whose home was the lost output.
     function homesAfterLoss(lost, st) {
         var out = {};

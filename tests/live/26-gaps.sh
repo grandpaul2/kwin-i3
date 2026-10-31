@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # focus: mouse
-# Gaps (docs/records/spec-settings.md): i3's inner gap between windows and inner + outer at the screen's
+# Gaps: i3's inner gap between windows and inner + outer at the screen's
 # edge, by KWin's tile padding (= inner) and an inset root (outer + inner/2). Exact frames on the
 # first monitor (1280x720), pixels for the gap itself, and the seams: minimums, fullscreen, a
 # resize drag, a reload with gaps set, a hidden workspace, a monitor unplugged, release. No plugin
@@ -70,7 +70,7 @@ set_key gapsInner 0; set_key gapsOuter 0
 reload_settings
 check "no gaps again"                       geom_is a "0,0 640x720"
 
-# 4c. i3's per-side and per-workspace gaps (§11 N2, redo stage 7): gaps left 20 insets the root
+# 4c. i3's per-side and per-workspace gaps (§11 N2): gaps left 20 insets the root
 #     on that side only; workspace 1 gaps top 10 adds to the top on this workspace only.
 set_key gapsLeft 20
 reload_settings
@@ -98,7 +98,7 @@ near() {   # near <caption> <x> <y> <w> <h>: each within 1 px
 }
 # An odd inner gap counts as the even one below (the pickers step by 2): 4 between and at the
 # edges, every window on whole pixels (KWin's own numbers, unrounded: an odd padding put them
-# half a pixel off, Paul, 2026-10-25).
+# half a pixel off).
 raw() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
 echo "    inner 5: a $(raw a)  b $(raw b)"
 check "inner 5 as 4: a, 4 from the edges"   poll eval '[[ "$(raw a)" == "5,5 632x710" ]]'
@@ -119,7 +119,7 @@ check "and comes back to its tile"          geom_is a "31,31 603x658"
 #    the whole 1280; 600 px can (2 x 610 = 1220). The frame's border width is measured, not assumed.
 kclose b; kclose c
 check "a alone again"                       wait_tree 1 "H[a*]"
-# 6b. i3's smart_gaps (§6, redo stage 7): `on`, a window alone on its workspace has no gaps at
+# 6b. i3's smart_gaps (§6): `on`, a window alone on its workspace has no gaps at
 #     all; `inverse_outer`, the outer gaps only; `off`, its 30 px again.
 set_key smartGaps on
 reload_settings
@@ -184,8 +184,8 @@ set_key gapsOuter 20
 reload_settings
 
 # 10. A monitor unplugged and back, with gaps: workspace 2 comes to the first monitor gapped,
-#     and stays there, gapped (§4 W3, redo stage 4: a lost output's workspaces move for good,
-#     as i3's; only an assignment brings one back. Found red here 2026-10-28, redo stage 7).
+#     and stays there, gapped (§4 W3: a lost output's workspaces move for good,
+#     as i3's; only an assignment brings one back. Found red here 2026-10-28).
 key "Workspace 2"
 client --title s
 check "s alone on the second monitor"       geom_is s "1311,31 1218x658"

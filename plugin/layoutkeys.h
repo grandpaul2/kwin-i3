@@ -1,4 +1,4 @@
-// kwin-i3's keys that mean a key position, fitted to the keyboard layout (docs/records/spec-keyboard-layouts.md).
+// kwin-i3's keys that mean a key position, fitted to the keyboard layout.
 // KWin matches a shortcut by the symbol the key types in the current layout, never by position
 // (xkb.cpp modifiersRelevantForGlobalShortcuts; kglobalacceld activeShortcutByKey), and kwin-i3
 // registers US symbols: Meta+Shift+2 is Meta+@. A script can't read the keymap, nor send

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# workspaceOutputs, i3's "workspace N output X" (docs/records/spec-settings.md), on the two virtual
+# workspaceOutputs, i3's "workspace N output X", on the two virtual
 # monitors (Virtual-0 at x 0, Virtual-1 at x 1280): at login each monitor shows the lowest
 # workspace free and not assigned elsewhere; an empty assigned workspace opens on its monitor;
 # a monitor that appears takes its workspaces back; a reload moves no existing workspace.
@@ -70,7 +70,7 @@ key "Workspace 5"
 check "Meta+5 now shows 5 on the second"    poll shows Virtual-1 5
 check "e went with it"                      poll on_second e
 
-# 6. A returning monitor shows its lowest workspace (i3's init_ws_for_output, redo stage 4): 1, 3
+# 6. A returning monitor shows its lowest workspace (i3's init_ws_for_output): 1, 3
 #    and 5 are its; while it is away a window is sent to 6, unassigned, which then lives on the
 #    first monitor and stays there (i3: only assignment brings a workspace back).
 m=$(mark)

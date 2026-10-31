@@ -1,6 +1,6 @@
 // The settings table (src/settings.js), the form's entries (package/contents/config/main.xml) and
 // its widgets (package/contents/ui/config.ui) name the same keys with the same types and defaults,
-// and Settings parses what the form writes (docs/records/spec-settings.md). A key added to one and not the
+// and Settings parses what the form writes. A key added to one and not the
 // others would be a setting nobody can set, or a field that does nothing.
 const test = require("node:test");
 const assert = require("node:assert");
@@ -136,7 +136,7 @@ test("a choice: one of the list, else the default", () => {
     assert.strictEqual(loadSettings({}).S.get("defaultOrientation"), "auto");
 });
 
-test("workspaceOutputs: N=OUTPUT pairs, or a list of outputs per number (the first connected wins, redo stage 4); a bad entry is skipped and logged, the rest apply", () => {
+test("workspaceOutputs: N=OUTPUT pairs, or a list of outputs per number (the first connected wins); a bad entry is skipped and logged, the rest apply", () => {
     assert.deepStrictEqual(loadSettings({}).S.get("workspaceOutputs"), {});
     assert.deepStrictEqual(loadSettings({ workspaceOutputs: "1=DP-4, 2 = DP-6,10=HDMI-A-1" }).S.get("workspaceOutputs"),
         { 1: ["DP-4"], 2: ["DP-6"], 10: ["HDMI-A-1"] });

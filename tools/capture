@@ -7,7 +7,7 @@
 #   .../hold.txt      kwini3hold's last 500 events (holds, closes kept, snapshots), when it's loaded
 #   .../pointer.txt   kwini3helper's last 1000 presses and pointer crossings (pointerprobe.h)
 #   .../screen.png    both monitors, a second or so after the press
-#   .../note.txt      what Paul typed in the box that opens after the save (empty or missing: none)
+#   .../note.txt      what the user typed in the box that opens after the save (empty or missing: none)
 # tools/capture-read DIR prints the two logs as one timeline around the press: read that first.
 # KI3_CAPTURE_DIR overrides the parent directory (the live test uses it). Inside the test KWin
 # (KI3_INNER=1) the screenshot and the note box are skipped: the screenshot would be the live

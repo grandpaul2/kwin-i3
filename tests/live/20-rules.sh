@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: xwayland
-# Phase 2, one monitor: which windows float, and the states i3 doesn't have. Redo stage 3 (docs/
-# spec-redo-3-kinds-rules.md): the rules in i3's syntax (forWindow, assign), an X11 dialog floats,
+# Phase 2, one monitor: which windows float, and the states i3 doesn't have. The
+# rules in i3's syntax (forWindow, assign), an X11 dialog floats,
 # a rule runs once per window.
 source "$(dirname "$0")/lib.sh"
 set_key() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
@@ -12,7 +12,7 @@ prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-reload_with forWindow '[title="STAGE \(streamed\)"] floating enable'      # Paul's stream stage
+reload_with forWindow '[title="STAGE \(streamed\)"] floating enable'      # a streaming setup's stage window
 
 client --title a
 client --title fixed --fixed
@@ -55,7 +55,7 @@ kclose as
 set_key forWindow --delete; set_key assign --delete; key "Reload Settings"
 # A window floated by hand stays floating through a caption change: the rules act when their
 # verdict changes (a floatingTitle word appearing, above), not whenever it differs from what
-# Paul set (docs/records/spec-reload-keepabove.md; review finding 1: Firefox retitles in seconds).
+# the user set (Firefox retitles in seconds).
 client --title hand --retitle "1.5:hand2"
 check "hand tiles"                          wait_tree 1 "H[a main hand*]"
 key "Floating Toggle"

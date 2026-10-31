@@ -1,8 +1,8 @@
-// i3's tiling drag (docs/records/spec-tiled-look.md, part B): a left press on a tiled window's title bar,
+// i3's tiling drag: a left press on a tiled window's title bar,
 // or Meta+left anywhere in it, is taken before KWin's decoration and
 // window-action filters can arm a move: the window stays put and kwin-i3 drops it where the
 // pointer is released. Meta+right on a tiled window, or in the gap beside one, is i3's resize of
-// the boundary (docs/records/spec-tiling-resize.md): taken the same way, kwin-i3 draws the bar and
+// the boundary: taken the same way, kwin-i3 draws the bar and
 // resizes at the release. The helper only carries the drag: a hidden kwin-i3 action says it began,
 // and kwin-i3 polls State() over D-Bus until it ends (a script has no inbound D-Bus). kwin-i3
 // works out the target and the zone, tells kwini3hold the indicator, and moves the window in its
@@ -77,7 +77,7 @@ private:
 // i3's drain_drag_events: any key press cancels a drag, and the key goes on as usual (a binding
 // still runs). The helper's drag filters sit at Decoration and Effects, after KWin's global
 // shortcuts, so a bound key never reaches them: this one is ahead of the shortcuts (TabBox's
-// place), installed only while a press is held (§9 G7, Z7; redo stage 6).
+// place), installed only while a press is held (§9 G7, Z7).
 class TilingDragKeys : public KWin::InputEventFilter
 {
 public:
@@ -91,9 +91,9 @@ private:
 // G5's float (Meta+Shift+left on a tiled window) is KWin's own move, and Shift held during a KWin
 // move is its "drop into a custom tile": an outline over each tile passed, and the window tiled at
 // a release with Shift down (KWin 6.7.5 window.cpp:1245, :1108). kwin-i3's windows all sit in
-// custom tiles, so every window passed showed it (Paul's capture, 2026-10-29). Just ahead of
+// custom tiles, so every window passed showed it (A capture, 2026-10-29). Just ahead of
 // KWin's move filter (same weight, installed after it), and only for a move G5 started: what that
-// filter does, with Shift taken out (docs/records/mouse-plugin-design.md, ChordMoveFilter, 2026-10-22).
+// filter does, with Shift taken out.
 class TilingDragFloat : public KWin::InputEventFilter
 {
 public:
@@ -163,7 +163,7 @@ private:
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
     QSet<QString> m_floating;         // kwin-i3's floating windows, by internal id (SetFloating)
-    // One float or float to tile per press of the keys (§9 G5, G13; Paul 2026-10-28): set by a
+    // One float or float to tile per press of the keys (§9 G5, G13): set by a
     // Meta+Shift+left press taken, cleared when Meta or Shift is released.
     bool m_shiftLatched = false;
     KConfigWatcher::Ptr m_watcher;

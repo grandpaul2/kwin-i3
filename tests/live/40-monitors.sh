@@ -14,7 +14,7 @@ wait_log 'kwin-i3 loaded$'
 
 check "login numbering: 1 on the first monitor" poll shows Virtual-0 1
 check "login numbering: 2 on the second"    poll shows Virtual-1 2
-# i3's start: the focus on the output under the pointer (§12 P2, redo stage 2): an empty, hidden
+# i3's start: the focus on the output under the pointer (§12 P2): an empty, hidden
 # workspace opens on the focused output.
 key "Workspace 3"
 check "login: the focus is on the monitor under the pointer (Meta+3 opens there)" poll shows Virtual-1 3
@@ -62,8 +62,8 @@ check "Meta+5 from the second monitor opens there" poll shows Virtual-1 5
 key "Workspace 2"
 key "Focus Left"
 
-# A monitor drops out and comes back (the monitor-wake bug of 2026-10-21, 2026-10-28's i3 rule,
-# redo stage 4): its workspaces move to the first monitor for good; the returning monitor shows a
+# A monitor drops out and comes back (the monitor-wake bug of
+# 2026-10-21; i3's rule): its workspaces move to the first monitor for good; the returning monitor shows a
 # free workspace, not the one it showed; an assignment (workspaceOutputs) is what brings a workspace
 # back. The focus goes to the first monitor's workspace after either change (§5 D5).
 key "Workspace 1"
@@ -136,7 +136,7 @@ check "no window is active (not the hidden c)" poll active_is ""
 key "Workspace 6"
 check "Meta+6: c is active again"           poll active_is c
 
-# i3's sticky floating (§3 R3, X4; redo stage 9; approved by Paul, 2026-10-28): a window put on
+# i3's sticky floating (§3 R3, X4): a window put on
 # all desktops floats and follows Meta+N on its monitor, with the focus if it had it; one taken
 # off all desktops stays on the workspace shown; tiling a sticky window takes it off all desktops.
 on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { $2 } })" >/dev/null; }

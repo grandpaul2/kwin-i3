@@ -9,7 +9,7 @@ source "$(dirname "$0")/lib.sh"
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
 # The fuzzer settles about a second after each action; without that the failure didn't show.
 settle() { sleep 1; }
-# Since redo stage 4 a lost monitor's workspaces move to the first one for good, as in i3; only an
+# A lost monitor's workspaces move to the first one for good, as in i3; only an
 # assignment brings 2 back to the returning monitor, which this scenario's geometry checks rely on.
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "2=Virtual-1"
 load_kwin_i3

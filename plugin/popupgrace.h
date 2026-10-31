@@ -1,4 +1,4 @@
-// Panel popups forgive a stray pointer (docs/records/spec-popup-grace.md). With focus follows mouse, a
+// Panel popups forgive a stray pointer. With focus follows mouse, a
 // pointer crossing the gap between a floating panel and its popup focuses the window beneath at
 // once and the popup closes (KDE bug 511162, closed as invalid). KWin's focus delay would forgive
 // it, but for every focus change. This raises the delay only while a panel popup has the focus,

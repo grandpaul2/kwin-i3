@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# Atomic layout changes: the kwini3hold KWin effect (plugin/hold.cpp, docs/records/spec-atomic-layout.md).
+# Atomic layout changes: the kwini3hold KWin effect (plugin/hold.cpp).
 # A slow test client (--resize-delay) makes the gap between windows landing long enough to
 # screenshot: without the effect the spot where a window is about to land shows the background
 # (black in the headless KWin); with it, the old layout stays until every window has landed.
@@ -180,7 +180,7 @@ wait_tree 1 "H[c h*]"
 wait_stat open False
 n=$(( $(stat transactions) - t ))
 check "leaving fullscreen: KWin's restore alone, not held ($n transactions)"   between "$n" 0 1
-# A newcomer under the fullscreen window (docs/records/spec-fullscreen-tree.md): the rebuild for it
+# A newcomer under the fullscreen window: the rebuild for it
 # loses c its tile (KWin refuses a fullscreen window), a second pass lays out without c: the
 # newcomer's placement and up to two rebuilds, held. Leaving: KWin's restore, then the rebuild
 # that takes c back in beside h and i (bounds measured 2026-10-24).
@@ -209,7 +209,7 @@ m=$(mark)
 drag Meta right 600 360 500 360
 check "a resize drag happened"              wait_log '^.{9}RESIZE resized width' "$m"
 sleep 0.2
-# Meta+right is kwin-i3's own resize (docs/records/spec-tiling-resize.md): the drag holds nothing, its release
+# Meta+right is kwin-i3's own resize: the drag holds nothing, its release
 # re-tiles the two neighbours, which is one ordinary transaction at most.
 check "at most the drag's end re-tile was held"   between "$(( $(stat transactions) - t ))" 0 1
 
@@ -262,7 +262,7 @@ kjs 'var p, q; workspace.windowList().forEach(function (w) { if (w.caption === "
      var h = q.frameGeometry; q.frameGeometry = { x: h.x, y: h.y, width: h.width - 100, height: h.height };' >/dev/null
 sleep 1.2
 wait_stat open False
-# kwin-i3 puts both back (docs/records/spec-self-resize.md: to it, a frame changed from outside is a
+# kwin-i3 puts both back (to it, a frame changed from outside is a
 # window resizing itself): p inside the same call, q once its slow answer lands, a transaction of
 # its own. A release between p and q would make it three.
 check "one transaction for both, one for q put back" _stat_is transactions $((t + 2))

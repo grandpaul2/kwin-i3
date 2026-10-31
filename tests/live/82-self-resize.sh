@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
-# resize (docs/records/spec-self-resize.md; Firefox's session restore, Paul's capture 2026-10-25).
+# resize (Firefox's session restore, a capture 2026-10-25).
 # A well-behaved client can't do what Firefox did (GTK 3 and 4 keep the size KWin last
 # configured: tried), so the resize is written from outside
 # kwin-i3: to kwin-i3 it is the same, a frame change it didn't ask for.

@@ -70,7 +70,7 @@ const Slot s_slots[] = {
     {"kwin-i3 Workspace 10", KEY_0, 0, Qt::META, "Meta+0"},
     {"kwin-i3 Focus Right (;)", KEY_SEMICOLON, 0, Qt::META, "Meta+;"},
     // The letters by position too, as i3's config.keycodes and its wizard (i3 4.24: bindcode,
-    // turned into the layout's symbols at those QWERTY places; Paul's call 36, refinement stage 6).
+    // turned into the layout's symbols at those QWERTY places).
     {"kwin-i3 Focus Left (J)", KEY_J, 0, Qt::META, "Meta+J"},
     {"kwin-i3 Focus Down (K)", KEY_K, 0, Qt::META, "Meta+K"},
     {"kwin-i3 Focus Up (L)", KEY_L, 0, Qt::META, "Meta+L"},

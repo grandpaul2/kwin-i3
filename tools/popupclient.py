@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Stand-ins for the windows Plasma shows that kwin-i3 doesn't manage, for the live tests: an X11
 window of a given type, as KWin classes it (x11window.cpp's supported types). By default a panel
-popup, _KDE_NET_WM_WINDOW_TYPE_APPLET_POPUP (Window::isAppletPopup; docs/records/spec-popup-grace.md);
+popup, _KDE_NET_WM_WINDOW_TYPE_APPLET_POPUP (Window::isAppletPopup);
 --type tooltip, notification, osd, dialog, desktop (Plasma's desktop, the wallpaper's window). The test KWins have no Plasma shell to show real ones.
 Runs until killed.
   popupclient.py --title p --geometry 300x200+100+400 [--type tooltip] [--no-input]

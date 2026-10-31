@@ -22,7 +22,7 @@ check "every window is in the tree (tiled or floating)" poll all_in
 tiled_set() { [[ "$(tree 1 | grep -oE '^[HV]\[[^]]*\]' | tr -d '*![]HV' | tr ' ' '\n' | sort | tr '\n' ' ')" == "a b c d main " ]]; }
 check "the tiled ones are a, b, c, d, main (in any order)" poll tiled_set
 
-# A reload (docs/records/spec-reload-keepabove.md): a window floated by hand stays floating (the keep-above
+# A reload: a window floated by hand stays floating (the keep-above
 # flag kwin-i3 set is the one durable mark of a floating window), the new instance owns the flags
 # the old one set, so un-floating clears them, and release leaves nothing kept above.
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }

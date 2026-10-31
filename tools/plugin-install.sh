@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # make plugin-install: put the built kwini3helper (a plugin) and kwini3hold (an effect, which also
-# draws the frame) into a user plugin dir and (re)load them in the running KWin, without a relog
-# (docs/records/mouse-plugin-design.md, "Building, installing, upkeep"; docs/records/spec-atomic-layout.md;
-# docs/records/spec-window-modes.md). The kwini3frame decoration (until 2026-10-24) is removed, and if it
+# draws the frame) into a user plugin dir and (re)load them in the running KWin, without a relog.
+# The kwini3frame decoration (until 2026-10-24) is removed, and if it
 # was the selected decoration, Plasma's default (Breeze) is selected again.
 #   KI3_PLUGIN_ROOT   the Qt plugin dir (default ~/.local/lib/kwin-i3/qt6plugins); KWin finds it
 #                     through QT_PLUGIN_PATH, which a systemd drop-in gives KWin's unit only. The

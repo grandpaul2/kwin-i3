@@ -1,4 +1,4 @@
-// The keys that type a shifted symbol (docs/records/spec-keys-shifted-labels.md): a KDE shortcut is the
+// The keys that type a shifted symbol: a KDE shortcut is the
 // symbol, so Meta+Shift+1 is stored as Meta+! on a US keyboard; the page names it by its keys.
 // table: the current layout's keys, each [unshifted, shifted] as Qt keys and the unshifted
 // character as typed (é, not Qt's É) (KeysModel.layoutTable).

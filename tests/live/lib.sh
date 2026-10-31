@@ -1,6 +1,5 @@
 # Helpers for live scenarios. Sourced inside tools/testkwin.sh (headless KWin, private bus).
-# Every wait polls for the event it needs; no helper sleeps a fixed time and hopes
-# (test review 2026-10-22, faults 1-4).
+# Every wait polls for the event it needs; no helper sleeps a fixed time and hopes.
 #
 #   kjs '<js>'            run a throwaway KWin script that has log(); prints what it logged.
 #                         Fails loudly (stderr, status 1) on a script error or a timeout.
@@ -192,7 +191,7 @@ drag() {   # drag <mods> <button> x1 y1 x2 y2
     "$INJECT" "${cmds[@]}"
 }
 
-# An accessibility bus of the test's own, for tools/a11y.py (docs/records/spec-settings-cleanup.md): its
+# An accessibility bus of the test's own, for tools/a11y.py: its
 # runtime directory is the test's, since the live session's bus lives in $XDG_RUNTIME_DIR/at-spi
 # and a second launcher there would sit beside it. Apps started after this register on it.
 A11Y="python3 -I $root/tools/a11y.py"

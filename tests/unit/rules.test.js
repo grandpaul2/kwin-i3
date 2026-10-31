@@ -1,7 +1,7 @@
-// Unit tests for src/rules.js (node --test; approved by Paul, 2026-10-28): the i3 kind of each
-// window (docs/behaviour.md §3; docs/records/spec-redo-3-kinds-rules.md A), the rule parser (B), the
+// Unit tests for src/rules.js (node --test): the i3 kind of each
+// window (docs/behaviour.md §3), the rule parser (B), the
 // once-per-window record (X2), `assign` (N12), and the old list settings read as rules (C), with
-// Paul's two titles as a case. Windows are stubs with KWin's window properties (window.h).
+// two real titles as a case. Windows are stubs with KWin's window properties (window.h).
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
@@ -46,17 +46,17 @@ test("i3Kind: KRunner, Plasma's system windows, the logout screen and Spectacle'
     for (const c of ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml", "kwin_wayland", "ksmserver-logout-greeter"])
         assert.strictEqual(R.i3Kind(win({ resourceClass: c })), "override-redirect", c);
     assert.strictEqual(R.i3Kind(win({ resourceName: "krunner", resourceClass: "org.kde.krunner" })), "override-redirect", "by name");
-    assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle", fullScreen: true })), "override-redirect", "the region overlay (probe 93, call 60)");
+    assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle", fullScreen: true })), "override-redirect", "the region overlay (probe 93)");
     assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle" })), null, "Spectacle's own window is a rule's (floating by default)");
     assert.strictEqual(R.i3Kind(win({ resourceClass: "plasmashell" })), null, "plasmashell's ordinary windows are a rule's");
 });
 
-test("classify: the kinds kept out come first; on all desktops is sticky (in the tree, floating, redo stage 9); other non-Normal types are override-redirect", () => {
+test("classify: the kinds kept out come first; on all desktops is sticky (in the tree, floating); other non-Normal types are override-redirect", () => {
     const { R } = rules();
     assert.strictEqual(kind(R, { deleted: true }), "override-redirect");
     assert.strictEqual(kind(R, { dock: true }), "dock");
     assert.strictEqual(kind(R, { onAllDesktops: true, resourceClass: "yakuake" }), "sticky");
-    assert.strictEqual(R.keptOut(win({ onAllDesktops: true, resourceClass: "yakuake" })), null, "sticky is in the tree since redo stage 9");
+    assert.strictEqual(R.keptOut(win({ onAllDesktops: true, resourceClass: "yakuake" })), null, "sticky is in the tree");
     assert.strictEqual(kind(R, { normalWindow: false }), "override-redirect", "a type KWin has that i3 wouldn't manage");
     assert.strictEqual(R.keptOut(win({ resourceClass: "Alacritty" })), null);
 });

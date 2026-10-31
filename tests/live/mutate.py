@@ -85,16 +85,16 @@ muts = [
  (D, "src/kwin.js", "a rebuilt root unmanages by w.tile (hidden windows stay listed)", "                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });", "                t.windows.slice().forEach(function (w) { if (w.tile) unmanageFrom(w.tile, w); });"),
  (D, "src/kwin.js", "a modal pair's two-desktop moment taken for sticky", "            if (relocating && w.desktops.length !== 1) return;\n", ""),
  (C, "src/log.js", "the in-memory log only with debugLog", "    logRing.push(now", "    if (DEBUG_LOG) logRing.push(now"),
- # A reload keeps owning the floating windows' keep-above flags (docs/records/spec-reload-keepabove.md)
+ # A reload keeps owning the floating windows' keep-above flags
  (L, "src/kwin.js", "a flag already set is not owned (orphaned by a reload)", "        if (on) { if (!w.keepAbove) w.keepAbove = true; keptAbove[id(w)] = true; }", "        if (on && !w.keepAbove) { w.keepAbove = true; keptAbove[id(w)] = true; }"),
  (L, "src/kwin.js", "a reload re-tiles a hand-floated window", "        if (kind === \"tile\" && !fresh && !w.tile && w.keepAbove) kind = \"float\";\n", ""),
  (R, "src/kwin.js", "the rules re-float/re-tile on every caption change (a hand float lasts one retitle)", "        if (kind === was) return;\n", ""),
- # A fullscreen window stays in the tree (docs/records/spec-fullscreen-tree.md, 2026-10-24)
+ # A fullscreen window stays in the tree
  (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            log(\"FULLSCREEN \"", "        if (false) {\n            log(\"FULLSCREEN \""),
  (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),
  (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient || w.fullScreen) return null;", "        return null;"),
  (F, "src/kwin.js", "C: a workspace switch focuses what KWin chose under fullscreen", "        model.activate(fs || model.descendFocused(ws));", "        model.activate(model.descendFocused(ws));"),
- # Settings and the reload (docs/records/spec-settings.md, 2026-10-24)
+ # Settings and the reload
  (S, "src/kwin.js", "settings not re-read on a reconfigure", "        options.configChanged.connect(guard(\"settings\", settingsChanged));\n", ""),
  (S, "src/kwin.js", "Reload Settings does nothing", "callDBus(\"org.kde.KWin\", \"/KWin\", \"org.kde.KWin\", \"reconfigure\");", ""),
  (S, "src/kwin.js", "a rule change leaves open windows as they were", "            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });\n", "            ;\n"),
@@ -108,7 +108,7 @@ muts = [
  (W, "src/kwin.js", "a monitor that appears doesn't take its workspaces", "        names.forEach(function (n) { if (!(n in lastShown)) Workspaces.claimAssigned(n); });\n", ""),
  (W, "src/kwin.js", "a reload re-applies assignments to existing workspaces", "        log(\"SETTINGS \" + changed.join(\" \"));\n", "        log(\"SETTINGS \" + changed.join(\" \"));\n        if (changed.indexOf(\"workspaceOutputs\") >= 0) { Workspaces.numberScreens(); }\n"),
  (W, "src/kwin.js", "a returning monitor's spare workspace may be assigned elsewhere", " || (a && a !== s.name)) continue;", ") continue;"),
- # Gaps (docs/records/spec-settings.md, step d)
+ # Gaps
  (G, "src/kwin.js", "gaps: the root never inset", "            if (reinset) root.relativeGeometry = inset;\n", ""),
  (G, "src/kwin.js", "gaps: no rebuild when the inset changes", "        if (want !== have || reinset) {", "        if (want !== have) {"),
  (G, "src/kwin.js", "gaps: a pinned outer edge not mended", " || !edgesIntact(root);", ";"),
@@ -118,7 +118,7 @@ muts = [
  (G, "src/kwin.js", "gaps: the read-back not clipped to the root", "                return { x: Math.max(g.x, lo.x), y: Math.max(g.y, lo.y),\n                         x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };", "                return { x: g.x, y: g.y, x2: g.x + g.width, y2: g.y + g.height };"),
  (G, "src/kwin.js", "gaps: release leaves the root inset", "                    root.relativeGeometry = full;\n", ""),
  (G, "src/kwin.js", "gaps: sizes start from the whole area", "var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };", "var r = { x: 0, y: 0, width: 1, height: 1 };"),
- # A floated window at the geometry it opened with (docs/records/spec-float-size.md)
+ # A floated window at the geometry it opened with
  (Z, "src/kwin.js", "float size: the record never applied", "        w.frameGeometry = g;\n", ""),
  (Z, "src/kwin.js", "float size: never recorded", "        recordUntiled(w);\n", ""),
  (Z, "src/kwin.js", "float size: not moved by i3's rule on another output", "        if (r.out.x !== o.x ||", "        if (false && r.out.x !== o.x ||"),
@@ -243,7 +243,7 @@ def main():
     only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
     chosen = [m for m in muts if (not only or any(o in m[2] for o in only)) and (not one or m[0] == one)]
     # KI3_ONLY: the baseline is the scenarios its faults name, not the whole suite, so a flake
-    # elsewhere doesn't block it (OPEN.md item 34 (e), Paul 2026-10-27).
+    # elsewhere doesn't block it (OPEN.md item 34 (e)).
     base_set = [one] if one else sorted({m[0] for m in chosen}) if only else ALL
     if not base_set:
         print("KI3_ONLY: no fault matches"); return 2

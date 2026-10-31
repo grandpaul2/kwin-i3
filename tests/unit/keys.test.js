@@ -1,7 +1,6 @@
-// The default keys in src/kwin.js against the author's old i3 config (git d3de958^ in the dotfiles),
+// The default keys in src/kwin.js against an i3 config's defaults,
 // translated: $mod is Meta, resize mode becomes Meta+Ctrl (a script can't have mode-only keys).
-// The live tests press actions by name, so without this a typo in a key would ship unnoticed
-// (test review 2026-10-22, fault 10).
+// The live tests press actions by name, so without this a typo in a key would ship unnoticed.
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");

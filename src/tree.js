@@ -93,7 +93,7 @@ var Tree = (function () {
         return null;
     }
 
-    // A minimized window is i3's scratchpad window (§5 C9, §10 V7, redo stage 6): in the tree, out
+    // A minimized window is i3's scratchpad window (§5 C9, §10 V7): in the tree, out
     // of the layout, and never reached by the focus kwin-i3 chooses. A container counts while any
     // leaf in it is not minimized; a workspace always.
     function reachable(con) {
@@ -168,7 +168,7 @@ var Tree = (function () {
     }
 
     // con_next_focused: what gets focus when `con` goes away. Minimized windows are skipped, as
-    // i3's focus never reaches the scratchpad's (redo stage 6); none left: the parent.
+    // i3's focus never reaches the scratchpad's; none left: the parent.
     M.nextFocused = function (con) {
         var next = null, focus = con.parent.focus;
         for (var i = 0; i < focus.length && !next; i++) if (focus[i] !== con && reachable(focus[i])) next = focus[i];
@@ -314,7 +314,7 @@ var Tree = (function () {
         return node;
     };
 
-    // i3's con->sticky (cmd_sticky; redo stage 9, docs/records/spec-redo-9-sticky.md): a floating window
+    // i3's con->sticky (cmd_sticky): a floating window
     // visible on every workspace of its output. Only floating nodes carry it here: a sticky
     // window made tiling is taken off all desktops first (C, KWin's tiles belong to one desktop).
     M.setSticky = function (con, on) {
@@ -466,7 +466,7 @@ var Tree = (function () {
     // moving a window took several presses to cross (seen 2026-10-22). A one-child split
     // holding a window stays: that is what Split H makes, and what a move goes into. Called by
     // every operation that can leave one: move (via flatten), close, float (not tile), send to
-    // workspace, drop, adopt. docs/records/spec-nested-boxes.md has the reasons and when to revisit.
+    // workspace, drop, adopt.
     function tidyCon(con) {
         while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
             var parent = con.parent, child = con.nodes[0];
@@ -685,7 +685,7 @@ var Tree = (function () {
     };
 
     // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
-    // docs/records/spec-tiled-look.md, part B. Rects come from the caller (kwin.js has the tiles):
+    // Rects come from the caller (kwin.js has the tiles):
     // rectOf(con) gives { x, y, width, height } for a leaf, a split or a workspace.
 
     var SIBLING = "sibling", CENTER = "center", PARENT = "parent";
@@ -1023,7 +1023,7 @@ var Tree = (function () {
         while (con.type !== "ws") {
             if (con.fullscreen) { con = wsOf(con); break; }
             var parent = con.parent;
-            // Minimized windows are not there to be focused (redo stage 6): the siblings that are.
+            // Minimized windows are not there to be focused: the siblings that are.
             var siblings = parent.nodes.filter(function (c) { return c === con || reachable(c); });
             if (siblings.length > 1 && parent.layout === o) {
                 var idx = siblings.indexOf(con);

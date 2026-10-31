@@ -1,4 +1,4 @@
-// The Keys sub-page (docs/records/spec-settings-page.md, "The Keys sub-page"): kwin-i3's commands, grouped,
+// The Keys sub-page: kwin-i3's commands, grouped,
 // each with its keys. Changes wait for Apply; a key another shortcut holds says so in its row.
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -111,7 +111,7 @@ KCM.ScrollViewKCM {
                             required property var modelData
                             // The keys that type a shifted symbol: KDE's key button shows the
                             // symbol (Meta+!), which it can't be told otherwise; this names the
-                            // keys beside it (docs/records/spec-keys-shifted-labels.md).
+                            // keys beside it.
                             readonly property string keysText: Shifted.shifted(modelData.keyCode, kcm.keys.layoutTable)
                             readonly property string defaultKeysText: Shifted.shifted(modelData.defaultCode, kcm.keys.layoutTable)
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 16
@@ -127,8 +127,7 @@ KCM.ScrollViewKCM {
                                 font: Kirigami.Theme.smallFont
                                 Accessible.name: i18nc("the keys that type this shortcut's symbol", "typed with %1", text)
                             }
-                            // What the command's keys are inside a mode (docs/records/spec-settings-words.md
-                            // row 32): after the last key, not the slot, so it doesn't stand off alone.
+                            // What the command's keys are inside a mode: after the last key, not the slot, so it doesn't stand off alone.
                             QQC2.Label {
                                 anchors.left: typed.visible ? typed.right : item.right
                                 anchors.leftMargin: Kirigami.Units.largeSpacing

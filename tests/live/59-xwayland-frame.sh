@@ -2,7 +2,7 @@
 # timing: alone
 # needs: plugin
 # needs: xwayland
-# Xwayland apps get the frame as Wayland ones do (docs/records/spec-window-modes.md, decision 8): tiled,
+# Xwayland apps get the frame as Wayland ones do: tiled,
 # borderless and framed; floating, their decoration back; never the GTK 4 bounds request (X11 has
 # no bounds). The X11 client is the GTK test client under GDK_BACKEND=x11.
 source "$(dirname "$0")/lib.sh"
@@ -38,7 +38,7 @@ check "x fills its tile, 1 px from the edges" geom_is x "1,1 638x718"
 sleep 0.3; capture
 echo "    row 360: $(px 0 360) $(px 1 360) | $(px 638 360) $(px 639 360) $(px 640 360)"
 check "x's frame and app"                   eval 'pix 0 360 $INACT && pix 1 360 $RED && pix 638 360 $RED && pix 639 360 $INACT && pix 640 360 $ACT'
-# Rounded as Wayland windows are (docs/records/spec-rounded-corners.md; 78 has the arithmetic): its
+# Rounded as Wayland windows are (78 has the arithmetic): its
 # corner pixel neither app nor frame, the frame on the arc, the app 4 px in.
 echo "    x's corner: $(px 1 1) $(px 3 1) $(px 5 5)"
 check "x rounded, the frame along it"       eval '! pix 1 1 $RED && ! pix 1 1 $INACT && near 3 1 $INACT $RED && pix 5 5 $RED'

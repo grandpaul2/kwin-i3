@@ -1,5 +1,4 @@
-// The pointer, known instead of guessed (OPEN.md item 43, Paul 2026-10-28: "we can't be guessing
-// anymore"). Three questions at any point of the screen, each answered from KWin's own state:
+// The pointer, known instead of guessed. Three questions at any point of the screen, each answered from KWin's own state:
 //   drawn by:    the windows whose buffer, frame or kwini3hold ring cover the point, top first
 //   received by: the window KWin gives the pointer there (InputRedirection::findToplevel, its
 //                hover), and each window's own hit test (Window::hitTest: its input region)

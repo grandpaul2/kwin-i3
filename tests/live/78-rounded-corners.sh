@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # timing: alone
 # needs: plugin
-# Rounded corners on tiled windows (docs/records/spec-rounded-corners.md): kwini3hold gives each tiled
+# Rounded corners on tiled windows: kwini3hold gives each tiled
 # window KWin's 5 px radius and draws the frame along it; floating windows keep Breeze's; square
 # when fullscreen and with roundedCorners off. Pixels from tools/shot.py.
 # At scale 1, a window at 1,1 with r=5 and a 1 px frame: the arc's centre is 6,6, its inner edge
@@ -153,7 +153,7 @@ sleep 1; capture
 check "  rounded again"                     rounded 1 1 $INACT $RED
 
 # Gaps 5 and 3 with the frame: 5 counts as 4, the padding 4 + 2 is even, so a sits on whole
-# pixels at 3 + 2 + 3 (an odd one put every window half a pixel off; Paul, 2026-10-25), and
+# pixels at 3 + 2 + 3 (an odd one put every window half a pixel off), and
 # stays rounded there.
 rawg() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var g = w.frameGeometry; log(g.x + \",\" + g.y + \" \" + g.width + \"x\" + g.height); } });"; }
 set_key gapsInner 5; set_key gapsOuter 3

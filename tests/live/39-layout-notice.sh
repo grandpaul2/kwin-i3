@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Without the plugins kwin-i3's keys stay US symbols: on another keyboard layout the load
-# notification says so (docs/records/spec-keyboard-layouts.md). On US, nothing; with warnTakenKeys off,
+# notification says so. On US, nothing; with warnTakenKeys off,
 # nothing. No "# needs: plugin": the helper is not loaded here.
 source "$(dirname "$0")/lib.sh"
 notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
@@ -19,7 +19,7 @@ reload() {
 poll grep -q READY "$KI3_TMP/notify.out"
 
 # 1. US: logged, nothing to say about the layout. (Without the helper the load report has one
-#    part all the same since redo stage 5: what goes without the plugins, refinement stage 3.)
+#    part all the same: what goes without the plugins.)
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "US: logged, no notice"               wait_log '^.{9}LAYOUTS us$'
@@ -36,7 +36,7 @@ check "a second notification"               poll notes_are 2
 check "it names the layout"                 grep -q "Its keys may not fit the keyboard layout (de)" "$KI3_TMP/notify.out"
 check "and the fix"                         grep -q "make plugin-install" "$KI3_TMP/notify.out"
 
-# 3. warnTakenKeys off: only the taken keys go (review 2026-10-30); the layout is still said.
+# 3. warnTakenKeys off: only the taken keys go; the layout is still said.
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key warnTakenKeys false
 m=$(mark); reload
 check "off: the layout still checked"       slow_log '^.{9}LAYOUTS de, not fitted \(no helper\)$' "$m"
