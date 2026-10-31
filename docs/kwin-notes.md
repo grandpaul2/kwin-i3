@@ -267,6 +267,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
   `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (2026-10-30; 1 in 8
   resumes that boot).
+- The logout screen (`org.kde.LogoutPrompt`, the global theme's `logout/Logout.qml`; Breeze in
+  plasma-workspace 6.7.5): `promptLogout`, `promptShutDown` and `promptReboot` show that one action
+  and Cancel, and **do it unasked after a 30 s countdown**; `promptAll` shows every action (Sleep
+  and Hibernate only where the machine can, `spdMethods`), with no countdown, Shut Down focused.
+  Escape or a click outside cancels. Read from the source, 2026-10-31.
 
 ## The test KWin (`tools/testkwin.sh`)
 
