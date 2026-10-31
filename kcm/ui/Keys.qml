@@ -117,6 +117,7 @@ KCM.ScrollViewKCM {
                             Layout.preferredWidth: Kirigami.Units.gridUnit * 16
                             implicitHeight: item.implicitHeight
                             QQC2.Label {
+                                id: typed
                                 anchors.left: item.right
                                 anchors.leftMargin: Kirigami.Units.smallSpacing
                                 anchors.verticalCenter: item.verticalCenter
@@ -125,6 +126,17 @@ KCM.ScrollViewKCM {
                                 color: Kirigami.Theme.disabledTextColor
                                 font: Kirigami.Theme.smallFont
                                 Accessible.name: i18nc("the keys that type this shortcut's symbol", "typed with %1", text)
+                            }
+                            // What the command's keys are inside a mode (docs/records/spec-settings-words.md
+                            // row 32): after the last key, not the slot, so it doesn't stand off alone.
+                            QQC2.Label {
+                                anchors.left: typed.visible ? typed.right : item.right
+                                anchors.leftMargin: Kirigami.Units.largeSpacing
+                                anchors.verticalCenter: item.verticalCenter
+                                visible: row.note !== "" && slot.index === row.keySlots.length - 1
+                                text: row.note
+                                color: Kirigami.Theme.disabledTextColor
+                                font: Kirigami.Theme.smallFont
                             }
                             KQC.KeySequenceItem {
                                 id: item
@@ -158,13 +170,6 @@ KCM.ScrollViewKCM {
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
                             }
                         }
-                    }
-                    // What the command's keys are inside a mode (docs/records/spec-settings-words.md row 32).
-                    QQC2.Label {
-                        visible: row.note !== ""
-                        text: row.note
-                        color: Kirigami.Theme.disabledTextColor
-                        font: Kirigami.Theme.smallFont
                     }
                     Item {
                         Layout.fillWidth: true
