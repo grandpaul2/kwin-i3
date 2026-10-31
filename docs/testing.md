@@ -16,8 +16,8 @@ change; the reload of a desktop is its owner's go.
 1. **Only the runs listed here.** No extra run "to be sure", no whole-suite run but P3's, no run
    to chase a flake.
 2. **No run over 5 minutes, ever.** A longer one is split into runs of 5 minutes or less.
-   **Anything over a few seconds runs in the background** (Paul, 2026-10-26: "I need you available
-   to me as much as possible"): `make unit` in the foreground, every scenario run and `make test`
+   **Anything over a few seconds runs in the background** (Paul, 2026-10-26: so the person can keep
+   talking to the agent): `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
    timer from the moment it starts, `AGENTS.md`'s "Long runs": at each firing
    read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset); a red scenario's output and kwin-i3's log are kept in `tests/live/out/` after the run

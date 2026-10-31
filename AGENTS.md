@@ -77,7 +77,7 @@ The rules below quote Paul and date his decisions; they are the project's rules,
 
 ## How a problem is worked (Paul's method, earned the hard way)
 
-- **Lead with i3, every time** (Paul, 2026-10-28: "the name of the frikin project is kwin-i3"). A
+- **Lead with i3, every time** (Paul, 2026-10-28: the project is named for it). A
   bug, a capture, a design question or an option list opens with: how i3 does it (its source,
   file:line), how kwin-i3 copies it, the hurdles (KWin, Wayland). Then KWin's detail. i3 behaviour
   is ported from i3's source (`src/move.c`, `src/tree.c`, `src/con.c`; the **4.24 release**, not

@@ -106,8 +106,8 @@ ended after 3 ms and 7 ms.
 - **03:46:04**, helper without the frame filter: it opened and stayed open ~15 s.
 
 Every other try failed: 03:19, 03:32, 03:47, 03:49 and 03:50, and 03:52 with the normal helper and
-no input method. The two successes were not traced, so what differed is unknown. Paul (2026-10-25):
-"you had it working a minute ago. please do not just move on from that." The leading guess:
+no input method. The two successes were not traced, so what differed is unknown; a fix seen
+working once is not dropped (Paul, 2026-10-25). The leading guess:
 which window had the focus when the menu closed (a Plasma window then, not a tile).
 
 ## Second look (2026-10-25, later session; sources read before the reproduction above)

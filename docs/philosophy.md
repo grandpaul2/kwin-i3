@@ -16,9 +16,8 @@ it feel like i3, made configurable and reliable (`docs/plan.md`, "Scope").
 A window manager that replaces a desktop has to carry the whole desktop: display and input
 hardware, multi-monitor, scaling, portals, screen sharing, every update of the stack beneath it.
 kwin-i3 carries none of it. KWin and Plasma are among the best-supported projects on Linux;
-kwin-i3 rides on them and updates as one script and two plugins (Paul, 2026-10-27: "Everything
-that those other WMs have to do when they update is insane because they are trying to replace a
-DE"). Its windows live beside an ordinary Plasma session, with all the support that brings.
+kwin-i3 rides on them and updates as one script and two plugins (Paul, 2026-10-27: a standalone
+window manager has to rebuild what a desktop environment already gives, at every update). Its windows live beside an ordinary Plasma session, with all the support that brings.
 
 ## Who it is for
 

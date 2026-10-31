@@ -25,8 +25,8 @@ there. Rare (a custom-frame app's band at the monitor edge, the gap strips stop 
 output). Next: a test-KWin trace of that press with `pointer-map events` (the press line was not
 printed in the sweep). Waits: the Stage, nothing seen live.
 
-**36. The test depth held back during the Stage** (Paul, 2026-10-26: testing that heavy "is really
-hurting my motivation"; `docs/testing.md` is lean until the Stage ends). Then, each in runs of 5
+**36. The test depth held back during the Stage** (Paul, 2026-10-26: testing stays lean for the Stage;
+`docs/testing.md` is lean until the Stage ends). Then, each in runs of 5
 minutes or less (never one long run): the fault battery (`make mutate-live`, `make mutate`) and
 faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz campaign; `make
 live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 36 run
