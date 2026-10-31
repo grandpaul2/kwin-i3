@@ -33,25 +33,7 @@ window management, with Plasma doing the rest. The scope and its reasons:
 
 ## Open
 
-Suggested order: 4 with 51(a), then 22, then 68.
-
-**4. No dependence on Paul's dotfiles.** (a)-(d) done and live 2026-10-24: workspaces created on
-demand (`docs/records/spec-desktops-on-demand.md`), per-monitor desktops reported and put right when
-turned on (`docs/records/spec-per-output-desktops.md`), taken keys reported with `make take-keys` /
-`restore-keys` (`docs/records/spec-taken-keys.md`), kwin-i3's own Meta+F / Meta+Shift+Q
-(`docs/records/spec-own-keys.md`); (b) and (c) share one notification at load. The stock test mode is
-done (`make live-stock`, `docs/records/spec-stock-mode.md`, 2026-10-24): the install as written
-(per-output on, `make take-keys`) works on a stock Plasma with click-to-focus; no real finding.
-Done 2026-10-30, the README's Install rewritten for a stranger: the clone, each distribution's
-packages (Fedora, Arch/CachyOS, PikaOS/Debian; PikaOS's from `tools/box.sh`, the plugins and the
-settings page built there), the script, plugins and settings page in order with the one log-out,
-`make take-keys` as the step that prints the keys taken (Paul, 2026-10-30), "For i3's feel"
-(focus follows mouse with KWin 6.7.5's own labels, per-output desktops, animations; said to be
-Plasma's), Meta+Return's default terminal, the capture key and what to send, after a Plasma
-update, updating, removing; every "the load notification says" made true; the window-rule advice
-for an app's floating size, after a probe (`docs/records/spec-float-size.md`); the settings page's
-taken-keys checkbox hidden while 56 stands. Left:
-- Paul's read of the new Install, as a stranger would.
+Suggested order: 51, then 22, then 68.
 
 **51. What users of other KWin tilers expect** (fourteenth session, 2026-10-28: three agents
 surveyed Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report
@@ -70,8 +52,10 @@ can't show tabs without much work). Our niche's only other entry: krohnkite-i3 (
 releases). For the beta, (a) is a build from source on each friend's machine (a package, COPR/AUR
 as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
 plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what
-says the plugins are missing. Next: (a) and (b) in item 4's README pass; (d) asked as a foundation
-change if a friend asks for it.
+says the plugins are missing. (a) done in item 4's README pass (2026-10-30: per-distribution packages, rebuild after a Plasma
+update); of (b), supported versions and removal done. Next: whether the beta needs (b)'s
+screenshot and "window X won't tile" FAQ, or they wait for a release (Paul); (d) asked as a
+foundation change if a friend asks for it.
 
 **22. The settings page, finished for the beta** (Paul, 2026-10-25: "not perfect, but fine for
 the dev phase; it will need more attention as we end it"). Today's state: reorganized
