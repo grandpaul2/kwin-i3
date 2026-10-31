@@ -30,8 +30,12 @@ check "1, 3, 4, 5, each one monitor, 3 and 5 shown, 5 focused" poll spaces_are '
 frame() { grep -o 'kwin-i3 workspaces frame: .*' "$KI3_TMP/pw.log" | tail -1 | cut -d' ' -f4-; }
 check "the theme's task frame has side margins; no lead off a panel" poll eval 'read -r l r t b lead <<<"$(frame)"; (( l + r > 0 )) && [[ $lead == 0 ]]' || echo "    $(frame)"
 # A click on 1's thumbnail, the first: Meta+1.
-g=$(kjs 'workspace.windowList().forEach(function (w) { if (w.resourceClass.indexOf("plasmawindowed") >= 0) { var c = w.clientGeometry; log(Math.round(c.x) + " " + Math.round(c.y) + " " + Math.round(c.height)); } });')
-read -r cx cy ch <<<"$g"
+wg() { kjs 'workspace.windowList().forEach(function (w) { if (w.resourceClass.indexOf("plasmawindowed") >= 0) { var c = w.clientGeometry; log(Math.round(c.x) + " " + Math.round(c.y) + " " + Math.round(c.height)); } });'; }
+# Read only once it is back in its tile on Virtual-1: on KWin 6.8 the window resizes itself to its
+# whole row of thumbnails once, just after it tiles, until kwin-i3 puts it back (82's refit).
+intile() { local x; read -r x _ <<<"$(wg)"; (( x >= 1280 )); }
+poll intile
+read -r cx cy ch <<<"$(wg)"
 x1=$(( cx + ch * 16 / 9 / 2 )); y1=$(( cy + ch / 2 ))
 echo "    widget client at $cx,$cy height $ch: 1's thumbnail centre near $x1,$y1"
 m=$(mark)

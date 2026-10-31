@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # needs: plugin
+# timing: alone
+# (f floats where KWin first placed it, which shifts under load: in PikaOS's batch it covered the
+# point that hovers b; green alone)
 # Closing the focused window focuses the one used before it, as i3 (con_next_focused, con.c:1651).
 # Found from a capture, where closing a window always focused the leftmost one: H[A V[A A*]], the pointer over the left one and back (focus follows
 # mouse: both activated), Meta+Shift+Q: KWin activates the left one, the most recent in its
