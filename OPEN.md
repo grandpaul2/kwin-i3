@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-01** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main's script as loaded at 6217b1b.
+main's script as loaded at 5657732.
 
 ## Stage
 
@@ -90,8 +90,9 @@ the same, and a one-child parent only changes direction. The same family as the 
 Next: a deep dive, not one more case. Map how a tree change reaches KWin's tiles (which changes
 rebuild a workspace's tiles and which adjust them, and what each does to a window's geometry),
 then trace every window's geometry through Split V then Split H in a test KWin, i3's
-expectation being no change at all; a capture (Meta+Shift+B) right after it shows live adds the
-desktop's own timeline. Then a verdict on the mapping as a whole.
+expectation being no change at all. A capture of it is kept:
+`~/.local/state/kwin-i3/captures/2026-11-01_135855.515` ("h and v shift"), read first with
+`tools/capture-read`. Then a verdict on the mapping as a whole.
 
 **76. A container's tab title is not i3's** (found 2026-11-01). A tab holding a container (a
 split inside a tabbed or stacked group) is titled with the container's tree. i3 writes it
