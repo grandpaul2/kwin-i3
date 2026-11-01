@@ -770,8 +770,8 @@ var Tree = (function () {
     }
 
     // drag_callback: where `con`, dragged to x,y over `target` (the leaf there, the fullscreen
-    // window covering it, or a visible workspace), would drop. parentMax is i3's
-    // render_deco_height() + 5 px. Returns { target, type, dir, rect } (rect: the indicator) or
+    // window covering it, or a visible workspace), would drop. parentMax is the parent
+    // zone's depth (i3's render_deco_height() + 5 px; kwin.js's is deeper, §9 G9). Returns { target, type, dir, rect } (rect: the indicator) or
     // null for no drop (onto itself, not as a parent drop).
     M.dropPlan = function (con, target, x, y, rectOf, parentMax) {
         if (!target) return null;

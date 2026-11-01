@@ -2265,12 +2265,10 @@ var KI3 = (function () {
         var on = shown.filter(function (v) { return v.screen === s; })[0];
         return on ? model.descendTilingFocused(on.ws) : null;
     }
-    // i3's parent zone: render_deco_height() + 5 px; the dragged window's title bar when it has
-    // one, else about i3's default font's.
-    function parentZone(w) {
-        var t = w.clientGeometry.y - w.frameGeometry.y;
-        return (t > 0 ? t : 20) + 5;
-    }
+    // The parent zone's depth. Not i3's render_deco_height() + 5 px (about 25): a strip that thin
+    // goes unnoticed and is hard to hit with a mouse, and it is the only way out of a tabbed
+    // group by drag, whose sides join the group (§9 G9).
+    var PARENT_ZONE = 50;
     // The centre's band under the pointer (tabbed, stacked, swap), for the indicator.
     function bandRect(plan) {
         if (!plan.bands) return null;
@@ -2310,7 +2308,7 @@ var KI3 = (function () {
             if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || !inTree(con) || con.type !== drag.type) { endDrag("its window is gone"); return; }
             var zw = wins[shownWindow(con).win];
             if (!zw) { endDrag("its window is gone"); return; }
-            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(zw));
+            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, PARENT_ZONE);
             if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect), drag.plan); return; }
             dropOn(drag.plan, " at " + x + "," + y);
             return;

@@ -61,7 +61,7 @@ drag Meta left 1100 400 213 440
 echo "    $(dropped $m)"
 check "Meta+drag a onto b's centre, bottom band: swapped" wait_tree 1 "H[a* c b]" "$m"
 
-# Within the parent zone (title bar + 5 px: 33; 28 px from the edge) of a's bottom edge, which
+# Within the parent zone (50 px; 28 px from the edge) of a's bottom edge, which
 # is the workspace's too: out of the row, under everything (tree_move down). The press focused
 # c, so c keeps it.
 m=$(mark)
@@ -108,7 +108,7 @@ check "a onto the empty workspace on Virtual-1" wait_tree 2 "H[a*]" "$m"
 check "  ws 1 without it"                   wait_tree 1 "V[H[b] c]" "$m"
 
 # i3's frame (no title bars): Meta+drag only. c onto b's left side, inside the sibling zone (30 %
-# of 358) and outside the parent zone (20 + 5 px with no title bar): beside b, before it.
+# of 358) and outside the parent zone (50 px; 59 px from the edge): beside b, before it.
 set_key tiledLook frame
 poll eval '[[ "$(fc b)" == "1,1 1278x358" ]]'
 m=$(mark)
