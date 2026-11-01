@@ -692,7 +692,12 @@ var KI3 = (function () {
                 changed = true;
                 moved.push(tileNames(child) + " asked " + relLog(r) + " kept " + relLog(child.relativeGeometry));
             }
-            if (setSizes(child, k.p, r)) changed = true;
+            // The children from the edges KWin keeps, not the ones asked: one within the tolerance
+            // isn't written, and KWin's own split can leave it an ulp off the parent's (0.5 +
+            // 0.49921875 on an inset root). A child asked the parent's edge then changes it by
+            // that ulp, and KWin pins it to the border: the tiles never match, rebuilt every pass.
+            var kept = child.relativeGeometry;
+            if (setSizes(child, k.p, { x: kept.x, y: kept.y, width: kept.width, height: kept.height })) changed = true;
         }
         return changed;
     }
