@@ -93,6 +93,14 @@ then trace every window's geometry through Split V then Split H in a test KWin, 
 expectation being no change at all; a capture (Meta+Shift+B) right after it shows live adds the
 desktop's own timeline. Then a verdict on the mapping as a whole.
 
+**76. A container's tab title is not i3's** (found 2026-11-01). A tab holding a container (a
+split inside a tabbed or stacked group) is titled with the container's tree. i3 writes it
+`i3: H[alacritty firefox]`: the prefix, and each window's class instance
+(`con_get_tree_representation`, `con.c:2473`; `x.c:690`). kwin-i3's `barTitle`
+(`src/kwin.js:1415`) has no prefix and uses each window's caption, so two terminals make a long
+tab; `behaviour.md` (the bar) calls it i3's. A tab holding one window, its caption, is as i3.
+Next: look at one live (a split inside a tab), then i3's form, or a written reason to differ.
+
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
