@@ -81,8 +81,10 @@ beside the gap strips through `FrameFocus`, the hold covering a tab switch. **Th
 tabbed group, middle stacked, bottom swaps, each band kept on a small target, just smaller; three
 large icons drawing each result show at once over the target's centre, the band under the pointer
 highlighted. Float to tile (G13) takes the same bands, its bottom one putting the window after the
-target. Next: `plan.md`'s "In" list and the behaviour rows (K7, K8, N4, G11, a tabbed section),
-then the model.
+target. Keys: Meta+W tabbed (`make take-keys` frees it from Plasma's Overview; the README
+names the hot corner and Meta+G), Meta+S stacked, Meta+A focus parent. Built on main, `stable` held
+back until it has had its week (`docs/testing.md` P6). Next: the model in `tree.js`, with its
+behaviour rows (K7, K8, N4, G11, a tabbed section) in the same commit.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same

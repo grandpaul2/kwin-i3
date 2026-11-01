@@ -37,7 +37,8 @@ cited was).
    pager can't show per-output workspaces; the hold, because KWin's tile moves would otherwise show
    torn layouts; an OSD or an animation Plasma already has is out.
 
-**In:** i3's tree, with its focus, move, split, layout toggle and resize (by key, its resize mode,
+**In:** i3's tree, with its focus (`focus parent` too), move, split, tabbed and stacked layouts
+with their bar, layout toggle and resize (by key, its resize mode,
 and by mouse); workspaces that live on an output, with i3's workspace output and `assign`;
 floating, sticky floating and the focus mode toggle; i3's keys (`docs/behaviour.md` §8); the
 frame, gaps and the split indicator; i3's tiling drag; i3's window kinds and its `for_window`
@@ -49,7 +50,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 
 | left out | why |
 |---|---|
-| tabbed and stacked layouts, `focus parent`, urgency | KWin's tiles can't show tabs without much work, and `focus parent` mostly serves them; urgency was shown in i3's bar, and there is no bar |
+| urgency | it was shown in i3's bar, and there is no bar |
 | marks, the scratchpad, i3's restart | outside the core of i3's feel that kwin-i3 copies (the scratchpad is an open question for a release, `LATER.md` item 51); restart is for a new i3 binary, and an install reloads kwin-i3 |
 | i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
 | a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key leaves Plasma's way, as `endSession` says) |
@@ -67,8 +68,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   desktop, where it costs no performance (`docs/philosophy.md`, "How it presents itself").
 - **(c) The feel in use**: the verdict on the live desktop, after push back
   (`docs/philosophy.md`, "How a decision is made"), recorded as "judged live".
-- **(d) Out of scope**: the "Out" list above, or what rests on it (tidy rests on `focus parent`
-  and tabbed being out).
+- **(d) Out of scope**: the "Out" list above, or what rests on it.
 - **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them, and where an i3
   directive is one of them, Plasma's setting stands in for it (focus follows mouse is KWin's
   focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
@@ -156,8 +156,10 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    **One deliberate break, tidy**: every one-child split whose child is a split is
    removed, flatten's shape included, after anything that changes the tree (so after a close it
    removes at once what i3's flatten would remove only at the next move). i3 keeps them, and each one costs a
-   move key press. They only matter in i3 because of `focus parent` and tabbed/stacked, both out
-   (reason (d)); adding either means revisiting this first.
+   move or `focus parent` key press and shows nothing. Only splits (`splith`, `splitv`) are tidied:
+   a tabbed or stacked container is never removed, nor a split whose only child is one, so a tab
+   group always stays. Reason (c), judged live: tidy has been the live desktop's behaviour since
+   it went in.
    **Atomic layout changes**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
    holds the old layout on screen until every moved window has its new frame, as Sway's
    transactions do; i3 on X11 never had the gap.
