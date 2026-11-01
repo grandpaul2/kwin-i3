@@ -28,6 +28,7 @@ var Settings = (function () {
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
+        workspaceLayout: { type: "choice", def: "default", choices: ["default", "stacking", "tabbed"] },   // i3's workspace_layout (§11 N4)
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
         // What Exit does (§8 K17): i3's exit is leaving the computer; Plasma has several ways to leave.

@@ -39,6 +39,9 @@
     <entry name="defaultOrientation" type="String">
       <default>auto</default>
     </entry>
+    <entry name="workspaceLayout" type="String">
+      <default>default</default>
+    </entry>
     <entry name="focusWrapping" type="String">
       <default>yes</default>
     </entry>

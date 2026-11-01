@@ -49,6 +49,7 @@ var Settings = (function () {
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
+        workspaceLayout: { type: "choice", def: "default", choices: ["default", "stacking", "tabbed"] },   // i3's workspace_layout (§11 N4)
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
         // What Exit does (§8 K17): i3's exit is leaving the computer; Plasma has several ways to leave.
@@ -2190,9 +2191,17 @@ var KI3 = (function () {
     // The model's workspace num, created with i3's default_orientation: "auto" is horizontal
     // unless the monitor it lives on is taller than wide. Only at creation, as i3: a changed
     // setting leaves existing workspaces as they are.
+    // i3's workspace_layout likewise: a new workspace's windows open in a stacked or tabbed
+    // container (workspace_attach_to).
     function wsModel(num) {
         var o = Settings.get("defaultOrientation"), g = Workspaces.outputOf(num).geometry;
-        return model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
+        var fresh = !model.workspaces[num];
+        var ws = model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
+        if (fresh) {
+            var l = Settings.get("workspaceLayout");
+            ws.wsLayout = l === "stacking" ? "stacked" : l === "tabbed" ? "tabbed" : "default";
+        }
+        return ws;
     }
 
     function wsForWindow(w) {

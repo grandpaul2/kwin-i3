@@ -888,6 +888,7 @@ again.
 | `smartGaps` | `off` | `off`, `on`, `inverse_outer` | i3's `smart_gaps` (§6) | next pass |
 | `hideEdgeBorders` | `none` | `none`, `vertical`, `horizontal`, `both`, `smart`, `smart_no_gaps` | i3's `hide_edge_borders` (§7 L6) | next pass |
 | `defaultOrientation` | `auto` | `auto`, `horizontal`, `vertical` | a new workspace's direction | new workspaces |
+| `workspaceLayout` | `default` | `default`, `stacking`, `tabbed` | a new workspace's windows open in a stacked or tabbed group (§2 T25) | new workspaces |
 | `resizeStep` | 10 | 1-50 % | resize by key, tiling | next press |
 | `floatingStep` | 10 | 1-200 px | move and resize by key, floating | next press |
 | `focusWrapping` | `yes` | `yes`, `no`, `force`, `workspace` | §2 | next press |
@@ -927,7 +928,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N1 | `gaps inner \| outer` | `gapsInner`, `gapsOuter` (outer added to inner at the edges, as i3) | = | the defaults differ: §7 L5 |
 | N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (each `gapsOuter` unless set), and `workspaceGaps` in i3's words and meaning, in place of the global values (§6) | = (≠ for a negative edge: down to half the inner gap, §6; the per-side keys from 0) | |
 | N3 | `default_orientation` | `defaultOrientation` | = | |
-| N4 | `workspace_layout default \| stacking \| tabbed` | no setting; Meta+W or Meta+S on an empty workspace sets it (§2 T25), as in i3 | ≠ | the setting itself: not yet offered |
+| N4 | `workspace_layout default \| stacking \| tabbed` | `workspaceLayout`; Meta+W or Meta+S on an empty workspace sets it too (§2 T25) | = | |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |
 | N6 | `focus_follows_mouse` | KWin's focus policy (System Settings) | ≠ | reason (e): Plasma's own setting stands in; the default differs (§5 B1) |
 | N7 | `mouse_warping output \| none` | `mouseWarping`, `output` (default) or `none` (§5 A2) | = | |

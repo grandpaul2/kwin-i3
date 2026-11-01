@@ -5,6 +5,7 @@
 //   ei-send <fd>        then commands on stdin, one per line:
 //     abs X Y           move the pointer to X,Y (logical pixels, whole desktop)
 //     btn left|right|middle down|up
+//     scroll N          N wheel steps at the pointer, down (positive) or up (negative)
 //     key CODE down|up  evdev key code (KEY_LEFTMETA 125, KEY_LEFTSHIFT 42, ...)
 //     wait MS           pause, still processing KWin's events
 //   Prints "ready" once the devices can be used, "ok" after each command once KWin has taken it
@@ -25,7 +26,7 @@
 #define BTN_MIDDLE 0x112
 
 static struct ei *ei;
-static struct ei_device *absdev, *kbd;
+static struct ei_device *absdev, *kbd, *scrolldev;
 static uint32_t sequence = 1;
 static bool abs_on, kbd_on;     // resumed by KWin and emulating (libei 1.6 has no state getter)
 static struct ei_ping *pending; // the round trip in flight, and whether KWin has answered it
@@ -38,13 +39,15 @@ static void handle_events(void) {
         switch (ei_event_get_type(e)) {
         case EI_EVENT_SEAT_ADDED:
             ei_seat_bind_capabilities(ei_event_get_seat(e), EI_DEVICE_CAP_POINTER_ABSOLUTE,
-                                      EI_DEVICE_CAP_BUTTON, EI_DEVICE_CAP_KEYBOARD, NULL);
+                                      EI_DEVICE_CAP_BUTTON, EI_DEVICE_CAP_SCROLL, EI_DEVICE_CAP_KEYBOARD, NULL);
             break;
         case EI_EVENT_DEVICE_ADDED:
             if (ei_device_has_capability(d, EI_DEVICE_CAP_POINTER_ABSOLUTE) && !absdev)
                 absdev = ei_device_ref(d);
             if (ei_device_has_capability(d, EI_DEVICE_CAP_KEYBOARD) && !kbd)
                 kbd = ei_device_ref(d);
+            if (ei_device_has_capability(d, EI_DEVICE_CAP_SCROLL) && !scrolldev)
+                scrolldev = ei_device_ref(d);
             break;
         case EI_EVENT_DEVICE_RESUMED:
             ei_device_start_emulating(d, sequence++);
@@ -127,6 +130,10 @@ int main(int argc, char **argv) {
             uint32_t code = !strcmp(a, "right") ? BTN_RIGHT : !strcmp(a, "middle") ? BTN_MIDDLE : BTN_LEFT;
             ei_device_button_button(absdev, code, !strcmp(b, "down"));
             ei_device_frame(absdev, ei_now(ei));
+        } else if (!strcmp(cmd, "scroll") && n == 2) {
+            if (!scrolldev) { fprintf(stderr, "ei-send: no scroll device\n"); return 2; }
+            ei_device_scroll_discrete(scrolldev, 0, atoi(a) * 120);
+            ei_device_frame(scrolldev, ei_now(ei));
         } else if (!strcmp(cmd, "key") && n == 3) {
             ei_device_keyboard_key(kbd, (uint32_t)atoi(a), !strcmp(b, "down"));
             ei_device_frame(kbd, ei_now(ei));

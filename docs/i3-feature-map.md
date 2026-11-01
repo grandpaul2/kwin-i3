@@ -335,7 +335,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 | B35 | `default_orientation vertical` | new workspaces split top-down | K script | | `defaultOrientation` = vertical | C | |
 | B36 | `default_orientation auto` | by monitor shape (wide = horizontal) | K script | | `defaultOrientation` = auto (default); README: side by side unless monitor taller than wide | C | Workspaces that exist keep theirs, as in i3. |
 | B37 | `workspace_layout default` | new workspaces start as splith/splitv | K script | | same as B34-B36 | C | |
-| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | K, by key only | | Meta+W / Meta+S on an empty workspace sets it (`con_set_layout`); no setting (`behaviour.md` §11 N4) | C | |
+| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | K (script, settings page) | | `workspaceLayout`; also Meta+W / Meta+S on an empty workspace (`con_set_layout`) | C | |
 
 **Floating**
 

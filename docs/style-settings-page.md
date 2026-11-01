@@ -82,6 +82,7 @@ hunt for; no collision with another word on the page or in Plasma.
 | 16 | a window's title bar | — | Titlebar | **titlebar** | Plasma's spelling on its own pages |
 | 17 | kwin-i3's plugins | — (+) | "plug-ins" (HIG) | **kwin-i3's plugins**, never which one | the user installs both together; a banner says what is missing, in a short list |
 | 18 | a workspace | workspace | virtual desktop | **workspace** (keep) | i3's; Plasma users meet it in kwin-i3's widget. Help may say "a virtual desktop" once |
+| 19 | a group's layout | default, stacking, tabbed; `workspace_layout` | — | **Split, Tabbed, Stacked** | "default" names nothing to a Plasma user; i3's "stacking" reads as the stacked rows it draws |
 
 ### Tone rules
 

@@ -243,6 +243,24 @@ KCM.SimpleKCM {
             }
         }
         RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces open:")
+            Kirigami.FormData.buddyFor: workspaceLayoutBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: workspaceLayoutBox
+                settingName: "workspaceLayout"
+                model: [
+                    { text: i18nc("@item:inlistbox", "Split"), value: "default" },
+                    { text: i18nc("@item:inlistbox", "Tabbed"), value: "tabbed" },
+                    { text: i18nc("@item:inlistbox", "Stacked"), value: "stacking" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "how new workspaces open")
+                toolTipText: i18n("Tabbed or Stacked: the windows of a new workspace open as one group, tabs or rows, until you change it with a key. For workspaces made after the change. i3: workspace_layout")
+            }
+        }
+        RowLayout {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Resize step:")
             Kirigami.FormData.buddyFor: resizeStepBox
             spacing: Kirigami.Units.smallSpacing

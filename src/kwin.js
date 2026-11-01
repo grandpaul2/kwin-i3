@@ -123,9 +123,17 @@ var KI3 = (function () {
     // The model's workspace num, created with i3's default_orientation: "auto" is horizontal
     // unless the monitor it lives on is taller than wide. Only at creation, as i3: a changed
     // setting leaves existing workspaces as they are.
+    // i3's workspace_layout likewise: a new workspace's windows open in a stacked or tabbed
+    // container (workspace_attach_to).
     function wsModel(num) {
         var o = Settings.get("defaultOrientation"), g = Workspaces.outputOf(num).geometry;
-        return model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
+        var fresh = !model.workspaces[num];
+        var ws = model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
+        if (fresh) {
+            var l = Settings.get("workspaceLayout");
+            ws.wsLayout = l === "stacking" ? "stacked" : l === "tabbed" ? "tabbed" : "default";
+        }
+        return ws;
     }
 
     function wsForWindow(w) {
