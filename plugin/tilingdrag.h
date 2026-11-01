@@ -52,6 +52,13 @@ public Q_SLOTS:
     // A window of kwin-i3's floats, or no longer does: Meta+Shift+left on it is float to tile
     // (§9 G13). Told again after every SetOn(true).
     void SetFloating(const QString &id, bool on);
+    // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
+    // window the bar is drawn with, the rect logical and global, n tabs or rows of equal size).
+    // A plain left press on a bar, or a scroll over it, over nothing else (the desktop, a gap
+    // strip), is the bar's: kwin-i3 is told by its hidden "Tab Click" action and asks TabEvent.
+    void SetBars(const QString &spec);
+    // The last press or scroll on a bar, once: "click KEY INDEX" or "scroll KEY -1|1"; "" none.
+    QString TabEvent();
 
 private:
     TilingDrag *m_drag;
@@ -141,6 +148,11 @@ public:
     // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
     void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
     KWin::Window *gapWindow(const QPointF &pos) const;
+    // A press on a group's bar (FrameFocus asks first, before its own gap and ring presses).
+    bool pressBar(KWin::PointerButtonEvent *event);
+    bool pointerAxis(KWin::PointerAxisEvent *event) override;
+    void setBars(const QString &spec);
+    QString tabEvent();
 
 private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
@@ -182,4 +194,15 @@ private:
     // A drag kwin-i3 never asked about: it isn't there (unloaded without its release). The drag
     // ends and the presses are KWin's again.
     QTimer m_unanswered;
+    struct BarSpot {
+        QString key;
+        QRectF rect;
+        bool stacked = false;
+        int n = 0;
+    };
+    QList<BarSpot> m_bars;            // SetBars
+    QString m_tabEvent;               // TabEvent's answer
+    // The tab under pos on a bar no other window covers: its bar, and the index; -1 for none.
+    int barAt(const QPointF &pos, const BarSpot **bar) const;
+    void tellTab(const QString &event);
 };

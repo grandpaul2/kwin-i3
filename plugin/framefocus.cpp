@@ -186,6 +186,10 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
         return pass(QStringLiteral(" (modifiers)"));
     }
+    // A group's bar first (tilingdrag.h SetBars): over the desktop or a gap strip it is i3's tab.
+    if (m_drag && m_drag->pressBar(event)) {
+        return true;
+    }
     const Decision d = decide(event->position, input()->pointer()->hover(), event->button);
     if (m_probe && d.kind != Decision::Pass) {
         m_probe->note(QStringLiteral("FrameFocus ") + d.describe());

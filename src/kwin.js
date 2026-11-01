@@ -334,6 +334,9 @@ var KI3 = (function () {
     var barTiles = [], multiTiles = [], shownTabs = [], groupBars = [];
     var barsOf = {};        // workspace number -> its groups' bars as last placed ({ con, tile })
     var barTold = {};       // window id -> the bar the effect was told to draw with it (SetBar)
+    var barGroups = {};     // the same ids -> the group the bar is of, for the helper's tab events
+    var barsHelperTold = null;   // the helper's SetBars spec last sent (null: never)
+    var tabDrag = null;     // { key, leaf } of a tab just clicked: a drag from that press takes it
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
@@ -1335,7 +1338,8 @@ var KI3 = (function () {
     }
     function tellBars() {
         if (!effectSeen) return;
-        var want = {};
+        var want = {}, helper = [];
+        barGroups = {};
         shownWorkspaces().forEach(function (v) {
             (barsOf[v.ws.num] || []).forEach(function (b) {
                 var con = b.con;
@@ -1348,6 +1352,9 @@ var KI3 = (function () {
                 if (!t || t.windows.indexOf(w) < 0) return;
                 var a = windowRect(t), r = windowRect(b.tile), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
+                barGroups[id(w)] = con;
+                helper.push([id(w), Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
+                             con.layout === "stacked" ? 1 : 0, kids.length].join(" "));
                 want[id(w)] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
                                con.layout === "stacked", kids.indexOf(shown), inside ? "focused" : "unfocused",
                                kids.map(barTitle).join("\u001f")];
@@ -1364,6 +1371,55 @@ var KI3 = (function () {
             barTold[key] = spec;
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
         });
+        tellBarsToHelper(helper.join("\n"));
+    }
+    // The helper takes presses and scrolls on the bars (plugin/tilingdrag.h SetBars); without the
+    // effect the bars aren't drawn, and aren't told.
+    function tellBarsToHelper(spec) {
+        if (barsHelperTold === spec) return;
+        barsHelperTold = spec;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", spec);
+    }
+
+    // A press or a scroll on a group's bar (the helper's hidden "Tab Click" action, then TabEvent).
+    // i3's route_click (click.c): a scroll goes to the next or previous tab, its focused window; a
+    // press on a tab focuses that tab's focused window, but when the focus is in that tab already
+    // (and isn't the tab itself) the tab itself, and a press on the tab focused that way the
+    // window again: so a group of windows can be selected by a second click.
+    function tabEvent() {
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "TabEvent", guard("tab event", function (s) {
+            var f = String(s).split(" "), con = barGroups[f[1]];
+            if (!con || f.length !== 3 || Tree.wsOf(con) === null) return;
+            var kids = con.nodes.filter(function (k) { return project(k); });
+            var current = null;
+            for (var i = 0; i < con.focus.length && !current; i++) if (kids.indexOf(con.focus[i]) >= 0) current = con.focus[i];
+            var to;
+            if (f[0] === "scroll") {
+                var at = kids.indexOf(current) + Number(f[2]);
+                to = model.descendFocused(kids[at] || current);
+            } else {
+                var tab = kids[Number(f[2])];
+                if (!tab) return;
+                var focused = model.focused, inside = false;
+                for (var p = focused ? focused.parent : null; p; p = p.parent) if (p === tab) inside = true;
+                // i3 descends through focus_head to the end, past the focus itself (click.c:268).
+                var leaf = tab;
+                while (leaf.nodes.length) {
+                    var next = null;
+                    for (var j = 0; j < leaf.focus.length && !next; j++) if (project(leaf.focus[j])) next = leaf.focus[j];
+                    if (!next) break;
+                    leaf = next;
+                }
+                to = focused === tab || !inside ? leaf : tab;
+                // A drag from this press drags the tab's window, not the one shown before it.
+                tabDrag = leaf.win !== null ? { key: f[1], leaf: leaf } : null;
+            }
+            if (!to) return;
+            model.activate(to);
+            schedule(Tree.wsOf(to));
+            wantFocus(true);
+            log("TAB " + f[0] + " " + f[2] + ": " + conCaption(to));
+        }));
     }
 
     function forgetRings() {
@@ -2069,6 +2125,8 @@ var KI3 = (function () {
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         dragTold = {};
+        barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
+        if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
         if (on) for (var k in model.byWin) if (model.byWin[k].type === "floating" && wins[k]) tellDragFloating(k, true);
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
         // windows, the frame's room included; spec-tiling-resize.md, B).
@@ -2158,7 +2216,8 @@ var KI3 = (function () {
         var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
         if (phase === "drag" || phase === "drop") {
             var con = drag.con;
-            if (model.byWin[f[1]] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
+            // A tab's drag is reported by the window the helper took the press with (drag.via).
+            if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || model.byWin[con.win] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
             if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect)); return; }
             dropOn(drag.plan, " at " + x + "," + y);
@@ -2245,6 +2304,10 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "drag" || drag) return;
+            // A drag from a tab: the press was taken with the window shown then; the tab's own.
+            var via = null;
+            if (tabDrag && tabDrag.key === f[1] && model.byWin[tabDrag.leaf.win] === tabDrag.leaf) { con = tabDrag.leaf; via = f[1]; }
+            tabDrag = null;
             var ours = !!con && (con.type === "con" || con.type === "floating");
             if (!ours || !wins[con.win] || !hasDropTargets(con.type === "floating")) {
                 log("DRAG not started: " + (ours ? "nowhere to drop" : "not a window of kwin-i3's"));
@@ -2253,7 +2316,7 @@ var KI3 = (function () {
             var timer = new QTimer();
             timer.interval = 16;            // a frame, about: the helper keeps only the last position
             timer.timeout.connect(guard("drag poll", pollDrag));
-            drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null };
+            drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null, via: via };
             log("DRAG " + conCaption(con) + (con.type === "floating" ? " (floating: to tile)" : ""));
             dragCursor(true);
             dragState(s);
@@ -3451,6 +3514,8 @@ var KI3 = (function () {
                          guard("Tiling Drag", startDrag));
         registerShortcut("kwin-i3 Tiling Resize", "kwin-i3: tiling resize (run by the mouse, no key)", "",
                          guard("Tiling Resize", startResize));
+        registerShortcut("kwin-i3 Tab Click", "kwin-i3: a group's tab clicked (run by the mouse, no key)", "",
+                         guard("Tab Click", tabEvent));
         // The helper's resize mode changed (plugin/resizemode.cpp): read it. Not in registerKeys,
         // so not on the Keys page.
         registerShortcut("kwin-i3 Mode Changed", "kwin-i3: the resize mode changed (run by the helper, no key)", "",

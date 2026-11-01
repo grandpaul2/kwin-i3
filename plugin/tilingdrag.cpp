@@ -62,6 +62,16 @@ void TilingDragBus::Cancel()
     m_drag->cancelFromOutside();
 }
 
+void TilingDragBus::SetBars(const QString &spec)
+{
+    m_drag->setBars(spec);
+}
+
+QString TilingDragBus::TabEvent()
+{
+    return m_drag->tabEvent();
+}
+
 void TilingDragBus::SetFloating(const QString &id, bool on)
 {
     m_drag->setFloating(id, on);
@@ -530,5 +540,110 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
     }
     window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
     takePress(window, Qt::RightButton, event->position, true, QString(), false);
+    return true;
+}
+
+void TilingDrag::setBars(const QString &spec)
+{
+    m_bars.clear();
+    const QStringList lines = spec.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    for (const QString &line : lines) {
+        const QStringList f = line.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+        if (f.size() != 7) {
+            continue;
+        }
+        BarSpot b;
+        b.key = f[0];
+        b.rect = QRectF(f[1].toDouble(), f[2].toDouble(), f[3].toDouble(), f[4].toDouble());
+        b.stacked = f[5] == QLatin1String("1");
+        b.n = f[6].toInt();
+        if (b.n > 0 && !b.rect.isEmpty()) {
+            m_bars << b;
+        }
+    }
+}
+
+QString TilingDrag::tabEvent()
+{
+    const QString e = m_tabEvent;
+    m_tabEvent.clear();
+    return e;
+}
+
+// Over a bar only where no window of anyone's is: KWin's hover there is the desktop, a gap strip of
+// kwin-i3's, or nothing. A floating window, a panel or a popup over the bar keeps its press. The
+// index as i3 lays the tabs out (render_con_tabbed: equal widths; render_con_stacked: equal rows).
+int TilingDrag::barAt(const QPointF &pos, const BarSpot **bar) const
+{
+    Window *hover = input()->pointer()->hover();
+    if (hover && !hover->isDeleted() && !hover->isDesktop() && !GapStrips::isStrip(hover)) {
+        return -1;
+    }
+    for (const BarSpot &b : m_bars) {
+        if (!b.rect.contains(pos)) {
+            continue;
+        }
+        *bar = &b;
+        const double along = b.stacked ? (pos.y() - b.rect.y()) / b.rect.height() : (pos.x() - b.rect.x()) / b.rect.width();
+        return std::clamp(int(along * b.n), 0, b.n - 1);
+    }
+    return -1;
+}
+
+void TilingDrag::tellTab(const QString &event)
+{
+    m_tabEvent = event;
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    msg << QStringLiteral("kwin-i3 Tab Click");
+    QDBusConnection::sessionBus().asyncCall(msg);
+}
+
+// i3's click on a tab (click.c route_click, CLICK_DECORATION): kwin-i3 focuses it by i3's rule.
+// With tiling_drag's titlebar (§9 G3), the press is a title-bar press of the tab's window too: past
+// the drag distance it is a tiling drag of it, as i3 drags a tab's container from its decoration.
+bool TilingDrag::pressBar(PointerButtonEvent *event)
+{
+    if (!m_on || event->button != Qt::LeftButton || dragging()
+        || (event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
+        return false;
+    }
+    const BarSpot *bar = nullptr;
+    const int index = barAt(event->position, &bar);
+    if (index < 0) {
+        return false;
+    }
+    tellTab(QStringLiteral("click %1 %2").arg(bar->key).arg(index));
+    m_taken |= Qt::LeftButton;
+    if (m_titlebarDrag) {
+        // The drag is the shown window's until kwin-i3 has focused the tab: it reports the tab's
+        // window in State() once it knows (the tab clicked is the one that ends up shown).
+        Window *shown = nullptr;
+        for (Window *w : workspace()->windows()) {
+            if (w->internalId().toString() == bar->key) {
+                shown = w;
+            }
+        }
+        if (shown && !shown->isDeleted()) {
+            takePress(shown, Qt::LeftButton, event->position, false, QString(), true);
+        }
+    }
+    return true;
+}
+
+// i3's scroll over a tabbed or stacked decoration: the next or previous tab (click.c, step 1).
+bool TilingDrag::pointerAxis(PointerAxisEvent *event)
+{
+    if (!m_on || dragging() || (event->modifiersRelevantForGlobalShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
+        return false;
+    }
+    const BarSpot *bar = nullptr;
+    if (barAt(event->position, &bar) < 0) {
+        return false;
+    }
+    if (event->delta == 0) {
+        return true;
+    }
+    tellTab(QStringLiteral("scroll %1 %2").arg(bar->key).arg(event->delta < 0 ? -1 : 1));
     return true;
 }
