@@ -265,7 +265,7 @@ var KI3 = (function () {
             if (projected.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
         var sp = byNode[projected.indexOf(shown)];
         if (projected.length === 1) return sp;
-        var hidden = [], anchor = leafOf(sp, model.descendFocused(shown).win) || leafOf(sp, null), order = [];
+        var hidden = [], anchor = leafOf(sp, shownWindow(shown).win) || leafOf(sp, null), order = [];
         projected.forEach(function (child, k) {
             if (child === shown) { order.push(anchor.win); return; }
             var ws = windowsOf(byNode[k]);
@@ -278,6 +278,18 @@ var KI3 = (function () {
         var members = sp.dir === "v" ? sp.kids : [{ p: sp, share: 1 }];
         var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length };
         return { dir: "v", kids: [{ p: bar, share: 0 }].concat(members) };
+    }
+    // The window a container shows: down its focus stacks to a window, past the tree's focus (the
+    // tree's descendFocused stops there, and with a container focused by focus parent a group's
+    // bar lost its window), skipping what isn't placed (minimized, out of the tiles).
+    function shownWindow(c) {
+        while (c.nodes.length) {
+            var next = null;
+            for (var i = 0; i < c.focus.length && !next; i++) if (project(c.focus[i])) next = c.focus[i];
+            if (!next) break;
+            c = next;
+        }
+        return c;
     }
     // Every window a projection places, extras included.
     function windowsOf(p) {
@@ -1359,7 +1371,7 @@ var KI3 = (function () {
                 var kids = con.nodes.filter(function (k) { return project(k); }), shown = null;
                 for (var i = 0; i < con.focus.length && !shown; i++) if (kids.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
                 if (kids.length < 2 || !shown) return;
-                var leaf = model.descendFocused(shown), w = leaf && leaf.win !== null ? wins[leaf.win] : null;
+                var leaf = shownWindow(shown), w = leaf.win !== null ? wins[leaf.win] : null;
                 var t = w && expected[leaf.win];
                 if (!t || t.windows.indexOf(w) < 0) return;
                 var a = windowRect(t), r = windowRect(b.tile), inside = false;
@@ -1415,13 +1427,7 @@ var KI3 = (function () {
                 var focused = model.focused, inside = false;
                 for (var p = focused ? focused.parent : null; p; p = p.parent) if (p === tab) inside = true;
                 // i3 descends through focus_head to the end, past the focus itself (click.c:268).
-                var leaf = tab;
-                while (leaf.nodes.length) {
-                    var next = null;
-                    for (var j = 0; j < leaf.focus.length && !next; j++) if (project(leaf.focus[j])) next = leaf.focus[j];
-                    if (!next) break;
-                    leaf = next;
-                }
+                var leaf = shownWindow(tab);
                 to = focused === tab || !inside ? leaf : tab;
                 // A drag from this press drags the tab's window, not the one shown before it.
                 tabDrag = leaf.win !== null ? { key: f[1], leaf: leaf } : null;
