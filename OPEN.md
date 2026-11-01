@@ -64,27 +64,18 @@ then whether to block, follow or document them (and whether `make take-keys` sho
 The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
 floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
 
-**72. Tabbed and stacked layouts** (i3's `layout tabbed` / `layout stacking`, `render.c:437-480`,
-`con_set_layout` `con.c:2001`; with `focus parent`, which a tab group needs). A test-KWin probe
-found no blocker on KWin's side: a vertical tile holding an empty bar tile (its `minimumSize`
-zeroed) over one leaf holding every tab gives each tab the leaf's geometry; activating a tab raises
-it, i3's raise of the focused child, so an activation from the task manager or Alt+Tab is a tab
-switch the tree follows; closing a tab keeps the leaf and the bar tile; a hidden desktop's group
-lays out when shown; an unplug drops the tiles as for any tiled window (the replug reconcile
-rebuilds). The layout is chosen by key, as in i3, never from a container's shape. The pieces: the
-model (`tree.js`: the two layouts, focus and move through them, `focus parent`, tidy revisited,
-`plan.md` decision 8); the adapter's tile shape and its rebuild at load; the bar, drawn by
-kwini3hold in the bar tile as part of the shown tab's paint, its clicks and scrolls by a strip
-beside the gap strips through `FrameFocus`, the hold covering a tab switch. **The centre drop**
-(replaces G11), decided: onto a window already in a group, it joins the group (i3's
-`con_move_to_target`); onto any other tiled window, the centre is three bands, top makes the two a
-tabbed group, middle stacked, bottom swaps, each band kept on a small target, just smaller; three
-large icons drawing each result show at once over the target's centre, the band under the pointer
-highlighted. Float to tile (G13) takes the same bands, its bottom one putting the window after the
-target. Keys: Meta+W tabbed (`make take-keys` frees it from Plasma's Overview; the README
-names the hot corner and Meta+G), Meta+S stacked, Meta+A focus parent. Built on main, `stable` held
-back until it has had its week (`docs/testing.md` P6). Next: the model in `tree.js`, with its
-behaviour rows (K7, K8, N4, G11, a tabbed section) in the same commit.
+**72. Tabbed and stacked layouts** (i3's `layout tabbed` / `layout stacking`, `focus parent`;
+`docs/behaviour.md` §2 T25-T28, §6, §9 G11, G14, G15, §12 P3). Built on the `tabbed` branch:
+the model (ported from i3 4.24), groups on KWin's tiles (a bar tile over one leaf holding the
+tabs, the shown one raised), Meta+W, Meta+S, Meta+A, the bar drawn by kwini3hold with clicks,
+scrolls and tab drags through the helper, the centre's three bands with their cards, groups read
+back at a reload. `stable` stays where it is until this has had its week on main (`docs/testing.md`
+P6). Known gaps, each a ≠ or untried: a scroll on the bar is untried (the test input has no
+scroll); a tab drag drags its focused window, not a split tab whole; a split tab comes back from a
+reload as its windows; in the `titlebars` look a group's windows keep their own title bars under
+the bar, where i3's tab is the only decoration; `workspace_layout` has no setting. Next: the go
+to merge the branch to main, then on the live desktop `make plugin-install`, `make take-keys`
+(Meta+W is the Overview's there) and a reload, each with the go.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
