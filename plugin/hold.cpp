@@ -708,7 +708,9 @@ bool Hold::isActive() const
     }
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
-        if (ringed(w) && shown(w)) {
+        // A group's bar too: in the titlebars and bare looks no window has a ring, and the
+        // effect sat out of the paint chain, so no bar was drawn.
+        if ((ringed(w) || m_bars.count(w->internalId().toString())) && shown(w)) {
             return true;
         }
     }

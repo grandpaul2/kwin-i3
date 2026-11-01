@@ -3524,8 +3524,22 @@ var KI3 = (function () {
     function tiledBorderless() { return frameOn && Settings.get("tiledLook") !== "titlebars"; }
     function tiledRing() { return frameOn && Settings.get("tiledLook") === "frame"; }
     function tiledBorder(w) {
-        if (tiledBorderless()) takeBorder(w);
+        if (tiledBorderless() || (frameOn && inBarGroup(w))) takeBorder(w);
         else giveBorder(w);
+    }
+    // In a tabbed or stacked group that shows its bar (more than one child placed): i3's tab is
+    // then the window's only decoration (x.c draws the child's title in the tab), so in the
+    // titlebars look too the window's own title bar goes while it is in the group.
+    function inBarGroup(w) {
+        var c = model.byWin[id(w)];
+        if (!c || c.type !== "con") return false;
+        for (var p = c.parent; p && p.type !== "ws"; p = p.parent) {
+            if ((p.layout === "tabbed" || p.layout === "stacked") &&
+                p.nodes.filter(function (k) { return project(k); }).length > 1) return true;
+        }
+        var ws = Tree.wsOf(c);
+        return !!ws && (ws.layout === "tabbed" || ws.layout === "stacked") &&
+               ws.nodes.filter(function (k) { return project(k); }).length > 1;
     }
     // The effect draws the ring as the script says, so the ring and the tiles' room for it change
     // in the same pass (spec, item 3). An older effect without the call ignores it.

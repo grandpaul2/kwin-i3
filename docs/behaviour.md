@@ -578,7 +578,8 @@ that it fits Plasma better.
   its colour class's colour (L3) with the indicator side, after a split key, in the class's indicator colour (L4), and
   the tiles leave room for it;
 - `titlebars`: the window's own decoration; its maximize button and a title-bar double-click do
-  nothing, as in sway (the tree places it);
+  nothing, as in sway (the tree places it). In a tabbed or stacked group showing its bar, none:
+  the tab is the window's title bar, as in i3, where the tab is the child's decoration;
 - `bare`: no title bar and no ring (nothing marks the focused window; the page suggests Dim
   Inactive).
 
