@@ -68,19 +68,31 @@ With a container focused (focus parent), Meta+Shift+Space does nothing: a floati
 one window (`src/tree.js` header), where i3 wraps the container in a floating one, its splits
 and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree done with tabbed and
 stacked layouts; the one core difference left from it. i3 wraps every floating thing in a `CT_FLOATING_CON`
-whose child is laid out as a tiled tree inside its rect, moved and resized as one. Next, a
-test-KWin probe of the hard part: several floating windows kept moving and sizing as one when
-the user drags one with KWin's own move (follow it, or take the drag as the tiling drag does);
-then the model's wrapper node, ported from `floating_enable` / `floating_disable`.
+whose child is laid out as a tiled tree inside its rect, moved and resized as one. Here: the
+model's wrapper node ported from `floating_enable` / `floating_disable`; its windows KWin
+floating windows whose frames kwin-i3 lays out; the hard parts a move (on Wayland compositor-only,
+so the others may follow each step, or the helper takes the drag) and a resize of the outer edge
+(each client answers at its own pace: likely the helper's), raising them together, and a group's
+bar with no bar tile to draw over. Next: planned in item 78's session.
 
 **74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
 `click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
 `:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press
 with no modifier (`plugin/tilingdrag.cpp:607-609`), so a Meta press on a group's bar falls to the
 general drag, which finds no window there (§9 G8's gap rule: likely the group's shown window, not
-the tab pressed). Next: a test-KWin probe of what it does now; then Meta+left on a tab drags that
-tab whole at once (G1's no-focus rule, G14's tab con), and Meta+Shift+left floats it where dropped
-(G5) for a one-window tab, nothing for a split tab until item 73.
+the tab pressed). The i3 port: Meta+left on a tab drags that tab whole at once (G1's no-focus
+rule, G14's tab con); it doesn't wait on item 73, except Meta+Shift+left (G5) on a split tab.
+Next: planned in item 78's session.
+
+**78. The line between Plasma and kwin-i3 for the mouse and floating** (raised 2026-11-01, while
+planning items 73 and 74). Tabbed and stacked groups came after the mouse's float rules (G5's
+Meta+Shift float where dropped, G13's float to tile, X5), which were judged for single windows;
+a tab, a split tab and a floating container (item 73) each ask again what Plasma owns (KWin's
+move and resize, its title bars) and what kwin-i3 owns, and some click-to-float behaviour may
+change. Next: a planning session of its own: for each mouse action on a window, a tab and a
+container, i3's behaviour (`click.c`, `tiling_drag.c`, `floating.c`), what Plasma does there, and
+the line drawn explicitly, as a foundation change to `docs/plan.md` and `behaviour.md` §9; then
+items 73 and 74 from it.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
