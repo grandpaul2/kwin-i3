@@ -99,9 +99,10 @@ public Q_SLOTS:
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
     // or height of 0 clears it. In logical pixels, global.
     void SetDropIndicator(int x, int y, int width, int height);
-    // kwin-i3's tiling drag over a window's centre (§9 G11): the centre's rect, cut in three bands
-    // (tabbed, stacked, swap), each drawn with an icon of its result and its name, the one under
-    // the pointer (`active`, 0-2) highlighted. A width or height of 0 clears them.
+    // kwin-i3's tiling drag over a window's centre (§9 G11): the centre's rect, drawn as one
+    // rounded outline cut in three (tabbed, stacked, swap), each third with a small picture of its
+    // result and its name, the one under the pointer (`active`, 0-2) filled as the indicator.
+    // A width or height of 0 clears them.
     void SetDropBands(int x, int y, int width, int height, int active);
     // kwin-i3's tiling drag: i3's move cursor while it lasts. KWin shows an effect's cursor only
     // while the effect holds the mouse (CursorImage::reevaluteSource), so on grabs it; the

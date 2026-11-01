@@ -23,6 +23,7 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPalette>
 #include <QScopeGuard>
 #include <QPen>
@@ -1148,14 +1149,14 @@ void Hold::SetDropIndicator(int x, int y, int width, int height)
 PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
 {
     KI3_PAINT(effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen));
-    // The bands' icons over the indicator, which would wash the highlighted one out.
+    // A window's centre: its thirds, outline and highlight (the plain indicator isn't drawn then).
     const auto bands = qScopeGuard([&] {
         if (!m_bands.isEmpty()) {
             paintBands(renderTarget, viewport, deviceRegion);
         }
     });
-    if (m_drop.isEmpty()) {
-        KI3_PAINTED;
+    if (m_drop.isEmpty() || !m_bands.isEmpty()) {
+        KI3_PAINTED;                     // over a centre, the thirds draw their own highlight
     }
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
@@ -1507,10 +1508,10 @@ void Hold::SetDropBands(int x, int y, int width, int height, int active)
     }
 }
 
-// The three bands' icons (§9 G11), over everything as the indicator is: in each band a picture of
-// what a drop there makes and its name, centred; the band under the pointer in the frame's active
-// colour, the others in Plasma's window colours. Kept as one image until the size, the scale or
-// the band changes.
+// The window's centre as one rounded outline cut in three (§9 G11), over everything as the
+// indicator is: the third under the pointer filled as the indicator (which isn't drawn while the
+// thirds are), and in each third a small picture of what a drop there makes and its name. Kept
+// as one image until the size, the scale or the third changes.
 void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &viewport, const Region &deviceRegion)
 {
     const double scale = viewport.scale();
@@ -1525,68 +1526,80 @@ void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &vi
         image.fill(Qt::transparent);
         QPainter p(&image);
         p.setRenderHint(QPainter::Antialiasing);
-        const QPalette pal = QGuiApplication::palette();
-        const double bh = double(logical.height()) / 3;
+        const double W = logical.width(), third = double(logical.height()) / 3, radius = 8;
+        const QRectF whole(1, 1, W - 2, logical.height() - 2);
+        // The whole centre, rounded: the third under the pointer filled as the indicator was
+        // (the frame's active colour at half), clipped to the outline's corners.
+        QPainterPath pill;
+        pill.addRoundedRect(whole, radius, radius);
+        if (m_bandActive >= 0 && m_bandActive < 3) {
+            QColor fill = m_frameColour[0];
+            fill.setAlphaF(0.5);
+            p.save();
+            p.setClipPath(pill);
+            p.fillRect(QRectF(0, third * m_bandActive, W, third), fill);
+            p.restore();
+        }
+        // The thirds' borders and the outline, in the frame's active colour.
+        p.setPen(QPen(m_frameColour[0], 2));
+        p.setBrush(Qt::NoBrush);
+        p.drawLine(QPointF(whole.left(), third), QPointF(whole.right(), third));
+        p.drawLine(QPointF(whole.left(), 2 * third), QPointF(whole.right(), 2 * third));
+        p.drawPath(pill);
+        // In each third, small: a picture of the result and its name, white over a dark edge so
+        // it reads over any window.
         const QString names[3] = {QStringLiteral("Tabbed"), QStringLiteral("Stacked"), QStringLiteral("Swap")};
         QFont font = QGuiApplication::font();
         font.setBold(true);
-        p.setFont(font);
         const QFontMetrics fm(font);
-        for (int i = 0; i < 3; ++i) {
-            const bool on = i == m_bandActive;
-            // The icon: as big as the band allows, up to 96 px, with its name beside it.
-            const double s = std::max(0.0, std::min({bh * 0.8, double(logical.width()) * 0.3, 96.0}));
-            if (s < 12) {
-                continue;                        // too small a band for a picture
-            }
+        const double s = std::min({third * 0.45, W * 0.2, 36.0});
+        for (int i = 0; s >= 10 && i < 3; ++i) {
             const double textW = fm.horizontalAdvance(names[i]);
-            const bool label = s + 12 + textW + 16 <= logical.width();
-            const double total = s + (label ? 12 + textW : 0) + 24;
-            const QRectF card((logical.width() - total) / 2, bh * i + (bh - s - 16) / 2, total, s + 16);
-            QColor bg = on ? m_frameColour[0] : pal.color(QPalette::Window);
-            bg.setAlphaF(0.92);
-            p.setPen(QPen(on ? m_frameColour[0].lighter(135) : pal.color(QPalette::Mid), 1));
-            p.setBrush(bg);
-            p.drawRoundedRect(card.adjusted(0.5, 0.5, -0.5, -0.5), 8, 8);
-            const QColor fg = on ? QColor(Qt::white) : pal.color(QPalette::WindowText);
-            const QRectF icon(card.x() + 12, card.y() + 8, s, s);
-            const double lw = std::max(1.5, s / 32);
-            p.setPen(QPen(fg, lw));
-            p.setBrush(Qt::NoBrush);
+            const bool label = s + 8 + textW + 16 <= W;
+            const double total = s + (label ? 8 + textW : 0);
+            const QRectF icon((W - total) / 2, third * i + (third - s) / 2, s, s);
+            QPainterPath path;
+            const double lw = std::max(1.5, s / 18);
             if (i < 2) {
-                // A window under a bar: two tabs side by side, or two rows.
                 const QRectF win = icon.adjusted(lw, lw, -lw, -lw);
-                p.drawRoundedRect(win, s / 16, s / 16);
-                const double row = win.height() / (i == 0 ? 5 : 6);
-                QColor fill = fg;
-                fill.setAlphaF(0.85);
+                path.addRoundedRect(win, s / 12, s / 12);
+                const double row = win.height() / (i == 0 ? 4.5 : 5);
                 if (i == 0) {
-                    const QRectF tab1(win.x(), win.y(), win.width() / 2, row), tab2(win.x() + win.width() / 2, win.y(), win.width() / 2, row);
-                    p.fillRect(tab1, fill);
-                    p.drawRect(tab2);
+                    path.moveTo(win.left(), win.top() + row);
+                    path.lineTo(win.right(), win.top() + row);
+                    path.moveTo(win.center().x(), win.top());
+                    path.lineTo(win.center().x(), win.top() + row);
                 } else {
-                    const QRectF r1(win.x(), win.y(), win.width(), row), r2(win.x(), win.y() + row, win.width(), row);
-                    p.fillRect(r1, fill);
-                    p.drawRect(r2);
+                    path.moveTo(win.left(), win.top() + row);
+                    path.lineTo(win.right(), win.top() + row);
+                    path.moveTo(win.left(), win.top() + 2 * row);
+                    path.lineTo(win.right(), win.top() + 2 * row);
                 }
             } else {
-                // Two windows trading places: two boxes and an arrow each way between them.
-                const double w = s * 0.26, h = s * 0.62, y0 = icon.y() + (s - h) / 2;
-                p.drawRoundedRect(QRectF(icon.x() + lw, y0, w, h), s / 20, s / 20);
-                p.drawRoundedRect(QRectF(icon.right() - w - lw, y0, w, h), s / 20, s / 20);
-                const double ax0 = icon.x() + w + lw * 3, ax1 = icon.right() - w - lw * 3, a = s * 0.07;
+                const double w = s * 0.2, h = s * 0.62, y0 = icon.y() + (s - h) / 2;
+                path.addRoundedRect(QRectF(icon.x() + lw, y0, w, h), s / 20, s / 20);
+                path.addRoundedRect(QRectF(icon.right() - w - lw, y0, w, h), s / 20, s / 20);
+                const double ax0 = icon.x() + w + lw * 3, ax1 = icon.right() - w - lw * 3, a = s * 0.08;
                 const double ya = icon.y() + s * 0.42, yb = icon.y() + s * 0.58;
-                p.drawLine(QPointF(ax0, ya), QPointF(ax1, ya));
-                p.drawLine(QPointF(ax1, ya), QPointF(ax1 - a, ya - a));
-                p.drawLine(QPointF(ax1, ya), QPointF(ax1 - a, ya + a));
-                p.drawLine(QPointF(ax1, yb), QPointF(ax0, yb));
-                p.drawLine(QPointF(ax0, yb), QPointF(ax0 + a, yb - a));
-                p.drawLine(QPointF(ax0, yb), QPointF(ax0 + a, yb + a));
+                path.moveTo(ax0, ya); path.lineTo(ax1, ya);
+                path.moveTo(ax1 - a, ya - a); path.lineTo(ax1, ya); path.lineTo(ax1 - a, ya + a);
+                path.moveTo(ax1, yb); path.lineTo(ax0, yb);
+                path.moveTo(ax0 + a, yb - a); path.lineTo(ax0, yb); path.lineTo(ax0 + a, yb + a);
             }
+            QPainterPath text;
             if (label) {
-                p.setPen(fg);
-                p.drawText(QRectF(icon.right() + 12, card.y(), textW + 4, card.height()), Qt::AlignVCenter | Qt::AlignLeft, names[i]);
+                text.addText(QPointF(icon.right() + 8, third * i + (third + fm.capHeight()) / 2), font, names[i]);
             }
+            const QColor dark(0, 0, 0, 160);
+            p.setBrush(Qt::NoBrush);
+            p.setPen(QPen(dark, lw + 2.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            p.drawPath(path);
+            p.drawPath(text);
+            p.setPen(QPen(Qt::white, lw, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            p.drawPath(path);
+            p.setPen(Qt::NoPen);
+            p.setBrush(Qt::white);
+            p.drawPath(text);
         }
         p.end();
         img.texture = GLTexture::upload(image);

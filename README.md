@@ -69,14 +69,15 @@ Mouse:
 - **Meta+left-drag on a tiling window** is i3's tiling drag (needs the helper plugin): the window
   stays put while a highlight shows where it would land, under a move cursor. Near another
   window's edge it goes beside that window; in the thin strip at an edge it goes beside the whole
-  row or column that shares that edge. In the middle, three cards show the choices: the top
-  makes the two a **tabbed** group, the middle a **stacked** one, the bottom **swaps** them (i3
-  makes groups only by key); dropped in the middle of a window already in a group, it joins it.
+  row or column that shares that edge. The middle is outlined and cut in three, each third
+  named: the top makes the two a **tabbed** group, the middle a **stacked** one, the bottom
+  **swaps** them (i3 makes groups only by key); dropped in the middle of a window already in a
+  group, it joins it.
   Any button's release drops it there; any key cancels. With tiling windows showing their own title bars (`tiledLook`), dragging a tiling window's title
   bar does the same, and so does dragging a tab out of a group's bar.
 - **Meta+Shift+left-drag on a tiling window** pulls it out at its floating size and floats it where
   it is dropped, the mouse twin of Meta+Shift+Space: Shift is a float modifier here, where i3's
-  Shift swaps (the middle's bottom card swaps anyway). Without the helper plugin, Meta+left-drag does this.
+  Shift swaps (the middle's bottom third swaps anyway). Without the helper plugin, Meta+left-drag does this.
 - **Meta+right-drag on a tiling window**, or in the gap beside one, is i3's tiling resize (helper
   plugin): the pointer jumps onto the nearest edge, a bar follows it, and the sizes change on
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if
