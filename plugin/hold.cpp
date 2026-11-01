@@ -24,6 +24,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QPalette>
+#include <QScopeGuard>
 #include <QPen>
 #include <QTime>
 
@@ -148,6 +149,7 @@ void Hold::reconfigure(ReconfigureFlags)
 void Hold::loadConfig()
 {
     m_bannersStale = true;
+    m_bandsImage.active = -2;              // the colours may have changed: drawn again
     for (auto &[id, bar] : m_bars) {
         bar.width = -1;                       // the colours may have changed
     }
@@ -696,7 +698,7 @@ bool Hold::holding() const
 // is hidden whole (hideEdgeBorders), a setup too rare for a cache.
 bool Hold::isActive() const
 {
-    if (holding() || !m_drop.isEmpty() || !m_mode.isEmpty()) {
+    if (holding() || !m_drop.isEmpty() || !m_bands.isEmpty() || !m_mode.isEmpty()) {
         return true;
     }
     const auto windows = effects->stackingOrder();
@@ -1146,6 +1148,12 @@ void Hold::SetDropIndicator(int x, int y, int width, int height)
 PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderViewport &viewport, int mask, const Region &deviceRegion, LogicalOutput *screen)
 {
     KI3_PAINT(effects->paintScreen(renderTarget, viewport, mask, deviceRegion, screen));
+    // The bands' icons over the indicator, which would wash the highlighted one out.
+    const auto bands = qScopeGuard([&] {
+        if (!m_bands.isEmpty()) {
+            paintBands(renderTarget, viewport, deviceRegion);
+        }
+    });
     if (m_drop.isEmpty()) {
         KI3_PAINTED;
     }
@@ -1482,3 +1490,132 @@ QVariantMap Hold::Stats() const
 }
 
 #include "moc_hold.cpp"
+
+void Hold::SetDropBands(int x, int y, int width, int height, int active)
+{
+    const RectF bands = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
+    if (bands == m_bands && active == m_bandActive) {
+        return;
+    }
+    if (!m_bands.isEmpty()) {
+        effects->addRepaint(m_bands.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+    m_bands = bands;
+    m_bandActive = active;
+    if (!m_bands.isEmpty()) {
+        effects->addRepaint(m_bands.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+}
+
+// The three bands' icons (§9 G11), over everything as the indicator is: in each band a picture of
+// what a drop there makes and its name, centred; the band under the pointer in the frame's active
+// colour, the others in Plasma's window colours. Kept as one image until the size, the scale or
+// the band changes.
+void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &viewport, const Region &deviceRegion)
+{
+    const double scale = viewport.scale();
+    const QSize logical(std::lround(m_bands.width()), std::lround(m_bands.height()));
+    if (logical.isEmpty()) {
+        return;
+    }
+    BandsImage &img = m_bandsImage;
+    if (!img.texture || img.scale != scale || img.logical != logical || img.active != m_bandActive) {
+        QImage image(QSize(std::lround(logical.width() * scale), std::lround(logical.height() * scale)), QImage::Format_ARGB32_Premultiplied);
+        image.setDevicePixelRatio(scale);
+        image.fill(Qt::transparent);
+        QPainter p(&image);
+        p.setRenderHint(QPainter::Antialiasing);
+        const QPalette pal = QGuiApplication::palette();
+        const double bh = double(logical.height()) / 3;
+        const QString names[3] = {QStringLiteral("Tabbed"), QStringLiteral("Stacked"), QStringLiteral("Swap")};
+        QFont font = QGuiApplication::font();
+        font.setBold(true);
+        p.setFont(font);
+        const QFontMetrics fm(font);
+        for (int i = 0; i < 3; ++i) {
+            const bool on = i == m_bandActive;
+            // The icon: as big as the band allows, up to 96 px, with its name beside it.
+            const double s = std::max(0.0, std::min({bh * 0.8, double(logical.width()) * 0.3, 96.0}));
+            if (s < 12) {
+                continue;                        // too small a band for a picture
+            }
+            const double textW = fm.horizontalAdvance(names[i]);
+            const bool label = s + 12 + textW + 16 <= logical.width();
+            const double total = s + (label ? 12 + textW : 0) + 24;
+            const QRectF card((logical.width() - total) / 2, bh * i + (bh - s - 16) / 2, total, s + 16);
+            QColor bg = on ? m_frameColour[0] : pal.color(QPalette::Window);
+            bg.setAlphaF(0.92);
+            p.setPen(QPen(on ? m_frameColour[0].lighter(135) : pal.color(QPalette::Mid), 1));
+            p.setBrush(bg);
+            p.drawRoundedRect(card.adjusted(0.5, 0.5, -0.5, -0.5), 8, 8);
+            const QColor fg = on ? QColor(Qt::white) : pal.color(QPalette::WindowText);
+            const QRectF icon(card.x() + 12, card.y() + 8, s, s);
+            const double lw = std::max(1.5, s / 32);
+            p.setPen(QPen(fg, lw));
+            p.setBrush(Qt::NoBrush);
+            if (i < 2) {
+                // A window under a bar: two tabs side by side, or two rows.
+                const QRectF win = icon.adjusted(lw, lw, -lw, -lw);
+                p.drawRoundedRect(win, s / 16, s / 16);
+                const double row = win.height() / (i == 0 ? 5 : 6);
+                QColor fill = fg;
+                fill.setAlphaF(0.85);
+                if (i == 0) {
+                    const QRectF tab1(win.x(), win.y(), win.width() / 2, row), tab2(win.x() + win.width() / 2, win.y(), win.width() / 2, row);
+                    p.fillRect(tab1, fill);
+                    p.drawRect(tab2);
+                } else {
+                    const QRectF r1(win.x(), win.y(), win.width(), row), r2(win.x(), win.y() + row, win.width(), row);
+                    p.fillRect(r1, fill);
+                    p.drawRect(r2);
+                }
+            } else {
+                // Two windows trading places: two boxes and an arrow each way between them.
+                const double w = s * 0.26, h = s * 0.62, y0 = icon.y() + (s - h) / 2;
+                p.drawRoundedRect(QRectF(icon.x() + lw, y0, w, h), s / 20, s / 20);
+                p.drawRoundedRect(QRectF(icon.right() - w - lw, y0, w, h), s / 20, s / 20);
+                const double ax0 = icon.x() + w + lw * 3, ax1 = icon.right() - w - lw * 3, a = s * 0.07;
+                const double ya = icon.y() + s * 0.42, yb = icon.y() + s * 0.58;
+                p.drawLine(QPointF(ax0, ya), QPointF(ax1, ya));
+                p.drawLine(QPointF(ax1, ya), QPointF(ax1 - a, ya - a));
+                p.drawLine(QPointF(ax1, ya), QPointF(ax1 - a, ya + a));
+                p.drawLine(QPointF(ax1, yb), QPointF(ax0, yb));
+                p.drawLine(QPointF(ax0, yb), QPointF(ax0 + a, yb - a));
+                p.drawLine(QPointF(ax0, yb), QPointF(ax0 + a, yb + a));
+            }
+            if (label) {
+                p.setPen(fg);
+                p.drawText(QRectF(icon.right() + 12, card.y(), textW + 4, card.height()), Qt::AlignVCenter | Qt::AlignLeft, names[i]);
+            }
+        }
+        p.end();
+        img.texture = GLTexture::upload(image);
+        img.size = image.size();
+        img.scale = scale;
+        img.logical = logical;
+        img.active = m_bandActive;
+    }
+    if (!img.texture) {
+        return;
+    }
+    const QPoint origin = viewport.scaledRenderRect().topLeft();
+    const Rect device(std::lround(m_bands.x() * scale) - origin.x(), std::lround(m_bands.y() * scale) - origin.y(), img.size.width(), img.size.height());
+    const Region visible = deviceRegion & device;
+    if (visible.isEmpty()) {
+        return;
+    }
+    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    const BlendState kept;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    img.texture->bind();
+    for (const Rect &r : visible.rects()) {
+        QMatrix4x4 mvp = viewport.projectionMatrix();
+        mvp.translate(r.x() + origin.x(), r.y() + origin.y());
+        binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
+        const RectF source(r.x() - device.x(), r.y() - device.y(), r.width(), r.height());
+        img.texture->render(source, Region::infinite(), QSizeF(r.width(), r.height()));
+    }
+    img.texture->unbind();
+}

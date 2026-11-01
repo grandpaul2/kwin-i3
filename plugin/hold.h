@@ -99,6 +99,10 @@ public Q_SLOTS:
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
     // or height of 0 clears it. In logical pixels, global.
     void SetDropIndicator(int x, int y, int width, int height);
+    // kwin-i3's tiling drag over a window's centre (§9 G11): the centre's rect, cut in three bands
+    // (tabbed, stacked, swap), each drawn with an icon of its result and its name, the one under
+    // the pointer (`active`, 0-2) highlighted. A width or height of 0 clears them.
+    void SetDropBands(int x, int y, int width, int height, int active);
     // kwin-i3's tiling drag: i3's move cursor while it lasts. KWin shows an effect's cursor only
     // while the effect holds the mouse (CursorImage::reevaluteSource), so on grabs it; the
     // helper's drag filter sits ahead of KWin's effects filter and keeps the drag's input. Renewed
@@ -251,6 +255,17 @@ private:
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
     QString m_focusedId;                                    // SetFocused: the tree's focused window
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
+    KWin::RectF m_bands;                                    // SetDropBands; empty when none
+    int m_bandActive = -1;
+    struct BandsImage {
+        std::unique_ptr<KWin::GLTexture> texture;
+        QSize size;                                         // device pixels
+        double scale = 0;
+        QSize logical;
+        int active = -1;
+    };
+    BandsImage m_bandsImage;                                // drawn at the paint, where GL is current
+    void paintBands(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, const KWin::Region &deviceRegion);
     Qt::CursorShape m_dragShape = Qt::SizeAllCursor;        // the shape it grabs with now
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
 

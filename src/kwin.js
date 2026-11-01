@@ -2202,12 +2202,22 @@ var KI3 = (function () {
         for (var i = 0; i < plan.bands.length; i++) if (plan.bands[i].band === plan.band) return plan.bands[i].rect;
         return null;
     }
-    function indicate(rect) {
+    // The indicator, and over a window's centre its three bands' icons (plan.bands: tabbed,
+    // stacked, swap), the one under the pointer highlighted.
+    function indicate(rect, plan) {
         var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
-        var key = r.join(",");
+        var b = [0, 0, 0, 0, -1];
+        if (plan && plan.bands) {
+            var c = plan.rect;
+            b = [Math.round(c.x), Math.round(c.y), Math.round(c.width), Math.round(c.height),
+                 plan.bands.map(function (x) { return x.band; }).indexOf(plan.band)];
+        }
+        var key = r.join(",") + "|" + b.join(",");
         if (!drag || key === drag.rect) return;
         drag.rect = key;
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+        if (!frameOn) return;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropBands", b[0], b[1], b[2], b[3], b[4]);
     }
     function dragState(s) {
         if (!drag) return;
@@ -2219,7 +2229,7 @@ var KI3 = (function () {
             // A tab's drag is reported by the window the helper took the press with (drag.via).
             if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || model.byWin[con.win] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
-            if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect)); return; }
+            if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect), drag.plan); return; }
             dropOn(drag.plan, " at " + x + "," + y);
             return;
         }
