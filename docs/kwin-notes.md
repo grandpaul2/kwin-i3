@@ -114,6 +114,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - A Wayland window is transient only when its app names a parent (`set_parent`, or a portal's
   `parent_window` through xdg-foreign, `xdgshellwindow.cpp:1165`). There is no dialog type, so a
   parentless portal dialog (Firefox's screen-share picker) arrives as a plain `Normal` window.
+- `resourceName` (i3's class instance) can be empty for a native Wayland window (KeePassXC's, live
+  KWin 6.x, 2026-11-01); `resourceClass` (the app id) is always there. Anything keyed on the
+  instance needs the class as a fallback.
 
 ## Activation and focus (`activation.cpp`, `workspace.cpp`)
 
