@@ -2,8 +2,8 @@
 # needs: plugin
 # i3's tiling drag: a tiled window's title bar dragged, or
 # Meta+drag anywhere in it, drops by tiling_drag.c's zones while the window stays put: sibling
-# beside the target, parent out to the workspace's edge, center swapped with it (beyond
-# i3's move), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
+# beside the target, parent out to the workspace's edge, the centre's bottom band swapped with it
+# (beyond i3's move; its top and middle bands make a group, §9 G11), an empty workspace on the other monitor (moved there). Escape cancels; a press without movement only
 # focuses; the indicator shows the drop mid-drag. Breeze title bars (tiledLook titlebars).
 # Meta+right is i3's resize of the boundary: the bar shows mid-drag
 # and the shares change at the release only; Escape leaves it; a press in the gap takes it too;
@@ -57,9 +57,9 @@ echo "    $(dropped $m)"
 check "a to c's right side: sibling"        wait_tree 1 "H[b c a*]" "$m"
 
 m=$(mark)
-drag Meta left 1100 400 213 360
+drag Meta left 1100 400 213 520
 echo "    $(dropped $m)"
-check "Meta+drag a onto b's centre: swapped" wait_tree 1 "H[a* c b]" "$m"
+check "Meta+drag a onto b's centre, bottom band: swapped" wait_tree 1 "H[a* c b]" "$m"
 
 # Within the parent zone (title bar + 5 px: 33; 28 px from the edge) of a's bottom edge, which
 # is the workspace's too: out of the row, under everything (tree_move down). The press focused
@@ -70,13 +70,14 @@ check "c to a's bottom edge: parent, under the row" wait_tree 1 "V[H[a b] c*]" "
 echo "    $(dropped $m)"
 poll eval '[[ "$(fc a)" == "0,0 640x360" && "$(fc c)" == "0,360 1280x360" ]]'
 
-# Mid-drag: the window stays put and the indicator shows the centre of c, inset by 30 % of its
-# smaller side (108 px): then Escape, and nothing changes.
+# Mid-drag: the window stays put and the indicator shows the band of c's centre under the pointer
+# (the centre inset by 30 % of its smaller side, 108 px, then cut in three: the middle one,
+# stacked): then Escape, and nothing changes.
 m=$(mark)
 "$INJECT" "abs 200 14" "wait 30" "btn left down" "abs 300 200" "wait 40" "abs 640 540" "wait 1200" \
     "key 1 down" "key 1 up" "wait 40" "abs 1000 300" "wait 40" "btn left up" &
 held=$!
-check "mid-drag: the indicator on c's centre" poll eval '[[ "$(indicator)" == "108,468 1064x144" ]]' || echo "    indicator: $(indicator)"
+check "mid-drag: the indicator on c's centre, middle band" poll eval '[[ "$(indicator)" == "108,516 1064x48" ]]' || echo "    indicator: $(indicator)"
 check "  a still in its place"              eval '[[ "$(fc a)" == "0,0 640x360" ]]'
 "$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
 check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 640 540 38,60,204 10'
@@ -192,7 +193,7 @@ echo "    c $g0 -> $(fc c)"
 # Float to tile (§9 G13): Meta+Shift+drag of the floating c onto b's right side,
 # inside the sibling zone: tiled after b. With the keys still held, a second Meta+Shift press on
 # c does nothing (one toggle per press of the keys); Shift released and pressed again, it is G5's
-# float again. Then onto b's centre: after b, no swap (b stays tiled); and a key cancels.
+# float again. Then onto b's centre, bottom band: after b, no swap (b stays tiled); and a key cancels.
 tiled_c() { [[ "$(tree 1)" != *"~c"* && "$(tree 1)" == *"b"*"c"* ]]; }
 floating_c() { [[ "$(tree 1)" == *"~c"* ]]; }
 read -r cx cy <<<"$(centre c)"; g=$(fc b); bw=${g#* }; bw=${bw%x*}
@@ -230,9 +231,11 @@ check "  released with Shift: c never tiled by KWin" eval '! after "$m" | grep -
 kclose d
 poll eval '[[ "$(tree 1)" != *d* ]]'
 read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
+g=$(fc b); bh=${g##*x}; bw=${g#* }; bw=${bw%x*}; bs=$(( (bw < bh ? bw : bh) * 3 / 10 ))
+r=${g#*,}; by=$(( ${r%% *} + bs + (bh - 2 * bs) * 5 / 6 ))   # the bottom band's middle
 m=$(mark)
 drag Meta+Shift left "$cx" "$cy" "$bx" "$by"
-check "G13: onto b's centre: after b, no swap" wait_log '^.{9}DRAG dropped center' "$m"
+check "G13: onto b's centre, bottom band: after b, no swap" wait_log '^.{9}DRAG dropped center' "$m"
 echo "    $(dropped $m) / $(tree 1)"
 check "  c tiled, b still tiled"            poll tiled_c
 key "Floating Toggle"
