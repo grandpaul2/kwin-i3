@@ -74,6 +74,15 @@ test-KWin probe of the hard part: several floating windows kept moving and sizin
 the user drags one with KWin's own move (follow it, or take the drag as the tiling drag does);
 then the model's wrapper node, ported from `floating_enable` / `floating_disable`.
 
+**74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
+`click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
+`:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press
+with no modifier (`plugin/tilingdrag.cpp:607-609`), so a Meta press on a group's bar falls to the
+general drag, which finds no window there (§9 G8's gap rule: likely the group's shown window, not
+the tab pressed). Next: a test-KWin probe of what it does now; then Meta+left on a tab drags that
+tab whole at once (G1's no-focus rule, G14's tab con), and Meta+Shift+left floats it where dropped
+(G5) for a one-window tab, nothing for a split tab until item 73.
+
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
