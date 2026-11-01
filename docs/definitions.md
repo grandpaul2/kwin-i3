@@ -69,7 +69,6 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 | **the focus** | the one container the tree has focused: a window, a container (after focus parent), or an empty workspace | `focused` |
 | **group** | a tabbed or stacked container: its children share its place, one shown, under its **bar** (one row of tabs, or one row per child) | a tabbed or stacked con |
 | **flatten** | i3's removal of a redundant split: a one-child split whose child is a split of the other orientation, where the child's orientation matches the grandparent's (`tree.c:657-690`) | `tree_flatten` |
-| **tidy** | removing every one-child split (`splith`, `splitv`) whose only child is such a split, flatten's shape included; run after every change, flatten only where i3 calls `tree_flatten` (≠ i3, `plan.md` decision 8) | — |
 
 ## Workspaces and outputs
 

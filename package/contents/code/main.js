@@ -584,7 +584,6 @@ var Tree = (function () {
     M.close = function (win) {
         var con = this.byWin[win];
         if (con) this.closeCon(con, false);
-        this.tidy();
     };
 
     // con_on_remove_child: an empty split closes itself, and so on upwards. Workspaces stay.
@@ -708,30 +707,6 @@ var Tree = (function () {
 
     M.flatten = function () {
         for (var n in this.workspaces) flattenCon(this, this.workspaces[n]);
-        this.tidy();
-    };
-
-    // Not i3: a split whose only child is another split goes, and the child takes its place.
-    // i3 keeps these, and each one stops a move one level short, so after some splitting and
-    // moving a window took several presses to cross (seen 2026-10-22). A one-child split
-    // holding a window stays: that is what Split H makes, and what a move goes into. Only i3's
-    // split layouts: a tabbed or stacked container stays, and so does a split holding one.
-    // Called by every operation that can leave one: move (via flatten), close, float (not
-    // tile), send to workspace, drop, adopt.
-    function tidyCon(con) {
-        while (isPlainSplit(con) && con.nodes.length === 1 && isPlainSplit(con.nodes[0])) {
-            var parent = con.parent, child = con.nodes[0];
-            parent.nodes[parent.nodes.indexOf(con)] = child;
-            parent.focus[parent.focus.indexOf(con)] = child;
-            child.parent = parent;
-            child.percent = con.percent;
-            con = child;
-        }
-        con.nodes.forEach(tidyCon);
-    }
-
-    M.tidy = function () {
-        for (var n in this.workspaces) this.workspaces[n].nodes.forEach(tidyCon);
     };
 
     // ---- moving (move.c) -------------------------------------------------------------------
@@ -946,7 +921,6 @@ var Tree = (function () {
         if (!fs && !ignoreFocus) focusUp(con);   // i3 step 6: not under the target's fullscreen window
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
-        this.tidy();
     };
 
     // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
@@ -1153,7 +1127,6 @@ var Tree = (function () {
         }
         if (setFs) con.fullscreen = true;
         if (setFocus) this.activate(con);
-        this.tidy();
         return true;
     };
 
@@ -1190,7 +1163,6 @@ var Tree = (function () {
         this.byWin[con.win] = node;
         if (wasFocused) this.activate(node);
         this.onRemoveChild(parent);
-        this.tidy();
         return node;
     };
 
@@ -1432,7 +1404,6 @@ var Tree = (function () {
         }
         fixPercent(ws);
         ws.wsLayout = wsLayout;
-        this.tidy();                // a tile that lost its other children to foreign windows
     };
 
     // Every window leaf (tiling) of a workspace, in tree order.

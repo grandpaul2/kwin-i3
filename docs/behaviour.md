@@ -106,21 +106,15 @@ function names the i3 function it ports.
 
 - **A split left empty closes**, and so on upward (`onRemoveChild`).
 - **`flatten`** is i3's `tree_flatten`: a split whose only child is a split of the other
-  direction, inside a parent of that same direction, is dissolved into the parent.
-- **`tidy`** **≠** i3 (`plan.md` decision 8): a split whose only child is a split is
-  replaced by that child, repeatedly: every such shape, flatten's included, so after a close it
-  removes at once what i3's flatten would remove only at the next move. A one-child split holding
-  a window stays. Only splits (`h`, `v`): a tabbed or stacked container is never removed, nor a
-  split holding one, by tidy or flatten. Run after a move (`flatten` calls it), a close, floating a window, sending one to a workspace, a drop and the
-  adoption at load; not after tiling a floating window.
+  direction, inside a parent of that same direction, is dissolved into the parent; only splits,
+  never a tabbed or stacked container. Run where i3 runs it: after a move, a move to another
+  output and a layout change on a workspace. Nothing else is removed: a one-child split holding a
+  split stays, as in i3, where `focus parent` reaches it (`plan.md` decision 8).
 
 ### Operations
 
 **=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart. The "=" rows are
-ports: the i3 function is named, and the code follows it, edge cases included, **on the tidied
-tree**: after the first `tidy` the tree is no longer the one i3 would have, so a long sequence of
-moves can end differently from i3's, and a replay in real i3 matches only with that allowed for
-(kept, knowing this).
+ports: the i3 function is named, and the code follows it, edge cases included.
 
 | # | Operation | Result | i3 | Note |
 |---|---|---|---|---|
@@ -129,9 +123,9 @@ moves can end differently from i3's, and a replay in real i3 matches only with t
 | T3 | **Split** (`split`; Meta+H, Meta+V) on a window | its parent has one child: the parent takes the direction; else the window is wrapped in a new split of that direction, even when the parent already has it | = | `tree_split` |
 | T4 | Split with the workspace focused (an empty workspace) | under two children: the workspace takes the direction; else its children are wrapped first (`workspace_encapsulate`), then as T3 | = | `tree_split` |
 | T5 | Split on a floating window | nothing | = | `tree_split`: "Floating containers can't be split" |
-| T6 | **Toggle split** (`toggleSplit`; Meta+E) | the window's parent flips direction (after i3's #3001 rule: a parent and grandparent each holding one child are collapsed first); at the workspace's top level, the workspace's children are wrapped in a split of the other direction, then flattened (and tidied). From a tabbed or stacked container: back to the split it was (side by side if it never was one) | = | `layout toggle split` (`con_toggle_layout`). i3's bare `layout toggle`, which cycles stacked and tabbed too, is bound to no key |
+| T6 | **Toggle split** (`toggleSplit`; Meta+E) | the window's parent flips direction (after i3's #3001 rule: a parent and grandparent each holding one child are collapsed first); at the workspace's top level, the workspace's children are wrapped in a split of the other direction, then flattened. From a tabbed or stacked container: back to the split it was (side by side if it never was one) | = | `layout toggle split` (`con_toggle_layout`). i3's bare `layout toggle`, which cycles stacked and tabbed too, is bound to no key |
 | T7 | **Move** (`move`; Meta+Shift+direction), a leaf beside it in the same split | the two swap | = | `tree_move` |
-| T8 | Move, a split beside it | enters that split at the edge facing the move, then `flatten` (and tidy) | = | `tree_move` |
+| T8 | Move, a split beside it | enters that split at the edge facing the move, then `flatten` | = | `tree_move` |
 | T9 | Move, no sibling that way | climbs out to the nearest ancestor of that direction, creating one at the top if none (`ws_force_orientation`) | = | `tree_move` |
 | T10 | Move at the workspace's edge; or a fullscreen window; or the workspace's only child; or the lone child of a split at the workspace's edge that way | to the workspace visible on the neighbouring output, at its top level, at the near edge (first when moving right or down); it keeps focus. A fullscreen window arriving where one already is: that one's flag goes (one per workspace, as a move to a workspace) | = | `move_to_output_directed`, `attach_to_workspace` |
 | T11 | Move that would climb out across a fullscreen window | refused | = | `tree_move` checks only the climb-out path, as here; a swap inside the fullscreen window's own split isn't checked by either |
@@ -140,7 +134,7 @@ moves can end differently from i3's, and a replay in real i3 matches only with t
 | T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on an output; landing on another output (the one holding its centre, else the one it overlaps most) joins the workspace visible there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws`, `get_output_from_rect` |
 | T15 | **Swap** (`swap`) | two tiling windows exchange places, shares and fullscreen flags; the tiling drag's centre drop uses it (§9) | = | `con_swap` |
 | T16 | **Float** (`floatingEnable`; Meta+Shift+Space) | the leaf becomes a floating node at the top of the workspace's floating list, taking its branch's place in the focus stack; a fullscreen window stays fullscreen | = | `floating_enable` |
-| T17 | **Tile** (`floatingDisable`) | after the workspace's focused tiling container, or at the top level of an empty workspace; a fullscreen window stays fullscreen; no tidy afterwards | = | `floating_disable` |
+| T17 | **Tile** (`floatingDisable`) | after the workspace's focused tiling container, or at the top level of an empty workspace; a fullscreen window stays fullscreen | = | `floating_disable` |
 | T18 | **Focus a direction** (`focusDir`; Meta+arrows, J K L ;) from a tiling window | the sibling that way in the nearest split of that direction; at the workspace's edge, the workspace visible on the neighbouring output, at its **tiling** focus (its fullscreen window if it has one); else wrapping by `focusWrapping` | = | `tree_next`, `get_tree_next` |
 | T19 | `focusWrapping` | `yes` (default): the next output first, else wrap inside the **innermost** container of that direction; `no`: the next output, never wrap; `force`: wrap inside the container, never leave it; `workspace`: wrap, never leave the workspace | = | `focus_wrapping` |
 | T20 | Focus a direction from a floating window | left and right cycle the workspace's floating windows, wrapping; up and down do nothing | = | The list is i3's stacking order: a window that opens floating goes to its head (`floating_enable`, `floating.c:295`), an activated one to its tail (`con_activate`'s `floating_raise_con`, `floating.c:478`), and a step left or right rotates it so the one reached is last, the cycle keeping its order (`tree.c:615-625`). `get_tree_next`: "up/down does not change floating containers". Refinement stage 5; before, new ones joined the end and the list never changed |

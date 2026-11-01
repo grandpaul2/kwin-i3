@@ -153,13 +153,9 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
    focus-after-close (`tree_close_internal`), in `src/tree.js`. Flatten removes only the redundant
    shape (`docs/definitions.md`, "flatten"); a split holding one window stays, as in i3. KWin
    collapses those itself; the projection must tolerate that.
-   **One deliberate break, tidy**: every one-child split whose child is a split is
-   removed, flatten's shape included, after anything that changes the tree (so after a close it
-   removes at once what i3's flatten would remove only at the next move). i3 keeps them, and each one costs a
-   move or `focus parent` key press and shows nothing. Only splits (`splith`, `splitv`) are tidied:
-   a tabbed or stacked container is never removed, nor a split whose only child is one, so a tab
-   group always stays. Reason (c), judged live: tidy has been the live desktop's behaviour since
-   it went in.
+   No tidying beyond i3's: a one-child split holding a split stays, as in i3. With `focus parent`
+   such a level is one i3 users select and act on (a layout key, a split, a move), and the focus
+   can rest on it, so removing it behind the user's back would act on a container they chose.
    **Atomic layout changes**: a KWin effect, `kwini3hold` (plugin/hold.cpp),
    holds the old layout on screen until every moved window has its new frame, as Sway's
    transactions do; i3 on X11 never had the gap.
