@@ -169,8 +169,7 @@ script alone: title bars, no drag; the plugins need a per-KWin-version build); (
 (screenshot, FAQ, supported versions, uninstall), with item 4's README pass; (c) activities (item
 5); (d) the scratchpad, i3's most-asked missing feature (Bismuth #412; `plan.md` leaves it out):
 a foundation question, cheap on floating
-plus a hidden workspace, i3's `src/scratchpad.c` first. Tabbed/stacked stay out (KWin's tiles
-can't show tabs without much work). Our niche's only other entry: krohnkite-i3 (4 stars, no
+plus a hidden workspace, i3's `src/scratchpad.c` first. Our niche's only other entry: krohnkite-i3 (4 stars, no
 releases). For the beta, (a) is a build from source on each user's machine (a package, COPR/AUR
 as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
 plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what

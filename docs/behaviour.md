@@ -102,7 +102,7 @@ function names the i3 function it ports.
   scratchpad (`docs/plan.md`, "Scope"); a minimized window stays in the tree, skipped by every
   descent, focus move and insertion (`reachable`), i3's scratchpad stand-in (§5 C9, §10 V7).
 
-### Tidying
+### Empty and redundant splits
 
 - **A split left empty closes**, and so on upward (`onRemoveChild`).
 - **`flatten`** is i3's `tree_flatten`: a split whose only child is a split of the other

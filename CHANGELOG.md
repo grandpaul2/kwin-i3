@@ -5,6 +5,22 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **Tabbed and stacked layouts, as i3's**: Meta+W and Meta+S make the focused window's container
+  a group, its windows sharing one place under a bar of their titles (one row of tabs, or a row
+  each); Meta+E goes back to the split it was. Left/right walk the tabs, up/down the rows; a
+  click or a scroll on the bar switches, and a tab dragged off the bar leaves the group. Groups
+  come back after a reload.
+- **Focus parent** (Meta+A), as i3's: a split or a group is then moved, split or made tabbed as
+  one, and every window in it is drawn focused.
+- **The tree keeps i3's levels**: a split holding only a split is no longer removed (it was
+  kwin-i3's own tidying), so focus parent reaches it as in i3.
+- **The tiling drag's centre**: the middle of a window is outlined and cut in three, each named:
+  the top makes the two windows a tabbed group, the middle a stacked one, the bottom swaps them;
+  dropped in the middle of a window in a group, it joins the group. The centre is kept about as
+  wide as tall; beyond it is the beside drop.
+- **Keys**: Meta+W is Plasma's Overview on a stock install; `make take-keys` gives it to Layout
+  Tabbed (the Overview stays on the top-left screen corner).
+
 ## v1.1.0 (2026-10-31): the first version on `stable`
 
 Install the `stable` branch from now on (README, Install step 1); `main` is where the work lands

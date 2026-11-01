@@ -65,17 +65,14 @@ The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, M
 floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
 
 **72. Tabbed and stacked layouts** (i3's `layout tabbed` / `layout stacking`, `focus parent`;
-`docs/behaviour.md` §2 T25-T28, §6, §9 G11, G14, G15, §12 P3). Built on the `tabbed` branch:
-the model (ported from i3 4.24), groups on KWin's tiles (a bar tile over one leaf holding the
-tabs, the shown one raised), Meta+W, Meta+S, Meta+A, the bar drawn by kwini3hold with clicks,
-scrolls and tab drags through the helper, the centre's three bands with their cards, groups read
-back at a reload. `stable` stays where it is until this has had its week on main (`docs/testing.md`
-P6). Known gaps, each a ≠ or untried: a scroll on the bar is untried (the test input has no
-scroll); a tab drag drags its focused window, not a split tab whole; a split tab comes back from a
-reload as its windows; in the `titlebars` look a group's windows keep their own title bars under
-the bar, where i3's tab is the only decoration; `workspace_layout` has no setting. Next: the go
-to merge the branch to main, then on the live desktop `make plugin-install`, `make take-keys`
-(Meta+W is the Overview's there) and a reload, each with the go.
+`docs/behaviour.md` §2 T25-T28, §6, §9 G9, G11, G14, G15, §12 P3). On main and live; `stable`
+stays where it is until main has had its week (`docs/testing.md` P6). Left, each a ≠ or untried:
+in the `titlebars` look a group's windows keep their own title bars under the bar, where i3's
+tab is the only decoration; a tab drag drags its focused window, not a split tab whole; a split
+tab comes back from a reload as its windows; `workspace_layout` has no setting; a scroll on the
+bar is untried in a test (the test input has no scroll). Next: an i3 parity audit of the tree
+(every ≠ in §2, §5, §9 sorted into UI, KWin-forced and core), each core difference put to the
+maintainer with what matching i3 would cost; then these gaps.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same

@@ -88,8 +88,8 @@ them, with their tags.
 17. ~150 inert `HyprKwin *` entries from another tiling script sit in `kglobalshortcutsrc`
    (A100): unbound, harmless, clutter.
 
-**Out of scope, confirmed** (plan "Scope"): binding modes and `$mod` (B89, B93-B95), tabbed and
-stacking, scratchpad, marks, `append_layout` / `i3-save-tree` (D76), arbitrary i3 commands on keys
+**Out of scope, confirmed** (plan "Scope"): binding modes and `$mod` (B89, B93-B95),
+scratchpad, marks, `append_layout` / `i3-save-tree` (D76), arbitrary i3 commands on keys
 (B79), the i3 IPC (D-rows), tiling drag (B45, C37), removing empty workspaces (C56).
 
 ## Slice A: i3's command grammar (`parser-specs/commands.spec`) against kwin-i3 + Plasma
@@ -135,14 +135,14 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 | A9 | `focus left/...` into a fullscreen / empty workspace edge | cross to neighbouring output, or onto its empty workspace | K | | `focusDir` header comment,  | C | |
 | A10 | `focus prev` / `focus next` | cycle to the previous/next sibling in the focus-direction sense (4.24: `cmd_focus_direction` with prev/next) | none | KW: `Walk Through Windows` (Alt+Tab / Meta+Tab, live default keys present) switches by recency, not tree order | no action; `src/tree.js` has no sibling stepping | C | Hole but minor: Alt+Tab in KWin follows focus, kwin-i3 follows activation, so it is a different tool. i3's default config binds neither |
 | A11 | `focus prev sibling` / `focus next sibling` | focus the previous/next child of the same parent | none | | `cmd_focus_sibling` `commands.c:1365`; no kwin-i3 equivalent | C | Not bound by i3's default config; negligible |
-| A12 | `focus parent` | move focus to the parent container | OOS | | plan Scope (`focus parent` out) | C | Needs tabbed/stacked or a split-selecting `split` to matter |
+| A12 | `focus parent` | move focus to the parent container | K (script) | | `Focus Parent`, Meta+A; `Tree.focusParent` (`level_up`) | C | |
 | A13 | `focus child` | move focus down to the focused child | OOS | | same | C | |
 | A14 | `focus tiling` / `focus floating` | focus the most recent tiling/floating window | none (the toggle is K) | | only `mode_toggle` exists | C | Explicit forms are a trivial gap; toggle covers the default binding |
 | A15 | `focus mode_toggle` | swap between the tiling and floating layer | K (script) | | `Focus Mode Toggle`, Meta+Space; `Tree.focusModeToggle` `src/tree.js:654` | C | Live bound |
 | A16 | `focus output <name>` / `<dir>` / `primary` / `next` | focus the named/directional output | K (script), directional forms only | | `Focus Output Left/Right/Up/Down` in `UNBOUND`, `src/kwin.js:1393`; live entries exist, unbound | C | Named-output, `primary`, `next` absent. By-name is the part with no equivalent; directional is what a user wants. Unbound by default, as in i3 (spec-workspace-commands) |
 | A17 | `focus output` with several outputs listed (`focus output left right`) | try each in turn (the `FOCUS_OUTPUT` loop) | none | | | C | Rare |
 | A18 | `focus workspace` (`cmd_focus(1)`) | focus the workspace container (moves focus to the workspace itself) | none | | tree has `ws` as focusable only when empty (`fromWs` in `focusDir`) | C | Only used with `focus parent`-style climbing; same fate as A12 |
-| A19 | bare `focus` (with criteria) | focus the window matched by criteria, switching workspace/output if needed | none; partly KW/P | P: Overview (Meta+W, bound live), task manager click, KRunner "Windows"; KW activation is followed by the tree (`Tree.activate`) | no criteria addressing; but any KWin-side activation is followed (`desktopsChanged`, activation hooks) | C | "Jump to window by name" has owners in Plasma, harmless duplicate: kwin-i3 follows whatever activates |
+| A19 | bare `focus` (with criteria) | focus the window matched by criteria, switching workspace/output if needed | none; partly KW/P | P: Overview (Meta+W on a stock install, which `make take-keys` gives to Layout Tabbed), task manager click, KRunner "Windows"; KW activation is followed by the tree (`Tree.activate`) | no criteria addressing; but any KWin-side activation is followed (`desktopsChanged`, activation hooks) | C | "Jump to window by name" has owners in Plasma, harmless duplicate: kwin-i3 follows whatever activates |
 
 ### 2. move
 
@@ -198,11 +198,11 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 | A52 | `split horizontal` / `h` | next window opens beside the focused one | K (script) | | `Split H`, Meta+H; `Tree.split` `src/tree.js:304` | C | Ported incl. the single-child case |
 | A53 | `split vertical` / `v` | next window opens below | K (script) | | `Split V`, Meta+V | C | |
 | A54 | `split toggle` / `t` | tree_split in the opposite orientation of the parent | none | | not bound; `Toggle Split` (A55) is `layout toggle split`, a different operation (it flips the parent's orientation, `split t` wraps the con) | C | Different effect from A55; negligible |
-| A55 | `layout toggle split` (and `layout toggle`, `layout toggle default`) | flip the parent between splith and splitv | K (script) | | `Toggle Split`, Meta+E; `Tree.toggleSplit` `src/tree.js:352` | C | On a stock Plasma Meta+E is Dolphin's. Bare `layout toggle` in i3 cycles tabbed/stacking too; here splith/splitv only |
+| A55 | `layout toggle split` (and `layout toggle`, `layout toggle default`) | flip the parent between splith and splitv | K (script) | | `Toggle Split`, Meta+E; `Tree.toggleSplit` (from tabbed or stacked, back to the last split) | C | On a stock Plasma Meta+E is Dolphin's. Bare `layout toggle` (which cycles stacked and tabbed too) is bound to no key |
 | A56 | `layout splith` / `splitv` | set the parent's orientation explicitly | none | | no action (only the toggle) | C | Tiny gap; the toggle plus `Split H/V` reaches every state |
 | A57 | `layout default` | restore the default layout | none | | | C | Same |
-| A58 | `layout stacked` / `stacking`, `layout tabbed` | stacked / tabbed container | OOS | | plan Scope (tabbed and stacked out) | C | Largest i3 feature left out; deliberate |
-| A59 | `layout toggle all`, `layout toggle split <mode list>` | cycle through chosen layouts | OOS | | tabbed/stacked out | C | |
+| A58 | `layout stacked` / `stacking`, `layout tabbed` | stacked / tabbed container | K (script, kwini3hold draws the bar, the helper takes its clicks) | | `Layout Stacking` Meta+S, `Layout Tabbed` Meta+W; `Tree.setLayout` (`con_set_layout`) | C | |
+| A59 | `layout toggle all`, `layout toggle split <mode list>` | cycle through chosen layouts | none | | i3 binds neither by default; the bound keys (A55, A58) cover the layouts | C | |
 | A60 | `layout toggle <a b c>` | user-defined cycle | none | | | C | |
 
 ### 6. floating, fullscreen, sticky, border, title
@@ -320,7 +320,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 | B25 | `client.focused` (border bg text indicator child_border) | colours of the focused window | K (kwini3hold) | | `frameActive` (`#4c7899`), floating `frameFloatingActive` | C | One colour only (the frame): bg/text/indicator have no meaning without a title bar. |
 | B26 | `client.unfocused` | colours of unfocused windows | K (kwini3hold) | | `frameInactive` (`#333333`), `frameFloatingInactive` | C | |
 | B27 | `client.focused_inactive` | focused in its container, but a different container has the focus | none | | only active / inactive exist | D | I did not read plugin/ to see whether an unfocused monitor's last-focused window gets the active colour. Unchecked. Probably invisible to most users. |
-| B28 | `client.focused_tab_title` | tab title colour | OOS | | tabbed layout is out (Scope) | C | |
+| B28 | `client.focused_tab_title` | tab title colour | K (kwini3hold) | | the shown tab in the frame colour of its class, the others Plasma's window colours (`behaviour.md` §6, the bar) | C | ≠, reason (b) |
 | B29 | `client.urgent` | colour of an urgent window | OOS | P (task manager flash) | urgency out (Scope) | C | |
 | B30 | `client.placeholder` | restore-layout placeholder | n/a | | no `append_layout` here | C | |
 | B31 | `client.background` | colour behind windows | P | | wallpaper / Plasma | C | The studied desktop sets a dark wallpaper. |
@@ -335,7 +335,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 | B35 | `default_orientation vertical` | new workspaces split top-down | K script | | `defaultOrientation` = vertical | C | |
 | B36 | `default_orientation auto` | by monitor shape (wide = horizontal) | K script | | `defaultOrientation` = auto (default); README: side by side unless monitor taller than wide | C | Workspaces that exist keep theirs, as in i3. |
 | B37 | `workspace_layout default` | new workspaces start as splith/splitv | K script | | same as B34-B36 | C | |
-| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | OOS | | Scope: tabbed and stacked left out | C | Decision. |
+| B38 | `workspace_layout stacking` / `stacked` / `tabbed` | new workspaces start stacked/tabbed | K, by key only | | Meta+W / Meta+S on an empty workspace sets it (`con_set_layout`); no setting (`behaviour.md` §11 N4) | C | |
 
 **Floating**
 
@@ -354,7 +354,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 |---|---|---|---|---|---|---|---|
 | B45 | `tiling_drag modifier\|titlebar` (default `modifier`) | drag a tiled window onto another to move it in the tree | K (helper + script + kwini3hold) | | 2026-10-26: Meta+drag, and a title-bar drag in the title-bar look (`plugin/tilingdrag.cpp`, ); KWin's untile-and-float moved to Meta+Shift+drag (decision D) | C | Closed. |
 | B46 | `tiling_drag off` | disables the above | n/a | | nothing to disable | C | Effectively what is here. |
-| B47 | `tiling_drag swap_modifier <mod>` | modifier toggles swap vs. move during the drag | K (helper) | | 2026-10-26: no swap modifier: a centre drop always swaps; Meta+Shift+drag floats instead | C | A deliberate break from i3. |
+| B47 | `tiling_drag swap_modifier <mod>` | modifier toggles swap vs. move during the drag | K (helper) | | no swap modifier: the centre's bottom third swaps, its top and middle make a group (`behaviour.md` §9 G11); Meta+Shift+drag floats instead | C | A deliberate break from i3. |
 | B48 | `focus_follows_mouse yes` (default) | pointer into a window focuses it | KW | UC sets it | kwinrc `[Windows] FocusPolicy=FocusFollowsMouse`, `DelayFocusInterval=0`, set by the studied desktop's configuration (the live kwinrc); kwin-i3 only follows `windowActivated` (plan Policies) | C | A stock install is `ClickToFocus` (KWin default), so i3's default feel is NOT provided by kwin-i3 or by stock Plasma. README does not tell a new user to set it. Candidate hole for a new user. |
 | B49 | `focus_follows_mouse no` | click to focus | KW | | stock default (`FocusPolicy=ClickToFocus`) | D | |
 | B50 | focus follows mouse and a raise | i3 never raises (floating always above) | K + KW | | `AutoRaise` false (kwin.kcfg), `ClickRaise` true default; kwin-i3 keeps floating windows `keepAbove` (`kwin.js:758-833`) | C | Harmless duplicate: `ClickRaise` is KWin's, floating-above is kwin-i3's. |
@@ -605,7 +605,7 @@ Columns in every table: # | i3 item | What i3 does | Owner here | Also done by |
 | C82 | Focus follows mouse (default yes): entering a window focuses it (descends to its focused child) | `handle_enter_notify` | KW (`FocusPolicy=FocusFollowsMouse` set by UC) | K takes each activation into the model, "last focus event wins" | live kwinrc `[Windows]`; `kwin.js:1856` | C | **A stranger gets KWin's default, click-to-focus.** Not set by kwin-i3 (OPEN 4e README-only). |
 | C83 | Click focuses; click on the other workspace focuses it | | KW | K | | C | |
 | C84 | Ignored enter events caused by the WM's own re-layout (`add_ignore_event`) | Avoids focus jumping when windows move under a still pointer | KW (`NextFocusPrefersMouse`, "moved" checks in `pointerEnterEvent`) | K: the plugin popup grace; test client note about a pointer that does not move | `window.cpp:2838-2860` | D | i3's explicit sequence-number scheme has no counterpart; KWin only focuses on real pointer motion. |
-| C85 | Scroll over titles of tabbed/stacked containers | Cycles tabs | n/a (OOS: no tabbed/stacked) | | plan Scope | C | |
+| C85 | Scroll over titles of tabbed/stacked containers | Cycles tabs | K (helper) | | `pointerAxis` on a bar, then `tabEvent` (`behaviour.md` §9 G15) | C | |
 | C86 | Client takes the keyboard focus on its own (`handle_focus_in`), i3 re-asserts its focus | | KW (focus-stealing prevention; `restoreFocus`, `activation.cpp` `restoreFocus`) | none | | D | |
 | C87 | Panel popups vs focus-follows-mouse | not an i3 concern (i3bar has no popups) | K helper plugin (popup grace 1.5 s) | KW's `DelayFocusInterval` is set to 0 by UC |  | C | Plasma adaptation. |
 
