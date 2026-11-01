@@ -1390,24 +1390,57 @@ var Tree = (function () {
         var self = this, wsLayout = ws.wsLayout;
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
         ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
+        // A snapshot's focus order (indices of tiled children, most recent first) where it has one;
+        // a workspace's floating nodes stay after its tiled ones.
+        function order(c, s) {
+            if (!s.focus) return;
+            var tiled = s.focus.map(function (i) { return c.nodes[i]; }).filter(function (k) { return k; });
+            c.nodes.forEach(function (k) { if (tiled.indexOf(k) < 0) tiled.push(k); });
+            c.focus = tiled.concat(c.focus.filter(isFloating));
+        }
         function build(s, parent) {
             var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
             attach(c, parent, true);
             c.percent = s.percent || 0;
+            if (s.lastSplit) c.lastSplit = s.lastSplit;
             if (s.kids) s.kids.forEach(function (k) { build(k, c); });
             else self.byWin[s.win] = c;
             fixPercent(c);
+            order(c, s);
             return c;
         }
         if (spec.kids) {
             ws.layout = spec.layout;
+            if (spec.lastSplit) ws.lastSplit = spec.lastSplit;
             spec.kids.forEach(function (k) { build(k, ws); });
+            order(ws, spec);
         } else if (spec.win !== undefined) {
             build(spec, ws);
         }
         fixPercent(ws);
-        ws.wsLayout = wsLayout;
+        ws.wsLayout = spec.wsLayout || wsLayout;
     };
+
+    // A workspace's tiling tree as adopt reads it, whole: layouts, shares, last split layouts,
+    // focus orders and workspace_layout. kwin-i3 keeps it outside the script (with the effect)
+    // so a reload restores i3's tree, as i3's restart does, where KWin's tiles hold less.
+    M.snapshot = function (ws) {
+        function snap(c) {
+            if (c.type !== "ws" && c.win !== null) return { win: c.win, percent: c.percent };
+            var s = { layout: c.layout, percent: c.percent, lastSplit: c.lastSplit,
+                      kids: c.nodes.map(snap),
+                      focus: c.focus.filter(function (k) { return !isFloating(k); }).map(function (k) { return c.nodes.indexOf(k); }) };
+            if (c.type === "ws") s.wsLayout = c.wsLayout;
+            return s;
+        }
+        return snap(ws);
+    };
+    // Every window id a snapshot (or a spec read off the tiles) places.
+    function specWindows(s) {
+        if (s.win !== undefined) return [s.win];
+        return [].concat.apply([], (s.kids || []).map(specWindows));
+    }
+    M.specWindows = specWindows;
 
     // Every window leaf (tiling) of a workspace, in tree order.
     M.leaves = function (ws) {
@@ -3062,6 +3095,7 @@ var KI3 = (function () {
             settleDragArms(ws);
         }
         barsOf[ws.num] = groupBars;
+        tellMemo(ws);
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
         else checkInvariants(ws, root, p, area);
@@ -3268,6 +3302,39 @@ var KI3 = (function () {
         return text.replace(/\{[0-9a-f-]+\}/g, function (key) {
             return wins[key] ? String(wins[key].caption).replace(/\s+/g, "_") : key;
         });
+    }
+
+    // The workspace's whole tree, kept by the effect for the next load (SetMemo): KWin's tiles hold
+    // no focus order, last split layout or workspace_layout, and nothing of a split tab, all of
+    // which i3's restart keeps. Told only when it changed; keyed by the desktop's id, which a
+    // reload doesn't change.
+    var memoTold = {};
+    function tellMemo(ws) {
+        if (!effectSeen) return;
+        var key = deskOf(ws.num).id, json = ws.nodes.length ? JSON.stringify(model.snapshot(ws)) : "";
+        if (memoTold[key] === json) return;
+        memoTold[key] = json;
+        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetMemo", key, json);
+    }
+    // At load, with the effect's answer: each workspace whose tiled windows are exactly its
+    // memo's is rebuilt from the memo, i3's tree whole. Returns the workspaces done, by number.
+    function adoptMemos(m) {
+        var done = {};
+        if (!m || !m.memo) return done;
+        Object.keys(model.workspaces).forEach(function (n) {
+            var ws = model.workspaces[n], json = m.memo[deskOf(ws.num).id];
+            if (!json) return;
+            var memo;
+            try { memo = JSON.parse(json); } catch (e) { return; }
+            var want = model.specWindows(memo).slice().sort(), have = model.leaves(ws).map(function (c) { return String(c.win); }).sort();
+            if (want.length !== have.length || want.some(function (k, i) { return k !== have[i]; })) return;
+            model.adopt(ws, memo);
+            done[n] = true;
+            memoTold[deskOf(ws.num).id] = json;
+            schedule(ws);
+            log("MEMO " + n + " " + named(model.describe(ws.num)));
+        });
+        return done;
     }
 
     // ---- reading sizes back after a border drag ---------------------------------------------
@@ -5501,10 +5568,16 @@ var KI3 = (function () {
         if (m && m.floating) m.floating.forEach(function (k) { atLoadFloating[k] = true; });
         var all = workspace.stackingOrder.slice();
         workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
+        var memo = adoptMemos(m);
         all.forEach(function (w) {
             watchClose(w);
             if (!wins[id(w)]) adoptWindow(w);
-            else model.focusWin(id(w));
+            else {
+                // A workspace from its memo keeps the memo's focus order; the global focus is
+                // KWin's active window, below.
+                var c = model.byWin[id(w)], ws = c ? Tree.wsOf(c) : null;
+                if (!ws || !memo[ws.num]) model.focusWin(id(w));
+            }
         });
         atLoadFloating = {};
         if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
@@ -5768,7 +5841,7 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
-        told = {}; ringTold = {}; barTold = {};       // a new effect knows nothing: the next pass tells it again
+        told = {}; ringTold = {}; barTold = {}; memoTold = {};       // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled

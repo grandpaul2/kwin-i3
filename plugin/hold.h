@@ -133,6 +133,10 @@ public Q_SLOTS:
     void SetBar(const QString &id, int dx, int dy, int width, int height, bool stacked, int active, const QString &cls, const QString &titles);
     // Forget every bar (kwin-i3 loaded: it tells the ones it has).
     void ClearBars();
+    // kwin-i3's tree of a workspace (a snapshot, JSON), by desktop id, kept here so that a reload of
+    // the script restores i3's tree whole (KWin's tiles hold less): read back from Stats ("memo").
+    // An empty `json` forgets it. Not kept across a login, as i3's tree isn't.
+    void SetMemo(const QString &desktop, const QString &json);
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -254,6 +258,7 @@ private:
         QString cls, titles;
     };
     QList<BarCall> m_barsHeld;
+    QHash<QString, QString> m_memo;                         // SetMemo, by desktop id
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the form's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};

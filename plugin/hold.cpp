@@ -964,6 +964,15 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     repaintBar(w);
 }
 
+void Hold::SetMemo(const QString &desktop, const QString &json)
+{
+    if (json.isEmpty()) {
+        m_memo.remove(desktop);
+    } else {
+        m_memo.insert(desktop, json);
+    }
+}
+
 void Hold::ClearBars()
 {
     m_barsHeld.clear();
@@ -1497,6 +1506,11 @@ QVariantMap Hold::Stats() const
         bars << id;
     }
     m[QStringLiteral("bars")] = bars;
+    QVariantMap memo;
+    for (auto it = m_memo.cbegin(); it != m_memo.cend(); ++it) {
+        memo.insert(it.key(), it.value());
+    }
+    m[QStringLiteral("memo")] = memo;
     m[QStringLiteral("focused")] = m_focusedId;
     return m;
 }

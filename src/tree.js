@@ -1202,24 +1202,57 @@ var Tree = (function () {
         var self = this, wsLayout = ws.wsLayout;
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
         ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
+        // A snapshot's focus order (indices of tiled children, most recent first) where it has one;
+        // a workspace's floating nodes stay after its tiled ones.
+        function order(c, s) {
+            if (!s.focus) return;
+            var tiled = s.focus.map(function (i) { return c.nodes[i]; }).filter(function (k) { return k; });
+            c.nodes.forEach(function (k) { if (tiled.indexOf(k) < 0) tiled.push(k); });
+            c.focus = tiled.concat(c.focus.filter(isFloating));
+        }
         function build(s, parent) {
             var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
             attach(c, parent, true);
             c.percent = s.percent || 0;
+            if (s.lastSplit) c.lastSplit = s.lastSplit;
             if (s.kids) s.kids.forEach(function (k) { build(k, c); });
             else self.byWin[s.win] = c;
             fixPercent(c);
+            order(c, s);
             return c;
         }
         if (spec.kids) {
             ws.layout = spec.layout;
+            if (spec.lastSplit) ws.lastSplit = spec.lastSplit;
             spec.kids.forEach(function (k) { build(k, ws); });
+            order(ws, spec);
         } else if (spec.win !== undefined) {
             build(spec, ws);
         }
         fixPercent(ws);
-        ws.wsLayout = wsLayout;
+        ws.wsLayout = spec.wsLayout || wsLayout;
     };
+
+    // A workspace's tiling tree as adopt reads it, whole: layouts, shares, last split layouts,
+    // focus orders and workspace_layout. kwin-i3 keeps it outside the script (with the effect)
+    // so a reload restores i3's tree, as i3's restart does, where KWin's tiles hold less.
+    M.snapshot = function (ws) {
+        function snap(c) {
+            if (c.type !== "ws" && c.win !== null) return { win: c.win, percent: c.percent };
+            var s = { layout: c.layout, percent: c.percent, lastSplit: c.lastSplit,
+                      kids: c.nodes.map(snap),
+                      focus: c.focus.filter(function (k) { return !isFloating(k); }).map(function (k) { return c.nodes.indexOf(k); }) };
+            if (c.type === "ws") s.wsLayout = c.wsLayout;
+            return s;
+        }
+        return snap(ws);
+    };
+    // Every window id a snapshot (or a spec read off the tiles) places.
+    function specWindows(s) {
+        if (s.win !== undefined) return [s.win];
+        return [].concat.apply([], (s.kids || []).map(specWindows));
+    }
+    M.specWindows = specWindows;
 
     // Every window leaf (tiling) of a workspace, in tree order.
     M.leaves = function (ws) {

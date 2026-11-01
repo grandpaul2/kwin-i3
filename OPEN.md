@@ -64,21 +64,11 @@ then whether to block, follow or document them (and whether `make take-keys` sho
 The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
 floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
 
-**72. Tabbed and stacked layouts** (i3's `layout tabbed` / `layout stacking`, `focus parent`;
-`docs/behaviour.md` §2 T25-T28, §6, §9 G9, G11, G14, G15, §12 P3). On main and live; `stable`
-stays where it is until main has had its week (`docs/testing.md` P6). Left, each a ≠ or untried:
-in the `titlebars` look a group's windows keep their own title bars under the bar, where i3's
-tab is the only decoration; a split
-tab comes back from a reload as its windows; `workspace_layout` has no setting; a scroll on the
-bar is untried in a test (the test input has no scroll). Next: an i3 parity audit of the tree
-(every ≠ in §2, §5, §9 sorted into UI, KWin-forced and core), each core difference put to the
-maintainer with what matching i3 would cost; then these gaps.
-
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
 one window (`src/tree.js` header), where i3 wraps the container in a floating one, its splits
-and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree; the one core
-difference left from it. Next: the model's floating node holding a subtree, and the adapter
+and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree done with tabbed and
+stacked layouts; the one core difference left from it. Next: the model's floating node holding a subtree, and the adapter
 placing its windows by their shares inside the floating rect (no KWin tiles there).
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
