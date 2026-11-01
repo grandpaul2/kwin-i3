@@ -99,7 +99,8 @@ split inside a tabbed or stacked group) is titled with the container's tree. i3 
 (`con_get_tree_representation`, `con.c:2473`; `x.c:690`). kwin-i3's `barTitle`
 (`src/kwin.js:1415`) has no prefix and uses each window's caption, so two terminals make a long
 tab; `behaviour.md` (the bar) calls it i3's. A tab holding one window, its caption, is as i3.
-Next: look at one live (a split inside a tab), then i3's form, or a written reason to differ.
+Seen live 2026-11-01. Next: i3's form (KWin's `resourceName` is the class instance), or a
+written reason to differ.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
