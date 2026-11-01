@@ -77,14 +77,30 @@ run in `plan.md`, which the README and the settings page follow.
 mouse", in order 78, 74, 73). G5 (Meta+Shift+drag floats a tiling window where dropped), G13 (on
 a floating window, tiles it) and X5 come out: in i3 the mouse never changes a window's kind.
 After: Meta+Shift+left on a tiling window is the tiling drag Meta+left is, the centre's bands
-deciding (Shift adds nothing, `LATER.md` item 80); on a floating window, KWin's move, as i3's
-floating modifier ignores Shift on the left button (`click.c:284`). Whether KWin's window action
-fires with Shift held is to be read in KWin 6.7.5's source; if not, the helper passes the press on
-without Shift, as `TilingDragFloat` does now. Touches: the helper's Meta+Shift paths
-(`plugin/tilingdrag.cpp`), the script's `startDrag`/`drop` float-to-tile branch, the settings
-page's `tilingDrag` help ("Meta+Shift+drag floats it instead", `kcm/ui/main.qml:375`),
-`behaviour.md` G5, G11 ("Shift or not"), G13, X5, the i3 feature map's A61, and the scenarios
-that drive Meta+Shift (grep `tests/live`). Next: build it.
+deciding (Shift adds nothing, `LATER.md` item 80), whatever `tilingDrag` says of plain presses;
+on a floating window a move, as i3's floating modifier ignores Shift on the left button
+(`click.c:284`). KWin's window actions fire only on their exact modifier (6.7.5
+`input.cpp:1299`), so today that press reaches the app (`tests/live/52-mouse.sh:46-51`): the
+helper starts the move itself, Shift taken out as `TilingDragFloat` does (kept, reworded), for a
+movable normal floating window only (not fullscreen, a panel, a popup). With nowhere to drop, a
+Meta+Shift press goes on to the app, as i3's (steps 3, 10): G4's swallow is for Meta alone,
+whose press KWin would turn into a move. Also to read: whether the helper can refuse a client's
+own move request on a tiling window (i3 ignores it, `handlers.c:936`; here it floats,
+`src/kwin.js:2053-2060`, the i3 feature map's C44, `tests/live/51-input.sh:90`). Touches:
+- the helper: `plugin/tilingdrag.cpp` (the Meta+Shift paths, `:178-190`'s once-per-press rule,
+  `:423-426`), `tilingdrag.h` (`SetFloating`, `m_floating`, `m_shiftLatched`, `:52-54`,
+  `:178-180`);
+- the script: `src/kwin.js` `tellDragFloating`/`tellDrag`, `startDrag`'s `drag.type ===
+  "floating"`, `dropOn`, `unfloatForDrop`;
+- user-facing text: the settings page's `tilingDrag` help (`kcm/ui/main.qml:375`), `README.md`'s
+  Meta+Shift bullet (`:78-80`) and its mouse prose, `CHANGELOG.md`'s next entry;
+- `behaviour.md`: G3, G5, G11 ("Shift or not", "as G5 and G13"), G13, X5, N17 ("Shift floats
+  instead of swapping"), T16/T17's wording, §1's helper table;
+- the i3 feature map: A61, B40, B45, B47, R26;
+- tests: `tests/live/86-tiling-drag.sh` (the G5/G13 block), `52-mouse.sh:46-51` (asserts
+  Meta+Shift+left does nothing).
+
+Next: build it.
 
 **74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
 `click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
@@ -96,7 +112,11 @@ container at once, a split tab whole (G1's no-focus rule, G14's tab con); droppe
 (G9-G11); a split tab onto one of its own windows does nothing (i3's guards, `con_swap`
 `con.c:2607`, `con_move_to_target`). With it, i3's right press on a tab: a resize against the
 neighbour above (step 10, `BORDER_TOP`; `plan.md` "The mouse": the bar is kwin-i3's, so Z4's
-window menu isn't). Next: after item 78, the helper's `pressBar` with the modifier and §9's rows.
+window menu isn't), and with `tilingDrag` leaving plain title-bar drags out, a left press on a tab
+the same resize (step 10, `click.c:355-358`); G14 says only step 8 now. `pressBar`
+(`tilingdrag.cpp:607-612`) refuses right presses too: a new path. A split tab dropped on the
+Swap band onto one of its own windows hits `con_swap`'s parent-child guard (`con.c:2607`): the
+port must reach it. Next: after item 78, the helper's `pressBar` and §9's rows.
 
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
@@ -108,10 +128,19 @@ moving it (Meta+left anywhere in it, a left drag on its bar) and resizing it (Me
 outer edge) whole, a border between its windows a tiling resize inside it; one floating window
 stays KWin's; never a tiling drag's drop target; Floating Toggle on a window inside it floats that
 window alone. The model's node ported from `floating_enable` / `floating_disable` (the size from
-its children, `:331-342`). The hard parts: moving several KWin windows as one per motion step,
-a resize answered by each client at its own pace (the hold's kind of wait), raising them
-together, a group's bar with no bar tile to draw over. Next: after item 74, a test-KWin spike of
-the helper moving and resizing two floating windows as one.
+its children, `:331-342`: widths summed, the tallest height, whatever the orientation, as i3
+does). The hard parts: moving several KWin windows as one per motion step, a resize answered by
+each client at its own pace (the hold's kind of wait), raising them together, a group's bar with
+no bar tile to draw over, and each window's own Plasma title bar and edges (L10), which the
+helper must take ahead of KWin's decoration as it takes the gaps (Z9), with a marker of its own
+(today `m_floating` is per window, so Meta+left would fall to KWin's move of one). Also to
+decide in the build, from i3: keys acting on the whole container (`con_inside_floating`,
+`commands.c:598`, `:672`; T13, T14, K3, T23), a sticky child (`output_push_sticky_windows` moves
+the whole container; R3, X4), a fullscreen child (`click.c:281-282`; V4, V6b), the frames and
+rings (`framefocus.cpp`, `hold.cpp`'s `floatingFramed`), the drop-target row (`plan.md`), and
+what a floating container does without the helper. The plan's line stands or falls with the
+spike. Next: after item 74, a test-KWin spike of the helper moving and resizing two floating
+windows as one.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same

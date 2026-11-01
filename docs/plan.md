@@ -109,12 +109,14 @@ the window: it floats (decision 7).
 i3 4.24's `route_click` (`click.c:169-362`) is the model, step by step; `docs/behaviour.md` §9
 has a row for each case. Where the line runs between kwin-i3 and Plasma:
 
-- **The mouse never changes a window's kind.** In i3 only a command or a rule floats or tiles a
-  window (`floating toggle`, `for_window`): a tiling drag never starts from anything floating
-  (`click.c:251`, `!floatingcon`) and a drop never floats. Meta+Shift+Space is the way between
-  them. Meta+Shift+left is i3's too: on a tiling window a tiling drag (i3's swap modifier, below),
-  on a floating one a move, i3's floating modifier ignoring Shift on the left button
-  (`click.c:284`).
+- **kwin-i3's mouse never changes a window's kind.** In i3 only a command or a rule floats or
+  tiles a window (`floating toggle`, `for_window`): a tiling drag never starts from anything
+  floating (`click.c:251`, `!floatingcon`), a drop never floats, and a client's own request to
+  move a tiling window is ignored (`handlers.c:936`). Meta+Shift+Space is the way between them.
+  Meta+Shift+left is i3's too: on a tiling window a tiling drag (i3's swap modifier, below), on a
+  floating one a move, i3's floating modifier ignoring Shift on the left button (`click.c:284`).
+  KWin's window actions fire only on their exact modifier (6.7.5 `input.cpp:1299`), so that move
+  is the helper's to start.
 - **kwin-i3 takes every press on the tree**: tiling windows, a group's bar and its tabs, and
   floating containers, each as i3 routes it. Meta+left is a tiling drag of the pressed container
   at once, without focusing it (step 2): on a tab, that tab's container, a split tab whole
@@ -126,24 +128,35 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   Meta+right, the title bar, the edges), which is i3's floating modifier for one window, with
   Plasma's title bar, window menu and screen-edge snapping (reason (e): the window actions are
   Plasma's settings). The differences are `behaviour.md` F1's.
-- **A floating container is kwin-i3's**: a split or a group floated whole (i3's
-  `CT_FLOATING_CON`, `floating.c:233`), its windows KWin floating windows whose frames kwin-i3
-  lays out as a tiled tree inside its rect. A press anywhere in it focuses and raises (step 3);
-  Meta+left, or a left drag on its bar, moves it whole (steps 5, 7); Meta+right, or its outer
-  edge, resizes it whole (step 6); a border between two of its windows is a tiling resize inside
-  it. The helper does these, as KWin moves and resizes one window, never several as one (reason
-  (a)). Floating toggle on a window inside it floats that window alone (`floating_enable`: only
-  the container's child carries the floating flag).
+- **A split or a group floated whole is kwin-i3's** (i3's floating container holding more than
+  one window, `floating.c:291`; `docs/definitions.md`): its windows are KWin floating windows
+  whose frames kwin-i3 lays out as a tiled tree inside the container's rect. A press anywhere in
+  it focuses and raises the whole container (step 3, `con_raise`); Meta+left moves it whole
+  (step 5); a left press on a title bar or tab inside it first resizes against the neighbour
+  above, and moves it whole only where there is none (steps 6, 7); Meta+right, or its outer edge,
+  resizes it whole (step 6); a border between two of its windows is a tiling resize inside it.
+  The helper takes all of these, title bars and edges included, ahead of KWin, as KWin moves and
+  resizes one window, never several as one (reason (a)). Floating Toggle on a window inside it
+  floats that window alone (`floating_enable`: only the container's child carries the floating
+  flag); on the container, it tiles it whole (`floating_disable`). Without the helper: `OPEN.md`
+  item 73 settles it.
 - **A tiling drag drops onto tiling windows and empty visible workspaces only**
-  (`is_tiling_drop_target`), never onto a window inside a floating container. i3's check lets
-  such a window through only by the order of its list (`con_is_floating` is true of the floating
-  container's child alone); here KWin's tiles can't hold a window outside them (reason (a)).
+  (`is_tiling_drop_target`), never onto a window inside a floating container. i3's check is meant
+  for tiling targets, but `con_is_floating` is true of a floating container's direct child alone,
+  so a window deeper in one passes, and whichever window comes first in i3's list of every
+  container wins: an accident of i3's code, not a rule, and following it would make a drop change
+  a window's kind. Not followed, as `behaviour.md` G8 doesn't follow an i3 result that comes from
+  its arithmetic; the row is item 73's.
 - **The centre of a drop** is `behaviour.md` G11's three bands (Tabbed, Stacked, Swap; reason
   (c), judged live), whatever is dragged. **Shift adds nothing there**: i3's swap modifier
   (`tiling_drag.c:341`, read at the press) would make the whole centre a swap, which the bottom
   band already is; the bands decide, for G11's reason (revisited: `LATER.md` item 80).
 - **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
-  Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79).
+  Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79). So
+  is **a move KWin starts itself**: Meta+drag without the helper (`behaviour.md` F9), or a client
+  asking to be moved by its own header bar (GTK, Electron), which floats a tiling window where
+  i3 ignores the request (`handlers.c:936`). Whether the helper can refuse the client's request
+  is `OPEN.md` item 78's to read; until then it is a difference.
 - **Where it can't match**, each a ≠ row with its reason: a press with nothing to do is
   swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
   would float the window); the drag distance is Plasma's setting, not i3's 15 px (G2); a
