@@ -54,14 +54,24 @@ For the beta, `make take-keys`'s printout at install is the one-time list of the
 the settings page's banner says when the plugins aren't loaded. Next: how i3
 tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
-**26. KWin's own tile tools act on kwin-i3's tiles** (i3 feature map, finding 9: R11, R12,
-R14; back in `OPEN.md` 2026-10-31: the beta runs stock installs, where both are a new user's first try). Meta+T's tile editor edits the tiles kwin-i3 owns (overwritten at the next pass);
-Shift+drag drops a window into one (two windows in a leaf); drag to a screen edge quick-tiles into
-KWin's other tree (kwin-i3 pulls it back, not "floats where dropped"). Meta+T is unbound on some
-desktops but KWin's default on a stock one. Inferred from code: next, a test-KWin check of each,
-then whether to block, follow or document them (and whether `make take-keys` should free Meta+T).
-The map's R12 says Shift is no modifier of kwin-i3's: untrue since 2026-10-26, Meta+Shift+drag
-floats a tiled window; the check includes whether KWin's Shift-drop still fires beside it.
+**79. The install and first run, re-evaluated** (2026-11-01; takes in item 26). The seam a new
+user meets first is murky in the foundation docs. `plan.md` reason (e) names the Plasma settings
+kwin-i3 is designed around in three places, but only the README's "For i3's feel" exists: the
+load notification never arrives (item 56) and the settings page shows none of them (`LATER.md`
+item 22). That list was built from i3's config, so Plasma features with no i3 counterpart were
+never candidates. Item 26's three, read in KWin 6.7.5's `window.cpp`: a drag to a screen edge
+(`ElectricBorderTiling`, `ElectricBorderMaximize`) already floats the window, KWin untiling it at
+the move's first step (`:1234`, `kwin.js` tileChanged), then quick-tiles it, not "pulled back" as
+`behaviour.md` V12 and the i3 feature map's R11 say; Shift at a move's release (no Plasma setting)
+drops a floating window into kwin-i3's tile under the pointer, two windows in one tile until some
+other pass; Meta+T ("Edit Tiles", KWin's default) edits kwin-i3's tiles. No foundation doc owns the
+install. Next, a session of its own: (1) a survey from Plasma's side: every stock Plasma 6.7/6.8
+setting, shortcut, edge and effect touching windows (`kwin.kcfg`, default shortcuts), each marked
+conflicting, standing in for an i3 directive, or harmless; (2) the install walked as a new user on
+stock CachyOS and PikaOS (`tools/box.sh`), step by step; (3) the foundation question: names only,
+or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs and why and sets
+it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
+run in `plan.md`, which the README and the settings page follow.
 
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
