@@ -300,6 +300,8 @@ set -g set-titles-string '#S: #T'
 
 then `tmux source-file` that file. `#S` is the session's name, `#T` the title the program in the
 pane sets. Most terminals take a title from the program inside them (Alacritty does by default).
+A tab holding a split lists its windows by app, as i3 does (`V[alacritty alacritty]`), so the
+session names show only on a tab holding one terminal.
 
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
 window on all desktops is i3's sticky floating: it floats and follows the workspace its output shows (`docs/behaviour.md` §3; the unbound action Sticky Toggle, as i3's `sticky toggle`); panels, the desktop,
