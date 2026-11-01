@@ -94,17 +94,6 @@ expectation being no change at all. A capture of it is kept:
 `~/.local/state/kwin-i3/captures/2026-11-01_135855.515` ("h and v shift"), read first with
 `tools/capture-read`. Then a verdict on the mapping as a whole.
 
-**77. A group shown inside a group loses one of the two bars** (seen live 2026-11-01). In
-`T[V[a b] T[c d e]]` with the inner group the shown tab, the space for both bars is kept (the
-windows start two bars down, as i3's `render_con_tabbed` with a bar for each group of more than
-one child, `render.c:473`), but only the inner bar is drawn: the outer one's place stays empty.
-`tellBars` (`src/kwin.js:1423`) keys a bar by the window its group shows, and the effect holds
-one bar per window (`plugin/hold.h:233`, `SetBar`), so the two groups sharing a shown window
-overwrite each other; the helper's press routing (`barGroups`) the same. A capture is kept:
-`~/.local/state/kwin-i3/captures/2026-11-01_155305.631` ("sub tabs"). Next: a bar keyed by its
-group (or several per window) in the script, the effect and the helper, then the unit tests and
-scenario 64.
-
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a

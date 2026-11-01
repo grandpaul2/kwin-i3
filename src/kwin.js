@@ -359,7 +359,7 @@ var KI3 = (function () {
     // tabs behind the shown one, and each shown tab with the windows it must be above.
     var barTiles = [], multiTiles = [], shownTabs = [], groupBars = [];
     var barsOf = {};        // workspace number -> its groups' bars as last placed ({ con, tile })
-    var barTold = {};       // window id -> the bar the effect was told to draw with it (SetBar)
+    var barTold = {};       // bar key (the window's id, "id#1" for its next) -> the bar the effect was told to draw with it (SetBar)
     var barGroups = {};     // the same ids -> the group the bar is of, for the helper's tab events
     var barsHelperTold = null;   // the helper's SetBars spec last sent (null: never)
     var tabDrag = null;     // { key, con } of a tab just clicked (a window or a container): a drag from that press takes it whole
@@ -1432,7 +1432,7 @@ var KI3 = (function () {
     }
     function tellBars() {
         if (!effectSeen) return;
-        var want = {}, helper = [];
+        var want = {}, helper = [], perWindow = {};
         barGroups = {};
         shownWorkspaces().forEach(function (v) {
             (barsOf[v.ws.num] || []).forEach(function (b) {
@@ -1446,10 +1446,16 @@ var KI3 = (function () {
                 if (!t || t.windows.indexOf(w) < 0) return;
                 var a = windowRect(t), r = windowRect(b.tile), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
-                barGroups[id(w)] = con;
-                helper.push([id(w), Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
+                // Groups nested in one another show the same window, each with its own bar (i3
+                // draws every tabbed container's decorations): the first by the window's id, the
+                // next "id#1", "id#2" (plugin/hold.h SetBar).
+                var key = id(w), n = perWindow[key] || 0;
+                perWindow[key] = n + 1;
+                if (n > 0) key += "#" + n;
+                barGroups[key] = con;
+                helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
                              con.layout === "stacked" ? 1 : 0, kids.length].join(" "));
-                want[id(w)] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
+                want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
                                con.layout === "stacked", kids.indexOf(shown), inside ? "focused" : "unfocused",
                                kids.map(barTitle).join("\u001f")];
             });
@@ -1501,7 +1507,7 @@ var KI3 = (function () {
                 to = focused === tab || !inside ? leaf : tab;
                 // A drag from this press drags the tab, not the window shown before it: a tab
                 // that is a container whole, as i3 drags the con whose decoration was pressed.
-                tabDrag = { key: f[1], con: tab };
+                tabDrag = { key: f[1].split("#")[0], con: tab };     // the window's id (State's)
             }
             if (!to) return;
             model.activate(to);
@@ -2139,8 +2145,9 @@ var KI3 = (function () {
     function focusedCon() {
         var w = workspace.activeWindow, f = model.focused;
         if (w && model.byWin[id(w)]) {
-            // A container chosen with focus parent stays focused while KWin's active window is in it.
-            for (var p = model.byWin[id(w)].parent; f && f.type === "con" && f.win === null && p; p = p.parent)
+            // A container chosen with focus parent stays focused while KWin's active window is in
+            // it, the workspace too (i3's focus parent reaches it, and a key then acts on it).
+            for (var p = model.byWin[id(w)].parent; f && (f.type === "ws" || (f.type === "con" && f.win === null)) && p; p = p.parent)
                 if (p === f) return f;
             model.focusWin(id(w));
             return model.byWin[id(w)];

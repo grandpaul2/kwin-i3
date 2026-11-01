@@ -619,8 +619,9 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
         // The drag is the shown window's until kwin-i3 has focused the tab: it reports the tab's
         // window in State() once it knows (the tab clicked is the one that ends up shown).
         Window *shown = nullptr;
+        const QString windowId = bar->key.section(QLatin1Char('#'), 0, 0);   // "id#N": a further bar of that window
         for (Window *w : workspace()->windows()) {
-            if (w->internalId().toString() == bar->key) {
+            if (w->internalId().toString() == windowId) {
                 shown = w;
             }
         }

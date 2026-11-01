@@ -322,10 +322,7 @@ void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
     m_rings.remove(w->internalId().toString());
-    if (m_bars.count(w->internalId().toString())) {
-        effects->makeOpenGLContextCurrent();
-        m_bars.erase(w->internalId().toString());
-    }
+    eraseBars(w->internalId().toString());
     m_indicatorShown.remove(w->internalId().toString());
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
@@ -710,7 +707,7 @@ bool Hold::isActive() const
     for (EffectWindow *w : windows) {
         // A group's bar too: in the titlebars and bare looks no window has a ring, and the
         // effect sat out of the paint chain, so no bar was drawn.
-        if ((ringed(w) || m_bars.count(w->internalId().toString())) && shown(w)) {
+        if ((ringed(w) || hasBar(w)) && shown(w)) {
             return true;
         }
     }
@@ -745,7 +742,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
 {
     // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
     // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
-    if (m_held.contains(w) || m_hidden.contains(w) || ringed(w) || m_bars.count(w->internalId().toString())) {
+    if (m_held.contains(w) || m_hidden.contains(w) || ringed(w) || hasBar(w)) {
         data.setTransformed();
     }
     effects->prePaintWindow(view, w, data);
@@ -768,8 +765,8 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
     if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
-    if (!m_hidden.contains(w) && !w->isDeleted() && m_bars.count(w->internalId().toString())) {
-        paintBar(renderTarget, viewport, w, deviceRegion, data);
+    if (!m_hidden.contains(w) && !w->isDeleted() && hasBar(w)) {
+        paintBars(renderTarget, viewport, w, deviceRegion, data);
     }
     if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
         paintBanner(renderTarget, viewport, w, data);
@@ -937,9 +934,9 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
         m_barsHeld << BarCall{id, dx, dy, width, height, stacked, active, cls, titles};
         return;
     }
-    EffectWindow *w = windowById(id);
+    EffectWindow *w = windowById(barWindow(id));
     if (w) {
-        repaintBar(w);                       // where it was
+        repaintBar(w, id);                   // where it was
     }
     if (titles.isEmpty() || height <= 0 || width <= 0) {
         if (m_bars.count(id)) {
@@ -961,7 +958,7 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     bar.cls = cls == QLatin1String("focused") ? 0 : 1;
     bar.titles = titles.split(QChar(0x1f));
     bar.width = -1;                          // drawn again at the next paint, where GL is current
-    repaintBar(w);
+    repaintBar(w, id);
 }
 
 void Hold::SetMemo(const QString &desktop, const QString &json)
@@ -977,8 +974,8 @@ void Hold::ClearBars()
 {
     m_barsHeld.clear();
     for (auto &[id, bar] : m_bars) {
-        if (EffectWindow *w = windowById(id)) {
-            repaintBar(w);
+        if (EffectWindow *w = windowById(barWindow(id))) {
+            repaintBar(w, id);
         }
     }
     effects->makeOpenGLContextCurrent();
@@ -990,9 +987,33 @@ RectF Hold::barRect(const TabBar &bar, const RectF &frame) const
     return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.w, bar.height);
 }
 
-void Hold::repaintBar(EffectWindow *w)
+QString Hold::barWindow(const QString &key)
 {
-    auto it = m_bars.find(w->internalId().toString());
+    return key.section(QLatin1Char('#'), 0, 0);
+}
+
+bool Hold::hasBar(EffectWindow *w) const
+{
+    const QString id = w->internalId().toString();
+    const auto it = m_bars.lower_bound(id);
+    return it != m_bars.end() && barWindow(it->first) == id;
+}
+
+void Hold::eraseBars(const QString &windowId)
+{
+    auto it = m_bars.lower_bound(windowId);
+    if (it == m_bars.end() || barWindow(it->first) != windowId) {
+        return;
+    }
+    effects->makeOpenGLContextCurrent();         // the textures go with them
+    while (it != m_bars.end() && barWindow(it->first) == windowId) {
+        it = m_bars.erase(it);
+    }
+}
+
+void Hold::repaintBar(EffectWindow *w, const QString &key)
+{
+    auto it = m_bars.find(key);
     if (it == m_bars.end()) {
         return;
     }
@@ -1006,11 +1027,18 @@ void Hold::repaintBar(EffectWindow *w)
 // `focused`, the others in `focused_inactive` or `unfocused`); here the shown tab takes the ring's
 // colour of its class and the others Plasma's window colours, so the bar sits in a Plasma desktop
 // (docs/plan.md reason (b)). Drawn once as an image per width and scale.
-void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
+void Hold::paintBars(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
 {
-    TabBar &bar = m_bars[w->internalId().toString()];
+    const QString id = w->internalId().toString();
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
+    for (auto it = m_bars.lower_bound(id); it != m_bars.end() && barWindow(it->first) == id; ++it) {
+        paintBar(renderTarget, viewport, it->second, drawn, deviceRegion, data);
+    }
+}
+
+void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &viewport, TabBar &bar, const RectF &drawn, const Region &deviceRegion, const WindowPaintData &data)
+{
     const RectF rect = barRect(bar, drawn);
     const double scale = viewport.scale();
     const int width = std::lround(rect.width());
@@ -1321,7 +1349,8 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
     if (!w || frame.isEmpty()) {
         return;
     }
-    if (auto it = m_bars.find(w->internalId().toString()); it != m_bars.end()) {
+    const QString id = w->internalId().toString();
+    for (auto it = m_bars.lower_bound(id); it != m_bars.end() && barWindow(it->first) == id; ++it) {
         const RectF b = barRect(it->second, frame);
         effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height()) + 1));
     }

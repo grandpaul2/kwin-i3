@@ -445,7 +445,9 @@ can hold:
   `normal` border). After a border drag, a group's share is read from its shown child's tiles
   and its bar; the children behind keep theirs.
 - **The bar** is drawn by kwini3hold (with the plugins; without them the bar's place stays
-  empty), with the group's shown window, so a window above covers it: one row of equal tabs, or
+  empty), with the group's shown window, so a window above covers it; groups nested in one
+  another show the same window and each draws its own bar, as i3 draws every tabbed or stacked
+  container's decorations: one row of equal tabs, or
   one row per child, each the child's window title, a container's i3's tree representation
   (`H[alacritty firefox]`, each window by its class instance, `con.c`'s
   `con_get_tree_representation`; a Wayland window with no instance by its class). Without i3's

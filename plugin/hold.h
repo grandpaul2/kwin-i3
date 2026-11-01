@@ -129,7 +129,9 @@ public Q_SLOTS:
     // it is painted with: a shown child that is a split); one row of equal tabs, or
     // (`stacked`) one row per title; `active` the shown one's index, drawn in the class's colour,
     // `cls` "focused" or "unfocused"; the titles joined by U+001F. Empty titles: no bar. Drawn
-    // with the window, so whatever is above the window covers its bar too.
+    // with the window, so whatever is above the window covers its bar too. `id` is the bar's
+    // key: the window's id, or "id#N" for a further bar drawn with the same window (groups
+    // nested in one another show the same window, each with its own bar).
     void SetBar(const QString &id, int dx, int dy, int width, int height, bool stacked, int active, const QString &cls, const QString &titles);
     // Forget every bar (kwin-i3 loaded: it tells the ones it has).
     void ClearBars();
@@ -199,8 +201,9 @@ private:
     void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     struct TabBar;
     KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const;   // logical, above `frame`
-    void repaintBar(KWin::EffectWindow *w);
-    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void repaintBar(KWin::EffectWindow *w, const QString &key);  // that one bar, where it is now
+    void paintBars(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, TabBar &bar, const KWin::RectF &drawn, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -230,8 +233,10 @@ private:
     // every paint); cleared when the settings change (its colour).
     std::map<double, Banner> m_banners;
     bool m_bannersStale = false;    // set by loadConfig; cleared in the paint, where GL is current
-    // SetBar, by the shown window's internal id. The image is drawn at the paint, where GL is
-    // current, for the width and scale it is painted at, and again when either changes.
+    // SetBar, by the bar's key (the shown window's internal id, "#N" after it for a further bar:
+    // sorted, a window's bars are next to each other, from lower_bound of its id). The image is
+    // drawn at the paint, where GL is current, for the width and scale it is painted at, and
+    // again when either changes.
     struct TabBar {
         int dx = 0;
         int dy = 0;
@@ -247,6 +252,9 @@ private:
         int width = 0;                                      // logical, drawn for
     };
     std::map<QString, TabBar> m_bars;
+    static QString barWindow(const QString &key);                // the window's id in a bar key
+    bool hasBar(KWin::EffectWindow *w) const;
+    void eraseBars(const QString &windowId);                     // all of a window's; makes GL current
     // SetBar calls that came while a hold was open, applied in order at its release: a held
     // snapshot is drawn at its old place, where only the old bar matches (a new bar's offset on an
     // old place drew it beside the group for the hold's 25 ms).

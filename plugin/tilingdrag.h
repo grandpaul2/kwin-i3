@@ -53,7 +53,8 @@ public Q_SLOTS:
     // (§9 G13). Told again after every SetOn(true).
     void SetFloating(const QString &id, bool on);
     // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
-    // window the bar is drawn with, the rect logical and global, n tabs or rows of equal size).
+    // window the bar is drawn with, "#N" after it for that window's further bar, the rect logical
+    // and global, n tabs or rows of equal size).
     // A plain left press on a bar, or a scroll over it, over nothing else (the desktop, a gap
     // strip), is the bar's: kwin-i3 is told by its hidden "Tab Click" action and asks TabEvent.
     void SetBars(const QString &spec);
