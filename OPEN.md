@@ -68,8 +68,11 @@ floats a tiled window; the check includes whether KWin's Shift-drop still fires 
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
 one window (`src/tree.js` header), where i3 wraps the container in a floating one, its splits
 and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree done with tabbed and
-stacked layouts; the one core difference left from it. Next: the model's floating node holding a subtree, and the adapter
-placing its windows by their shares inside the floating rect (no KWin tiles there).
+stacked layouts; the one core difference left from it. i3 wraps every floating thing in a `CT_FLOATING_CON`
+whose child is laid out as a tiled tree inside its rect, moved and resized as one. Next, a
+test-KWin probe of the hard part: several floating windows kept moving and sizing as one when
+the user drags one with KWin's own move (follow it, or take the drag as the tiling drag does);
+then the model's wrapper node, ported from `floating_enable` / `floating_disable`.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
