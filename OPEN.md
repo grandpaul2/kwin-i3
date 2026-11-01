@@ -73,36 +73,45 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
-With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
-one window (`src/tree.js` header), where i3 wraps the container in a floating one, its splits
-and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree done with tabbed and
-stacked layouts; the one core difference left from it. i3 wraps every floating thing in a `CT_FLOATING_CON`
-whose child is laid out as a tiled tree inside its rect, moved and resized as one. Here: the
-model's wrapper node ported from `floating_enable` / `floating_disable`; its windows KWin
-floating windows whose frames kwin-i3 lays out; the hard parts a move (on Wayland compositor-only,
-so the others may follow each step, or the helper takes the drag) and a resize of the outer edge
-(each client answers at its own pace: likely the helper's), raising them together, and a group's
-bar with no bar tile to draw over. Next: planned in item 78's session.
+**78. The Meta+Shift drags back to i3's** (the first of three builds from `docs/plan.md` "The
+mouse", in order 78, 74, 73). G5 (Meta+Shift+drag floats a tiling window where dropped), G13 (on
+a floating window, tiles it) and X5 come out: in i3 the mouse never changes a window's kind.
+After: Meta+Shift+left on a tiling window is the tiling drag Meta+left is, the centre's bands
+deciding (Shift adds nothing, `LATER.md` item 80); on a floating window, KWin's move, as i3's
+floating modifier ignores Shift on the left button (`click.c:284`). Whether KWin's window action
+fires with Shift held is to be read in KWin 6.7.5's source; if not, the helper passes the press on
+without Shift, as `TilingDragFloat` does now. Touches: the helper's Meta+Shift paths
+(`plugin/tilingdrag.cpp`), the script's `startDrag`/`drop` float-to-tile branch, the settings
+page's `tilingDrag` help ("Meta+Shift+drag floats it instead", `kcm/ui/main.qml:375`),
+`behaviour.md` G5, G11 ("Shift or not"), G13, X5, the i3 feature map's A61, and the scenarios
+that drive Meta+Shift (grep `tests/live`). Next: build it.
 
 **74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
 `click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
 `:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press
 with no modifier (`plugin/tilingdrag.cpp:607-609`), so a Meta press on a group's bar falls to the
 general drag, which finds no window there (§9 G8's gap rule: likely the group's shown window, not
-the tab pressed). The i3 port: Meta+left on a tab drags that tab whole at once (G1's no-focus
-rule, G14's tab con); it doesn't wait on item 73, except Meta+Shift+left (G5) on a split tab.
-Next: planned in item 78's session.
+the tab pressed). The port: Meta+left (and Meta+Shift+left, item 78) on a tab drags that tab's
+container at once, a split tab whole (G1's no-focus rule, G14's tab con); dropped as any drag
+(G9-G11); a split tab onto one of its own windows does nothing (i3's guards, `con_swap`
+`con.c:2607`, `con_move_to_target`). With it, i3's right press on a tab: a resize against the
+neighbour above (step 10, `BORDER_TOP`; `plan.md` "The mouse": the bar is kwin-i3's, so Z4's
+window menu isn't). Next: after item 78, the helper's `pressBar` with the modifier and §9's rows.
 
-**78. The line between Plasma and kwin-i3 for the mouse and floating** (raised 2026-11-01, while
-planning items 73 and 74). Tabbed and stacked groups came after the mouse's float rules (G5's
-Meta+Shift float where dropped, G13's float to tile, X5), which were judged for single windows;
-a tab, a split tab and a floating container (item 73) each ask again what Plasma owns (KWin's
-move and resize, its title bars) and what kwin-i3 owns, and some click-to-float behaviour may
-change. Next: a planning session of its own: for each mouse action on a window, a tab and a
-container, i3's behaviour (`click.c`, `tiling_drag.c`, `floating.c`), what Plasma does there, and
-the line drawn explicitly, as a foundation change to `docs/plan.md` and `behaviour.md` §9; then
-items 73 and 74 from it.
+**73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
+With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
+one window (`src/tree.js` header), where i3 wraps the container in a floating container
+(`docs/definitions.md`), its splits and tabs laid out inside its rect, moved and sized as one.
+The one core difference left from the i3 parity audit of the tree done with tabbed and stacked
+layouts. The line is drawn (`plan.md` "The mouse"): a floating container is kwin-i3's, the helper
+moving it (Meta+left anywhere in it, a left drag on its bar) and resizing it (Meta+right, its
+outer edge) whole, a border between its windows a tiling resize inside it; one floating window
+stays KWin's; never a tiling drag's drop target; Floating Toggle on a window inside it floats that
+window alone. The model's node ported from `floating_enable` / `floating_disable` (the size from
+its children, `:331-342`). The hard parts: moving several KWin windows as one per motion step,
+a resize answered by each client at its own pace (the hold's kind of wait), raising them
+together, a group's bar with no bar tile to draw over. Next: after item 74, a test-KWin spike of
+the helper moving and resizing two floating windows as one.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same

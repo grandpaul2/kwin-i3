@@ -40,8 +40,9 @@ cited was).
 **In:** i3's tree, with its focus (`focus parent` and `focus child` too), move, split, tabbed and stacked layouts
 with their bar, layout toggle and resize (by key, its resize mode,
 and by mouse); workspaces that live on an output, with i3's workspace output and `assign`;
-floating, sticky floating and the focus mode toggle; i3's keys (`docs/behaviour.md` §8); the
-frame, gaps and the split indicator; i3's tiling drag; i3's window kinds and its `for_window`
+floating (a window, or a container floated whole), sticky floating and the focus mode toggle;
+i3's keys (`docs/behaviour.md` §8); the frame, gaps and the split indicator; i3's mouse ("The
+mouse", below: the tiling drag, the resize, the floating move); i3's window kinds and its `for_window`
 floating rules (`docs/definitions.md`); i3's settings for all of these (below). Around them,
 kwin-i3's own: the settings page, the workspace widget, the load notification, the capture key
 and the release key. What each does, exactly: `docs/behaviour.md`.
@@ -59,7 +60,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 | fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only |
 | the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace focused when it appears; for programs a launcher, Steam or a game client starts, i3 did the same, and that is useful. A maybe for the release: `LATER.md`, item 28 |
-| mouse chords beyond i3's | one chord was ever used (2026-10-22 to 10-24); i3's own tiling drag and Meta+right-drag resize are in instead |
+| mouse chords beyond i3's, and any mouse way to change a window's kind | i3's own mouse is in instead ("The mouse", below); one chord was ever used (2026-10-22 to 10-24), and the Meta+Shift drags that floated and tiled a window took i3's swap modifier and left a floating container no meaning |
 
 **The reasons a difference from i3 may have** (each ≠ row in `docs/behaviour.md` names one):
 - **(a) KWin or Wayland can't do i3's**: KWin tells a script no activation's source, a Wayland
@@ -102,6 +103,52 @@ up and puts the user's value back; it changes no saved setting (reason (e); `beh
 
 **Plasma's own tiling** (quick tile, the tile editor) on a kwin-i3 workspace is the user untiling
 the window: it floats (decision 7).
+
+## The mouse
+
+i3 4.24's `route_click` (`click.c:169-362`) is the model, step by step; `docs/behaviour.md` §9
+has a row for each case. Where the line runs between kwin-i3 and Plasma:
+
+- **The mouse never changes a window's kind.** In i3 only a command or a rule floats or tiles a
+  window (`floating toggle`, `for_window`): a tiling drag never starts from anything floating
+  (`click.c:251`, `!floatingcon`) and a drop never floats. Meta+Shift+Space is the way between
+  them. Meta+Shift+left is i3's too: on a tiling window a tiling drag (i3's swap modifier, below),
+  on a floating one a move, i3's floating modifier ignoring Shift on the left button
+  (`click.c:284`).
+- **kwin-i3 takes every press on the tree**: tiling windows, a group's bar and its tabs, and
+  floating containers, each as i3 routes it. Meta+left is a tiling drag of the pressed container
+  at once, without focusing it (step 2): on a tab, that tab's container, a split tab whole
+  (`click.c:432-437`). A left press on a title bar or a tab focuses (step 3, the tab rules), then
+  drags past the drag distance (step 8). Meta+right and a press on a border resize against the
+  neighbour (steps 9, 10); on a group's bar, a right press resizes against the neighbour above, the
+  bar being kwin-i3's, not KWin's title bar.
+- **One floating window is KWin's**: KWin's window actions move and resize it (Meta+left,
+  Meta+right, the title bar, the edges), which is i3's floating modifier for one window, with
+  Plasma's title bar, window menu and screen-edge snapping (reason (e): the window actions are
+  Plasma's settings). The differences are `behaviour.md` F1's.
+- **A floating container is kwin-i3's**: a split or a group floated whole (i3's
+  `CT_FLOATING_CON`, `floating.c:233`), its windows KWin floating windows whose frames kwin-i3
+  lays out as a tiled tree inside its rect. A press anywhere in it focuses and raises (step 3);
+  Meta+left, or a left drag on its bar, moves it whole (steps 5, 7); Meta+right, or its outer
+  edge, resizes it whole (step 6); a border between two of its windows is a tiling resize inside
+  it. The helper does these, as KWin moves and resizes one window, never several as one (reason
+  (a)). Floating toggle on a window inside it floats that window alone (`floating_enable`: only
+  the container's child carries the floating flag).
+- **A tiling drag drops onto tiling windows and empty visible workspaces only**
+  (`is_tiling_drop_target`), never onto a window inside a floating container. i3's check lets
+  such a window through only by the order of its list (`con_is_floating` is true of the floating
+  container's child alone); here KWin's tiles can't hold a window outside them (reason (a)).
+- **The centre of a drop** is `behaviour.md` G11's three bands (Tabbed, Stacked, Swap; reason
+  (c), judged live), whatever is dragged. **Shift adds nothing there**: i3's swap modifier
+  (`tiling_drag.c:341`, read at the press) would make the whole centre a swap, which the bottom
+  band already is; the bands decide, for G11's reason (revisited: `LATER.md` item 80).
+- **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
+  Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79).
+- **Where it can't match**, each a ≠ row with its reason: a press with nothing to do is
+  swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
+  would float the window); the drag distance is Plasma's setting, not i3's 15 px (G2); a
+  floating container's resize waits on each app, as the hold does; no mouse bindings (F7, reason
+  (d)).
 
 **The product is the script and its two plugins** (the plugins lock
 in i3's feel completely, but it works fine without them). The script

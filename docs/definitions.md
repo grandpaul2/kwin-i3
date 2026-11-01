@@ -68,6 +68,7 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 | **focus stack** | each container's children, most recently focused first | `focus_head` |
 | **the focus** | the one container the tree has focused: a window, a container (after focus parent), or an empty workspace | `focused` |
 | **group** | a tabbed or stacked container: its children share its place, one shown, under its **bar** (one row of tabs, or one row per child) | a tabbed or stacked con |
+| **floating container** | a container on its workspace's floating list: one floating window, or a split or a group floated whole, its windows laid out inside its rect as a tiled tree and moved and resized as one (`docs/plan.md`, "The mouse"; a split or group floated whole is `OPEN.md` item 73, the code holding one window today) | `CT_FLOATING_CON` (`floating_enable`, `floating.c:233`) |
 | **flatten** | i3's removal of a redundant split: a one-child split whose child is a split of the other orientation, where the child's orientation matches the grandparent's (`tree.c:657-690`) | `tree_flatten` |
 
 ## Workspaces and outputs
