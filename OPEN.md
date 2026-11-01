@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-01** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main's script and plugins as loaded at f555ab3.
+main's script as loaded at b9ec21f, its plugins at f555ab3.
 
 ## Stage
 
@@ -81,18 +81,6 @@ general drag, which finds no window there (§9 G8's gap rule: likely the group's
 the tab pressed). Next: a test-KWin probe of what it does now; then Meta+left on a tab drags that
 tab whole at once (G1's no-focus rule, G14's tab con), and Meta+Shift+left floats it where dropped
 (G5) for a one-window tab, nothing for a split tab until item 73.
-
-**75. A split resizes windows it shouldn't** (seen live 2026-11-01). Meta+V in one terminal, then
-Meta+H in another: the terminals' text shifts, so their size changed. In i3 a split moves nothing:
-`tree_split` (`tree.c:330`) gives the new container the window's `percent`, so every rect stays
-the same, and a one-child parent only changes direction. The same family as the recent fixes
-(10406bb: a tab switch resized the windows 2 px and back; 6217b1b), each found one case at a time.
-Next: a deep dive, not one more case. Map how a tree change reaches KWin's tiles (which changes
-rebuild a workspace's tiles and which adjust them, and what each does to a window's geometry),
-then trace every window's geometry through Split V then Split H in a test KWin, i3's
-expectation being no change at all. A capture of it is kept:
-`~/.local/state/kwin-i3/captures/2026-11-01_135855.515` ("h and v shift"), read first with
-`tools/capture-read`. Then a verdict on the mapping as a whole.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
