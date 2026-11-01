@@ -994,23 +994,29 @@ var Tree = (function () {
         var dmin = Math.min(dl, dr, dt, db);
         var dir = dl === dmin ? LEFT : dt === dmin ? UP : dr === dmin ? RIGHT : DOWN;
         var type = dmin < parentSize && onSideOfParent(target, dir) ? PARENT : dmin < siblingSize ? SIBLING : CENTER;
-        // Not i3: the centre is at most 1.25 times as tall as it is wide, in the middle of the
-        // window, so on a tall narrow one it isn't a column; what it gives up above and below is
-        // the beside drop up or down, its indicator reaching the centre (§9 G9).
-        var cw = rect.width - 2 * siblingSize, chFull = rect.height - 2 * siblingSize;
-        var ch = Math.min(chFull, cw * 1.25), cy = rect.y + (rect.height - ch) / 2;
+        // Not i3: the centre is at most 1.25 times as tall as it is wide and as wide as it is
+        // tall, in the middle of the window, so on a narrow or a flat window it isn't a column or
+        // a strip; what it gives up on either side is the beside drop that way, its indicator
+        // reaching the centre (§9 G9).
+        var cwFull = rect.width - 2 * siblingSize, chFull = rect.height - 2 * siblingSize;
+        var ch = Math.min(chFull, cwFull * 1.25), cy = rect.y + (rect.height - ch) / 2;
+        var cw = Math.min(cwFull, chFull * 1.25), cx = rect.x + (rect.width - cw) / 2;
         var overflow = 0;
         if (type === CENTER && (y < cy || y >= cy + ch)) {
             type = SIBLING;
             dir = y < cy ? UP : DOWN;
             overflow = cy - rect.y;
+        } else if (type === CENTER && (x < cx || x >= cx + cw)) {
+            type = SIBLING;
+            dir = x < cx ? LEFT : RIGHT;
+            overflow = cx - rect.x;
         }
         if (type !== PARENT && target === con) return null;
         if (type === PARENT) {
             while (target.parent.type !== "ws" && onSideOfParent(target.parent, dir)) target = target.parent;
             rect = adjustRect(rectOf(target.parent), dir, parentSize);
         } else if (type === CENTER) {
-            rect = { x: rect.x + siblingSize, y: cy, width: cw, height: ch };
+            rect = { x: cx, y: cy, width: cw, height: ch };
             // Not i3: onto a window outside a tab group, the centre is three bands: the top makes
             // the two a tabbed group, the middle a stacked one, the bottom swaps them (G11). Onto
             // a window in a group, the centre joins it, as i3's con_move_to_target.

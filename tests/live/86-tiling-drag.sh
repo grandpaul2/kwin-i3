@@ -71,17 +71,17 @@ echo "    $(dropped $m)"
 poll eval '[[ "$(fc a)" == "0,0 640x360" && "$(fc c)" == "0,360 1280x360" ]]'
 
 # Mid-drag: the window stays put and the indicator shows the band of c's centre under the pointer
-# (the centre inset by 30 % of its smaller side, 108 px, then cut in three: the middle one,
-# stacked): then Escape, and nothing changes.
+# (the centre inset by 30 % of its smaller side, 108 px, at most 1.25 times as wide as tall, so
+# 180 px in the middle, then cut in three: the middle one, stacked): then Escape, nothing changes.
 m=$(mark)
 "$INJECT" "abs 200 14" "wait 30" "btn left down" "abs 300 200" "wait 40" "abs 640 540" "wait 1200" \
     "key 1 down" "key 1 up" "wait 40" "abs 1000 300" "wait 40" "btn left up" &
 held=$!
-check "mid-drag: the indicator on c's centre, middle band" poll eval '[[ "$(indicator)" == "108,516 1064x48" ]]' || echo "    indicator: $(indicator)"
+check "mid-drag: the indicator on c's centre, middle band" poll eval '[[ "$(indicator)" == "550,516 180x48" ]]' || echo "    indicator: $(indicator)"
 check "  a still in its place"              eval '[[ "$(fc a)" == "0,0 640x360" ]]'
 "$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
-# Beside the band's card (its icon and name sit at the band's centre): the indicator itself.
-check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 200 540 38,60,204 10'
+# Inside the third, left of its icon and name (which sit at its centre): the highlight itself.
+check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 565 540 38,60,204 10'
 wait $held
 check "Escape: cancelled, the indicator gone" eval '[[ "$(dropped $m)" == "DRAG cancelled" && -z "$(indicator)" ]]'
 check "  the tree as it was"                eval '[[ "$(tree 1)" == "V[H[a b] c*]" ]]'
