@@ -447,7 +447,10 @@ can hold:
 - **The bar** is drawn by kwini3hold (with the plugins; without them the bar's place stays
   empty), with the group's shown window, so a window above covers it: one row of equal tabs, or
   one row per child, each the child's window title, a container's i3's tree representation
-  (`H[a b]`). The shown child takes the frame's colour of its class (focused when the focus is in
+  (`H[alacritty firefox]`, each window by its class instance, `con.c`'s
+  `con_get_tree_representation`; a Wayland window with no instance by its class). Without i3's
+  `i3: ` prefix (`x.c`): the brackets already say it is a container, and the look follows
+  Plasma's (reason (b)). The shown child takes the frame's colour of its class (focused when the focus is in
   the group, as i3's `focused` against `focused_inactive`) with white text; the others Plasma's
   window colours. Reason (b): i3 draws its own colours and font, here Plasma's. While the hold
   shows the old layout, each bar stays as it was and the new ones show with the new layout.

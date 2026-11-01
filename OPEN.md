@@ -94,15 +94,6 @@ expectation being no change at all. A capture of it is kept:
 `~/.local/state/kwin-i3/captures/2026-11-01_135855.515` ("h and v shift"), read first with
 `tools/capture-read`. Then a verdict on the mapping as a whole.
 
-**76. A container's tab title is not i3's** (found 2026-11-01). A tab holding a container (a
-split inside a tabbed or stacked group) is titled with the container's tree. i3 writes it
-`i3: H[alacritty firefox]`: the prefix, and each window's class instance
-(`con_get_tree_representation`, `con.c:2473`; `x.c:690`). kwin-i3's `barTitle`
-(`src/kwin.js:1415`) has no prefix and uses each window's caption, so two terminals make a long
-tab; `behaviour.md` (the bar) calls it i3's. A tab holding one window, its caption, is as i3.
-Seen live 2026-11-01. Next: i3's form (KWin's `resourceName` is the class instance), or a
-written reason to differ.
-
 **77. A group shown inside a group loses one of the two bars** (seen live 2026-11-01). In
 `T[V[a b] T[c d e]]` with the inner group the shown tab, the space for both bars is kept (the
 windows start two bars down, as i3's `render_con_tabbed` with a bar for each group of more than

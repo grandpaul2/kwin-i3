@@ -3527,12 +3527,22 @@ var KI3 = (function () {
     // The bars of the shown workspaces' groups, for the effect to draw (SetBar): painted with the
     // window the group shows (its focused one), at the bar tile's place. A tab's title is its
     // window's caption; a container's, i3's tree representation (con_get_tree_representation:
-    // "H[a b]"). The group's shown tab in the focused colour when the focus is in the group,
-    // as i3's `focused` against `focused_inactive`. Told only when something changed.
+    // "H[alacritty firefox]", each window by its class instance), without i3's "i3: " prefix,
+    // the bracket being mark enough. A Wayland window may have no instance: its class then,
+    // where i3 writes "noinstance". The group's shown tab in the focused colour when the focus
+    // is in the group, as i3's `focused` against `focused_inactive`. Told only when something
+    // changed.
     var LETTERS = { h: "H", v: "V", tabbed: "T", stacked: "S" };
     function barTitle(c) {
         if (c.win !== null) return wins[c.win] ? String(wins[c.win].caption) : "";
-        return LETTERS[c.layout] + "[" + c.nodes.map(barTitle).join(" ") + "]";
+        return treeTitle(c);
+    }
+    function treeTitle(c) {
+        if (c.win !== null) {
+            var w = wins[c.win];
+            return w ? String(w.resourceName || w.resourceClass || "noinstance") : "nowin";
+        }
+        return LETTERS[c.layout] + "[" + c.nodes.map(treeTitle).join(" ") + "]";
     }
     function tellBars() {
         if (!effectSeen) return;
