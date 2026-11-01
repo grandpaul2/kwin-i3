@@ -57,7 +57,7 @@ echo "    $(dropped $m)"
 check "a to c's right side: sibling"        wait_tree 1 "H[b c a*]" "$m"
 
 m=$(mark)
-drag Meta left 1100 400 213 520
+drag Meta left 1100 400 213 440
 echo "    $(dropped $m)"
 check "Meta+drag a onto b's centre, bottom band: swapped" wait_tree 1 "H[a* c b]" "$m"
 
@@ -233,7 +233,8 @@ kclose d
 poll eval '[[ "$(tree 1)" != *d* ]]'
 read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
 g=$(fc b); bh=${g##*x}; bw=${g#* }; bw=${bw%x*}; bs=$(( (bw < bh ? bw : bh) * 3 / 10 ))
-r=${g#*,}; by=$(( ${r%% *} + bs + (bh - 2 * bs) * 5 / 6 ))   # the bottom band's middle
+ch=$(( bh - 2 * bs )); cap=$(( (bw - 2 * bs) * 5 / 4 )); (( ch > cap )) && ch=$cap   # the centre, capped (§9 G9)
+r=${g#*,}; by=$(( ${r%% *} + (bh - ch) / 2 + ch * 5 / 6 ))   # the bottom band's middle
 m=$(mark)
 drag Meta+Shift left "$cx" "$cy" "$bx" "$by"
 check "G13: onto b's centre, bottom band: after b, no swap" wait_log '^.{9}DRAG dropped center' "$m"
