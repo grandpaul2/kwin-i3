@@ -486,6 +486,8 @@ var Tree = (function () {
     M.focusParent = function () {
         var f = this.focused;
         if (!f || f.type === "ws" || !f.parent) return null;
+        // cmd_focus_level: not out of a fullscreen container (con_fullscreen_permits_focusing).
+        if (!focusPermits(this, f.parent)) return null;
         this.activate(f.parent);
         return f.parent;
     };
@@ -1091,14 +1093,14 @@ var Tree = (function () {
 
     // resize_neighboring_cons(first, second, px, 0): px of the parent's `size` (con_rect_size_in_
     // orientation) go from second to first (negative: the other way). False, and nothing changed,
-    // if either would drop below the floor (i3: 1 px; the model has no pixels, so MIN_SHARE as
-    // M.resize). Shares not yet set get the average first, as M.resize does.
+    // if either would drop below i3's floor of one pixel of the parent (percent_for_1px).
+    // Shares not yet set get the average first, as M.resize does.
     M.resizeNeighbouring = function (first, second, px, size) {
         var parent = first.parent;
         if (!(size > 0) || !parent || second.parent !== parent) return false;
         parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / parent.nodes.length; });
-        var pct = px / size, a = first.percent + pct, b = second.percent - pct;
-        if (a < MIN_SHARE || b < MIN_SHARE) return false;
+        var pct = px / size, a = first.percent + pct, b = second.percent - pct, floor = 1 / size;
+        if (a < floor || b < floor) return false;
         first.percent = a;
         second.percent = b;
         fixPercent(parent);

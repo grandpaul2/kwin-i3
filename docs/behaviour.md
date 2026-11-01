@@ -133,7 +133,7 @@ ports: the i3 function is named, and the code follows it, edge cases included.
 | T13 | Resize by key on a floating window | by `floatingStep` px, if KWin lets it resize, kept within `floatingMinimumSize` and `floatingMaximumSize` (§11 N15) | = | `cmd_resize_floating`, 10 px (§8), `floating_check_size` |
 | T14 | Move by key on a floating window | by `floatingStep` px; refused only if no part would be on an output; landing on another output (the one holding its centre, else the one it overlaps most) joins the workspace visible there, keeping focus | = | `cmd_move_direction`, `floating_reposition`, `floating_maybe_reassign_ws`, `get_output_from_rect` |
 | T15 | **Swap** (`swap`) | two tiling windows exchange places, shares and fullscreen flags; the tiling drag's centre drop uses it (§9) | = | `con_swap` |
-| T16 | **Float** (`floatingEnable`; Meta+Shift+Space) | the leaf becomes a floating node at the top of the workspace's floating list, taking its branch's place in the focus stack; a fullscreen window stays fullscreen | = | `floating_enable` |
+| T16 | **Float** (`floatingEnable`; Meta+Shift+Space) | the leaf becomes a floating node at the top of the workspace's floating list, taking its branch's place in the focus stack; a fullscreen window stays fullscreen. With a container focused (focus parent): nothing | ≠ | `floating_enable`. i3 floats a container whole, its splits inside; here a floating node is one window. Not built yet (`OPEN.md` item 73) |
 | T17 | **Tile** (`floatingDisable`) | after the workspace's focused tiling container, or at the top level of an empty workspace; a fullscreen window stays fullscreen | = | `floating_disable` |
 | T18 | **Focus a direction** (`focusDir`; Meta+arrows, J K L ;) from a tiling window | the sibling that way in the nearest split of that direction; at the workspace's edge, the workspace visible on the neighbouring output, at its **tiling** focus (its fullscreen window if it has one); else wrapping by `focusWrapping` | = | `tree_next`, `get_tree_next` |
 | T19 | `focusWrapping` | `yes` (default): the next output first, else wrap inside the **innermost** container of that direction; `no`: the next output, never wrap; `force`: wrap inside the container, never leave it; `workspace`: wrap, never leave the workspace | = | `focus_wrapping` |
@@ -144,7 +144,7 @@ ports: the i3 function is named, and the code follows it, edge cases included.
 | T24 | **Move to a workspace** (`moveToWorkspace`) | after the target's focused container; focus stays on the source, on i3's next focus there. A fullscreen window arriving where another is fullscreen clears the other's flag; a window arriving under a fullscreen window doesn't take that workspace's focus | = | `con_move_to_workspace` |
 | T25 | **Layout tabbed / stacked** (`setLayout`; Meta+W, Meta+S) | the focused window's container takes the layout; at the workspace's top level, the workspace's children are wrapped in a new container of that layout; on an empty workspace, the workspace takes it as its layout and its `workspace_layout`, so the windows that open there go into a new container of that layout | = | `con_set_layout`, `workspace_attach_to`. With a container focused (T27), that container's parent |
 | T26 | Focus and move inside a tabbed or stacked container | tabbed: left and right step through the tabs, up and down leave the group; stacked: up and down, left and right leave it; a move reorders the same way; a window opened in the group goes after the focused tab | = | `con_orientation`, `get_tree_next`, `tree_move` |
-| T27 | **Focus parent** (`focusParent`; Meta+A) | the focused container's parent takes the focus; from a floating window, its workspace; never above the workspace. KWin's focus stays on the window the container would descend to; every window in the focused container is drawn focused; a window opened then goes beside the container, and a move or a layout key acts on the whole container | = | `level_up`; `con_inside_focused` (x.c) for the look |
+| T27 | **Focus parent** (`focusParent`; Meta+A) | the focused container's parent takes the focus; from a floating window, its workspace; never above the workspace, and not out of a fullscreen window. KWin's focus stays on the window the container would descend to; every window in the focused container is drawn focused; a window opened then goes beside the container, and a move or a layout key acts on the whole container | = | `level_up`; `con_inside_focused` (x.c) for the look |
 | T28 | Resize inside a tabbed or stacked container | the container is skipped: the resize goes to the nearest split around it | = | `resize_find_tiling_participants` |
 
 ---
@@ -657,8 +657,8 @@ with `$mod` as the wizard's Win choice.
 | K8 | Focus Parent | Meta+A | = | `focus parent` (§2 T27) |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
-| K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10 |
-| K12 | Close | Meta+Shift+Q | = | KWin's Window Close: asks the window to close, as i3's `kill` |
+| K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10. With a container focused (focus parent): its focused window, where i3 makes the container fullscreen; reason (a), KWin makes only a window fullscreen |
+| K12 | Close | Meta+Shift+Q | = | KWin's Window Close: asks the window to close, as i3's `kill`. With a container focused (focus parent), every window in it; with a workspace, every window on it, floating ones too (`con_close`) |
 | K13 | Workspace 1 … 10 | Meta+1 … Meta+0 | = | |
 | K14 | Move to Workspace 1 … 10 | Meta+! @ # $ % ^ & * ( ) | = | the US Shift+digit symbols; refitted by position (below), as i3's `bindcode` |
 | K15 | Reload Settings | Meta+Shift+C | ≠ | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own |
@@ -822,10 +822,6 @@ One that should change becomes an `OPEN.md` or `LATER.md` item. Most were found 
   with Keep Above set comes in floating where the rules would tile it; at a login, a window whose
   session restored Keep Above and that arrives after kwin-i3 loaded is tiled with the flag left
   on.
-- **Focus keys over a fullscreen window** are judged per workspace: with a floating window focused
-  over a fullscreen app, a focus key is refused where i3 (which judges from the focused window's
-  own fullscreen ancestor) allows it. Kept: i3's form would let a key focus a
-  window behind the fullscreen one, which KWin then shows above it.
 - **Focus mode toggle under a fullscreen window** (Meta+Space) focuses the other kind and leaves
   the fullscreen flag on, where i3 drops it (`con_activate_unblock`). Accepted.
 - **A rare wallpaper flash** for a few frames, after closing a tiling window beside another, at
@@ -1014,7 +1010,7 @@ Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_wind
 |---|---|---|---|---|
 | P1 | A login: workspaces onto outputs | §4 M1 | = | `init_ws_for_output` |
 | P2 | A login: where focus starts | the output under the pointer, at its workspace's focus (`focusUnderPointer`): at the load with no windows, and again after Plasma's first activity event numbers the outputs | = | i3: `main.c`, after `tree_init`. Before, workspace 1 |
-| P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window. A tabbed or stacked group comes back from its tile (several windows in tab order, its bar's rows saying which), the tab on top shown; one whose shown tab was a split comes back as a group of that tab's windows | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
+| P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window. A tabbed or stacked group comes back from its tile (several windows in tab order, its bar's rows saying which), the tab on top shown; one whose shown tab was a split comes back as a group of that tab's windows | ≠ | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15). Reason (a): what survives a reload is KWin's tiles, which hold no focus history, last split layout or `workspace_layout`, and nothing of a group's shown tab that was a split |
 | P4 | Windows open at load that no tile holds | adopted bottom of the stack first, each as a new window, so the focus order follows the stacking | = | `manage_existing_windows`, in the X server's stacking order |
 | P5 | Release (Meta+Ctrl+Shift+Q), or a load or rebuild failing | every window out of its tile, KWin's state put back; kwin-i3 does nothing more until reloaded | + | the safety valve; i3's `exit` ends the session |
 | P6 | The plugins loaded or unloaded | below | + | |

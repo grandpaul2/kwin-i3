@@ -74,6 +74,13 @@ bar is untried in a test (the test input has no scroll). Next: an i3 parity audi
 (every ≠ in §2, §5, §9 sorted into UI, KWin-forced and core), each core difference put to the
 maintainer with what matching i3 would cost; then these gaps.
 
+**73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
+With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
+one window (`src/tree.js` header), where i3 wraps the container in a floating one, its splits
+and tabs inside, moved and sized as a unit. Found by the i3 parity audit of the tree; the one core
+difference left from it. Next: the model's floating node holding a subtree, and the adapter
+placing its windows by their shares inside the floating rect (no KWin tiles there).
+
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a

@@ -2615,7 +2615,17 @@ var KI3 = (function () {
         // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
         // not; a stock Plasma binds neither key.
         "Fullscreen": function () { invoke("Window Fullscreen"); },
-        "Close": function () { invoke("Window Close"); },
+        // i3's kill on a container (focus parent) closes every window in it, on a workspace
+        // every window there, floating ones too (con_close); else KWin's own, on any window.
+        "Close": function () {
+            var f = model.focused;
+            if (f && f.win === null && (f.type === "con" || f.nodes.length || (f.floating && f.floating.length))) {
+                var all = model.leaves(f).concat(f.type === "ws" ? f.floating : []);
+                all.forEach(function (c) { if (wins[c.win]) wins[c.win].closeWindow(); });
+                return;
+            }
+            invoke("Window Close");
+        },
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the load
         // report says the mode needs the plugins (checkHelperKeys).
         "Resize Mode": function () { callDBus(MODE[0], MODE[1], MODE[2], "SetMode", mode ? "" : "resize"); },
