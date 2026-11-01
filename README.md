@@ -289,6 +289,18 @@ Properties: *Size* and *Position*, each "Apply Initially" with the values you wa
 it (the window still fills its tile); floated, the window comes back at that size and place. Not
 "Force": that would fight the tiles.
 
+**tmux's session name on a tab**: a tab shows its window's title, as in i3, so a terminal running
+tmux shows whatever title tmux gives it. To show the session name, add to your tmux config
+(`~/.config/tmux/tmux.conf` or `~/.tmux.conf`):
+
+```
+set -g set-titles on
+set -g set-titles-string '#S: #T'
+```
+
+then `tmux source-file` that file. `#S` is the session's name, `#T` the title the program in the
+pane sets. Most terminals take a title from the program inside them (Alacritty does by default).
+
 Dialogs, transients, modals, splash and utility windows and non-resizable windows float; a
 window on all desktops is i3's sticky floating: it floats and follows the workspace its output shows (`docs/behaviour.md` §3; the unbound action Sticky Toggle, as i3's `sticky toggle`); panels, the desktop,
 popups and Plasma's system windows are never in it (i3's dock, root and override-redirect kinds). kwin-i3 assumes one activity: windows on other activities aren't
