@@ -514,11 +514,12 @@ var KI3 = (function () {
         if (!t.tiles.length) return true;
         var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
         var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
-        // Below the hair (1e-6); and a side KWin pinned to the border where the layout's side is
-        // only the hair is intact: no gap is lost there, windowRect gives it half the padding, and
-        // a rebuild pins it again (OPEN 63: every pass rebuilt the tree, a focus change too).
+        // Below the hair (1e-6); and a side KWin pinned to the border under an inset root is
+        // intact: windowRect measures it from the root's edge, so no gap is lost, and a rebuild
+        // only pins it again (KWin's own float drift re-pins it as it re-fits a moved edge's
+        // children): every pass rebuilt the tree, a tab switch too, and the windows bounced.
         var eq = function (a, b) {
-            return Math.abs(a - b) < 1e-7 || (a <= 0 && b > 0 && b < 1e-4) || (a >= 1 && b < 1 && b > 1 - 1e-4);
+            return Math.abs(a - b) < 1e-7 || (a <= 0 && b > 0) || (a >= 1 && b < 1);
         };
         if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
         return t.tiles.every(function (c) {
@@ -533,14 +534,19 @@ var KI3 = (function () {
     // float noise "changes" it (CustomTile::setRelativeGeometry compares exactly), so under a
     // root inset by the hair a pinned side got P, a 1 px line with no frame (fuzzer I11, OPEN 63).
     function rootOf(t) { while (t.parent) t = t.parent; return t; }
+    // A side pinned to the border under an inset root is measured from the root's edge, so the
+    // window stands where it would unpinned, its gap kept (edgesIntact).
     function windowRect(t) {
         var a = t.absoluteGeometry, r = t.relativeGeometry, p = t.padding;
         if (!p) return a;
-        var g = rootOf(t).relativeGeometry;
+        var root = rootOf(t), g = root.relativeGeometry, ra = root.absoluteGeometry;
+        var x0 = r.x <= 0 && g.x > 0 ? ra.x : a.x, y0 = r.y <= 0 && g.y > 0 ? ra.y : a.y;
+        var x1 = r.x + r.width >= 1 && g.x + g.width < 1 ? ra.x + ra.width : a.x + a.width;
+        var y1 = r.y + r.height >= 1 && g.y + g.height < 1 ? ra.y + ra.height : a.y + a.height;
         var l = r.x > 0 || g.x > 0 ? p / 2 : p, tp = r.y > 0 || g.y > 0 ? p / 2 : p;
         var rt = r.x + r.width < 1 || g.x + g.width < 1 ? p / 2 : p;
         var b = r.y + r.height < 1 || g.y + g.height < 1 ? p / 2 : p;
-        return { x: a.x + l, y: a.y + tp, width: a.width - l - rt, height: a.height - tp - b };
+        return { x: x0 + l, y: y0 + tp, width: x1 - x0 - l - rt, height: y1 - y0 - tp - b };
     }
     // A side KWin pinned to the border under an inset root: KWin puts the window P/2 short there
     // at every change of the tile, so it is put back even inside fits()'s 1 px: in the pass, and
@@ -685,9 +691,14 @@ var KI3 = (function () {
             var b = i === p.kids.length - 1 ? start + size : snap(pos, n);
             var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
                       : { x: rect.x, y: a, width: rect.width, height: b - a };
+            // By edges; one KWin pinned to the border under an inset root is where it should be
+            // (edgesIntact): asked again, KWin pins it again, every pass.
             var g = child.relativeGeometry;
-            if (Math.abs(g.x - r.x) > 1e-4 || Math.abs(g.y - r.y) > 1e-4 ||
-                Math.abs(g.width - r.width) > 1e-4 || Math.abs(g.height - r.height) > 1e-4) {
+            var ge = [g.x, g.y, g.x + g.width, g.y + g.height], re = [r.x, r.y, r.x + r.width, r.y + r.height];
+            var off = ge.some(function (v, e) {
+                return Math.abs(v - re[e]) > 1e-4 && !(e < 2 ? v <= 0 && re[e] > 0 : v >= 1 && re[e] < 1);
+            });
+            if (off) {
                 child.relativeGeometry = r;
                 changed = true;
                 moved.push(tileNames(child) + " asked " + relLog(r) + " kept " + relLog(child.relativeGeometry));
@@ -1186,7 +1197,9 @@ var KI3 = (function () {
                 var h = t.layoutDirection !== 2, pos = h ? t.relativeGeometry.x : t.relativeGeometry.y;
                 t.tiles.forEach(function (c) {
                     var g = c.relativeGeometry, start = h ? g.x : g.y;
-                    if (Math.abs(start - pos) > 1e-3) problems.push("tiles overlap or leave a gap at " + start.toFixed(3));
+                    // A first side KWin pinned to the border under an inset root is intact (edgesIntact).
+                    var pinnedStart = c === t.tiles[0] && start <= 0 && pos > 0;
+                    if (Math.abs(start - pos) > 1e-3 && !pinnedStart) problems.push("tiles overlap or leave a gap at " + start.toFixed(3));
                     pos = start + (h ? g.width : g.height);
                 });
             }

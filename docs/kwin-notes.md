@@ -33,7 +33,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   0.99921875 where the root's is 0.9992187499999999 (x + width, stored as x and width). A child
   then asked the root's edge changes it by that ulp, KWin pins it to 1, `edgesIntact` fails, and
   every pass rebuilt the workspace (a tab switch made the windows bounce 2 px). So `setSizes`
-  sizes children from the edges KWin kept, never the ones asked. The warning names each tile
+  sizes children from the edges KWin kept, never the ones asked. KWin drifts by an ulp on its
+  own too: moving a shared edge re-fits the other tile's children (`customtile.cpp:141-156`),
+  and at some shares (0.6/0.4 on 2560x1400) a child's outer edge comes back an ulp off and is
+  pinned. No order of writes avoids it, and a rebuild repeats it. So a side pinned under an
+  inset root is accepted (`edgesIntact`, `setSizes`, the invariant) and `windowRect` measures it
+  from the root's edge, where the window would stand unpinned. The warning names each tile
   still moving, the rect asked and the one KWin kept.
 - Padding is one number per tile (`tile.h:33`). `windowGeometry` gives an edge at the screen's
   border (relative 0 or 1) the full padding, others half (`tile.cpp:171-178`). Edges are rounded to
