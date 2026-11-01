@@ -37,7 +37,7 @@ cited was).
    pager can't show per-output workspaces; the hold, because KWin's tile moves would otherwise show
    torn layouts; an OSD or an animation Plasma already has is out.
 
-**In:** i3's tree, with its focus (`focus parent` too), move, split, tabbed and stacked layouts
+**In:** i3's tree, with its focus (`focus parent` and `focus child` too), move, split, tabbed and stacked layouts
 with their bar, layout toggle and resize (by key, its resize mode,
 and by mouse); workspaces that live on an output, with i3's workspace output and `assign`;
 floating, sticky floating and the focus mode toggle; i3's keys (`docs/behaviour.md` §8); the

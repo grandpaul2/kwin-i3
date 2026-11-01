@@ -492,6 +492,19 @@ var Tree = (function () {
         return f.parent;
     };
 
+    // level_down (cmd_focus_level "child"): the focus goes to the focused container's most
+    // recently focused child, a floating window from a workspace included (a floating node is
+    // the window itself, so there is no wrapper to step through). Nothing from a window. Returns
+    // the new focus or null.
+    M.focusChild = function () {
+        var f = this.focused;
+        if (!f) return null;
+        var next = firstReachable(f.focus);
+        if (!next) return null;
+        this.activate(next);
+        return next;
+    };
+
     // tree_flatten: remove a one-child split whose child is a split of the other orientation and
     // of its own parent's orientation (redundant pairs left behind by moves). i3 calls it only
     // after a move that re-parents and after con_set_layout on a workspace, not after a close.

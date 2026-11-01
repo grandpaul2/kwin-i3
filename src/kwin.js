@@ -2968,6 +2968,8 @@ var KI3 = (function () {
     };
 
     var UNBOUND = {
+        // i3's `focus child`, commented out in i3's shipped config (Meta+D there).
+        "Focus Child": function () { model.focusChild(); },
         // i3's `sticky toggle`: KWin's "on all desktops" flag;
         // desktopsChanged does the rest (makeSticky, or off it onto its workspace's desktop).
         "Sticky Toggle": function (c) {

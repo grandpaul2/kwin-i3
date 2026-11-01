@@ -71,6 +71,15 @@
       "Meta+A"
      ]
     ]
+   },
+   {
+    "label": "Focus the child container",
+    "actions": [
+     [
+      "kwin-i3 Focus Child",
+      ""
+     ]
+    ]
    }
   ]
  },
