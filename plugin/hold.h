@@ -243,6 +243,17 @@ private:
         int width = 0;                                      // logical, drawn for
     };
     std::map<QString, TabBar> m_bars;
+    // SetBar calls that came while a hold was open, applied in order at its release: a held
+    // snapshot is drawn at its old place, where only the old bar matches (a new bar's offset on an
+    // old place drew it beside the group for the hold's 25 ms).
+    struct BarCall {
+        QString id;
+        int dx, dy, width, height;
+        bool stacked;
+        int active;
+        QString cls, titles;
+    };
+    QList<BarCall> m_barsHeld;
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the form's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};

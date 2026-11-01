@@ -454,7 +454,8 @@ can hold:
   one row per child, each the child's window title, a container's i3's tree representation
   (`H[a b]`). The shown child takes the frame's colour of its class (focused when the focus is in
   the group, as i3's `focused` against `focused_inactive`) with white text; the others Plasma's
-  window colours. Reason (b): i3 draws its own colours and font, here Plasma's.
+  window colours. Reason (b): i3 draws its own colours and font, here Plasma's. While the hold
+  shows the old layout, each bar stays as it was and the new ones show with the new layout.
 
 `reconcileNow` then, per workspace: moves windows that are on the wrong desktop or output
 (below), refreshes the floating windows' look, floats what can't fit, and compares the projection

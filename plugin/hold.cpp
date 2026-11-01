@@ -613,6 +613,10 @@ void Hold::release(bool timedOut)
     m_open = false;
     m_deadline.stop();
     m_quiet.stop();
+    // The bars told while it held, now that the windows take their new places too.
+    for (const BarCall &c : std::exchange(m_barsHeld, {})) {
+        SetBar(c.id, c.dx, c.dy, c.width, c.height, c.stacked, c.active, c.cls, c.titles);
+    }
     const double ms = m_started.nsecsElapsed() / 1e6;
     m_stats.lastMs = ms;
     m_stats.maxMs = std::max(m_stats.maxMs, ms);
@@ -927,6 +931,10 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
 
 void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool stacked, int active, const QString &cls, const QString &titles)
 {
+    if (m_open) {
+        m_barsHeld << BarCall{id, dx, dy, width, height, stacked, active, cls, titles};
+        return;
+    }
     EffectWindow *w = windowById(id);
     if (w) {
         repaintBar(w);                       // where it was
@@ -956,6 +964,7 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
 
 void Hold::ClearBars()
 {
+    m_barsHeld.clear();
     for (auto &[id, bar] : m_bars) {
         if (EffectWindow *w = windowById(id)) {
             repaintBar(w);
