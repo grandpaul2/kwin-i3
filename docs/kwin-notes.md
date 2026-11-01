@@ -28,32 +28,27 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Setting one tile's `relativeGeometry` moves its neighbours' shared edges: one pass in order can
   leave a stale edge. `CustomTile::setRelativeGeometry` pins a changed edge with no tile beyond it
   to 0 or 1 and compares exactly, and clamps a root to (0,0,1,1): no negative inset.
-  `setSizesStable` repeats up to four passes. "Sizes did not settle after 4 passes" on every pass
-  was one ulp: KWin's own split of an inset root leaves its second child's right edge at
-  0.99921875 where the root's is 0.9992187499999999 (x + width, stored as x and width). A child
-  then asked the root's edge changes it by that ulp, KWin pins it to 1, `edgesIntact` fails, and
-  every pass rebuilt the workspace (a tab switch made the windows bounce 2 px). So `setSizes`
-  sizes children from the edges KWin kept, never the ones asked. KWin drifts by an ulp on its
-  own too: moving a shared edge re-fits the other tile's children (`customtile.cpp:141-156`),
-  and at some shares (0.6/0.4 on 2560x1400) a child's outer edge comes back an ulp off and is
-  pinned. No order of writes avoids it, and a rebuild repeats it. So a side pinned under an
-  inset root is accepted (`edgesIntact`, `setSizes`, the invariant) and `windowRect` measures it
-  from the root's edge, where the window would stand unpinned. The warning names each tile
-  still moving, the rect asked and the one KWin kept.
+  `setSizesStable` repeats up to four passes. The warning names each tile still moving, the rect
+  asked and the one KWin kept.
+- **A tile's rect stores its four edges** (`core/rect.h` `RectF`: `m_left`, `m_right`, ...), but a
+  script reads and writes x, y, width and height: KWin builds a written rect's right edge as
+  `x + width`, and a script reads `width` as `right - left`, rounded. For edges that aren't short
+  binary fractions the edge read back, or written back, is often an ulp off (on 2560 px, for 384
+  of the 2556 split positions). KWin compares edges exactly and pins an outer one that
+  "changed" to 0 or 1 (above), where `windowGeometry` gives the window the full padding: 1 px
+  short, on some passes and not others, so every window of a workspace shifted by a pixel at a
+  split, a layout change or a focus change inside a tab group. So every edge kwin-i3 writes is a
+  multiple of 2^-20 (`grid()`), the root's included: every sum and difference is then exact, an
+  edge reads back as written, and nothing is pinned. KWin's own edge moves (`setLeft`,
+  `intersected`, a split's halves) keep the grid. A tile already pinned stays so under any write:
+  `edgesIntact` (exact) fails and the workspace is rebuilt once.
 - Padding is one number per tile (`tile.h:33`). `windowGeometry` gives an edge at the screen's
   border (relative 0 or 1) the full padding, others half (`tile.cpp:171-178`). Edges are rounded to
   whole logical pixels first, so an odd padding puts every window on a half pixel (text shifts on
   redraw). A padded tile has no anchors, so apps are never told "tiled".
-- **A rebuild's float noise pins tiles to the border.** `CustomTile::setRelativeGeometry`
-  (`customtile.cpp:120-133`) compares each side exactly and sets a changed side with no tile beyond
-  it to 0 or 1. Resizing a layout rewrites its children's sides, and the stored doubles differ
-  in the last digit (probed 2026-10-30, `V[a b H[c d e]]` after Move Up and a new window: c and d's
-  bottoms 1.0, e's 0.9999982222222221 against the root's ...222), so under a root inset by the
-  hair some children land at exactly 1 and get the full padding. No write takes them off, and a
-  rebuild pins them again: kwin-i3 judges the edge by the root instead (`windowRect`, `pinned`),
-  `edgesIntact` counts such a side as intact (it rebuilt the tree on every pass, a focus change
-  too), and KWin's own request for the short rect lands after the pass, so the window is put
-  back when its frame changes (`refitOnFrameChange`).
+- A side pinned all the same (a user's drag of an outer side) is measured from the root's edge
+  (`windowRect`, `pinned`), and the window put back when KWin's own request for the short rect
+  lands after the pass (`refitOnFrameChange`), until the next pass rebuilds the tiles.
 - App minimum sizes exclude the decoration.
 
 - **A leaf tile holds several windows** at the same geometry (`Tile::manage` keeps a list): KWin

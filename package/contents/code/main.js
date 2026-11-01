@@ -2131,6 +2131,7 @@ var KI3 = (function () {
     var frameOn = false, tookBorder = {}, borderDue = {};
     var borderGone = {};                             // window id -> its GTK 4 bounds (refitOnFrameChange)
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
+    var GRID = 1048576;                              // tile edges are multiples of 1/GRID (grid)
     var gapCache = {}, passWs = null;                // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
     // The floating mark (spec-window-modes decision 5c): with the effect, it keeps the set of
     // floating windows (told[key]: what it was last told), which outlives a reload of this
@@ -2607,10 +2608,27 @@ var KI3 = (function () {
         var g = gaps(ws), e = g.inset;
         // KWin gives a tile side exactly at the screen's edge the full padding, two frames
         // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) on a side with no gap makes
-        // every side half. Only where there is padding to halve.
+        // every side half. Only where there is padding to halve. Its edges on the grid (grid()),
+        // a hair at least one step of it.
         var hair = g.inner ? HAIR * Math.max(area.width, area.height) : 0;
         var l = e.left || hair, t = e.top || hair, r = e.right || hair, b = e.bottom || hair;
-        return { x: l / area.width, y: t / area.height, width: 1 - (l + r) / area.width, height: 1 - (t + b) / area.height };
+        function lo(v, n) { return v ? Math.max(1 / GRID, grid(v / n)) : 0; }
+        var x = lo(l, area.width), y = lo(t, area.height);
+        var x1 = 1 - lo(r, area.width), y1 = 1 - lo(b, area.height);
+        return { x: x, y: y, width: x1 - x, height: y1 - y };
+    }
+    // Every tile edge kwin-i3 writes is a multiple of 2^-20. KWin keeps a tile's four edges
+    // (RectF), but a script reads and writes x and width: right = x + width is computed again, and
+    // for edges off the grid it came out an ulp away from the edge it was meant to keep (for about
+    // one split position in seven). KWin compares that edge exactly, and an outer edge that
+    // "changed" is pinned to the screen's border (CustomTile::setRelativeGeometry): the window
+    // got the full padding there, 1 px short, on some passes and not others, and every window of
+    // the workspace shifted by a pixel at a split or a layout change. On the grid every sum and
+    // difference of edges is exact, so an edge read back is the edge written. A step is 0.002 px
+    // on a 2560 px screen, far inside KWin's rounding to whole pixels (absoluteGeometry).
+    function grid(v) { return Math.round(v * GRID) / GRID; }
+    function exactRect(g, r) {
+        return g.x === r.x && g.y === r.y && g.x + g.width === r.x + r.width && g.y + g.height === r.y + r.height;
     }
     // For root tiles only (the hair's tolerance would be wrong for any other tile).
     function sameRect(g, r) {
@@ -2624,17 +2642,13 @@ var KI3 = (function () {
     // is at the screen's border, so KWin lets a window's outer side be dragged
     // (Tile::supportsResizeGravity), and pins that edge to the border (CustomTile::
     // setRelativeGeometry), where no later write can move it off: only a rebuild mends it.
+    // Exactly: on the grid (grid()) an intact edge reads back as written, and a rebuild no longer
+    // pins it again, so a pinned side is not intact.
     function edgesIntact(t) {
         if (!t.tiles.length) return true;
         var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
         var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
-        // Below the hair (1e-6); and a side KWin pinned to the border under an inset root is
-        // intact: windowRect measures it from the root's edge, so no gap is lost, and a rebuild
-        // only pins it again (KWin's own float drift re-pins it as it re-fits a moved edge's
-        // children): every pass rebuilt the tree, a tab switch too, and the windows bounced.
-        var eq = function (a, b) {
-            return Math.abs(a - b) < 1e-7 || (a <= 0 && b > 0) || (a >= 1 && b < 1);
-        };
+        var eq = function (a, b) { return a === b; };
         if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
         return t.tiles.every(function (c) {
             var r = c.relativeGeometry;
@@ -2800,18 +2814,14 @@ var KI3 = (function () {
             var k = p.kids[i], child = tile.tiles[i];
             // The outer edges exactly as the parent has them (see setSizesStable), the inner
             // ones on whole pixels.
-            var a = i === 0 ? start : snap(pos, n);
+            var a = i === 0 ? start : grid(snap(pos, n));
             pos += px[i] / n;
-            var b = i === p.kids.length - 1 ? start + size : snap(pos, n);
+            var b = i === p.kids.length - 1 ? start + size : grid(snap(pos, n));
             var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
                       : { x: rect.x, y: a, width: rect.width, height: b - a };
-            // By edges; one KWin pinned to the border under an inset root is where it should be
-            // (edgesIntact): asked again, KWin pins it again, every pass.
-            var g = child.relativeGeometry;
-            var ge = [g.x, g.y, g.x + g.width, g.y + g.height], re = [r.x, r.y, r.x + r.width, r.y + r.height];
-            var off = ge.some(function (v, e) {
-                return Math.abs(v - re[e]) > 1e-4 && !(e < 2 ? v <= 0 && re[e] > 0 : v >= 1 && re[e] < 1);
-            });
+            // By edges, exactly: on the grid a tile in place reads back as written, and one off it
+            // (a drag's edge, a split's halves) is put on it.
+            var off = !exactRect(child.relativeGeometry, r);
             if (off) {
                 child.relativeGeometry = r;
                 changed = true;
@@ -3094,7 +3104,7 @@ var KI3 = (function () {
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
         // its edges (probed). Then padding, then minimums (review).
-        var inset = rootRect(area, ws), reinset = !sameRect(root.relativeGeometry, inset) || !edgesIntact(root);
+        var inset = rootRect(area, ws), reinset = !exactRect(root.relativeGeometry, inset) || !edgesIntact(root);
         prepareTiles(root, area);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
         if (want !== have || reinset) {
