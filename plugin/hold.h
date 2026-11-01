@@ -118,6 +118,16 @@ public Q_SLOTS:
     // window gets by itself; a geometry change that isn't its tile's leaves it hidden meanwhile.
     // ms 0: kwin-i3 has placed it (a floating window); shown now unless its tile holds it.
     void HoldNew(const QString &id, int ms);
+    // kwin-i3's tabbed and stacked groups: the bar above the group's shown window `id` (i3's
+    // decorations of a tabbed or stacked container, x.c x_draw_decoration): at `dx`, `dy` from
+    // the window's frame's top left, `width` by `height` (the group may be wider than the window
+    // it is painted with: a shown child that is a split); one row of equal tabs, or
+    // (`stacked`) one row per title; `active` the shown one's index, drawn in the class's colour,
+    // `cls` "focused" or "unfocused"; the titles joined by U+001F. Empty titles: no bar. Drawn
+    // with the window, so whatever is above the window covers its bar too.
+    void SetBar(const QString &id, int dx, int dy, int width, int height, bool stacked, int active, const QString &cls, const QString &titles);
+    // Forget every bar (kwin-i3 loaded: it tells the ones it has).
+    void ClearBars();
 
 private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
@@ -178,6 +188,10 @@ private:
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     KWin::EffectWindow *windowById(const QString &id) const;
     void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
+    struct TabBar;
+    KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const;   // logical, above `frame`
+    void repaintBar(KWin::EffectWindow *w);
+    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -207,6 +221,23 @@ private:
     // every paint); cleared when the settings change (its colour).
     std::map<double, Banner> m_banners;
     bool m_bannersStale = false;    // set by loadConfig; cleared in the paint, where GL is current
+    // SetBar, by the shown window's internal id. The image is drawn at the paint, where GL is
+    // current, for the width and scale it is painted at, and again when either changes.
+    struct TabBar {
+        int dx = 0;
+        int dy = 0;
+        int w = 0;                                          // logical, as told
+        int height = 0;
+        bool stacked = false;
+        int active = 0;
+        int cls = 0;                                        // 0 focused, 1 unfocused, as Ring
+        QStringList titles;
+        std::unique_ptr<KWin::GLTexture> texture;
+        QSize size;                                         // the texture's, device pixels
+        double scale = 0;
+        int width = 0;                                      // logical, drawn for
+    };
+    std::map<QString, TabBar> m_bars;
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the form's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};

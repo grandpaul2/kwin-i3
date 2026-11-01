@@ -23,6 +23,7 @@
 #include <QGuiApplication>
 #include <QImage>
 #include <QPainter>
+#include <QPalette>
 #include <QPen>
 #include <QTime>
 
@@ -147,6 +148,9 @@ void Hold::reconfigure(ReconfigureFlags)
 void Hold::loadConfig()
 {
     m_bannersStale = true;
+    for (auto &[id, bar] : m_bars) {
+        bar.width = -1;                       // the colours may have changed
+    }
     auto config = m_watcher->config();
     config->reparseConfiguration();
     const KConfigGroup group = config->group(s_group), old = config->group(s_oldGroup);
@@ -315,6 +319,10 @@ void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
     m_rings.remove(w->internalId().toString());
+    if (m_bars.count(w->internalId().toString())) {
+        effects->makeOpenGLContextCurrent();
+        m_bars.erase(w->internalId().toString());
+    }
     m_indicatorShown.remove(w->internalId().toString());
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
@@ -728,7 +736,7 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
 {
     // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
     // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
-    if (m_held.contains(w) || m_hidden.contains(w) || ringed(w)) {
+    if (m_held.contains(w) || m_hidden.contains(w) || ringed(w) || m_bars.count(w->internalId().toString())) {
         data.setTransformed();
     }
     effects->prePaintWindow(view, w, data);
@@ -750,6 +758,9 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
     KI3_PAINT(effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data));
     if (ringed(w) && !m_hidden.contains(w)) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
+    }
+    if (!m_hidden.contains(w) && !w->isDeleted() && m_bars.count(w->internalId().toString())) {
+        paintBar(renderTarget, viewport, w, deviceRegion, data);
     }
     if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
         paintBanner(renderTarget, viewport, w, data);
@@ -909,6 +920,145 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
         m_rings.insert(id, r);
     }
     repaintRingOf(id);
+}
+
+void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool stacked, int active, const QString &cls, const QString &titles)
+{
+    EffectWindow *w = windowById(id);
+    if (w) {
+        repaintBar(w);                       // where it was
+    }
+    if (titles.isEmpty() || height <= 0 || width <= 0) {
+        if (m_bars.count(id)) {
+            effects->makeOpenGLContextCurrent();     // its texture goes with it
+            m_bars.erase(id);
+        }
+        return;
+    }
+    if (!w) {
+        return;                              // gone already (an async call crossing its deletion)
+    }
+    TabBar &bar = m_bars[id];
+    bar.dx = dx;
+    bar.dy = dy;
+    bar.w = width;
+    bar.height = height;
+    bar.stacked = stacked;
+    bar.active = active;
+    bar.cls = cls == QLatin1String("focused") ? 0 : 1;
+    bar.titles = titles.split(QChar(0x1f));
+    bar.width = -1;                          // drawn again at the next paint, where GL is current
+    repaintBar(w);
+}
+
+void Hold::ClearBars()
+{
+    for (auto &[id, bar] : m_bars) {
+        if (EffectWindow *w = windowById(id)) {
+            repaintBar(w);
+        }
+    }
+    effects->makeOpenGLContextCurrent();
+    m_bars.clear();
+}
+
+RectF Hold::barRect(const TabBar &bar, const RectF &frame) const
+{
+    return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.w, bar.height);
+}
+
+void Hold::repaintBar(EffectWindow *w)
+{
+    auto it = m_bars.find(w->internalId().toString());
+    if (it == m_bars.end()) {
+        return;
+    }
+    const RectF b = barRect(it->second, w->frameGeometry());
+    effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height()) + 1));
+}
+
+// The bar of a tabbed or stacked group, above wherever its shown window is drawn (moved and
+// scaled as the paint data says, as the ring), clipped to the region this paint may touch.
+// i3 draws each child's title in its decoration (x.c x_draw_decoration: the focused child in
+// `focused`, the others in `focused_inactive` or `unfocused`); here the shown tab takes the ring's
+// colour of its class and the others Plasma's window colours, so the bar sits in a Plasma desktop
+// (docs/plan.md reason (b)). Drawn once as an image per width and scale.
+void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
+{
+    TabBar &bar = m_bars[w->internalId().toString()];
+    const RectF cur = w->frameGeometry();
+    const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
+    const RectF rect = barRect(bar, drawn);
+    const double scale = viewport.scale();
+    const int width = std::lround(rect.width());
+    if (width <= 0 || bar.titles.isEmpty()) {
+        return;
+    }
+    if (!bar.texture || bar.scale != scale || bar.width != width) {
+        const int n = bar.titles.size();
+        QImage img(QSize(std::lround(width * scale), std::lround(bar.height * scale)), QImage::Format_ARGB32_Premultiplied);
+        img.setDevicePixelRatio(scale);
+        const QPalette pal = QGuiApplication::palette();
+        img.fill(pal.color(QPalette::Window));
+        QPainter p(&img);
+        p.setRenderHint(QPainter::Antialiasing);
+        QFont font = QGuiApplication::font();
+        p.setFont(font);
+        const QFontMetrics fm(font);
+        const double rowH = bar.stacked ? double(bar.height) / n : bar.height;
+        for (int i = 0; i < n; ++i) {
+            // A tab's rect: equal widths, the last taking what rounding leaves (render_con_tabbed).
+            const double x0 = bar.stacked ? 0 : std::floor(double(width) * i / n);
+            const double x1 = bar.stacked ? width : (i == n - 1 ? width : std::floor(double(width) * (i + 1) / n));
+            const QRectF r(x0, bar.stacked ? rowH * i : 0, x1 - x0, rowH);
+            const bool active = i == bar.active;
+            const QColor bg = active ? m_frameColour[bar.cls] : pal.color(QPalette::Window);
+            p.fillRect(r, bg);
+            p.setPen(QPen(pal.color(QPalette::Mid), 1));
+            if (!bar.stacked && i > 0) {
+                p.drawLine(QPointF(r.left() + 0.5, r.top()), QPointF(r.left() + 0.5, r.bottom()));
+            }
+            if (bar.stacked && i > 0) {
+                p.drawLine(QPointF(r.left(), r.top() + 0.5), QPointF(r.right(), r.top() + 0.5));
+            }
+            p.setPen(active ? QColor(Qt::white) : pal.color(QPalette::WindowText));
+            const QRectF text = r.adjusted(8, 0, -8, 0);
+            p.drawText(text, Qt::AlignVCenter | Qt::AlignLeft, fm.elidedText(bar.titles[i], Qt::ElideRight, std::max(0, int(text.width()))));
+        }
+        p.end();
+        bar.texture = GLTexture::upload(img);
+        bar.size = img.size();
+        bar.scale = scale;
+        bar.width = width;
+    }
+    if (!bar.texture) {
+        return;
+    }
+    // Device pixels, global, as the ring's: the bar's rect, then only what this paint may touch.
+    const QPoint origin = viewport.scaledRenderRect().topLeft();
+    const int bx = std::lround(rect.x() * scale), by = std::lround(rect.y() * scale);
+    const Rect device(bx - origin.x(), by - origin.y(), bar.size.width(), bar.size.height());
+    const Region visible = deviceRegion & device;
+    if (visible.isEmpty()) {
+        return;
+    }
+    const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
+    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace | ShaderTrait::Modulate);
+    binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    binder.shader()->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
+    const BlendState kept;
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    bar.texture->bind();
+    for (const Rect &r : visible.rects()) {
+        // Each visible piece as its own quad: the texture's matching part, placed there.
+        QMatrix4x4 mvp = viewport.projectionMatrix();
+        mvp.translate(r.x() + origin.x(), r.y() + origin.y());
+        binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
+        const RectF source(r.x() - device.x(), r.y() - device.y(), r.width(), r.height());
+        bar.texture->render(source, Region::infinite(), QSizeF(r.width(), r.height()));
+    }
+    bar.texture->unbind();
 }
 
 void Hold::ShowIndicator(const QString &id)
@@ -1142,6 +1292,10 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
     if (!w || frame.isEmpty()) {
         return;
     }
+    if (auto it = m_bars.find(w->internalId().toString()); it != m_bars.end()) {
+        const RectF b = barRect(it->second, frame);
+        effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height()) + 1));
+    }
     const double f = m_frameWidth + 1;      // and a pixel of slack for the rounding
     const double r = m_roundedCorners ? s_radius : 0;   // the wedges inside the corners
     const RectF outer = frame.adjusted(-f, -f, f, f);
@@ -1318,6 +1472,11 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
+    QStringList bars;
+    for (const auto &[id, bar] : m_bars) {
+        bars << id;
+    }
+    m[QStringLiteral("bars")] = bars;
     m[QStringLiteral("focused")] = m_focusedId;
     return m;
 }

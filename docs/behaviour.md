@@ -449,6 +449,12 @@ can hold:
   as i3 with its `pixel` border (`render_con_tabbed`: the bar only for more than one child or a
   `normal` border). After a border drag, a group's share is read from its shown child's tiles
   and its bar; the children behind keep theirs.
+- **The bar** is drawn by kwini3hold (with the plugins; without them the bar's place stays
+  empty), with the group's shown window, so a window above covers it: one row of equal tabs, or
+  one row per child, each the child's window title, a container's i3's tree representation
+  (`H[a b]`). The shown child takes the frame's colour of its class (focused when the focus is in
+  the group, as i3's `focused` against `focused_inactive`) with white text; the others Plasma's
+  window colours. Reason (b): i3 draws its own colours and font, here Plasma's.
 
 `reconcileNow` then, per workspace: moves windows that are on the wrong desktop or output
 (below), refreshes the floating windows' look, floats what can't fit, and compares the projection

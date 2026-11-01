@@ -212,6 +212,7 @@ var KI3 = (function () {
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.byKey, fp.checked); }
         passWs = null;
         try { tellRings(); } catch (e) { log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : "")); }
+        try { tellBars(); } catch (e) { log("ERROR in tellBars: " + e + (e.stack ? " " + e.stack : "")); }
         showHeld();
         rememberShown();
     }
@@ -330,7 +331,9 @@ var KI3 = (function () {
     var refused = false;    // set when KWin refused a manage() during this reconcile
     // This reconcile's group tiles (placeWindows): bars (empty on purpose), leaves holding the
     // tabs behind the shown one, and each shown tab with the windows it must be above.
-    var barTiles = [], multiTiles = [], shownTabs = [];
+    var barTiles = [], multiTiles = [], shownTabs = [], groupBars = [];
+    var barsOf = {};        // workspace number -> its groups' bars as last placed ({ con, tile })
+    var barTold = {};       // window id -> the bar the effect was told to draw with it (SetBar)
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
@@ -683,6 +686,7 @@ var KI3 = (function () {
         if (p.bar) {                                   // a group's bar: an empty tile
             tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
             barTiles.push(tile);
+            groupBars.push({ con: p.bar, tile: tile });
             return;
         }
         if (p.win !== undefined) {
@@ -920,7 +924,7 @@ var KI3 = (function () {
         var p = project(ws);
         gapCache[ws.num] = computeGaps(ws, p);   // a float above may have left one window
         refused = false;
-        barTiles = []; multiTiles = []; shownTabs = [];
+        barTiles = []; multiTiles = []; shownTabs = []; groupBars = [];
         // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
@@ -954,6 +958,7 @@ var KI3 = (function () {
             raiseShownTabs();
             settleDragArms(ws);
         }
+        barsOf[ws.num] = groupBars;
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
         if (refused) schedule(ws);          // the projection changed under us: one more pass
         else checkInvariants(ws, root, p, area);
@@ -1318,11 +1323,56 @@ var KI3 = (function () {
         if (flash && flash.win !== null && wins[flash.win])
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ShowIndicator", flash.win);
     }
+    // The bars of the shown workspaces' groups, for the effect to draw (SetBar): painted with the
+    // window the group shows (its focused one), at the bar tile's place. A tab's title is its
+    // window's caption; a container's, i3's tree representation (con_get_tree_representation:
+    // "H[a b]"). The group's shown tab in the focused colour when the focus is in the group,
+    // as i3's `focused` against `focused_inactive`. Told only when something changed.
+    var LETTERS = { h: "H", v: "V", tabbed: "T", stacked: "S" };
+    function barTitle(c) {
+        if (c.win !== null) return wins[c.win] ? String(wins[c.win].caption) : "";
+        return LETTERS[c.layout] + "[" + c.nodes.map(barTitle).join(" ") + "]";
+    }
+    function tellBars() {
+        if (!effectSeen) return;
+        var want = {};
+        shownWorkspaces().forEach(function (v) {
+            (barsOf[v.ws.num] || []).forEach(function (b) {
+                var con = b.con;
+                if (Tree.wsOf(con) !== v.ws) return;                // gone since its pass
+                var kids = con.nodes.filter(function (k) { return project(k); }), shown = null;
+                for (var i = 0; i < con.focus.length && !shown; i++) if (kids.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
+                if (kids.length < 2 || !shown) return;
+                var leaf = model.descendFocused(shown), w = leaf && leaf.win !== null ? wins[leaf.win] : null;
+                var t = w && expected[leaf.win];
+                if (!t || t.windows.indexOf(w) < 0) return;
+                var a = windowRect(t), r = windowRect(b.tile), inside = false;
+                for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
+                want[id(w)] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
+                               con.layout === "stacked", kids.indexOf(shown), inside ? "focused" : "unfocused",
+                               kids.map(barTitle).join("\u001f")];
+            });
+        });
+        Object.keys(barTold).forEach(function (key) {
+            if (want[key]) return;
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, 0, 0, 0, 0, false, 0, "", "");
+            delete barTold[key];
+        });
+        Object.keys(want).forEach(function (key) {
+            var b = want[key], spec = JSON.stringify(b);
+            if (barTold[key] === spec) return;
+            barTold[key] = spec;
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+        });
+    }
+
     function forgetRings() {
         Object.keys(ringTold).forEach(function (key) {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         });
         ringTold = {};
+        if (effectSeen) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ClearBars");
+        barTold = {};
         if (effectSeen) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", "");
         focusTold = null;
     }
@@ -1697,7 +1747,7 @@ var KI3 = (function () {
             }
         }));
         w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
-        w.captionChanged.connect(guard("caption", function () { reclassify(w); }));
+        w.captionChanged.connect(guard("caption", function () { reclassify(w); if (Object.keys(barTold).length) kick(); }));
         w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
         w.hiddenByShowDesktopChanged.connect(guard("show desktop", readShowing));
         w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
@@ -3479,6 +3529,11 @@ var KI3 = (function () {
                     var rings = {};
                     (m.rings || []).forEach(function (k) { rings[k] = true; });
                     if (Object.keys(ringTold).some(function (k) { return !rings[k]; })) { ringTold = {}; lost = true; }
+                    // The bars likewise: a reloaded effect lost them; a reloaded script never
+                    // told the ones the effect still draws.
+                    var bars = {};
+                    (m.bars || []).forEach(function (k) { bars[k] = true; if (!barTold[k]) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", k, 0, 0, 0, 0, false, 0, "", ""); });
+                    Object.keys(barTold).forEach(function (k) { if (!bars[k]) { delete barTold[k]; kick(); } });
                     if (lost) { told = {}; scheduleAll(); }
                 }
             }
@@ -3495,7 +3550,7 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
-        told = {}; ringTold = {};       // a new effect knows nothing: the next pass tells it again
+        told = {}; ringTold = {}; barTold = {};       // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled
