@@ -2430,7 +2430,7 @@ var KI3 = (function () {
     var barTold = {};       // window id -> the bar the effect was told to draw with it (SetBar)
     var barGroups = {};     // the same ids -> the group the bar is of, for the helper's tab events
     var barsHelperTold = null;   // the helper's SetBars spec last sent (null: never)
-    var tabDrag = null;     // { key, leaf } of a tab just clicked: a drag from that press takes it
+    var tabDrag = null;     // { key, con } of a tab just clicked (a window or a container): a drag from that press takes it whole
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
@@ -3505,8 +3505,9 @@ var KI3 = (function () {
                 // i3 descends through focus_head to the end, past the focus itself (click.c:268).
                 var leaf = shownWindow(tab);
                 to = focused === tab || !inside ? leaf : tab;
-                // A drag from this press drags the tab's window, not the one shown before it.
-                tabDrag = leaf.win !== null ? { key: f[1], leaf: leaf } : null;
+                // A drag from this press drags the tab, not the window shown before it: a tab
+                // that is a container whole, as i3 drags the con whose decoration was pressed.
+                tabDrag = { key: f[1], con: tab };
             }
             if (!to) return;
             model.activate(to);
@@ -4327,6 +4328,11 @@ var KI3 = (function () {
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropBands", b[0], b[1], b[2], b[3], b[4]);
     }
+    // Still in the tree: a window by its id, a container by its place in its parent.
+    function inTree(c) {
+        if (c.win !== null) return model.byWin[c.win] === c;
+        return !!c.parent && (c.parent.nodes.indexOf(c) >= 0) && !!Tree.wsOf(c);
+    }
     function dragState(s) {
         if (!drag) return;
         drag.busy = false;
@@ -4335,8 +4341,10 @@ var KI3 = (function () {
         if (phase === "drag" || phase === "drop") {
             var con = drag.con;
             // A tab's drag is reported by the window the helper took the press with (drag.via).
-            if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || model.byWin[con.win] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
-            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
+            if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || !inTree(con) || con.type !== drag.type) { endDrag("its window is gone"); return; }
+            var zw = wins[shownWindow(con).win];
+            if (!zw) { endDrag("its window is gone"); return; }
+            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(zw));
             if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect), drag.plan); return; }
             dropOn(drag.plan, " at " + x + "," + y);
             return;
@@ -4424,10 +4432,10 @@ var KI3 = (function () {
             if (f[0] !== "drag" || drag) return;
             // A drag from a tab: the press was taken with the window shown then; the tab's own.
             var via = null;
-            if (tabDrag && tabDrag.key === f[1] && model.byWin[tabDrag.leaf.win] === tabDrag.leaf) { con = tabDrag.leaf; via = f[1]; }
+            if (tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con)) { con = tabDrag.con; via = f[1]; }
             tabDrag = null;
             var ours = !!con && (con.type === "con" || con.type === "floating");
-            if (!ours || !wins[con.win] || !hasDropTargets(con.type === "floating")) {
+            if (!ours || !wins[shownWindow(con).win] || !hasDropTargets(con.type === "floating")) {
                 log("DRAG not started: " + (ours ? "nowhere to drop" : "not a window of kwin-i3's"));
                 return;
             }

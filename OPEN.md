@@ -68,7 +68,7 @@ floats a tiled window; the check includes whether KWin's Shift-drop still fires 
 `docs/behaviour.md` §2 T25-T28, §6, §9 G9, G11, G14, G15, §12 P3). On main and live; `stable`
 stays where it is until main has had its week (`docs/testing.md` P6). Left, each a ≠ or untried:
 in the `titlebars` look a group's windows keep their own title bars under the bar, where i3's
-tab is the only decoration; a tab drag drags its focused window, not a split tab whole; a split
+tab is the only decoration; a split
 tab comes back from a reload as its windows; `workspace_layout` has no setting; a scroll on the
 bar is untried in a test (the test input has no scroll). Next: an i3 parity audit of the tree
 (every ≠ in §2, §5, §9 sorted into UI, KWin-forced and core), each core difference put to the
