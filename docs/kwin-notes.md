@@ -210,6 +210,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 ## Plugins and effects (`plugin/`)
 
 - Both plugins are version-locked to the installed KWin, which refuses a stale build after an update.
+- An effect's paint hooks run only while its `isActive()` says so: anything it draws (kwini3hold's
+  ring, a group's bar) must keep it active, or it silently draws nothing (the bar was missing in
+  the looks without a ring until a shown bar counted).
+- A held snapshot is drawn at the window's old frame (the paint data's translate and scale), so
+  anything drawn relative to that window must use its old values too until the hold releases.
 - KWin's exported CMake targets name `Qt6::Widgets` (`KWinTargets.cmake`): a plugin that uses no
   widget still finds the component, or its configure fails (2026-10-30).
   Unloading one in a running KWin leaves its library loaded: anything it connected must end with it.
