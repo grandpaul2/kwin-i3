@@ -265,10 +265,16 @@ var KI3 = (function () {
             if (projected.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
         var sp = byNode[projected.indexOf(shown)];
         if (projected.length === 1) return sp;
-        var hidden = [];
-        projected.forEach(function (child, k) { if (child !== shown) hidden = hidden.concat(windowsOf(byNode[k])); });
-        var anchor = leafOf(sp, model.descendFocused(shown).win) || leafOf(sp, null);
+        var hidden = [], anchor = leafOf(sp, model.descendFocused(shown).win) || leafOf(sp, null), order = [];
+        projected.forEach(function (child, k) {
+            if (child === shown) { order.push(anchor.win); return; }
+            var ws = windowsOf(byNode[k]);
+            hidden = hidden.concat(ws);
+            order = order.concat(ws);
+        });
         anchor.extra = (anchor.extra || []).concat(hidden);
+        // The tile lists them in the tabs' order, so a reload reads the order back (specOf).
+        anchor.order = anchor.order ? anchor.order.concat(hidden) : order;
         var members = sp.dir === "v" ? sp.kids : [{ p: sp, share: 1 }];
         var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length };
         return { dir: "v", kids: [{ p: bar, share: 0 }].concat(members) };
@@ -697,8 +703,14 @@ var KI3 = (function () {
             tile.windows.slice().forEach(function (o) { if (o !== w && behind.indexOf(o) < 0) unmanageFrom(tile, o); });
             if (behind.length) {
                 multiTiles.push(tile);
-                // The tabs behind first, then the shown one, which must end up on top of them.
-                behind.forEach(function (b) {
+                // Listed out of the tabs' order (a tab moved, one joined): listed again in order.
+                var want = (p.order || [p.win].concat(p.extra)).map(function (k) { return wins[k]; });
+                var listed = tile.windows.filter(function (o) { return want.indexOf(o) >= 0; });
+                if (listed.length === want.length && listed.some(function (o, i) { return o !== want[i]; }))
+                    listed.forEach(function (o) { unmanageFrom(tile, o); });
+                // Listed in the tabs' order, the shown one too; which one shows is the stacking's
+                // (raiseShownTabs), not the list's.
+                want.forEach(function (b) {
                     if (shown && b.tile !== tile && tile.windows.indexOf(b) >= 0) unmanageFrom(tile, b);
                     if (tile.windows.indexOf(b) < 0) manageInto(tile, b);
                     else { expected[id(b)] = tile; tiledBorder(b); }
@@ -3289,8 +3301,16 @@ var KI3 = (function () {
             var mine = tile.windows.filter(function (w) {
                 return Rules.classify(w) === "tiling" && w.desktops.length === 1 && w.desktops[0] === desk;
             });
-            if (mine.length !== 1) return null;
-            return { win: id(mine[0]), percent: total };
+            if (!mine.length) return null;
+            if (mine.length === 1) return { win: id(mine[0]), percent: total };
+            // Several windows in one tile: a group kwin-i3 placed (projectGroup), its bar the empty
+            // tile just before: a bar of one row per window is stacked, else tabbed. The tabs in
+            // the order KWin lists them, kwin-i3's tab order; the one on top is shown. A
+            // group whose shown tab was a split comes back as a group of that tab's windows.
+            var sib = tile.parent ? tile.parent.tiles : [], at = sib.indexOf(tile), bar = at > 0 ? sib[at - 1] : null;
+            var rows = bar && !bar.tiles.length && !bar.windows.length ? Math.round(bar.absoluteGeometry.height / BAR_ROW) : 1;
+            return { layout: rows > 1 && rows === mine.length ? "stacked" : "tabbed", percent: total,
+                     kids: mine.map(function (w) { return { win: id(w), percent: 0 }; }) };
         }
         var dir = tile.layoutDirection === 2 ? "v" : "h";
         var kids = [];
@@ -3301,6 +3321,8 @@ var KI3 = (function () {
             if (s) kids.push(s);
         });
         if (!kids.length) return null;
+        // A group with its bar is a vertical pair of tiles: alone in it, it is that group.
+        if (kids.length === 1 && (kids[0].layout === "tabbed" || kids[0].layout === "stacked")) { kids[0].percent = total; return kids[0]; }
         return { layout: dir, percent: total, kids: kids };
     }
 
@@ -3334,6 +3356,13 @@ var KI3 = (function () {
                     expected[leaf.win] = w.tile;
                     if (w.fullScreen) model.setFullscreen(leaf.win, true);
                     connectWindow(w);
+                });
+                // The focus order from the stacking, bottom first, before any pass: a group's tab
+                // on top is its focused one, so the first pass shows (and raises) that one, not
+                // the first tab. adoptRest sets the global focus after.
+                workspace.stackingOrder.forEach(function (w) {
+                    var c = model.byWin[id(w)];
+                    if (c && c.type === "con" && Tree.wsOf(c) === ws) model.focusWin(id(w));
                 });
             });
         });

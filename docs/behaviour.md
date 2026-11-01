@@ -1019,7 +1019,7 @@ Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_wind
 |---|---|---|---|---|
 | P1 | A login: workspaces onto outputs | §4 M1 | = | `init_ws_for_output` |
 | P2 | A login: where focus starts | the output under the pointer, at its workspace's focus (`focusUnderPointer`): at the load with no windows, and again after Plasma's first activity event numbers the outputs | = | i3: `main.c`, after `tree_init`. Before, workspace 1 |
-| P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
+| P3 | A reload (kwin-i3 loaded with windows open) | nothing renumbered; the layout comes back from KWin's tiles, floating from the effect, focus on KWin's active window. A tabbed or stacked group comes back from its tile (several windows in tab order, its bar's rows saying which), the tab on top shown; one whose shown tab was a split comes back as a group of that tab's windows | = | i3's `restart`, which keeps the tree (`tree_restore`) and the focus. i3's `reload` keeps the tree too (§8 K15) |
 | P4 | Windows open at load that no tile holds | adopted bottom of the stack first, each as a new window, so the focus order follows the stacking | = | `manage_existing_windows`, in the X server's stacking order |
 | P5 | Release (Meta+Ctrl+Shift+Q), or a load or rebuild failing | every window out of its tile, KWin's state put back; kwin-i3 does nothing more until reloaded | + | the safety valve; i3's `exit` ends the session |
 | P6 | The plugins loaded or unloaded | below | + | |

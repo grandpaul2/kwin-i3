@@ -80,7 +80,8 @@ held=$!
 check "mid-drag: the indicator on c's centre, middle band" poll eval '[[ "$(indicator)" == "108,516 1064x48" ]]' || echo "    indicator: $(indicator)"
 check "  a still in its place"              eval '[[ "$(fc a)" == "0,0 640x360" ]]'
 "$root/tools/shot.py" capture Virtual-0 "$KI3_TMP/shot.png"
-check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 640 540 38,60,204 10'
+# Beside the band's card (its icon and name sit at the band's centre): the indicator itself.
+check "  drawn: frameActive at half over c's blue" eval '"$root/tools/shot.py" same "$KI3_TMP/shot.png" 200 540 38,60,204 10'
 wait $held
 check "Escape: cancelled, the indicator gone" eval '[[ "$(dropped $m)" == "DRAG cancelled" && -z "$(indicator)" ]]'
 check "  the tree as it was"                eval '[[ "$(tree 1)" == "V[H[a b] c*]" ]]'

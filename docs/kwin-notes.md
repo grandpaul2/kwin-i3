@@ -49,6 +49,16 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   back when its frame changes (`refitOnFrameChange`).
 - App minimum sizes exclude the decoration.
 
+- **A leaf tile holds several windows** at the same geometry (`Tile::manage` keeps a list): KWin
+  lays them over one another, the stacking order deciding which shows. Activating one raises it;
+  closing one leaves the others listed. An **empty** leaf tile stays (KWin removes no tile by
+  itself), and its minimum can be zeroed like any other's. kwin-i3's tabbed and stacked groups
+  rest on both (probed in the test KWin: a bar tile, then one leaf holding three windows).
+- A vertical tile can't sit in a vertical parent (`split()` adds a sibling instead): a group's
+  bar-over-content pair merges into a vertical parent, and its bar's px come from its own kids.
+- Scripts have `workspace.raiseWindow(w)` (6.7.5 `workspace_wrapper.h:471`): above all others in
+  its layer, so not above a kept-above (floating) window.
+
 ## Windows and Wayland clients (`window.cpp`, `xdgshellwindow.cpp`)
 
 - **A hidden Wayland window (its desktop not current on its output) gets no frame callbacks, never

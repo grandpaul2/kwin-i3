@@ -12,8 +12,8 @@ changes. The script runs without them, and the settings page says at its top whe
 capture (Install, step 9). Install the `stable` branch: each version there has run on a
 desktop for a day and passed every test on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
 2026-10-23), in daily use since 2026-10-22.
-The core of i3 is here; what is left out is deliberate (tabbed and stacked
-layouts, `focus parent`, urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
+The core of i3 is here, tabbed and stacked layouts included; what is left out is deliberate
+(urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
 not all of i3: from here the work is making it configurable and reliable, not adding more of i3
 (the scope and its reasons are in `docs/plan.md`, "Scope"). `CHANGELOG.md` says what changed,
 `OPEN.md` what is open.
@@ -35,7 +35,9 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+arrows, Meta+J/K/L/; | focus left/down/up/right, i3's tree-based focus, across outputs at the edge (the pointer follows to the other output, as i3's `mouse_warping output`; only a key moves it, never a window closing) |
 | Meta+Shift+arrows, Meta+Shift+J/K/L/; (or Meta+:) | move the window left/down/up/right, i3's `tree_move`, to the next output at the edge |
 | Meta+H / Meta+V | split horizontal / vertical |
-| Meta+E | toggle the split's orientation |
+| Meta+E | toggle the split's orientation; in a tabbed or stacked group, back to the split it was |
+| Meta+W / Meta+S | make the window's container **tabbed** / **stacked**: its windows share its place, one shown, under a bar of their titles (plugins) that a click or a scroll switches; left/right walk the tabs, up/down the stacked rows |
+| Meta+A | focus the parent container (i3's `focus parent`): a split or a group then moves, splits or turns tabbed as one |
 | Meta+Shift+Space | floating toggle |
 | Meta+Space | focus mode toggle (tiling / floating) |
 | Meta+R, then J/K/L/; or the arrows | i3's **resize mode** (plugins): Meta+R enters, a banner on the focused window says so; J/Left shrink the width, ;/Right grow it, L/Up shrink the height, K/Down grow it, by 10 % (holding a key repeats); kwin-i3's other keys do nothing, Plasma's own shortcuts (volume, screenshot) still run; Return, Escape or Meta+R leave. The four resize actions have no flat key; bind one on the Keys page if you want |
@@ -67,12 +69,14 @@ Mouse:
 - **Meta+left-drag on a tiling window** is i3's tiling drag (needs the helper plugin): the window
   stays put while a highlight shows where it would land, under a move cursor. Near another
   window's edge it goes beside that window; in the thin strip at an edge it goes beside the whole
-  row or column that shares that edge; in the middle **the two swap**, unlike i3, which moves it after the target.
+  row or column that shares that edge. In the middle, three cards show the choices: the top
+  makes the two a **tabbed** group, the middle a **stacked** one, the bottom **swaps** them (i3
+  makes groups only by key); dropped in the middle of a window already in a group, it joins it.
   Any button's release drops it there; any key cancels. With tiling windows showing their own title bars (`tiledLook`), dragging a tiling window's title
-  bar does the same.
+  bar does the same, and so does dragging a tab out of a group's bar.
 - **Meta+Shift+left-drag on a tiling window** pulls it out at its floating size and floats it where
   it is dropped, the mouse twin of Meta+Shift+Space: Shift is a float modifier here, where i3's
-  Shift swaps (the middle drop swaps anyway). Without the helper plugin, Meta+left-drag does this.
+  Shift swaps (the middle's bottom card swaps anyway). Without the helper plugin, Meta+left-drag does this.
 - **Meta+right-drag on a tiling window**, or in the gap beside one, is i3's tiling resize (helper
   plugin): the pointer jumps onto the nearest edge, a bar follows it, and the sizes change on
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if
@@ -118,8 +122,9 @@ off first (System Settings > Window Management > KWin Scripts).
 5. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
    paths, only at login. kwin-i3 is running when your windows tile.
 6. **Your keys**: `make take-keys`. Some of i3's keys are Plasma's too (Meta+arrows for quick
-   tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the
-   task manager uses them), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
+   tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
+   Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview stays on the
+   screen's top-left corner and Grid View on Meta+G), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
    takes each one that clashes from its Plasma shortcut and **prints the list of what it took**.
    To give them back: `make restore-keys`, or Defaults in System Settings > Shortcuts. Rather keep
    some of Plasma's? Skip this step and take keys one by one on kwin-i3's Keys page (a key Plasma
