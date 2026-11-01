@@ -5,8 +5,12 @@
 // this file directly (tests/unit).
 //
 // Shapes (i3's Con, reduced to what kwin-i3 needs):
-//   ws        { type: "ws", num, layout: "h"|"v", nodes: [], floating: [], focus: [], parent: null }
-//   split     { type: "con", win: null, layout, nodes: [], focus: [], parent, percent }
+//   ws        { type: "ws", num, layout, wsLayout, lastSplit, nodes: [], floating: [], focus: [], parent: null }
+//   split     { type: "con", win: null, layout, lastSplit, nodes: [], focus: [], parent, percent }
+// layout: "h" | "v" (i3's splith, splitv) | "tabbed" | "stacked"; con_orientation makes tabbed
+// horizontal and stacked vertical (orient). lastSplit: i3's last_split_layout, what a split toggle
+// goes back to from tabbed or stacked. wsLayout: i3's workspace_layout, "default" | "tabbed" |
+// "stacked", set by a layout change on an empty workspace.
 //   leaf      { type: "con", win: <id>, layout: "h", nodes: [], focus: [], parent, percent, fullscreen }
 //   floating  { type: "floating", win: <id>, parent: <ws>, sticky: bool, ... }  (sticky: i3's con->sticky, floating only)
 // `focus` is i3's focus_head: the children most recently focused first; a workspace's also
@@ -17,7 +21,7 @@
 //   - Outputs are not modelled. Where i3 asks for "the visible workspace on the next output in
 //     this direction", the model calls env.outputNeighbour(ws, dir), supplied by the caller.
 //   - Fullscreen is i3's per-output fullscreen (CF_OUTPUT) only, a flag on the leaf.
-//   - No stacked/tabbed layouts, marks, urgency or scratchpad (decided 2026-10-21).
+//   - No marks, urgency or scratchpad (docs/plan.md, "Out").
 
 var Tree = (function () {
     "use strict";
@@ -36,7 +40,7 @@ var Tree = (function () {
     function insertBefore(list, ref, item) { list.splice(list.indexOf(ref), 0, item); }
 
     function newCon(layout, win) {
-        return { type: "con", win: win === undefined ? null : win, layout: layout || "h",
+        return { type: "con", win: win === undefined ? null : win, layout: layout || "h", lastSplit: "h",
                  nodes: [], focus: [], parent: null, percent: 0, fullscreen: false, minimized: false };
     }
     function newFloating(win) {
@@ -62,8 +66,8 @@ var Tree = (function () {
     M.ws = function (num, layout) {
         var ws = this.workspaces[num];
         if (!ws) {
-            ws = { type: "ws", num: num, layout: layout || "h", nodes: [], floating: [],
-                   focus: [], parent: null, percent: 0, win: null, fullscreen: false };
+            ws = { type: "ws", num: num, layout: layout || "h", wsLayout: "default", lastSplit: "h",
+                   nodes: [], floating: [], focus: [], parent: null, percent: 0, win: null, fullscreen: false };
             this.workspaces[num] = ws;
         }
         return ws;
@@ -75,6 +79,20 @@ var Tree = (function () {
     }
     function isLeaf(con) { return con.nodes.length === 0; }  // con_is_leaf
     function isSplit(con) { return con.type === "con" && con.win === null; }
+    function isTabbing(layout) { return layout === "tabbed" || layout === "stacked"; }
+    // con_orientation: tabbed containers behave as horizontal ones, stacked as vertical.
+    function orient(con) { return con.layout === "stacked" ? "v" : con.layout === "tabbed" ? "h" : con.layout; }
+    // A split of i3's two split layouts (splith, splitv), not a tabbed or stacked container.
+    function isPlainSplit(con) { return isSplit(con) && !isTabbing(con.layout); }
+
+    // con_is_hidden: inside a tabbed or stacked container, behind the tab it shows.
+    function isHidden(con) {
+        for (var cur = con; cur && cur.type !== "ws"; cur = cur.parent) {
+            var p = cur.parent;
+            if (p && isTabbing(p.layout) && firstTiling(p.focus) !== cur) return true;
+        }
+        return false;
+    }
     function isFloating(con) { return con.type === "floating"; }
     function hasParent(con, parent) {                        // con_has_parent
         for (var c = con.parent; c; c = c.parent) if (c === parent) return true;
@@ -121,7 +139,7 @@ var Tree = (function () {
     function parentWithOrientation(con, o) {
         if (isFloating(con)) return null;
         var parent = con.parent;
-        while (parent && parent.layout !== o) parent = parent.parent;
+        while (parent && orient(parent) !== o) parent = parent.parent;
         return parent || null;
     }
 
@@ -157,10 +175,10 @@ var Tree = (function () {
         var most = null, nodes = con.nodes.filter(reachable);
         if (isLeaf(con)) return con;
         if (dir === LEFT || dir === RIGHT) {
-            if (con.layout === "h") most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];
+            if (orient(con) === "h") most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];
             else most = firstTiling(con.focus);
         } else {
-            if (con.layout === "v") most = dir === UP ? nodes[nodes.length - 1] : nodes[0];
+            if (orient(con) === "v") most = dir === UP ? nodes[nodes.length - 1] : nodes[0];
             else most = firstTiling(con.focus);
         }
         if (!most) return con;
@@ -212,16 +230,33 @@ var Tree = (function () {
 
     // _con_attach: a tiling child goes after the most recently focused tiling child (unless
     // ignoreFocus), else at the end; a floating one at the end. Focus: at the tail.
+    // A window attached to a workspace whose workspace_layout is tabbed or stacked goes into a new
+    // container of that layout (workspace_attach_to), at the end of its lists.
     function attach(con, parent, ignoreFocus) {
         con.parent = parent;
         if (isFloating(con)) {
             parent.floating.push(con);
         } else {
             var current = ignoreFocus ? null : firstTiling(parent.focus);
+            if (con.win !== null && parent.type === "ws" && parent.wsLayout !== "default") {
+                parent = workspaceAttachTo(parent);
+                con.parent = parent;
+                current = null;
+            }
             if (current) insertAfter(parent.nodes, current, con);
             else parent.nodes.push(con);
         }
         parent.focus.push(con);
+    }
+
+    // workspace_attach_to: where a window joining workspace `ws` goes: the workspace itself, or a
+    // new container of its workspace_layout.
+    function workspaceAttachTo(ws) {
+        if (ws.wsLayout === "default") return ws;
+        var c = newCon(ws.wsLayout);
+        attach(c, ws, false);
+        fixPercent(ws);
+        return c;
     }
 
     function detach(con) {                                   // con_detach (keeps con.parent)
@@ -377,12 +412,17 @@ var Tree = (function () {
     M.split = function (con, o) {
         if (!con || isFloating(con)) return;
         if (con.type === "ws") {
-            if (con.nodes.length < 2) { con.layout = o; return; }
+            if (con.nodes.length < 2) {
+                if (con.nodes.length === 0) con.wsLayout = "default";
+                con.layout = o;
+                return;
+            }
             con = wrapChildren(con, newCon(con.layout), true);       // workspace_encapsulate
         }
         var parent = con.parent;
-        // A container that is its parent's only child just changes the parent's orientation.
-        if (parent.nodes.length === 1) { parent.layout = o; return; }
+        // A container that is its parent's only child just changes the parent's orientation; a
+        // tabbed or stacked parent gets a new split inside it instead.
+        if (parent.nodes.length === 1 && !isTabbing(parent.layout)) { parent.layout = o; return; }
         var c = newCon(o);
         parent.nodes[parent.nodes.indexOf(con)] = c;
         parent.focus[parent.focus.indexOf(con)] = c;
@@ -395,18 +435,29 @@ var Tree = (function () {
     // ws_force_orientation: wrap the workspace's contents in a split with its old layout, and
     // give the workspace the new one.
     function forceOrientation(ws, o) {
-        var old = ws.layout;
+        var old = ws.layout, c = newCon(old);
+        c.lastSplit = ws.lastSplit;
         ws.layout = o;
-        wrapChildren(ws, newCon(old), false);
+        wrapChildren(ws, c, false);
         fixPercent(ws);
     }
 
-    // con_set_layout, for the split layouts.
+    // con_set_layout: the layout of con's parent (of con itself for a workspace): "h", "v",
+    // "tabbed" or "stacked". On a workspace with windows, they are wrapped in a new container that
+    // takes the layout; on an empty one, the layout is also its workspace_layout.
     M.setLayout = function (con, layout) {
+        if (!con || isFloating(con)) return;
         if (con.type !== "ws") con = con.parent;
+        if (con.layout === "h" || con.layout === "v") con.lastSplit = con.layout;
         if (con.type === "ws") {
-            if (con.nodes.length === 0) { con.layout = layout; return; }
-            wrapChildren(con, newCon(layout), false);
+            if (con.nodes.length === 0) {
+                con.wsLayout = isTabbing(layout) ? layout : "default";
+                con.layout = layout;
+                return;
+            }
+            var c = newCon(layout);
+            c.lastSplit = con.lastSplit;
+            wrapChildren(con, c, false);
             this.flatten();
             return;
         }
@@ -415,17 +466,29 @@ var Tree = (function () {
             var parent = con.parent, only = con.nodes[0];
             detach(only);
             attach(only, parent, true);
+            parent.lastSplit = con.lastSplit;
             this.closeCon(con, true);
             con = parent;
         }
         con.layout = layout;
     };
 
-    // con_toggle_layout(con, "split")
+    // con_toggle_layout(con, "split"): from a split to the other split; from tabbed or stacked,
+    // back to the split it was.
     M.toggleSplit = function (con) {
         if (!con || isFloating(con)) return;
         var parent = con.type === "ws" ? con : con.parent;
-        this.setLayout(con, parent.layout === "h" ? "v" : "h");
+        var layout = isTabbing(parent.layout) ? (parent.lastSplit || "h") : parent.layout === "h" ? "v" : "h";
+        this.setLayout(con, layout);
+    };
+
+    // level_up (cmd_focus_level "parent"): the focus goes to the parent container; from a
+    // floating window to its workspace; never above the workspace. Returns the new focus or null.
+    M.focusParent = function () {
+        var f = this.focused;
+        if (!f || f.type === "ws" || !f.parent) return null;
+        this.activate(f.parent);
+        return f.parent;
     };
 
     // tree_flatten: remove a one-child split whose child is a split of the other orientation and
@@ -433,9 +496,9 @@ var Tree = (function () {
     // after a move that re-parents and after con_set_layout on a workspace, not after a close.
     function flattenCon(model, con) {
         var parent = con.parent;
-        if (isSplit(con) && parent && con.nodes.length === 1) {
+        if (isPlainSplit(con) && parent && con.nodes.length === 1) {
             var child = con.nodes[0];
-            if (isSplit(child) && con.layout !== child.layout && child.layout === parent.layout) {
+            if (isPlainSplit(child) && con.layout !== child.layout && child.layout === orient(parent)) {
                 var focusNext = child.focus[0] || null;
                 while (child.nodes.length) {
                     var cur = child.nodes[0];
@@ -464,11 +527,12 @@ var Tree = (function () {
     // Not i3: a split whose only child is another split goes, and the child takes its place.
     // i3 keeps these, and each one stops a move one level short, so after some splitting and
     // moving a window took several presses to cross (seen 2026-10-22). A one-child split
-    // holding a window stays: that is what Split H makes, and what a move goes into. Called by
-    // every operation that can leave one: move (via flatten), close, float (not tile), send to
-    // workspace, drop, adopt.
+    // holding a window stays: that is what Split H makes, and what a move goes into. Only i3's
+    // split layouts: a tabbed or stacked container stays, and so does a split holding one.
+    // Called by every operation that can leave one: move (via flatten), close, float (not
+    // tile), send to workspace, drop, adopt.
     function tidyCon(con) {
-        while (isSplit(con) && con.nodes.length === 1 && isSplit(con.nodes[0])) {
+        while (isPlainSplit(con) && con.nodes.length === 1 && isPlainSplit(con.nodes[0])) {
             var parent = con.parent, child = con.nodes[0];
             parent.nodes[parent.nodes.indexOf(con)] = child;
             parent.focus[parent.focus.indexOf(con)] = child;
@@ -517,6 +581,7 @@ var Tree = (function () {
             var first = !!this.focused && wsOf(this.focused) === wsOf(con);
             detach(con);
             fixPercent(con.parent);
+            con = intoWorkspaceLayout(con, parent);
             con.parent = parent;
             if (first) parent.focus.unshift(con);
             else parent.focus.push(con);
@@ -550,6 +615,7 @@ var Tree = (function () {
         }
         detach(con);
         fixPercent(con.parent);
+        con = intoWorkspaceLayout(con, parent);
         con.parent = parent;
         if (parent === lca) {
             if (focusBefore) insertBefore(parent.focus, target, con);
@@ -564,6 +630,18 @@ var Tree = (function () {
         fixPercent(parent);
         this.onRemoveChild(oldParent);
     };
+
+    // insert_con_into (move.c:120-135): moving to a workspace respects its workspace_layout: con
+    // goes into a new container of that layout, which is what is then placed. Returns what to place.
+    function intoWorkspaceLayout(con, parent) {
+        if (parent.type !== "ws" || parent.wsLayout === "default") return con;
+        var split = workspaceAttachTo(parent);
+        attach(con, split, false);
+        con.percent = 0;
+        fixPercent(split);
+        detach(split);
+        return split;
+    }
 
     // attach_to_workspace: entering from the left/above puts it first, else last.
     M.attachToWorkspace = function (con, ws, dir) {
@@ -615,7 +693,7 @@ var Tree = (function () {
                 if (swap) {
                     if (!isLeaf(swap)) {
                         target = descendDirection(swap, dir);
-                        position = (target.parent.layout !== o || isBefore(dir)) ? "after" : "before";
+                        position = (orient(target.parent) !== o || isBefore(dir)) ? "after" : "before";
                         this.insertConInto(con, target, position);
                         this.flatten();
                         return;
@@ -639,7 +717,7 @@ var Tree = (function () {
         var next = stepReachable(above.parent.nodes, aIdx, isBefore(dir) ? -1 : 1);
         if (next && !isLeaf(next)) {
             target = descendDirection(next, dir);
-            position = (target.parent.layout !== o || isBefore(dir)) ? "after" : "before";
+            position = (orient(target.parent) !== o || isBefore(dir)) ? "after" : "before";
             this.insertConInto(con, target, position);
         } else if (!next && con.parent.parent && con.parent.parent.type === "ws" &&
                    liveChildren(con.parent, con) === 1) {
@@ -704,7 +782,8 @@ var Tree = (function () {
     // con_on_side_of_parent: con's edge facing `dir` is its parent's edge too.
     function onSideOfParent(con, dir) {
         var reverse = { left: RIGHT, right: LEFT, up: DOWN, down: UP }[dir];
-        return con.parent.layout !== orientationOf(dir) || descendDirection(con.parent, reverse) === con;
+        return orient(con.parent) !== orientationOf(dir) || isTabbing(con.parent.layout) ||
+            descendDirection(con.parent, reverse) === con;
     }
 
     function adjustRect(r, dir, t) {                          // adjust_rect
@@ -735,6 +814,19 @@ var Tree = (function () {
         } else if (type === CENTER) {
             rect = { x: rect.x + siblingSize, y: rect.y + siblingSize,
                      width: rect.width - 2 * siblingSize, height: rect.height - 2 * siblingSize };
+            // Not i3: onto a window outside a tab group, the centre is three bands: the top makes
+            // the two a tabbed group, the middle a stacked one, the bottom swaps them (G11). Onto
+            // a window in a group, the centre joins it, as i3's con_move_to_target.
+            if (isTabbing(target.parent.layout)) {
+                return { target: target, type: type, dir: null, rect: rect, band: "join" };
+            }
+            var third = rect.height / 3, bands = [], names = ["tabbed", "stacked", "swap"], band = null;
+            for (var i = 0; i < 3; i++) {
+                var b = { band: names[i], rect: { x: rect.x, y: rect.y + i * third, width: rect.width, height: third } };
+                bands.push(b);
+                if (!band && (y < b.rect.y + third || i === 2)) band = b.band;
+            }
+            return { target: target, type: type, dir: null, rect: rect, band: band, bands: bands };
         } else {
             rect = adjustRect(rect, dir, siblingSize);
         }
@@ -772,6 +864,29 @@ var Tree = (function () {
         return true;
     };
 
+    // Not i3 (the centre drop's top and middle bands): target and con become a tabbed or stacked
+    // group in target's place, con after target and shown. When the two are the only children
+    // of a container, that container takes the layout (as a sibling drop changes its parent's
+    // orientation) rather than wrapping them in another. False if con can't go there.
+    M.group = function (con, target, layout) {
+        if (!isTabbing(layout) || target.type !== "con" || target.win === null) return false;
+        if (con === target || hasParent(target, con) || !focusPermits(this, wsOf(target))) return false;
+        var p = target.parent;
+        if (p.type !== "ws" && (p.nodes.length === 1 || (p.nodes.length === 2 && con.parent === p))) {
+            if (p.layout === "h" || p.layout === "v") p.lastSplit = p.layout;
+            p.layout = layout;
+        } else {
+            var c = newCon(layout);
+            p.nodes[p.nodes.indexOf(target)] = c;
+            p.focus[p.focus.indexOf(target)] = c;
+            c.parent = p;
+            c.percent = target.percent;
+            target.percent = 0;
+            attach(target, c, false);
+        }
+        return this.moveToTarget(con, target);
+    };
+
     // con_swap, for two tiled leaves: each takes the other's place, share and fullscreen.
     M.swap = function (first, second) {
         if (first.type !== "con" || second.type !== "con" || first === second) return false;
@@ -803,16 +918,24 @@ var Tree = (function () {
         con.fullscreen = false;                                // con_disable_fullscreen
         if (plan.type === CENTER) {
             // As i3: a failed swap ends the drop with con's fullscreen already off; a move's
-            // result isn't checked.
-            if (swap) { if (!this.swap(con, target)) return setFs; }
+            // result isn't checked. `swap` is the bottom band's swap; the other bands group, and
+            // a centre onto a group's window joins it.
+            if (plan.band === "tabbed" || plan.band === "stacked") { if (!this.group(con, target, plan.band)) return setFs; }
+            else if (swap && plan.band !== "join") { if (!this.swap(con, target)) return setFs; }
             else this.moveToTarget(con, target);
         } else if (plan.type === SIBLING) {
-            if (target.parent.layout !== o) {
+            if (orient(target.parent) !== o) {
                 if (con.parent === target.parent && target.parent.nodes.length === 2) target.parent.layout = o;
                 else this.split(target, o);
             }
             this.insertConInto(con, target, position);
         } else {
+            // In a tabbed or stacked parent the target can be in the middle: the move starts from
+            // its first or last child instead, so con leaves the group (tiling_drag.c:370-385).
+            if (isTabbing(target.parent.layout)) {
+                var sib = target.parent.nodes;
+                target = position === "before" ? sib[0] : sib[sib.length - 1];
+            }
             if (con !== target) this.insertConInto(con, target, position);
             var old = this.focused;
             this.move(con, dir);
@@ -936,7 +1059,9 @@ var Tree = (function () {
         var current = con;
         // resize_find_tiling_participants(..., both_sides = true)
         while (current.type !== "ws") {
-            if (current.parent.layout === o && liveChildren(current.parent, current) > 1) break;
+            // stacked and tabbed containers are skipped (resize_find_tiling_participants)
+            if (orient(current.parent) === o && !isTabbing(current.parent.layout) &&
+                liveChildren(current.parent, current) > 1) break;
             current = current.parent;
         }
         if (current.type === "ws") return false;
@@ -962,12 +1087,12 @@ var Tree = (function () {
     // resize_find_tiling_participants(..., both_sides = false), then click.c's swap that puts the
     // container in front first: up from con to the first ancestor whose parent splits along dir's
     // orientation and has a sibling on dir's side. -> { first, second } | null (none up to the
-    // workspace). The model has no stacked or tabbed layouts, so no skipping of those.
+    // workspace), stacked and tabbed containers skipped.
     M.resizeParticipants = function (con, dir) {
         if (!con || con.type === "ws" || con.type === "floating") return null;
         var o = orientationOf(dir), backwards = isBefore(dir), first = con, second = null;
         while (first.type !== "ws" && first.type !== "floating" && !second) {
-            if (first.parent.layout !== o) { first = first.parent; continue; }
+            if (orient(first.parent) !== o || isTabbing(first.parent.layout)) { first = first.parent; continue; }
             var i = first.parent.nodes.indexOf(first);
             second = first.parent.nodes[backwards ? i - 1 : i + 1] || null;
             if (!second) first = first.parent;
@@ -1025,7 +1150,7 @@ var Tree = (function () {
             var parent = con.parent;
             // Minimized windows are not there to be focused: the siblings that are.
             var siblings = parent.nodes.filter(function (c) { return c === con || reachable(c); });
-            if (siblings.length > 1 && parent.layout === o) {
+            if (siblings.length > 1 && orient(parent) === o) {
                 var idx = siblings.indexOf(con);
                 var cand = previous ? siblings[idx - 1] : siblings[idx + 1];
                 if (cand && focusPermits(this, cand)) { next = cand; break; }
@@ -1084,8 +1209,9 @@ var Tree = (function () {
     // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
     // until focusWin() calls refine them.
     M.adopt = function (ws, spec) {
-        var self = this;
+        var self = this, wsLayout = ws.wsLayout;
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
+        ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
         function build(s, parent) {
             var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
             attach(c, parent, true);
@@ -1102,6 +1228,7 @@ var Tree = (function () {
             build(spec, ws);
         }
         fixPercent(ws);
+        ws.wsLayout = wsLayout;
         this.tidy();                // a tile that lost its other children to foreign windows
     };
 
@@ -1116,7 +1243,9 @@ var Tree = (function () {
 
     // ---- reading the tree ------------------------------------------------------------------
 
-    // "H[a V[b c*]] ~f": layout letter and children in order, * on the global focus, ! on a
+    var LETTER = { h: "H", v: "V", tabbed: "T", stacked: "S" };
+
+    // "H[a V[b c*]] ~f": layout letter (T tabbed, S stacked) and children in order, * on the global focus, ! on a
     // fullscreen leaf, then the floating windows. For tests and the debug log.
     M.describe = function (num) {
         var self = this, ws = this.workspaces[num];
@@ -1124,7 +1253,7 @@ var Tree = (function () {
         function d(c) {
             var mark = (c === self.focused ? "*" : "") + (c.fullscreen ? "!" : "") + (c.minimized ? "_" : "");
             if (c.type !== "ws" && c.win !== null) return String(c.win) + mark;
-            return c.layout.toUpperCase() + "[" + c.nodes.map(d).join(" ") + "]" + mark;
+            return LETTER[c.layout] + "[" + c.nodes.map(d).join(" ") + "]" + mark;
         }
         var s = d(ws);
         ws.floating.forEach(function (f) { s += " ~" + f.win + (f === self.focused ? "*" : "") + (f.minimized ? "_" : ""); });
@@ -1134,7 +1263,7 @@ var Tree = (function () {
     // A container's focus stack as window ids / "H[]" / "V[]", most recent first.
     M.focusOrder = function (con) {
         return con.focus.map(function (c) {
-            return c.win !== null ? (isFloating(c) ? "~" : "") + String(c.win) : c.layout.toUpperCase() + "[]";
+            return c.win !== null ? (isFloating(c) ? "~" : "") + String(c.win) : LETTER[c.layout] + "[]";
         });
     };
 
@@ -1154,6 +1283,8 @@ var Tree = (function () {
     return {
         Model: Model,
         wsOf: wsOf,
+        isHidden: isHidden,
+        orient: orient,
         nextWorkspace: nextWorkspace,
         LEFT: LEFT, RIGHT: RIGHT, UP: UP, DOWN: DOWN,
         SIBLING: SIBLING, CENTER: CENTER, PARENT: PARENT,

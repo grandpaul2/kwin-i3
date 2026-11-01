@@ -901,20 +901,20 @@ test("drag zones: a parent drop climbs while the parent is on that side too", ()
     assert.deepStrictEqual(p.rect, { x: 1175, y: 0, width: 25, height: 600 }, "on V's rect");
 });
 
-test("drop centre: after the target, focus where it was (con_move_to_target)", () => {
+test("drop centre, bottom band without swap: after the target, focus where it was (con_move_to_target)", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
-    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1000, 300), false));
+    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1000, 420), false));
     assert.strictEqual(d(m), "H[b c* a]");
     assert.deepStrictEqual(pct(m, "b", "c", "a"), [0.333, 0.333, 0.333]);
 });
 
-test("drop centre with the swap modifier: the two change places (con_swap)", () => {
+test("drop centre, bottom band with swap: the two change places (con_swap)", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
     m.resize(leaf(m, "a"), "width", 0.1);
     const before = pct(m, "a", "c");
-    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1050, 300), true));
+    assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1050, 420), true));
     assert.strictEqual(d(m), "H[c* b a]");
     assert.deepStrictEqual(pct(m, "c", "a"), before, "shares swapped with the places");
 });
@@ -965,7 +965,7 @@ test("drop onto an empty workspace: moved there, and focused if it was (tiling_d
 test("drop of an unfocused window: the focus stays", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
-    m.drop(leaf(m, "a"), plan(m, "a", "b", 600, 300), false);
+    m.drop(leaf(m, "a"), plan(m, "a", "b", 600, 420), false);
     assert.strictEqual(d(m), "H[b a c*]");
     assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["c", "a", "b"], "a heads the stack below the focus");
 });
@@ -974,7 +974,7 @@ test("drop of the focused fullscreen window: still fullscreen and focused after"
     const m = model();
     open(m, 1, "a", "b", "c");
     m.setFullscreen("c", true);
-    m.drop(leaf(m, "c"), plan(m, "c", "a", 200, 300), false);
+    m.drop(leaf(m, "c"), plan(m, "c", "a", 200, 420), false);
     assert.strictEqual(d(m), "H[a c*! b]");
 });
 
