@@ -81,7 +81,7 @@ test("every command has a label and a group", () => {
 test("the layout keys' table names registered actions with their registered US keys", () => {
     const cpp = fs.readFileSync(path.join(root, "plugin/layoutkeys.cpp"), "utf8");
     const slots = [...cpp.matchAll(/\{"(kwin-i3 [^"]+)", KEY_\w+, [01], [^,]+, "([^"]+)"\}/g)].map((m) => [m[1], m[2]]);
-    assert.strictEqual(slots.length, 37, "10 workspaces, 10 moves, two on the ; key, and the 15 letter keys by position");
+    assert.strictEqual(slots.length, 40, "10 workspaces, 10 moves, two on the ; key, and the 18 letter keys by position");
     const reg = Object.fromEntries(registered());
     for (const [action, us] of slots) assert.strictEqual(reg[action], us, action);
 });

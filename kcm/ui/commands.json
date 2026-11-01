@@ -62,6 +62,15 @@
       "Meta+Space"
      ]
     ]
+   },
+   {
+    "label": "Focus the parent container",
+    "actions": [
+     [
+      "kwin-i3 Focus Parent",
+      "Meta+A"
+     ]
+    ]
    }
   ]
  },
@@ -203,6 +212,24 @@
      [
       "kwin-i3 Toggle Split",
       "Meta+E"
+     ]
+    ]
+   },
+   {
+    "label": "Stacked",
+    "actions": [
+     [
+      "kwin-i3 Layout Stacking",
+      "Meta+S"
+     ]
+    ]
+   },
+   {
+    "label": "Tabbed",
+    "actions": [
+     [
+      "kwin-i3 Layout Tabbed",
+      "Meta+W"
      ]
     ]
    },

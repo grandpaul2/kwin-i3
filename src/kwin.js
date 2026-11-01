@@ -243,9 +243,53 @@ var KI3 = (function () {
         return w && !w.minimized && !(w.fullScreen && !w.tile);
     }
 
-    // -> null | { win } | { dir: "h"|"v", kids: [{ node, share }] }
+    // A tabbed or stacked group (i3's render_con_tabbed, render_con_stacked): every child gets the
+    // group's whole rect less the bar, the focused one on top. Here: a vertical pair, the bar's
+    // empty tile over the shown child's tiles. The other children's windows go into the tile of
+    // the shown child's focused window (`extra`), behind it, so they keep a tile at the group's
+    // place. The bar (rows of BAR_ROW px: one for tabbed, one per child for stacked) is shown, as
+    // i3 in its pixel look, only for more than one child; a group of one is its child alone.
+    // { bar, rows, members } is the bar's kid: its px come out of the `members` kids after it,
+    // which keeps them right when the pair merges into a vertical parent (setSizes).
+    var BAR_ROW = 24;
+    function projectGroup(con) {
+        var projected = [], byNode = [];
+        con.nodes.forEach(function (child) {
+            var p = project(child);
+            if (p) { projected.push(child); byNode.push(p); }
+        });
+        if (!projected.length) return null;
+        var shown = null;
+        for (var i = 0; i < con.focus.length && !shown; i++)
+            if (projected.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
+        var sp = byNode[projected.indexOf(shown)];
+        if (projected.length === 1) return sp;
+        var hidden = [];
+        projected.forEach(function (child, k) { if (child !== shown) hidden = hidden.concat(windowsOf(byNode[k])); });
+        var anchor = leafOf(sp, model.descendFocused(shown).win) || leafOf(sp, null);
+        anchor.extra = (anchor.extra || []).concat(hidden);
+        var members = sp.dir === "v" ? sp.kids : [{ p: sp, share: 1 }];
+        var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length };
+        return { dir: "v", kids: [{ p: bar, share: 0 }].concat(members) };
+    }
+    // Every window a projection places, extras included.
+    function windowsOf(p) {
+        if (p.bar) return [];
+        if (p.win !== undefined) return [p.win].concat(p.extra || []);
+        return [].concat.apply([], p.kids.map(function (k) { return windowsOf(k.p); }));
+    }
+    // The window leaf of a projection holding `win` (null: the first one).
+    function leafOf(p, win) {
+        if (p.bar) return null;
+        if (p.win !== undefined) return win === null || p.win === win ? p : null;
+        for (var i = 0; i < p.kids.length; i++) { var l = leafOf(p.kids[i].p, win); if (l) return l; }
+        return null;
+    }
+
+    // -> null | { win, extra } | { dir: "h"|"v", kids: [{ p, share }] } (a kid's p may be a bar)
     function project(con) {
         if (con.win !== null && con.type !== "ws") return visibleLeaf(con) ? { win: con.win } : null;
+        if (con.layout === "tabbed" || con.layout === "stacked") return projectGroup(con);
         var kids = [];
         var total = 0;
         con.nodes.forEach(function (child) {
@@ -259,7 +303,7 @@ var KI3 = (function () {
         var out = { dir: con.layout, kids: [] };
         kids.forEach(function (k) {
             var share = total > 0 ? k.share / total : 1 / kids.length;
-            if (k.p.dir === con.layout) {
+            if (k.p.dir === con.layout) {      // a bar's kids too: its px still come from its members
                 k.p.kids.forEach(function (g) { out.kids.push({ p: g.p, share: share * g.share }); });
             } else {
                 out.kids.push({ p: k.p, share: share });
@@ -271,11 +315,12 @@ var KI3 = (function () {
     // "H[a V[b c]]" over window ids, without sizes: equal shapes need only a resize.
     function shapeOfProjection(p) {
         if (!p) return "";
-        if (p.win !== undefined) return "w:" + p.win;
+        if (p.bar) return "b";
+        if (p.win !== undefined) return "w:" + [p.win].concat(p.extra || []).map(String).sort().join("+");
         return p.dir + "[" + p.kids.map(function (k) { return shapeOfProjection(k.p); }).join(" ") + "]";
     }
     function shapeOfTile(t) {
-        if (!t.tiles.length) return t.windows.length === 1 ? "w:" + id(t.windows[0]) : (t.windows.length ? "?" : "");
+        if (!t.tiles.length) return t.windows.length ? "w:" + t.windows.map(id).map(String).sort().join("+") : t.parent ? "b" : "";
         return (t.layoutDirection === 2 ? "v" : "h") + "[" +
             t.tiles.map(shapeOfTile).join(" ") + "]";
     }
@@ -283,6 +328,9 @@ var KI3 = (function () {
     // ---- reconcile: make one workspace's tiles match the model -------------------------------
 
     var refused = false;    // set when KWin refused a manage() during this reconcile
+    // This reconcile's group tiles (placeWindows): bars (empty on purpose), leaves holding the
+    // tabs behind the shown one, and each shown tab with the windows it must be above.
+    var barTiles = [], multiTiles = [], shownTabs = [];
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
@@ -532,7 +580,15 @@ var KI3 = (function () {
     // The smallest a projected subtree can be, in pixels: windows' minimum sizes (each with the
     // inner gap, half on each side) added up along a split and the largest across it.
     function minOf(p) {
-        if (p.win !== undefined) { var fm = frameMin(wins[p.win]), i = gaps().inner; return { w: fm.w + i, h: fm.h + i }; }
+        if (p.bar) return { w: 0, h: p.rows * BAR_ROW };
+        if (p.win !== undefined) {
+            var i = gaps().inner, m = { w: 0, h: 0 };
+            [p.win].concat(p.extra || []).forEach(function (k) {      // the tabs behind fit too
+                var fm = frameMin(wins[k]);
+                m.w = Math.max(m.w, fm.w + i); m.h = Math.max(m.h, fm.h + i);
+            });
+            return m;
+        }
         var r = { w: 0, h: 0 };
         p.kids.forEach(function (k) {
             var m = minOf(k.p);
@@ -571,11 +627,21 @@ var KI3 = (function () {
 
     // Returns true if anything had to change.
     function setSizes(tile, p, rect) {
-        if (p.win !== undefined) return false;
+        if (p.win !== undefined || p.bar) return false;
         var changed = false, h = p.dir === "h", n = h ? snapW : snapH;
         var start = h ? rect.x : rect.y, size = h ? rect.width : rect.height, pos = start;
+        var want = p.kids.map(function (k) { return k.share * size * n; });
+        // A bar takes its rows' px out of its group's members, whatever the shares merged into.
+        p.kids.forEach(function (k, i) {
+            if (!k.p.bar) return;
+            var bar = k.p.rows * BAR_ROW, total = 0, j;
+            for (j = i + 1; j <= i + k.p.members; j++) total += want[j];
+            var scale = total > bar ? (total - bar) / total : 0;
+            for (j = i + 1; j <= i + k.p.members; j++) want[j] *= scale;
+            want[i] = Math.min(bar, total);
+        });
         var px = fitMinimums(
-            p.kids.map(function (k) { return k.share * size * n; }),
+            want,
             p.kids.map(function (k) { var m = minOf(k.p); return h ? m.w : m.h; }),
             size * n);
         for (var i = 0; i < p.kids.length; i++) {
@@ -601,7 +667,7 @@ var KI3 = (function () {
 
     // Build p's shape under `tile`, which has no children. Returns nothing; windows come after.
     function build(tile, p) {
-        if (p.win !== undefined) return;
+        if (p.win !== undefined || p.bar) return;
         var dir = p.dir === "v" ? 2 : 1;
         if (tile.parent) tile.split(dir);          // a leaf becomes a layout with two children
         else { tile.layoutDirection = dir; tile.split(dir); }
@@ -614,9 +680,24 @@ var KI3 = (function () {
 
     // shown: the workspace's desktop is current on its monitor.
     function placeWindows(tile, p, shown) {
+        if (p.bar) {                                   // a group's bar: an empty tile
+            tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
+            barTiles.push(tile);
+            return;
+        }
         if (p.win !== undefined) {
-            var w = wins[p.win];
-            tile.windows.slice().forEach(function (o) { if (o !== w) unmanageFrom(tile, o); });
+            var w = wins[p.win], behind = (p.extra || []).map(function (k) { return wins[k]; });
+            tile.windows.slice().forEach(function (o) { if (o !== w && behind.indexOf(o) < 0) unmanageFrom(tile, o); });
+            if (behind.length) {
+                multiTiles.push(tile);
+                // The tabs behind first, then the shown one, which must end up on top of them.
+                behind.forEach(function (b) {
+                    if (shown && b.tile !== tile && tile.windows.indexOf(b) >= 0) unmanageFrom(tile, b);
+                    if (tile.windows.indexOf(b) < 0) manageInto(tile, b);
+                    else { expected[id(b)] = tile; tiledBorder(b); }
+                });
+                shownTabs.push({ w: w, behind: behind });
+            }
             // Listed is not placed: a tile managed while its desktop was hidden lists the window
             // but never requested it (Tile::manage), and manage() again returns early for a window
             // it already lists. Once shown: off the list, then on (fuzzer I4, a monitor unplug).
@@ -805,6 +886,19 @@ var KI3 = (function () {
         fitToTile(w, t);
     }
 
+    // i3 raises a group's focused child over the others (render.c:196). Activating a tab raises
+    // it, but the shown tab of a group without the focus can come up by the tree alone (the one
+    // shown before closed): raised, so the tree's shown tab is the one on top.
+    function raiseShownTabs() {
+        if (!shownTabs.length) return;
+        var order = workspace.stackingOrder;
+        shownTabs.forEach(function (t) {
+            var at = order.indexOf(t.w);
+            if (at < 0) return;
+            if (t.behind.some(function (b) { return order.indexOf(b) > at; })) workspace.raiseWindow(t.w);
+        });
+    }
+
     var selftestBroken = false;   // debug only: every reconcile throws (tests the backoff)
     function reconcile(ws) {
         if (!ws || released) return;
@@ -826,6 +920,7 @@ var KI3 = (function () {
         var p = project(ws);
         gapCache[ws.num] = computeGaps(ws, p);   // a float above may have left one window
         refused = false;
+        barTiles = []; multiTiles = []; shownTabs = [];
         // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
@@ -856,6 +951,7 @@ var KI3 = (function () {
             setSizesStable(root, p, area);
             prepareTiles(root, area);           // then each leaf gets its window's minimum
             refit(root);
+            raiseShownTabs();
             settleDragArms(ws);
         }
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
@@ -1038,8 +1134,8 @@ var KI3 = (function () {
         if (!sameRect(root.relativeGeometry, rootRect(area, ws))) problems.push("root not inset for the gaps");
         (function walk(t) {
             if (t.padding !== inner) problems.push("padding " + t.padding + ", gaps " + inner);
-            if (!t.tiles.length && t.windows.length > 1) problems.push("tile holds " + t.windows.length + " windows");
-            if (!t.tiles.length && t.windows.length === 0 && p) problems.push("empty leaf tile");
+            if (!t.tiles.length && t.windows.length > 1 && multiTiles.indexOf(t) < 0) problems.push("tile holds " + t.windows.length + " windows");
+            if (!t.tiles.length && t.windows.length === 0 && p && barTiles.indexOf(t) < 0) problems.push("empty leaf tile");
             if (t.tiles.length) {
                 var h = t.layoutDirection !== 2, pos = h ? t.relativeGeometry.x : t.relativeGeometry.y;
                 t.tiles.forEach(function (c) {
@@ -1083,6 +1179,18 @@ var KI3 = (function () {
                          x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };
             }
             var e = null;
+            if (c.layout === "tabbed" || c.layout === "stacked") {
+                // A group's extent is its shown child's plus the bar above it; the children
+                // behind share the shown one's tile, so their own shares are left alone.
+                var shown = null, n = 0;
+                c.nodes.forEach(function (k) { k._extent = null; if (project(k)) n++; });
+                for (var i = 0; i < c.focus.length && !shown; i++) if (project(c.focus[i])) shown = c.focus[i];
+                if (!shown) return null;
+                e = extent(shown);
+                shown._extent = e;
+                if (e && n > 1) e = { x: e.x, y: Math.max(lo.y, e.y - (c.layout === "stacked" ? n : 1) * BAR_ROW), x2: e.x2, y2: e.y2 };
+                return e;
+            }
             c.nodes.forEach(function (k) {
                 var r = extent(k);
                 k._extent = r;
@@ -1164,7 +1272,9 @@ var KI3 = (function () {
     var focusTold = null;
     function tellFocused() {
         if (!effectSeen) return;
-        var c = model.focused, key = c && c.win !== undefined && c.win !== null && wins[c.win] ? String(c.win) : "";
+        var c = model.focused;
+        if (c && c.type === "con" && c.win === null) c = model.descendFocused(c);     // focus parent
+        var key = c && c.win !== undefined && c.win !== null && wins[c.win] ? String(c.win) : "";
         if (focusTold === key) return;
         focusTold = key;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", key);
@@ -1175,8 +1285,10 @@ var KI3 = (function () {
         tellFocused();
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
+        // i3 draws every window in the focused container as focused (x.c: con_inside_focused).
         function cls(c) {
-            return c === model.focused ? "focused" : "unfocused";
+            for (var p = c; p; p = p.parent) if (p === model.focused) return "focused";
+            return "unfocused";
         }
         function send(key, c, ind, hidden) {
             var v = c + "|" + ind + "|" + hidden;
@@ -1191,7 +1303,7 @@ var KI3 = (function () {
             model.leaves(ws).forEach(function (c) {
                 var w = wins[c.win];
                 if (!w) return;
-                var ind = c.parent.nodes.length === 1 ? (c.parent.layout === "h" ? "right" : "bottom") : "", sides = [];
+                var pl = c.parent.layout, ind = c.parent.nodes.length === 1 && (pl === "h" || pl === "v") ? (pl === "h" ? "right" : "bottom") : "", sides = [];
                 if (!g.ring) sides = ["top", "right", "bottom", "left"];
                 else if ((hide === "vertical" || hide === "horizontal" || hide === "both") && w.tile && root && g.gap === 0) {
                     var r = w.tile.relativeGeometry, rr = root.relativeGeometry;
@@ -1778,6 +1890,12 @@ var KI3 = (function () {
             // a monitor unplugged, its workspace reconciled on the other while still hidden).
             schedule(ws);
         }
+        // A container focused (focus parent): KWin's focus goes to the window it would descend
+        // to, as i3's X focus follows con_descend_focused.
+        if (f.type === "con" && f.win === null) {
+            var d = model.descendFocused(f);
+            if (d !== f && d.win !== null) f = d;
+        }
         if (f.type === "ws" || f.win === null) {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
@@ -1810,8 +1928,11 @@ var KI3 = (function () {
     }
 
     function focusedCon() {
-        var w = workspace.activeWindow;
+        var w = workspace.activeWindow, f = model.focused;
         if (w && model.byWin[id(w)]) {
+            // A container chosen with focus parent stays focused while KWin's active window is in it.
+            for (var p = model.byWin[id(w)].parent; f && f.type === "con" && f.win === null && p; p = p.parent)
+                if (p === f) return f;
             model.focusWin(id(w));
             return model.byWin[id(w)];
         }
@@ -1919,7 +2040,7 @@ var KI3 = (function () {
     // is_tiling_drop_target: a tiled window shown, not under another's fullscreen.
     function dropTargetsOf(ws) {
         var fs = model.fullscreenOn(ws);
-        return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && (!fs || fs === c); });
+        return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && !Tree.isHidden(c) && (!fs || fs === c); });
     }
     function hasDropTargets(floating) {     // has_drop_targets; a floating window needs only one
         var n = 0;
@@ -1967,6 +2088,12 @@ var KI3 = (function () {
         var t = w.clientGeometry.y - w.frameGeometry.y;
         return (t > 0 ? t : 20) + 5;
     }
+    // The centre's band under the pointer (tabbed, stacked, swap), for the indicator.
+    function bandRect(plan) {
+        if (!plan.bands) return null;
+        for (var i = 0; i < plan.bands.length; i++) if (plan.bands[i].band === plan.band) return plan.bands[i].rect;
+        return null;
+    }
     function indicate(rect) {
         var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
         var key = r.join(",");
@@ -1983,7 +2110,7 @@ var KI3 = (function () {
             var con = drag.con;
             if (model.byWin[f[1]] !== con || con.type !== drag.type) { endDrag("its window is gone"); return; }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, parentZone(wins[con.win]));
-            if (phase === "drag") { indicate(drag.plan && drag.plan.rect); return; }
+            if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect)); return; }
             dropOn(drag.plan, " at " + x + "," + y);
             return;
         }
@@ -1992,16 +2119,17 @@ var KI3 = (function () {
     // The drop, by plan (the drag's last, or the release's).
     function dropOn(plan, where) {
         var con = drag.con, from = Tree.wsOf(con), to = plan && Tree.wsOf(plan.target);
-        // A centre drop onto a window swaps the two, Shift or not (i3 moves
-        // it after the target, which without tabs is the same as the side drop).
-        // Onto an empty workspace it is a move: nothing there to swap with. A floating window
-        // (float to tile, §9 G13) goes after the target, i3's centre drop: a swap would float it.
+        // A centre drop onto a window: its top band makes the two a tabbed group, its middle a
+        // stacked one, its bottom swaps them, Shift or not (§9 G11); onto a window in a group it
+        // joins the group (i3's con_move_to_target). Onto an empty workspace it is a move. A
+        // floating window (float to tile, §9 G13) goes after the target in the bottom band: a
+        // swap would float the target.
         var swap = !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws" && drag.type === "con";
         var unfloated = drag.type === "floating" && plan ? unfloatForDrop(con) : null;
         if (unfloated) con = unfloated;
         // Unfloated, the tree changed whatever the drop does after.
         var dropped = (drag.type !== "floating" || !!unfloated) && (model.drop(con, plan, swap) || !!unfloated);
-        endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (swap ? " (swap)" : "") +
+        endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (plan.band ? " " + plan.band : "") + (swap ? " (swap)" : "") +
                           where : "no drop" + where);
         if (dropped) {
             schedule(from);
@@ -2326,6 +2454,10 @@ var KI3 = (function () {
         "Split H": function (c) { model.split(c, "h"); indicatorFor = c; },
         "Split V": function (c) { model.split(c, "v"); indicatorFor = c; },
         "Toggle Split": function (c) { model.toggleSplit(c); indicatorFor = c; },
+        // i3's layout stacking / layout tabbed: the focused window's container (con_set_layout).
+        "Layout Stacking": function (c) { if (c) model.setLayout(c, "stacked"); },
+        "Layout Tabbed": function (c) { if (c) model.setLayout(c, "tabbed"); },
+        "Focus Parent": function () { model.focusParent(); },
         "Floating Toggle": function (c) {
             if (!c) return;
             var w = wins[c.win];
@@ -2583,6 +2715,8 @@ var KI3 = (function () {
 
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
+        // Meta+W is Plasma's Overview on a stock install: make take-keys frees it, as any other.
+        "Layout Stacking": ["Meta+S"], "Layout Tabbed": ["Meta+W"], "Focus Parent": ["Meta+A"],
         "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
         "Fullscreen": ["Meta+F"], "Close": ["Meta+Shift+Q"],
         "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],

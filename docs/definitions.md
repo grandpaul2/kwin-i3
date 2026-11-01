@@ -62,13 +62,14 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 | **tree** | kwin-i3's model of every output's workspaces and their containers (`src/tree.js`); "the model" in older docs is the tree | the tree (`tree.c`) |
 | **container** | any node: a workspace, a split container or a window's container | con |
 | **split container** | a container holding others, side by side (`splith`) or one above the other (`splitv`); it draws nothing | split con |
-| **layout** | a split container's or workspace's `splith` or `splitv`; its **orientation** is h or v. i3's `layout` also has `stacked` and `tabbed`, out of scope | `layout`, `con_orientation` |
+| **layout** | a container's or workspace's `splith`, `splitv`, `tabbed` or `stacked`; its **orientation** is h or v, tabbed counting as h and stacked as v | `layout`, `con_orientation` |
 | **leaf** | a container holding a window | a window's con |
 | **share** | a child's fraction of its parent along the split | `percent` |
 | **focus stack** | each container's children, most recently focused first | `focus_head` |
-| **the focus** | the one container the tree has focused: a window, or an empty workspace | `focused` |
+| **the focus** | the one container the tree has focused: a window, a container (after focus parent), or an empty workspace | `focused` |
+| **group** | a tabbed or stacked container: its children share its place, one shown, under its **bar** (one row of tabs, or one row per child) | a tabbed or stacked con |
 | **flatten** | i3's removal of a redundant split: a one-child split whose child is a split of the other orientation, where the child's orientation matches the grandparent's (`tree.c:657-690`) | `tree_flatten` |
-| **tidy** | removing every one-child split whose only child is a split, flatten's shape included; run after every change, flatten only where i3 calls `tree_flatten` (≠ i3, `plan.md` decision 8) | — |
+| **tidy** | removing every one-child split (`splith`, `splitv`) whose only child is such a split, flatten's shape included; run after every change, flatten only where i3 calls `tree_flatten` (≠ i3, `plan.md` decision 8) | — |
 
 ## Workspaces and outputs
 

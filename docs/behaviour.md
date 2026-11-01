@@ -84,8 +84,11 @@ function names the i3 function it ports.
 
 ### The model
 
-- **Nodes.** A workspace (`ws`: number, layout `h` or `v`, tiling children, floating children,
-  focus stack). A split (`con` with no window: layout, children, focus stack, share). A leaf
+- **Nodes.** A workspace (`ws`: number, layout, `workspace_layout`, tiling children, floating
+  children, focus stack). A split (`con` with no window: layout, children, focus stack, share).
+  A layout is `h` or `v` (i3's splith, splitv), `tabbed` or `stacked`; a tabbed container counts
+  as horizontal and a stacked one as vertical wherever a direction is asked (`con_orientation`),
+  and each container remembers its last split layout for Meta+E. A leaf
   (`con` with a window). A floating node (one node per window, not i3's wrapper container).
 - **Focus stacks**, most recent first, in every container. Only a workspace's stack holds
   floating nodes.
@@ -95,7 +98,7 @@ function names the i3 function it ports.
   the workspace focus was last on.
 - **Departures from i3, by design**: workspaces are KWin desktops and are never closed when empty;
   outputs are not modelled (the adapter supplies the neighbouring output); fullscreen is a flag on
-  a leaf (i3's output fullscreen only); no tabbed or stacked layout, no marks, no urgency, no
+  a leaf (i3's output fullscreen only); no marks, no urgency, no
   scratchpad (`docs/plan.md`, "Scope"); a minimized window stays in the tree, skipped by every
   descent, focus move and insertion (`reachable`), i3's scratchpad stand-in (§5 C9, §10 V7).
 
@@ -107,7 +110,8 @@ function names the i3 function it ports.
 - **`tidy`** **≠** i3 (`plan.md` decision 8): a split whose only child is a split is
   replaced by that child, repeatedly: every such shape, flatten's included, so after a close it
   removes at once what i3's flatten would remove only at the next move. A one-child split holding
-  a window stays. Run after a move (`flatten` calls it), a close, floating a window, sending one to a workspace, a drop and the
+  a window stays. Only splits (`h`, `v`): a tabbed or stacked container is never removed, nor a
+  split holding one, by tidy or flatten. Run after a move (`flatten` calls it), a close, floating a window, sending one to a workspace, a drop and the
   adoption at load; not after tiling a floating window.
 
 ### Operations
@@ -125,7 +129,7 @@ moves can end differently from i3's, and a replay in real i3 matches only with t
 | T3 | **Split** (`split`; Meta+H, Meta+V) on a window | its parent has one child: the parent takes the direction; else the window is wrapped in a new split of that direction, even when the parent already has it | = | `tree_split` |
 | T4 | Split with the workspace focused (an empty workspace) | under two children: the workspace takes the direction; else its children are wrapped first (`workspace_encapsulate`), then as T3 | = | `tree_split` |
 | T5 | Split on a floating window | nothing | = | `tree_split`: "Floating containers can't be split" |
-| T6 | **Toggle split** (`toggleSplit`; Meta+E) | the window's parent flips direction (after i3's #3001 rule: a parent and grandparent each holding one child are collapsed first); at the workspace's top level, the workspace's children are wrapped in a split of the other direction, then flattened (and tidied) | = | `layout toggle split`. i3's bare `layout toggle` also cycles tabbed and stacked: out of scope |
+| T6 | **Toggle split** (`toggleSplit`; Meta+E) | the window's parent flips direction (after i3's #3001 rule: a parent and grandparent each holding one child are collapsed first); at the workspace's top level, the workspace's children are wrapped in a split of the other direction, then flattened (and tidied). From a tabbed or stacked container: back to the split it was (side by side if it never was one) | = | `layout toggle split` (`con_toggle_layout`). i3's bare `layout toggle`, which cycles stacked and tabbed too, is bound to no key |
 | T7 | **Move** (`move`; Meta+Shift+direction), a leaf beside it in the same split | the two swap | = | `tree_move` |
 | T8 | Move, a split beside it | enters that split at the edge facing the move, then `flatten` (and tidy) | = | `tree_move` |
 | T9 | Move, no sibling that way | climbs out to the nearest ancestor of that direction, creating one at the top if none (`ws_force_orientation`) | = | `tree_move` |
@@ -144,6 +148,10 @@ moves can end differently from i3's, and a replay in real i3 matches only with t
 | T22 | Focus a direction past a fullscreen window | only to the next output, in all four directions, tiling or floating (with `focusWrapping` `workspace`: nowhere) | = | `con_fullscreen_permits_focusing` (`con.c:2327-2364`), from the focus's own fullscreen ancestor: with the focus on another window of that workspace (after an activation), it moves on, as i3 (before, the workspace's fullscreen window refused it, here and in T11) |
 | T23 | **Focus mode toggle** (`focusModeToggle`; Meta+Space) | between the workspace's most recent floating window and its most recent tiling one | = | `focus mode_toggle` |
 | T24 | **Move to a workspace** (`moveToWorkspace`) | after the target's focused container; focus stays on the source, on i3's next focus there. A fullscreen window arriving where another is fullscreen clears the other's flag; a window arriving under a fullscreen window doesn't take that workspace's focus | = | `con_move_to_workspace` |
+| T25 | **Layout tabbed / stacked** (`setLayout`; Meta+W, Meta+S) | the focused window's container takes the layout; at the workspace's top level, the workspace's children are wrapped in a new container of that layout; on an empty workspace, the workspace takes it as its layout and its `workspace_layout`, so the windows that open there go into a new container of that layout | = | `con_set_layout`, `workspace_attach_to`. With a container focused (T27), that container's parent |
+| T26 | Focus and move inside a tabbed or stacked container | tabbed: left and right step through the tabs, up and down leave the group; stacked: up and down, left and right leave it; a move reorders the same way; a window opened in the group goes after the focused tab | = | `con_orientation`, `get_tree_next`, `tree_move` |
+| T27 | **Focus parent** (`focusParent`; Meta+A) | the focused container's parent takes the focus; from a floating window, its workspace; never above the workspace. KWin's focus stays on the window the container would descend to; every window in the focused container is drawn focused; a window opened then goes beside the container, and a move or a layout key acts on the whole container | = | `level_up`; `con_inside_focused` (x.c) for the look |
+| T28 | Resize inside a tabbed or stacked container | the container is skipped: the resize goes to the nearest split around it | = | `resize_find_tiling_participants` |
 
 ---
 
@@ -431,7 +439,16 @@ can hold:
 - minimized windows, and fullscreen windows KWin has taken out of their tile, are left out; their
   share goes to their siblings;
 - one-child splits collapse; a split inside one of the same direction merges into it, shares
-  multiplied through.
+  multiplied through;
+- a **tabbed or stacked** container is a vertical pair: an empty bar tile, then the tiles of the
+  child it shows (its focused one). The bar is 24 px for tabbed and 24 px a child for stacked,
+  taken out of the group's own share, so the pair stays right when it merges into a vertical
+  parent. The other children's windows go into the tile of the shown child's focused window,
+  behind it, and the shown child's window is raised when it isn't on top (i3's raise of a
+  group's focused child, `render.c`). A group of one child has no bar and is that child alone,
+  as i3 with its `pixel` border (`render_con_tabbed`: the bar only for more than one child or a
+  `normal` border). After a border drag, a group's share is read from its shown child's tiles
+  and its bar; the children behind keep theirs.
 
 `reconcileNow` then, per workspace: moves windows that are on the wrong desktop or output
 (below), refreshes the floating windows' look, floats what can't fit, and compares the projection
@@ -635,8 +652,8 @@ with `$mod` as the wizard's Win choice.
 | K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Meta+R leave; the four actions themselves unbound (a user who wants them flat binds them) | ≠ | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; Meta+R exactly, as i3 matches modifiers exactly (`bindings.c`), so Meta+Shift+R doesn't leave; every other key goes on, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`). ≠: **Plasma's shortcuts still run** (volume, screenshot, the launcher), where i3's mode leaves only its own keys bound and every other key reaches the window: `philosophy.md`, Plasma does hardware and the rest. The screen locking doesn't leave the mode, as i3. The sign: a banner at the top of the tree's focused window (`SetFocused`; before, KWin's active window, so KRunner took it), drawn by the effect (`SetMode`), in the frame's active colour, reading "Resize (Esc)": i3's bar shows only the mode's name, `resize` (i3bar's binding mode button, `xcb.c:2172`), here with the way out. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing and the load report says so (§13). Before, Meta+Ctrl+arrows and Meta+Ctrl+J K L ; |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
-| K7 | Stacking, Tabbed (i3: Meta+S, Meta+W) | none | ≠ | Out (`plan.md` Scope). Meta+W is Plasma's Overview |
-| K8 | Focus Parent (i3: Meta+A) | none | ≠ | Out (`plan.md`, "Out"); tidy's removal of a split holding only a split rests on it (`plan.md` decision 8). **Kept**: out: it needs a focused group of windows drawn and tidy revisited, a feature, not a key |
+| K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: `make take-keys` frees it (the Overview stays on the top-left screen corner and Grid View on Meta+G) |
+| K8 | Focus Parent | Meta+A | = | `focus parent` (§2 T27) |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
 | K11 | Fullscreen | Meta+F | = | KWin's Window Fullscreen; how it differs from i3's is §10 |
@@ -667,7 +684,7 @@ KWin matches a shortcut by the typed symbol, not the key's position. With the he
 position keys are refitted to the current layout at load, on every layout change and on the
 script's `FitKeys`: Workspace 1-10, Move to Workspace 1-10, Focus Right (;), Move Right (:), and
 the letters i3 binds by keycode: Focus and Move Left,
-Down, Up (J K L), Split H, Split V, Toggle Split (E), Fullscreen (F), Resize Mode (R), Launcher
+Down, Up (J K L), Split H, Split V, Toggle Split (E), Layout Stacking (S), Layout Tabbed (W), Focus Parent (A), Fullscreen (F), Resize Mode (R), Launcher
 (D), Close (Shift+Q), Reload Settings (Shift+C), Exit (Shift+E). So on Dvorak or AZERTY the keys
 keep their QWERTY places, as i3 4.24's `etc/config.keycodes` through `i3-config-wizard` gives them
 (a shifted key types its Shift symbol where the place holds no letter: Close on Dvorak is
@@ -722,9 +739,9 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | G8 | What is under the pointer (`find_drop_target`) | the tiling windows of every visible workspace, any output, not under another's fullscreen (`is_tiling_drop_target`); over no window (a gap), **the focused tiling window of the workspace shown there**, else that workspace if empty | ≠ | Was written as "the visible workspace there", which the code doesn't do. Over a gap the pointer is outside that window, and which side it lands on is then judged from the pointer: ≠ kept, i3's own result there comes from unsigned arithmetic going negative, not a rule |
 | G9 | Where on the target (`drag_callback`) | within 30 % of its smaller side (at least 2 px) of an edge: beside it on that side; within the **parent strip** (`render_deco_height()` + 5 px, capped 1 px inside the side zone) on a side its parent shares: beside the highest ancestor on that side; else the centre | = | `render_deco_height()` is the title bar's height in the title-bar look, else 20 px (about i3's default font's). Dropped onto itself: only a parent drop does anything |
 | G10 | A side or parent drop | as i3: a split where the orientation differs (or the two-window parent flips), then inserted; a parent drop moves it out with i3's move | = | `DT_SIBLING`, `DT_PARENT` |
-| G11 | A centre drop onto a window | the two **swap**, Shift or not; onto an empty workspace it moves there | ≠ | i3 moves it after the target (`con_move_to_target`), and swaps with the swap modifier. Kept, judged live: without tabs, i3's centre move is the same as a side drop, so the centre would add nothing |
+| G11 | A centre drop onto a window | outside a tabbed or stacked container, the centre is three bands of equal height, each kept on a small window: the **top** makes the two a tabbed group, the **middle** a stacked one (the dragged window after the target and shown; two windows alone in a split turn that split instead of being wrapped), the **bottom** swaps them, Shift or not; the indicator is the band under the pointer. Onto a window in a group: it joins the group, after that window. Onto an empty workspace it moves there | ≠ | i3 moves it after the target (`con_move_to_target`), which joins a group and is a side drop elsewhere, and swaps with the swap modifier; it never makes a group by dragging. Reason (c), a mouse feature for the Plasma audience, as G5 and G13: making a group needs no key |
 | G12 | The dragged window fullscreen | it leaves fullscreen for the drop and gets it back, unless the target workspace has a fullscreen window and it didn't have focus | = | the end of `tiling_drag` |
-| G13 | **Float to tile**: Meta+Shift+left on a floating window of kwin-i3's (with `tilingDrag`'s `modifier`; otherwise KWin's move) | a tiling drag of it, as G1 and G6-G10, G12: no activation, the indicator, any key cancels; dropped, it is tiled first (as the floating toggle, T17: unstuck, the floating look gone), then placed as a tiled window would be; **a centre drop puts it after the target**, no swap. Cancelled: it stays floating where it was. **Once per press of the keys**: after a Meta+Shift drag ends, either way (this or G5), a further Meta+Shift+left press does nothing until Meta or Shift is released. With nowhere to drop (no tiled window or empty workspace shown), the press does nothing | + | i3 never tiles a floating window by dragging (`click.c:251-258` guards the tiling drag with `!floatingcon`; Shift only means `proportional`, `:221`). Reason (c): **judged live**, G5's other half. The centre is i3's own centre drop (`con_move_to_target`): G11's swap is for two tiled windows, and here it would float the target |
+| G13 | **Float to tile**: Meta+Shift+left on a floating window of kwin-i3's (with `tilingDrag`'s `modifier`; otherwise KWin's move) | a tiling drag of it, as G1 and G6-G10, G12: no activation, the indicator, any key cancels; dropped, it is tiled first (as the floating toggle, T17: unstuck, the floating look gone), then placed as a tiled window would be; **the centre's top and middle bands group it as G11; the bottom band puts it after the target**, no swap. Cancelled: it stays floating where it was. **Once per press of the keys**: after a Meta+Shift drag ends, either way (this or G5), a further Meta+Shift+left press does nothing until Meta or Shift is released. With nowhere to drop (no tiled window or empty workspace shown), the press does nothing | + | i3 never tiles a floating window by dragging (`click.c:251-258` guards the tiling drag with `!floatingcon`; Shift only means `proportional`, `:221`). Reason (c): **judged live**, G5's other half. The centre is i3's own centre drop (`con_move_to_target`): G11's swap is for two tiled windows, and here it would float the target |
 
 **Z. Tiling resize (Meta+right-drag)**
 
@@ -910,7 +927,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N1 | `gaps inner \| outer` | `gapsInner`, `gapsOuter` (outer added to inner at the edges, as i3) | = | the defaults differ: §7 L5 |
 | N2 | `gaps horizontal \| vertical \| top \| right \| bottom \| left`, and `workspace N gaps …` | `gapsTop`, `gapsRight`, `gapsBottom`, `gapsLeft` (each `gapsOuter` unless set), and `workspaceGaps` in i3's words and meaning, in place of the global values (§6) | = (≠ for a negative edge: down to half the inner gap, §6; the per-side keys from 0) | |
 | N3 | `default_orientation` | `defaultOrientation` | = | |
-| N4 | `workspace_layout default \| stacking \| tabbed` | none | ≠ | kept: tabbed and stacked are out (§8 K7) |
+| N4 | `workspace_layout default \| stacking \| tabbed` | no setting; Meta+W or Meta+S on an empty workspace sets it (§2 T25), as in i3 | ≠ | the setting itself: not yet offered |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |
 | N6 | `focus_follows_mouse` | KWin's focus policy (System Settings) | ≠ | reason (e): Plasma's own setting stands in; the default differs (§5 B1) |
 | N7 | `mouse_warping output \| none` | `mouseWarping`, `output` (default) or `none` (§5 A2) | = | |

@@ -8,6 +8,15 @@
  "Toggle Split": [
   "Meta+E"
  ],
+ "Layout Stacking": [
+  "Meta+S"
+ ],
+ "Layout Tabbed": [
+  "Meta+W"
+ ],
+ "Focus Parent": [
+  "Meta+A"
+ ],
  "Floating Toggle": [
   "Meta+Shift+Space"
  ],
