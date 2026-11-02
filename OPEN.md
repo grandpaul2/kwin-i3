@@ -99,9 +99,26 @@ helper's `Window::move` per motion stayed in step on all 30 steps of a Meta+drag
 on a press; resized live by `moveResize` (each half of the joint rect), a quick client landed every
 step within 1 ms, while a client slow to redraw (100 ms) answered only the last of 30 steps, the
 two windows landing 60 ms apart (120 and 181 ms after the last step): between them the pair shows
-torn, the hold's job as for a tiled layout. Next: plan the build: the model's node first (`src/tree.js`,
-unit-tested as i3's `floating_enable` / `floating_disable`), then the helper's move, resize and
-raise, the hold for a resize, the look.
+torn, the hold's job as for a tiled layout. **The model takes i3's shape** (no reason in `plan.md`
+for the one-node floating window, `src/tree.js` header): every floating thing is a floating
+container (`CT_FLOATING_CON`, `include/data.h:666`) holding one child, a leaf or a split, the
+floating flag on the child (`floating.c:357`), `con_inside_floating` (`con.c:696`) for the
+commands, focus parent skipping the wrapper (`tree.c:392`), the wrapper closed when its child goes
+(`con.c:2246`); a split down to one window stays a split, as i3 (no flattening), and is KWin's to
+move, being one floating window (`plan.md` "The mouse"). Without the helper, floating a container
+does nothing and the load report says so, as K4 and K18. Next, in commits: (1) the wrapper for every
+floating window, no behaviour change (unit tests and scenarios unchanged); (2) `floating_enable` /
+`floating_disable` on a split, unit-tested, the size as `floating.c:331-342` over each window's
+untiled rect; (3) `kwin.js`: its windows laid out in its rect by `frameGeometry`, frames, raised
+together, sticky, a workspace move, fullscreen; (4) the helper's move, resize, raise, title bars
+and edges; (5) the hold for a resize; (6) docs: `definitions.md`, `behaviour.md` rows, `plan.md`'s
+drop-target row.
+
+**81. Outputs in the model** (`src/tree.js` header, `behaviour.md` §2). i3's tree has its outputs
+(`CT_OUTPUT` between root and workspaces, `include/data.h`); the model has none, the adapter
+answering `env.outputNeighbour`, and no reason for it is written in `plan.md`. Next: port i3's
+output level into the model, or name the `plan.md` reason it rests on (reason (a): KWin owns the
+screens, if it holds), and write it beside the header line.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
