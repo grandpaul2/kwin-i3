@@ -106,8 +106,8 @@ floating flag on the child (`floating.c:357`), `con_inside_floating` (`con.c:696
 commands, focus parent skipping the wrapper (`tree.c:392`), the wrapper closed when its child goes
 (`con.c:2246`); a split down to one window stays a split, as i3 (no flattening), and is KWin's to
 move, being one floating window (`plan.md` "The mouse"). Without the helper, floating a container
-does nothing and the load report says so, as K4 and K18. Next, in commits: (1) the wrapper for every
-floating window, no behaviour change (unit tests and scenarios unchanged); (2) `floating_enable` /
+does nothing and the load report says so, as K4 and K18. Done: (1) the floating container around
+every floating window (9fee78f, no behaviour change). Next, in commits: (2) `floating_enable` /
 `floating_disable` on a split, unit-tested, the size as `floating.c:331-342` over each window's
 untiled rect; (3) `kwin.js`: its windows laid out in its rect by `frameGeometry`, frames, raised
 together, sticky, a workspace move, fullscreen; (4) the helper's move, resize, raise, title bars
