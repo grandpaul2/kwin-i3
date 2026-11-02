@@ -38,9 +38,12 @@ and can't parse the wording; an i3 user wants i3's defaults without reading. Bot
   title ("Tiling", "Window rules"). Never a section called "Advanced" (HIG: it says nothing about
   what's inside), and no section for one control that does nothing for the user (a debug log
   checkbox is hidden, not shown).
-- **Rows that belong together share one shape**: each kind of
-  window in Frame has its colours on one line and its option on the next. Don't pack a checkbox,
+- **One label, one control** a row, as Plasma's own pages (Display Configuration): no captions
+  inside a row, no icon-only buttons beside a control that come and go. Frame's colours are a
+  row each ("Focused frame:", "Unfocused frame:", "Split indicator:"). Don't pack a checkbox,
   its long label and other controls onto one line.
+- **Every dropdown and spin box is one width** (`root.controlWidth`), so the controls and their
+  help buttons end on one line; colour buttons are their own fixed swatch.
 - **Compound rows** are a `RowLayout`, `spacing: Kirigami.Units.smallSpacing`, with a
   `largeSpacing` gap between groups ("[4 px] between windows   [2 px] more at the edges").
 - **A checkbox with its value** sits on one row, as Virtual Desktops does: "[x] Wait for every
@@ -89,7 +92,7 @@ hunt for; no collision with another word on the page or in Plasma.
 | 3 | on every workspace | sticky | "all desktops" | **sticky**, explained once in help ("on every workspace of its screen") | i3's word, short; Plasma's "all desktops" would be untrue (one screen only) |
 | 4 | the window's border | border | frame | **frame** (keep) | already Plasma's word; "border" is a decoration's size in Plasma |
 | 5 | the side the next window opens | indicator | — | **split indicator** | i3's word plus "split", a word the page already uses; help says what it marks |
-| 6 | focus classes | focused, unfocused | Active, Inactive | **Focused:, Unfocused:** | i3's class names; in the Frame section "window" is given. "Active" is KWin's, qualified (`definitions.md`) |
+| 6 | focus classes | focused, unfocused | Active, Inactive | **Focused frame:, Unfocused frame:** | i3's class names, one colour a row; in the Frame section "window" is given. The unfocused class's split indicator stays off the page: it shows only until the focus leaves its window, so it is almost never seen. "Active" is KWin's, qualified (`definitions.md`) |
 | 7 | the two gaps | inner, outer | — | **between windows, extra at edges** | "outer" reads as the whole edge gap to a Plasma user, but in i3 it is added to inner; "extra" says that. Never "screen edges" (Plasma's page) |
 | 8 | split direction | splith, splitv; `default_orientation` | — | **side by side, top to bottom** on both | "split horizontally" is read both ways by Plasma users; "stacked" collides with i3's stacking layout. Keys: "Split side by side", "Split top to bottom" |
 | 9 | previous workspace, by history | back_and_forth | — | **back and forth** | i3's; "previous" is taken by Prev (by number). Help explains it once |
@@ -107,7 +110,8 @@ hunt for; no collision with another word on the page or in Plasma.
 ### Tone rules
 
 1. **A field label is a noun phrase, about 3 words**: "Focus wrapping:", "Resize step:". The
-   section heading gives its subject, so the label doesn't repeat it ("Focused:" under Frame).
+   section heading gives its subject, so the label doesn't repeat it ("Width:" under Frame),
+   unless a sibling row needs it told apart ("Focused frame:" beside "Split indicator:").
 2. **A checkbox says what is on, in about 6 words**: imperative ("Show layout changes all at
    once") or a plain statement, as Plasma's pages do ("Navigation wraps around"). One idea, no
    "when … returns …" sentence.

@@ -14,6 +14,11 @@ KCM.SimpleKCM {
     id: root
 
     readonly property var settings: kcm.settings
+    // One width for every dropdown and spin box, so the controls end on one line, as Plasma's
+    // pages do (docs/style-settings-page.md §1).
+    readonly property real controlWidth: Kirigami.Units.gridUnit * 14
+    // The frame's width and colours apply wherever a frame is drawn.
+    readonly property bool frameDrawn: settings.tiledLook === "frame" || settings.frameOnFloating
 
     header: ColumnLayout {
         spacing: 0
@@ -130,46 +135,6 @@ KCM.SimpleKCM {
             configObject: root.settings
             settingName: parent.settingName
             extraEnabledConditions: kcm.frameAvailable && parent.applies
-        }
-    }
-
-    // i3's colour classes, two (focused_inactive left out; docs/behaviour.md §7 L3, L4): a row each, the
-    // frame's colour and the split indicator's (the side where the next window opens on a
-    // window alone in its split; empty in kwinrc means the frame's colour, shown as such).
-    component ClassRow: RowLayout {
-        property string frameKey
-        property string indicatorKey
-        property string who
-        property string help
-        spacing: Kirigami.Units.smallSpacing
-        readonly property bool applies: root.settings.tiledLook === "frame" || root.settings.frameOnFloating
-        QQC2.Label { text: i18nc("@label before a colour", "frame"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
-        FrameColour {
-            settingName: parent.frameKey
-            applies: parent.applies
-            Accessible.name: i18nc("@action:button", "Frame colour of %1", parent.who)
-        }
-        Item { implicitWidth: Kirigami.Units.largeSpacing }
-        QQC2.Label { text: i18nc("@label before a colour", "split indicator"); Accessible.ignored: true; enabled: parent.applies && kcm.frameAvailable }
-        KQC.ColorButton {
-            readonly property string key: parent.indicatorKey
-            showAlphaChannel: false
-            color: root.settings[key] || root.settings[parent.frameKey]
-            onAccepted: (c) => root.settings[key] = c.toString()
-            Accessible.name: i18nc("@action:button", "Split indicator colour of %1", parent.who)
-            KCM.SettingStateBinding { configObject: root.settings; settingName: parent.indicatorKey; extraEnabledConditions: kcm.frameAvailable && parent.applies }
-        }
-        QQC2.ToolButton {
-            visible: root.settings[parent.indicatorKey] !== ""
-            icon.name: "edit-clear"
-            onClicked: root.settings[parent.indicatorKey] = ""
-            Accessible.name: i18nc("@action:button", "Use the frame colour for the split indicator of %1", parent.who)
-            QQC2.ToolTip.text: i18nc("@info:tooltip", "Same as the frame")
-            QQC2.ToolTip.visible: hovered
-        }
-        Help {
-            topic: i18nc("@item help topic", "the colours of %1", parent.who)
-            toolTipText: parent.help
         }
     }
 
@@ -454,6 +419,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: tiledLook
+                Layout.preferredWidth: root.controlWidth
                 settingName: "tiledLook"
                 applies: kcm.frameAvailable
                 model: [
@@ -482,29 +448,50 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
                 id: frameWidthBox
+                Layout.preferredWidth: root.controlWidth
                 unit: "px"
                 from: 1; to: 10
                 value: root.settings.frameWidth
                 onValueModified: root.settings.frameWidth = value
                 Accessible.name: i18nc("@label:spinbox", "Frame width")
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable && (root.settings.tiledLook === "frame" || root.settings.frameOnFloating) }
+                KCM.SettingStateBinding { configObject: root.settings; settingName: "frameWidth"; extraEnabledConditions: kcm.frameAvailable && root.frameDrawn }
             }
             Help {
                 topic: i18nc("@item help topic", "the frame's width")
                 toolTipText: i18n("i3: default_border pixel")
             }
         }
-        ClassRow {
-            Kirigami.FormData.label: i18nc("@label", "Focused:")
-            frameKey: "frameActive"; indicatorKey: "frameIndicatorActive"
-            who: i18nc("@item which window", "the focused window")
-            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused")
+        // i3's colour classes, two (focused_inactive left out; docs/behaviour.md §7 L3), one
+        // colour a row. The split indicator shows only until the focus leaves its window (L4), so
+        // the unfocused class's indicator is almost never seen: it keeps its default, off the page.
+        FrameColour {
+            Kirigami.FormData.label: i18nc("@label", "Focused frame:")
+            settingName: "frameActive"
+            applies: root.frameDrawn
+            Accessible.name: i18nc("@action:button", "Frame colour of the focused window")
         }
-        ClassRow {
-            Kirigami.FormData.label: i18nc("@label", "Unfocused:")
-            frameKey: "frameInactive"; indicatorKey: "frameIndicatorInactive"
-            who: i18nc("@item which window", "unfocused windows")
-            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.unfocused")
+        FrameColour {
+            Kirigami.FormData.label: i18nc("@label", "Unfocused frame:")
+            settingName: "frameInactive"
+            applies: root.frameDrawn
+            Accessible.name: i18nc("@action:button", "Frame colour of unfocused windows")
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Split indicator:")
+            Kirigami.FormData.buddyFor: indicatorBox
+            spacing: Kirigami.Units.smallSpacing
+            FrameColour {
+                id: indicatorBox
+                settingName: "frameIndicatorActive"
+                applies: root.frameDrawn
+                // Empty in kwinrc: the frame's colour, shown as such.
+                color: root.settings.frameIndicatorActive || root.settings.frameActive
+                Accessible.name: i18nc("@action:button", "Split indicator colour")
+            }
+            Help {
+                topic: i18nc("@item help topic", "the split indicator")
+                toolTipText: i18n("Marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused indicator")
+            }
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:listbox", "Hide frame:")
@@ -512,6 +499,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: hideEdgesBox
+                Layout.preferredWidth: root.controlWidth
                 settingName: "hideEdgeBorders"
                 applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
                 model: [
