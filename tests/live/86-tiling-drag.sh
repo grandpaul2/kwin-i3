@@ -225,6 +225,9 @@ kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") worksp
 poll eval '[[ "$(active)" == *c* ]]'
 key "Floating Toggle"
 check "c tiled again"                       poll eval '[[ "$(tree 1)" != *"~c"* ]]'
+# The tree changes first, the frame in the pass after: pressed at its floating rect's centre, the
+# drag took b. Read c's centre once it is back at its tile's height.
+poll eval '[[ "$(fc c)" == *x718 ]]'
 read -r cx cy <<<"$(centre c)"; g=$(fc b); bx=${g%%,*}
 m=$(mark)
 drag Meta+Shift left "$cx" "$cy" $((bx + 100)) 360

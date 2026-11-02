@@ -59,7 +59,9 @@ then the fix and P1. A check for the bug only under rule 5.
 2. A red scenario the change drives: fix it, then rerun only that scenario.
 3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
    (`# timing: alone`), as 69 did (2026-10-28), not another guessed fix. Red: report
-   it, don't fix it.
+   it, don't fix it. A red whose cause the logs name in the scenario itself (a check reading
+   state before it has settled) is a wrong check, not a flake: the check is corrected, as any
+   existing check a change shows wrong, and not moved.
 4. The maintainer's go to merge, then the desktop owner's go to reload (AGENTS.md, "Nothing goes live").
 
 ## P4. A probe
