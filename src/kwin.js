@@ -1087,9 +1087,11 @@ var KI3 = (function () {
     // in no tile and kept above the tiled ones (L12), that kwin-i3 lays out as a tiled tree inside
     // the container's rect (fc.rect, i3's nc->rect, with fc.rect.out the output's geometry it was
     // set on), in the tiling look (L10a), with no gaps inside (gaps.c:57).
+    // Only while it holds more than one window: down to one, that window is KWin's, as any
+    // floating window alone (plan.md "The mouse"), though i3's split stays around it.
     function floatedOf(con) {
         var fc = con && Tree.insideFloating(con);
-        return fc && fc.nodes.length && fc.nodes[0].win === null ? fc : null;
+        return fc && fc.nodes.length && fc.nodes[0].win === null && model.leaves(fc).length > 1 ? fc : null;
     }
     // One floating window, alone in its floating container: KWin's (plan.md "The mouse").
     function floatsAlone(con) { return floats(con) && !floatedOf(con); }
@@ -1180,6 +1182,12 @@ var KI3 = (function () {
     function placeFloated(ws) {
         var bars = [];
         ws.floating.forEach(function (fc) {
+            // Down to one window, KWin's: the rect follows it, for a window opened into it later.
+            var only = fc.rect && fc.nodes[0] && fc.nodes[0].win === null ? model.leaves(fc) : [];
+            if (only.length === 1 && wins[only[0].win]) {
+                var g = wins[only[0].win].frameGeometry;
+                fc.rect = { x: g.x, y: g.y, width: g.width, height: g.height, out: outGeometry(outputOf(ws)) };
+            }
             if (!fc.rect || !floatedOf(fc)) return;
             fixFloated(fc, ws);
             var laid = [];

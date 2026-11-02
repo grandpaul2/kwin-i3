@@ -61,6 +61,11 @@ check "  not kept above"                    poll eval '[[ "$(kjs "workspace.wind
 # Floated again; its windows closing close it.
 key "Floating Toggle"
 check "floated again"                       wait_tree 1 "H[a] ~V[b c]*"
-kclose b; kclose c
+# Down to one window: KWin's, as any floating window alone (plan.md "The mouse"), i3's split
+# staying around it; then closed, it closes the container.
+kclose b
+check "c alone, in its split"               wait_tree 1 "H[a] ~V[c]*"
+check "  not floated any more"              poll eval '[[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"c\") log(w.noBorder); })")" == false ]]'
+kclose c
 check "closed with its windows"             wait_tree 1 "H[a*]"
 finish
