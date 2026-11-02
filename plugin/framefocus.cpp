@@ -132,6 +132,7 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 // requested that window's focus, and cancelDelayFocus would drop it.
 bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
+    noticeFocusParent(input()->pointer()->hover(), event->position, true);
     // A tiled neighbour's invisible band over this tiled window's own frame (an app drawing its
     // own frame, stacked above): raise this one among the tiles, so that each tiled window owns
     // its whole frame, as a clipped client does in i3 (spec-gap-ownership.md, part B). Tiled
@@ -164,6 +165,27 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
     return false;
 }
 
+// i3 focuses the window pressed, at any button and modifier (click.c route_click step 3,
+// con_activate before step 5's drag), or with focus follows mouse the window entered
+// (handlers.c handle_enter_notify: any con but the focused one), even inside a container chosen
+// with focus parent. KWin activates a window pressed or entered, but not the one it has active
+// already, which is the one such a container descends to: kwin-i3 would hear of nothing.
+void FrameFocus::noticeFocusParent(Window *hover, const QPointF &pos, bool entered)
+{
+    Window *fp = m_drag ? m_drag->focusParentWindow() : nullptr;
+    Window *in = fp && (hover == fp || onRing(fp, pos)) ? fp : hover;
+    if (entered) {
+        const bool reached = in != m_pointerIn;
+        m_pointerIn = in;
+        if (!reached || options->focusPolicy() == Options::ClickToFocus) {
+            return;
+        }
+    }
+    if (fp && in == fp) {
+        m_drag->tellWindowPressed();
+    }
+}
+
 // A plain press on a frame: what a press in the window does (activate and raise by the
 // [MouseBindings] CommandWindow* commands, as i3's click on a border), and the press and its
 // release go no further, to the desktop beneath (review R1-12). A press with modifiers is
@@ -178,6 +200,7 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
         }
         return false;
     }
+    noticeFocusParent(input()->pointer()->hover(), event->position, false);
     // A press starts afresh: a filter before this one may have taken the release of a press
     // taken here, which would otherwise leave the bit set and eat the next release of that
     // button anywhere (review of the change, finding 5).

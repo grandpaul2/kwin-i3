@@ -61,6 +61,11 @@ public Q_SLOTS:
     // when it has a neighbour above; "" for none. Its presses are kwin-i3's, moving or resizing
     // the whole container (plan.md "The mouse"), where KWin's would move one window.
     void SetFloated(const QString &id, const QString &group);
+    // The focus is a container or a workspace (i3's focus parent) and KWin keeps this window
+    // active, by its internal id; "" for none. A press on it, or with focus follows mouse the
+    // pointer entering it, is told by the hidden "Window Pressed" action: KWin activates it no
+    // further, where i3 focuses it (click.c route_click step 3, handlers.c handle_enter_notify).
+    void SetFocusParent(const QString &id);
     // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
     // window the bar is drawn with, "#N" after it for that window's further bar, the rect logical
     // and global, n tabs or rows of equal size).
@@ -151,6 +156,10 @@ public:
     void warp(int x, int y);
     void setFloating(const QString &id, bool on);
     void setFloated(const QString &id, const QString &group);
+    void setFocusParent(const QString &id) { m_focusParent = id; }
+    // The window SetFocusParent names, if it is still there.
+    KWin::Window *focusParentWindow() const;
+    void tellWindowPressed();
     // In a floated container (SetFloated), and whether it has a neighbour inside it on `side`.
     bool floated(const KWin::Window *window) const;
     bool floatedHas(const KWin::Window *window, const QString &side) const;
@@ -235,6 +244,7 @@ private:
     };
     QList<BarSpot> m_bars;            // SetBars
     QString m_tabEvent;               // TabEvent's answer
+    QString m_focusParent;            // SetFocusParent
     // The tab under pos on a bar no other window covers: its bar, and the index; -1 for none.
     int barAt(const QPointF &pos, const BarSpot **bar) const;
     void tellTab(const QString &event);

@@ -84,9 +84,7 @@ i3's source: (b) Meta+drag on a floated group's bar moving it whole (`click.c` s
 tiling drag refuses it); (c) the hold for its resize, a slow client's windows landing apart as the
 spike measured (60 ms); (d) a sticky window inside (`output_push_sticky_windows` moves the whole
 container, its other windows on one desktop) and a fullscreen one (`click.c:281`; V4, V6b), checked
-against i3; (e) a press on a window inside a container chosen by focus parent keeps the container
-focused (`kwin.js` `focusedCon`), where i3's `route_click` focuses the window pressed (`click.c`
-step 3): settled by i3, to fix, tiled containers included. Next: (e), then (b) and (c).
+against i3. Next: (b), then (c).
 
 **81. Outputs in the model** (`src/tree.js` header, `behaviour.md` §2). i3's tree has its outputs
 (`CT_OUTPUT` between root and workspaces, `include/data.h`); the model has none, the adapter

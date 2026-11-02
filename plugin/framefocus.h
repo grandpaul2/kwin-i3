@@ -67,5 +67,9 @@ private:
     bool m_tiledRing = true;
     QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any
     QPointer<KWin::Window> m_raised;      // the tiled window last raised over a neighbour's band
+    QPointer<KWin::Window> m_pointerIn;   // the window the pointer is in or on the ring of, last motion
+    // A press in or on the ring of the window SetFocusParent names, or with `entered` the pointer
+    // reaching it: kwin-i3 is told (TilingDrag::tellWindowPressed).
+    void noticeFocusParent(KWin::Window *hover, const QPointF &pos, bool entered);
     Qt::MouseButtons m_taken;             // presses taken on a frame: their releases are ours too
 };

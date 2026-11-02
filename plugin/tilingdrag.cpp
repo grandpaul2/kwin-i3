@@ -82,6 +82,11 @@ void TilingDragBus::SetFloated(const QString &id, const QString &group)
     m_drag->setFloated(id, group);
 }
 
+void TilingDragBus::SetFocusParent(const QString &id)
+{
+    m_drag->setFocusParent(id);
+}
+
 TilingDragKeys::TilingDragKeys(TilingDrag *drag)
     : InputEventFilter(InputFilterOrder::TabBox)
     , m_drag(drag)
@@ -272,7 +277,21 @@ void TilingDrag::setOn(bool on)
     if (!on) {
         m_floating.clear();     // kwin-i3 gone: a new instance tells its own
         m_floated.clear();
+        m_focusParent.clear();
     }
+}
+
+Window *TilingDrag::focusParentWindow() const
+{
+    return m_focusParent.isEmpty() ? nullptr : workspace()->findWindow(QUuid(m_focusParent));
+}
+
+void TilingDrag::tellWindowPressed()
+{
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    msg << QStringLiteral("kwin-i3 Window Pressed");
+    QDBusConnection::sessionBus().asyncCall(msg);
 }
 
 void TilingDrag::setFloated(const QString &id, const QString &group)

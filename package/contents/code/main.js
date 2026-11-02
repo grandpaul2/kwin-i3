@@ -2254,6 +2254,7 @@ var KI3 = (function () {
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
     var dragTold = {};                  // the drag helper's floating list (tellDragFloating)
+    var focusParentTold = null;         // the helper's focus-parent window (tellFocusParent); null: not told yet
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
@@ -3863,10 +3864,32 @@ var KI3 = (function () {
         focusTold = key;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", key);
     }
+    // While the focus is a container or a workspace (focus parent), the helper is told the window
+    // KWin keeps active in it: a press on that window, or focus follows mouse entering it, comes
+    // back as "Window Pressed" (windowPressed), as KWin activates it no further.
+    function tellFocusParent() {
+        var f = model.focused, a = workspace.activeWindow, key = "";
+        if (f && (f.type === "ws" || (f.type === "con" && f.win === null)) && a && !a.deleted && model.byWin[id(a)])
+            for (var p = model.byWin[id(a)].parent; p; p = p.parent) if (p === f) { key = id(a); break; }
+        if (focusParentTold === key) return;
+        focusParentTold = key;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFocusParent", key);
+    }
+    // i3 focuses the window pressed (click.c route_click step 3, con_activate) or, with focus
+    // follows mouse, entered (handlers.c handle_enter_notify), the container chosen with focus
+    // parent included (§5 B1, B3).
+    function windowPressed() {
+        var a = workspace.activeWindow, c = a && !a.deleted ? model.byWin[id(a)] : null, f = model.focused;
+        if (!c || !f || c === f) return;
+        log("PRESSED " + shortCaption(a) + ": the focus leaves " + conCaption(f));
+        model.focusWin(id(a));
+        schedule(Tree.wsOf(c));
+    }
     function tellRings() {
         var flash = indicatorFor;
         indicatorFor = null;
         tellFocused();
+        tellFocusParent();
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
         // i3 draws every window in the focused container as focused (x.c: con_inside_focused).
@@ -4772,6 +4795,7 @@ var KI3 = (function () {
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         dragTold = {};
+        focusParentTold = on ? null : "";           // again with the next pass (tellFocusParent)
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
         if (on) for (var k in model.byWin) if (floatsAlone(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
@@ -6226,6 +6250,8 @@ var KI3 = (function () {
                          guard("Floated Moved", floatedMoved));
         registerShortcut("kwin-i3 Tab Click", "kwin-i3: a group's tab clicked (run by the mouse, no key)", "",
                          guard("Tab Click", tabEvent));
+        registerShortcut("kwin-i3 Window Pressed", "kwin-i3: a window pressed inside the focused container (run by the mouse, no key)", "",
+                         guard("Window Pressed", windowPressed));
         // The helper's resize mode changed (plugin/resizemode.cpp): read it. Not in registerKeys,
         // so not on the Keys page.
         registerShortcut("kwin-i3 Mode Changed", "kwin-i3: the resize mode changed (run by the helper, no key)", "",
