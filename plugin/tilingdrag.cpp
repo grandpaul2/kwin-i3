@@ -234,7 +234,8 @@ void TilingDrag::loadConfig()
     m_titlebarDrag = mode.contains(QLatin1String("titlebar"));
 }
 
-// "phase id x y side": side is the ring's side of a Z3 press, else "-".
+// "phase id x y side tab": side is the ring's side of a Z3 press, a tab's "top", else "-"; tab the
+// bar and tab of a Meta press on a tab ("key:index", SetBars' key), else "-".
 QString TilingDrag::state()
 {
     m_unanswered.stop();
@@ -246,7 +247,7 @@ QString TilingDrag::state()
     }
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
     const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
-                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side);
+                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side) + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab);
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -320,6 +321,7 @@ void TilingDrag::takePress(Window *window, Qt::MouseButton button, const QPointF
     m_button = button;
     m_resize = resize;
     m_side = side;
+    m_tab.clear();
     m_threshold = threshold;
     m_phase = Phase::Pressed;
     if (!m_keysInstalled && input()) {
@@ -425,6 +427,9 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     if (!m_on || (event->button != Qt::LeftButton && event->button != Qt::RightButton) || input()->pointer()->isConstrained()
         || workspace()->globalShortcutsDisabled()) {
         return false;
+    }
+    if (pressBar(event)) {          // a group's bar, with or without a modifier (FrameFocus asks too)
+        return true;
     }
     if (event->button == Qt::RightButton) {
         return pressResize(event);
@@ -607,13 +612,17 @@ void TilingDrag::tellTab(const QString &event)
     QDBusConnection::sessionBus().asyncCall(msg);
 }
 
-// i3's click on a tab (click.c route_click, CLICK_DECORATION): kwin-i3 focuses it by i3's rule.
-// With tiling_drag's titlebar (§9 G3), the press is a title-bar press of the tab's window too: past
-// the drag distance it is a tiling drag of it, as i3 drags a tab's container from its decoration.
+// A press on a tab (click.c route_click, CLICK_DECORATION), any modifiers, in i3's steps: 2, the
+// floating modifier's left press drags that tab's container at once, focusing nothing; 3, any
+// other left or right press focuses the tab by i3's rule (kwin-i3, told by "Tab Click"); 8, with
+// tiling_drag's titlebar a left press is then a tiling drag of the tab past the drag distance;
+// 10, else a left press, and every right press, resizes against the neighbour above (BORDER_TOP).
+// i3 waits for its threshold there only if the tab wasn't focused; here always (§9 G14: the
+// helper decides at the press, the focus is the tree's). The press is taken with the window the
+// bar is drawn with: kwin-i3 finds the tab from "key:index" (step 2) or its tab click (the rest).
 bool TilingDrag::pressBar(PointerButtonEvent *event)
 {
-    if (!m_on || event->button != Qt::LeftButton || dragging()
-        || (event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
+    if (!m_on || (event->button != Qt::LeftButton && event->button != Qt::RightButton) || dragging()) {
         return false;
     }
     const BarSpot *bar = nullptr;
@@ -621,21 +630,31 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
     if (index < 0) {
         return false;
     }
+    Window *shown = nullptr;
+    const QString windowId = bar->key.section(QLatin1Char('#'), 0, 0);   // "id#N": a further bar of that window
+    for (Window *w : workspace()->windows()) {
+        if (w->internalId().toString() == windowId) {
+            shown = w;
+        }
+    }
+    m_taken |= event->button;
+    if (!shown || shown->isDeleted()) {
+        return true;
+    }
+    const bool mod = event->modifiersRelevantForShortcuts & Qt::MetaModifier;
+    const bool left = event->button == Qt::LeftButton;
+    if (left && mod && m_modifierDrag) {
+        takePress(shown, Qt::LeftButton, event->position, false, QString(), false);
+        m_tab = QStringLiteral("%1:%2").arg(bar->key).arg(index);
+        return true;
+    }
     tellTab(QStringLiteral("click %1 %2").arg(bar->key).arg(index));
-    m_taken |= Qt::LeftButton;
-    if (m_titlebarDrag) {
+    if (left && m_titlebarDrag) {
         // The drag is the shown window's until kwin-i3 has focused the tab: it reports the tab's
         // window in State() once it knows (the tab clicked is the one that ends up shown).
-        Window *shown = nullptr;
-        const QString windowId = bar->key.section(QLatin1Char('#'), 0, 0);   // "id#N": a further bar of that window
-        for (Window *w : workspace()->windows()) {
-            if (w->internalId().toString() == windowId) {
-                shown = w;
-            }
-        }
-        if (shown && !shown->isDeleted()) {
-            takePress(shown, Qt::LeftButton, event->position, false, QString(), true);
-        }
+        takePress(shown, Qt::LeftButton, event->position, false, QString(), !mod);
+    } else {
+        takePress(shown, event->button, event->position, true, QStringLiteral("top"), true);
     }
     return true;
 }

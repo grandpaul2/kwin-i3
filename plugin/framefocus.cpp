@@ -183,12 +183,13 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     if (input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
         return pass(QStringLiteral(" (pointer constrained or shortcuts inhibited)"));
     }
-    if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
-        return pass(QStringLiteral(" (modifiers)"));
-    }
-    // A group's bar first (tilingdrag.h SetBars): over the desktop or a gap strip it is i3's tab.
+    // A group's bar first (tilingdrag.h SetBars): over the desktop or a gap strip it is i3's tab,
+    // with or without a modifier (click.c routes every press on a decoration).
     if (m_drag && m_drag->pressBar(event)) {
         return true;
+    }
+    if ((event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier) != Qt::NoModifier) {
+        return pass(QStringLiteral(" (modifiers)"));
     }
     const Decision d = decide(event->position, input()->pointer()->hover(), event->button);
     if (m_probe && d.kind != Decision::Pass) {

@@ -4385,6 +4385,13 @@ var KI3 = (function () {
         var fs = model.fullscreenOn(ws);
         return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && !Tree.isHidden(c) && (!fs || fs === c); });
     }
+    // The tab a Meta press on a bar names ("key:index", State's last field), else null.
+    function tabAt(spec) {
+        if (!spec || spec === "-") return null;
+        var i = spec.lastIndexOf(":"), con = barGroups[spec.slice(0, i)];
+        if (!con || !Tree.wsOf(con)) return null;
+        return con.nodes.filter(function (k) { return project(k); })[Number(spec.slice(i + 1))] || null;
+    }
     function hasDropTargets() {             // has_drop_targets
         var n = 0;
         shownWorkspaces().forEach(function (v) {
@@ -4540,9 +4547,12 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "drag" || drag) return;
-            // A drag from a tab: the press was taken with the window shown then; the tab's own.
-            var via = null;
-            if (tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con)) { con = tabDrag.con; via = f[1]; }
+            // A drag from a tab: the press was taken with the window shown then; the tab's own,
+            // from the helper's "key:index" for a Meta press (nothing focused, so the bars are as
+            // they were), else from the tab click that came first.
+            var via = null, tab = tabAt(f[5]);
+            if (tab) { con = tab; via = f[1]; }
+            else if (tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con)) { con = tabDrag.con; via = f[1]; }
             tabDrag = null;
             var ours = !!con && con.type === "con";
             if (!ours || !wins[shownWindow(con).win] || !hasDropTargets()) {
@@ -4631,7 +4641,7 @@ var KI3 = (function () {
     function resizeState(s) {
         var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]), rz = drag.resize;
         if (phase === "resize" || phase === "drop") {
-            if (model.byWin[f[1]] !== drag.con) { endDrag("its window is gone"); return; }
+            if (model.byWin[f[1]] !== drag.con && f[1] !== drag.via) { endDrag("its window is gone"); return; }
             var pos = resizePos(rz, x, y);
             drag.lastPos = pos;
             if (phase === "resize") { indicate(resizeBar(rz, pos)); return; }
@@ -4654,14 +4664,19 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("resize start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "resize" || drag) return;
-            // f[4]: the ring's side pressed (Z3), or "-" for Meta+right's nearest edge (Z1).
+            // f[4]: the ring's side pressed (Z3), a tab's "top" (G14), or "-" for Meta+right's
+            // nearest edge (Z1). A tab's press was taken with the window shown then: the tab's own
+            // container resizes, as i3's tiling_resize of the con whose decoration was pressed.
             var x = Number(f[2]), y = Number(f[3]), side = f[4] && f[4] !== "-" ? f[4] : null;
-            var rz = con && con.type === "con" && wins[con.win] ? resizePlan(con, x, y, side) : null;
+            var tab = side === "top" && tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con) ? tabDrag.con : null;
+            tabDrag = null;
+            if (tab) con = tab;
+            var rz = con && con.type === "con" && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
             if (!rz) { log("RESIZE not started: nothing to resize against" + (side ? " on the " + side : "")); callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel"); return; }
             var timer = new QTimer();
             timer.interval = 16;
             timer.timeout.connect(guard("resize poll", pollDrag));
-            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: rz.o === "h" ? 1 : 2, resize: rz };
+            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: rz.o === "h" ? 1 : 2, resize: rz, via: tab ? f[1] : null };
             log("RESIZE " + conCaption(con) + " " + (rz.o === "h" ? "width" : "height") + " at " + rz.start);
             // i3 warps the pointer onto the bar (spec D): along the boundary's axis only.
             callDBus(DRAG[0], DRAG[1], DRAG[2], "Warp", Math.round(rz.o === "h" ? rz.start : x), Math.round(rz.o === "h" ? y : rz.start));

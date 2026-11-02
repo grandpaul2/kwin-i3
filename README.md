@@ -74,7 +74,9 @@ Mouse:
   **swaps** them (i3 makes groups only by key); dropped in the middle of a window already in a
   group, it joins it.
   Any button's release drops it there; any key cancels. With tiling windows showing their own title bars (`tiledLook`), dragging a tiling window's title
-  bar does the same, and so does dragging a tab out of a group's bar.
+  bar does the same, and so does dragging a tab out of a group's bar. Meta+drag on a tab drags
+  that tab at once without switching to it; a right-drag on a tab (or a left one, with title-bar
+  drags off) resizes the group against the window above it, as i3.
 - **Meta+Shift+left-drag** is the same drag (i3's Shift would swap at the middle; here the middle's
   thirds decide). The mouse never floats or tiles a window: Meta+Shift+Space does, as in i3.
   Without the helper plugin, Meta+left-drag is KWin's own move, which floats the window where it

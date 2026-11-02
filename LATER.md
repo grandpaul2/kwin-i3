@@ -187,7 +187,7 @@ if a user asks for it.
 **80. Shift at a drop's centre, i3's swap modifier** (`tiling_drag.c:341`: Shift held at the
 press makes a centre drop a swap). Here Shift adds nothing; the centre's three bands (`behaviour.md`
 G11) decide, Swap being the bottom one (`docs/plan.md` "The mouse"). To revisit once the bands
-have been used with tabs dragged (`OPEN.md` item 74): Shift as i3's, the whole centre a swap and
+have been used with tabs dragged (`behaviour.md` G14): Shift as i3's, the whole centre a swap and
 the indicator saying so from the press, or the bands as they are. Waits: the bands are judged
 live, and a change to them is judged the same way.
 

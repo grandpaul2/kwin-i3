@@ -181,6 +181,7 @@ private:
     KConfigWatcher::Ptr m_watcher;
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty
+    QString m_tab;                    // a Meta press's tab, "key:index", else empty (State)
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;

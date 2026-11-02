@@ -73,22 +73,6 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
-`click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
-`:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press
-with no modifier (`plugin/tilingdrag.cpp:607-609`), so a Meta press on a group's bar falls to the
-general drag, which finds no window there (§9 G8's gap rule: likely the group's shown window, not
-the tab pressed). The port: Meta+left (and Meta+Shift+left, G5) on a tab drags that tab's
-container at once, a split tab whole (G1's no-focus rule, G14's tab con); dropped as any drag
-(G9-G11); a split tab onto one of its own windows does nothing (i3's guards, `con_swap`
-`con.c:2607`, `con_move_to_target`). With it, i3's right press on a tab: a resize against the
-neighbour above (step 10, `BORDER_TOP`; `plan.md` "The mouse": the bar is kwin-i3's, so Z4's
-window menu isn't), and with `tilingDrag` leaving plain title-bar drags out, a left press on a tab
-the same resize (step 10, `click.c:355-358`); G14 says only step 8 now. `pressBar`
-(`tilingdrag.cpp:607-612`) refuses right presses too: a new path. A split tab dropped on the
-Swap band onto one of its own windows hits `con_swap`'s parent-child guard (`con.c:2607`): the
-port must reach it. Next: the helper's `pressBar` and §9's rows.
-
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is
 one window (`src/tree.js` header), where i3 wraps the container in a floating container
@@ -110,7 +94,7 @@ decide in the build, from i3: keys acting on the whole container (`con_inside_fl
 the whole container; R3, X4), a fullscreen child (`click.c:281-282`; V4, V6b), the frames and
 rings (`framefocus.cpp`, `hold.cpp`'s `floatingFramed`), the drop-target row (`plan.md`), and
 what a floating container does without the helper. The plan's line stands or falls with the
-spike. Next: after item 74, a test-KWin spike of the helper moving and resizing two floating
+spike. Next: a test-KWin spike of the helper moving and resizing two floating
 windows as one.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
