@@ -463,3 +463,14 @@ QList<std::pair<int, QString>> KeysModel::currentKeys() const
                 out.append({s.current[0].toCombined(), s.action});
     return out;
 }
+
+void restoreKeyDefault(const QString &component, const QString &action, int code)
+{
+    if (!keyHolder(code).component.isEmpty())
+        return;
+    auto keys = keysOf(component, action).value_or(QList<KeySeq>{});
+    KeySeq k;
+    k.keys = {code, 0, 0, 0};
+    keys << k;
+    setKeys(component, action, keys);
+}

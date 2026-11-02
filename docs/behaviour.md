@@ -1027,14 +1027,14 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Plasma Settings sub-page** (the first-run step, `plan.md` "Install and first run";
-  `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings, every one
-  always shown (disabled, not hidden): one Plasma already matches and kwin-i3 didn't change is
-  ticked and disabled, "Plasma already has this."; the others each read as a review: what
-  Plasma does, in a sentence, tagged Plasma's default or changed from it; what kwin-i3 needs
-  instead and why, naming Plasma's own page; a checkbox named by the behaviour kwin-i3 needs
-  ("Focus follows the mouse"), ticked where Plasma has it, with one muted line under it: what
-  Plasma does (tagged when that is Plasma's default), or, once changed, what Plasma had and that
-  unticking restores it; the why and Plasma's own place for the setting in its help button. Focus follows
+  `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings that matter
+  to tiling, shown for convenience, every one always: two columns of checkboxes, "Plasma" and
+  "kwin-i3 (recommended)", ticking one unticking the other, the one ticked being where the
+  setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
+  what the Plasma column means for it, and its help button why kwin-i3 wants its way and where
+  Plasma keeps the setting. Choosing Plasma gives back what the reader had before kwin-i3
+  changed it, or, where kwin-i3 changed nothing, Plasma's stock value (focus stealing prevention
+  Medium and Meta+drag Move, whose stock values are kwin-i3's own), saving nothing. The rows: Focus follows
   mouse with no delay and the next focus under the pointer (`FocusPolicy`, `DelayFocusInterval`,
   `NextFocusPrefersMouse`); per-output desktops; focus stealing prevention at Low; screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
   window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,

@@ -78,6 +78,8 @@ KeyHolder keyHolder(int code);
 bool componentActive(const QString &component);
 // Takes the key from its holder, recorded in make take-keys' save (taken-keys.json) first.
 bool takeKey(const KeyHolder &holder, int code);
+// Gives an action the key back where no shortcut holds it (a row moved to Plasma's side).
+void restoreKeyDefault(const QString &component, const QString &action, int code);
 // The save's records, "component|action".
 QStringList takenIds();
 // Gives back the records `which` accepts, as make restore-keys: where the holder still has what

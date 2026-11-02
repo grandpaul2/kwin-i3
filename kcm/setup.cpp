@@ -126,7 +126,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Switch workspaces independently for each screen"),
                   {},
                   i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
-                  i18n("Unticking it also puts every screen on the same workspace."), false,
+                  i18n("Choosing Plasma also puts every screen on the same workspace."), false,
                   {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr};
     perOutput.plasma = [ch = perOutput.changes, on](const Getter &g) {
         return on(g(ch[0])) ? i18n("Plasma switches each screen's workspace on its own.") : i18n("Plasma switches every screen's workspace together.");
@@ -136,7 +136,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     Row stealing{QStringLiteral("focusStealing"), i18nc("@option:check", "Let new windows take the focus"),
                  {},
                  i18n("A new window takes the focus, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus stealing prevention\" at Low."),
-                 {}, false, {w(QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"))}, nullptr};
+                 {}, false, {Change{QStringLiteral("kwinrc"), QStringLiteral("Windows"), QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"), {}, QStringLiteral("2")}}, nullptr};
     stealing.plasma = [ch = stealing.changes](const Getter &g) {
         const QStringList names{i18n("None"), i18n("Low"), i18n("Medium"), i18n("High"), i18n("Extreme")};
         const int level = g(ch[0]).toInt();
@@ -171,7 +171,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
                 {},
                 i18n("Meta and a drag move a floating window and focus it, as in i3. Plasma's setting: Window Management > Window Behavior > Window Actions."),
                 {}, false,
-                {mb(QStringLiteral("CommandAllKey"), QStringLiteral("Meta")), mb(QStringLiteral("CommandAll1"), QStringLiteral("Activate, raise and move"))},
+                {mb(QStringLiteral("CommandAllKey"), QStringLiteral("Meta")), Change{QStringLiteral("kwinrc"), QStringLiteral("MouseBindings"), QStringLiteral("CommandAll1"), QStringLiteral("Activate, raise and move"), {}, QStringLiteral("Move")}},
                 nullptr};
     actions.plasma = [ch = actions.changes](const Getter &g) {
         const QString key = g(ch[0]), a = g(ch[1]);
@@ -242,6 +242,32 @@ QString SetupModel::before(const Change &c) const
         return effective(c);
     const QJsonValue old = e.value(QStringLiteral("old"));
     return old.isString() ? old.toString() : stock(c);
+}
+
+// The value of a key on Plasma's side of a row: Plasma's stock value, or where that is kwin-i3's
+// own, the row's named other (empty: the key is left as it is).
+QString SetupModel::plasmaSide(const Change &c) const
+{
+    const QString s = stock(c);
+    return s != c.value ? s : c.other;
+}
+
+// A row moved to Plasma's side with nothing kwin-i3 saved to give back: each key to its Plasma
+// value (stock: the key removed). Nothing is saved: the reader chose Plasma's way, so there is
+// nothing for kwin-i3 to give back, and choosing kwin-i3 again saves this value as the one to
+// return to.
+void SetupModel::setPlasmaSide(const Row &r)
+{
+    if (r.id == QLatin1String("tileEditor")) {
+        restoreKeyDefault(QStringLiteral("kwin"), QStringLiteral("Edit Tiles"), int(Qt::META) | Qt::Key_T);
+        return;
+    }
+    for (const Change &c : r.changes) {
+        const QString p = plasmaSide(c);
+        if (p.isEmpty() || effective(c) == p)
+            continue;
+        write(c, p == stock(c) ? QJsonValue(QJsonValue::Null) : QJsonValue(p));
+    }
 }
 
 QString SetupModel::effective(const Change &c) const
@@ -318,6 +344,7 @@ void SetupModel::load()
         if (!r.changes.isEmpty())
             status = std::all_of(r.changes.begin(), r.changes.end(), [this](const Change &ch) { return effective(ch) == stock(ch); })
                 ? QStringLiteral("default") : QStringLiteral("changed");
+        const Getter plasmaG = [this](const Change &ch) { const QString p = plasmaSide(ch); return p.isEmpty() ? effective(ch) : p; };
         const QString earlier = r.id == QLatin1String("keys")         ? i18n("These keys ran Plasma's shortcuts.")
                               : r.id == QLatin1String("tileEditor")   ? i18n("Meta+T opens Plasma's tile editor.")
                                                                       : r.plasma(was);
@@ -327,7 +354,10 @@ void SetupModel::load()
                               {QStringLiteral("why"), r.why},       {QStringLiteral("note"), r.note},
                               {QStringLiteral("optional"), r.optional}, {QStringLiteral("differs"), d},
                               {QStringLiteral("changed"), c},       {QStringLiteral("before"), c ? earlier : QString()},
-                              {QStringLiteral("settled"), !d && !c}};
+                              {QStringLiteral("settled"), !d && !c},
+                              // What the Plasma column means for this row: Plasma's current way where
+                              // it differs, else what choosing Plasma brings back.
+                              {QStringLiteral("plasmaSide"), d ? r.plasma(now) : c ? earlier : r.plasma(plasmaG)}};
     }
     m_wanted = m_initial;
     Q_EMIT changed();
@@ -376,7 +406,9 @@ void SetupModel::save()
         if (m_wanted.value(r.id).toBool())
             failed << applyRow(r);
         else if (changedByUs(r))
-            unreachable += giveBackRow(r);
+            unreachable += giveBackRow(r);       // what the reader had before kwin-i3 changed it
+        else
+            setPlasmaSide(r);
     }
     reconfigure();
     // KWin's reconfigure loads an effect turned on but doesn't unload one turned off: unloaded

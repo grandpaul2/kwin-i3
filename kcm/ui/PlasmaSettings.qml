@@ -1,11 +1,10 @@
-// The Plasma Settings sub-page (docs/plan.md, "Install and first run"): the Plasma settings that
-// work against kwin-i3, a checkbox each named by the behaviour kwin-i3 needs (its on state), ticked
-// where Plasma has it; under it one muted line: what Plasma does, or what it had before kwin-i3
-// changed it; the why and Plasma's own place for the setting in the help button
-// (.claude/skills/settings-pages). A tick is an edit
-// like any on the page: Apply makes it, Reset drops it, Defaults ticks every row kwin-i3 needs.
-// Unticked where kwin-i3 changed it, Apply gives back what Plasma had, where Plasma still has
-// what kwin-i3 wrote (kcm/setup.cpp). kwin-i3's keys are on the main page, under Keys.
+// The Plasma Settings sub-page (docs/plan.md, "Install and first run"): Plasma's own settings
+// that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
+// columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
+// muted line under a name says what the Plasma column means for it. A choice is an edit like any
+// on the page: Apply makes it, Reset drops it, Defaults picks kwin-i3 for all but the optional.
+// Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
+// reader had before kwin-i3 changed it, and make uninstall can put everything back.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -27,7 +26,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: true
-            text: i18n("Plasma settings that work against kwin-i3. A ticked one changes on Apply, as it would in System Settings; unticking one restores Plasma's previous setting. Defaults ticks all but the optional.")
+            text: i18n("Plasma's own settings that matter to kwin-i3, shown here for convenience. A change applies with Apply, as in System Settings; Defaults picks kwin-i3's for all but the optional.")
         }
         Kirigami.InlineMessage {
             Layout.fillWidth: true
@@ -38,44 +37,17 @@ KCM.SimpleKCM {
         }
     }
 
-    // One setting: its checkbox (the behaviour kwin-i3 needs) and help, and one muted line: what
-    // Plasma does, tagged when that is Plasma's default; or, once kwin-i3 changed it, what Plasma
-    // had and that unticking restores it.
-    component SettingRow: ColumnLayout {
-        required property var modelData
-        Layout.fillWidth: true
-        Layout.topMargin: modelData.optional ? Kirigami.Units.largeSpacing : 0
-        spacing: 0
-        RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            QQC2.CheckBox {
-                text: modelData.title
-                enabled: !modelData.settled          // nothing to change and nothing to give back
-                checked: !!kcm.setup.wanted[modelData.id]
-                onToggled: kcm.setup.setWanted(modelData.id, checked)
-                Accessible.description: line.text
-            }
-            Kirigami.ContextualHelpButton {
-                toolTipText: modelData.why
-                Accessible.name: i18nc("@action:button", "More about %1", modelData.title)
-            }
-        }
-        QQC2.Label {
-            id: line
-            Layout.fillWidth: true
-            Layout.leftMargin: Kirigami.Units.gridUnit * 1.5      // under the checkbox's text
-            wrapMode: Text.Wrap
-            color: Kirigami.Theme.disabledTextColor
-            font: Kirigami.Theme.smallFont
-            Accessible.ignored: true
-            text: [modelData.optional ? i18nc("@info", "Optional.") : "",
-                   modelData.settled ? i18nc("@info", "Plasma already has this.") :
-                   modelData.changed && !modelData.differs
-                       ? i18nc("@info what Plasma had", "Changed by kwin-i3; Plasma had: %1 Unticking this restores it.", modelData.before)
-                       : modelData.status === "default" ? i18nc("@info what Plasma does", "%1 This is Plasma's default.", modelData.plasma)
-                       : modelData.plasma,
-                   modelData.changed ? modelData.note : ""].filter((t) => t).join(" ")
-        }
+    // One side of a row: ticked where the setting is that side's; ticking it picks that side
+    // (and unticks the other). Clicking a ticked box leaves it ticked: one side is always chosen.
+    component SideBox: QQC2.CheckBox {
+        property var row
+        property bool kwini3                 // true: the kwin-i3 column
+        readonly property bool chosen: !!kcm.setup.wanted[row.id] === kwini3
+        checked: chosen
+        onClicked: { kcm.setup.setWanted(row.id, kwini3); checked = Qt.binding(() => chosen) }
+        Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+        Accessible.name: kwini3 ? i18nc("@option:check a setting, kwin-i3's way", "%1: kwin-i3", row.title)
+                                : i18nc("@option:check a setting, Plasma's way", "%1: Plasma", row.title)
     }
 
     // A centred column, as Window Rules; not a FormLayout, which re-sorts the rows a Repeater
@@ -88,9 +60,52 @@ KCM.SimpleKCM {
             y: Kirigami.Units.largeSpacing
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.largeSpacing
+            GridLayout {
+                id: grid
+                Layout.fillWidth: true
+                columns: 3
+                columnSpacing: Kirigami.Units.largeSpacing * 2
+                rowSpacing: Kirigami.Units.largeSpacing
+                // The column titles.
+                Item { implicitWidth: 1 }
+                Kirigami.Heading { level: 5; text: i18nc("@title:column the setting as Plasma has it", "Plasma"); Layout.alignment: Qt.AlignHCenter }
+                Kirigami.Heading { level: 5; text: i18nc("@title:column the setting as kwin-i3 needs it", "kwin-i3 (recommended)"); Layout.alignment: Qt.AlignHCenter }
                 Repeater {
-                model: page.rows
-                delegate: SettingRow {}
+                    model: page.rows
+                    delegate: ColumnLayout {
+                        required property var modelData
+                        required property int index
+                        Layout.row: 1 + index
+                        Layout.column: 0
+                        Layout.fillWidth: true
+                        spacing: 0
+                        RowLayout {
+                            spacing: Kirigami.Units.smallSpacing
+                            QQC2.Label { text: modelData.title }
+                            Kirigami.ContextualHelpButton {
+                                toolTipText: modelData.why
+                                Accessible.name: i18nc("@action:button", "More about %1", modelData.title)
+                            }
+                        }
+                        QQC2.Label {
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            color: Kirigami.Theme.disabledTextColor
+                            font: Kirigami.Theme.smallFont
+                            text: [modelData.optional ? i18nc("@info", "Optional.") : "",
+                                   modelData.plasmaSide,
+                                   modelData.note].filter((t) => t).join(" ")
+                        }
+                    }
+                }
+                Repeater {
+                    model: page.rows
+                    delegate: SideBox { required property var modelData; required property int index; row: modelData; kwini3: false; Layout.row: 1 + index; Layout.column: 1 }
+                }
+                Repeater {
+                    model: page.rows
+                    delegate: SideBox { required property var modelData; required property int index; row: modelData; kwini3: true; Layout.row: 1 + index; Layout.column: 2 }
+                }
             }
         }
     }

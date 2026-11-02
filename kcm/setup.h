@@ -44,6 +44,7 @@ public:
     struct Change {
         QString file, group, key, value;
         QString stock = {};             // its stock value where kwin.kcfg has none (an effect's EnabledByDefault)
+        QString other = {};             // Plasma's side where the stock value is kwin-i3's own (empty: left as it is)
     };
     // A value as Plasma holds it, from wherever it is read (Plasma's settings, or the save).
     using Getter = std::function<QString(const Change &)>;
@@ -61,6 +62,8 @@ Q_SIGNALS:
 private:
     QString effective(const Change &c) const;
     QString before(const Change &c) const;
+    QString plasmaSide(const Change &c) const;
+    void setPlasmaSide(const Row &r);
     bool differs(const Row &r) const;
     bool changedByUs(const Row &r) const;
     QStringList applyRow(const Row &r);
