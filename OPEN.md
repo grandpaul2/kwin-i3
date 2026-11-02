@@ -74,18 +74,19 @@ it through Plasma's own settings on one yes, with a way back; (4) a home for the
 run in `plan.md`, which the README and the settings page follow.
 
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
-Built (9fee78f, cfa3d30, 66b4c66 and the commit after): the model in i3's shape (every floating
-thing a floating container, the flag on its child); Floating Toggle on a container floats it
-whole and back (T16), laid out in its rect in the tiling look (L10a), moved and resized whole by
-the helper (F1a), its rings resizing inside it or whole (F1a), restored by a reload (P3); down to
-one window it is KWin's; scenario 88. Left, each from i3's source: (b) Meta+drag on a floated
-group's bar moving it whole (`click.c` step 5; today the tiling drag refuses it); (c) the hold
-for its resize, a slow client tearing the pair as the spike measured; (d) a sticky window inside
-(`output_push_sticky_windows` moves the whole container, its other windows on one desktop) and a
-fullscreen one (`click.c:281`; V4, V6b), checked against i3; (e) a press on a window inside a
-container focused by focus parent keeps the container focused (`kwin.js` `focusedCon`), where
-i3's `route_click` focuses the window pressed: a parity question for tiled containers too. Next:
-(b), then (c).
+Built and live (9fee78f to 6555878): the model in i3's shape (every floating thing a floating
+container, the flag on its child); Floating Toggle on a container floats it whole and back (T16),
+sized from its windows all the way down (a split child counting its own windows, not i3's 0, as
+G8), laid out in its rect in the tiling look (L10a), moved and resized whole by the helper with
+i3's cursors, its rings resizing inside it or whole, a floated group's bar kept on its top (F1a),
+restored by a reload (P3); down to one window it is KWin's; scenarios 88 and 89. Left, each from
+i3's source: (b) Meta+drag on a floated group's bar moving it whole (`click.c` step 5; today the
+tiling drag refuses it); (c) the hold for its resize, a slow client's windows landing apart as the
+spike measured (60 ms); (d) a sticky window inside (`output_push_sticky_windows` moves the whole
+container, its other windows on one desktop) and a fullscreen one (`click.c:281`; V4, V6b), checked
+against i3; (e) a press on a window inside a container chosen by focus parent keeps the container
+focused (`kwin.js` `focusedCon`), where i3's `route_click` focuses the window pressed (`click.c`
+step 3): settled by i3, to fix, tiled containers included. Next: (e), then (b) and (c).
 
 **81. Outputs in the model** (`src/tree.js` header, `behaviour.md` §2). i3's tree has its outputs
 (`CT_OUTPUT` between root and workspaces, `include/data.h`); the model has none, the adapter

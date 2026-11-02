@@ -70,7 +70,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - A same-size move is applied synchronously inside the caller (`moveResizeInternal`); a resize waits
   for the client's commit, so a check right after a resize reads the old frame.
   `frameGeometryAboutToChange` fires first either way, even when nothing changes. Windows of one
-  layout change land 2-13 ms apart (240 Hz monitor).
+  layout change land 2-13 ms apart (240 Hz monitor). So a position worked out against a window's
+  frame just after it was told a new one is against the old (a floated group's bar drawn
+  mid-window): work from the rect it was told. A `moveResize` outside an interactive resize sends
+  every new size on with no pacing (6.7.5 `xdgshellwindow.cpp:262-279`), and no Resizing state.
 - KWin sends no configure when the size asked is the size the window has (a swap of two equal halves
   only moves them): an answer still in flight lands after a refit that saw "fits". A watch for late
   frames must be scoped to the tile it was set for.
@@ -224,6 +227,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 ## Plugins and effects (`plugin/`)
 
 - Both plugins are version-locked to the installed KWin, which refuses a stale build after an update.
+- A plugin reloaded (an install, KWin's own effect reload) starts with nothing the script told the
+  last instance (the saved trees, the floating set, the bars): each asks a reconfigure at load,
+  and the script compares Stats with what it told and tells it again (`checkFrame`). A script
+  that tells only what changed never repairs a loss on its own.
 - An effect's paint hooks run only while its `isActive()` says so: anything it draws (kwini3hold's
   ring, a group's bar) must keep it active, or it silently draws nothing (the bar was missing in
   the looks without a ring until a shown bar counted).
@@ -306,6 +313,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   Escape or a click outside cancels. Read from the source, 2026-10-31.
 
 ## The test KWin (`tools/testkwin.sh`)
+
+- Focus follows the mouse there: a pointer left over where windows are being laid out hands
+  KWin's focus to whatever lands under it (a hidden tab once, OPEN.md item 82), and the next key
+  acts from there. Park it (`point 20 20`) before building a layout a check depends on.
+- A scenario's bare `wait` waits for every background job, the test clients too, which never
+  exit: the run times out at 110 s. Wait on the one PID (`held=$!`, `wait "$held"`).
 
 - Its KWin logs to the user journal as `kwin_wayland`, with its own PID, and most of its lines
   don't name the test (a scenario's "No such object path '/kwini3hold'" while the effect loads):
