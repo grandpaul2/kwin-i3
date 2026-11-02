@@ -120,7 +120,9 @@ These are the project's rules, not suggestions.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
   window classes or regexes to know; choose from a list over typing an identifier; side text off
-  the rows. The settings page and the cog's form follow `docs/style-settings-page.md`.
+  the rows. The settings page and the cog's form follow `docs/style-settings-page.md`, and every string or
+  layout change on them goes through the `settings-pages` skill (`.claude/skills/settings-pages/`,
+  plain steps any agent can follow).
 
 ## Finding bugs
 

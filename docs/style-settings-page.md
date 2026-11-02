@@ -6,8 +6,11 @@ here first, with the maintainer's go.
 
 **Where it comes from.** Mostly KDE's Human Interface Guidelines (develop.kde.org/hig) and
 Plasma's own pages (KWin's Virtual Desktops page, `src/kcms/desktop/ui/main.qml`); the aim is a
-page as clean as Plasma's other configuration screens, accessible and well organized. When this
-guide says nothing, do what Plasma's own pages do.
+page as clean as Plasma's other configuration screens, accessible and well organized. **The
+method and the rules beneath this guide are the `settings-pages` skill**
+(`.claude/skills/settings-pages/`: wording, layout, patterns, KDE's own wording, the review
+tests): read it before writing or changing any text on the page. This guide holds only kwin-i3's
+own decisions on top of it. When both say nothing, do what Plasma's own pages do.
 
 ## 1. Layout
 
