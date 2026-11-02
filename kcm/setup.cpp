@@ -184,7 +184,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
 
     Row keysRow{QStringLiteral("keys"), i18nc("@title", "kwin-i3's keys"),
                 i18n("These keys run kwin-i3's commands; each Plasma shortcut keeps its other keys."),
-                i18n("A key two shortcuts share runs the other one. Configure Keys… takes them one at a time instead."),
+                i18n("A key two shortcuts share runs only one of them."),
                 {}, false, {}, nullptr, nullptr};
     keysRow.plasma = [this](const Getter &) {
         const auto c = clashes();

@@ -143,9 +143,9 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    (Meta+arrows for quick tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the
    Overview, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview
    stays on the screen's top-left corner and Grid View on Meta+G), as a key two shortcuts share
-   runs Plasma's, not kwin-i3's; unticked again, the Plasma shortcuts get their keys back. Rather
-   keep some of Plasma's keys? Take them one by one on Configure Keys… instead (a key Plasma holds
-   is named in its row and moved on Apply). In a terminal: `make take-keys` takes the keys and
+   runs Plasma's, not kwin-i3's: ticked, every key set in Configure Keys that a Plasma shortcut
+   also holds runs kwin-i3's command; unticked again, the Plasma shortcuts get their original
+   keys back. In a terminal: `make take-keys` takes the keys and
    prints what it took, `make restore-keys` gives them back.
 5. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
    Applications > Terminal emulator).

@@ -594,7 +594,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
-                    toolTipText: i18n("A key two shortcuts share runs the other one. Taken, each key runs kwin-i3's command, and each Plasma shortcut keeps its other keys. Configure Keys… takes them one at a time instead.")
+                    toolTipText: i18n("A key two shortcuts share runs only one of them. Ticked, every key set in Configure Keys that a Plasma shortcut also holds runs kwin-i3's command, and each Plasma shortcut keeps its other keys. Unticking this restores the original keys.")
                 }
             }
             QQC2.Label {
