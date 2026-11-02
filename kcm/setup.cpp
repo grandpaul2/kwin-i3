@@ -108,7 +108,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
               {}, false,
               {w(QStringLiteral("FocusPolicy"), QStringLiteral("FocusFollowsMouse")), w(QStringLiteral("DelayFocusInterval"), QStringLiteral("0")),
                w(QStringLiteral("NextFocusPrefersMouse"), QStringLiteral("true"))},
-              nullptr, nullptr};
+              nullptr};
     focus.plasma = [ch = focus.changes, on](const Getter &g) {
         const QString p = g(ch[0]);
         if (p == QLatin1String("ClickToFocus"))
@@ -127,7 +127,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
                   {},
                   i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
                   i18n("Unticking it also puts every screen on the same workspace."), false,
-                  {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr, nullptr};
+                  {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr};
     perOutput.plasma = [ch = perOutput.changes, on](const Getter &g) {
         return on(g(ch[0])) ? i18n("Plasma switches each screen's workspace on its own.") : i18n("Plasma switches every screen's workspace together.");
     };
@@ -136,7 +136,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     Row stealing{QStringLiteral("focusStealing"), i18nc("@option:check", "Let new windows take the focus"),
                  {},
                  i18n("A new window takes the focus, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus stealing prevention\" at Low."),
-                 {}, false, {w(QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"))}, nullptr, nullptr};
+                 {}, false, {w(QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"))}, nullptr};
     stealing.plasma = [ch = stealing.changes](const Getter &g) {
         const QStringList names{i18n("None"), i18n("Low"), i18n("Medium"), i18n("High"), i18n("Extreme")};
         const int level = g(ch[0]).toInt();
@@ -150,7 +150,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
               i18n("Plasma's edge tiling places a window outside kwin-i3's layout. Holding Shift as a drag ends does the same, and no setting turns that off. Plasma's setting: Window Management > Screen Edges."),
               {}, false,
               {w(QStringLiteral("ElectricBorderTiling"), QStringLiteral("false")), w(QStringLiteral("ElectricBorderMaximize"), QStringLiteral("false"))},
-              nullptr, nullptr};
+              nullptr};
     edges.plasma = [ch = edges.changes, on](const Getter &g) {
         const bool t = on(g(ch[0])), m = on(g(ch[1]));
         return t && m ? i18n("Plasma tiles a window dragged to a screen edge, and maximizes it at the top.")
@@ -163,7 +163,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     Row tiles{QStringLiteral("tileEditor"), i18nc("@option:check", "Free Meta+T from Plasma's tile editor"),
               {},
               i18n("Plasma's tile editor changes the tiles kwin-i3 lays out. Plasma's shortcut: Keyboard > Shortcuts, Window Management, \"Toggle Tiles Editor\"."),
-              {}, false, {}, nullptr, nullptr};
+              {}, false, {}, nullptr};
     tiles.plasma = [](const Getter &) { return i18n("Meta+T opens Plasma's tile editor."); };
     m_defs << tiles;
 
@@ -172,7 +172,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
                 i18n("Meta and a drag move a floating window and focus it, as in i3. Plasma's setting: Window Management > Window Behavior > Window Actions."),
                 {}, false,
                 {mb(QStringLiteral("CommandAllKey"), QStringLiteral("Meta")), mb(QStringLiteral("CommandAll1"), QStringLiteral("Activate, raise and move"))},
-                nullptr, nullptr};
+                nullptr};
     actions.plasma = [ch = actions.changes](const Getter &g) {
         const QString key = g(ch[0]), a = g(ch[1]);
         if (key != QLatin1String("Meta"))
@@ -186,7 +186,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "Use kwin-i3's keys over Plasma's"),
                 {},
                 i18n("A key two shortcuts share runs only one of them."),
-                {}, false, {}, nullptr, nullptr};
+                {}, false, {}, nullptr};
     keysRow.plasma = [this](const Getter &) {
         const auto c = clashes();
         QStringList out;
@@ -213,7 +213,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
              {fx(QStringLiteral("scale"), true), fx(QStringLiteral("glide"), false), fx(QStringLiteral("fade"), false),
               fx(QStringLiteral("maximize"), true), fx(QStringLiteral("squash"), true), fx(QStringLiteral("magiclamp"), false),
               fx(QStringLiteral("fullscreen"), true), fx(QStringLiteral("slide"), true), fx(QStringLiteral("fadedesktop"), false)},
-             nullptr, nullptr};
+             nullptr};
     anim.plasma = [ch = anim.changes](const Getter &g) {
         const auto on = [&](int i) { return g(ch[i]) == QLatin1String("true"); };
         QStringList what;
@@ -232,9 +232,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     };
     m_defs << anim;
 
-    for (Row &r : m_defs)
-        if (r.id == QLatin1String("focusStealing"))
-            r.shown = [this, ch = r.changes]() { return effective(ch[0]).toInt() > 1; };
 }
 
 QString SetupModel::before(const Change &c) const
@@ -309,9 +306,9 @@ void SetupModel::load()
     m_needed = false;
     m_initial.clear();
     for (const Row &r : m_defs) {
+        // Every row is shown, as KDE's rule is disabled, not hidden: one Plasma already matches and
+        // kwin-i3 didn't change ("settled") is ticked and disabled, with nothing to give back.
         const bool d = differs(r), c = changedByUs(r);
-        if (!c && (!d || (r.shown && !r.shown())))
-            continue;
         m_needed = m_needed || (d && !r.optional && r.id != QLatin1String("keys"));
         m_initial[r.id] = !d;
         const Getter now = [this](const Change &ch) { return effective(ch); };
@@ -329,7 +326,8 @@ void SetupModel::load()
                               {QStringLiteral("status"), status},   {QStringLiteral("kwini3"), r.kwini3},
                               {QStringLiteral("why"), r.why},       {QStringLiteral("note"), r.note},
                               {QStringLiteral("optional"), r.optional}, {QStringLiteral("differs"), d},
-                              {QStringLiteral("changed"), c},       {QStringLiteral("before"), c ? earlier : QString()}};
+                              {QStringLiteral("changed"), c},       {QStringLiteral("before"), c ? earlier : QString()},
+                              {QStringLiteral("settled"), !d && !c}};
     }
     m_wanted = m_initial;
     Q_EMIT changed();

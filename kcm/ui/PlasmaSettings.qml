@@ -50,6 +50,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             QQC2.CheckBox {
                 text: modelData.title
+                enabled: !modelData.settled          // nothing to change and nothing to give back
                 checked: !!kcm.setup.wanted[modelData.id]
                 onToggled: kcm.setup.setWanted(modelData.id, checked)
                 Accessible.description: line.text
@@ -68,6 +69,7 @@ KCM.SimpleKCM {
             font: Kirigami.Theme.smallFont
             Accessible.ignored: true
             text: [modelData.optional ? i18nc("@info", "Optional.") : "",
+                   modelData.settled ? i18nc("@info", "Plasma already has this.") :
                    modelData.changed && !modelData.differs
                        ? i18nc("@info what Plasma had", "Changed by kwin-i3; Plasma had: %1 Unticking this restores it.", modelData.before)
                        : modelData.status === "default" ? i18nc("@info what Plasma does", "%1 This is Plasma's default.", modelData.plasma)
@@ -86,12 +88,7 @@ KCM.SimpleKCM {
             y: Kirigami.Units.largeSpacing
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.largeSpacing
-            Kirigami.PlaceholderMessage {
-                Layout.fillWidth: true
-                visible: page.rows.length === 0
-                text: i18n("Plasma's settings are as kwin-i3 needs them.")
-            }
-            Repeater {
+                Repeater {
                 model: page.rows
                 delegate: SettingRow {}
             }

@@ -21,7 +21,8 @@ class SetupModel : public QObject
     // One map per row shown: id, title, plasma (what Plasma does, in a sentence), plasmaDefault
     // (that is Plasma's default), kwini3 (what kwin-i3 needs instead), why, note (a caution the
     // give-back carries), optional, differs, changed (by kwin-i3, can be given back), before (what
-    // Plasma did before kwin-i3 changed it).
+    // Plasma did before kwin-i3 changed it), settled (Plasma already has it and kwin-i3 didn't
+    // change it: shown ticked and disabled).
     Q_PROPERTY(QVariantList rows MEMBER m_rows NOTIFY changed)
     // A Plasma setting kwin-i3 needs differs (the keys aside, on the main page): the banner.
     Q_PROPERTY(bool needed MEMBER m_needed NOTIFY changed)
@@ -50,7 +51,6 @@ public:
         QString id, title, kwini3, why, note;
         bool optional = false;
         QList<Change> changes;                       // config rows
-        std::function<bool()> shown;                 // null: always
         std::function<QString(const Getter &)> plasma; // what Plasma does with these values
     };
 

@@ -594,6 +594,8 @@ KCM.SimpleKCM {
                 QQC2.CheckBox {
                     id: takeKeys
                     text: i18nc("@option:check", "Use kwin-i3's keys over Plasma's")
+                    // kwin-i3's keys are known only while it runs (KeysModel.available).
+                    enabled: kcm.keys.available && !(parent.parent.row && parent.parent.row.settled)
                     checked: !!kcm.setup.wanted["keys"]
                     onToggled: kcm.setup.setWanted("keys", checked)
                     Accessible.description: keysNote.text
@@ -610,7 +612,9 @@ KCM.SimpleKCM {
                 color: Kirigami.Theme.disabledTextColor
                 font: Kirigami.Theme.smallFont
                 Accessible.ignored: true
-                text: i18n("Unticking this and applying restores Plasma's original keys.")
+                text: !kcm.keys.available ? i18n("kwin-i3 isn't running, so its keys can't be checked.")
+                    : parent.row && parent.row.settled ? i18n("No Plasma shortcut shares a key with kwin-i3.")
+                                                       : i18n("Unticking this and applying restores Plasma's original keys.")
             }
         }
 
