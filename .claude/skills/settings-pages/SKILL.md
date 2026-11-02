@@ -39,10 +39,14 @@ Follow it for a new page, a changed page, or a single new control.
 5. **Hard cases** from `patterns.md`; on a KDE page, check `kde.md` for how Plasma words the same
    thing, and copy its wording where it fits.
 6. **Review** (`review.md`): run the rubric, then T1 (say it aloud with on/off), T6 (left edge),
-   T7 (titles and buttons alone). Screenshot the page and read the screenshot.
-7. **Newcomer test (T3)**: give a fresh sub-agent only the screenshot or the strings, no code and
-   no docs, and ask, per row: what does this do, what happens when it's ticked, how do you get
-   back? Every wrong or hesitant answer is a wording bug. Fix and repeat.
+   T7 (titles and buttons alone). Then **T10 and T11**: screenshot the page in every state its model
+   tells apart (stock, already right, changed by the product, dependency off) and compare which
+   rows exist; read every line of code that shows or hides something. A screenshot in one state
+   can't show what's missing.
+7. **Newcomer test (T3)**: give a fresh sub-agent only the screenshots (in at least two states)
+   or the strings, no code and no docs, and ask, per row: what does this do, what happens when
+   it's ticked, how do you get back? Every wrong or hesitant answer is a wording bug. Fix and
+   repeat.
 8. **Remove one thing**, then stop.
 
 ## The rules that matter most
@@ -73,7 +77,10 @@ These cover most failures. Each has its sources in the reference files.
     hasn't seen, and controls show the current state, not a suggestion. (`layout.md` 26-29)
 11. **Changing another system's setting**: say what the reader gets, whose it is, and how it comes
     back, in that order; show its current state. (`patterns.md` P1)
-12. **Reversible, and said once where not obvious**: "Unticking this restores the previous
+12. **Disabled, not hidden.** A setting that's already right, unavailable or locked stays on the
+    page, greyed, with why beside it; only absent hardware is hidden. A page whose rows come and go
+    with state can't be learned. (`kde.md` 33; `review.md` 15, T10)
+13. **Reversible, and said once where not obvious**: "Unticking this restores the previous
     value." "Defaults" means the product's defaults; "restore" means the reader's own. (P4)
 
 ## When the guides disagree

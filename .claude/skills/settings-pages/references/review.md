@@ -22,6 +22,11 @@ Every line scores 0 or 1; fix every 0 before the page goes to anyone.
 12. Buttons say what happens, verb + object; none says where.
 13. No "you", "your", "my", "now", "please", "oops"; no exclamation marks.
 14. A newcomer can say what each row does after one read (T3).
+15. No control's presence depends on state (T10): the same rows exist whether a setting is at its
+    default, already right, changed by the product, or its dependency is missing. State changes
+    what a control shows (ticked, disabled, its muted line), never whether it is there. The only
+    exceptions: hardware that isn't there, a state message, a note that applies only in one state,
+    and a reveal the reader chose (a field that appears under the choice that needs it).
 
 ## The tests
 
@@ -53,6 +58,17 @@ SMASH.
 
 **T8. Readability score as a smoke alarm.** Flesch-Kincaid grade 6-8 for a general audience.
 It measures only length; never treat it as a judge. ALA-TEST, NNG-PL.
+
+**T10. Every state, side by side.** List the states the page's model tells apart (the product's
+defaults, the platform's stock settings, already as the product needs, changed by the product,
+a dependency off or not running). Screenshot the page in each, and compare the set of rows. Any row
+that appears in one and not another is a finding unless rubric line 15 excuses it. Screenshots in
+one state can't show what's missing, and neither can a newcomer reading them: this is the only test
+that catches a hidden control.
+
+**T11. Read what decides visibility.** Search the page's code for every place that shows or hides
+something (`visible:`, model filters, rows skipped in a loop that builds the list) and justify each
+against rubric line 15. Wording reviews read strings; this one reads the logic.
 
 **T9. Screenshot it.** Look at every changed page, at the platform's normal size, before saying it
 is done. Then remove one thing.
