@@ -14,12 +14,12 @@ KCM.SimpleKCM {
     id: root
 
     readonly property var settings: kcm.settings
-    // One width for every dropdown and spin box, so the controls end on one line, as Plasma's
-    // pages do (docs/style-settings-page.md §1): the widest dropdown's own, so no choice is cut.
-    readonly property real controlWidth: Math.max(Kirigami.Units.gridUnit * 14,
-        wrappingBox.implicitWidth, dragBox.implicitWidth, popupBox.implicitWidth,
-        workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth,
-        tiledLook.implicitWidth, hideEdgesBox.implicitWidth)
+    // The dropdowns of a section share one width, its widest one's own, so they end on one line
+    // and no choice is cut; every spin box is one compact width (docs/style-settings-page.md §1).
+    readonly property real spinWidth: Kirigami.Units.gridUnit * 6
+    readonly property real mouseColumn: Math.max(dragBox.implicitWidth, popupBox.implicitWidth)
+    readonly property real workspacesColumn: Math.max(workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth)
+    readonly property real frameColumn: Math.max(tiledLook.implicitWidth, hideEdgesBox.implicitWidth)
     // The frame's width and colours apply wherever a frame is drawn.
     readonly property bool frameDrawn: settings.tiledLook === "frame" || settings.frameOnFloating
 
@@ -101,7 +101,7 @@ KCM.SimpleKCM {
 
     // A spin box that shows its unit: "8 px".
     component UnitSpinBox: QQC2.SpinBox {
-        Layout.preferredWidth: root.controlWidth
+        Layout.preferredWidth: root.spinWidth
         property string unit
         textFromValue: (value) => unit === "ms" ? i18ncp("@item:valuesuffix milliseconds", "%1 ms", "%1 ms", value)
                                 : unit === "%" ? i18nc("@item:valuesuffix percent", "%1%", value)
@@ -111,7 +111,8 @@ KCM.SimpleKCM {
 
     // A choice stored as i3's word ("auto", "force"), shown as words a person would say.
     component ChoiceBox: QQC2.ComboBox {
-        Layout.preferredWidth: root.controlWidth
+        property real columnWidth: implicitWidth      // its section's widest dropdown
+        Layout.preferredWidth: columnWidth
         property string settingName
         property bool applies: true
         textRole: "text"
@@ -304,6 +305,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: dragBox
+                columnWidth: root.mouseColumn
                 settingName: "tilingDrag"
                 applies: kcm.helperLoaded       // plugin/tilingdrag.cpp
                 model: [
@@ -324,6 +326,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: popupBox
+                columnWidth: root.mouseColumn
                 settingName: "popupDuringFullscreen"
                 model: [
                     { text: i18nc("@item:inlistbox", "Behind; the fullscreen app's dialogs in front"), value: "smart" },
@@ -348,6 +351,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: workspaceLayoutBox
+                columnWidth: root.workspacesColumn
                 settingName: "workspaceLayout"
                 model: [
                     { text: i18nc("@item:inlistbox", "Split"), value: "default" },
@@ -366,6 +370,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: orientationBox
+                columnWidth: root.workspacesColumn
                 settingName: "defaultOrientation"
                 model: [
                     { text: i18nc("@item:inlistbox", "By screen shape"), value: "auto" },
@@ -418,6 +423,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: tiledLook
+                columnWidth: root.frameColumn
                 settingName: "tiledLook"
                 applies: kcm.frameAvailable
                 model: [
@@ -496,6 +502,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: hideEdgesBox
+                columnWidth: root.frameColumn
                 settingName: "hideEdgeBorders"
                 applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
                 model: [
