@@ -206,7 +206,7 @@ follows it:
 - **The list**: Plasma's settings that stand in for an i3 directive, at i3's value (focus follows
   mouse with no delay and the next focus under the pointer); the ones kwin-i3 needs (per-output
   desktops, with more than one output); Plasma's features that fight the tree; kwin-i3's keys
-  another shortcut holds; and the optional (animations off; i3 has none).
+  another shortcut holds; and the optional (window animations set to None, not the global speed; i3 has none).
 - **Every change outside kwin-i3's own settings can be undone.** Before kwin-i3 changes a Plasma
   setting or takes a shortcut, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
   given back alone or all at once, unticked and applied, and all on removal. A give-back writes

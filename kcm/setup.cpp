@@ -55,6 +55,8 @@ static KConfigGroup groupOf(const SetupModel::Change &c)
 // changed (6.8's window actions) is read right; kdeglobals' one key here is Plasma's 1.
 static QString stock(const SetupModel::Change &c)
 {
+    if (!c.stock.isEmpty())
+        return c.stock;
     if (c.file == QLatin1String("kdeglobals"))
         return QStringLiteral("1");
     static QString kcfg;
@@ -196,14 +198,37 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     };
     m_defs << keysRow;
 
-    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Make animations instant"),
+    // The window animations of Plasma's Animations page (KWin 6.7.5 src/kcms/animations: Window
+    // open/close, maximize, minimize, full screen, virtual desktop switching), each set to None:
+    // every effect of its group off (the effects' X-KWin-Exclusive-Category), the stock ones first.
+    // Other animations, and the global speed, stay as they are.
+    const auto fx = [](const QString &effect, bool onByDefault) {
+        return Change{QStringLiteral("kwinrc"), QStringLiteral("Plugins"), effect + QStringLiteral("Enabled"), QStringLiteral("false"),
+                      onByDefault ? QStringLiteral("true") : QStringLiteral("false")};
+    };
+    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Set window animations to None"),
              {},
-             i18n("i3 has none. This is for every app, not windows alone. Plasma's setting: Quick Settings > Animation speed, \"Instant\"."),
-             {}, true, {Change{QStringLiteral("kdeglobals"), QStringLiteral("KDE"), QStringLiteral("AnimationDurationFactor"), QStringLiteral("0")}},
+             i18n("Opening and closing, maximizing, minimizing, full screen and virtual desktop switching, each set to None, as i3 has none. Other animations and the animation speed stay as they are. Plasma's setting: Animations, Desktop animations."),
+             {}, true,
+             {fx(QStringLiteral("scale"), true), fx(QStringLiteral("glide"), false), fx(QStringLiteral("fade"), false),
+              fx(QStringLiteral("maximize"), true), fx(QStringLiteral("squash"), true), fx(QStringLiteral("magiclamp"), false),
+              fx(QStringLiteral("fullscreen"), true), fx(QStringLiteral("slide"), true), fx(QStringLiteral("fadedesktop"), false)},
              nullptr, nullptr};
     anim.plasma = [ch = anim.changes](const Getter &g) {
-        const double f = g(ch[0]).toDouble();
-        return f == 0 ? i18n("Plasma shows no animations.") : i18n("Plasma animates windows and controls as they open, close and move.");
+        const auto on = [&](int i) { return g(ch[i]) == QLatin1String("true"); };
+        QStringList what;
+        if (on(0) || on(1) || on(2))
+            what << i18nc("an animation, in a list", "opening and closing");
+        if (on(3))
+            what << i18nc("an animation, in a list", "maximizing");
+        if (on(4) || on(5))
+            what << i18nc("an animation, in a list", "minimizing");
+        if (on(6))
+            what << i18nc("an animation, in a list", "full screen");
+        if (on(7) || on(8))
+            what << i18nc("an animation, in a list", "desktop switching");
+        return what.isEmpty() ? i18n("Plasma shows no window animations.")
+                              : i18nc("a list of animations", "Plasma animates windows: %1.", what.join(QStringLiteral(", ")));
     };
     m_defs << anim;
 
@@ -356,6 +381,16 @@ void SetupModel::save()
             unreachable += giveBackRow(r);
     }
     reconfigure();
+    // KWin's reconfigure loads an effect turned on but doesn't unload one turned off: unloaded
+    // here, as Plasma's Animations page does through the same interface.
+    for (const Row &r : m_defs)
+        for (const Change &c : r.changes)
+            if (c.group == QLatin1String("Plugins") && effective(c) == QLatin1String("false")) {
+                auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
+                                                          QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("unloadEffect"));
+                msg << c.key.chopped(int(qstrlen("Enabled")));
+                QDBusConnection::sessionBus().call(msg);
+            }
     QStringList errors;
     if (!failed.isEmpty())
         errors << i18n("These could not be changed: %1.", failed.join(QStringLiteral(", ")));

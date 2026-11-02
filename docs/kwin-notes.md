@@ -241,6 +241,13 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Read-only live window list: `busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Match
   s <text>` for ids, then `org.kde.KWin getWindowInfo s <uuid>`.
 - busctl's JSON for `a(ai)` nests each sequence one level deeper (`[[k,0,0,0]]`).
+- **KWin's `reconfigure` loads an effect switched on in `[Plugins]` but doesn't unload one
+  switched off** (`EffectsHandler::reconfigure` is `queryAndLoadAll`): unload it over D-Bus
+  (`/Effects` `unloadEffect`), as Plasma's Animations page does. That page's rows are effect
+  groups (`X-KWin-Exclusive-Category`, or `exclusiveGroup` in a built-in's metadata), "None" being
+  all of a group off; 6.7.5: open/close scale (on), glide, fade; maximize; minimize squash (on),
+  magic lamp; full screen; desktop switching slide (on), fade desktop; peek at desktop window
+  aperture (on), eye on screen.
 - **Turning `PerOutputVirtualDesktops` off is not a plain revert**: it sets every output's current
   desktop to the active output's (6.7.5 `virtualdesktops.cpp:984-998`, 6.8.2 `:990-1003`). Turning
   it on is harmless; both take effect at once.

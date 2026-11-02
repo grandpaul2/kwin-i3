@@ -1038,7 +1038,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   `NextFocusPrefersMouse`); per-output desktops; focus stealing prevention at Low (shown only
   above it); screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
   window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
-  optional, animations off (`AnimationDurationFactor` 0). **kwin-i3's keys other active shortcuts
+  optional, the window animations set to None (Plasma's Animations page: every effect of the
+  open/close, maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`,
+  and unloaded; the global speed untouched). **kwin-i3's keys other active shortcuts
   hold** are one tick on the main page's Keys section, "Use kwin-i3's keys over Plasma's", each taken
   from every holder in turn (at most five), a holder that launches what kwin-i3's action launches
   (the load report's `TAKEN-SAME`: KRunner on the Launcher's key, the default terminal on the

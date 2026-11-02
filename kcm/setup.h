@@ -42,6 +42,7 @@ public:
 
     struct Change {
         QString file, group, key, value;
+        QString stock = {};             // its stock value where kwin.kcfg has none (an effect's EnabledByDefault)
     };
     // A value as Plasma holds it, from wherever it is read (Plasma's settings, or the save).
     using Getter = std::function<QString(const Change &)>;

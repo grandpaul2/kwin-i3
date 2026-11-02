@@ -135,7 +135,8 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    the frame moves only when you click); each screen switching workspaces alone (with it off, a
    workspace switch changes every monitor); no tiling or maximizing at screen edges; Meta+T freed
    from Plasma's tile editor; Meta and a drag focusing the window it moves; and, optional,
-   animations off (i3 has none). These are **Plasma's settings, not kwin-i3's**: tick each one you
+   window animations set to None (opening and closing, maximizing, minimizing, full screen and
+   desktop switching; i3 has none; the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each one you
    want (or press **Defaults**, which ticks them all), then **Apply**, the
    same as changing them in System Settings. kwin-i3 keeps what each was: untick it and Apply to
    put it back (one you changed since stays as you set it). On the main page, under Keys, **Use
