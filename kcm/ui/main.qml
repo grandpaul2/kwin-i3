@@ -19,7 +19,6 @@ KCM.SimpleKCM {
     readonly property real spinWidth: Kirigami.Units.gridUnit * 6
     readonly property real mouseColumn: Math.max(dragBox.implicitWidth, popupBox.implicitWidth)
     readonly property real workspacesColumn: Math.max(workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth)
-    readonly property real frameColumn: Math.max(tiledLook.implicitWidth, hideEdgesBox.implicitWidth)
     // The frame's width and colours apply wherever a frame is drawn.
     readonly property bool frameDrawn: settings.tiledLook === "frame" || settings.frameOnFloating
 
@@ -132,6 +131,7 @@ KCM.SimpleKCM {
     }
 
     component FrameColour: KQC.ColorButton {
+        Layout.preferredWidth: root.spinWidth
         property string settingName
         property bool applies: true
         showAlphaChannel: false
@@ -423,7 +423,7 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: tiledLook
-                columnWidth: root.frameColumn
+                columnWidth: root.spinWidth      // as the rows down to Hide frame
                 settingName: "tiledLook"
                 applies: kcm.frameAvailable
                 model: [
@@ -502,7 +502,6 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: hideEdgesBox
-                columnWidth: root.frameColumn
                 settingName: "hideEdgeBorders"
                 applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
                 model: [
