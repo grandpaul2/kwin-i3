@@ -1426,7 +1426,7 @@ var Tree = (function () {
             var c = ws.focus[i];
             if (toFloating !== isFloatingCon(c) || !reachable(c)) continue;
             var f = this.descendFocused(c);
-            this.activate(f);
+            this.activateUnblock(f);
             return f;
         }
         return null;
@@ -1578,6 +1578,20 @@ var Tree = (function () {
         }
         this.activate(focus);
         return focus;
+    };
+
+    // con_activate_unblock (con.c:302-311): activating a window ends the fullscreen of another
+    // window covering its workspace, where the focus commands can't pass one
+    // (con_fullscreen_permits_focusing): an activation (handlers.c:782-804) and the focus mode
+    // toggle (commands.c:1421) do. Fullscreen sits on windows only (K11), so no window is inside
+    // the fullscreen one. Returns the window whose fullscreen ended, or null.
+    M.activateUnblock = function (con) {
+        if (!con) return null;
+        var fs = fullscreenOn(wsOf(con));
+        if (fs && fs !== con) fs.fullscreen = false;
+        else fs = null;
+        this.activate(con);
+        return fs;
     };
 
     // KWin activated a window by itself (a click, focus follows mouse, a new window).
@@ -2396,6 +2410,11 @@ var KI3 = (function () {
     // A window in the tree that is closing, the same span: KWin's activation then is its own
     // choice, which the close's pass corrects, and i3 doesn't warp at a close (tree.c).
     var closingTree = null;
+    // A window adopted since the last pass is still opening: KWin finishes its own activation of
+    // a new window after the script's windowAdded returns (the same call), so a second
+    // activation then is the opening's, popup_during_fullscreen's (§5 C5), not a request that
+    // ends a fullscreen (V6b). The fullscreen window C5 handed the focus back to, or true.
+    var opening = {};
     var ruleRan = {};       // window id -> { rule index: true }: the forWindow rules already run on it (Rules.classify, X2)
     var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
@@ -2604,6 +2623,7 @@ var KI3 = (function () {
 
     function flush() {
         if (rebuilding) return;         // the model is being rebuilt (desktopListChanged)
+        opening = {};
         var nums = Object.keys(dirty), ok = true;
         dirty = {};
         // Each workspace on its own: one that fails can't stop the others.
@@ -3374,6 +3394,7 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
+        endFullscreen(ws);
         model.floatingWindows(ws).forEach(function (f) {
             var w = wins[f.win];
             if (w) (floatedOf(f) ? lookFloated : lookFloating)(w, ws);
@@ -4407,21 +4428,32 @@ var KI3 = (function () {
         return wins[fs.win];
     }
 
-    // fullscreen_blocks_floating_render, for an existing floating window w: its workspace has
-    // another window fullscreen, and popupDuringFullscreen doesn't let it over (`all` lets every
-    // floating window over, `smart` the fullscreen window's own transients).
-    function fullscreenBlocks(w) {
+    // An activation KWin made on its own, of an existing window on a workspace with another
+    // window fullscreen (Alt+Tab, the task manager, an app's request, a click): i3's
+    // con_activate_unblock (handlers.c:782-804, con.c:302-309) ends that fullscreen and focuses
+    // the window, tiling or floating (§10 V6b). Not KWin's pick at a close (the close's pass
+    // decides, §5 C7), and not the fullscreen window's own modal dialog: KWin activates it in its
+    // parent's place (activation.cpp findModal, §5 C5), so it is how the fullscreen window itself
+    // is reached (reason (a)). The pass then ends KWin's fullscreen (endFullscreen).
+    function unblocksFullscreen(w) {
         var con = model.byWin[id(w)];
-        if (!con || !floats(con) || w.fullScreen) return false;
+        if (!con || closingTree) return null;
         var fs = model.fullscreenOn(Tree.wsOf(con));
-        if (!fs || fs === con || !wins[fs.win]) return false;
-        // The fullscreen window's own modal dialog: KWin activates it in its place whatever is
-        // asked (activation.cpp findModal, §5 C5), so handing back would only loop.
-        if (w.modal && transientOf(w, wins[fs.win])) return false;
-        var how = Settings.get("popupDuringFullscreen");
-        if (how === "all") return false;
-        if (how === "smart" && transientOf(w, wins[fs.win])) return false;
-        return true;
+        if (!fs || fs === con || !wins[fs.win]) return null;
+        if (w.modal && transientOf(w, wins[fs.win])) return null;
+        return con;
+    }
+
+    // The tree owns fullscreen (decision 3): a window KWin holds fullscreen that the model no
+    // longer does (a second one went fullscreen, con_enable_fullscreen, con.c:1269-1276; an
+    // activation unblocked it; a move brought another in, T10, T24) leaves KWin's fullscreen too.
+    function endFullscreen(ws) {
+        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
+            var w = wins[c.win];
+            if (!w || !w.fullScreen || c.fullscreen) return;
+            log("FULLSCREEN " + shortCaption(w) + ": ends, the tree's fullscreen is another's");
+            w.fullScreen = false;
+        });
     }
 
     function adoptWindow(w, fresh) {
@@ -4459,6 +4491,7 @@ var KI3 = (function () {
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh, kind);
+        if (fresh) opening[key] = fs || true;
         if (kind === "floating" || kind === "sticky") {
             model.setSticky(model.openFloating(key, ws), kind === "sticky");
             setFloatingLook(w, true);
@@ -4652,6 +4685,14 @@ var KI3 = (function () {
         w.fullScreenChanged.connect(guard("fullscreen", function () {
             model.setFullscreen(key, w.fullScreen);
             var con = model.byWin[key];
+            // con_enable_fullscreen (con.c:1286-1289): the window takes the focus, unless its
+            // workspace isn't the focused one (§10 V1). KWin activates it only when it asks.
+            if (con && w.fullScreen && !con.minimized && model.focused !== con &&
+                Tree.wsOf(con) === focusedWs()) {
+                log("FULLSCREEN " + shortCaption(w) + ": takes the focus");
+                model.activate(con);
+                wantFocus();
+            }
             if (con) schedule(Tree.wsOf(con));
         }));
         // Maximize (i3 has none) needs no handler of its own: it drops the window out of its
@@ -6377,16 +6418,19 @@ var KI3 = (function () {
                 wantFocus();
                 return;
             }
-            // A floating window activated on a workspace with another window fullscreen (Alt+Tab,
-            // the task manager, an app's request): i3 neither draws it over the fullscreen one nor
-            // focuses it (render.c:253-270 fullscreen_blocks_floating_render, with
-            // popup_during_fullscreen's exceptions; con_fullscreen_permits_focusing), so the
-            // fullscreen window takes the focus back, as a new window's does (§5 C5, §10 V6b).
-            if (!switching && fullscreenBlocks(w)) {
-                var fsw = wins[model.fullscreenOn(Tree.wsOf(model.byWin[id(w)])).win];
-                log("FULLSCREEN " + shortCaption(fsw) + ": keeps the focus over " + shortCaption(w) + " (activated)");
-                workspace.activeWindow = fsw;
+            // An activation on a workspace with another window fullscreen ends that fullscreen
+            // (unblocksFullscreen, §10 V6b).
+            var back = !switching && opening[id(w)];
+            if (back && back !== true && !back.deleted) {
+                log("FULLSCREEN " + shortCaption(back) + ": keeps the focus over " + shortCaption(w) + " (opening)");
+                workspace.activeWindow = back;
                 return;
+            }
+            var unblock = switching || back ? null : unblocksFullscreen(w);
+            if (unblock) {
+                var ended = model.activateUnblock(unblock);
+                log("FULLSCREEN " + (ended && wins[ended.win] ? shortCaption(wins[ended.win]) : "?") + ": ends, " + shortCaption(w) + " activated");
+                schedule(Tree.wsOf(unblock));
             }
             // A modal dialog activated: its parent takes the place right behind it in the focus
             // order, as in i3 the parent was focused at its opening (KWin activates a new window's modal dialog in its place, so the parent never got in).

@@ -129,7 +129,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 
 - `addWaylandWindow` activates every new window (focus stealing Low) **before** scripts get
   `windowAdded`; `activateWindow` switches that output's desktop first (SwitchToOtherDesktop): a
-  capture shows SHOWN, ACTIVE, ADD within 2 ms. A script can hand focus back synchronously from the handler.
+  capture shows SHOWN, ACTIVE, ADD within 2 ms. A script can hand focus back synchronously from the handler,
+  but a new modal dialog whose parent hasn't mapped yet is activated again right after (the same
+  millisecond, before the next pass): a second `windowActivated` that is still the opening's, not
+  a request (scenario 87, part 4; `opening` in `src/kwin.js`).
 - `activateWindow` activates a window's modal dialog in its place (`findModal`): the parent never
   gets `windowActivated`.
 - Every activation (xdg-activation, Alt+Tab, a task manager click, a script) goes through one

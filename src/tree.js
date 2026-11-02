@@ -1238,7 +1238,7 @@ var Tree = (function () {
             var c = ws.focus[i];
             if (toFloating !== isFloatingCon(c) || !reachable(c)) continue;
             var f = this.descendFocused(c);
-            this.activate(f);
+            this.activateUnblock(f);
             return f;
         }
         return null;
@@ -1390,6 +1390,20 @@ var Tree = (function () {
         }
         this.activate(focus);
         return focus;
+    };
+
+    // con_activate_unblock (con.c:302-311): activating a window ends the fullscreen of another
+    // window covering its workspace, where the focus commands can't pass one
+    // (con_fullscreen_permits_focusing): an activation (handlers.c:782-804) and the focus mode
+    // toggle (commands.c:1421) do. Fullscreen sits on windows only (K11), so no window is inside
+    // the fullscreen one. Returns the window whose fullscreen ended, or null.
+    M.activateUnblock = function (con) {
+        if (!con) return null;
+        var fs = fullscreenOn(wsOf(con));
+        if (fs && fs !== con) fs.fullscreen = false;
+        else fs = null;
+        this.activate(con);
+        return fs;
     };
 
     // KWin activated a window by itself (a click, focus follows mouse, a new window).

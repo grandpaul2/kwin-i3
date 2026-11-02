@@ -98,12 +98,7 @@ window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
 **84. The foundation sweep's code fixes** (2026-11-01; each checked against i3 4.24 and the
 code). The code breaks a row of `behaviour.md` or i3 with no reason (a)-(f); each row is marked
 "being fixed". Five stages, one live at a time, each with the go to build and to reload, `make
-unit` and the changed scenarios (64 for a plugin stage):
-(1) **fullscreen**: a second fullscreen window ends the first's in KWin too (V2, `con.c:1269`); an
-activation of a window under a fullscreen one, tiling or floating, ends the fullscreen and
-focuses it, as `con_activate_unblock` (V6b, `handlers.c:782-804`), the focus mode toggle too
-(known limits); a window going fullscreen takes the focus unless on another workspace (V1,
-`con.c:1286-1289`).
+unit` and the changed scenarios (64 for a plugin stage). Stage 1 (fullscreen: V1, V2, V6b) is built; left:
 (2) **tree and rules**: flatten walks the floating containers (§2, `tree.c:660-749`); focus
 mode_toggle from the workspace (T23); sticky windows pushed in focus order (R3, `output.c:96-117`);
 `assign … output <direction>` from the window's own output (R19); `__focused__` (R9); the
@@ -126,4 +121,4 @@ G15); Meta+Shift with nowhere to drop goes to the app, the script telling the he
 (K4); the helper takes the ring decision from the script (§1).
 (5) **pointer and release**: entering a gap or a panel on the focused output refocuses (B2,
 `handlers.c:91-121`); Release resets only the roots kwin-i3 placed, a user's own tile layout kept
-(Y4, reason (e)). Next: stage 1, with the go.
+(Y4, reason (e)). Next: stage 2, with the go.
