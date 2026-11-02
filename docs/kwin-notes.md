@@ -135,6 +135,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   a request (scenario 87, part 4; `opening` in `src/kwin.js`).
 - `activateWindow` activates a window's modal dialog in its place (`findModal`): the parent never
   gets `windowActivated`.
+- A parent resized by its tile (a rebuild after a sibling's fullscreen ended) was followed, the
+  same millisecond, by KWin activating its open modal dialog, which had opened without the focus
+  (scenario 32, `leave_fullscreen`, before a fullscreen window's place was kept). Seen, not yet read
+  in the source; it is not the dialog's own activation request, which never came without the resize.
 - Every activation (xdg-activation, Alt+Tab, a task manager click, a script) goes through one
   `activateWindow` and one `ActivationDesktopPolicy`; a script can't tell them apart. DoNothing
   breaks Alt+Tab and the task manager.
