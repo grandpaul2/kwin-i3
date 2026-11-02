@@ -9,6 +9,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QDBusPendingCallWatcher>
 
 #include <linux/input-event-codes.h>
 
@@ -171,11 +172,17 @@ void ResizeMode::LaunchTerminal()
     auto reg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
                                               QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("doRegister"));
     reg << QStringList{service, QStringLiteral("_launch"), service, QStringLiteral("Launch")};
-    QDBusConnection::sessionBus().call(reg, QDBus::Block, 1000);
-    QString path = QStringLiteral("/component/") + service;
-    path.replace(QLatin1Char('.'), QLatin1Char('_')).replace(QLatin1Char('-'), QLatin1Char('_'));
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), path,
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
-    msg << QStringLiteral("_launch");
-    QDBusConnection::sessionBus().asyncCall(msg);
+    // Never waited for: this runs in the compositor, and a busy kglobalacceld would stall the
+    // desktop. The launch follows the registration's answer, whatever it is (the component may be
+    // there already).
+    auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(reg, 1000), this);
+    connect(watcher, &QDBusPendingCallWatcher::finished, this, [service](QDBusPendingCallWatcher *w) {
+        w->deleteLater();
+        QString path = QStringLiteral("/component/") + service;
+        path.replace(QLatin1Char('.'), QLatin1Char('_')).replace(QLatin1Char('-'), QLatin1Char('_'));
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), path,
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+        msg << QStringLiteral("_launch");
+        QDBusConnection::sessionBus().asyncCall(msg);
+    });
 }

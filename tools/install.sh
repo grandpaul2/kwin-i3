@@ -5,7 +5,7 @@
 # shortcuts hold, Plasma's settings) wait for the first run, after the log-out; this changes none.
 #   KI3_SCRIPTS_DIR   KWin's user script dir (default $XDG_DATA_HOME/kwin/scripts; tests)
 set -euo pipefail
-here=$(cd "$(dirname "$0")/.." && pwd)
+here=$(cd "$(dirname "$0")/.." && pwd -P)   # physical, as readlink -f below gives the link's target
 scripts=${KI3_SCRIPTS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/kwin/scripts}
 link=$scripts/kwin-i3
 

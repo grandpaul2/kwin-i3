@@ -23,6 +23,7 @@
 #include <QStyleHints>
 
 #include <algorithm>
+#include <cmath>
 
 using namespace KWin;
 
@@ -527,6 +528,21 @@ void TilingDrag::cancelFromOutside()
     }
 }
 
+// The drag button is no longer held, but its release never reached this filter (a filter in
+// front of it took it: the lock screen, a screen edge): the drag ends as cancelled, as i3's
+// drag_pointer always ends, so the pointer is never left grabbed. KWin updates the held buttons
+// before it runs the filters, so the next event's `buttons` tells.
+bool TilingDrag::releaseLost(Qt::MouseButtons held)
+{
+    if (!dragging() || (held & m_button)) {
+        return false;
+    }
+    cancelFromOutside();
+    m_taken &= held;
+    pressDone();
+    return true;
+}
+
 // A press taken for a drag or a resize: who, which button, from where; the key filter goes in
 // front of the shortcuts while it is held.
 void TilingDrag::takePress(Window *window, Qt::MouseButton button, const QPointF &pos, bool resize, const QString &side, bool threshold)
@@ -584,7 +600,7 @@ void TilingDrag::hoverAt(const QPointF &pos)
 
 bool TilingDrag::pointerMotion(PointerMotionEvent *event)
 {
-    if (!dragging()) {
+    if (!dragging() || releaseLost(event->buttons)) {
         return false;
     }
     if (m_groupActive) {
@@ -652,6 +668,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return true;
     }
     // Another button's press during a drag goes nowhere (i3 drains it); its release drops (above).
+    releaseLost(event->buttons);
     if (dragging()) {
         m_taken |= event->button;
         return true;
@@ -977,9 +994,27 @@ bool TilingDrag::pointerAxis(PointerAxisEvent *event)
     if (barAt(event->position, &bar) < 0) {
         return false;
     }
-    if (event->delta == 0) {
+    // i3 steps once per scroll button (up or left back, down or right on: click.c:227-242). A
+    // wheel notch is 120; a touchpad's or a high-resolution wheel's small deltas add up to one, at
+    // 15 per notch as X's libinput driver emulates the scroll buttons.
+    if (bar->key != m_scrollBar || event->orientation != m_scrollOrientation) {
+        m_scrollBar = bar->key;
+        m_scrollOrientation = event->orientation;
+        m_scrollV120 = 0;
+    }
+    const int v120 = event->deltaV120 != 0 ? event->deltaV120 : int(std::lround(event->delta * 8));
+    if (v120 == 0) {
+        return true;                    // the end of a touchpad scroll (libinput's stop event)
+    }
+    if ((m_scrollV120 < 0) != (v120 < 0)) {
+        m_scrollV120 = 0;               // a change of direction starts afresh
+    }
+    m_scrollV120 += v120;
+    if (std::abs(m_scrollV120) < 120) {
         return true;
     }
-    tellTab(QStringLiteral("scroll %1 %2").arg(bar->key).arg(event->delta < 0 ? -1 : 1));
+    const int step = m_scrollV120 < 0 ? -1 : 1;
+    m_scrollV120 -= step * 120;
+    tellTab(QStringLiteral("scroll %1 %2").arg(bar->key).arg(step));
     return true;
 }

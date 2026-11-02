@@ -78,7 +78,11 @@ def take():
                 break
             comp, action, friendly = h
             seqs = keys_of(comp, action)
-            entry = saved.setdefault(comp + "|" + action, {"component": comp, "action": action, "keys": seqs})
+            # An earlier record is kept while the holder still has what kwin-i3 left it; one the
+            # user has changed since starts afresh from its keys now, which are theirs.
+            entry = saved.get(comp + "|" + action)
+            if entry is None or not unchanged(entry, seqs):
+                entry = saved[comp + "|" + action] = {"component": comp, "action": action, "keys": seqs}
             write(saved)                   # saved before each change, so a failure loses nothing
             set_keys(comp, action, [s for s in seqs if s[0] != code])
             entry["set"] = keys_of(comp, action)

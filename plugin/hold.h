@@ -205,7 +205,7 @@ private:
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     KWin::EffectWindow *windowById(const QString &id) const;
-    void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::WindowPaintData &data);
+    void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     struct TabBar;
     KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const;   // logical, above `frame`
     void repaintBar(KWin::EffectWindow *w, const QString &key);  // that one bar, where it is now

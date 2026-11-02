@@ -142,7 +142,12 @@ KCM.SimpleKCM {
         readonly property var size: /^\s*(-?\d+)\s*x\s*(-?\d+)\s*$/.exec(page.settings[settingName] || "")
         readonly property int w: size ? parseInt(size[1]) : 0
         readonly property int h: size ? parseInt(size[2]) : 0
-        readonly property string mode: w < 0 || h < 0 ? "none" : w === 0 && h === 0 ? "default" : "size"
+        // The smallest size's default is i3's 75x50, stored as such (0x0 means the same to the
+        // script); the largest's is 0x0, all screens together.
+        readonly property int defW: maximum ? 0 : 75
+        readonly property int defH: maximum ? 0 : 50
+        property bool custom: false     // Custom chosen: its spin boxes stay, even at the default's size
+        readonly property string mode: w < 0 || h < 0 ? "none" : custom ? "size" : (w === 0 && h === 0) || (w === defW && h === defH) ? "default" : "size"
         function write(nw, nh) { page.settings[settingName] = nw + "x" + nh }
         spacing: Kirigami.Units.smallSpacing
         QQC2.Label { text: what; Accessible.ignored: true }
@@ -163,9 +168,20 @@ KCM.SimpleKCM {
             function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
             onStoredChanged: sync()
             Component.onCompleted: sync()
-            onActivated: currentValue === "none" ? parent.write(-1, -1) : currentValue === "default" ? parent.write(0, 0) : parent.write(parent.w > 0 ? parent.w : Screen.width, parent.h > 0 ? parent.h : Screen.height)
-            // A size starts from the screen's, never 1x1 (the largest size: every floating window
-            // shrunk to a pixel).
+            // A custom size starts from the default's own: the largest from the screen's (never
+            // 1x1, every floating window shrunk to a pixel), the smallest from 75x50 (never the
+            // screen's, every floating window grown to fill it).
+            onActivated: {
+                const row = parent;
+                row.custom = currentValue === "size";
+                if (currentValue === "none")
+                    row.write(-1, -1);
+                else if (currentValue === "default")
+                    row.write(row.defW, row.defH);
+                else
+                    row.write(row.w > 0 ? row.w : row.maximum ? Screen.width : 75,
+                              row.h > 0 ? row.h : row.maximum ? Screen.height : 50);
+            }
             Accessible.name: i18nc("@label:listbox", "%1 floating window size", what)
             KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
         }

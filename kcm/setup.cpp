@@ -100,8 +100,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     const auto on = [](const QString &v) { return v == QLatin1String("true"); };
 
     // Each row says in a sentence what Plasma does with its values, and what kwin-i3 needs
-    // instead; never a setting's name alone (docs/style-settings-page.md, "Saying what to pick": the Plasma Settings
-    // sub-page).
+    // instead; never a setting's name alone (docs/style-settings-page.md, "Saying what to pick").
     Row focus{QStringLiteral("focus"), i18nc("@option:check", "Focus follows the mouse"),
               {},
               i18n("The window under the pointer takes the focus at once, and when a window closes, the one under the pointer takes it, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus follows mouse (mouse precedence)\" with no delay."),

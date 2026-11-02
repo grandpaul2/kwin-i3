@@ -2594,7 +2594,7 @@ var KI3 = (function () {
 
     function wsForWindow(w) {
         // On all desktops (sticky, §3 R3): the workspace its output shows.
-        if (w.onAllDesktops && w.output) return wsModel(shownOn(w.output));
+        if (w.onAllDesktops && w.output) return shownWs(w.output);
         if (w.desktops.length !== 1) return null;
         var num = deskNum(w.desktops[0]);
         // A virtual desktop past 10 (Plasma's Overview can add one) is not kwin-i3's (plan.md
@@ -3707,8 +3707,8 @@ var KI3 = (function () {
                 var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r);
                 if (s) r.out = outGeometry(s);
                 log("FLOAT a container moved by the mouse: " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
-                if (s && s !== outputOf(v.ws)) {
-                    var to = wsModel(deskNum(workspace.currentDesktopForScreen(s)));
+                var to = s && s !== outputOf(v.ws) ? shownWs(s) : null;
+                if (to) {
                     model.moveToWorkspace(fc.nodes[0], to);
                     schedule(to);
                     wantFocus();
@@ -4614,6 +4614,10 @@ var KI3 = (function () {
         // the tree picked it; "kept", KWin had activated another window first (forgetWindow then
         // puts i3's choice back).
         if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
+        // A window that leaves the tree still open (two desktops, a desktop past 10, a rule) loses
+        // its ring with it, as forgetRings tells the effect.
+        if (ringTold[key] !== undefined && !w.deleted)
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
         delete untiled[key];
@@ -4977,7 +4981,8 @@ var KI3 = (function () {
     // Dropped (a drag) or moved by key onto another monitor: it joins the workspace shown there
     // and keeps the focus (i3's floating_maybe_reassign_ws).
     function joinShownWorkspace(con, w, output) {
-        var to = wsModel(deskNum(workspace.currentDesktopForScreen(output)));
+        var to = shownWs(output);
+        if (!to) return;
         model.moveToWorkspace(con, to);
         model.focusWin(id(w));
         wantFocus();
@@ -5003,9 +5008,9 @@ var KI3 = (function () {
         var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r), ws = Tree.wsOf(c);
         if (fc) {
             fc.rect.x = r.x; fc.rect.y = r.y;
-            if (s && s !== outputOf(ws)) {
+            var to = s && s !== outputOf(ws) ? shownWs(s) : null;   // floating_maybe_reassign_ws
+            if (to) {
                 fc.rect.out = outGeometry(s);
-                var to = wsModel(deskNum(workspace.currentDesktopForScreen(s)));   // floating_maybe_reassign_ws
                 model.moveToWorkspace(c, to);
                 wantFocus();
                 schedule(to);
@@ -5074,8 +5079,8 @@ var KI3 = (function () {
     // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
     function shownWorkspaces() {
         return workspace.screens.map(function (s) {
-            var n = deskNum(workspace.currentDesktopForScreen(s));
-            return n >= 1 ? { ws: wsModel(n), screen: s } : null;
+            var ws = shownWs(s);
+            return ws ? { ws: ws, screen: s } : null;
         }).filter(function (v) { return v; });
     }
     // is_tiling_drop_target: a tiled window shown, not under another's fullscreen.
@@ -5638,7 +5643,8 @@ var KI3 = (function () {
     // wherever its output is). `old`, the focus before the switch: a sticky window that had it
     // keeps it (workspace_show calls with old_focus); null otherwise (a move, an output change).
     function pushSticky(s, old) {
-        var ws = wsModel(shownOn(s)), others = [];
+        var ws = shownWs(s), others = [];
+        if (!ws) return;            // a desktop past 10 is no workspace (plan.md decision 9)
         Object.keys(model.workspaces).forEach(function (n) {
             var m = model.workspaces[n];
             if (m !== ws && m.floating.some(Tree.isSticky) && outputOf(m) === s) others.push(m);
@@ -5754,8 +5760,8 @@ var KI3 = (function () {
     }
     // The screen next to the focused workspace's, in a direction (or next, primary).
     function screenFrom(spec) { return screenBy(spec, outputOfNum(focusedWsNum())); }
-    // The model workspace an output shows.
-    function visibleWsOn(t) { return wsModel(shownOn(t)); }
+    // The model workspace an output shows, or null for a desktop past 10.
+    function visibleWsOn(t) { return shownWs(t); }
     // i3's cmd_focus_output: show the target's visible workspace, focusing its focused window.
     function focusOutput(dir) {
         var t = screenFrom(dir);
@@ -5764,7 +5770,8 @@ var KI3 = (function () {
     // i3's con_move_to_output: to the target's visible workspace; focus stays behind.
     function moveToOutput(spec, con) {
         var t = con ? screenBy(spec, outputOf(Tree.wsOf(con))) : null;
-        if (t) model.moveToWorkspace(con, visibleWsOn(t));
+        var to = t ? visibleWsOn(t) : null;
+        if (to) model.moveToWorkspace(con, to);
     }
     // i3's workspace_move_to_output: the focused workspace lives on the target and is shown
     // there, focused; the monitor it left, if it showed it, shows the one it showed most recently

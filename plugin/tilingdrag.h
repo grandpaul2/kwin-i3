@@ -214,6 +214,7 @@ private:
     void hoverAt(const QPointF &pos);
     void takePress(KWin::Window *window, Qt::MouseButton button, const QPointF &pos, bool resize, const QString &side, bool threshold);
     void pressDone();
+    bool releaseLost(Qt::MouseButtons held);
     void loadConfig();
     void watchMoves(KWin::Window *window);
 
@@ -263,6 +264,9 @@ private:
     };
     QList<BarSpot> m_bars;            // SetBars
     QString m_tabEvent;               // TabEvent's answer
+    QString m_scrollBar;              // the bar the scroll below was on
+    Qt::Orientation m_scrollOrientation = Qt::Vertical;
+    int m_scrollV120 = 0;             // a scroll not yet a whole step, in 120ths of one
     QString m_focusParent;            // SetFocusParent
     bool m_dropTargets = true;        // SetDropTargets
     int m_tiledRingTold = -1;         // SetTiledRing

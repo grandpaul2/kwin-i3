@@ -780,7 +780,7 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
         paintBars(renderTarget, viewport, w, deviceRegion, data);
     }
     if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
-        paintBanner(renderTarget, viewport, w, data);
+        paintBanner(renderTarget, viewport, w, deviceRegion, data);
     }
     KI3_PAINTED;
 }
@@ -791,7 +791,7 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
 // of wherever the window is drawn, in device pixels, as the ring is. KWin 6.7.5 gives an effect
 // no way to draw an offscreen QML scene of its own (OffscreenQuickView has no texture access in
 // its public header), so the banner is a plain textured quad.
-void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const WindowPaintData &data)
+void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
 {
     const double scale = viewport.scale();
     if (m_bannersStale) {
@@ -831,18 +831,31 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
     if (drawn.width() * scale < banner.size.width() + 8) {
         return;                                 // too narrow a window for the banner
     }
-    const double x = std::round(drawn.x() * scale + (drawn.width() * scale - banner.size.width()) / 2);
-    const double y = std::round((drawn.y() + 12) * scale);
-    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace);
-    QMatrix4x4 mvp = viewport.projectionMatrix();
-    mvp.translate(x, y);
-    binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
+    const int x = std::lround(drawn.x() * scale + (drawn.width() * scale - banner.size.width()) / 2);
+    const int y = std::lround((drawn.y() + 12) * scale);
+    // Only what this paint may touch, as the tab bars: KWin scissors no effect's own draws, and a
+    // partial repaint blended the whole banner again over pixels that already held it.
+    const QPoint origin = viewport.scaledRenderRect().topLeft();
+    const Rect device(x - origin.x(), y - origin.y(), banner.size.width(), banner.size.height());
+    const Region visible = deviceRegion & device;
+    const double opacity = std::clamp(data.opacity(), 0.0, 1.0);
+    if (visible.isEmpty() || opacity <= 0.0) {
+        return;
+    }
+    ShaderBinder binder(ShaderTrait::MapTexture | ShaderTrait::TransformColorspace | ShaderTrait::Modulate);
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
+    binder.shader()->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     const BlendState kept;
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
     banner.texture->bind();
-    banner.texture->render(QSizeF(banner.size));
+    for (const Rect &r : visible.rects()) {
+        QMatrix4x4 mvp = viewport.projectionMatrix();
+        mvp.translate(r.x() + origin.x(), r.y() + origin.y());
+        binder.shader()->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, mvp);
+        const RectF source(r.x() - device.x(), r.y() - device.y(), r.width(), r.height());
+        banner.texture->render(source, Region::infinite(), QSizeF(r.width(), r.height()));
+    }
     banner.texture->unbind();
 }
 

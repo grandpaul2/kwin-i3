@@ -318,10 +318,13 @@ bool componentActive(const QString &component)
     return QDBusConnection::sessionBus().call(msg).arguments().value(0).toBool();
 }
 
+static bool stillAsLeft(const QJsonObject &e, const QList<KeySeq> &now);
+
 // Takes code from its holder, recorded first (an earlier record of the same holder is kept, as
-// take-keys does): not recorded, not taken, since it couldn't be given back. After the take,
-// "set" records what the holder was left with: a give-back writes the old keys only where the
-// holder still has exactly that.
+// take-keys does, while the holder still has what kwin-i3 left it; one the user has changed since
+// starts afresh from its keys now, which are theirs): not recorded, not taken, since it couldn't
+// be given back. After the take, "set" records what the holder was left with: a give-back writes
+// the old keys only where the holder still has exactly that.
 bool takeKey(const KeyHolder &h, int code)
 {
     const auto keys = keysOf(h.component, h.action);
@@ -329,7 +332,7 @@ bool takeKey(const KeyHolder &h, int code)
         return false;
     QJsonObject taken = readTaken();
     const QString id = h.component + QLatin1Char('|') + h.action;
-    if (!taken.contains(id)) {
+    if (!taken.contains(id) || !stillAsLeft(taken[id].toObject(), *keys)) {
         taken[id] = QJsonObject{{QStringLiteral("component"), h.component},
                                 {QStringLiteral("action"), h.action},
                                 {QStringLiteral("keys"), toJson(*keys)}};
@@ -364,6 +367,18 @@ static bool sameKeys(const QList<KeySeq> &a, const QList<KeySeq> &b)
     return flat(a) == flat(b);
 }
 
+// The holder still has what kwin-i3 left it (the record's "set"). A record from before "set" was
+// kept: taking only removes keys, so any key its old keys didn't have is the user's.
+static bool stillAsLeft(const QJsonObject &e, const QList<KeySeq> &now)
+{
+    if (e.contains(QStringLiteral("set")))
+        return sameKeys(now, fromJson(e[QStringLiteral("set")].toArray()));
+    const QList<KeySeq> old = fromJson(e[QStringLiteral("keys")].toArray());
+    return std::all_of(now.begin(), now.end(), [&old](const KeySeq &k) {
+        return std::any_of(old.begin(), old.end(), [&k](const KeySeq &o) { return o.keys == k.keys; });
+    });
+}
+
 QStringList takenIds()
 {
     return readTaken().keys();
@@ -385,14 +400,7 @@ int giveBackKeys(const std::function<bool(const QString &id)> &which)
             continue;
         }
         const QList<KeySeq> old = fromJson(e[QStringLiteral("keys")].toArray());
-        bool unchanged;
-        if (e.contains(QStringLiteral("set")))
-            unchanged = sameKeys(*now, fromJson(e[QStringLiteral("set")].toArray()));
-        else
-            unchanged = std::all_of(now->begin(), now->end(), [&old](const KeySeq &k) {
-                return std::any_of(old.begin(), old.end(), [&k](const KeySeq &o) { return o.keys == k.keys; });
-            });
-        if (!sameKeys(*now, old) && unchanged && !setKeys(c, a, old)) {
+        if (!sameKeys(*now, old) && stillAsLeft(e, *now) && !setKeys(c, a, old)) {
             ++failed;
             continue;
         }

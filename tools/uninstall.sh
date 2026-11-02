@@ -5,8 +5,15 @@
 # removal leaves ~/.config.
 #   KI3_SCRIPTS_DIR   as tools/install.sh
 set -uo pipefail
-here=$(cd "$(dirname "$0")/.." && pwd)
+here=$(cd "$(dirname "$0")/.." && pwd -P)
 scripts=${KI3_SCRIPTS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/kwin/scripts}
+
+# Another copy's install is that copy's to remove, as tools/install.sh refuses to replace it.
+if [[ -L $scripts/kwin-i3 && $(readlink -f "$scripts/kwin-i3") != "$here/package" ]]; then
+    echo "uninstall: $scripts/kwin-i3 links to $(readlink -f "$scripts/kwin-i3"), another copy of kwin-i3." >&2
+    echo "  Run make uninstall from that one." >&2
+    exit 1
+fi
 state=${XDG_STATE_HOME:-$HOME/.local/state}/kwin-i3
 gone() { echo "  removed $1"; }
 
