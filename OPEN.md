@@ -11,8 +11,7 @@ Last reconciled: **2026-11-02** (the `stable` branch started at v1.1.0 on 2026-1
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
 main at e915726: script (plugins and settings page at 1c93f70), through `make install`. The next
 promotion (`v1.2.0`): P6's runs green at e915726 on 2026-11-02 (the host's `make test`, every
-scenario on Arch and PikaOS); it is due once main has had its day of use, from 2026-11-03 15:20,
-with no kwin-i3 capture meanwhile and no code change since e915726 (one resets both).
+scenario on Arch and PikaOS); a code change since resets them.
 
 ## Stage
 
@@ -22,7 +21,7 @@ users can run it: people new to Plasma who found other tiling scripts buggy, on 
 fixed as they come, hardening kwin-i3. The Stage's rules hold through the beta (lean testing,
 `docs/testing.md`; fuzz and fault runs in `LATER.md`). Their desktops are theirs: their go to
 reload (`AGENTS.md`). They run the `stable` branch, moved to main when main has passed
-`docs/testing.md` P6 (a day on the maintainer's desktop, every scenario on the host and in both
+`docs/testing.md` P6 (the maintainer's use and word that it works, every scenario on the host and in both
 containers), and tagged `v1.N.0`; a fix for their bug reaches `stable` sooner, as `v1.N.M`. A
 public release is not decided yet (`LATER.md`).
 

@@ -77,8 +77,9 @@ main is ready rather than on a schedule, and at least once a week while main has
 `stable` lacks (session start says when one is due), moves `stable` to main once all of these
 hold:
 
-1. **A day of use**: main's script and plugins have run on the maintainer's desktop for a day or
-   more since their last change, with no capture that is kwin-i3's.
+1. **The maintainer's use**: main's script and plugins run on the maintainer's desktop, and the
+   maintainer says the changes since `stable` work, with no capture of kwin-i3's open. During
+   the beta no set time goes with it: a fix for the beta's users is better out the same day.
 2. **`make test`** on the host, green (P3's one for the session).
 3. **Every scenario in both containers** (P5), `KI3_BOX=arch` and `KI3_BOX=pika`, green: one
    container at a time, each in runs of 5 minutes or less (thirds by first digit: `0-4`, `5-6`,
