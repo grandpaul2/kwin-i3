@@ -329,7 +329,7 @@
      <item row="8" column="0">
       <widget class="QLabel" name="resizeStepLabel">
        <property name="text">
-        <string>Resize step:</string>
+        <string>Tiling key step:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_resizeStep</cstring>
@@ -355,7 +355,7 @@
      <item row="9" column="0">
       <widget class="QLabel" name="floatingStepLabel">
        <property name="text">
-        <string>Floating step:</string>
+        <string>Floating key step:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_floatingStep</cstring>

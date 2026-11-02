@@ -42,10 +42,12 @@ and can't parse the wording; an i3 user wants i3's defaults without reading. Bot
   inside a row, no icon-only buttons beside a control that come and go. Frame's colours are a
   row each ("Focused frame:", "Unfocused frame:", "Split indicator:"). Don't pack a checkbox,
   its long label and other controls onto one line.
-- **Every dropdown and spin box is one width** (`root.controlWidth`), so the controls and their
-  help buttons end on one line; colour buttons are their own fixed swatch.
-- **Compound rows** are a `RowLayout`, `spacing: Kirigami.Units.smallSpacing`, with a
-  `largeSpacing` gap between groups ("[4 px] between windows   [2 px] more at the edges").
+- **Every dropdown and spin box is one width** (`root.controlWidth`, the widest dropdown's own),
+  so the controls and their help buttons end on one line; colour buttons are their own fixed
+  swatch.
+- **Two values are two rows**, each with its own label ("Gap between windows:", "Extra gap at
+  edges:"), never two controls with captions on one line. A row holds a control and its help
+  button, in a `RowLayout`, `spacing: Kirigami.Units.smallSpacing`.
 - **A checkbox with its value** sits on one row, as Virtual Desktops does: "[x] Wait for every
   window to resize, at most [100 ms]".
 - **Grids are even**: uniform cells, rows of equal length. A

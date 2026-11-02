@@ -15,8 +15,11 @@ KCM.SimpleKCM {
 
     readonly property var settings: kcm.settings
     // One width for every dropdown and spin box, so the controls end on one line, as Plasma's
-    // pages do (docs/style-settings-page.md §1).
-    readonly property real controlWidth: Kirigami.Units.gridUnit * 14
+    // pages do (docs/style-settings-page.md §1): the widest dropdown's own, so no choice is cut.
+    readonly property real controlWidth: Math.max(Kirigami.Units.gridUnit * 14,
+        wrappingBox.implicitWidth, dragBox.implicitWidth, popupBox.implicitWidth,
+        workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth,
+        tiledLook.implicitWidth, hideEdgesBox.implicitWidth)
     // The frame's width and colours apply wherever a frame is drawn.
     readonly property bool frameDrawn: settings.tiledLook === "frame" || settings.frameOnFloating
 
@@ -98,6 +101,7 @@ KCM.SimpleKCM {
 
     // A spin box that shows its unit: "8 px".
     component UnitSpinBox: QQC2.SpinBox {
+        Layout.preferredWidth: root.controlWidth
         property string unit
         textFromValue: (value) => unit === "ms" ? i18ncp("@item:valuesuffix milliseconds", "%1 ms", "%1 ms", value)
                                 : unit === "%" ? i18nc("@item:valuesuffix percent", "%1%", value)
@@ -107,6 +111,7 @@ KCM.SimpleKCM {
 
     // A choice stored as i3's word ("auto", "force"), shown as words a person would say.
     component ChoiceBox: QQC2.ComboBox {
+        Layout.preferredWidth: root.controlWidth
         property string settingName
         property bool applies: true
         textRole: "text"
@@ -163,13 +168,11 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Tiling")
         }
-        // One label row for the gaps: their sizes, then the sub-page for the rest (an unlabelled
-        // FormLayout row would be an empty heading to a screen reader).
-        ColumnLayout {
-          Kirigami.FormData.label: i18nc("@label", "Gaps:")
-          Kirigami.FormData.buddyFor: gapInnerBox
-          spacing: Kirigami.Units.smallSpacing
-          RowLayout {
+        // The gaps: a row for each size, then the sub-page for the rest. Every row has a label (an
+        // unlabelled FormLayout row would be an empty heading to a screen reader).
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Gap between windows:")
+            Kirigami.FormData.buddyFor: gapInnerBox
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
                 id: gapInnerBox
@@ -184,23 +187,22 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@label:spinbox", "Gap between windows")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsInner" }
             }
-            QQC2.Label { text: i18nc("@label after a gap's size", "between windows"); Accessible.ignored: true }
-            Item { implicitWidth: Kirigami.Units.largeSpacing }
-            UnitSpinBox {
-                unit: "px"
-                from: -100; to: 200       // negative: a thinner edge, down to half the inner gap
-                value: root.settings.gapsOuter
-                onValueModified: root.settings.gapsOuter = value
-                Accessible.name: i18nc("@label:spinbox", "Extra gap at screen edges")
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsOuter" }
-            }
-            QQC2.Label { text: i18nc("@label after a gap's size", "extra at edges"); Accessible.ignored: true }
             Help {
                 topic: i18nc("@item help topic", "gaps")
                 toolTipText: i18n("The space between tiling windows, and what is added to it at the screen's edges; below 0 takes from it, down to half the space between windows. i3: gaps inner, gaps outer")
             }
         }
+        UnitSpinBox {
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Extra gap at edges:")
+            unit: "px"
+            from: -100; to: 200       // negative: a thinner edge, down to half the inner gap
+            value: root.settings.gapsOuter
+            onValueModified: root.settings.gapsOuter = value
+            Accessible.name: i18nc("@label:spinbox", "Extra gap at screen edges")
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "gapsOuter" }
+        }
         SubPageButton {
+            Kirigami.FormData.label: i18nc("@label", "Gaps:")
             text: i18nc("@action:button", "Configure Gaps…")
             readonly property var g: Logic.gapsSummary(root.settings)
             summary: [g.sides ? i18np("1 edge set", "%1 edges set", g.sides) : "",
@@ -209,11 +211,10 @@ KCM.SimpleKCM {
                      .filter(s => s).join(", ") || i18n("Same everywhere")
             onClicked: kcm.push("Gaps.qml")
         }
-        }
         // How far one key press goes: a share of the split for tiling windows, pixels for floating
-        // ones, as in i3. One row, as the gaps.
+        // ones, as in i3. A row each, as the gaps.
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label:spinbox", "Key step:")
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Tiling key step:")
             Kirigami.FormData.buddyFor: resizeStepBox
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
@@ -225,22 +226,20 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@label:spinbox", "Resize step")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "resizeStep" }
             }
-            QQC2.Label { text: i18nc("@label after a step's size", "tiling"); Accessible.ignored: true }
-            Item { implicitWidth: Kirigami.Units.largeSpacing }
-            UnitSpinBox {
-                id: floatingStepBox
-                unit: "px"
-                from: 1; to: 200
-                value: root.settings.floatingStep
-                onValueModified: root.settings.floatingStep = value
-                Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
-            }
-            QQC2.Label { text: i18nc("@label after a step's size", "floating"); Accessible.ignored: true }
             Help {
                 topic: i18nc("@item help topic", "the key step")
                 toolTipText: i18n("How far one press of a resize key goes for a tiling window, as a share of its split, and of a move or resize key for a floating window. i3: resize grow width 10 px or 10 ppt, move left 10 px")
             }
+        }
+        UnitSpinBox {
+            id: floatingStepBox
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Floating key step:")
+            unit: "px"
+            from: 1; to: 200
+            value: root.settings.floatingStep
+            onValueModified: root.settings.floatingStep = value
+            Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:listbox", "Focus wrapping:")
@@ -419,7 +418,6 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: tiledLook
-                Layout.preferredWidth: root.controlWidth
                 settingName: "tiledLook"
                 applies: kcm.frameAvailable
                 model: [
@@ -448,7 +446,6 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
                 id: frameWidthBox
-                Layout.preferredWidth: root.controlWidth
                 unit: "px"
                 from: 1; to: 10
                 value: root.settings.frameWidth
@@ -499,7 +496,6 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: hideEdgesBox
-                Layout.preferredWidth: root.controlWidth
                 settingName: "hideEdgeBorders"
                 applies: kcm.frameAvailable && root.settings.tiledLook === "frame"
                 model: [

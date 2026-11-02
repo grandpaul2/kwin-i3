@@ -117,7 +117,8 @@ check "unrecorded: the stand-in keeps Meta+Alt+F" test "$(keys_of fakeapp Launch
 check "and Focus Down (K) keeps Meta+K"     test "$(keys_of kwin "kwin-i3 Focus Down (K)")" == "a(ai) 1 4 $((0x1000004B)) 0 0 0"
 check "the page says so"                    test "$(count_near keys-failed 0 76 1280 116 $ERROR)" -gt 200
 
-# 3. Back on the main page: a gap typed, and from the floating step Tab reaches the focus choice,
+# 3. Back on the main page: a gap typed, and from the resize step Tab reaches its help, the
+#    floating step (a row of its own) and the focus choice,
 #    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
 #    with no plugin loaded. Each control's help button is the next Tab stop after it, as on
 #    Plasma's own pages.
@@ -125,9 +126,9 @@ click_named - "Navigate Back"; sleep 0.5
 shot main
 click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
-check "Tab from the resize step reaches the floating step" test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
+check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell6)" == "More about the key step"
 press Tab
-check "then their help"                     test "$($A11Y focused kcmshell6)" == "More about the key step"
+check "then the floating step"              test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
 press Tab
 # A combo box is named by its current choice.
 check "then the focus choice" test "$($A11Y focused kcmshell6)" == "Next screen, then wrap"
