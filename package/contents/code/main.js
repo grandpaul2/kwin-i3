@@ -2670,6 +2670,7 @@ var KI3 = (function () {
         passWs = null;
         try { tellRings(); } catch (e) { log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : "")); }
         try { tellBars(); } catch (e) { log("ERROR in tellBars: " + e + (e.stack ? " " + e.stack : "")); }
+        try { tellDragState(); } catch (e) { log("ERROR in tellDragState: " + e + (e.stack ? " " + e.stack : "")); }
         showHeld();
         syncShown();
     }
@@ -5050,9 +5051,11 @@ var KI3 = (function () {
         dragTold[key] = on;
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloating", key, on);
     }
+    var dropTargetsTold = null, ringToHelperTold = null;     // tellDragState
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         dragTold = {};
+        dropTargetsTold = null; ringToHelperTold = null;   // again with the next pass (tellDragState)
         focusParentTold = on ? null : "";           // again with the next pass (tellFocusParent)
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
@@ -5086,6 +5089,14 @@ var KI3 = (function () {
         var i = spec.lastIndexOf(":"), con = barGroups[spec.slice(0, i)];
         if (!con || !Tree.wsOf(con)) return null;
         return con.nodes.filter(function (k) { return project(k); })[Number(spec.slice(i + 1))] || null;
+    }
+    // What the helper decides a press by, told after each pass when it changes: whether there is
+    // anywhere to drop (a Meta+Shift press goes to the app without, §9 G4) and whether tiling
+    // windows have the ring (frame focus, §1).
+    function tellDragState() {
+        var d = hasDropTargets(), r = tiledRing();
+        if (d !== dropTargetsTold) { dropTargetsTold = d; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetDropTargets", d); }
+        if (r !== ringToHelperTold) { ringToHelperTold = r; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetTiledRing", r); }
     }
     function hasDropTargets() {             // has_drop_targets
         var n = 0;
@@ -6122,6 +6133,7 @@ var KI3 = (function () {
                 untile(w);
                 if (keptAbove[key]) w.keepAbove = false;
                 giveBorder(w);
+                tellFloated(key, "");       // the effect's mark for a container floated whole
             } catch (e) { log("ERROR in release (window): " + e); }
         });
         workspace.screens.forEach(function (s) {

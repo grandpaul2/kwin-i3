@@ -13,12 +13,18 @@
 #include <QString>
 #include <QStringList>
 
+#include <functional>
+
 class LayoutKeys : public QObject
 {
     Q_OBJECT
 public:
     LayoutKeys();
     ~LayoutKeys() override;
+
+    // An action's current keys from kglobalaccel, asynchronously (never a blocking call from
+    // inside KWin): `done` gets them as Qt key combinations, none if it has none or no answer.
+    static void askKeys(QObject *context, const QString &action, std::function<void(const QList<int> &)> done);
 
 public Q_SLOTS:
     // The script, once its keys are registered at load.

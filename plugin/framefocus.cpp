@@ -24,9 +24,12 @@ FrameFocus::FrameFocus(TilingDrag *drag)
         auto config = m_watcher->config();
         config->reparseConfiguration();
         const KConfigGroup group = config->group(QStringLiteral("Script-kwin-i3"));
-        m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
+        // Out of its range, the default, as the script reads it (settings.js; §11).
+        const int fw = group.readEntry("frameWidth", 1);
+        m_frameWidth = fw >= 1 && fw <= 10 ? fw : 1;
         m_frameOnFloating = group.readEntry("frameOnFloating", false);
-        // Tiled windows have a ring in i3's frame look only.
+        // Tiled windows have a ring in i3's frame look only; until the script says (SetTiledRing,
+        // which also knows whether the effect draws it), the setting.
         m_tiledRing = group.readEntry("tiledLook", QStringLiteral("frame")) == QLatin1String("frame");
     };
     load();
@@ -114,10 +117,11 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
         return false;
     }
     // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
-    // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
+    // windows are framed too (frame focus doesn't consult the floating set TilingDrag is told; kwin-i3
     // takes the border of no floating window but its own).
     const bool tiled = customTiled(w) || (m_drag && m_drag->floated(w));
-    if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
+    const bool tiledRing = m_drag && m_drag->tiledRingTold() >= 0 ? m_drag->tiledRingTold() == 1 : m_tiledRing;
+    if (tiled ? !tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
         return false;
     }
     const RectF frame = w->frameGeometry();

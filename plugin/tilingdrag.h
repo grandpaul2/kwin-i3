@@ -66,6 +66,12 @@ public Q_SLOTS:
     // pointer entering it, is told by the hidden "Window Pressed" action: KWin activates it no
     // further, where i3 focuses it (click.c route_click step 3, handlers.c handle_enter_notify).
     void SetFocusParent(const QString &id);
+    // i3's has_drop_targets (tiling_drag.c:42), counted by kwin-i3 after each pass: with nowhere
+    // to drop, a Meta+Shift press goes to the app as i3 replays it (§9 G4). True until told.
+    void SetDropTargets(bool any);
+    // Whether tiling windows have the frame's ring (the script's verdict, which it tells the
+    // effect too: SetTiledRing): frame focus counts the ring only then (§1).
+    void SetTiledRing(bool on);
     // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n floated"
     // (key the window the bar is drawn with, "#N" after it for that window's further bar, the rect
     // logical and global, n tabs or rows of equal size; floated 0 for a tiled group, 1 for one
@@ -158,6 +164,16 @@ public:
     void setFloating(const QString &id, bool on);
     void setFloated(const QString &id, const QString &group);
     void setFocusParent(const QString &id) { m_focusParent = id; }
+    void setDropTargets(bool any) { m_dropTargets = any; }
+    void setTiledRing(bool on) { m_tiledRingTold = on ? 1 : 0; }
+    // The script's ring verdict: 1 on, 0 off, -1 not told yet (FrameFocus falls back to kwinrc).
+    int tiledRingTold() const { return m_tiledRingTold; }
+    // The tiling window whose frame holds pos, over `hover` when the pointer is on a neighbour's
+    // invisible resize band (i3's frames clip each client, manage.c:557; §9 Z9).
+    KWin::Window *frameOwner(KWin::Window *hover, const QPointF &pos) const;
+    // A press i3 focuses first (route_click step 3) on the window a focus-parent container
+    // descends to: KWin activates nothing (it is active), so kwin-i3 is told (§5 B3).
+    void noticePressed(KWin::Window *window);
     // The window SetFocusParent names, if it is still there.
     KWin::Window *focusParentWindow() const;
     void tellWindowPressed();
@@ -248,6 +264,8 @@ private:
     QList<BarSpot> m_bars;            // SetBars
     QString m_tabEvent;               // TabEvent's answer
     QString m_focusParent;            // SetFocusParent
+    bool m_dropTargets = true;        // SetDropTargets
+    int m_tiledRingTold = -1;         // SetTiledRing
     // The tab under pos on a bar no other window covers: its bar, and the index; -1 for none.
     int barAt(const QPointF &pos, const BarSpot **bar) const;
     void tellTab(const QString &event);

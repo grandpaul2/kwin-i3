@@ -140,6 +140,21 @@ KConfigGroup stored()
 }
 }
 
+void LayoutKeys::askKeys(QObject *context, const QString &action, std::function<void(const QList<int> &)> done)
+{
+    QDBusMessage ask = QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"),
+                                                      QStringLiteral("shortcutKeys"));
+    ask << actionId(action);
+    auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(ask), context);
+    QObject::connect(watcher, &QDBusPendingCallWatcher::finished, context, [done](QDBusPendingCallWatcher *self) {
+        self->deleteLater();
+        const QDBusMessage reply = self->reply();
+        done(reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty()
+                 ? fromArgument(reply.arguments().first().value<QDBusArgument>())
+                 : QList<int>());
+    });
+}
+
 LayoutKeys::LayoutKeys()
 {
     qDBusRegisterMetaType<KeySeq>();

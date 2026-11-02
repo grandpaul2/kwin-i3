@@ -115,6 +115,10 @@ m=$(mark)
 drag Meta left 640 540 60 180
 check "frame: Meta+drag c to b's left side"  wait_tree 1 "V[H[c* b]]" "$m"
 echo "    $(dropped $m)"
+# The frames landed before the next drag: KWin keeps the pointer in the window it was in until
+# the pointer moves, so a drag starting while c is still in its old place enters c, and focus
+# follows mouse focuses it (a red under the batch's load, its drop late).
+poll eval '[[ "$(fc c)" == "1,1 638x718" && "$(fc b)" == "641,1 638x718" ]]'
 
 # i3's G1: a Meta-drag of a window that isn't focused leaves the focus where it was
 # (the drag starts before any focusing; the dropped window has focus only if it had it): b

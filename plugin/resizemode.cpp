@@ -1,4 +1,5 @@
 #include "resizemode.h"
+#include "layoutkeys.h"
 
 #include <input_event.h>
 
@@ -54,6 +55,9 @@ void ResizeMode::enter()
         return;
     }
     m_mode = QStringLiteral("resize");
+    LayoutKeys::askKeys(this, QStringLiteral("kwin-i3 Resize Mode"), [this](const QList<int> &keys) {
+        m_leaveKey = keys.isEmpty() ? 0 : keys.first();
+    });
     if (!m_installed && input()) {
         input()->installInputEventFilter(this);
         m_installed = true;
@@ -93,7 +97,7 @@ void ResizeMode::invoke(const QString &action)
 }
 
 // i3's mode "resize" (etc/config.keycodes): bindcode, so the evdev code decides, whatever the
-// layout; the mode's keys take no modifier, Meta+R leaves. A key's release is taken with its press,
+// layout; the mode's keys take no modifier, its own key (Meta+R) leaves. A key's release is taken with its press,
 // so the focused window sees neither half.
 bool ResizeMode::keyboardKey(KeyboardKeyEvent *event)
 {
@@ -104,9 +108,12 @@ bool ResizeMode::keyboardKey(KeyboardKeyEvent *event)
     const bool held = press || event->state == KeyboardKeyState::Repeated;
     const quint32 code = event->nativeScanCode;
     const Qt::KeyboardModifiers mods = event->modifiers & (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
-    // Meta+R exactly, as i3 matches a binding's modifiers exactly (bindings.c, mods_match):
-    // Meta+Shift+R and the like go on, as in i3 to the window (here to KWin's shortcuts).
-    if (code == KEY_R && mods == Qt::MetaModifier) {
+    // The key Resize Mode is bound to (Meta+R by default, by position), its modifiers exactly, as
+    // i3 matches a binding's (bindings.c, mods_match): Meta+Shift+R and the like go on, as in i3
+    // to the window (here to KWin's shortcuts).
+    const bool leaves = m_leaveKey ? QKeyCombination(mods, event->key).toCombined() == m_leaveKey
+                                   : code == KEY_R && mods == Qt::MetaModifier;
+    if (leaves) {
         if (press) {
             leave();
         }

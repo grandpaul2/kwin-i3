@@ -98,15 +98,9 @@ window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
 **84. The foundation sweep's code fixes** (2026-11-01; each checked against i3 4.24 and the
 code). The code breaks a row of `behaviour.md` or i3 with no reason (a)-(f); each row is marked
 "being fixed". Five stages, one live at a time, each with the go to build and to reload, `make
-unit` and the changed scenarios (64 for a plugin stage). Stages 1 (fullscreen: V1, V2, V6b), 2 (tree and rules: flatten, T23, R3, R19, R9, L12, the size
-check) and 3 (look: smart gaps and borders, the bars' colours, the words) are built; left:
-(4) **plugins**: Release clears the effect's floated marks (known limits); the window-pressed
-report before the tiling drag takes the press (B3); extra modifiers start the drag and resize
-(G1, Z1, `click.c:166`); a group's bar takes any button and a scroll with any modifier (G14,
-G15); Meta+Shift with nowhere to drop goes to the app, the script telling the helper the count
-(G4); a Meta press on a neighbour's band (Z9); the resize mode left by the key it was entered by
-(K4); the helper takes the ring decision from the script (§1); one rule for an out-of-range
-number, script and plugins alike (§11).
+unit` and the changed scenarios (64 for a plugin stage). Stages 1 (fullscreen), 2 (tree and rules), 3 (look) and 4 (plugins: Release's marks, B3, extra
+modifiers, the bar's buttons and scroll, G4, Z9, K4's leave key, the ring's source, the range
+rule) are built; left:
 (5) **pointer and release**: entering a gap or a panel on the focused output refocuses (B2,
 `handlers.c:91-121`); Release resets only the roots kwin-i3 placed, a user's own tile layout kept
-(Y4, reason (e)). Next: stage 4, with the go.
+(Y4, reason (e)). Next: stage 5, with the go.

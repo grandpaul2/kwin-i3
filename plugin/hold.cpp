@@ -164,11 +164,14 @@ void Hold::loadConfig()
     m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
     m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 200)
                                                 : old.readEntry("TimeoutMs", 200);   // tests raise it to capture mid-hold
-    // A layout never waits longer than 2 s, nor not at all (a negative timer never fires: the
-    // hold would wait on a window for good). 10 ms: settings.js's minimum.
-    m_timeoutMs = std::clamp(m_timeoutMs, 10, 2000);
+    // Out of its range (10-2000 ms, settings.js), the default, as the script reads it (§11): a
+    // layout never waits longer than 2 s, nor not at all (a negative timer never fires).
+    if (m_timeoutMs < 10 || m_timeoutMs > 2000) {
+        m_timeoutMs = 200;
+    }
     // The frame's keys (src/settings.js); not affected by holdEnabled.
-    m_frameWidth = std::clamp(group.readEntry("frameWidth", 1), 1, 10);
+    const int fw = group.readEntry("frameWidth", 1);
+    m_frameWidth = fw >= 1 && fw <= 10 ? fw : 1;
     const auto colour = [&group](const char *key, const QColor &def) {
         const QColor c(group.readEntry(key, def.name()));
         return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;    // opaque whatever it says

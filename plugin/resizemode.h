@@ -1,5 +1,5 @@
 // i3's resize mode (behaviour.md §8 K4): entered by kwin-i3's Resize
-// Mode action (Meta+R) over D-Bus, left by Return, Escape or Meta+R. While it is on, a key filter
+// Mode action (Meta+R) over D-Bus, left by Return, Escape or its own key. While it is on, a key filter
 // ahead of KWin's global shortcuts takes, by evdev code as i3's bindcode does (so no keyboard
 // layout matters): J and Left shrink the width, K and Down grow the height, L and Up shrink the
 // height, ; and Right grow the width, on press and on repeat (holding a key keeps resizing), each
@@ -43,4 +43,7 @@ private:
 
     QString m_mode;
     bool m_installed = false;
+    // Resize Mode's own key, asked of kglobalaccel at each entry: i3's default config leaves the
+    // mode by the key that entered it ($mod+r in both, config.keycodes:180). 0: not known, Meta+R.
+    int m_leaveKey = 0;
 };
