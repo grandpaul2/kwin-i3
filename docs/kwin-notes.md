@@ -360,8 +360,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 ## The test KWin (`tools/testkwin.sh`)
 
 - Focus follows the mouse there: a pointer left over where windows are being laid out hands
-  KWin's focus to whatever lands under it (a hidden tab once, OPEN.md item 82), and the next key
-  acts from there. Park it (`point 20 20`) before building a layout a check depends on.
+  KWin's focus to whatever lands under it (a tab hidden by the time of the check, once: shown
+  while its group was being built), and the next key acts from there. Park it (`point 20 20`)
+  before building a layout a check depends on. A settled group never does it: with the pointer
+  anywhere over `T[f V[g]]`, a window h opened into V took f into its tile behind it, f stayed
+  lowest in the stacking and KWin activated only h (probe, branch `probe-hidden-tab`).
 - It has two outputs, and an empty workspace other than 1 may open on Virtual-1: a probe of what
   stays on one monitor (a sticky window's push) switches to a workspace shown on that monitor
   (3 from 1), not to 2.

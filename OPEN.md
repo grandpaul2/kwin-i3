@@ -42,14 +42,6 @@ by step, from `git clone` to the sub-page. Separate, still open: a rule for Plas
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
 
-**82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
-a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
-f, the hidden tab, right after kwin-i3 focused h (the log: `ACTIVE h (KWin)`, then `ACTIVE f
-(KWin)`); the next key then took the focus from f. i3 never focuses a hidden tab but by a key or a
-click on its tab (`con_is_hidden`). Likely KWin's focus follows mouse finding f under the pointer
-in the stacking. Next: reproduce in a test KWin with the pointer over the group, read the stacking
-order at that moment, then i3's rule against what KWin allows.
-
 **83. A tiled fullscreen window's neighbours** (found 2026-11-01 with item 73's floated case).
 i3 renders a fullscreen con alone and returns (`render.c:127-144`), its siblings keeping their
 rects. The tiled projection leaves a fullscreen window out once KWin no longer keeps it in a tile
