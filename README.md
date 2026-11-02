@@ -139,7 +139,7 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    Meta+E, Meta+L, Meta+W for the Overview, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the task
    manager uses them; the Overview stays on the screen's top-left corner and Grid View on Meta+G),
    as a key two shortcuts share runs Plasma's, not kwin-i3's. Animations off is there too,
-   unticked (i3 has none). These are **Plasma's settings, not kwin-i3's**: **Change in Plasma**
+   unticked (i3 has none). These are **Plasma's settings, not kwin-i3's**: **Change Ticked Settings**
    changes the ticked ones, the same as changing them in System Settings, and nothing changes
    without it. kwin-i3 keeps what each was, and **Give Back** puts it back (one you changed since
    stays as you set it). In a terminal instead: `make take-keys` takes the keys and prints what

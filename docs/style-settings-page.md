@@ -133,6 +133,12 @@ hunt for; no collision with another word on the page or in Plasma.
 - **Defaults are shown, not hidden**: the window rules Plasma ships are listed like any other,
   marked "default", so Defaults visibly restores them.
 
+- **The Plasma Settings sub-page reads as a review, not a form**: each of Plasma's settings is
+  a title, then what Plasma does in a sentence (tagged "Plasma's default" or "changed from
+  Plasma's default"), what kwin-i3 needs instead, and why in small text naming Plasma's own page;
+  never a setting's name or value alone, and never "now" or "your". Its button names what it does
+  ("Change Ticked Settings"), not where.
+
 ## 5. Explanations, messages, disabled state
 
 - **No paragraphs in the form and no label-only rows.** An explanation goes in a

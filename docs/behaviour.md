@@ -1025,14 +1025,16 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Plasma Settings sub-page** (the first-run step, `plan.md` "Install and first run";
   `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings, a row each
-  where Plasma differs from what kwin-i3 needs or kwin-i3 changed it, with Plasma's value now and
-  help naming Plasma's own page. Focus follows mouse with no delay and the next focus under the
+  where Plasma differs from what kwin-i3 needs or kwin-i3 changed it, each read as a review: what
+  Plasma does, in a sentence, tagged Plasma's default or changed from it; what kwin-i3 needs
+  instead and why, naming Plasma's own page; a tick, "Change to kwin-i3's"; once changed, what
+  Plasma had and Give Back. Focus follows mouse with no delay and the next focus under the
   pointer (`FocusPolicy`, `DelayFocusInterval`, `NextFocusPrefersMouse`); per-output desktops;
   focus stealing prevention at Low (shown only above it); screen-edge tiling and maximizing off;
   Meta+T freed from KWin's Edit Tiles; the window actions' modifier Meta and Meta+left "Activate,
   raise and move" (6.8's stock); kwin-i3's keys other active shortcuts hold, each taken from every
   holder in turn (at most five); and, optional and unticked, animations off
-  (`AnimationDurationFactor` 0). **Change in Plasma** changes the ticked rows at once, apart from
+  (`AnimationDurationFactor` 0). **Change Ticked Settings** changes the ticked rows at once, apart from
   Apply (Reset and Defaults never touch them): each key's old value (or its absence) and the value
   written saved first in `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make
   take-keys' save; KWin reconfigured. **Give Back** (a row) and **Give All Back** write the old

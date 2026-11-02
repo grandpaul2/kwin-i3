@@ -16,8 +16,10 @@
 class SetupModel : public QObject
 {
     Q_OBJECT
-    // One map per row shown: id, label, help, now, optional, differs, changed (by kwin-i3, can be
-    // given back), note (a caution the row's give-back carries).
+    // One map per row shown: id, title, plasma (what Plasma does, in a sentence), plasmaDefault
+    // (that is Plasma's default), kwini3 (what kwin-i3 needs instead), why, note (a caution the
+    // give-back carries), optional, differs, changed (by kwin-i3, can be given back), before (what
+    // Plasma did before kwin-i3 changed it).
     Q_PROPERTY(QVariantList rows MEMBER m_rows NOTIFY changed)
     // A row kwin-i3 needs differs from Plasma now: the page's banner.
     Q_PROPERTY(bool needed MEMBER m_needed NOTIFY changed)
@@ -35,12 +37,14 @@ public:
     struct Change {
         QString file, group, key, value;
     };
+    // A value as Plasma holds it, from wherever it is read (Plasma's settings, or the save).
+    using Getter = std::function<QString(const Change &)>;
     struct Row {
-        QString id, label, help, note;
+        QString id, title, kwini3, why, note;
         bool optional = false;
         QList<Change> changes;                       // config rows
         std::function<bool()> shown;                 // null: always
-        std::function<QString()> now;
+        std::function<QString(const Getter &)> plasma; // what Plasma does with these values
     };
 
 Q_SIGNALS:
@@ -48,6 +52,7 @@ Q_SIGNALS:
 
 private:
     QString effective(const Change &c) const;
+    QString before(const Change &c) const;
     bool differs(const Row &r) const;
     bool changedByUs(const Row &r) const;
     void reconfigure() const;
