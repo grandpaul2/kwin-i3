@@ -454,12 +454,12 @@ bool KeysModel::isDefaults() const
     return true;
 }
 
-QList<int> KeysModel::currentKeys() const
+QList<std::pair<int, QString>> KeysModel::currentKeys() const
 {
-    QList<int> out;
+    QList<std::pair<int, QString>> out;
     for (const Row &row : m_rows)
         for (const Slot &s : row.entries)
             if (!s.current.isEmpty())
-                out << s.current[0].toCombined();
+                out.append({s.current[0].toCombined(), s.action});
     return out;
 }

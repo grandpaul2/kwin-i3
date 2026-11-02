@@ -38,8 +38,8 @@ public:
     bool isDefaults() const;
 
     Q_INVOKABLE void setKey(int row, int slot, const QKeySequence &key);
-    // Every key kwin-i3's actions hold now (read at load).
-    QList<int> currentKeys() const;
+    // Every key kwin-i3's actions hold (read at load), with the action holding it.
+    QList<std::pair<int, QString>> currentKeys() const;
 
 Q_SIGNALS:
     void changed();

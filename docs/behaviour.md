@@ -741,7 +741,7 @@ running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys another active
 component holds, and reports them (§13); a holder that launches what the kwin-i3 action launches
 (KRunner's own `_launch` on Meta+D, the default terminal's on Meta+Return) is logged
-(`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn), recording the holders in
+(`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn; a `TAKEN-SAME` holder is left), recording the holders in
 `~/.local/state/kwin-i3/taken-keys.json` before each change, with what each was left holding
 (`set`). The settings page's Keys page takes a key the same way on Apply, recording it in the same
 file. `make restore-keys` gives each holder its old keys back where it still holds what kwin-i3
@@ -1039,8 +1039,10 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   above it); screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
   window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
   optional, animations off (`AnimationDurationFactor` 0). **kwin-i3's keys other active shortcuts
-  hold** are one tick on the main page's Keys section, "Take kwin-i3's keys from them", each taken
-  from every holder in turn (at most five); while it is ticked, one line says unticking restores
+  hold** are one tick on the main page's Keys section, "Use kwin-i3's keys over Plasma's", each taken
+  from every holder in turn (at most five), a holder that launches what kwin-i3's action launches
+  (the load report's `TAKEN-SAME`: KRunner on the Launcher's key, the default terminal on the
+  Terminal's) never counted; while it is ticked, one line says unticking restores
   the original keys. Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
   `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make take-keys' save; KWin

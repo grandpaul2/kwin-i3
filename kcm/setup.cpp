@@ -228,12 +228,29 @@ QString SetupModel::effective(const Change &c) const
     return g.hasKey(c.key) ? g.readEntry(c.key, QString()) : stock(c);
 }
 
+// A holder that launches what kwin-i3's action launches: KRunner's own on the Launcher's key, the
+// default terminal's on the Terminal's. Both fire the same thing, so it is no clash (as the load
+// report's TAKEN-SAME, src/kwin.js sameLaunch).
+static bool sameLaunch(const QString &action, const KeyHolder &h)
+{
+    if (h.action != QLatin1String("_launch"))
+        return false;
+    if (action == QLatin1String("kwin-i3 Launcher"))
+        return h.component.contains(QLatin1String("krunner"));
+    if (action == QLatin1String("kwin-i3 Terminal")) {
+        const QString terminal = KConfigGroup(KSharedConfig::openConfig(QStringLiteral("kdeglobals")), QStringLiteral("General"))
+                                     .readEntry("TerminalService", QStringLiteral("org.kde.konsole.desktop"));
+        return h.component == terminal;
+    }
+    return false;
+}
+
 QList<std::pair<int, KeyHolder>> SetupModel::clashes() const
 {
     QList<std::pair<int, KeyHolder>> out;
-    for (int code : m_keys->currentKeys()) {
+    for (const auto &[code, action] : m_keys->currentKeys()) {
         const KeyHolder h = keyHolder(code);
-        if (!h.component.isEmpty() && componentActive(h.component))
+        if (!h.component.isEmpty() && !sameLaunch(action, h) && componentActive(h.component))
             out.append({code, h});
     }
     return out;
@@ -368,7 +385,13 @@ QStringList SetupModel::applyRow(const Row &r)
         // A key several shortcuts hold is taken from each in turn, until kwin-i3's fires.
         for (const auto &[code, first] : clashes()) {
             KeyHolder h = first;
-            for (int i = 0; i < 5 && !h.component.isEmpty() && componentActive(h.component); ++i) {
+            const QString action = [&] {
+                for (const auto &[c, a] : m_keys->currentKeys())
+                    if (c == code)
+                        return a;
+                return QString();
+            }();
+            for (int i = 0; i < 5 && !h.component.isEmpty() && !sameLaunch(action, h) && componentActive(h.component); ++i) {
                 if (!takeKey(h, code)) {
                     failed << QKeySequence(code).toString(QKeySequence::NativeText);
                     break;

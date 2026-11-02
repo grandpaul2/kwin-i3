@@ -2,7 +2,9 @@
 # make take-keys / make restore-keys: free the keys kwin-i3 registered
 # that another shortcut holds (that one fires, kwin-i3's doesn't), and put them back.
 #   take     for each kwin-i3 key whose firing holder (KGlobalAccel.action) is another action,
-#            of a component that is active (an inactive one's key doesn't block kwin-i3's):
+#            of a component that is active (an inactive one's key doesn't block kwin-i3's), and
+#            that doesn't launch what kwin-i3's action launches (KRunner on the Launcher's key, the
+#            default terminal on the Terminal's: the same thing fires either way):
 #            save that holder's keys, then remove just that key from it. kwin-i3's action works
 #            at once. A second run takes what is still taken and keeps the first save.
 #   restore  give every saved holder its saved keys back where it still holds what kwin-i3 left
@@ -59,13 +61,20 @@ def take():
     if not loaded or not loaded[0]:
         sys.exit("take-keys: kwin-i3 is not loaded; its keys must exist first")
     infos = call("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component", "allShortcutInfos")[0]
-    mine = [k for i in infos if i[0].startswith("kwin-i3 ") for k in i[6] if k]
+    mine = [(k, i[0]) for i in infos if i[0].startswith("kwin-i3 ") for k in i[6] if k]
+    terminal = subprocess.run(["kreadconfig6", "--file", "kdeglobals", "--group", "General", "--key", "TerminalService",
+                               "--default", "org.kde.konsole.desktop"], capture_output=True, text=True).stdout.strip()
+
+    def same_launch(action, h):   # as src/kwin.js sameLaunch: KRunner's on Launcher, the terminal's on Terminal
+        if h[1] != "_launch":
+            return False
+        return (action == "kwin-i3 Launcher" and "krunner" in h[0]) or (action == "kwin-i3 Terminal" and h[0] == terminal)
     saved = json.load(open(STATE)) if os.path.exists(STATE) else {}
     took = 0
-    for code in mine:
+    for code, mine_action in mine:
         for _ in range(5):                 # a key several shortcuts hold: taken from each in turn
             h = holder(code)
-            if not h or h[1].startswith("kwin-i3 ") or not active(h[0]):
+            if not h or h[1].startswith("kwin-i3 ") or same_launch(mine_action, h) or not active(h[0]):
                 break
             comp, action, friendly = h
             seqs = keys_of(comp, action)
