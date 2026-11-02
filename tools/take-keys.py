@@ -5,7 +5,9 @@
 #            of a component that is active (an inactive one's key doesn't block kwin-i3's):
 #            save that holder's keys, then remove just that key from it. kwin-i3's action works
 #            at once. A second run takes what is still taken and keeps the first save.
-#   restore  give every saved holder its saved keys back, and remove the save.
+#   restore  give every saved holder its saved keys back where it still holds what kwin-i3 left
+#            it ("set"); a holder changed since keeps the change, its old keys printed.
+# The settings page's Keys (kcm/keys.cpp) writes the same save, the same way.
 # The save: $XDG_STATE_HOME/kwin-i3/taken-keys.json (~/.local/state). Only busctl and the
 # standard library.
 import json, os, subprocess, sys
@@ -66,11 +68,11 @@ def take():
             continue
         comp, action, friendly = h
         seqs = keys_of(comp, action)
-        saved.setdefault(comp + "|" + action, {"component": comp, "action": action, "keys": seqs})
-        os.makedirs(os.path.dirname(STATE), exist_ok=True)
-        with open(STATE, "w") as f:      # saved before each change, so a failure loses nothing
-            json.dump(saved, f, indent=1)
+        entry = saved.setdefault(comp + "|" + action, {"component": comp, "action": action, "keys": seqs})
+        write(saved)                     # saved before each change, so a failure loses nothing
         set_keys(comp, action, [s for s in seqs if s[0] != code])
+        entry["set"] = keys_of(comp, action)
+        write(saved)
         now = holder(code)
         ok = now and now[1].startswith("kwin-i3 ")
         print(f"  {name(code)}: taken from {friendly} ({comp})" + ("" if ok else f", but {now} still fires"))
@@ -78,15 +80,52 @@ def take():
     print(f"take-keys: {took} taken" + (f"; make restore-keys puts them back ({STATE})" if took else ", nothing was taken"))
 
 
+def write(saved):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE + ".new", "w") as f:
+        json.dump(saved, f, indent=1)
+    os.replace(STATE + ".new", STATE)
+
+
+def same(a, b):
+    return sorted(map(tuple, a)) == sorted(map(tuple, b))
+
+
+def unchanged(e, now):
+    """The holder still holds what kwin-i3 left it. A save from before "set" was kept: taking
+    only removes keys, so any key its old keys didn't have is the user's."""
+    if "set" in e:
+        return same(now, e["set"])
+    return all(any(same([s], [o]) for o in e["keys"]) for s in now)
+
+
 def restore():
     if not os.path.exists(STATE):
         print("restore-keys: nothing saved")
         return
-    for e in json.load(open(STATE)).values():
-        set_keys(e["component"], e["action"], e["keys"])
-        print(f"  {e['component']} / {e['action']}: keys restored")
-    os.remove(STATE)
-    print("restore-keys: done")
+    saved = json.load(open(STATE))
+    for id, e in list(saved.items()):
+        comp, action = e["component"], e["action"]
+        try:
+            now = keys_of(comp, action)
+            if same(now, e["keys"]):
+                print(f"  {comp} / {action}: already has its keys")
+            elif unchanged(e, now):
+                set_keys(comp, action, e["keys"])
+                print(f"  {comp} / {action}: keys restored")
+            else:
+                old = ", ".join(name(s[0]) for s in e["keys"] if s and s[0]) or "none"
+                print(f"  {comp} / {action}: changed since kwin-i3 took its key; left as it is (it had: {old})")
+        except subprocess.CalledProcessError as err:
+            print(f"  {comp} / {action}: not restored ({err.stderr.strip()}); kept in the save")
+            continue
+        del saved[id]
+        write(saved)
+    if saved:
+        print(f"restore-keys: {len(saved)} left in {STATE}; run it again later")
+    else:
+        os.remove(STATE)
+        print("restore-keys: done")
 
 
 if __name__ == "__main__":

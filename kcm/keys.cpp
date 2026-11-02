@@ -263,8 +263,25 @@ void KeysModel::setKey(int r, int slot, const QKeySequence &key)
     Q_EMIT changed();
 }
 
+static QJsonArray toJson(const QList<KeySeq> &keys)
+{
+    QJsonArray out;
+    for (const KeySeq &k : keys)
+        out << QJsonArray::fromVariantList({k.keys.value(0), k.keys.value(1), k.keys.value(2), k.keys.value(3)});
+    return out;
+}
+
+static bool writeTaken(const QJsonObject &taken)
+{
+    QDir().mkpath(QFileInfo(takenPath()).path());
+    QSaveFile out(takenPath());
+    return out.open(QIODevice::WriteOnly) && out.write(QJsonDocument(taken).toJson()) >= 0 && out.commit();
+}
+
 // Takes s.pending from its holder, recorded first (an earlier record of the same holder is kept,
 // as take-keys does): not recorded, not taken, since make restore-keys couldn't give it back.
+// After the take, "set" records what the holder was left with: make restore-keys gives the old
+// keys back only where the holder still has exactly that.
 bool KeysModel::take(const Slot &s, QJsonObject &taken)
 {
     const auto keys = keysOf(s.holder.component, s.holder.action);
@@ -272,15 +289,10 @@ bool KeysModel::take(const Slot &s, QJsonObject &taken)
         return false;
     const QString id = s.holder.component + QLatin1Char('|') + s.holder.action;
     if (!taken.contains(id)) {
-        QJsonArray saved;
-        for (const KeySeq &k : *keys)
-            saved << QJsonArray::fromVariantList({k.keys.value(0), k.keys.value(1), k.keys.value(2), k.keys.value(3)});
         taken[id] = QJsonObject{{QStringLiteral("component"), s.holder.component},
                                 {QStringLiteral("action"), s.holder.action},
-                                {QStringLiteral("keys"), saved}};
-        QDir().mkpath(QFileInfo(takenPath()).path());
-        QSaveFile out(takenPath());
-        if (!out.open(QIODevice::WriteOnly) || out.write(QJsonDocument(taken).toJson()) < 0 || !out.commit()) {
+                                {QStringLiteral("keys"), toJson(*keys)}};
+        if (!writeTaken(taken)) {
             qWarning("kcm_kwin_i3: can't write %s; %s keeps its key", qPrintable(takenPath()), qPrintable(id));
             taken.remove(id);
             return false;
@@ -290,7 +302,14 @@ bool KeysModel::take(const Slot &s, QJsonObject &taken)
     for (const KeySeq &k : *keys)
         if (k.keys.value(0) != s.pending[0].toCombined())
             kept << k;
-    return setKeys(s.holder.component, s.holder.action, kept);
+    if (!setKeys(s.holder.component, s.holder.action, kept))
+        return false;
+    QJsonObject entry = taken[id].toObject();
+    entry[QStringLiteral("set")] = toJson(keysOf(s.holder.component, s.holder.action).value_or(kept));
+    taken[id] = entry;
+    if (!writeTaken(taken))   // the take stands; a stale "set" only makes restore-keys leave it
+        qWarning("kcm_kwin_i3: can't write %s", qPrintable(takenPath()));
+    return true;
 }
 
 void KeysModel::save()

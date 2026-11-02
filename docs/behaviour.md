@@ -741,9 +741,13 @@ At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys anot
 component holds, and reports them (§13); a holder that launches what the kwin-i3 action launches
 (KRunner's own `_launch` on Meta+D, the default terminal's on Meta+Return) is logged
 (`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them, recording the holders in
-`~/.local/state/kwin-i3/taken-keys.json`; `make restore-keys` gives them back. The settings page's
-Keys page takes a key the same way on Apply, recording it in the same file
-.
+`~/.local/state/kwin-i3/taken-keys.json` before each change, with what each was left holding
+(`set`). The settings page's Keys page takes a key the same way on Apply, recording it in the same
+file. `make restore-keys` gives each holder its old keys back where it still holds what kwin-i3
+left it; one changed since keeps the change, and its old keys are printed (`plan.md`, "Install and
+first run": a change the user made since is theirs). A record from before `set` was kept counts as
+unchanged where the holder holds no key its old keys didn't. A holder that can't be reached stays
+in the save for a later run.
 
 ---
 

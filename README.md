@@ -135,7 +135,8 @@ off first (System Settings > Window Management > KWin Scripts).
    Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview stays on the
    screen's top-left corner and Grid View on Meta+G), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
    takes each one that clashes from its Plasma shortcut and **prints the list of what it took**.
-   To give them back: `make restore-keys`, or Defaults in System Settings > Shortcuts. Rather keep
+   To give them back: `make restore-keys`, which gives each shortcut its own keys back (one you
+   changed since stays as you set it). Rather keep
    some of Plasma's? Skip this step and take keys one by one on kwin-i3's Keys page (a key Plasma
    holds is named in its row and moved on Apply).
 7. **For i3's feel**: Plasma's own settings that kwin-i3 is designed around. These are **Plasma's
