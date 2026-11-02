@@ -963,7 +963,7 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     bar.cls = cls == QLatin1String("focused") ? 0 : 1;
     bar.titles = titles.split(QChar(0x1f));
     bar.span = m_barSpan.contains(id);
-    bar.extra = m_barSpan.value(id);
+    bar.ratio = m_barSpan.value(id, 1);
     bar.width = -1;                          // drawn again at the next paint, where GL is current
     repaintBar(w, id);
 }
@@ -991,13 +991,14 @@ void Hold::ClearBars()
 
 RectF Hold::barRect(const TabBar &bar, const RectF &frame) const
 {
-    return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.span ? std::max(1.0, frame.width() + bar.extra) : bar.w, bar.height);
+    return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.span ? std::max(1.0, frame.width() * bar.ratio) : bar.w, bar.height);
 }
 
-void Hold::SetBarSpan(const QString &id, bool on, int extra)
+void Hold::SetBarSpan(const QString &id, bool on, int ratio)
 {
-    if (on) {
-        m_barSpan.insert(id, extra);
+    const double r = ratio / 100000.0;
+    if (on && r > 0) {
+        m_barSpan.insert(id, r);
     } else {
         m_barSpan.remove(id);
     }
@@ -1005,8 +1006,8 @@ void Hold::SetBarSpan(const QString &id, bool on, int extra)
     if (it == m_bars.end()) {
         return;
     }
-    it->second.span = on;
-    it->second.extra = extra;
+    it->second.span = on && r > 0;
+    it->second.ratio = r > 0 ? r : 1;
     it->second.width = -1;                  // drawn again at the next paint
     if (EffectWindow *w = windowById(barWindow(id))) {
         repaintBar(w, id);

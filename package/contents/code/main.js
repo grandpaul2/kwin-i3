@@ -3323,21 +3323,26 @@ var KI3 = (function () {
     // One floating window, alone in its floating container: KWin's (plan.md "The mouse").
     function floatsAlone(con) { return floats(con) && !floatedOf(con); }
     function outGeometry(s) { var o = s.geometry; return { x: o.x, y: o.y, width: o.width, height: o.height }; }
-    // floating_enable's rect for a split (floating.c:331-342): its children's own sizes (i3's
-    // con->geometry: the frame each window arrived with; one tiled already at a load has none
+    // floating_enable's rect for a split (floating.c:331-342): "a sensible one by combining the
+    // geometry of all children", widths summed and the tallest height. A window's is its own
+    // size (i3's con->geometry: the frame it arrived with; one tiled already at a load has none
     // recorded, and takes KWin's restore, the size KWin gives it back out of its tile, as one
-    // floating window does), widths summed and the tallest height, a split child's being 0;
-    // within floating_check_size's limits; centred on the workspace, as a rect at 0,0 is
-    // (floating.c:381). After untile, so KWin's restore is there to read.
+    // floating window does). A split child's is its own children's, the same way: i3's is 0
+    // there, which defeats the comment's intent and floats a group of splits at the size floor,
+    // a result of its arithmetic, not followed (behaviour.md T16, as G8). Within
+    // floating_check_size's limits; centred on the workspace, as a rect at 0,0 is (:381). After
+    // untile, so KWin's restore is there to read.
+    function ownSize(k) {
+        if (k.win !== null) {
+            var w = wins[k.win], g = untiled[k.win] || (w && !w.tile && w.frameGeometry);
+            return g ? { width: g.width, height: g.height } : { width: 0, height: 0 };
+        }
+        var r = { width: 0, height: 0 };
+        k.nodes.forEach(function (c) { var o = ownSize(c); r.width += o.width; r.height = Math.max(r.height, o.height); });
+        return r;
+    }
     function floatedRect(split, ws) {
-        var width = 0, height = 0;
-        split.nodes.forEach(function (k) {
-            var w = k.win !== null ? wins[k.win] : null;
-            var g = k.win !== null ? untiled[k.win] || (w && !w.tile && w.frameGeometry) : null;
-            if (!g) return;
-            width += g.width;
-            height = Math.max(height, g.height);
-        });
+        var own = ownSize(split), width = own.width, height = own.height;
         var size = checkSize(width, height), s = outputOf(ws), a = areaOf(s, ws);
         return { x: Math.round(a.x + (a.width - size.width) / 2), y: Math.round(a.y + (a.height - size.height) / 2),
                  width: size.width, height: size.height, out: outGeometry(s) };
@@ -3443,6 +3448,18 @@ var KI3 = (function () {
     // plugin/tilingdrag.cpp): each container's rect follows its windows, from where they were laid
     // to where they are, and onto the workspace shown where its centre now is
     // (floating_maybe_reassign_ws).
+    // A floated group's bar is drawn against the shown tab's top-left window, laid at the group's
+    // top: the helper's resize keeps that window's top on the container's (another window of a
+    // split tab would carry the bar with its own top).
+    function topLeftLeaf(c) {
+        var best = null, at = null;
+        model.leaves({ nodes: [c], win: null, type: "con" }).forEach(function (l) {
+            var r = floatedLaid[l.win], w = wins[l.win];
+            if (!r || !w || w.minimized || w.fullScreen) return;
+            if (!at || r.y < at.y || (r.y === at.y && r.x < at.x)) { best = l; at = r; }
+        });
+        return best || shownWindow(c);
+    }
     function floatedMoved() {
         shownWorkspaces().forEach(function (v) {
             v.ws.floating.slice().forEach(function (fc) {
@@ -3916,7 +3933,7 @@ var KI3 = (function () {
                 var kids = con.nodes.filter(function (k) { return project(k); }), shown = null;
                 for (var i = 0; i < con.focus.length && !shown; i++) if (kids.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
                 if (kids.length < 2 || !shown) return;
-                var leaf = shownWindow(shown), w = leaf.win !== null ? wins[leaf.win] : null;
+                var leaf = b.rect ? topLeftLeaf(shown) : shownWindow(shown), w = leaf && leaf.win !== null ? wins[leaf.win] : null;
                 // A tiled group's bar is its bar tile, drawn with the shown window's tile; a
                 // floated group's is the strip layFloated left above it, drawn with the window.
                 var t = w && !b.rect && expected[leaf.win];
@@ -3933,7 +3950,8 @@ var KI3 = (function () {
                 barGroups[key] = con;
                 // A floated group's bar follows its window's width on every frame, as i3 draws the
                 // decorations again at each step of a floating resize (the helper's, with no pass).
-                span[key] = b.rect ? Math.round(r.width - a.width) : null;
+                // As a ratio of the window's width (in 1/100000), which the helper's scaling keeps.
+                span[key] = b.rect ? Math.round(r.width / a.width * 100000) : null;
                 helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
                              con.layout === "stacked" ? 1 : 0, kids.length].join(" "));
                 want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
