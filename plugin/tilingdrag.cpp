@@ -284,6 +284,24 @@ void TilingDrag::setFloated(const QString &id, const QString &group)
     }
 }
 
+bool TilingDrag::floated(const Window *window) const
+{
+    return m_on && m_floated.contains(window->internalId().toString());
+}
+
+bool TilingDrag::floatedHas(const Window *window, const QString &side) const
+{
+    return m_floated.value(window->internalId().toString()).split(QLatin1Char(' ')).mid(1).contains(side);
+}
+
+bool TilingDrag::pressFloatedRing(Window *window, PointerButtonEvent *event)
+{
+    if (!m_on || !window || window->isDeleted() || dragging()) {
+        return false;
+    }
+    return pressGroup(window, event, true);
+}
+
 bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resize)
 {
     const QString group = m_floated.value(window->internalId().toString()).section(QLatin1Char(' '), 0, 0);
@@ -599,7 +617,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         if (e.isAccepted()) {
             return true;    // a title-bar button
         }
-        if (floated.endsWith(QLatin1String(" top"))) {
+        if (floatedHas(window, QStringLiteral("top"))) {
             window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
             takePress(window, Qt::LeftButton, event->position, true, QStringLiteral("top"), false);
             return true;

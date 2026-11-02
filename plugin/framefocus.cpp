@@ -65,10 +65,26 @@ bool FrameFocus::overTiledMargin(const QPointF &pos, Window *hover) const
 // (custom tiling), or floating with frameOnFloating; no server decoration, not fullscreen.
 KWin::Window *FrameFocus::ringWindow(const QPointF &pos, Window *hover) const
 {
+    const auto order = workspace()->stackingOrder();
+    // A floated container's ring sits inside its rect, over whatever is beneath it (a tiled
+    // window, often): from the top, the first window whose frame or floated ring holds pos.
+    if (m_drag) {
+        for (auto it = order.crbegin(); it != order.crend(); ++it) {
+            Window *w = *it;
+            if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || !w->isOnCurrentActivity()) {
+                continue;
+            }
+            if (m_drag->floated(w) && onRing(w, pos)) {
+                return w;
+            }
+            if (w->frameGeometry().contains(pos)) {
+                break;
+            }
+        }
+    }
     if (hover && !hover->isDesktop() && !GapStrips::isStrip(hover) && !overTiledMargin(pos, hover)) {
         return nullptr;
     }
-    const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         if (onRing(*it, pos)) {
             return *it;
@@ -100,7 +116,7 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
     // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating
     // windows are framed too (kwini3hold's floating set isn't readable from here; kwin-i3
     // takes the border of no floating window but its own).
-    const bool tiled = customTiled(w);
+    const bool tiled = customTiled(w) || (m_drag && m_drag->floated(w));
     if (tiled ? !m_tiledRing : !(m_frameOnFloating && w->noBorder() && w->isNormalWindow())) {
         return false;
     }
@@ -209,6 +225,9 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
             return true;
         }
         break;
+    case Decision::FloatedResize:
+        m_drag->pressFloatedRing(d.window, event);
+        return true;
     case Decision::Margin:
         break;
     }
@@ -250,12 +269,18 @@ FrameFocus::Decision FrameFocus::decide(const QPointF &pos, Window *hover, Qt::M
     if (customTiled(window) && resizeButton) {
         return {Decision::RingResize, window, sideOf(window, pos)};
     }
+    // In a floated container (route_click, step 6): a neighbour on that side inside it is a tiling
+    // resize against it; none, the whole container resized.
+    if (m_drag && m_drag->floated(window) && resizeButton) {
+        const QString side = sideOf(window, pos);
+        return {m_drag->floatedHas(window, side) ? Decision::RingResize : Decision::FloatedResize, window, side};
+    }
     return {Decision::Ring, window, QString()};
 }
 
 QString FrameFocus::Decision::describe() const
 {
-    static const char *const names[] = {"pass", "ring", "ring-resize", "gap-resize", "margin"};
+    static const char *const names[] = {"pass", "ring", "ring-resize", "gap-resize", "margin", "floated-resize"};
     QString text = QString::fromLatin1(names[kind]);
     if (window) {
         text += QLatin1Char(' ') + PointerProbe::name(window);

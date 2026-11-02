@@ -36,6 +36,7 @@ public:
             RingResize, // on a tiled window's ring: i3's resize on `side` (TilingDrag::pressRing)
             GapResize,  // in the gap: i3's resize of the nearest tiled window on `side`
             Margin,     // over a tiled window's margin, no tiled window in reach: taken, nothing
+            FloatedResize, // on a floated window's ring, no neighbour that side: the container whole
         };
         Kind kind = Pass;
         KWin::Window *window = nullptr;

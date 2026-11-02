@@ -19,11 +19,12 @@ key "Floating Toggle"
 check "V[b c] floated whole"                wait_tree 1 "H[a] ~V[b c]*"
 
 xywh() { geom "$1" | tr ',x' '  '; }
-# b over c, one column, no gap between; the two together centred on the workspace.
+# b over c, one column, no gap between: only their two rings (1 px each, inside each window's
+# share as i3's border is inside its con); the two together centred on the workspace.
 stacked() {
     local bx by bw bh cx cy cw ch
     read -r bx by bw bh < <(xywh b); read -r cx cy cw ch < <(xywh c)
-    [[ $bx == "$cx" && $bw == "$cw" && $((by + bh)) == "$cy" ]]
+    [[ $bx == "$cx" && $bw == "$cw" && $((by + bh + 2)) == "$cy" ]]
 }
 check "b over c, no gap"                    poll stacked
 read -r bx by bw bh < <(xywh b); read -r cx cy cw ch < <(xywh c)
@@ -51,9 +52,23 @@ check "Meta+right: 60 px wider, b and c"    poll eval '[[ "$(xywh b | cut -d" " 
 check "  40 px taller together"             poll eval 'read -r _ y1 _ _ < <(xywh b); read -r _ y2 _ h2 < <(xywh c); (( y2 + h2 - y1 == ch + cy + 40 - by ))'
 check "  still one column"                  poll stacked
 
-# Back into the tiles, whole. The container is still the focus: the presses went to c, KWin's
-# active window already, inside it (kwin.js focusedCon).
-check "the container still focused"         wait_tree 1 "H[a] ~V[b c]*"
+# A plain press on the ring between b and c (b's bottom side): a tiling resize inside the
+# container, b taller and c shorter by as much (route_click, step 6: tiling_resize first).
+read -r bx by bw bh < <(xywh b); read -r cx cy cw ch < <(xywh c)
+"$INJECT" "abs $((bx + bw / 2)) $((by + bh))" "wait 30" "btn left down" "abs $((bx + bw / 2)) $((by + bh + 15))" "wait 40" \
+    "abs $((bx + bw / 2)) $((by + bh + 30))" "wait 60" "btn left up"
+check "ring between them: b 30 px taller"   poll eval 'read -r _ _ _ h < <(xywh b); (( h >= bh + 28 && h <= bh + 32 ))'
+check "  c as much shorter, same bottom"    poll eval 'read -r _ y _ h < <(xywh c); (( y + h == cy + ch && h <= ch - 28 ))'
+# Its outer ring (c's bottom side, no neighbour there): the whole container resized.
+read -r bx by bw bh < <(xywh b); read -r cx cy cw ch < <(xywh c)
+"$INJECT" "abs $((cx + cw / 2)) $((cy + ch))" "wait 30" "btn left down" "abs $((cx + cw / 2)) $((cy + ch + 15))" "wait 40" \
+    "abs $((cx + cw / 2)) $((cy + ch + 30))" "wait 60" "btn left up"
+check "outer ring: 30 px taller whole"      poll eval 'read -r _ y _ h < <(xywh c); read -r _ y1 _ _ < <(xywh b); (( y + h >= cy + ch + 28 && y + h <= cy + ch + 32 && y1 == by ))'
+check "  still one column"                  poll stacked
+
+# Back into the tiles, whole: the ring presses focused c, so Focus Parent first.
+check "the ring press focused c"            wait_tree 1 "H[a] ~V[b c*]"
+key "Focus Parent"
 key "Floating Toggle"
 check "tiled again: H[a V[b c]]"            wait_tree 1 "H[a V[b c]*]"
 check "  not kept above"                    poll eval '[[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"b\") log(w.keepAbove); })")" == false ]]'

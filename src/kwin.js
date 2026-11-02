@@ -1154,8 +1154,11 @@ var KI3 = (function () {
         if (c.win !== null) {
             var w = wins[c.win];
             if (!w || w.fullScreen || w.minimized) return;
-            if (!exactRect(w.frameGeometry, r)) w.frameGeometry = r;
-            laid.push(r);
+            // The ring inside the window's share, as i3's border is inside its con's rect.
+            var f = tiledRing() ? Settings.get("frameWidth") : 0;
+            var wr = { x: r.x + f, y: r.y + f, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - 2 * f) };
+            if (!exactRect(w.frameGeometry, wr)) w.frameGeometry = wr;
+            laid.push(wr);
             return;
         }
         var kids = c.nodes.filter(shows);
@@ -1253,11 +1256,13 @@ var KI3 = (function () {
         tellFloating(w, false);
         tellDragFloating(id(w), false);
         var con = model.byWin[id(w)], fc = floatedOf(con);
-        // The helper's group is the container, by its first window; "top": a neighbour above,
-        // which a title-bar press resizes against before it would move the container (i3's
-        // route_click, steps 6 and 7).
-        var top = !!model.resizeParticipants(con, Tree.UP);
-        tellFloated(id(w), "c" + model.leaves(fc)[0].win + (top ? " top" : ""));
+        // The helper's group is the container, by its first window, then each side with a
+        // neighbour inside it: a press on that side's ring, or "top" on the title bar, resizes
+        // against it before it would resize or move the container (route_click, steps 6 and 7).
+        var sides = ["top", "left", "right", "bottom"].filter(function (side) {
+            return !!model.resizeParticipants(con, { top: Tree.UP, left: Tree.LEFT, right: Tree.RIGHT, bottom: Tree.DOWN }[side]);
+        });
+        tellFloated(id(w), ["c" + model.leaves(fc)[0].win].concat(sides).join(" "));
     }
     // group: the helper's "group [top]", or "" (or false) for none.
     function tellFloated(key, group) {

@@ -150,6 +150,12 @@ public:
     void warp(int x, int y);
     void setFloating(const QString &id, bool on);
     void setFloated(const QString &id, const QString &group);
+    // In a floated container (SetFloated), and whether it has a neighbour inside it on `side`.
+    bool floated(const KWin::Window *window) const;
+    bool floatedHas(const KWin::Window *window, const QString &side) const;
+    // A press on a floated window's ring with no neighbour on that side: the container resized
+    // whole (route_click, step 6: floating_resize_window).
+    bool pressFloatedRing(KWin::Window *window, KWin::PointerButtonEvent *event);
     void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
     TilingDragGrab *grab() { return &m_grab; }
