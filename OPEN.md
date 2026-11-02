@@ -64,12 +64,6 @@ by step, from `git clone` to the sub-page. Separate, still open: a rule for Plas
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
 
-**85. Two empty headings on the settings page's main page** (found 2026-11-02). `tools/a11y.py
-audit kcmshell6 kwin-i3` reports "an empty heading in the form (a row without a label)" twice,
-on main as it was before the Plasma Settings sub-page; `style-settings-page.md` §6 allows none.
-Next: `a11y.py dump` in a test KWin to find the two rows, then give each a label or fold it into
-its neighbour.
-
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
 f, the hidden tab, right after kwin-i3 focused h (the log: `ACTIVE h (KWin)`, then `ACTIVE f

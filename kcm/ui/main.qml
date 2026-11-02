@@ -55,9 +55,9 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && kcm.setup.needed
-            text: i18n("Some of Plasma's settings work against kwin-i3.")
+            text: i18n("Some Plasma settings work against kwin-i3.")
             actions: Kirigami.Action {
-                text: i18nc("@action:button", "Review…")
+                text: i18nc("@action:button", "Review Plasma Settings…")
                 icon.name: "go-next"
                 onTriggered: kcm.push("PlasmaSettings.qml")
             }
@@ -198,10 +198,16 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Tiling")
         }
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Gaps:")
+        // One label row for the gaps: their sizes, then the sub-page for the rest (an unlabelled
+        // FormLayout row would be an empty heading to a screen reader).
+        ColumnLayout {
+          Kirigami.FormData.label: i18nc("@label", "Gaps:")
+          Kirigami.FormData.buddyFor: gapInnerBox
+          spacing: Kirigami.Units.smallSpacing
+          RowLayout {
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
+                id: gapInnerBox
                 unit: "px"
                 // Even only: split across two windows, an odd gap would
                 // put them on half pixels. An odd value from kwinrc shows as the even below, as
@@ -238,44 +244,11 @@ KCM.SimpleKCM {
                      .filter(s => s).join(", ") || i18n("Same everywhere")
             onClicked: kcm.push("Gaps.qml")
         }
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces split:")
-            Kirigami.FormData.buddyFor: orientationBox
-            spacing: Kirigami.Units.smallSpacing
-            ChoiceBox {
-                id: orientationBox
-                settingName: "defaultOrientation"
-                model: [
-                    { text: i18nc("@item:inlistbox", "Automatic"), value: "auto" },
-                    { text: i18nc("@item:inlistbox", "Side by side"), value: "horizontal" },
-                    { text: i18nc("@item:inlistbox", "Top to bottom"), value: "vertical" },
-                ]
-            }
-            Help {
-                topic: i18nc("@item help topic", "how new workspaces split")
-                toolTipText: i18n("Automatic: top to bottom on a screen taller than wide, else side by side. i3: default_orientation")
-            }
         }
+        // How far one key press goes: a share of the split for tiling windows, pixels for floating
+        // ones, as in i3. One row, as the gaps.
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces open:")
-            Kirigami.FormData.buddyFor: workspaceLayoutBox
-            spacing: Kirigami.Units.smallSpacing
-            ChoiceBox {
-                id: workspaceLayoutBox
-                settingName: "workspaceLayout"
-                model: [
-                    { text: i18nc("@item:inlistbox", "Split"), value: "default" },
-                    { text: i18nc("@item:inlistbox", "Tabbed"), value: "tabbed" },
-                    { text: i18nc("@item:inlistbox", "Stacked"), value: "stacking" },
-                ]
-            }
-            Help {
-                topic: i18nc("@item help topic", "how new workspaces open")
-                toolTipText: i18n("Tabbed or Stacked: the windows of a new workspace open as one group, tabs or rows, until you change it with a key. For workspaces made after the change. i3: workspace_layout")
-            }
-        }
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label:spinbox", "Resize step:")
+            Kirigami.FormData.label: i18nc("@label:spinbox", "Key step:")
             Kirigami.FormData.buddyFor: resizeStepBox
             spacing: Kirigami.Units.smallSpacing
             UnitSpinBox {
@@ -287,16 +260,8 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@label:spinbox", "Resize step")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "resizeStep" }
             }
-            Help {
-                topic: i18nc("@item help topic", "the resize step")
-                toolTipText: i18n("How far a resize key grows or shrinks a tiling window, as a share of its split. i3: resize grow width 10 px or 10 ppt")
-            }
-        }
-        // Floating windows move and resize by pixels, as in i3.
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label:spinbox", "Floating step:")
-            Kirigami.FormData.buddyFor: floatingStepBox
-            spacing: Kirigami.Units.smallSpacing
+            QQC2.Label { text: i18nc("@label after a step's size", "tiling"); Accessible.ignored: true }
+            Item { implicitWidth: Kirigami.Units.largeSpacing }
             UnitSpinBox {
                 id: floatingStepBox
                 unit: "px"
@@ -306,9 +271,10 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
             }
+            QQC2.Label { text: i18nc("@label after a step's size", "floating"); Accessible.ignored: true }
             Help {
-                topic: i18nc("@item help topic", "the floating step")
-                toolTipText: i18n("How far a move or resize key takes a floating window. i3: move left 10 px, resize grow width 10 px")
+                topic: i18nc("@item help topic", "the key step")
+                toolTipText: i18n("How far one press of a resize key goes for a tiling window, as a share of its split, and of a move or resize key for a floating window. i3: resize grow width 10 px or 10 ppt, move left 10 px")
             }
         }
         RowLayout {
@@ -332,19 +298,19 @@ KCM.SimpleKCM {
         }
         // holdEnabled; holdTimeoutMs is an internal value, kwinrc only (plan.md, "Settings").
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Layout changes:")
+            Kirigami.FormData.label: i18nc("@label", "Options:")
             Kirigami.FormData.buddyFor: holdBox
             spacing: Kirigami.Units.smallSpacing
             QQC2.CheckBox {
                 id: holdBox
-                text: i18nc("@option:check", "Show all at once")
-                Accessible.name: i18nc("@option:check", "Show layout changes all at once")
+                text: i18nc("@option:check", "Show layout changes all at once")
                 checked: root.settings.holdEnabled
                 onToggled: root.settings.holdEnabled = checked
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "holdEnabled"; extraEnabledConditions: kcm.holdLoaded }
             }
-            Kirigami.ContextualHelpButton {
-                toolTipText: i18n("Shows a new layout all at once, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
+            Help {
+                topic: i18nc("@item help topic", "layout changes")
+                toolTipText: i18n("A new layout appears in one go, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
             }
         }
 
@@ -353,24 +319,23 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@title:group", "Mouse & focus")
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Pointer:")
+            Kirigami.FormData.label: i18nc("@label", "Options:")
             Kirigami.FormData.buddyFor: warpBox
             spacing: Kirigami.Units.smallSpacing
             QQC2.CheckBox {
                 id: warpBox
-                text: i18nc("@option:check", "Follow focus to another screen")
-                Accessible.name: i18nc("@option:check", "Pointer follows focus to another screen")
+                text: i18nc("@option:check", "Move the pointer with focus to another screen")
                 checked: root.settings.mouseWarping === "output"
                 onToggled: root.settings.mouseWarping = checked ? "output" : "none"
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
             }
             Help {
                 topic: i18nc("@item help topic", "the pointer")
-                toolTipText: i18n("When a key moves focus to another screen, the pointer goes to the middle of the focused window. i3: mouse_warping")
+                toolTipText: i18n("When a key moves the focus to another screen, the pointer goes to the middle of the focused window. i3: mouse_warping")
             }
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label:listbox", "Drag tiling windows:")
+            Kirigami.FormData.label: i18nc("@label:listbox", "Drag tiling windows by:")
             Kirigami.FormData.buddyFor: dragBox
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
@@ -378,34 +343,34 @@ KCM.SimpleKCM {
                 settingName: "tilingDrag"
                 applies: kcm.helperLoaded       // plugin/tilingdrag.cpp
                 model: [
-                    { text: i18nc("@item:inlistbox", "Titlebar or Meta+drag"), value: "modifier titlebar" },
-                    { text: i18nc("@item:inlistbox", "Meta+drag only"), value: "modifier" },
-                    { text: i18nc("@item:inlistbox", "Titlebar only"), value: "titlebar" },
-                    { text: i18nc("@item:inlistbox", "Never"), value: "off" },
+                    { text: i18nc("@item:inlistbox", "Titlebar, or Meta anywhere"), value: "modifier titlebar" },
+                    { text: i18nc("@item:inlistbox", "Meta anywhere"), value: "modifier" },
+                    { text: i18nc("@item:inlistbox", "Titlebar"), value: "titlebar" },
+                    { text: i18nc("@item:inlistbox", "Neither: no dragging"), value: "off" },
                 ]
             }
             Help {
                 topic: i18nc("@item help topic", "dragging tiling windows")
-                toolTipText: i18n("Drop a tiling window beside another, or on its middle to group or swap them. Meta+Shift+Space floats it. i3: tiling_drag")
+                toolTipText: i18n("Dropped beside another window, a tiling window moves there; dropped on its middle, the two are grouped or swapped. Meta+Shift+Space floats a window instead. i3: tiling_drag")
             }
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label:listbox", "New windows in fullscreen:")
+            Kirigami.FormData.label: i18nc("@label:listbox", "New windows over fullscreen:")
             Kirigami.FormData.buddyFor: popupBox
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: popupBox
                 settingName: "popupDuringFullscreen"
                 model: [
-                    { text: i18nc("@item:inlistbox", "Behind, except its dialogs"), value: "smart" },
+                    { text: i18nc("@item:inlistbox", "Behind; the fullscreen app's dialogs in front"), value: "smart" },
                     { text: i18nc("@item:inlistbox", "Always behind"), value: "ignore" },
-                    { text: i18nc("@item:inlistbox", "Dialogs end fullscreen"), value: "leave_fullscreen" },
+                    { text: i18nc("@item:inlistbox", "The fullscreen app's dialogs end fullscreen"), value: "leave_fullscreen" },
                     { text: i18nc("@item:inlistbox", "Floating ones in front"), value: "all" },
                 ]
             }
             Help {
                 topic: i18nc("@item help topic", "new windows in fullscreen")
-                toolTipText: i18n("What a window that opens on a workspace with a fullscreen window does. i3: popup_during_fullscreen")
+                toolTipText: i18n("Where a window goes when it opens on a workspace that has a fullscreen window. i3: popup_during_fullscreen")
             }
         }
 
@@ -414,20 +379,55 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@title:group", "Workspaces")
         }
         RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces:")
+            Kirigami.FormData.buddyFor: workspaceLayoutBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: workspaceLayoutBox
+                settingName: "workspaceLayout"
+                model: [
+                    { text: i18nc("@item:inlistbox", "Split"), value: "default" },
+                    { text: i18nc("@item:inlistbox", "Tabbed"), value: "tabbed" },
+                    { text: i18nc("@item:inlistbox", "Stacked"), value: "stacking" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "new workspaces")
+                toolTipText: i18n("How the windows of a workspace made from now on are arranged: split, or one group shown as tabs or as stacked rows. A layout key changes it later. i3: workspace_layout")
+            }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "Split direction:")
+            Kirigami.FormData.buddyFor: orientationBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: orientationBox
+                settingName: "defaultOrientation"
+                model: [
+                    { text: i18nc("@item:inlistbox", "By screen shape"), value: "auto" },
+                    { text: i18nc("@item:inlistbox", "Side by side"), value: "horizontal" },
+                    { text: i18nc("@item:inlistbox", "Top to bottom"), value: "vertical" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "the split direction")
+                toolTipText: i18n("Which way a new workspace's windows split. By screen shape: top to bottom on a screen taller than wide, side by side otherwise. i3: default_orientation")
+            }
+        }
+        RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Options:")
             Kirigami.FormData.buddyFor: backAndForthBox
             spacing: Kirigami.Units.smallSpacing
             QQC2.CheckBox {
                 id: backAndForthBox
-                text: i18nc("@option:check", "Repeat a key to go back and forth")
-                Accessible.name: i18nc("@option:check", "Repeat a workspace key to go back and forth")
+                text: i18nc("@option:check", "Repeat a workspace key to go back and forth")
                 checked: root.settings.workspaceAutoBackAndForth
                 onToggled: root.settings.workspaceAutoBackAndForth = checked
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "workspaceAutoBackAndForth" }
             }
             Help {
                 topic: i18nc("@item help topic", "back and forth")
-                toolTipText: i18n("The key of the workspace you are on takes you to the one you were on before. i3: workspace_auto_back_and_forth")
+                toolTipText: i18n("Pressing the key of the current workspace goes to the previous one. i3: workspace_auto_back_and_forth")
             }
         }
         SubPageButton {
@@ -446,32 +446,35 @@ KCM.SimpleKCM {
         }
         // Without the plugins tiled windows keep their title bars, so
         // the choice needs them as the frame does.
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label:listbox", "Tiling windows:")
-            Kirigami.FormData.buddyFor: tiledLook
+        ColumnLayout {
+          Kirigami.FormData.label: i18nc("@label:listbox", "Tiling windows show:")
+          Kirigami.FormData.buddyFor: tiledLook
+          spacing: 0
+          RowLayout {
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: tiledLook
                 settingName: "tiledLook"
                 applies: kcm.frameAvailable
                 model: [
-                    { text: i18nc("@item:inlistbox", "Frame"), value: "frame" },
+                    { text: i18nc("@item:inlistbox", "A frame"), value: "frame" },
                     { text: i18nc("@item:inlistbox", "Titlebars"), value: "titlebars" },
                     { text: i18nc("@item:inlistbox", "Neither"), value: "bare" },
                 ]
             }
             Help {
                 topic: i18nc("@item help topic", "how tiling windows look")
-                toolTipText: i18n("Frame: a thin coloured line around each window, in place of its title bar. Titlebars: Plasma's own. i3: default_border")
+                toolTipText: i18n("A frame: a thin coloured line around each window, in place of its titlebar. Titlebars: Plasma's own. i3: default_border")
             }
         }
         // Nothing marks the focused window then; KWin's own effect can (spec, item 6).
-        QQC2.Label {
-            visible: root.settings.tiledLook === "bare"
-            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-            wrapMode: Text.Wrap
-            font: Kirigami.Theme.smallFont
-            text: i18nc("@info", "Nothing marks the focused window; the Dim Inactive effect can.")
+          QQC2.Label {
+              visible: root.settings.tiledLook === "bare"
+              Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+              wrapMode: Text.Wrap
+              font: Kirigami.Theme.smallFont
+              text: i18nc("@info", "Nothing marks the focused window; the Dim Inactive effect can.")
+        }
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Width:")
@@ -525,30 +528,32 @@ KCM.SimpleKCM {
                 toolTipText: i18n("Hides the frame at the screen's edges, or on a window alone on its workspace. i3: hide_edge_borders")
             }
         }
-        // Drawn by kwini3hold, so it needs the plugins too; a
-        // title bar brings its theme's corners. Under the tiled colours, unlabelled.
-        QQC2.CheckBox {
-            text: i18nc("@option:check under Tiling frame", "Round corners of tiling windows")
-            checked: root.settings.roundedCorners
-            onToggled: root.settings.roundedCorners = checked
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
-        }
+        // Drawn by kwini3hold, so they need the plugins too; a title bar brings its theme's corners.
         // A floating window's frame uses the same colour classes (§7 L11).
-        RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Floating windows:")
-            Kirigami.FormData.buddyFor: floatingFrameBox
-            spacing: Kirigami.Units.smallSpacing
+        ColumnLayout {
+            Kirigami.FormData.label: i18nc("@label", "Options:")
+            Kirigami.FormData.buddyFor: cornersBox
+            spacing: 0
             QQC2.CheckBox {
-                id: floatingFrameBox
-                text: i18nc("@option:check", "Draw the frame too")
-                Accessible.name: i18nc("@option:check", "Draw the frame on floating windows too")
-                checked: root.settings.frameOnFloating
-                onToggled: root.settings.frameOnFloating = checked
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
+                id: cornersBox
+                text: i18nc("@option:check", "Round the corners of tiling windows")
+                checked: root.settings.roundedCorners
+                onToggled: root.settings.roundedCorners = checked
+                KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
             }
-            Help {
-                topic: i18nc("@item help topic", "the frame on floating windows")
-                toolTipText: i18n("Floating windows lose their title bar too and get the frame. i3: default_floating_border")
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                QQC2.CheckBox {
+                    id: floatingFrameBox
+                    text: i18nc("@option:check", "Draw the frame on floating windows too")
+                    checked: root.settings.frameOnFloating
+                    onToggled: root.settings.frameOnFloating = checked
+                    KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
+                }
+                Help {
+                    topic: i18nc("@item help topic", "the frame on floating windows")
+                    toolTipText: i18n("Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
+                }
             }
         }
 
@@ -557,7 +562,7 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@title:group", "Window rules")
         }
         SubPageButton {
-            Kirigami.FormData.label: i18nc("@label", "Rules:")
+            Kirigami.FormData.label: i18nc("@label", "Specific windows:")
             text: i18nc("@action:button", "Configure Window Rules…")
             readonly property var counts: Logic.ruleCounts(root.settings)
             summary: i18np("1 rule", "%1 rules", counts.rules + counts.assigns)
@@ -575,38 +580,37 @@ KCM.SimpleKCM {
             icon.name: "configure-shortcuts"
             onClicked: kcm.push("Keys.qml")
         }
-        // kwin-i3's keys other shortcuts hold, taken on Apply and given back unticked (the Plasma
-        // Settings model's "keys" row, kcm/setup.cpp; make take-keys' save).
+        // kwin-i3's keys that a Plasma shortcut also holds: ticked, they run kwin-i3's commands (taken
+        // from the Plasma shortcuts on Apply); unticked, the Plasma shortcuts get their original keys
+        // back (the Plasma Settings model's "keys" row, kcm/setup.cpp; make take-keys' save).
         ColumnLayout {
             readonly property var row: kcm.setup.rows.find((r) => r.id === "keys")
             visible: !!row
-            Kirigami.FormData.label: i18nc("@label", "Plasma's shortcuts:")
+            Kirigami.FormData.label: i18nc("@label", "Options:")
             Kirigami.FormData.buddyFor: takeKeys
             spacing: 0
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
                 QQC2.CheckBox {
                     id: takeKeys
-                    text: i18nc("@option:check", "Take kwin-i3's keys from them")
+                    text: i18nc("@option:check", "Use kwin-i3's keys over Plasma's")
                     checked: !!kcm.setup.wanted["keys"]
                     onToggled: kcm.setup.setWanted("keys", checked)
-                    Accessible.name: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
+                    Accessible.description: keysNote.text
                 }
                 Help {
-                    topic: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
-                    toolTipText: i18n("A key two shortcuts share runs only one of them. Ticked, every key set in Configure Keys that a Plasma shortcut also holds runs kwin-i3's command, and each Plasma shortcut keeps its other keys. Unticking this restores the original keys.")
+                    topic: i18nc("@item help topic", "kwin-i3's keys over Plasma's")
+                    toolTipText: i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them: Meta+D is Plasma's Show Desktop and kwin-i3's launcher. Ticked, such keys run kwin-i3's commands; each Plasma shortcut keeps its other keys.")
                 }
             }
             QQC2.Label {
-                visible: text !== ""
+                id: keysNote
                 Layout.maximumWidth: Kirigami.Units.gridUnit * 24
                 wrapMode: Text.Wrap
                 color: Kirigami.Theme.disabledTextColor
                 font: Kirigami.Theme.smallFont
                 Accessible.ignored: true
-                readonly property var row: parent.row
-                // One short line, never the list of keys: what unticking does.
-                text: takeKeys.checked ? i18n("Unticking this restores the original keys.") : ""
+                text: i18n("Unticking this and applying restores Plasma's original keys.")
             }
         }
 
@@ -618,9 +622,9 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label", "Settings:")
             text: i18nc("@action:button", "Configure Plasma Settings…")
             readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
-            summary: [rows.filter((r) => r.differs && !r.optional).length ? i18np("1 to review", "%1 to review", rows.filter((r) => r.differs && !r.optional).length) : "",
+            summary: [rows.filter((r) => r.differs).length ? i18np("1 to review", "%1 to review", rows.filter((r) => r.differs).length) : "",
                       rows.filter((r) => r.changed).length ? i18np("1 changed by kwin-i3", "%1 changed by kwin-i3", rows.filter((r) => r.changed).length) : ""]
-                     .filter((s) => s).join(", ") || i18n("as kwin-i3 needs them")
+                     .filter((s) => s).join(", ") || i18n("As kwin-i3 needs them")
             onClicked: kcm.push("PlasmaSettings.qml")
         }
         // warnTakenKeys has no control here while kwin-i3's notifications don't reach Plasma

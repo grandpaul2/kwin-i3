@@ -993,15 +993,18 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   without them is the load notification's, §13); while a Plasma setting kwin-i3 needs differs
   (the Plasma Settings sub-page's unticked-by-default rows aside), "Some of Plasma's settings work
   against kwin-i3", with Review… to that sub-page.
-- **Main page**: Tiling (gaps, with **Configure Gaps…**: a sub-page with the outer gap per
-  screen edge, `smartGaps`, and each workspace's own inner and outer gap; the new-workspace
-  direction, how new workspaces open (`workspaceLayout`), both steps, focus at an edge, the
-  hold), Mouse and focus (`mouseWarping` as a
-  checkbox, `tilingDrag`, `popupDuringFullscreen`), Workspaces (auto back-and-forth, and the
-  Workspaces sub-page), Frame (`tiledLook`, width; the two colour classes (§7 L3), a row each with the
-  frame's colour and the next-window side's, the latter "same as the frame" when empty;
-  `hideEdgeBorders`; corners; frame on floating windows; greyed without the effect), Window
-  Rules, Keys (the sub-page; `warnTakenKeys` has no control). **A help button** beside each setting with an
+- **Main page**, worded and laid out by the `settings-pages` skill (each lone checkbox under an
+  "Options:" label, so no row is an empty heading to a screen reader): Tiling (gaps, with
+  **Configure Gaps…** under them: a sub-page with the outer gap per screen edge, `smartGaps`, and
+  each workspace's own inner and outer gap; the key step, tiling and floating on one row; focus at
+  an edge; the hold), Mouse and focus (`mouseWarping` as a checkbox, `tilingDrag`,
+  `popupDuringFullscreen`), Workspaces (how new workspaces open (`workspaceLayout`), their split
+  direction, auto back-and-forth, and the Workspaces sub-page), Frame (`tiledLook`, width; the two
+  colour classes (§7 L3), a row each with the frame's colour and the next-window side's, the
+  latter "same as the frame" when empty; `hideEdgeBorders`; corners; frame on floating windows;
+  greyed without the effect), Window Rules, Keys (the sub-page, and "Use kwin-i3's keys over
+  Plasma's", below; `warnTakenKeys` has no control), Plasma (the Plasma Settings sub-page, with
+  how many rows differ). **A help button** beside each setting with an
   i3 counterpart (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
   focus_wrapping"); the sub-pages' help names theirs. Each is the next Tab stop after its
   control, as on Plasma's pages.
@@ -1027,8 +1030,10 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings, a row each
   where Plasma differs from what kwin-i3 needs or kwin-i3 changed it, each read as a review: what
   Plasma does, in a sentence, tagged Plasma's default or changed from it; what kwin-i3 needs
-  instead and why, naming Plasma's own page; a tick, "Use kwin-i3's", ticked where Plasma has
-  kwin-i3's value; once changed, what Plasma had and that unticking gives it back. Focus follows
+  instead and why, naming Plasma's own page; a checkbox named by the behaviour kwin-i3 needs
+  ("Focus follows the mouse"), ticked where Plasma has it, with one muted line under it: what
+  Plasma does (tagged when that is Plasma's default), or, once changed, what Plasma had and that
+  unticking restores it; the why and Plasma's own place for the setting in its help button. Focus follows
   mouse with no delay and the next focus under the pointer (`FocusPolicy`, `DelayFocusInterval`,
   `NextFocusPrefersMouse`); per-output desktops; focus stealing prevention at Low (shown only
   above it); screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the

@@ -125,10 +125,10 @@ click_named - "Navigate Back"; sleep 0.5
 shot main
 click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
-check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell6)" == "More about the resize step"
+check "Tab from the resize step reaches the floating step" test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
 press Tab
-check "then the floating step"              test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
-press Tab; press Tab
+check "then their help"                     test "$($A11Y focused kcmshell6)" == "More about the key step"
+press Tab
 # A combo box is named by its current choice.
 check "then the focus choice" test "$($A11Y focused kcmshell6)" == "Next screen, then wrap"
 press Down

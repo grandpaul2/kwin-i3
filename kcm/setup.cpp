@@ -100,9 +100,9 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     // Each row says in a sentence what Plasma does with its values, and what kwin-i3 needs
     // instead; never a setting's name alone (docs/style-settings-page.md, the Plasma Settings
     // sub-page).
-    Row focus{QStringLiteral("focus"), i18nc("@title", "Focus"),
-              i18n("The window under the pointer has the focus, at once, and a closed window's focus goes to the one under the pointer."),
-              i18n("i3's focus follows the mouse: the frame and every key act on the window under the pointer. In System Settings: Window Management > Window Behavior > Focus."),
+    Row focus{QStringLiteral("focus"), i18nc("@option:check", "Focus follows the mouse"),
+              {},
+              i18n("The window under the pointer takes the focus at once, and when a window closes, the one under the pointer takes it, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus follows mouse (mouse precedence)\" with no delay."),
               {}, false,
               {w(QStringLiteral("FocusPolicy"), QStringLiteral("FocusFollowsMouse")), w(QStringLiteral("DelayFocusInterval"), QStringLiteral("0")),
                w(QStringLiteral("NextFocusPrefersMouse"), QStringLiteral("true"))},
@@ -110,80 +110,79 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     focus.plasma = [ch = focus.changes, on](const Getter &g) {
         const QString p = g(ch[0]);
         if (p == QLatin1String("ClickToFocus"))
-            return i18n("A click focuses a window.");
+            return i18n("Plasma focuses a window when it is clicked.");
         const int delay = g(ch[1]).toInt();
-        QString s = delay ? i18np("The window under the pointer has the focus, after %1 ms.", "The window under the pointer has the focus, after %1 ms.", delay)
-                          : i18n("The window under the pointer has the focus, at once.");
-        if (p != QLatin1String("FocusFollowsMouse"))
-            s = i18nc("a stricter focus policy, then the sentence", "Plasma's stricter focus under mouse: %1", s);
+        QString s = p != QLatin1String("FocusFollowsMouse") ? i18np("Plasma focuses the window under the pointer, by a stricter rule, after %1 ms.", "Plasma focuses the window under the pointer, by a stricter rule, after %1 ms.", delay)
+                  : delay ? i18np("Plasma focuses the window under the pointer after %1 ms.", "Plasma focuses the window under the pointer after %1 ms.", delay)
+                          : i18n("Plasma focuses the window under the pointer at once.");
         if (!on(g(ch[2])))
-            s += QLatin1Char(' ') + i18n("A closed window's focus goes to the one used last.");
+            s += QLatin1Char(' ') + i18n("When a window closes, the last one used takes the focus.");
         return s;
     };
     m_defs << focus;
 
-    Row perOutput{QStringLiteral("perOutput"), i18nc("@title", "Workspaces on more than one screen"),
-                  i18n("Each screen switches its own workspace."),
-                  i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. In System Settings: Window Management > Virtual Desktops."),
-                  i18n("Giving this back puts every screen on the same workspace."), false,
+    Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Switch workspaces independently for each screen"),
+                  {},
+                  i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
+                  i18n("Unticking it also puts every screen on the same workspace."), false,
                   {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr, nullptr};
     perOutput.plasma = [ch = perOutput.changes, on](const Getter &g) {
-        return on(g(ch[0])) ? i18n("Each screen switches its own workspace.") : i18n("Switching workspace switches every screen together.");
+        return on(g(ch[0])) ? i18n("Plasma switches each screen's workspace on its own.") : i18n("Plasma switches every screen's workspace together.");
     };
     m_defs << perOutput;
 
-    Row stealing{QStringLiteral("focusStealing"), i18nc("@title", "New windows"),
-                 i18n("A new window takes the focus, as in i3."),
-                 i18n("Focus stealing prevention above Low keeps new windows from taking the focus. In System Settings: Window Management > Window Behavior > Focus."),
+    Row stealing{QStringLiteral("focusStealing"), i18nc("@option:check", "Let new windows take the focus"),
+                 {},
+                 i18n("A new window takes the focus, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus stealing prevention\" at Low."),
                  {}, false, {w(QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"))}, nullptr, nullptr};
     stealing.plasma = [ch = stealing.changes](const Getter &g) {
         const QStringList names{i18n("None"), i18n("Low"), i18n("Medium"), i18n("High"), i18n("Extreme")};
         const int level = g(ch[0]).toInt();
-        return level > 1 ? i18nc("level", "A new window doesn't take the focus (focus stealing prevention: %1).", names.value(level))
-                         : i18n("A new window takes the focus.");
+        return level > 1 ? i18nc("level", "Plasma keeps new windows from taking the focus (focus stealing prevention: %1).", names.value(level))
+                         : i18n("Plasma lets new windows take the focus.");
     };
     m_defs << stealing;
 
-    Row edges{QStringLiteral("edges"), i18nc("@title", "Screen edges"),
-              i18n("A window dragged to a screen edge stays as it is."),
-              i18n("Plasma's edge tiling places a window outside kwin-i3's layout. Shift held as a drag ends does the same, and no setting turns that off. In System Settings: Window Management > Screen Edges."),
+    Row edges{QStringLiteral("edges"), i18nc("@option:check", "Drop windows at screen edges without tiling them"),
+              {},
+              i18n("Plasma's edge tiling places a window outside kwin-i3's layout. Holding Shift as a drag ends does the same, and no setting turns that off. Plasma's setting: Window Management > Screen Edges."),
               {}, false,
               {w(QStringLiteral("ElectricBorderTiling"), QStringLiteral("false")), w(QStringLiteral("ElectricBorderMaximize"), QStringLiteral("false"))},
               nullptr, nullptr};
     edges.plasma = [ch = edges.changes, on](const Getter &g) {
         const bool t = on(g(ch[0])), m = on(g(ch[1]));
-        return t && m ? i18n("A window dragged to a screen edge is tiled there, or maximized at the top.")
-             : t      ? i18n("A window dragged to a screen edge is tiled there.")
-             : m      ? i18n("A window dragged to the top edge is maximized.")
-                      : i18n("A window dragged to a screen edge stays as it is.");
+        return t && m ? i18n("Plasma tiles a window dragged to a screen edge, and maximizes it at the top.")
+             : t      ? i18n("Plasma tiles a window dragged to a screen edge.")
+             : m      ? i18n("Plasma maximizes a window dragged to the top edge.")
+                      : i18n("Plasma leaves a window dragged to a screen edge in place.");
     };
     m_defs << edges;
 
-    Row tiles{QStringLiteral("tileEditor"), i18nc("@title", "Meta+T"),
-              i18n("Meta+T does nothing."),
-              i18n("Plasma's tile editor changes the tiles kwin-i3 lays out. In System Settings: Keyboard > Shortcuts, KWin, Toggle Tiles Editor."),
+    Row tiles{QStringLiteral("tileEditor"), i18nc("@option:check", "Free Meta+T from Plasma's tile editor"),
+              {},
+              i18n("Plasma's tile editor changes the tiles kwin-i3 lays out. Plasma's shortcut: Keyboard > Shortcuts, Window Management, \"Toggle Tiles Editor\"."),
               {}, false, {}, nullptr, nullptr};
     tiles.plasma = [](const Getter &) { return i18n("Meta+T opens Plasma's tile editor."); };
     m_defs << tiles;
 
-    Row actions{QStringLiteral("windowActions"), i18nc("@title", "Moving a window with Meta"),
-                i18n("Meta and a drag move a window and focus it, as in i3."),
-                i18n("kwin-i3's mouse uses Meta for every drag. In System Settings: Window Management > Window Behavior > Window Actions."),
+    Row actions{QStringLiteral("windowActions"), i18nc("@option:check", "Meta and a drag focus the window they move"),
+                {},
+                i18n("Meta and a drag move a floating window and focus it, as in i3. Plasma's setting: Window Management > Window Behavior > Window Actions."),
                 {}, false,
                 {mb(QStringLiteral("CommandAllKey"), QStringLiteral("Meta")), mb(QStringLiteral("CommandAll1"), QStringLiteral("Activate, raise and move"))},
                 nullptr, nullptr};
     actions.plasma = [ch = actions.changes](const Getter &g) {
         const QString key = g(ch[0]), a = g(ch[1]);
         if (key != QLatin1String("Meta"))
-            return i18nc("a modifier key", "%1 and a drag move a window; Meta does nothing.", key);
-        return a == QLatin1String("Move") ? i18n("Meta and a drag move a window without focusing it.")
-             : a == QLatin1String("Activate, raise and move") ? i18n("Meta and a drag move a window and focus it.")
-                                                               : i18nc("an action", "Meta and a drag: %1.", a);
+            return i18nc("a modifier key", "Plasma moves a window with %1 and a drag; Meta does nothing.", key);
+        return a == QLatin1String("Move") ? i18n("Plasma moves a window with Meta and a drag without focusing it.")
+             : a == QLatin1String("Activate, raise and move") ? i18n("Plasma moves a window with Meta and a drag and focuses it.")
+                                                               : i18nc("an action", "Plasma's Meta and a drag: %1.", a);
     };
     m_defs << actions;
 
-    Row keysRow{QStringLiteral("keys"), i18nc("@title", "kwin-i3's keys"),
-                i18n("These keys run kwin-i3's commands; each Plasma shortcut keeps its other keys."),
+    Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "Use kwin-i3's keys over Plasma's"),
+                {},
                 i18n("A key two shortcuts share runs only one of them."),
                 {}, false, {}, nullptr, nullptr};
     keysRow.plasma = [this](const Getter &) {
@@ -197,14 +196,14 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     };
     m_defs << keysRow;
 
-    Row anim{QStringLiteral("animations"), i18nc("@title", "Animations"),
-             i18n("No animations, as in i3, which has none."),
-             i18n("This is for every app, not windows alone. In System Settings: Quick Settings > Animation speed."),
+    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Make animations instant"),
+             {},
+             i18n("i3 has none. This is for every app, not windows alone. Plasma's setting: Quick Settings > Animation speed, \"Instant\"."),
              {}, true, {Change{QStringLiteral("kdeglobals"), QStringLiteral("KDE"), QStringLiteral("AnimationDurationFactor"), QStringLiteral("0")}},
              nullptr, nullptr};
     anim.plasma = [ch = anim.changes](const Getter &g) {
         const double f = g(ch[0]).toDouble();
-        return f == 0 ? i18n("No animations.") : i18n("Windows and controls animate as they open, close and move.");
+        return f == 0 ? i18n("Plasma shows no animations.") : i18n("Plasma animates windows and controls as they open, close and move.");
     };
     m_defs << anim;
 
@@ -281,7 +280,7 @@ void SetupModel::load()
             status = std::all_of(r.changes.begin(), r.changes.end(), [this](const Change &ch) { return effective(ch) == stock(ch); })
                 ? QStringLiteral("default") : QStringLiteral("changed");
         const QString earlier = r.id == QLatin1String("keys")         ? i18n("These keys ran Plasma's shortcuts.")
-                              : r.id == QLatin1String("tileEditor")   ? i18n("Meta+T opened Plasma's tile editor.")
+                              : r.id == QLatin1String("tileEditor")   ? i18n("Meta+T opens Plasma's tile editor.")
                                                                       : r.plasma(was);
         m_rows << QVariantMap{{QStringLiteral("id"), r.id},         {QStringLiteral("title"), r.title},
                               {QStringLiteral("plasma"), d ? r.plasma(now) : QString()},

@@ -81,7 +81,7 @@ hunt for; no collision with another word on the page or in Plasma.
 | 12 | what a rule does | floating enable, assign → | — | **Float, Tile, Workspace…, Screen…** | the row says it; the column is labelled "Then:" or the like (step 5) |
 | 13 | the layout held until windows resize | — (+) | — | **Show layout changes all at once** | named for what the user sees (style guide: "for what it does") |
 | 14 | focus past the last window | focus_wrapping | "Navigation wraps around" | **Focus wrapping:** | i3's and Plasma's verb agree |
-| 15 | the pointer following focus | mouse_warping | — | **Pointer follows focus to another screen** | short, true (only across screens) |
+| 15 | the pointer following focus | mouse_warping | — | **Move the pointer with focus to another screen** | the checkbox stands alone (no "Pointer:" label it depends on); true (only across screens) |
 | 16 | a window's title bar | — | Titlebar | **titlebar** | Plasma's spelling on its own pages |
 | 17 | kwin-i3's plugins | — (+) | "plug-ins" (HIG) | **kwin-i3's plugins**, never which one | the user installs both together; a banner says what is missing, in a short list |
 | 18 | a workspace | workspace | virtual desktop | **workspace** (keep) | i3's; Plasma users meet it in kwin-i3's widget. Help may say "a virtual desktop" once |
