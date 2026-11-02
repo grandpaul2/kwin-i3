@@ -116,8 +116,8 @@ matches nothing. i3 has only the config line: its users write it once, so anythi
 blending with Plasma, judged against `plan.md`'s scope. Ideas, none decided: (a) the README's
 paragraph for any monitor, not only docking; (b) a preset on the Workspaces page (alternate odd
 and even, split in halves, or keep where they are now); (c) a hint when an output returns and no
-workspace outputs are set, dropped: kwin-i3 sends no notifications (`behaviour.md` §13). (a) is
-`OPEN.md` item 71. Next: the beta users' monitor setups and whether either has lost a layout, then
+workspace outputs are set, dropped: kwin-i3 sends no notifications (`behaviour.md` §13). (a) done:
+the README's Install step 4. Next: the beta users' monitor setups and whether either has lost a layout, then
 a proposal on (b).
 
 **18. A standing accessibility check of the settings page** (parked: light tests while in

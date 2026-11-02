@@ -148,6 +148,10 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    also holds runs kwin-i3's command; unticked again, the Plasma shortcuts get their original
    keys back. In a terminal: `make take-keys` takes the keys and
    prints what it took, `make restore-keys` gives them back.
+   **With two or more monitors**, give each workspace its screen too (the main page's
+   **Configure Workspaces…**): when a monitor goes away, unplugged or only for a moment (a cable,
+   a monitor waking), its workspaces move to another for good, as in i3. A workspace given a screen,
+   with the other as its second, moves back when its screen returns.
 5. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
    Applications > Terminal emulator).
 6. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
@@ -162,10 +166,6 @@ update kwin-i3**: `cd ~/kwin-i3 && git pull && make install` (it reloads kwin-i3
 windows once). `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
 `main`: `git checkout stable` once moves it. To go back to an earlier version:
 `git checkout v1.N.M` (the tags), then `make install`.
-
-**On a laptop that docks**: when an output goes away, its workspaces move to the first output for
-good, as in i3. To keep a workspace on the external output, give it a workspace output (the
-settings page's Workspaces, or `workspaceOutputs` below); it goes back when that output returns.
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
 it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives your shortcuts their keys

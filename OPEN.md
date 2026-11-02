@@ -50,13 +50,6 @@ click on its tab (`con_is_hidden`). Likely KWin's focus follows mouse finding f 
 in the stacking. Next: reproduce in a test KWin with the pointer over the group, read the stacking
 order at that moment, then i3's rule against what KWin allows.
 
-**71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
-that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
-way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
-line in Install step 4 (beside each screen switching workspaces alone): workspaces of a
-monitor that goes away stay on the other for good, as in i3; a workspace output per number, with
-the other screen second, brings them back.
-
 **83. A tiled fullscreen window's neighbours** (found 2026-11-01 with item 73's floated case).
 i3 renders a fullscreen con alone and returns (`render.c:127-144`), its siblings keeping their
 rects. The tiled projection leaves a fullscreen window out once KWin no longer keeps it in a tile
