@@ -44,7 +44,7 @@ given the base, the change list, the i3 path and the output file. Five areas by 
 | area | reads | against |
 |---|---|---|
 | A. The foundations | `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, `AGENTS.md`'s doc rules; the words a user reads (`README.md`, `CONTRIBUTING.md`, the settings page `kcm/ui/`, the widget) | each other, i3's source, the code for the user's words |
-| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +) | i3 4.24's source; `plan.md`'s reasons (a)-(e) |
+| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +) | i3 4.24's source; `plan.md`'s reasons (a)-(f) |
 | C1. The model | `src/tree.js`, `outputs.js`, `workspaces.js`, `rules.js`, `placement.js`, `settings.js` | `behaviour.md` §2-4, §11 |
 | C2. The KWin seam | `src/kwin.js` | `behaviour.md` §5, §6, §10, §12-14 |
 | C3. The plugins | `plugin/*.cpp` | `behaviour.md` §1, §7-9 |
@@ -66,7 +66,7 @@ reachable while they run: answer them, and read each area's file as its agent fi
 
 The classes: **conflict** two docs say opposite things; **home** a fact in two homes or the
 wrong one (`docs/README.md`); **i3** i3 misstated or a citation wrong; **reason** a ≠ with no
-reason (a)-(e), a reason that doesn't hold, or an = that is a ≠; **code** the code and
+reason (a)-(f), a reason that doesn't hold, or an = that is a ≠; **code** the code and
 `behaviour.md` disagree; **words** what a user reads isn't true of the code; **word** a word not
 `definitions.md`'s; **hole** a case the foundations don't settle, or settle two ways.
 
@@ -96,7 +96,7 @@ In the conversation, not a file. Short, numbered once, each number one topic:
 
 1. **The conflicts** (step 5 only), grouped by the foundation they would change. Each: the two
    sides, cited; i3's way (file:line); the precedents (row ids, decision numbers); the reasons
-   (a)-(e) that bear; **the recommendation, written as the edit to the foundation**, with cost
+   (a)-(f) that bear; **the recommendation, written as the edit to the foundation**, with cost
    against value. Never as options away from i3 (`AGENTS.md`, "Follow the docs").
 2. **The holes closed at step 4**: each one line, the principle written and where.
 3. **Fixed without asking**: counts per class and per doc, one line each; the notable ones named.
@@ -132,8 +132,11 @@ are measured, not remembered. Per area:
 - **Settling**: the conflicts the maintainer answered against the recommendation, and the
   findings settled at steps 1-4 that the maintainer would have settled otherwise. Either means
   a foundation, or the settling rule here, is unclear.
-- **Cost**: agents run, against the budget; each agent's tokens and time where the harness
-  reports them.
+- **Cost**, weighed as heavily as yield: each agent's tokens and time (the harness reports them
+  at the end), the tokens per real finding by area, and where they went: reading every
+  foundation doc in every agent, whole files where the change since the base was small, sources
+  fetched again by each agent (KWin's), a strong model on a mechanical comparison. Each sweep
+  proposes at least one saving, with its estimated effect on cost and on misses.
 
 Then a short evaluation in the conversation: what worked, what didn't, and **each proposed change
 to `SKILL.md` or `briefs.md` as the edit itself** (an area split or merged, a brief line added

@@ -156,7 +156,9 @@ process, which i3 didn't start, and GLFW sets no startup id. The difference is o
 straight from the launcher, then a switch before its window shows. Documented as a divergence
 (`docs/plan.md`, "Scope"; README, "Keys"). Next, if a user asks for it: whether KWin 6.7.5 gives a
 script the window's xdg-activation token (Wayland) or startup id (Xwayland) and the launch's
-moment; if not, a plugin hook in KWin's activation, or won't-fix.
+moment; if not, a plugin hook in KWin's activation, or won't-fix. First case: kwin-i3's own
+Terminal key (`behaviour.md` K18), the one program it starts itself, as i3 starts its terminal
+with startup notification on (`exec i3-sensible-terminal`; the launcher is `--no-startup-id`).
 
 **51. What users of other KWin tilers expect** (back from `OPEN.md` 2026-10-30; (b)'s rest waits for a
 release. A survey, 2026-10-28, of Krohnkite, Bismuth, Polonium, Karousel, KZones, PlasmaZones and the forums; the report

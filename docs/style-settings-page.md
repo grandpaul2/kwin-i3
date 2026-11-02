@@ -110,7 +110,9 @@ hunt for; no collision with another word on the page or in Plasma.
 
 - **The control that can't be wrong** (HIG: a text field only where a validating control can't
   be used). An output is a ComboBox of the connected ones, not typed `1=DP-4`; a rule is a list
-  with Pick a Window, not comma-separated text.
+  with Pick a Window, not comma-separated text. A window rule's application is chosen from that
+  list; its title, role and type are i3's criteria in i3's syntax (`plan.md`, "Settings": rule
+  fields for i3 users), behind a button, so a user who needs none never meets a pattern.
 - **A control never accepts a value that means something else** (a user
   must never feel deceived): the gap between windows steps by 2 because an odd one would be drawn as
   the even one below.

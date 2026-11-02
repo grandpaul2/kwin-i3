@@ -10,7 +10,7 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 > `REPO` (read-only: change nothing, run no test, reload nothing). Read
 > `AGENTS.md`, then `docs/README.md` (one home per fact), `docs/definitions.md` (the words),
 > `docs/philosophy.md` (above all "How a decision is made") and `docs/plan.md` (the scope, the
-> reasons (a)-(e) a difference from i3 may have, the standing decisions).
+> reasons (a)-(f) a difference from i3 may have, the standing decisions).
 >
 > i3 means its 4.24 release, checked out at `I3`: cite `src/<file>.c:<line>` from there, never
 > from memory and never `next`. KWin is version `KWIN`; for "KWin can't" read
@@ -34,7 +34,7 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 > ```
 >
 > Classes: conflict (two docs say opposite things), home (a fact in two homes or the wrong one),
-> i3 (i3 misstated or a citation wrong), reason (a ≠ with no reason (a)-(e), a reason that
+> i3 (i3 misstated or a citation wrong), reason (a ≠ with no reason (a)-(f), a reason that
 > doesn't hold, or an = that is a ≠), code (code and `docs/behaviour.md` disagree), words (what
 > a user reads isn't true of the code), word (not `definitions.md`'s word), hole (a case the
 > foundations don't settle, or settle two ways). High: it misleads a decision or a user, or the
@@ -61,7 +61,7 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 
 > Your area: every row of `docs/behaviour.md` that carries an i3 mark (=, ≠, +).
 > 1. Its i3 side against `I3`: is that what i3 4.24 does? The citation right?
-> 2. Each ≠: does it name one of `plan.md`'s reasons (a)-(e), and does that reason hold? (a)
+> 2. Each ≠: does it name one of `plan.md`'s reasons (a)-(f), and does that reason hold? (f) cites the defect in i3; (a)
 >    checked against `kwin-notes.md` and KWin's source; (c) is precedent only for the thing it
 >    names; (d) against the Out list; (e) against Plasma's settings. A ≠ whose reason doesn't
 >    hold is a defect (`AGENTS.md`, "Ride i3 hard").

@@ -55,12 +55,14 @@ In order:
    not a question and not a call to invent. Work it first: the premise that let it open, i3's
    source, what Plasma and KWin allow, the precedents. Then write the missing principle into the
    doc it belongs in, as a proposal, and say it was a hole: a repair to the foundation, not a
-   one-time fix.
+   one-time fix. If the two that settle it two ways are foundations that genuinely conflict, the
+   worked recommendation goes to step 5, as the edit it would be.
 5. **The maintainer**, when out of moves: two foundations that genuinely conflict, or the
-   product's direction. Not each call: the project is past the point where one person can make
-   every individual call. **The maintainer's decisions live in these foundations**: a question
+   product's direction. The maintainer is brought conflicts between foundations, never
+   individual cases: the project is past the point where one person can make every individual
+   call. **The maintainer's decisions live in these foundations**: a question
    put to them is a question about a foundation. Before asking, show that steps 1-4 don't
-   decide it (the scope, the reasons (a)-(e), the precedent, i3's source), and ask it as the
+   decide it (the scope, the reasons (a)-(f), the precedent, i3's source), and ask it as the
    change to a foundation it would be. A question the docs already answer, asked anyway, can undo
    a decision already made there.
 
@@ -81,8 +83,9 @@ This is about deciding *what* kwin-i3 does. Putting anything on a live desktop s
 go for that change (`AGENTS.md`, "Nothing goes live").
 
 **The foundations stay true.** Work that changes a rule, the scope or a word edits the foundation
-doc in the same commit, as a behaviour change edits `behaviour.md`. (The redo of 2026-10-27/28
-did not, and left `plan.md` contradicting what it built.)
+doc in the same commit, as a behaviour change edits `behaviour.md`; a change that skips it leaves
+`plan.md` contradicting what is built. `.claude/skills/foundation-sweep/` reads the foundations
+against i3 and the code every so often, to catch what slipped.
 
 ## The line between i3 and Plasma
 

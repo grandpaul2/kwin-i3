@@ -1,8 +1,8 @@
 # kwin-i3 — plan
 
 The scope, what is left out, the reasons a difference from i3 may have, and the standing
-decisions. Revised 2026-10-28 after the redo; the history (the phases, the switch-over checklist,
-the first plan inside Krohnkite) is in git: `git show f3fa510:docs/plan.md`.
+decisions. The history (the phases, the switch-over checklist, the first plan inside Krohnkite) is
+in git: `git show f3fa510:docs/plan.md`.
 
 ## Goal
 
@@ -10,7 +10,7 @@ i3's window management inside a stock Plasma Wayland session: windows are entiti
 move among each other, not contents moved between fixed divisions. One KWin script and two KWin
 plugins, behaving as i3 does wherever KWin lets them (`docs/philosophy.md`).
 
-## Scope (the rule's order 2026-10-28)
+## Scope
 
 kwin-i3 gives Plasma i3's feel and basic window management, and leaves the rest to Plasma. It is
 not i3 on KWin: the more of i3 it takes on, the more of it duplicates Plasma. The work now is
@@ -24,8 +24,7 @@ Plasma, and the plugins in a release: `LATER.md`, "Release prep".
 **i3 means the 4.24 release** (its tag `4.24`: `https://raw.githubusercontent.com/i3/i3/4.24/src/<file>.c`,
 `etc/config.keycodes` for the keys), the version an i3 user meets in their distribution. Its `next`
 branch differs in places (a drag ends only on its own button's release there): a citation of
-`next` is checked against 4.24 before it decides anything (2026-10-28: every function this pass
-cited was).
+`next` is checked against 4.24 before it decides anything.
 
 **The test for anything new**, in this order:
 1. **In the "In" list below: i3's**, as i3 does it, even where Plasma has something similar
@@ -43,7 +42,10 @@ and by mouse); workspaces that live on an output, with i3's workspace output and
 floating (a window, or a container floated whole), sticky floating and the focus mode toggle;
 i3's keys (`docs/behaviour.md` §8); the frame, gaps and the split indicator; i3's mouse ("The
 mouse", below: the tiling drag, the resize, the floating move); i3's window kinds and its `for_window`
-floating rules (`docs/definitions.md`); i3's settings for all of these (below). Around them,
+floating rules (`docs/definitions.md`); i3's settings for all of these (below). With them, i3's
+commands that reach a state or a place no bound key reaches, left unbound as i3 leaves them
+(workspace back and forth, next and previous, outputs, Sticky Toggle, the forms with no back and
+forth: `behaviour.md` §4 and §8): a user who wants one binds it. Around them,
 kwin-i3's own: the settings page, the workspace widget, the load notification, the capture key
 and the release key. What each does, exactly: `docs/behaviour.md`.
 
@@ -53,13 +55,13 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 |---|---|
 | urgency | it was shown in i3's bar, and there is no bar |
 | marks, the scratchpad, i3's restart | outside the core of i3's feel that kwin-i3 copies (the scratchpad is an open question for a release, `LATER.md` item 51); restart is for a new i3 binary, and an install reloads kwin-i3 |
-| i3's explicit command forms (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | i3 binds none of them by default; the bound actions cover them (i3 feature map, finding 5; 2026-10-27) |
+| i3's explicit forms of a bound command (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | the bound toggles already reach every state they set (i3 feature map, finding 5); a command reaching a state or place no bound key reaches is in (above) |
 | a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key leaves Plasma's way, as `endSession` says) |
 | i3's config file, `i3-msg` IPC and a command language (`bindsym`, `mode`, chains) | settings belong in System Settings (and `kwinrc`); a key's action takes no arguments, `mode` or chain (a setting may still shape what an action does, as `resizeStep` does for resize). No scripting surface is promised during the Stage (`LATER.md`, "Release prep") |
 | workspace names, and workspaces past 10 | decision 9 |
 | fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only |
-| the launch workspace (i3: a window opens where it was launched, for programs i3 started) | a window opens on the workspace focused when it appears; for programs a launcher, Steam or a game client starts, i3 did the same, and that is useful. A maybe for the release: `LATER.md`, item 28 |
+| the launch workspace (i3's `startup_ws`, `manage.c:336`: a window opens where it was launched, for programs i3 started with startup notification) | a window opens on the workspace focused when it appears (`behaviour.md` C1, reason (d)); for programs a launcher, Steam or a game client starts, i3 did the same. A maybe for the release, kwin-i3's own Terminal key first: `LATER.md`, item 28 |
 | mouse chords beyond i3's, and any mouse way to change a window's kind | i3's own mouse is in instead ("The mouse", below); one chord was ever used (2026-10-22 to 10-24), and the Meta+Shift drags that floated and tiled a window took i3's swap modifier and left a floating container no meaning |
 
 **The reasons a difference from i3 may have** (each ≠ row in `docs/behaviour.md` names one):
@@ -75,12 +77,17 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
   component's shortcut stays its own). **Named, never set unasked** (a stock install showed why): the Plasma settings kwin-i3 is designed around (focus follows mouse with
   no delay and the next focus under the pointer; per-output desktops; kwin-i3's keys free;
-  animations off, optional) are named in three places, as i3 asks once at first start
+  animations off, optional) are to be named in three places, as i3 asks once at first start
   (`i3-config-wizard`): a README install step, "For i3's feel"; the load notification, which names
   the ones that differ; and the settings page, which shows them with a control that changes
   Plasma's own setting when the user asks. Each says plainly that it is a **Plasma setting, not
   kwin-i3's**, and that changing it there is the same as changing it in System Settings (the same
-  key, the same effect, undone the same way).
+  key, the same effect, undone the same way). Built so far: the README's step only; the load
+  notification's and the settings page's places wait on `OPEN.md` items 56 and 79.
+- **(f) i3's result comes from a defect in its code, not from a rule**: an unsigned value that
+  wraps, a size never set, a path that breaks an invariant i3 keeps everywhere else. The ≠ row
+  cites the defect's file:line and follows what i3's code evidently intends; copying the defect
+  would give a glitch, not i3's feel.
 
 Not reasons: "minor", "simpler", "someone's old config", "it was already built that way". A row
 whose only reason is one of these goes back to i3's, or finds a real reason. **The list of
@@ -101,8 +108,11 @@ mouse, crossing the gap between a floating panel and its popup would focus the w
 and close the popup (KDE bug 511162), so the helper lengthens KWin's focus delay while a popup is
 up and puts the user's value back; it changes no saved setting (reason (e); `behaviour.md` F10).
 
-**Plasma's own tiling** (quick tile, the tile editor) on a kwin-i3 workspace is the user untiling
-the window: it floats (decision 7).
+**Plasma's own tiling** on a kwin-i3 workspace: a drag out of a tile, a screen-edge drag
+included, is the user untiling the window and floats it (KWin untiles at the move's first step);
+a quick tile by key and Meta+T's tile editor are pulled back into the tree on the next pass
+(decision 7, `behaviour.md` V12). What kwin-i3 does with Plasma's window actions that have no i3
+counterpart, as a rule, is `OPEN.md` item 79's.
 
 ## The mouse
 
@@ -147,14 +157,13 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   for tiling targets, but `con_is_floating` is true of a floating container's direct child alone,
   so a window deeper in one passes, and whichever window comes first in i3's list of every
   container wins: an accident of i3's code, not a rule, and following it would make a drop change
-  a window's kind. Not followed, as `behaviour.md` G8 doesn't follow an i3 result that comes from
-  its arithmetic; the row is item 73's.
+  a window's kind. Not followed, reason (f), as `behaviour.md` G8.
 - **The centre of a drop** is `behaviour.md` G11's three bands (Tabbed, Stacked, Swap; reason
   (c), judged live), whatever is dragged. **Shift adds nothing there**: i3's swap modifier
   (`tiling_drag.c:341`, read at the press) would make the whole centre a swap, which the bottom
   band already is; the bands decide, for G11's reason (revisited: `LATER.md` item 80).
 - **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
-  Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79). So
+  Shift drag into a tile) are Plasma's ("Plasma's own tiling", above; `OPEN.md` item 79). So
   is **a move KWin starts itself** without the helper (Meta+drag, `behaviour.md` F9). A client
   asking to be moved by its own header bar (GTK, Electron) would float a tiling window too, where
   i3 ignores the request (`handlers.c:936`). With the helper, kwin-i3 refuses those on a tiling
@@ -162,8 +171,7 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   own move before any input filter, and the helper cancels it once started (`behaviour.md` X5).
 - **Where it can't match**, each a ≠ row with its reason: a Meta press with nothing to do is
   swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
-  would float the window), and so is a Meta+Shift press with nowhere to drop (G4: the helper
-  takes the press before the tree has counted); the drag distance is Plasma's setting, not i3's 15 px (G2); a
+  would float the window); the drag distance is Plasma's setting, not i3's 15 px (G2); a
   floating container's resize waits on each app, as the hold does; no mouse bindings (F7, reason
   (d)).
 
@@ -192,15 +200,16 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
      (`con_fix_percent`). Reconcile writes them to the tiles. A size changed *in KWin* (a border
      drag) is read back into the tree once, when the drag ends, not on every
      `relativeGeometryChanged`.
-   - Considered and rejected for now: tiles as the only structure (review S3-11.1). It removes the
+   - Considered and rejected for now: tiles as the only structure. It removes the
      projection, but i3's flatten and move rules would then be written against a structure that
      collapses on its own and can't be tested without a fake. Revisit if the projection proves costly.
 4. **One idempotent `reconcile(workspace)`** applies the tree to KWin: compute the wanted tile tree
    and which window goes in which tile, diff against the live tiles, change only what differs.
    Every event handler updates the tree and schedules a reconcile; a zero-interval `QTimer`
    coalesces a burst into one pass. Nothing else writes to tiles.
-5. **Start-up reads the live tiles back** into the tree (structure from layout tiles and their
-   directions, focus from `workspace.stackingOrder`), so a reload keeps the layout. Only tiles that
+5. **A reload keeps the tree.** With the plugins, the effect keeps a copy of the tree and gives
+   it back whole (`behaviour.md` P3). Without them, start-up reads the live tiles back (structure
+   from layout tiles and their directions, focus from `workspace.stackingOrder`); only tiles that
    hold zero or several windows fall back to inserting after the focus. KWin's saved defaults (the
    3-column template) hold no windows and are discarded.
 6. **Tile calls, in this order, always**: `oldTile.unmanage(w)`, then change `w.desktops` / output,
@@ -244,7 +253,7 @@ what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Pl
       workspace whose workspace output names it (i3 takes the first in its config; the setting is
       keyed by number, so the lowest stands in); else the first free number (`randr.c` `init_ws_for_output`, 444-520);
     - **no output left**: as i3, which falls back to one output covering the root window
-      (`randr.c:931`); here KWin's placeholder output, until one returns;
+      (`randr.c:932`); here KWin's placeholder output, until one returns;
     - windows KWin moves on its own during a hotplug are ignored: the tree, not KWin's move, says
       where they belong. (Verified: a window KWin moves to another output loses its tile and is
       switched to the virtual desktop that output shows.)
@@ -267,7 +276,7 @@ entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kw
 
 ## Focus
 
-**Focus follows i3** (a capture showed a modal dialog taking its parent to the other output): every way focus changes is a row of `behaviour.md` §5 set against i3. That
+**Focus follows i3**: every way focus changes is a row of `behaviour.md` §5 set against i3. That
 table is the home of the rules; this is the why.
 
 - **Why i3's rules, not exceptions**: the earlier rules asked "does kwin-i3 manage it?" and grew
@@ -279,7 +288,7 @@ table is the home of the rules; this is the why.
 - **What the user sees follows the tree.** The frame's colours, the split indicator, the resize
   banner and the widget are drawn from the tree's focus, never from KWin's active window. A focus
   change KWin makes on its own (focus follows mouse, a click, Alt+Tab) updates the tree and
-  re-tells every one of them in the same turn (the 2026-10-28 ring bug, `abfecf0`).
+  re-tells every one of them, the group bars' colours too, in the same turn.
 - **The shape in code** (`src/kwin.js` "---- focus"): the tree owns focus (`src/tree.js`,
   `activate`/`focusUp`); KWin's activations come in at one handler; `applyFocus` sends it out
   after every pass, so a pointer warp lands on settled windows; handing focus back to a
