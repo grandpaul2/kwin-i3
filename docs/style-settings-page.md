@@ -137,7 +137,9 @@ hunt for; no collision with another word on the page or in Plasma.
 
 - **No paragraphs in the form and no label-only rows.** An explanation goes in a
   `Kirigami.ContextualHelpButton` beside its control, or in the control's
-  `Accessible.description`. The main page has no tooltips.
+  `Accessible.description`. The main page has no tooltips, but an icon-only button's own name
+  (KDE's HIG: an icon-only button carries a tooltip saying what it does), as the colour rows'
+  clear button.
 - **State goes in inline messages in the page header** (`Kirigami.InlineMessage`,
   `Position.Header`): kwin-i3 off (with Turn On), on but not running, the plugins not loaded
   (one message for all the controls they govern). A sub-page's transient result (Pick a Window)

@@ -481,13 +481,13 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@label", "Focused:")
             frameKey: "frameActive"; indicatorKey: "frameIndicatorActive"
             who: i18nc("@item which window", "the focused window")
-            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split. i3: client.focused")
+            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused")
         }
         ClassRow {
             Kirigami.FormData.label: i18nc("@label", "Unfocused:")
             frameKey: "frameInactive"; indicatorKey: "frameIndicatorInactive"
             who: i18nc("@item which window", "unfocused windows")
-            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split. i3: client.unfocused")
+            help: i18n("The split indicator marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.unfocused")
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:listbox", "Hide frame:")
@@ -534,7 +534,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "the frame on floating windows")
-                toolTipText: i18n("Floating windows get the frame in place of their own border. i3: default_floating_border")
+                toolTipText: i18n("Floating windows lose their title bar too and get the frame. i3: default_floating_border")
             }
         }
 

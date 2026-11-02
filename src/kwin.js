@@ -556,11 +556,16 @@ var KI3 = (function () {
             gapFloorLogged[floorKey] = true;
             log("WARN gaps: an edge goes no thinner than half the inner gap (KWin's tile padding), held at -" + i / 2 + ": " + (ws ? "workspace " + floorKey : floorKey.slice(2)));
         }
-        var one = !!(p && p.win !== undefined), smart = Settings.get("smartGaps"), hide = Settings.get("hideEdgeBorders");
+        // i3's one visible child: smart_gaps also counts a workspace whose one child is a tabbed
+        // or stacked container (gaps.c:22-26); hide_edge_borders smart only the visible windows
+        // (con.c:1827-1828), so a lone group of one shown window counts as one for both.
+        var visible = ws && p ? Tree.numVisibleChildren(ws) : 2;
+        var one = visible <= 1 || !!(ws && p && ws.nodes.length === 1 && (ws.nodes[0].layout === "tabbed" || ws.nodes[0].layout === "stacked"));
+        var smart = Settings.get("smartGaps"), hide = Settings.get("hideEdgeBorders");
         if (ws && (smart === "on" && one || smart === "inverse_outer" && !one)) inset = { top: 0, right: 0, bottom: 0, left: 0 };
         if (ws && smart === "on" && one) i = 0;
         var outerGap = inset.top > 0 || inset.right > 0 || inset.bottom > 0 || inset.left > 0;
-        var ring = tiledRing() && !(ws && one && (hide === "smart" || hide === "smart_no_gaps" && !outerGap));
+        var ring = tiledRing() && !(ws && visible <= 1 && (hide === "smart" || hide === "smart_no_gaps" && !outerGap));
         Object.keys(inset).forEach(function (s) { inset[s] += i / 2; });
         // The frame's room: twice its width, so KWin's half padding leaves it on each side. With
         // title bars, the decoration's outline instead: Breeze (Plasma's default) draws 1 px
@@ -3671,7 +3676,7 @@ var KI3 = (function () {
             closed = true;
             var lines = [];
             if (helper === false) lines.push("Without the helper: no tiling drag or resize with the mouse, no focus from the frame, no resize mode (Meta+R), no floating a container whole, no terminal key (Meta+Return), no keys fitted to your keyboard layout, and the Configure form's Apply needs Meta+Shift+C.");
-            if (effect === false) lines.push("Without the effect: no frame (tiling windows keep their title bars), no drag highlight, no atomic layout changes.");
+            if (effect === false) lines.push("Without the effect: no frame (tiling windows keep their title bars), no tabs on tabbed and stacked groups, no resize-mode banner, no drag highlight, no atomic layout changes.");
             if (lines.length) lines.push("make plugin-install builds and loads them.");
             reportClose("kwin-i3's plugins aren't loaded", lines);
         }
@@ -4117,8 +4122,9 @@ var KI3 = (function () {
                 if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
             }
             // No pass follows KWin's own activation (focus follows mouse, a click, Alt+Tab): the
-            // rings are told here; kwin-i3's own are told at the end of its pass.
-            if (!switching) tellRings();
+            // rings and the group bars' colours are told here, in the same turn (plan.md
+            // "Focus"); kwin-i3's own are told at the end of its pass.
+            if (!switching) { tellRings(); tellBars(); }
         }));
         workspace.cursorPosChanged.connect(guard("pointer", pointerMoved));
         seedPointer();

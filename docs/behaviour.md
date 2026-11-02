@@ -474,8 +474,8 @@ can hold:
   `con_get_tree_representation`; a Wayland window with no instance by its class). Without i3's
   `i3: ` prefix (`x.c`): the brackets already say it is a container, and the look follows
   Plasma's (reason (b)). The shown child takes the frame's colour of its class (focused when the focus is in
-  the group, as i3's `focused` against `focused_inactive`) with white text (re-told at every pass, not yet when KWin moves the focus
-  itself: **being fixed**, `OPEN.md` item 84); the others Plasma's
+  the group, as i3's `focused` against `focused_inactive`) with white text (re-told at every pass and when KWin moves the focus
+  itself, `windowActivated`); the others Plasma's
   window colours. Reason (b): i3 draws its own colours and font, here Plasma's. While the hold
   shows the old layout, each bar stays as it was and the new ones show with the new layout.
 
@@ -506,10 +506,10 @@ i3's `gaps.c` `calculate_effective_gaps`, per workspace (`gaps(ws)`, worked out 
   (a); below that it is held, logged once (`WARN gaps`). The per-side keys stay 0 and up, as -1
   means "as `gapsOuter`" there.
 - **`smartGaps`** (i3's `smart_gaps`): `on`, no gaps at all on a workspace with one visible tiling
-  window (the projection is one leaf); `inverse_outer`, the outer gaps only on such a workspace.
-  The ring keeps its room either way. ≠ i3 for a workspace holding only a tabbed or stacked group:
-  i3 counts its one shown child (`con_num_visible_children`, `con.c:1091-1111`; `gaps.c:22-26`),
-  here the bar makes it more than one leaf. **Being fixed** (`OPEN.md` item 84).
+  window, a tabbed or stacked group's hidden tabs not counted, or whose one child is a tabbed or
+  stacked group (`Tree.numVisibleChildren`: i3's `con_num_visible_children`, `con.c:1090-1110`;
+  `gaps.c:22-26`); `inverse_outer`, the outer gaps only on such a workspace. The ring keeps its
+  room either way.
 - Every tile has the inner padding; the root is inset on each side by that side's outer gap plus
   half the inner gap. So between windows: the inner gap; at the output's edge: that side's outer
   gap plus the inner gap (the root's inset plus the tile's own half), as i3.
@@ -585,7 +585,7 @@ that it fits Plasma better.
 | L3 | The ring's colours | two classes, from the tree (`x.c:498-512`): `focused` (`frameActive` #4c7899) for the focused window; `unfocused` (`frameInactive` #333333) for every other, the other output's focused window included. The ring follows the tree's focus, not the keyboard: with KRunner or a menu open the focused window keeps its colour | ≠ | i3 has a third, `focused_inactive`, for a parent's last focus (the other output's focused window, a split's last focus, an unfocused floating window). **Left out**, judged live: a third colour confused more than it told. i3 draws the border in `child_border`, by default the class's **background**: #285577, #5f676a, #222222. Kept: Plasma-friendly defaults; `urgent` stays out with urgency. The script sends each shown window's class to the effect at the end of a pass, only when it changes; the script also tells the effect the tree's focused window (`SetFocused`, whatever the frame), and a window not yet told its class is `focused` only if it is that window; after a release, none is. Reason (c). |
 | L4 | A window alone in a split | the side where the next window opens (right in a horizontal split, bottom in a vertical one; the workspace counts, so a window alone on its workspace has it too) is drawn in the class's indicator colour after Split H, Split V or Toggle Split on it (the effect's `ShowIndicator`), until the tree's focus moves to another window (`SetFocused`) or the window is no longer alone in its split; otherwise in the frame's colour. No timer: it goes with the repaint of a focus change or a layout change (a fade's own repaints left the side stale on NVIDIA). `frameIndicatorActive` #3daee9, `frameIndicatorInactive` empty, the class's frame colour | ≠ | i3's `x.c:585-599` (its #2e9ef4, #484e50, #292d2e) draws it always. Only after a split key, until the focus leaves or the split happens: an indicator always on, judged live, said more than it helped. Reason (c). |
 | L5 | Gaps (`gapsInner`, `gapsOuter`) | 2 px between, none more at the edges | ≠ | i3: 0 and 0 (`config.c:222-226`). Reason (c): **judged live**, after living with them on large and small screens |
-| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | `hideEdgeBorders` (`none` default): `smart` draws no ring on a workspace with one visible tiling window, and its tile leaves no room for it; `smart_no_gaps` the same when that workspace has no outer gap; `vertical`, `horizontal`, `both` leave out the ring's left and right, top and bottom, or all sides where the window's tile is at the root's edge and the inner gap is 0 (i3's `con_adjacent_borders`, `con.c:1902`, on the rendered rects: an outer gap moves the workspace's rect, an inner gap moves the window off it). `smartGaps`: §6. Floating windows never | ≠ | i3's `con_border_style` (`con.c:1821-1879`). `vertical`, `horizontal`, `both` leave a strip of the ring's width where the side was: ≠, reason (a), KWin's tiles have one padding for all sides and a root inside its output. `smart` with a workspace holding only a tabbed or stacked group: as `smartGaps` (§6), **being fixed** |
+| L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | `hideEdgeBorders` (`none` default): `smart` draws no ring on a workspace with one visible tiling window, and its tile leaves no room for it; `smart_no_gaps` the same when that workspace has no outer gap; `vertical`, `horizontal`, `both` leave out the ring's left and right, top and bottom, or all sides where the window's tile is at the root's edge and the inner gap is 0 (i3's `con_adjacent_borders`, `con.c:1902`, on the rendered rects: an outer gap moves the workspace's rect, an inner gap moves the window off it). `smartGaps`: §6. Floating windows never | ≠ | i3's `con_border_style` (`con.c:1821-1879`). `vertical`, `horizontal`, `both` leave a strip of the ring's width where the side was: ≠, reason (a), KWin's tiles have one padding for all sides and a root inside its output. `smart` counts visible windows as i3 (`con.c:1827-1828`): a group's hidden tabs don't count |
 | L7 | A window's own look (i3's `border normal \| pixel N \| none`, `border toggle`, `for_window … border`) | one look for all tiling windows | ≠ | kept: no command language (§8 K22), and §3 R9's criteria set floating only. Reason (d). |
 | L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway |
 | L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows | ≠ | i3 has square corners. **Kept**: rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded. Reason (b). |
@@ -1115,9 +1115,8 @@ One notification per load (app "kwin-i3"), its parts collected first:
   script and both plugins): without the helper, the tiling drag and resize, frame focus, the
   resize mode (Meta+R), floating a container whole, the terminal key (Meta+Return), the
   layout-fitted keys and the form's Apply (§8 K4, K18; T16); without the effect, the frame, the
-  drag highlight and the hold, where the group bars (tabs) and the resize banner go too, unnamed:
-  **being fixed** (`OPEN.md` item 84). The helper from KWin's loaded plugins, the effect from its
-  loaded effects.
+  tabs of tabbed and stacked groups, the resize mode's banner, the drag highlight and the hold. The
+  helper from KWin's loaded plugins, the effect from its loaded effects.
 
 i3 has no counterpart: it reports a config error with `i3-nagbar`; here a setting that doesn't
 parse logs a `WARN` and uses its default (§11).

@@ -98,15 +98,8 @@ window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
 **84. The foundation sweep's code fixes** (2026-11-01; each checked against i3 4.24 and the
 code). The code breaks a row of `behaviour.md` or i3 with no reason (a)-(f); each row is marked
 "being fixed". Five stages, one live at a time, each with the go to build and to reload, `make
-unit` and the changed scenarios (64 for a plugin stage). Stages 1 (fullscreen: V1, V2, V6b) and 2 (tree and rules: flatten, T23, R3, R19, R9, L12, the
-size check) are built; left:
-(3) **look**: `smartGaps` and `hideEdgeBorders smart` count a lone tabbed or stacked group as one
-(§6, L6, `gaps.c:22-26`); the bars' colours re-told when KWin moves the focus itself (`plan.md`
-"Focus"); the load notification names the group bars and the resize banner among what goes
-without the effect (§13); the settings page's and the form's words made true (the split indicator
-shown only after a split key, L4; which windows float by default, R2-R7; where a workspace with no
-workspace output opens, S4; "frame", not "border"; the main page's tooltip, the form's "output"
-for the page's "screen": `docs/style-settings-page.md`).
+unit` and the changed scenarios (64 for a plugin stage). Stages 1 (fullscreen: V1, V2, V6b), 2 (tree and rules: flatten, T23, R3, R19, R9, L12, the size
+check) and 3 (look: smart gaps and borders, the bars' colours, the words) are built; left:
 (4) **plugins**: Release clears the effect's floated marks (known limits); the window-pressed
 report before the tiling drag takes the press (B3); extra modifiers start the drag and resize
 (G1, Z1, `click.c:166`); a group's bar takes any button and a scroll with any modifier (G14,
@@ -116,4 +109,4 @@ G15); Meta+Shift with nowhere to drop goes to the app, the script telling the he
 number, script and plugins alike (§11).
 (5) **pointer and release**: entering a gap or a panel on the focused output refocuses (B2,
 `handlers.c:91-121`); Release resets only the roots kwin-i3 placed, a user's own tile layout kept
-(Y4, reason (e)). Next: stage 3, with the go.
+(Y4, reason (e)). Next: stage 4, with the go.

@@ -293,8 +293,7 @@ table is the home of the rules; this is the why.
 - **What the user sees follows the tree.** The frame's colours, the split indicator, the resize
   banner and the widget are drawn from the tree's focus, never from KWin's active window. A focus
   change KWin makes on its own (focus follows mouse, a click, Alt+Tab) updates the tree and
-  re-tells every one of them, the group bars' colours too, in the same turn (the bars:
-  `behaviour.md` §6, being fixed).
+  re-tells every one of them, the group bars' colours too, in the same turn.
 - **The shape in code** (`src/kwin.js` "---- focus"): the tree owns focus (`src/tree.js`,
   `activate`/`focusUp`); KWin's activations come in at one handler; `applyFocus` sends it out
   after every pass, so a pointer warp lands on settled windows; handing focus back to a

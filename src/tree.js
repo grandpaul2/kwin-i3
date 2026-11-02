@@ -246,6 +246,16 @@ var Tree = (function () {
         }
         return false;
     }
+    // con_num_visible_children (con.c:1090-1110): the visible tiling windows under con, a tabbed
+    // or stacked container's hidden tabs not counted; a minimized window is out of the layout (V7).
+    function numVisibleChildren(con) {
+        var n = 0;
+        con.nodes.forEach(function (c) {
+            if (c.win !== null) { if (!c.minimized && !isHidden(c)) n++; }
+            else n += numVisibleChildren(c);
+        });
+        return n;
+    }
     function isFloatingCon(con) { return con.type === "floating"; }   // CT_FLOATING_CON
     // con_is_floating. A workspace's `floating` is its floating_head, a list: never true here.
     function isFloating(con) { return con.floating === true; }
@@ -1597,6 +1607,7 @@ var Tree = (function () {
         Model: Model,
         wsOf: wsOf,
         isHidden: isHidden,
+        numVisibleChildren: numVisibleChildren,
         isFloating: isFloating,
         insideFloating: insideFloating,
         isSticky: isSticky,

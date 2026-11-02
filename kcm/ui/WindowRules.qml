@@ -115,7 +115,7 @@ KCM.SimpleKCM {
             }
             Kirigami.ContextualHelpButton {
                 Layout.rightMargin: Kirigami.Units.largeSpacing
-                toolTipText: i18n("A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, utility windows, splash screens and fixed-size windows float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
+                toolTipText: i18n("A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
             }
         }
     }
@@ -425,7 +425,7 @@ KCM.SimpleKCM {
             }
             QQC2.Label {
                 visible: page.rows.length === 0
-                text: i18n("No rules. Dialogs and fixed-size windows float; the rest tile.")
+                text: i18n("No rules. Dialogs and the other windows that float by themselves float; the rest tile.")
                 color: Kirigami.Theme.disabledTextColor
             }
             QQC2.Label {

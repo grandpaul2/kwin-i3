@@ -95,7 +95,7 @@
         <number>200</number>
        </property>
        <property name="toolTip">
-        <string>i3's gaps outer: added to the gap between windows at the output's edge; below 0 takes from it, down to half that gap.</string>
+        <string>i3's gaps outer: added to the gap between windows at the screen's edge; below 0 takes from it, down to half that gap.</string>
        </property>
       </widget>
      </item>
@@ -272,7 +272,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's default_orientation. auto: side by side, unless the output is taller than wide. For workspaces created after the change.</string>
+        <string>i3's default_orientation. auto: side by side, unless the screen is taller than wide. For workspaces created after the change.</string>
        </property>
        <item>
         <property name="text">
@@ -394,7 +394,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's focus_wrapping. yes: at the edge, to the next output, else wrap around. no: never wrap, but cross to the next output. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
+        <string>i3's focus_wrapping. yes: at the edge, to the next screen, else wrap around. no: never wrap, but cross to the next screen. force: always wrap inside the container. workspace: wrap, never leave the workspace.</string>
        </property>
        <item>
         <property name="text">
@@ -479,7 +479,7 @@
      <item row="15" column="0">
       <widget class="QLabel" name="workspaceOutputsLabel">
        <property name="text">
-        <string>Workspace outputs:</string>
+        <string>Workspace screens:</string>
        </property>
        <property name="buddy">
         <cstring>kcfg_workspaceOutputs</cstring>
@@ -498,7 +498,7 @@
         <string>1=DP-4, 2=DP-6</string>
        </property>
        <property name="toolTip">
-        <string>i3's "workspace N output X": a workspace lives on that output, by its connector name (kscreen-doctor -o lists them). Applies at login, when the output appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary output, then the next free one.</string>
+        <string>i3's "workspace N output X": a workspace lives on that screen, by its connector name (kscreen-doctor -o lists them). Applies at login, when the screen appears, and to a workspace first used after the change. Unlisted workspaces: 1 on the primary screen, then the next free one.</string>
        </property>
       </widget>
      </item>
@@ -658,7 +658,7 @@
         <string>#3daee9</string>
        </property>
        <property name="toolTip">
-        <string>i3's indicator: on a window alone in its split, the side where the next window opens (right, or bottom in a vertical split) in this colour. Empty: the frame's colour.</string>
+        <string>i3's indicator: on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it, the side where the next window opens (right, or bottom in a vertical split) in this colour. Empty: the frame's colour.</string>
        </property>
       </widget>
      </item>
@@ -698,7 +698,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's hide_edge_borders. none: the frame all round. vertical: not the left and right sides of a window at the output's edge (with no gap between windows); horizontal: not the top and bottom; both: neither. smart: no frame on a window alone on its workspace; smart_no_gaps: the same, only without edge gaps. A hidden side leaves the frame's width empty (KWin's tiles).</string>
+        <string>i3's hide_edge_borders. none: the frame all round. vertical: not the left and right sides of a window at the screen's edge (with no gap between windows); horizontal: not the top and bottom; both: neither. smart: no frame on a window alone on its workspace; smart_no_gaps: the same, only without edge gaps. A hidden side leaves the frame's width empty (KWin's tiles).</string>
        </property>
        <item>
         <property name="text">
@@ -809,7 +809,7 @@
         <cstring>plainText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's assign rules, one per line: [criteria] → 5 opens matching windows on workspace 5 (shown or not, without switching an output); [criteria] output DP-6 opens them on that output's visible workspace. The same criteria as the rules above.</string>
+        <string>i3's assign rules, one per line: [criteria] → 5 opens matching windows on workspace 5 (shown or not, without switching a screen); [criteria] output DP-6 opens them on that screen's visible workspace. The same criteria as the rules above.</string>
        </property>
        <property name="minimumSize">
         <size>
@@ -950,7 +950,7 @@
         <cstring>currentText</cstring>
        </property>
        <property name="toolTip">
-        <string>i3's mouse_warping. output: when the focus moves to another output (a key, a workspace switch, an activation), the pointer goes to the focused window's centre, unless it is on that output already. none: the pointer never moves by itself.</string>
+        <string>i3's mouse_warping. output: when the focus moves to another screen (a key, a workspace switch, an activation), the pointer goes to the focused window's centre, unless it is on that screen already. none: the pointer never moves by itself.</string>
        </property>
        <item>
         <property name="text">

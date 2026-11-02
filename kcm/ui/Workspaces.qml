@@ -74,7 +74,7 @@ KCM.SimpleKCM {
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("Others open on the first free screen. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
+            toolTipText: i18n("Others open on the screen that has the focus when they are first shown. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
         }
     }
 
