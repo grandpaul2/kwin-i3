@@ -1291,6 +1291,22 @@ var Tree = (function () {
     }
     M.adopt = function (ws, spec) {
         var self = this, wsLayout = ws.wsLayout;
+        // A group at a workspace's top (a tile-read of a workspace that is one group; a tree saved
+        // in that shape before) goes into a container under it, as con_set_layout makes one for a
+        // workspace with windows (con.c:2024-2032): the workspace itself is never tabbed or
+        // stacked with windows directly in it, so focus parent can reach the group and a window
+        // can open beside it. Unless its workspace_layout is that layout, where i3's
+        // workspace_attach_to keeps it so.
+        if (spec.kids && isTabbing(spec.layout) && spec.wsLayout !== spec.layout) {
+            var inner = {};
+            for (var k in spec) if (k !== "wsLayout") inner[k] = spec[k];
+            inner.percent = 1;
+            var split = isTabbing(ws.layout) ? (ws.lastSplit || "h") : ws.layout;
+            spec = { layout: split, lastSplit: split, kids: [inner], focus: [0], wsLayout: spec.wsLayout };
+        }
+        // What KWin set on the windows already (fullscreen, minimized) outlives the rebuild.
+        var kept = {};
+        this.leaves(ws).forEach(function (l) { kept[l.win] = { fullscreen: l.fullscreen, minimized: l.minimized }; });
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
         ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
         function build(s, parent) { return adoptBuild(self, s, parent); }
@@ -1305,6 +1321,11 @@ var Tree = (function () {
         }
         fixPercent(ws);
         ws.wsLayout = spec.wsLayout || wsLayout;
+        this.leaves(ws).forEach(function (l) {
+            if (!kept[l.win]) return;
+            l.fullscreen = kept[l.win].fullscreen;
+            l.minimized = kept[l.win].minimized;
+        });
     };
 
     // A split or a group floated whole, from its snapshot (a reload, as i3's restart keeps it): a

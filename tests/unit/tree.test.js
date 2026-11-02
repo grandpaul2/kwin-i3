@@ -594,6 +594,47 @@ test("adopt: rebuilds the tree, shares and all, and leaves floating windows alon
     assert.ok(d(m).includes("d*"), "a usable tree: new windows open into it");
 });
 
+test("adopt: a group at a workspace's top comes back inside a container (con_set_layout, con.c:2024)", () => {
+    for (const layout of ["tabbed", "stacked"]) {
+        const m = model();
+        m.adopt(m.ws(1), { layout, kids: [{ win: "a", percent: 0 }, { win: "b", percent: 0 }] });
+        m.focusWin("b");
+        const L = layout === "tabbed" ? "T" : "S";
+        assert.strictEqual(d(m), `H[${L}[a b*]]`, `a lone ${layout} group, read off the tiles`);
+        assert.strictEqual(m.focusParent().layout, layout, "focus parent reaches the group");
+        m.open("c", m.ws(1));
+        assert.strictEqual(d(m), `H[${L}[a b]* c]`, "and a window opens beside it");
+    }
+});
+
+test("adopt: a tree saved with a group as the workspace's own layout is repaired", () => {
+    const m = model();
+    m.adopt(m.ws(1), { layout: "tabbed", wsLayout: "default", lastSplit: "h", focus: [1, 0],
+                       kids: [{ win: "a", percent: 0.5 }, { win: "b", percent: 0.5 }] });
+    assert.strictEqual(d(m), "H[T[a b]]");
+});
+
+test("adopt: a workspace_layout tabbed workspace round-trips as it is (workspace_attach_to)", () => {
+    const m = model();
+    m.setLayout(m.ws(1), "tabbed");
+    open(m, 1, "a", "b");
+    const before = d(m), snap = m.snapshot(m.ws(1));
+    const n = model();
+    n.adopt(n.ws(1), JSON.parse(JSON.stringify(snap)));
+    n.focusWin("b");
+    assert.strictEqual(d(n), before);
+});
+
+test("adopt: fullscreen and minimized set before the rebuild outlive it", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.setFullscreen("b", true);
+    m.setMinimized("a", true);
+    m.adopt(m.ws(1), JSON.parse(JSON.stringify(m.snapshot(m.ws(1)))));
+    assert.strictEqual(leaf(m, "b").fullscreen, true);
+    assert.strictEqual(leaf(m, "a").minimized, true);
+});
+
 test("adopt: a single window fills the workspace", () => {
     const m = model();
     m.adopt(m.ws(1), { win: "a", percent: 1 });

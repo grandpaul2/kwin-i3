@@ -96,6 +96,10 @@ Hold::Hold()
     // itself: only a --notify write reaches one (effecthandler.cpp). So this hears it directly.
     connect(workspace(), &Workspace::configChanged, this, &Hold::loadConfig);
     loadConfig();
+    // A new instance holds nothing kwin-i3 told the last one (the saved trees, the floating set,
+    // the bars): a reconfigure makes kwin-i3 ask Stats and tell it all again (kwin.js checkFrame),
+    // however this one was loaded (an install, KWin's own reload). The helper asks one too.
+    QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
 
     m_deadline.setSingleShot(true);
     connect(&m_deadline, &QTimer::timeout, this, [this] { release(true); });

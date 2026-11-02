@@ -1479,6 +1479,22 @@ var Tree = (function () {
     }
     M.adopt = function (ws, spec) {
         var self = this, wsLayout = ws.wsLayout;
+        // A group at a workspace's top (a tile-read of a workspace that is one group; a tree saved
+        // in that shape before) goes into a container under it, as con_set_layout makes one for a
+        // workspace with windows (con.c:2024-2032): the workspace itself is never tabbed or
+        // stacked with windows directly in it, so focus parent can reach the group and a window
+        // can open beside it. Unless its workspace_layout is that layout, where i3's
+        // workspace_attach_to keeps it so.
+        if (spec.kids && isTabbing(spec.layout) && spec.wsLayout !== spec.layout) {
+            var inner = {};
+            for (var k in spec) if (k !== "wsLayout") inner[k] = spec[k];
+            inner.percent = 1;
+            var split = isTabbing(ws.layout) ? (ws.lastSplit || "h") : ws.layout;
+            spec = { layout: split, lastSplit: split, kids: [inner], focus: [0], wsLayout: spec.wsLayout };
+        }
+        // What KWin set on the windows already (fullscreen, minimized) outlives the rebuild.
+        var kept = {};
+        this.leaves(ws).forEach(function (l) { kept[l.win] = { fullscreen: l.fullscreen, minimized: l.minimized }; });
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
         ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
         function build(s, parent) { return adoptBuild(self, s, parent); }
@@ -1493,6 +1509,11 @@ var Tree = (function () {
         }
         fixPercent(ws);
         ws.wsLayout = spec.wsLayout || wsLayout;
+        this.leaves(ws).forEach(function (l) {
+            if (!kept[l.win]) return;
+            l.fullscreen = kept[l.win].fullscreen;
+            l.minimized = kept[l.win].minimized;
+        });
     };
 
     // A split or a group floated whole, from its snapshot (a reload, as i3's restart keeps it): a
@@ -3676,7 +3697,7 @@ var KI3 = (function () {
     function adoptMemos(m) {
         var done = {}, present = {};
         if (!m || !m.memo) return done;
-        workspace.windowList().forEach(function (w) { if (!w.deleted) present[id(w)] = true; });
+        workspace.windowList().forEach(function (w) { if (!w.deleted && w.desktops.length === 1) present[id(w)] = w.desktops[0]; });
         Object.keys(model.workspaces).forEach(function (n) {
             var ws = model.workspaces[n], json = m.memo[deskOf(ws.num).id];
             if (!json) return;
@@ -3685,7 +3706,8 @@ var KI3 = (function () {
             // Its floated containers whose windows are all still there, ahead of the floating
             // windows' own adoption (adoptRest), which then finds them in place.
             (memo.floated || []).forEach(function (f) {
-                var all = model.specWindows(f.spec).every(function (k) { return present[k]; });
+                // Each still there, and still on this workspace's desktop (as specOf reads tiles).
+                var all = model.specWindows(f.spec).every(function (k) { return present[k] === deskOf(ws.num); });
                 if (!all || !f.rect || !f.rect.out) return;
                 var fc = model.adoptFloated(ws, f.spec);
                 if (fc) fc.rect = f.rect;
@@ -5977,6 +5999,7 @@ var KI3 = (function () {
                     wins[leaf.win] = w;
                     expected[leaf.win] = w.tile;
                     if (w.fullScreen) model.setFullscreen(leaf.win, true);
+                    if (w.minimized) model.setMinimized(leaf.win, true);
                     connectWindow(w);
                 });
                 // The focus order from the stacking, bottom first, before any pass: a group's tab
@@ -6267,7 +6290,12 @@ var KI3 = (function () {
                     // told the ones the effect still draws.
                     var bars = {};
                     (m.bars || []).forEach(function (k) { bars[k] = true; if (!barTold[k]) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", k, 0, 0, 0, 0, false, 0, "", ""); });
-                    Object.keys(barTold).forEach(function (k) { if (!bars[k]) { delete barTold[k]; kick(); } });
+                    Object.keys(barTold).forEach(function (k) { if (!bars[k]) { delete barTold[k]; delete spanTold[k]; kick(); } });
+                    // The saved trees likewise (SetMemo): a reloaded effect has none, and a tree is
+                    // told only when it changes, so a workspace left alone would come back at the
+                    // next load from the tiles alone (a plugin install, a capture).
+                    var memo = m.memo || {};
+                    if (Object.keys(memoTold).some(function (k) { return memoTold[k] && memo[k] !== memoTold[k]; })) { memoTold = {}; lost = true; }
                     if (lost) { told = {}; scheduleAll(); }
                 }
             }
@@ -6284,7 +6312,7 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
-        told = {}; ringTold = {}; barTold = {}; memoTold = {};       // a new effect knows nothing: the next pass tells it again
+        told = {}; ringTold = {}; barTold = {}; spanTold = {}; memoTold = {};   // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled
