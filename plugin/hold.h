@@ -81,6 +81,10 @@ public Q_SLOTS:
     // kwin-i3 says which windows are in a split or a group floated whole: in no tile, they are
     // framed as tiled ones all the same (the tiling look, behaviour.md L10a).
     void SetFloated(const QString &id, bool on);
+    // A bar (SetBar's key) of a split or a group floated whole: drawn as wide as its window is
+    // now plus `extra`, on every frame, so it follows the helper's resize, which moves the windows
+    // with no pass of kwin-i3's. Off: SetBar's width, as told.
+    void SetBarSpan(const QString &id, bool on, int extra);
     // kwin-i3 says how a window's ring is drawn (i3's x.c): its
     // colour class, "focused" or "unfocused" ("" forgets the window: KWin's
     // active window colours it, as before the first call); the indicator side, "right" or
@@ -253,7 +257,10 @@ private:
         QSize size;                                         // the texture's, device pixels
         double scale = 0;
         int width = 0;                                      // logical, drawn for
+        bool span = false;                                  // SetBarSpan: the window's width + extra
+        int extra = 0;
     };
+    QHash<QString, int> m_barSpan;                          // SetBarSpan, by bar key, for a bar told later
     std::map<QString, TabBar> m_bars;
     static QString barWindow(const QString &key);                // the window's id in a bar key
     bool hasBar(KWin::EffectWindow *w) const;

@@ -100,4 +100,29 @@ key "Floating Toggle"
 check "V[d e] floated after the reload"     wait_tree 1 "H[a] ~V[d e]*"
 check "  their own sizes: 400 px each, side by side summed" poll eval 'read -r _ _ w _ < <(xywh d); (( w >= 780 ))'
 check "  and 300 tall at least"             poll eval 'read -r _ y1 _ _ < <(xywh d); read -r _ y2 _ h2 < <(xywh e); (( y2 + h2 - y1 >= 290 ))'
+
+# A tabbed group floated whole: its bar on the shown window's top edge, ring and all, from the
+# float on (a capture: drawn mid-window until the next pass, the frame not landed when told), and
+# after a Meta+right resize, as wide as the window (a capture: left behind at the old width, the
+# container creeping a few pixels each time).
+key "Floating Toggle"
+check "tiled again"                         wait_tree 1 "H[a V[d e]*]"
+for t in a e; do kjs "workspace.windowList().forEach(function (w) { if (w.caption === '$t') workspace.activeWindow = w; })" >/dev/null; sleep 0.3; done
+key "Layout Tabbed"
+check "d e tabbed"                          wait_tree 1 "H[a T[d e*]]"
+key "Focus Parent"
+key "Floating Toggle"
+check "T[d e] floated whole"                wait_tree 1 "H[a] ~T[d e]*"
+barrect() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"barRects" as [0-9]* "[^"]*"' | cut -d'"' -f4 | tr ',x' '  '; }
+onbar() {   # the bar 24 px tall, right above e's ring, its width e's and both rings
+    local x y w h ex ey ew eh
+    read -r x y w h < <(barrect); read -r ex ey ew eh < <(xywh e)
+    [[ -n $x && $h == 24 && $((y + 25)) == "$ey" && $((x + 1)) == "$ex" && $w == $((ew + 2)) ]]
+}
+check "  its bar on e's top edge"           poll onbar || echo "    bar $(barrect) / e $(xywh e)"
+read -r ex ey ew eh < <(xywh e)
+drag Meta right $((ex + ew - 5)) $((ey + eh - 5)) $((ex + ew - 85)) $((ey + eh - 55))
+check "Meta+right: e 80 px narrower"        poll eval 'read -r _ _ w _ < <(xywh e); (( w == ew - 80 ))'
+check "  its bar with it"                   poll onbar || echo "    bar $(barrect) / e $(xywh e)"
+check "  the top edge where it was"         poll eval 'read -r _ y _ _ < <(xywh e); (( y == ey ))'
 finish

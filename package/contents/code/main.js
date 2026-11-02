@@ -2213,6 +2213,8 @@ var KI3 = (function () {
     var wins = {};          // window id -> KWin window, for every window we manage
     var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
     var floatedTold = {};   // window id -> true: told to the effect and the helper as floated (SetFloated)
+    var floatedLaid = {};   // window id -> the frame layFloated last gave it (its target, not yet its frame)
+    var spanTold = {};      // bar key -> true: told to the effect as spanning its window (SetBarSpan)
     var floatedBars = {};   // workspace number -> its floated groups' bars as last placed ({ con, rect })
     var helperLoaded = null;   // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
@@ -3365,6 +3367,7 @@ var KI3 = (function () {
             var f = tiledRing() ? Settings.get("frameWidth") : 0;
             var wr = { x: r.x + f, y: r.y + f, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - 2 * f) };
             if (!exactRect(w.frameGeometry, wr)) w.frameGeometry = wr;
+            floatedLaid[c.win] = wr;
             laid.push(wr);
             return;
         }
@@ -3428,9 +3431,11 @@ var KI3 = (function () {
                     .map(function (w) { return w.frameGeometry; }));
                 var was = fc.laid, r = fc.rect;
                 if (!now || exactRect(now, was)) return;
-                var sx = now.width / was.width, sy = now.height / was.height;
-                r.x = Math.round(now.x + (r.x - was.x) * sx); r.y = Math.round(now.y + (r.y - was.y) * sy);
-                r.width = Math.max(1, Math.round(r.width * sx)); r.height = Math.max(1, Math.round(r.height * sy));
+                // The bar's strip and the rings are fixed pixels between the rect and its windows:
+                // kept, only the windows' part following them.
+                r.x = Math.round(now.x - (was.x - r.x)); r.y = Math.round(now.y - (was.y - r.y));
+                r.width = Math.max(1, Math.round(now.width + (r.width - was.width)));
+                r.height = Math.max(1, Math.round(now.height + (r.height - was.height)));
                 var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r);
                 if (s) r.out = outGeometry(s);
                 log("FLOAT a container moved by the mouse: " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
@@ -3880,7 +3885,7 @@ var KI3 = (function () {
     }
     function tellBars() {
         if (!effectSeen) return;
-        var want = {}, helper = [], perWindow = {};
+        var want = {}, helper = [], perWindow = {}, span = {};
         barGroups = {};
         shownWorkspaces().forEach(function (v) {
             (barsOf[v.ws.num] || []).concat(floatedBars[v.ws.num] || []).forEach(function (b) {
@@ -3894,7 +3899,8 @@ var KI3 = (function () {
                 // floated group's is the strip layFloated left above it, drawn with the window.
                 var t = w && !b.rect && expected[leaf.win];
                 if (!w || (!b.rect && (!t || t.windows.indexOf(w) < 0))) return;
-                var a = b.rect ? w.frameGeometry : windowRect(t), r = b.rect || windowRect(b.tile), inside = false;
+                // A floated window's target, as a tiled one's tile: its frame may not have landed.
+                var a = b.rect ? floatedLaid[leaf.win] || w.frameGeometry : windowRect(t), r = b.rect || windowRect(b.tile), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
                 // Groups nested in one another show the same window, each with its own bar (i3
                 // draws every tabbed container's decorations): the first by the window's id, the
@@ -3903,6 +3909,9 @@ var KI3 = (function () {
                 perWindow[key] = n + 1;
                 if (n > 0) key += "#" + n;
                 barGroups[key] = con;
+                // A floated group's bar follows its window's width on every frame, as i3 draws the
+                // decorations again at each step of a floating resize (the helper's, with no pass).
+                span[key] = b.rect ? Math.round(r.width - a.width) : null;
                 helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
                              con.layout === "stacked" ? 1 : 0, kids.length].join(" "));
                 want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
@@ -3914,6 +3923,12 @@ var KI3 = (function () {
             if (want[key]) return;
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, 0, 0, 0, 0, false, 0, "", "");
             delete barTold[key];
+        });
+        Object.keys(want).concat(Object.keys(spanTold)).forEach(function (key) {
+            var on = span[key] !== undefined && span[key] !== null;
+            if (on === !!spanTold[key] && (!on || spanTold[key] === span[key])) return;
+            if (on) spanTold[key] = span[key]; else delete spanTold[key];
+            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBarSpan", key, on, on ? span[key] : 0);
         });
         Object.keys(want).forEach(function (key) {
             var b = want[key], spec = JSON.stringify(b);

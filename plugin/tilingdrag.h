@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QPointF>
+#include <QElapsedTimer>
 #include <QHash>
 #include <QList>
 #include <QRectF>
@@ -207,6 +208,8 @@ private:
     QList<QRectF> m_groupStart;       // each window's frame at the press
     QRectF m_groupUnion;              // all of them together at the press
     QPointF m_groupPress;
+    QElapsedTimer m_groupCursorTold;  // the effect's cursor, asked again while the drag lasts
+    void tellGroupCursor(bool on);
     KConfigWatcher::Ptr m_watcher;
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty

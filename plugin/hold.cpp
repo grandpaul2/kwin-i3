@@ -958,6 +958,8 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     bar.active = active;
     bar.cls = cls == QLatin1String("focused") ? 0 : 1;
     bar.titles = titles.split(QChar(0x1f));
+    bar.span = m_barSpan.contains(id);
+    bar.extra = m_barSpan.value(id);
     bar.width = -1;                          // drawn again at the next paint, where GL is current
     repaintBar(w, id);
 }
@@ -985,7 +987,26 @@ void Hold::ClearBars()
 
 RectF Hold::barRect(const TabBar &bar, const RectF &frame) const
 {
-    return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.w, bar.height);
+    return RectF(frame.x() + bar.dx, frame.y() + bar.dy, bar.span ? std::max(1.0, frame.width() + bar.extra) : bar.w, bar.height);
+}
+
+void Hold::SetBarSpan(const QString &id, bool on, int extra)
+{
+    if (on) {
+        m_barSpan.insert(id, extra);
+    } else {
+        m_barSpan.remove(id);
+    }
+    const auto it = m_bars.find(id);
+    if (it == m_bars.end()) {
+        return;
+    }
+    it->second.span = on;
+    it->second.extra = extra;
+    it->second.width = -1;                  // drawn again at the next paint
+    if (EffectWindow *w = windowById(barWindow(id))) {
+        repaintBar(w, id);
+    }
 }
 
 QString Hold::barWindow(const QString &key)
@@ -1161,8 +1182,11 @@ void Hold::SetDragCursor(bool on, int shape)
         effects->stopMouseInterception(this);
         return;
     }
-    // 1: left-right and 2: up-down, the tiling resize's (i3's XCURSOR_CURSOR_RESIZE_*); else the move's.
-    const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor : shape == 2 ? Qt::SizeVerCursor : Qt::SizeAllCursor;
+    // 1: left-right and 2: up-down, the tiling resize's (i3's XCURSOR_CURSOR_RESIZE_*); 3: top-left
+    // to bottom-right and 4: top-right to bottom-left, a floated container's resize from a corner
+    // (floating.c:719-722); else the move's.
+    const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor : shape == 2 ? Qt::SizeVerCursor
+        : shape == 3 ? Qt::SizeFDiagCursor : shape == 4 ? Qt::SizeBDiagCursor : Qt::SizeAllCursor;
     // A second startMouseInterception while grabbing is ignored (the effect is already grabbing):
     // a new shape mid-grab goes through defineCursor.
     if (!m_dragCursor.isActive()) {
@@ -1549,11 +1573,17 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
-    QStringList bars;
+    QStringList bars, barRects;
     for (const auto &[id, bar] : m_bars) {
         bars << id;
+        // Where it is drawn now, above its window: "x,y wxh" (logical), for the tests.
+        if (EffectWindow *w = windowById(barWindow(id))) {
+            const RectF r = barRect(bar, w->frameGeometry());
+            barRects << QStringLiteral("%1,%2 %3x%4").arg(std::lround(r.x())).arg(std::lround(r.y())).arg(std::lround(r.width())).arg(std::lround(r.height()));
+        }
     }
     m[QStringLiteral("bars")] = bars;
+    m[QStringLiteral("barRects")] = barRects;
     QVariantMap memo;
     for (auto it = m_memo.cbegin(); it != m_memo.cend(); ++it) {
         memo.insert(it.key(), it.value());

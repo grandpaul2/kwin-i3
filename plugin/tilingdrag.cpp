@@ -337,6 +337,7 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
     m_groupLeft = event->position.x() < all.center().x();
     m_groupTop = event->position.y() < all.center().y();
     m_groupActive = true;
+    tellGroupCursor(true);
     m_taken |= event->button;
     m_button = event->button;
     if (!m_keysInstalled && input()) {
@@ -348,8 +349,27 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
 
 // Each motion places every window of the container: moved by the pointer's travel, or scaled
 // into the resized whole (kwin-i3 lays the tree out exactly at the release).
+// i3's cursor for the drag (floating.c:606, :719-722): the move's, or the diagonal of the corner a
+// resize moves, kwini3hold's (SetDragCursor), which lets it go 500 ms after the last ask.
+void TilingDrag::tellGroupCursor(bool on)
+{
+    if (on && m_groupCursorTold.isValid() && m_groupCursorTold.elapsed() < 200) {
+        return;
+    }
+    m_groupCursorTold.restart();
+    const int shape = !m_groupResize ? 0 : m_groupLeft == m_groupTop ? 3 : 4;
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3hold"),
+                                              QStringLiteral("net.local.kwini3hold"), QStringLiteral("SetDragCursor"));
+    msg << on << (on ? shape : 0);
+    QDBusConnection::sessionBus().asyncCall(msg);
+    if (!on) {
+        m_groupCursorTold.invalidate();
+    }
+}
+
 void TilingDrag::groupMotion(const QPointF &pos)
 {
+    tellGroupCursor(true);
     const QPointF d = pos - m_groupPress;
     QRectF to = m_groupUnion;
     if (!m_groupResize) {
@@ -389,6 +409,7 @@ void TilingDrag::endGroup(bool revert)
         return;
     }
     m_groupActive = false;
+    tellGroupCursor(false);
     if (revert) {
         for (int i = 0; i < m_group.size(); ++i) {
             if (m_group[i] && !m_group[i]->isDeleted()) {
