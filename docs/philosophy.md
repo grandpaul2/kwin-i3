@@ -103,6 +103,9 @@ against i3 and the code every so often, to catch what slipped.
 
 ## How it presents itself
 
+- **It says what to pick.** Every choice on its pages marks the one kwin-i3 recommends, on the
+  control itself, so neither a newcomer nor an i3 user has to read to know what they want; the
+  user still makes every change (`docs/style-settings-page.md` §0).
 - **kwin-i3 is the window manager**, and says so. Its workspaces, outputs and keyboard focus
   apply to every window in the tree. No soft lies ("we won't touch your windows"): a user who
   meets something kwin-i3 does needs a model for why, and the truth is the only one that holds.

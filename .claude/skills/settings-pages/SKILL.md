@@ -93,5 +93,9 @@ the choice in the project's style guide.
 ## Project style guides
 
 A project keeps its own decisions (its glossary, its section order, its special cases) in its own
-style guide; this skill is the method and the rules beneath it. Read both. Where a project rule
-contradicts this skill, raise it rather than silently following either.
+style guide; this skill is the method and the rules beneath it. **Read the project's guide first;
+its rules win over this skill's.** Where they contradict, follow the project and note the
+conflict. Proven failures of this skill in use: it reviewed only what was on screen (a hidden
+control passed every review), and it never made the page tell the reader what to pick. A
+project that recommends choices marks them on the control itself (MS-UITXT "(recommended)";
+`wording.md` 21), loudly, as the reader's first need.

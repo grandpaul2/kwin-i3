@@ -12,6 +12,23 @@ method and the rules beneath this guide are the `settings-pages` skill**
 tests): read it before writing or changing any text on the page. This guide holds only kwin-i3's
 own decisions on top of it. When both say nothing, do what Plasma's own pages do.
 
+## 0. The first rule: say what to pick
+
+**Every choice the pages offer shows, loudly and where the choice is made, the one kwin-i3
+recommends; the user is the one who makes the change.** A newcomer doesn't know what to pick
+and can't parse the wording; an i3 user wants i3's defaults without reading. Both want to be told
+"this is what you want". So:
+
+- **The recommended choice is marked on the control itself**: a column titled "kwin-i3
+  (recommended)", or "(recommended)" after an item in a list. Never only in help, never only in
+  the docs.
+- **The user makes every change.** Nothing changes until they pick it and press Apply; kwin-i3
+  recommends, it never sets on its own (`philosophy.md`, "Plasma's own settings are the user's").
+- **The recommended choice is i3's default** where i3 has one (`philosophy.md`, "Defaults"),
+  else kwin-i3's own; Defaults picks every recommended choice.
+- **This rule wins** over every other rule in this guide and in the `settings-pages` skill (the
+  "no parenthesis in a control's text" tone rule included).
+
 ## 1. Layout
 
 - **One `Kirigami.FormLayout`** per page: a centred column, labels right-aligned in one shared
