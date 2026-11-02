@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-01** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main's script and plugins as loaded at 236c980.
+main's script and plugins as loaded at 8404403.
 
 ## Stage
 
@@ -78,8 +78,7 @@ Built (9fee78f, cfa3d30, 66b4c66 and the commit after): the model in i3's shape 
 thing a floating container, the flag on its child); Floating Toggle on a container floats it
 whole and back (T16), laid out in its rect in the tiling look (L10a), moved and resized whole by
 the helper (F1a), its rings resizing inside it or whole (F1a), restored by a reload (P3); down to
-one window it is KWin's; scenario 88. Not live yet: the script and both plugins need the go to
-install and reload. Left, each from i3's source: (b) Meta+drag on a floated
+one window it is KWin's; scenario 88. Left, each from i3's source: (b) Meta+drag on a floated
 group's bar moving it whole (`click.c` step 5; today the tiling drag refuses it); (c) the hold
 for its resize, a slow client tearing the pair as the spike measured; (d) a sticky window inside
 (`output_push_sticky_windows` moves the whole container, its other windows on one desktop) and a
