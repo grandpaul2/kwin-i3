@@ -1156,7 +1156,13 @@ var KI3 = (function () {
         }
     }
     // A container with a window placed: one not minimized, not fullscreen out of the tiles.
-    function shows(k) { return k.win !== null ? !!visibleLeaf(k) : k.nodes.some(shows); }
+    // A fullscreen window keeps its share: i3 renders the fullscreen con alone and returns
+    // (render.c:127-144), its siblings keeping their rects.
+    function shows(k) {
+        if (k.win === null) return k.nodes.some(shows);
+        var w = wins[k.win];
+        return !!w && !w.minimized;
+    }
     // render_con for a floating container's child: a split shares the rect by its children's
     // percent; a tabbed or stacked group gives each child the rect below its bar (BAR_ROW per
     // row; the bar only for more than one child, as a tiled group), the ones behind under the
@@ -1164,7 +1170,7 @@ var KI3 = (function () {
     function layFloated(c, r, bars, laid) {
         if (c.win !== null) {
             var w = wins[c.win];
-            if (!w || w.fullScreen || w.minimized) return;
+            if (!w || w.fullScreen || w.minimized) return;     // a fullscreen one: KWin's frame, its share kept
             // The ring inside the window's share, as i3's border is inside its con's rect.
             var f = tiledRing() ? Settings.get("frameWidth") : 0;
             var wr = { x: r.x + f, y: r.y + f, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - 2 * f) };

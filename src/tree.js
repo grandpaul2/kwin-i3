@@ -385,11 +385,13 @@ var Tree = (function () {
         con.floating = true;
     }
 
-    // i3's con->sticky (cmd_sticky): a floating window visible on every workspace of its output.
-    // Only a floating window carries it here: a sticky window made tiling is taken off all
-    // desktops first (C, KWin's tiles belong to one desktop).
+    // i3's con->sticky (cmd_sticky), set on the window's con: its floating container is then
+    // visible on every workspace of its output (con_is_sticky looks down from it), a split or a
+    // group floated whole included. Only a window in a floating container carries it here: a
+    // sticky window made tiling is taken off all desktops first (C, KWin's tiles belong to one
+    // desktop).
     M.setSticky = function (con, on) {
-        if (con && isFloating(con)) con.sticky = !!on;
+        if (con && con.win !== null && insideFloating(con)) con.sticky = !!on;
         return con;
     };
 

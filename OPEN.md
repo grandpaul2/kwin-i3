@@ -73,18 +73,6 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
-Built and live (9fee78f to 6555878): the model in i3's shape (every floating thing a floating
-container, the flag on its child); Floating Toggle on a container floats it whole and back (T16),
-sized from its windows all the way down (a split child counting its own windows, not i3's 0, as
-G8), laid out in its rect in the tiling look (L10a), moved and resized whole by the helper with
-i3's cursors, its rings resizing inside it or whole, a floated group's bar kept on its top and
-pressed as i3's decoration (F1a), a press inside focusing the window pressed (B3), its resize
-held as a tiled layout's (§7 "The hold"), restored by a reload (P3); down to one window it is
-KWin's; scenarios 88 and 89. Left, from i3's source: (d) a sticky window inside
-(`output_push_sticky_windows` moves the whole container, its other windows on one desktop) and a
-fullscreen one (`click.c:281`; V4, V6b), checked against i3. Next: (d).
-
 **81. Outputs in the model** (`src/tree.js` header, `behaviour.md` §2). i3's tree has its outputs
 (`CT_OUTPUT` between root and workspaces, `include/data.h`); the model has none, the adapter
 answering `env.outputNeighbour`, and no reason for it is written in `plan.md`. Next: port i3's
