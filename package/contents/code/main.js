@@ -908,6 +908,13 @@ var Tree = (function () {
         var same = parentWithOrientation(con, o);
         do {
             if (!same) {
+                // Inside a floating container, at its edge: out of it, onto the workspace
+                // (move.c:298, attach_to_workspace).
+                if (insideFloating(con)) {
+                    this.attachToWorkspace(con, wsOf(con), dir);
+                    this.flatten();
+                    return;
+                }
                 forceOrientation(wsOf(con), o);
                 same = parentWithOrientation(con, o);
             }
@@ -1198,10 +1205,11 @@ var Tree = (function () {
 
     // ---- floating (floating.c) -------------------------------------------------------------
 
-    // floating_enable (floating.c:233): con leaves the tiling tree for a new floating container,
-    // which takes its branch's place in the workspace focus stack. Returns con.
+    // floating_enable (floating.c:233): con, a window or a split, leaves the tree it is in (a
+    // tiling one, or a floating container's) for a new floating container, which takes its
+    // branch's place in the workspace focus stack. Returns con.
     M.floatingEnable = function (con) {
-        if (!con || con.type !== "con" || con.win === null || isFloating(con)) return null;
+        if (!con || con.type !== "con" || isFloating(con)) return null;
         var ws = wsOf(con), parent = con.parent, wasFocused = this.focused === con;
         var placeholder = null, before = true;
         if (!wasFocused) {
@@ -4888,7 +4896,9 @@ var KI3 = (function () {
         "Layout Tabbed": function (c) { if (c) model.setLayout(c, "tabbed"); },
         "Focus Parent": function () { model.focusParent(); },
         "Floating Toggle": function (c) {
-            if (!c) return;
+            // A container floated whole needs its layout here and the helper's mouse (OPEN.md
+            // item 73, steps 3-4): until they land, on a container it does nothing, as before.
+            if (!c || c.win === null) return;
             var w = wins[c.win];
             // A sticky window made tiling (§3 X4, C of the stage's spec): off all desktops first,
             // onto its workspace's; KWin's tiles belong to one desktop (≠ i3, which keeps the flag).

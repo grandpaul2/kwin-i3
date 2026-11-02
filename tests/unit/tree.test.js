@@ -365,6 +365,105 @@ test("focus mode_toggle: between the tiling and the floating focus", () => {
     assert.strictEqual(m.focusModeToggle().win, "f");
 });
 
+// ---- a container floated whole (floating_enable on a split, floating.c:233) -----------------
+
+// H[a] with V[b c] floated whole, c focused.
+function floatedSplit() {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");                              // H[a V[b c*]]
+    const v = m.focusParent();
+    m.toggleFloating(v);
+    m.focusWin("c");
+    return { m, v };
+}
+
+test("float a split whole: one floating container holding it, the focus on the split", () => {
+    const m = model();
+    open(m, 1, "a", "b");
+    m.split(leaf(m, "b"), "v");
+    open(m, 1, "c");
+    const v = m.focusParent();
+    assert.strictEqual(m.toggleFloating(v), v);
+    assert.strictEqual(d(m), "H[a] ~V[b c]*", "floating_enable: the split, its children inside");
+    assert.strictEqual(m.ws(1).floating.length, 1);
+    assert.strictEqual(Tree.isFloating(v), true, "the flag on the container's child (floating.c:357)");
+    assert.strictEqual(Tree.isFloating(leaf(m, "b")), false, "not on the windows inside");
+    assert.strictEqual(Tree.insideFloating(leaf(m, "b")), v.parent, "con_inside_floating from a window inside");
+});
+
+test("float a split whole, and back: after the tiling focus (floating_disable)", () => {
+    const { m, v } = floatedSplit();
+    m.focusWin("a");
+    m.focusWin("c");
+    assert.strictEqual(m.focusParent(), v);
+    m.toggleFloating(v);
+    assert.strictEqual(d(m), "H[a V[b c]*]");
+    assert.strictEqual(m.ws(1).floating.length, 0, "its floating container closed");
+});
+
+test("floating toggle on a window inside a floated split floats that window alone", () => {
+    const { m } = floatedSplit();
+    m.focusWin("b");
+    m.toggleFloating(leaf(m, "b"));
+    assert.strictEqual(d(m), "H[a] ~V[c] ~b*", "the split stays a split around c (con_on_remove_child closes only empty ones)");
+});
+
+test("a floated split's last window closing closes its floating container", () => {
+    const { m } = floatedSplit();
+    m.close("b");
+    assert.strictEqual(d(m), "H[a] ~V[c*]");
+    m.close("c");
+    assert.strictEqual(d(m), "H[a*]");
+    assert.strictEqual(m.ws(1).floating.length, 0);
+});
+
+test("focus parent goes past the floating container; focus child steps through it (level_up, level_down)", () => {
+    const { m, v } = floatedSplit();
+    assert.strictEqual(m.focusParent(), v);
+    assert.strictEqual(m.focusParent(), m.ws(1), "tree.c:392: to the workspace, not the floating container");
+    assert.strictEqual(m.focusChild(), v, "tree.c:418: the floating container's child");
+    assert.strictEqual(m.focusChild().win, "c");
+});
+
+test("move inside a floated split; at its edge, out onto the workspace (move.c:298)", () => {
+    const { m } = floatedSplit();
+    m.move(leaf(m, "c"), UP);
+    assert.strictEqual(d(m), "H[a] ~V[c* b]");
+    m.move(leaf(m, "c"), UP);
+    assert.strictEqual(d(m), "H[a c*] ~V[b]", "attach_to_workspace: up puts it last");
+    const n = floatedSplit().m;
+    n.move(leaf(n, "c"), RIGHT);
+    assert.strictEqual(d(n), "H[c* a] ~V[b]", "no horizontal parent inside: out, right puts it first");
+});
+
+test("inside a floated split: no tiling resize of the container, a border between its windows resizes", () => {
+    const { m } = floatedSplit();
+    assert.strictEqual(m.resize(leaf(m, "c"), "height", 0.1), false, "cmd_resize_floating's, not the tree's");
+    const p = m.resizeParticipants(leaf(m, "b"), DOWN);
+    assert.deepStrictEqual([p.first.win, p.second.win], ["b", "c"]);
+    assert.strictEqual(m.resizeParticipants(leaf(m, "b"), RIGHT), null, "nothing beyond the floating container");
+});
+
+test("focus inside a floated split, then round the floating containers (get_tree_next)", () => {
+    const { m } = floatedSplit();
+    m.openFloating("f", m.ws(1));
+    m.focusWin("b");
+    assert.strictEqual(m.focusDir(DOWN).win, "c", "within the split");
+    assert.strictEqual(m.focusDir(RIGHT).win, "f", "at the floating container: the next one");
+    assert.strictEqual(m.focusDir(LEFT).win, "c", "and back into the split, at its focus");
+});
+
+test("send a window inside a floated split to another workspace: it tiles there (con_move_to_workspace)", () => {
+    const { m } = floatedSplit();
+    open(m, 2, "x");
+    m.focusWin("c");
+    m.moveToWorkspace(leaf(m, "c"), m.ws(2));
+    assert.strictEqual(d(m, 2), "H[x c]");
+    assert.strictEqual(d(m), "H[a] ~V[b*]");
+});
+
 // ---- cases found by the mutation battery (2026-10-21) ---------------------------------------
 
 test("toggle split: no redundant one-child containers pile up (i3 #3001)", () => {

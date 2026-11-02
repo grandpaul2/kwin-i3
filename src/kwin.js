@@ -2712,7 +2712,9 @@ var KI3 = (function () {
         "Layout Tabbed": function (c) { if (c) model.setLayout(c, "tabbed"); },
         "Focus Parent": function () { model.focusParent(); },
         "Floating Toggle": function (c) {
-            if (!c) return;
+            // A container floated whole needs its layout here and the helper's mouse (OPEN.md
+            // item 73, steps 3-4): until they land, on a container it does nothing, as before.
+            if (!c || c.win === null) return;
             var w = wins[c.win];
             // A sticky window made tiling (§3 X4, C of the stage's spec): off all desktops first,
             // onto its workspace's; KWin's tiles belong to one desktop (≠ i3, which keeps the flag).

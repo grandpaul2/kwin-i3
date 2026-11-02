@@ -720,6 +720,13 @@ var Tree = (function () {
         var same = parentWithOrientation(con, o);
         do {
             if (!same) {
+                // Inside a floating container, at its edge: out of it, onto the workspace
+                // (move.c:298, attach_to_workspace).
+                if (insideFloating(con)) {
+                    this.attachToWorkspace(con, wsOf(con), dir);
+                    this.flatten();
+                    return;
+                }
                 forceOrientation(wsOf(con), o);
                 same = parentWithOrientation(con, o);
             }
@@ -1010,10 +1017,11 @@ var Tree = (function () {
 
     // ---- floating (floating.c) -------------------------------------------------------------
 
-    // floating_enable (floating.c:233): con leaves the tiling tree for a new floating container,
-    // which takes its branch's place in the workspace focus stack. Returns con.
+    // floating_enable (floating.c:233): con, a window or a split, leaves the tree it is in (a
+    // tiling one, or a floating container's) for a new floating container, which takes its
+    // branch's place in the workspace focus stack. Returns con.
     M.floatingEnable = function (con) {
-        if (!con || con.type !== "con" || con.win === null || isFloating(con)) return null;
+        if (!con || con.type !== "con" || isFloating(con)) return null;
         var ws = wsOf(con), parent = con.parent, wasFocused = this.focused === con;
         var placeholder = null, before = true;
         if (!wasFocused) {
