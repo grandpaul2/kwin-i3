@@ -93,9 +93,15 @@ decide in the build, from i3: keys acting on the whole container (`con_inside_fl
 `commands.c:598`, `:672`; T13, T14, K3, T23), a sticky child (`output_push_sticky_windows` moves
 the whole container; R3, X4), a fullscreen child (`click.c:281-282`; V4, V6b), the frames and
 rings (`framefocus.cpp`, `hold.cpp`'s `floatingFramed`), the drop-target row (`plan.md`), and
-what a floating container does without the helper. The plan's line stands or falls with the
-spike. Next: a test-KWin spike of the helper moving and resizing two floating
-windows as one.
+what a floating container does without the helper. **The spike** (test KWin, 2026-11-01, a
+throwaway filter in the helper, not kept) held the line: two KWin floating windows moved by the
+helper's `Window::move` per motion stayed in step on all 30 steps of a Meta+drag; raised together
+on a press; resized live by `moveResize` (each half of the joint rect), a quick client landed every
+step within 1 ms, while a client slow to redraw (100 ms) answered only the last of 30 steps, the
+two windows landing 60 ms apart (120 and 181 ms after the last step): between them the pair shows
+torn, the hold's job as for a tiled layout. Next: plan the build: the model's node first (`src/tree.js`,
+unit-tested as i3's `floating_enable` / `floating_disable`), then the helper's move, resize and
+raise, the hold for a resize, the look.
 
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
