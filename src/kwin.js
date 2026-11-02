@@ -1097,13 +1097,16 @@ var KI3 = (function () {
     function floatsAlone(con) { return floats(con) && !floatedOf(con); }
     function outGeometry(s) { var o = s.geometry; return { x: o.x, y: o.y, width: o.width, height: o.height }; }
     // floating_enable's rect for a split (floating.c:331-342): its children's own sizes (i3's
-    // con->geometry, here the frame each window arrived with), widths summed and the tallest
-    // height, a split child's being 0; within floating_check_size's limits; centred on the
-    // workspace, as a rect at 0,0 is (floating.c:381).
+    // con->geometry: the frame each window arrived with; one tiled already at a load has none
+    // recorded, and takes KWin's restore, the size KWin gives it back out of its tile, as one
+    // floating window does), widths summed and the tallest height, a split child's being 0;
+    // within floating_check_size's limits; centred on the workspace, as a rect at 0,0 is
+    // (floating.c:381). After untile, so KWin's restore is there to read.
     function floatedRect(split, ws) {
         var width = 0, height = 0;
         split.nodes.forEach(function (k) {
-            var g = k.win !== null ? untiled[k.win] : null;
+            var w = k.win !== null ? wins[k.win] : null;
+            var g = k.win !== null ? untiled[k.win] || (w && !w.tile && w.frameGeometry) : null;
             if (!g) return;
             width += g.width;
             height = Math.max(height, g.height);
@@ -1121,10 +1124,10 @@ var KI3 = (function () {
             leaves.forEach(function (l) { if (wins[l.win]) setFloatingLook(wins[l.win], false); });
             log("FLOAT " + named(model.describe(ws.num)) + ": a container tiled again");
         } else {
+            leaves.forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
             var r = floatedRect(c, ws);
             model.toggleFloating(c);
             c.parent.rect = r;
-            leaves.forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
             log("FLOAT a container whole, " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
         }
         schedule(ws);

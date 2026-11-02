@@ -83,4 +83,21 @@ check "c alone, in its split"               wait_tree 1 "H[a] ~V[c]*"
 check "  not floated any more"              poll eval '[[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"c\") log(w.noBorder); })")" == false ]]'
 kclose c
 check "closed with its windows"             wait_tree 1 "H[a*]"
+
+# Windows tiled already at a load have no recorded size of their own: each takes KWin's restore,
+# its size out of the tile, as one floating window does (a capture: 75x50, the size limit's floor).
+client --title d
+key "Split V"
+client --title e
+check "a | V[d e]"                          wait_tree 1 "H[a V[d e*]]"
+busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
+m=$(mark)
+load_kwin_i3
+check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
+check "  e focused"                         wait_tree 1 "H[a V[d e*]]" "$m"
+key "Focus Parent"
+key "Floating Toggle"
+check "V[d e] floated after the reload"     wait_tree 1 "H[a] ~V[d e]*"
+check "  their own sizes: 400 px each, side by side summed" poll eval 'read -r _ _ w _ < <(xywh d); (( w >= 780 ))'
+check "  and 300 tall at least"             poll eval 'read -r _ y1 _ _ < <(xywh d); read -r _ y2 _ h2 < <(xywh e); (( y2 + h2 - y1 >= 290 ))'
 finish
