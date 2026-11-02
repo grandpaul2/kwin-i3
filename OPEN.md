@@ -95,12 +95,3 @@ rects. The tiled projection leaves a fullscreen window out once KWin no longer k
 its space, and give it back when it leaves fullscreen. Next: a test-KWin probe (a fullscreen
 window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
 
-**84. The foundation sweep's code fixes** (2026-11-01; each checked against i3 4.24 and the
-code). The code breaks a row of `behaviour.md` or i3 with no reason (a)-(f); each row is marked
-"being fixed". Five stages, one live at a time, each with the go to build and to reload, `make
-unit` and the changed scenarios (64 for a plugin stage). Stages 1 (fullscreen), 2 (tree and rules), 3 (look) and 4 (plugins: Release's marks, B3, extra
-modifiers, the bar's buttons and scroll, G4, Z9, K4's leave key, the ring's source, the range
-rule) are built; left:
-(5) **pointer and release**: entering a gap or a panel on the focused output refocuses (B2,
-`handlers.c:91-121`); Release resets only the roots kwin-i3 placed, a user's own tile layout kept
-(Y4, reason (e)). Next: stage 5, with the go.

@@ -3053,12 +3053,17 @@ var KI3 = (function () {
         var was = pointerOutput;
         pointerOutput = s.name;
         if (was === null || drag || !focusFollowsMouse()) return;
-        // i3 checks on every motion over the root or a dock, not only at a crossing
-        // (handlers.c check_crossing_screen_boundary): nothing while the pointer's output holds
-        // the focus, one comparison; the hit test only when it doesn't (focus moved to another
-        // output by a key, mouseWarping off), as i3 does.
+        // i3 checks on every motion over the root or a dock, not only at a crossing, and on the
+        // focused output too (handlers.c:91-121 check_crossing_screen_boundary, no test that the
+        // output differs): the output's workspace descended to its focused window
+        // (con_descend_focused). On the focused output that changes the focus only while it is a
+        // container or the workspace itself (focus parent): only then the hit test, else one
+        // comparison per motion.
         var fws = focusedWs(), fout = fws ? outputOf(fws) : null;
-        if (fout && fout.name === s.name) return;
+        if (fout && fout.name === s.name) {
+            var f = model.focused;
+            if (!f || (f.type === "con" && f.win !== null) || focusOf(fws) === f) return;
+        }
         var under = windowUnder(p.x, p.y, s);
         if (under && wins[id(under)]) return;           // KWin's focus follows mouse takes it (B1)
         var ws = shownWs(s);
@@ -3774,11 +3779,13 @@ var KI3 = (function () {
                 try {
                     var root = workspace.rootTile(s, d), rk = s.name + "/" + d.id;
                     if (!root) return;
-                    // Roots kwin-i3 touched, and any left inset by gaps (a reload's predecessor):
-                    // KWin's whole area and no padding again (review: the padding seen at the
-                    // first reconcile can be our own gap, after a reload).
+                    // Roots kwin-i3 touched, and any a predecessor left inset by gaps (a reload):
+                    // KWin's whole area and no padding again. A root it didn't touch that holds
+                    // tiles is the user's own layout (Meta+T's editor): Plasma's, left as it is
+                    // (reason (e); §6 Y4). kwin-i3 empties a workspace's root when its last
+                    // window goes, so a leftover of its own holds none.
                     var full = { x: 0, y: 0, width: 1, height: 1 };
-                    if (!(rk in touchedRoots) && sameRect(root.relativeGeometry, full)) return;
+                    if (!(rk in touchedRoots) && (sameRect(root.relativeGeometry, full) || root.tiles.length)) return;
                     var stray = tiledWindowsOf(root, []);
                     stray.forEach(function (w) { root.unmanage(w); });
                     for (var n = 0; root.tiles.length && n < 256; n++) root.tiles[root.tiles.length - 1].remove();
