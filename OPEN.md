@@ -73,12 +73,6 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**81. Outputs in the model** (`src/tree.js` header, `behaviour.md` §2). i3's tree has its outputs
-(`CT_OUTPUT` between root and workspaces, `include/data.h`); the model has none, the adapter
-answering `env.outputNeighbour`, and no reason for it is written in `plan.md`. Next: port i3's
-output level into the model, or name the `plan.md` reason it rests on (reason (a): KWin owns the
-screens, if it holds), and write it beside the header line.
-
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
 f, the hidden tab, right after kwin-i3 focused h (the log: `ACTIVE h (KWin)`, then `ACTIVE f

@@ -41,9 +41,9 @@ var Outputs = (function () {
     }
 
     // C2. What a source output shows once the workspace it showed has moved away (i3's focus
-    // order, as S10): the one it most recently showed that has windows and still lives there
-    // (`recent`: numbers, most recent first), else its lowest with windows, else null (the caller
-    // finds an unused one).
+    // order, as S10): the one most recently focused there that has windows and still lives there
+    // (`recent`: the output's focus stack as numbers, most recent first), else its lowest with
+    // windows, else null (the caller finds an unused one).
     function sourceShows(source, recent, st) {
         function fits(n) { return st.homes[n] === source && !!st.occupied[n]; }
         for (var i = 0; i < recent.length; i++) if (fits(recent[i])) return recent[i];

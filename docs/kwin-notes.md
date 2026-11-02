@@ -202,6 +202,13 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - A JS `Error().stack` stops at the nearest native boundary: in a signal handler it never shows who
   caused the signal.
 - `var x` in the same scope as `function x()` overwrites the function.
+- `workspace.screensChanged` is `Workspace::outputsChanged`, emitted at the end of every
+  `updateOutputs` (6.7.5 `workspace.cpp:1490`), which runs on every applied output configuration
+  (hotplug, geometry, scale, mode: `:541`). Inside it `updateOutputOrder` emits
+  `screenOrderChanged` **first** (`:1422`), so a handler there sees a new output before
+  `screensChanged` does; `screenOrderChanged` also fires alone (`:633`, `:691`).
+- `currentDesktopChanged(previous, current, output)` is emitted after KWin has stored the new
+  desktop (`virtualdesktops.cpp:588`): `currentDesktopForScreen` is current inside the handler.
 - `workspace.createDesktop` is synchronous, tiles the new desktop at once, and **saves** the count
   to kwinrc. Removing a desktop renumbers the rest. With per-output desktops off, `setCurrent`
   switches every output.

@@ -33,9 +33,10 @@ live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`
 (2026-10-26: 19 caught, 16 survived, 1 broken by its own text, "the helper not turned on at a
 reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet sorted (a check to
 add, code to remove, or not visible in the test KWin). The fuller procedure that was in
-`docs/testing.md` before (git 6a58018) is the starting point for the stricter one. Several of
-those faults' from-texts no longer match (the centre swap, the drop outline added and removed,
-Meta+Shift): rewrite them from the code before the run. Test gaps the reviews left (2026-10-22 to 10-24, in git history;
+`docs/testing.md` before (git 6a58018) is the starting point for the stricter one. Many of the
+faults' from-texts across `tests/live/mutate.py` no longer match the code (over 40 on 2026-11-01:
+the centre swap, the drop outline added and removed, Meta+Shift, the monitor code moved to the
+model): rewrite them from the code before the run. Test gaps the reviews left (2026-10-22 to 10-24, in git history;
 checked 2026-10-27): the close hold when the fullscreen window is the last on its screen; a
 vertical border dragged inside a V layout and the middle border of three columns; the ignore
 rules, Focus/Move Up and Down, and a reload with floating or minimized windows, in no scenario by

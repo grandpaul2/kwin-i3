@@ -21,10 +21,25 @@
 // container itself, only on what it holds (level_up, level_down).
 // `focus` is i3's focus_head: the children most recently focused first; a workspace's also
 // holds its floating containers.
+// Above the workspaces, i3's levels (CT_ROOT, CT_OUTPUT, the output's content):
+//   root      { type: "root", nodes: [output…], focus: [output…], parent: null }
+//   output    { type: "output", name, rect, nodes: [content], focus: [content], shows, parent: root }
+//   content   { type: "content", layout: "h", nodes: [ws…], focus: [ws…], parent: output }
+// root.nodes is KWin's output order (primary first); focus runs up to the root, as con_focus, so
+// root.focus orders the outputs and a content's focus its workspaces. A content's workspaces are
+// in number order (_con_attach). The content's type stands in for i3's CT_CON named "content", so
+// no split test takes it for a split. A workspace with no output has parent null: an empty one
+// i3 would have closed (decision 9 keeps desktops).
 // Differences from i3, on purpose:
 //   - Workspaces are KWin's desktops and are never closed when empty.
-//   - Outputs are not modelled. Where i3 asks for "the visible workspace on the next output in
-//     this direction", the model calls env.outputNeighbour(ws, dir), supplied by the caller.
+//   - No dock areas, and no shares on outputs, contents or workspaces, reason (a): docks are
+//     Plasma's panels, outside the area KWin gives kwin-i3, and KWin lays out the outputs.
+//   - The visible workspace is `output.shows`, the workspace KWin shows there, not i3's CF_OUTPUT
+//     flag on the workspace, reason (a): KWin shows one desktop on several outputs (per-output
+//     desktops off) and, for a turn, a workspace on an output it doesn't live on (an outside
+//     switch); a flag on the workspace holds neither. The caller mirrors it (setShows, show).
+//   - show(ws) reorders only the content's focus, not the global focus or the root's, reason
+//     (a): KWin owns activation, and the global focus follows KWin's (focusWin).
 //   - Fullscreen is i3's per-output fullscreen (CF_OUTPUT) only, a flag on the leaf.
 //   - No marks, urgency or scratchpad (docs/plan.md, "Out").
 
@@ -62,6 +77,7 @@ var Tree = (function () {
         this.focused = null;    // i3's global `focused`
         this.previousWs = null; // i3's previous_workspace_name, as a number (back_and_forth)
         this.focusedWsNum = null;   // the workspace focus was last set on (for previousWs)
+        this.root = { type: "root", nodes: [], focus: [], parent: null };
     }
 
     var M = Model.prototype;
@@ -78,6 +94,136 @@ var Tree = (function () {
             this.workspaces[num] = ws;
         }
         return ws;
+    };
+
+    // ---- outputs (randr.c, output.c, con.c) ------------------------------------------------
+
+    function newOutput(name, rect) {
+        var o = { type: "output", name: name, rect: rect, nodes: [], focus: [], shows: null, parent: null };
+        var c = { type: "content", layout: "h", nodes: [], focus: [], parent: o };   // output_init_con
+        o.nodes.push(c);
+        o.focus.push(c);
+        return o;
+    }
+    // KWin's outputs, [{ name, rect }] in its order (primary first): new ones added (at the tail
+    // of the root's focus stack, as con_attach), every rect updated, the root's order set. Never
+    // removes one: removeOutput does, once its workspaces have gone (move_content).
+    M.setOutputs = function (list) {
+        var root = this.root;
+        list.forEach(function (l) {
+            var o = null;
+            root.nodes.forEach(function (x) { if (x.name === l.name) o = x; });
+            if (!o) {
+                o = newOutput(l.name, l.rect);
+                o.parent = root;
+                root.nodes.push(o);
+                root.focus.push(o);
+            }
+            o.rect = { x: l.rect.x, y: l.rect.y, width: l.rect.width, height: l.rect.height };
+        });
+        this.orderOutputs(list.map(function (l) { return l.name; }));
+    };
+    // The root's order by these names (KWin's screenOrder); outputs not named keep their place
+    // after them. Adds and updates nothing.
+    M.orderOutputs = function (names) {
+        var root = this.root;
+        var named = [], rest = [];
+        names.forEach(function (n) { root.nodes.forEach(function (o) { if (o.name === n && named.indexOf(o) < 0) named.push(o); }); });
+        root.nodes.forEach(function (o) { if (named.indexOf(o) < 0) rest.push(o); });
+        root.nodes = named.concat(rest);
+    };
+    // An output gone: its workspaces must have been placed elsewhere or unplaced first.
+    M.removeOutput = function (name) {
+        var o = this.output(name);
+        if (!o) return;
+        if (o.nodes[0].nodes.length) throw new Error("removeOutput: " + name + " still holds workspaces");
+        remove(this.root.nodes, o);
+        remove(this.root.focus, o);
+        o.parent = null;
+    };
+    M.output = function (name) {
+        for (var i = 0; i < this.root.nodes.length; i++) if (this.root.nodes[i].name === name) return this.root.nodes[i];
+        return null;
+    };
+    M.outputs = function () { return this.root.nodes.slice(); };
+    M.content = function (output) { return output.nodes[0]; };          // output_get_content
+    // con_get_output for a workspace; an unplaced one is on the output that shows it, if any.
+    M.outputOf = function (ws) {
+        if (ws.parent) return ws.parent.parent;
+        for (var i = 0; i < this.root.nodes.length; i++) if (this.root.nodes[i].shows === ws) return this.root.nodes[i];
+        return null;
+    };
+    // con_detach, then _con_attach's workspace case (con.c:109-134, 216-221): among the content's
+    // workspaces by number, at the tail of its focus stack. Callers show and focus.
+    M.placeWorkspace = function (ws, output) {
+        var content = output.nodes[0];
+        if (ws.parent === content) return;
+        this.unplaceWorkspace(ws);
+        var i = 0;
+        while (i < content.nodes.length && content.nodes[i].num <= ws.num) i++;
+        content.nodes.splice(i, 0, ws);
+        content.focus.push(ws);
+        ws.parent = content;
+    };
+    // No output (an empty workspace i3 would have closed): its own tree is left as it is.
+    M.unplaceWorkspace = function (ws) {
+        if (!ws.parent) return;
+        remove(ws.parent.nodes, ws);
+        remove(ws.parent.focus, ws);
+        ws.parent = null;
+    };
+    // The workspace KWin shows on an output (null: a desktop that is no workspace, or not made).
+    M.setShows = function (output, ws) { output.shows = ws || null; };
+    M.visibleOn = function (output) { return output.shows; };
+    // workspace_show's focus step: the workspace heads its content's focus stack.
+    M.show = function (ws) {
+        if (!ws.parent) return;
+        remove(ws.parent.focus, ws);
+        ws.parent.focus.unshift(ws);
+    };
+
+    // get_output_next (randr.c:255-317): an output that way by origin, overlapping on the other
+    // axis, the closest (far: the farthest); ties by the root's order.
+    var OPPOSITE = { left: "right", right: "left", up: "down", down: "up" };
+    M.outputNext = function (output, dir, far) {
+        var a = output.rect, best = null, all = this.root.nodes;
+        for (var i = 0; i < all.length; i++) {
+            if (all[i] === output) continue;
+            var o = all[i].rect;
+            if (dir === LEFT || dir === RIGHT) {
+                if (dir === RIGHT ? !(o.x > a.x) : !(o.x < a.x)) continue;
+                if (o.y + o.height <= a.y || a.y + a.height <= o.y) continue;
+            } else {
+                if (dir === DOWN ? !(o.y > a.y) : !(o.y < a.y)) continue;
+                if (o.x + o.width <= a.x || a.x + a.width <= o.x) continue;
+            }
+            if (!best) { best = all[i]; continue; }
+            var b = best.rect;
+            var nearer = dir === RIGHT ? o.x < b.x : dir === LEFT ? o.x > b.x : dir === DOWN ? o.y < b.y : o.y > b.y;
+            var farther = dir === RIGHT ? o.x > b.x : dir === LEFT ? o.x < b.x : dir === DOWN ? o.y > b.y : o.y < b.y;
+            if (far ? farther : nearer) best = all[i];
+        }
+        return best;
+    };
+    // get_output_next_wrap (randr.c:221-247): none that way, the farthest the other way; none at
+    // all, the output itself.
+    M.outputNextWrap = function (output, dir) {
+        return this.outputNext(output, dir, false) || this.outputNext(output, OPPOSITE[dir], true) || output;
+    };
+    // The visible workspace on the output next to ws's (get_tree_next_workspace,
+    // move_to_output_directed), or null.
+    M.neighbourWs = function (ws, dir) {
+        var o = this.outputOf(ws), t = o ? this.outputNext(o, dir, false) : null;
+        return t ? this.visibleOn(t) : null;
+    };
+    // One line per output, for the dump and the tests: "DP-1 0,0 1920x1080 shows=1 focus=[1 3] ws=[1 3]".
+    M.describeOutputs = function () {
+        function nums(list) { return "[" + list.map(function (w) { return w.num; }).join(" ") + "]"; }
+        return this.root.nodes.map(function (o) {
+            var r = o.rect, c = o.nodes[0];
+            return o.name + " " + r.x + "," + r.y + " " + r.width + "x" + r.height + " shows=" +
+                (o.shows ? o.shows.num : "-") + " focus=" + nums(c.focus) + " ws=" + nums(c.nodes);
+        });
     };
 
     function wsOf(con) {                                      // con_get_workspace
@@ -154,12 +300,14 @@ var Tree = (function () {
 
     // con_parent_with_orientation: the nearest ancestor with this orientation, or null at the
     // top of the workspace or at a floating container.
+    // Aborts at a floating container, an output or its content (con.c:560-582).
     function parentWithOrientation(con, o) {
         var parent = con.parent;
         if (isFloatingCon(parent)) return null;
         while (parent && orient(parent) !== o) {
             parent = parent.parent;
-            if (parent && isFloatingCon(parent)) return null;
+            if (parent && (isFloatingCon(parent) || parent.type === "output" ||
+                           (parent.parent && parent.parent.type === "output"))) return null;
         }
         return parent || null;
     }
@@ -587,12 +735,14 @@ var Tree = (function () {
 
     // ---- moving (move.c) -------------------------------------------------------------------
 
-    // null: on different workspaces, which meet only at i3's root (each is its own tree here).
+    // lowest_common_ancestor (move.c:20-45): two cons on placed workspaces always meet, at the
+    // root at the latest; i3 asserts it, and so does this (a workspace holding a window always has
+    // an output: kwin.js claims one for it).
     function lowestCommonAncestor(a, b) {
         for (var pa = a; pa; pa = pa.parent)
             for (var pb = b; pb; pb = pb.parent)
                 if (pa === pb) return pa;
-        return null;
+        throw new Error("lowestCommonAncestor: no common ancestor (a workspace with no output)");
     }
     function childContaining(ancestor, con) {
         var child = con;
@@ -608,28 +758,10 @@ var Tree = (function () {
     // insert_con_into: detach con and insert it before/after target, keeping the focus order.
     M.insertConInto = function (con, target, position) {
         var parent = target.parent, oldParent = con.parent;
+        // On another workspace (a tiling drop onto another output) the meeting point is a
+        // content or the root, whose focus order decides focus_before, as in i3.
         var lca = lowestCommonAncestor(con, parent);
         if (lca === con) return;
-        if (!lca) {
-            // Another workspace (a tiling drop onto the other output): the meeting point is i3's
-            // root, whose focus order is the outputs' and workspaces'; con goes first in its new
-            // parent's focus stack when its own side is ahead in that order, i.e. it is on the
-            // focused workspace (insert_con_into's focus_before, move.c:88-135). The global focus
-            // is the caller's (drop activates con).
-            var first = !!this.focused && wsOf(this.focused) === wsOf(con);
-            detach(con);
-            fixPercent(con.parent);
-            con = intoWorkspaceLayout(con, parent);
-            con.parent = parent;
-            if (first) parent.focus.unshift(con);
-            else parent.focus.push(con);
-            if (position === "before") insertBefore(parent.nodes, target, con);
-            else insertAfter(parent.nodes, target, con);
-            con.percent = 0;
-            fixPercent(parent);
-            this.onRemoveChild(oldParent);
-            return;
-        }
         var conAncestor = childContaining(lca, con);
         var targetAncestor = childContaining(lca, target);
         var movesFocus = isFocusedDescendant(con, conAncestor);
@@ -697,7 +829,7 @@ var Tree = (function () {
 
     // move_to_output_directed. Returns true if it moved.
     M.moveToOutputDirected = function (con, dir) {
-        var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(con), dir) : null;
+        var ws = this.neighbourWs(wsOf(con), dir);
         if (!ws) return false;
         var movesFocus = this.focused === con;
         // One fullscreen window per workspace (setFullscreen), as moveToWorkspace keeps it.
@@ -789,7 +921,8 @@ var Tree = (function () {
         // One fullscreen window per workspace (setFullscreen): the one moving wins.
         var fsWin = con.fullscreen || (isFloatingCon(con) && con.nodes.some(function (c) { return c.fullscreen; }));
         var target = this.descendFocused(ws);
-        var focusNext = null;
+        var focusNext = null, old = this.focused, oldWs = old ? wsOf(old) : null;
+        var oldHead = ws.parent ? ws.parent.focus[0] || null : null;
         if (!ignoreFocus && this.focused && wsOf(this.focused) === source) {
             focusNext = this.descendFocused(source);
             if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
@@ -805,10 +938,25 @@ var Tree = (function () {
         fixPercent(parent);
         con.percent = 0;
         fixPercent(target);
-        if (!fs && !ignoreFocus) focusUp(con);   // i3 step 6: not under the target's fullscreen window
+        if (!ignoreFocus) restoreAfterMove(con, ws, !fs, old, oldWs, oldHead);
         if (focusNext) this.activate(this.descendFocused(focusNext));
         this.onRemoveChild(parent);
     };
+
+    // _con_move_to_con's steps 6 and 7 (con.c:1438-1462), for the focus stacks: con is focused
+    // within its new workspace (step 6, `focus`: not under the target's fullscreen window); the
+    // target output's previously focused workspace `oldHead` (its content's head before) gets
+    // its place back, or the old focus when that workspace is the focused one; then the focused
+    // workspace `oldWs` (i3's current_ws, con_get_workspace(focused) before the move) is focused
+    // again up to the root (workspace_show). The global focus is the caller's.
+    function restoreAfterMove(con, targetWs, focus, old, oldWs, oldHead) {
+        if (focus) {
+            focusUp(con);
+            if (oldHead && oldHead === oldWs && old.type !== "ws") focusUp(old);
+            else if (oldHead && oldHead !== targetWs) focusUp(oldHead);
+        }
+        if (oldWs) focusUp(oldWs);
+    }
 
     // ---- tiling drag (tiling_drag.c, con.c) -------------------------------------------------
     // Rects come from the caller (kwin.js has the tiles):
@@ -911,7 +1059,8 @@ var Tree = (function () {
         if (target.type !== "ws") target = target.parent;
         var fs = fullscreenOn(targetWs);
         if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
-        var parent = con.parent, old = this.focused;
+        var parent = con.parent, old = this.focused, oldWs = old ? wsOf(old) : null;
+        var oldHead = targetWs.parent ? targetWs.parent.focus[0] || null : null;
         detach(con);
         con.parent = target;
         if (orig !== target) insertAfter(target.nodes, orig, con);
@@ -920,10 +1069,7 @@ var Tree = (function () {
         fixPercent(parent);
         con.percent = 0;
         fixPercent(target);
-        if (!fs) {
-            focusUp(con);
-            if (old && old !== con && wsOf(old) === targetWs) focusUp(old);
-        }
+        restoreAfterMove(con, targetWs, !fs, old, oldWs, oldHead);
         this.onRemoveChild(parent);
         return true;
     };
@@ -1232,7 +1378,7 @@ var Tree = (function () {
         if (!next) {
             if (wrapping === "workspace" && !fromWs) next = firstWrap;
             else {
-                var ws = this.env.outputNeighbour ? this.env.outputNeighbour(wsOf(this.focused), dir) : null;
+                var ws = this.neighbourWs(wsOf(this.focused), dir);
                 next = ws || firstWrap;
             }
         }

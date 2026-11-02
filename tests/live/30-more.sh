@@ -135,7 +135,9 @@ busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Com
 check "it gives up after 3 retries"         wait_log '^.{9}WARN giving up after 3 errors' "$m"
 sleep 1
 errors=$(after "$m" | grep -c 'ERROR in reconcile')
-check "a bounded number of errors ($errors)" test "$errors" -ge 4 -a "$errors" -le 8
+# One error per model workspace per round, four rounds: workspaces 1 and 3 here, and 2, which
+# the second output shows (a shown workspace has its model, behaviour.md §2).
+check "a bounded number of errors ($errors)" test "$errors" -ge 4 -a "$errors" -le 12
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
 m=$(mark)
 client --title r

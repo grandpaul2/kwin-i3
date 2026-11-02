@@ -5,18 +5,17 @@ const assert = require("node:assert");
 const Tree = require("../../src/tree.js");
 const { LEFT, RIGHT, UP, DOWN } = Tree;
 
-// A model with workspaces 1 and 2. With `twoOutputs`, 2 is the visible workspace of the output
-// to the right of 1's, and 1 is left of 2.
+// A model with workspaces 1 and 2. With `twoOutputs`, 1 shows on output A and 2 on output B, to
+// its right; else both live on one output A, which shows 1.
 function model(twoOutputs) {
-    const m = Tree.create({
-        outputNeighbour(ws, dir) {
-            if (!twoOutputs) return null;
-            if (ws.num === 1 && dir === RIGHT) return m.ws(2);
-            if (ws.num === 2 && dir === LEFT) return m.ws(1);
-            return null;
-        },
-    });
-    m.ws(1); m.ws(2);
+    const m = Tree.create();
+    const outs = [{ name: "A", rect: { x: 0, y: 0, width: 1280, height: 720 } }];
+    if (twoOutputs) outs.push({ name: "B", rect: { x: 1280, y: 0, width: 1280, height: 720 } });
+    m.setOutputs(outs);
+    const a = m.output("A"), b = twoOutputs ? m.output("B") : a;
+    m.placeWorkspace(m.ws(1), a); m.placeWorkspace(m.ws(2), b);
+    m.setShows(a, m.ws(1)); m.show(m.ws(1));
+    if (twoOutputs) { m.setShows(b, m.ws(2)); m.show(m.ws(2)); }
     return m;
 }
 
@@ -1116,4 +1115,74 @@ test("sticky: the push moves a sticky floating con to the workspace its output s
     // Off: no longer pushed.
     m.setSticky(m.byWin.s, false);
     assert.deepStrictEqual(m.pushSticky(m.ws(1), [m.ws(2)], null), []);
+});
+
+// ---- outputs (randr.c get_output_next, con.c _con_attach, move.c insert_con_into, con.c _con_move_to_con) ----
+
+// Outputs A and B side by side, C below A.
+function threeOutputs() {
+    const m = Tree.create();
+    m.setOutputs([
+        { name: "A", rect: { x: 0, y: 0, width: 1280, height: 720 } },
+        { name: "B", rect: { x: 1280, y: 0, width: 1280, height: 720 } },
+        { name: "C", rect: { x: 0, y: 720, width: 1280, height: 720 } },
+    ]);
+    return m;
+}
+
+test("get_output_next: by origin, overlapping on the other axis; none that way is null", () => {
+    const m = threeOutputs(), [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
+    assert.strictEqual(m.outputNext(A, RIGHT), B);
+    assert.strictEqual(m.outputNext(A, DOWN), C);
+    assert.strictEqual(m.outputNext(B, LEFT), A);
+    assert.strictEqual(m.outputNext(B, DOWN), null, "C is diagonal to B: never");
+    assert.strictEqual(m.outputNext(A, LEFT), null);
+});
+
+test("get_output_next_wrap: the farthest the other way; none at all, the output itself", () => {
+    const m = threeOutputs(), [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
+    assert.strictEqual(m.outputNextWrap(A, LEFT), B, "wraps to the far right");
+    assert.strictEqual(m.outputNextWrap(A, UP), C, "wraps to the bottom");
+    assert.strictEqual(m.outputNextWrap(B, DOWN), B, "nothing either way: itself");
+});
+
+test("_con_attach: a content's workspaces by number, its focus stack in arrival order", () => {
+    const m = threeOutputs(), A = m.output("A");
+    for (const n of [3, 1, 2]) m.placeWorkspace(m.ws(n), A);
+    assert.deepStrictEqual(m.describeOutputs()[0], "A 0,0 1280x720 shows=- focus=[3 1 2] ws=[1 2 3]");
+    m.placeWorkspace(m.ws(2), m.output("B"));
+    assert.deepStrictEqual(m.describeOutputs().slice(0, 2),
+        ["A 0,0 1280x720 shows=- focus=[3 1] ws=[1 3]", "B 1280,0 1280x720 shows=- focus=[2] ws=[2]"]);
+});
+
+test("insert_con_into across outputs meets at the root: the focused output's con goes first", () => {
+    const m = model(true);
+    open(m, 2, "c");
+    open(m, 1, "a", "b");
+    m.focusWin("c");                                    // B is the focused output
+    m.insertConInto(leaf(m, "c"), leaf(m, "a"), "after");
+    assert.strictEqual(d(m, 1), "H[a c* b]");
+    assert.deepStrictEqual(m.focusOrder(m.ws(1))[0], "c", "c heads its new parent's focus stack");
+    assert.strictEqual(m.root.focus[0].name, "A", "the target output moved ahead (moves_focus && focus_before)");
+});
+
+test("_con_move_to_con steps 6-7: a hidden target on another output stays behind its shown workspace", () => {
+    const m = model(true);
+    m.placeWorkspace(m.ws(3), m.output("B"));
+    open(m, 2, "x");
+    open(m, 1, "a", "b");
+    m.moveToWorkspace(leaf(m, "b"), m.ws(3));
+    assert.strictEqual(m.describeOutputs()[1], "B 1280,0 1280x720 shows=2 focus=[2 3] ws=[2 3]");
+    assert.strictEqual(m.root.focus[0].name, "A", "the outputs' order as before");
+    assert.strictEqual(m.focused.win, "a");
+});
+
+test("con_parent_with_orientation stops at the content: a vertical workspace's window moved left", () => {
+    const m = model();
+    m.ws(1).layout = "v";
+    open(m, 2, "x");
+    open(m, 1, "a", "b");
+    m.move(leaf(m, "a"), LEFT);
+    assert.strictEqual(d(m, 1), "H[a V[b*]]", "ws_force_orientation, never into the next workspace");
+    assert.strictEqual(d(m, 2), "H[x]");
 });
