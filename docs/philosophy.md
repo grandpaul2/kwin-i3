@@ -51,8 +51,11 @@ In order:
 3. **i3's source**, for *how* something already in scope behaves, where both are silent: do what
    i3 does. Whether something is in scope at all is `docs/plan.md`'s test; a feature not in is
    out, not a hole.
-4. **A hole**: a case none of these settles is a gap in the docs, not a question. Write the
-   missing principle into the doc it belongs in, as a proposal, and say it was a hole.
+4. **A hole**: a case none of these settles, or one they settle two ways, is a gap in the docs,
+   not a question and not a call to invent. Work it first: the premise that let it open, i3's
+   source, what Plasma and KWin allow, the precedents. Then write the missing principle into the
+   doc it belongs in, as a proposal, and say it was a hole: a repair to the foundation, not a
+   one-time fix.
 5. **The maintainer**, when out of moves: two foundations that genuinely conflict, or the
    product's direction. Not each call: the project is past the point where one person can make
    every individual call. **The maintainer's decisions live in these foundations**: a question
