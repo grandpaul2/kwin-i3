@@ -78,6 +78,9 @@ public Q_SLOTS:
     // kwin-i3 says which windows it floats: the set
     // outlives a reload of the script, which reads it back from Stats ("floating").
     void SetFloating(const QString &id, bool on);
+    // kwin-i3 says which windows are in a split or a group floated whole: in no tile, they are
+    // framed as tiled ones all the same (the tiling look, behaviour.md L10a).
+    void SetFloated(const QString &id, bool on);
     // kwin-i3 says how a window's ring is drawn (i3's x.c): its
     // colour class, "focused" or "unfocused" ("" forgets the window: KWin's
     // active window colours it, as before the first call); the indicator side, "right" or
@@ -275,6 +278,7 @@ private:
     bool m_roundedCorners = true;
     bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
+    QSet<QString> m_floated;                                // SetFloated, by internal id
     QHash<QString, Ring> m_rings;                           // SetRing, by internal id
     QSet<QString> m_indicatorShown;                         // ShowIndicator, by internal id
     QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id

@@ -1270,29 +1270,31 @@ var Tree = (function () {
     // { layout, percent, kids: [spec...] } for a split, { win, percent } for a window. Replaces
     // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
     // until focusWin() calls refine them.
+    // A snapshot's focus order (indices of tiled children, most recent first) where it has one;
+    // a workspace's floating containers stay after its tiled ones.
+    function adoptOrder(c, s) {
+        if (!s.focus) return;
+        var tiled = s.focus.map(function (i) { return c.nodes[i]; }).filter(function (k) { return k; });
+        c.nodes.forEach(function (k) { if (tiled.indexOf(k) < 0) tiled.push(k); });
+        c.focus = tiled.concat(c.focus.filter(isFloatingCon));
+    }
+    function adoptBuild(model, s, parent) {
+        var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
+        attach(c, parent, true);
+        c.percent = s.percent || 0;
+        if (s.lastSplit) c.lastSplit = s.lastSplit;
+        if (s.kids) s.kids.forEach(function (k) { adoptBuild(model, k, c); });
+        else model.byWin[s.win] = c;
+        fixPercent(c);
+        adoptOrder(c, s);
+        return c;
+    }
     M.adopt = function (ws, spec) {
         var self = this, wsLayout = ws.wsLayout;
         ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
         ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
-        // A snapshot's focus order (indices of tiled children, most recent first) where it has one;
-        // a workspace's floating nodes stay after its tiled ones.
-        function order(c, s) {
-            if (!s.focus) return;
-            var tiled = s.focus.map(function (i) { return c.nodes[i]; }).filter(function (k) { return k; });
-            c.nodes.forEach(function (k) { if (tiled.indexOf(k) < 0) tiled.push(k); });
-            c.focus = tiled.concat(c.focus.filter(isFloatingCon));
-        }
-        function build(s, parent) {
-            var c = s.kids ? newCon(s.layout) : newCon("h", s.win);
-            attach(c, parent, true);
-            c.percent = s.percent || 0;
-            if (s.lastSplit) c.lastSplit = s.lastSplit;
-            if (s.kids) s.kids.forEach(function (k) { build(k, c); });
-            else self.byWin[s.win] = c;
-            fixPercent(c);
-            order(c, s);
-            return c;
-        }
+        function build(s, parent) { return adoptBuild(self, s, parent); }
+        function order(c, s) { adoptOrder(c, s); }
         if (spec.kids) {
             ws.layout = spec.layout;
             if (spec.lastSplit) ws.lastSplit = spec.lastSplit;
@@ -1303,6 +1305,24 @@ var Tree = (function () {
         }
         fixPercent(ws);
         ws.wsLayout = spec.wsLayout || wsLayout;
+    };
+
+    // A split or a group floated whole, from its snapshot (a reload, as i3's restart keeps it): a
+    // new floating container on ws holding it, at the top of the floating list. Its windows must
+    // not be in the model yet. Returns the floating container.
+    M.adoptFloated = function (ws, spec) {
+        if (!spec.kids || !spec.kids.length) return null;
+        var self = this;
+        if (specWindows(spec).some(function (k) { return self.byWin[k]; })) return null;
+        var nc = newFloatingCon();
+        attach(nc, ws, false);
+        var c = newCon(spec.layout);
+        if (spec.lastSplit) c.lastSplit = spec.lastSplit;
+        holdIn(nc, c);
+        spec.kids.forEach(function (k) { adoptBuild(self, k, c); });
+        fixPercent(c);
+        adoptOrder(c, spec);
+        return nc;
     };
 
     // A workspace's tiling tree as adopt reads it, whole: layouts, shares, last split layouts,

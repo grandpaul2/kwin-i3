@@ -8,6 +8,9 @@ var KI3 = (function () {
     var model = null;
     var wins = {};          // window id -> KWin window, for every window we manage
     var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
+    var floatedTold = {};   // window id -> true: told to the effect and the helper as floated (SetFloated)
+    var floatedBars = {};   // workspace number -> its floated groups' bars as last placed ({ con, rect })
+    var helperLoaded = null;   // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
     // The frame: with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
@@ -978,7 +981,17 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
-        model.floatingWindows(ws).forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
+        model.floatingWindows(ws).forEach(function (f) {
+            var w = wins[f.win];
+            if (w) (floatedOf(f) ? lookFloated : lookFloating)(w, ws);
+        });
+        // A window that left a floated container for the tiles (tree_move out of it, a move to a
+        // workspace) is a tiling window again.
+        model.leaves(ws).forEach(function (l) {
+            var w = wins[l.win];
+            if (w && (keptAbove[l.win] || floatedTold[l.win])) setFloatingLook(w, false);
+        });
+        placeFloated(ws);
         passWs = ws;
         delete gapCache[ws.num];            // the settings or the tree may have changed
         floatWhatCannotFit(ws, area);
@@ -1069,6 +1082,185 @@ var KI3 = (function () {
     // A window in a floating container (i3's con_inside_floating): KWin's floating window, in no tile.
     function floats(con) { return !!Tree.insideFloating(con); }
 
+    // ---- a split or a group floated whole (plan.md "The mouse"; behaviour.md L10a) ---------
+    // i3's floating container holding a split or a group: its windows are KWin floating windows,
+    // in no tile and kept above the tiled ones (L12), that kwin-i3 lays out as a tiled tree inside
+    // the container's rect (fc.rect, i3's nc->rect, with fc.rect.out the output's geometry it was
+    // set on), in the tiling look (L10a), with no gaps inside (gaps.c:57).
+    function floatedOf(con) {
+        var fc = con && Tree.insideFloating(con);
+        return fc && fc.nodes.length && fc.nodes[0].win === null ? fc : null;
+    }
+    // One floating window, alone in its floating container: KWin's (plan.md "The mouse").
+    function floatsAlone(con) { return floats(con) && !floatedOf(con); }
+    function outGeometry(s) { var o = s.geometry; return { x: o.x, y: o.y, width: o.width, height: o.height }; }
+    // floating_enable's rect for a split (floating.c:331-342): its children's own sizes (i3's
+    // con->geometry, here the frame each window arrived with), widths summed and the tallest
+    // height, a split child's being 0; within floating_check_size's limits; centred on the
+    // workspace, as a rect at 0,0 is (floating.c:381).
+    function floatedRect(split, ws) {
+        var width = 0, height = 0;
+        split.nodes.forEach(function (k) {
+            var g = k.win !== null ? untiled[k.win] : null;
+            if (!g) return;
+            width += g.width;
+            height = Math.max(height, g.height);
+        });
+        var size = checkSize(width, height), s = outputOf(ws), a = areaOf(s, ws);
+        return { x: Math.round(a.x + (a.width - size.width) / 2), y: Math.round(a.y + (a.height - size.height) / 2),
+                 width: size.width, height: size.height, out: outGeometry(s) };
+    }
+    // Floating Toggle on a split or a group (focus parent): floating_enable or floating_disable,
+    // the windows untiled or given back to the tiles.
+    function toggleFloated(c) {
+        var ws = Tree.wsOf(c), leaves = model.leaves(c);
+        if (Tree.isFloating(c)) {
+            model.toggleFloating(c);
+            leaves.forEach(function (l) { if (wins[l.win]) setFloatingLook(wins[l.win], false); });
+            log("FLOAT " + named(model.describe(ws.num)) + ": a container tiled again");
+        } else {
+            var r = floatedRect(c, ws);
+            model.toggleFloating(c);
+            c.parent.rect = r;
+            leaves.forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
+            log("FLOAT a container whole, " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
+        }
+        schedule(ws);
+        wantFocus();
+    }
+    // floating_fix_coordinates, for a container now on another output's workspace: its centre at
+    // the same fraction of the new output; and back inside the area, centred, if off it.
+    function fixFloated(fc, ws) {
+        var s = outputOf(ws), o = s.geometry, r = fc.rect, a = areaOf(s, ws);
+        if (r.out.x !== o.x || r.out.y !== o.y || r.out.width !== o.width || r.out.height !== o.height) {
+            r.x = Math.round(o.x + (r.x - r.out.x + r.width / 2) * o.width / r.out.width - r.width / 2);
+            r.y = Math.round(o.y + (r.y - r.out.y + r.height / 2) * o.height / r.out.height - r.height / 2);
+            r.out = outGeometry(s);
+        }
+        if (r.x + r.width <= a.x || r.y + r.height <= a.y || r.x >= a.x + a.width || r.y >= a.y + a.height) {
+            r.x = Math.round(a.x + (a.width - r.width) / 2);
+            r.y = Math.round(a.y + (a.height - r.height) / 2);
+        }
+    }
+    // A container with a window placed: one not minimized, not fullscreen out of the tiles.
+    function shows(k) { return k.win !== null ? !!visibleLeaf(k) : k.nodes.some(shows); }
+    // render_con for a floating container's child: a split shares the rect by its children's
+    // percent; a tabbed or stacked group gives each child the rect below its bar (BAR_ROW per
+    // row; the bar only for more than one child, as a tiled group), the ones behind under the
+    // shown one (raiseFloated). Every bar goes in `bars` for the effect and the helper.
+    function layFloated(c, r, bars, laid) {
+        if (c.win !== null) {
+            var w = wins[c.win];
+            if (!w || w.fullScreen || w.minimized) return;
+            if (!exactRect(w.frameGeometry, r)) w.frameGeometry = r;
+            laid.push(r);
+            return;
+        }
+        var kids = c.nodes.filter(shows);
+        if (!kids.length) return;
+        if (c.layout === "tabbed" || c.layout === "stacked") {
+            var bar = kids.length > 1 ? BAR_ROW * (c.layout === "stacked" ? kids.length : 1) : 0;
+            if (bar) bars.push({ con: c, rect: { x: r.x, y: r.y, width: r.width, height: bar } });
+            var inner = { x: r.x, y: r.y + bar, width: r.width, height: Math.max(1, r.height - bar) };
+            kids.forEach(function (k) { layFloated(k, inner, bars, laid); });
+            return;
+        }
+        var horiz = Tree.orient(c) === "h", total = 0;
+        function share(k) { return k.percent > 0 ? k.percent : 1 / kids.length; }
+        kids.forEach(function (k) { total += share(k); });
+        var start = horiz ? r.x : r.y, size = horiz ? r.width : r.height, at = start, acc = 0;
+        kids.forEach(function (k, i) {
+            acc += share(k) / total;
+            var end = i === kids.length - 1 ? start + size : Math.round(start + size * acc);
+            layFloated(k, horiz ? { x: at, y: r.y, width: end - at, height: r.height }
+                                : { x: r.x, y: at, width: r.width, height: end - at }, bars, laid);
+            at = end;
+        });
+    }
+    function placeFloated(ws) {
+        var bars = [];
+        ws.floating.forEach(function (fc) {
+            if (!fc.rect || !floatedOf(fc)) return;
+            fixFloated(fc, ws);
+            var laid = [];
+            layFloated(fc.nodes[0], fc.rect, bars, laid);
+            fc.laid = union(laid);
+        });
+        floatedBars[ws.num] = bars;
+    }
+    function union(rects) {
+        if (!rects.length) return null;
+        var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+        rects.forEach(function (r) {
+            x1 = Math.min(x1, r.x); y1 = Math.min(y1, r.y);
+            x2 = Math.max(x2, r.x + r.width); y2 = Math.max(y2, r.y + r.height);
+        });
+        return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+    }
+    // The helper moved or resized a floated container whole (its hidden "Floated Moved" action,
+    // plugin/tilingdrag.cpp): each container's rect follows its windows, from where they were laid
+    // to where they are, and onto the workspace shown where its centre now is
+    // (floating_maybe_reassign_ws).
+    function floatedMoved() {
+        shownWorkspaces().forEach(function (v) {
+            v.ws.floating.slice().forEach(function (fc) {
+                if (!fc.rect || !fc.laid || !floatedOf(fc)) return;
+                var now = union(model.leaves(fc).map(function (l) { return wins[l.win]; })
+                    .filter(function (w) { return w && !w.fullScreen && !w.minimized; })
+                    .map(function (w) { return w.frameGeometry; }));
+                var was = fc.laid, r = fc.rect;
+                if (!now || exactRect(now, was)) return;
+                var sx = now.width / was.width, sy = now.height / was.height;
+                r.x = Math.round(now.x + (r.x - was.x) * sx); r.y = Math.round(now.y + (r.y - was.y) * sy);
+                r.width = Math.max(1, Math.round(r.width * sx)); r.height = Math.max(1, Math.round(r.height * sy));
+                var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r);
+                if (s) r.out = outGeometry(s);
+                log("FLOAT a container moved by the mouse: " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
+                if (s && s !== outputOf(v.ws)) {
+                    var to = wsModel(deskNum(workspace.currentDesktopForScreen(s)));
+                    model.moveToWorkspace(fc.nodes[0], to);
+                    schedule(to);
+                    wantFocus();
+                }
+                schedule(v.ws);
+            });
+        });
+    }
+    // con_raise for a floating container (x_raise_con): its windows above everything else, a
+    // group's hidden ones under its shown one, `top` (the focus) last.
+    function raiseFloated(fc, top) {
+        var leaves = model.leaves(fc), hidden = [], shown = [];
+        leaves.forEach(function (l) {
+            var w = wins[l.win];
+            if (!w || w === top || w.minimized) return;
+            (Tree.isHidden(l) ? hidden : shown).push(w);
+        });
+        hidden.concat(shown, top ? [top] : []).forEach(function (w) { workspace.raiseWindow(w); });
+    }
+    // The look of a window in a floated container: kept above as a floating window (L12), the
+    // tiling look (L10a), marked for the effect's ring and the helper's presses (SetFloated).
+    function lookFloated(w, ws) {
+        keepAboveOn(w, ws);
+        tiledBorder(w);
+        tellFloating(w, false);
+        tellDragFloating(id(w), false);
+        var con = model.byWin[id(w)], fc = floatedOf(con);
+        // The helper's group is the container, by its first window; "top": a neighbour above,
+        // which a title-bar press resizes against before it would move the container (i3's
+        // route_click, steps 6 and 7).
+        var top = !!model.resizeParticipants(con, Tree.UP);
+        tellFloated(id(w), "c" + model.leaves(fc)[0].win + (top ? " top" : ""));
+    }
+    // group: the helper's "group [top]", or "" (or false) for none.
+    function tellFloated(key, group) {
+        group = group || "";
+        if ((floatedTold[key] || "") === group) return;
+        var was = !!floatedTold[key];
+        if (group) floatedTold[key] = group; else delete floatedTold[key];
+        if (was !== !!group) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloated", key, !!group);
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloated", key, group);
+    }
+
     function floatWindow(w, why) {
         var con = model.byWin[id(w)];
         if (!con || floats(con)) return;
@@ -1086,6 +1278,13 @@ var KI3 = (function () {
     // floor (a decorated window is about 150 px wide at least) applies after.
     function clampFloating(w) {
         if (w.fullScreen || w.deleted || !w.output) return;
+        var g = w.frameGeometry, size = checkSize(g.width, g.height);
+        if (size.width === g.width && size.height === g.height) return;
+        w.frameGeometry = { x: g.x, y: g.y, width: size.width, height: size.height };
+        log("FLOAT " + shortCaption(w) + ": sized to " + size.width + "x" + size.height + " (floating size limits)");
+    }
+    // floating_check_size's limits on a width and a height.
+    function checkSize(width, height) {
         var min = Rules.parseSize(Settings.get("floatingMinimumSize")) || { w: 75, h: 50 };
         var max = Rules.parseSize(Settings.get("floatingMaximumSize")) || { w: 0, h: 0 };
         var all = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
@@ -1096,12 +1295,8 @@ var KI3 = (function () {
         });
         function lo(v, def) { return v === -1 ? 1 : v === 0 ? def : v; }
         function hi(v, def) { return v === -1 ? Infinity : v === 0 ? def : v; }
-        var g = w.frameGeometry;
-        var width = Math.min(Math.max(g.width, lo(min.w, 75)), hi(max.w, all.x2 - all.x1));
-        var height = Math.min(Math.max(g.height, lo(min.h, 50)), hi(max.h, all.y2 - all.y1));
-        if (width === g.width && height === g.height) return;
-        w.frameGeometry = { x: g.x, y: g.y, width: width, height: height };
-        log("FLOAT " + shortCaption(w) + ": sized to " + width + "x" + height + " (floating size limits)");
+        return { width: Math.min(Math.max(width, lo(min.w, 75)), hi(max.w, all.x2 - all.x1)),
+                 height: Math.min(Math.max(height, lo(min.h, 50)), hi(max.h, all.y2 - all.y1)) };
     }
 
     // The plan's rule "a window that can't fit floats" (code review: a window with a 900 px
@@ -1241,7 +1436,12 @@ var KI3 = (function () {
     var memoTold = {};
     function tellMemo(ws) {
         if (!effectSeen) return;
-        var key = deskOf(ws.num).id, json = ws.nodes.length ? JSON.stringify(model.snapshot(ws)) : "";
+        var floated = ws.floating.filter(function (fc) { return fc.rect && floatedOf(fc); }).map(function (fc) {
+            return { spec: model.snapshot(fc.nodes[0]), rect: fc.rect };
+        });
+        var snap = ws.nodes.length || floated.length ? model.snapshot(ws) : null;
+        if (snap && floated.length) snap.floated = floated;
+        var key = deskOf(ws.num).id, json = snap ? JSON.stringify(snap) : "";
         if (memoTold[key] === json) return;
         memoTold[key] = json;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetMemo", key, json);
@@ -1249,13 +1449,22 @@ var KI3 = (function () {
     // At load, with the effect's answer: each workspace whose tiled windows are exactly its
     // memo's is rebuilt from the memo, i3's tree whole. Returns the workspaces done, by number.
     function adoptMemos(m) {
-        var done = {};
+        var done = {}, present = {};
         if (!m || !m.memo) return done;
+        workspace.windowList().forEach(function (w) { if (!w.deleted) present[id(w)] = true; });
         Object.keys(model.workspaces).forEach(function (n) {
             var ws = model.workspaces[n], json = m.memo[deskOf(ws.num).id];
             if (!json) return;
             var memo;
             try { memo = JSON.parse(json); } catch (e) { return; }
+            // Its floated containers whose windows are all still there, ahead of the floating
+            // windows' own adoption (adoptRest), which then finds them in place.
+            (memo.floated || []).forEach(function (f) {
+                var all = model.specWindows(f.spec).every(function (k) { return present[k]; });
+                if (!all || !f.rect || !f.rect.out) return;
+                var fc = model.adoptFloated(ws, f.spec);
+                if (fc) fc.rect = f.rect;
+            });
             var want = model.specWindows(memo).slice().sort(), have = model.leaves(ws).map(function (c) { return String(c.win); }).sort();
             if (want.length !== have.length || want.some(function (k, i) { return k !== have[i]; })) return;
             model.adopt(ws, memo);
@@ -1328,6 +1537,7 @@ var KI3 = (function () {
         if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
         tellFloating(w, false);
         tellDragFloating(key, false);
+        tellFloated(key, false);
     }
     function plasmaWs(ws) { return !!(ws && Settings.get("floatingWorkspaces")[ws.num]); }
     // A floating window's look, on its workspace (spec-window-modes R2, decisions 3 and 5):
@@ -1335,11 +1545,16 @@ var KI3 = (function () {
     // keeps the floating mark (without it, the flag is the mark everywhere); its own decoration,
     // or the frame in the floating colours with frameOnFloating. Again on every pass, so a
     // window moved to another workspace takes that workspace's layering.
-    function lookFloating(w, ws) {
+    function keepAboveOn(w, ws) {
         var key = id(w);
         var above = !(frameOn && marks && plasmaWs(ws));
         if (above) { if (!w.keepAbove) w.keepAbove = true; keptAbove[key] = true; }
         else if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+    }
+    function lookFloating(w, ws) {
+        var key = id(w);
+        keepAboveOn(w, ws);
+        tellFloated(key, false);
         if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen) takeBorder(w);
         else giveBorder(w);
         delete borderGone[key];         // the GTK 4 bounds are a tiled window's matter
@@ -1448,16 +1663,18 @@ var KI3 = (function () {
         var want = {}, helper = [], perWindow = {};
         barGroups = {};
         shownWorkspaces().forEach(function (v) {
-            (barsOf[v.ws.num] || []).forEach(function (b) {
+            (barsOf[v.ws.num] || []).concat(floatedBars[v.ws.num] || []).forEach(function (b) {
                 var con = b.con;
                 if (Tree.wsOf(con) !== v.ws) return;                // gone since its pass
                 var kids = con.nodes.filter(function (k) { return project(k); }), shown = null;
                 for (var i = 0; i < con.focus.length && !shown; i++) if (kids.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
                 if (kids.length < 2 || !shown) return;
                 var leaf = shownWindow(shown), w = leaf.win !== null ? wins[leaf.win] : null;
-                var t = w && expected[leaf.win];
-                if (!t || t.windows.indexOf(w) < 0) return;
-                var a = windowRect(t), r = windowRect(b.tile), inside = false;
+                // A tiled group's bar is its bar tile, drawn with the shown window's tile; a
+                // floated group's is the strip layFloated left above it, drawn with the window.
+                var t = w && !b.rect && expected[leaf.win];
+                if (!w || (!b.rect && (!t || t.windows.indexOf(w) < 0))) return;
+                var a = b.rect ? w.frameGeometry : windowRect(t), r = b.rect || windowRect(b.tile), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
                 // Groups nested in one another show the same window, each with its own bar (i3
                 // draws every tabbed container's decorations): the first by the window's id, the
@@ -1555,13 +1772,13 @@ var KI3 = (function () {
     // titlebars look too the window's own title bar goes while it is in the group.
     function inBarGroup(w) {
         var c = model.byWin[id(w)];
-        if (!c || c.type !== "con" || floats(c)) return false;
-        for (var p = c.parent; p && p.type !== "ws"; p = p.parent) {
+        if (!c || c.type !== "con" || floatsAlone(c)) return false;
+        for (var p = c.parent; p && p.type !== "ws" && p.type !== "floating"; p = p.parent) {
             if ((p.layout === "tabbed" || p.layout === "stacked") &&
                 p.nodes.filter(function (k) { return project(k); }).length > 1) return true;
         }
         var ws = Tree.wsOf(c);
-        return !!ws && (ws.layout === "tabbed" || ws.layout === "stacked") &&
+        return !floats(c) && !!ws && (ws.layout === "tabbed" || ws.layout === "stacked") &&
                ws.nodes.filter(function (k) { return project(k); }).length > 1;
     }
     // The effect draws the ring as the script says, so the ring and the tiles' room for it change
@@ -1874,6 +2091,7 @@ var KI3 = (function () {
     // if one was recorded and is still there, over KWin's.
     function forgetWindow(w) {
         var key = id(w), next = closingNext[key];
+        delete floatedTold[key];
         delete closingNext[key]; delete ruleRan[key]; delete connected[key]; delete closeWatched[key];
         dropWindow(w);
         if (next && (next.win === null ? next.type === "ws" : model.byWin[next.win] === next) && model.focused !== next) {
@@ -1892,6 +2110,9 @@ var KI3 = (function () {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
         if (Rules.keptOut(w)) { dropWindow(w); return; }
+        // In a floated container the window carries no floating flag of its own, and a rule's
+        // `floating disable` finds nothing to undo (floating_disable on a con not floating).
+        if (floatedOf(con)) return;
         var floating = floats(con);
         if (!ruleRan[key]) ruleRan[key] = {};
         var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
@@ -2152,6 +2373,8 @@ var KI3 = (function () {
             try { workspace.activeWindow = w; } finally { switching--; }
             if (before && workspace.currentDesktopForScreen(o) !== before) showOn(before, o);
         }
+        var fc = floatedOf(model.byWin[f.win]);
+        if (fc) raiseFloated(fc, w);
         if (warp) invoke("MoveMouseToFocus");
     }
 
@@ -2178,7 +2401,7 @@ var KI3 = (function () {
     // keys are the tree's, or a floating window KWin holds fullscreen or maximized, whose keys
     // do nothing (nudgeFloating and growFloating take them).
     function floatingWin(c) {
-        var w = c && floats(c) ? wins[c.win] : null;
+        var w = c && floatsAlone(c) ? wins[c.win] : null;
         return w && !w.fullScreen && w.maximizeMode === 0 ? w : null;
     }
     function screenAt(x, y) {
@@ -2204,10 +2427,14 @@ var KI3 = (function () {
         schedule(to);
     }
     // True when the key was a floating window's (done, or refused), false for the tree's.
+    // On a floated split or group itself (focus parent), the whole container (cmd_move_direction:
+    // con_is_floating); on a window inside it, the tree's move (tree_move, which leaves it at its
+    // edge).
     function nudgeFloating(c, d) {
-        var w = floatingWin(c);
-        if (!w) return !!c && floats(c);
-        var px = Settings.get("floatingStep"), g = w.frameGeometry;
+        var w = floatingWin(c), fc = c && c.win === null && Tree.isFloating(c) ? c.parent : null;
+        if (fc && fc.rect) w = null;
+        else if (!w) return !!c && floatsAlone(c);
+        var px = Settings.get("floatingStep"), g = w ? w.frameGeometry : fc.rect;
         var r = { x: g.x + (d === "left" ? -px : d === "right" ? px : 0),
                   y: g.y + (d === "up" ? -px : d === "down" ? px : 0), width: g.width, height: g.height };
         // Refused only when no part would be on a monitor (i3's floating_reposition).
@@ -2216,15 +2443,36 @@ var KI3 = (function () {
             return r.x < o.x + o.width && r.x + r.width > o.x && r.y < o.y + o.height && r.y + r.height > o.y;
         });
         if (!on) return true;
+        var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r), ws = Tree.wsOf(c);
+        if (fc) {
+            fc.rect.x = r.x; fc.rect.y = r.y;
+            if (s && s !== outputOf(ws)) {
+                fc.rect.out = outGeometry(s);
+                var to = wsModel(deskNum(workspace.currentDesktopForScreen(s)));   // floating_maybe_reassign_ws
+                model.moveToWorkspace(c, to);
+                wantFocus();
+                schedule(to);
+            }
+            schedule(Tree.wsOf(c));
+            return true;
+        }
         w.frameGeometry = r;
         // i3's get_output_from_rect: the output holding its centre, else the one it overlaps most.
-        var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r), ws = Tree.wsOf(c);
         if (s && s !== outputOf(ws)) joinShownWorkspace(c, w, s);
         return true;
     }
+    // Inside a floated split or group, the whole container (cmd_resize: con_inside_floating).
     function growFloating(c, what, sign) {
-        var w = floatingWin(c);
-        if (!w) return !!c && floats(c);
+        var w = floatingWin(c), fc = floatedOf(c);
+        if (!w && fc && fc.rect) {
+            var d = sign * Settings.get("floatingStep");
+            var size = checkSize(Math.max(1, fc.rect.width + (what === "width" ? d : 0)),
+                                 Math.max(1, fc.rect.height + (what === "height" ? d : 0)));
+            fc.rect.width = size.width; fc.rect.height = size.height;
+            schedule(Tree.wsOf(c));
+            return true;
+        }
+        if (!w) return !!c && floatsAlone(c);
         if (!w.resizeable) return true;
         var px = sign * Settings.get("floatingStep"), g = w.frameGeometry;
         w.frameGeometry = { x: g.x, y: g.y, width: Math.max(1, g.width + (what === "width" ? px : 0)),
@@ -2251,7 +2499,8 @@ var KI3 = (function () {
         dragTold = {};
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
-        if (on) for (var k in model.byWin) if (floats(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
+        if (on) for (var k in model.byWin) if (floatsAlone(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
+        if (on) { var was = floatedTold; floatedTold = {}; for (var f in was) if (wins[f]) tellFloated(f, was[f]); }
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
         // windows, the frame's room included; spec-tiling-resize.md, B).
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
@@ -2560,7 +2809,7 @@ var KI3 = (function () {
             var tab = side === "top" && tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con) ? tabDrag.con : null;
             tabDrag = null;
             if (tab) con = tab;
-            var rz = con && con.type === "con" && !floats(con) && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
+            var rz = con && con.type === "con" && !floatsAlone(con) && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
             if (!rz) { log("RESIZE not started: nothing to resize against" + (side ? " on the " + side : "")); callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel"); return; }
             var timer = new QTimer();
             timer.interval = 16;
@@ -2712,9 +2961,15 @@ var KI3 = (function () {
         "Layout Tabbed": function (c) { if (c) model.setLayout(c, "tabbed"); },
         "Focus Parent": function () { model.focusParent(); },
         "Floating Toggle": function (c) {
-            // A container floated whole needs its layout here and the helper's mouse (OPEN.md
-            // item 73, steps 3-4): until they land, on a container it does nothing, as before.
-            if (!c || c.win === null) return;
+            if (!c || c.type === "ws") return;
+            // A split or a group (focus parent): floated whole, or tiled again. Floating one needs
+            // the helper, which moves it whole (plan.md "The mouse"); without it, nothing, as the
+            // resize mode's key (§8 K4).
+            if (c.win === null) {
+                if (!Tree.isFloating(c) && helperLoaded === false) { log("FLOAT a container: not without the helper"); return; }
+                toggleFloated(c);
+                return;
+            }
             var w = wins[c.win];
             // A sticky window made tiling (§3 X4, C of the stage's spec): off all desktops first,
             // onto its workspace's; KWin's tiles belong to one desktop (≠ i3, which keeps the flag).
@@ -3229,7 +3484,7 @@ var KI3 = (function () {
             if (closed) return;
             closed = true;
             var lines = [];
-            if (helper === false) lines.push("Without the helper: no tiling drag or resize with the mouse, no focus from the frame, no resize mode (Meta+R), no terminal key (Meta+Return), no keys fitted to your keyboard layout, and the Configure form's Apply needs Meta+Shift+C.");
+            if (helper === false) lines.push("Without the helper: no tiling drag or resize with the mouse, no focus from the frame, no resize mode (Meta+R), no floating a container whole, no terminal key (Meta+Return), no keys fitted to your keyboard layout, and the Configure form's Apply needs Meta+Shift+C.");
             if (effect === false) lines.push("Without the effect: no frame (tiling windows keep their title bars), no drag highlight, no atomic layout changes.");
             if (lines.length) lines.push("make plugin-install builds and loads them.");
             reportClose("kwin-i3's plugins aren't loaded", lines);
@@ -3238,7 +3493,7 @@ var KI3 = (function () {
         later(3000, close);
         callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
                  guard("helper keys", function (loaded) {
-            helper = String(loaded).indexOf("kwini3helper") >= 0;
+            helper = helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
             if (!helper) log("HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing");
             heard();
         }));
@@ -3691,6 +3946,8 @@ var KI3 = (function () {
                          guard("Tiling Drag", startDrag));
         registerShortcut("kwin-i3 Tiling Resize", "kwin-i3: tiling resize (run by the mouse, no key)", "",
                          guard("Tiling Resize", startResize));
+        registerShortcut("kwin-i3 Floated Moved", "kwin-i3: a floated container moved (run by the mouse, no key)", "",
+                         guard("Floated Moved", floatedMoved));
         registerShortcut("kwin-i3 Tab Click", "kwin-i3: a group's tab clicked (run by the mouse, no key)", "",
                          guard("Tab Click", tabEvent));
         // The helper's resize mode changed (plugin/resizemode.cpp): read it. Not in registerKeys,

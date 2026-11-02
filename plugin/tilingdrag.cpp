@@ -77,6 +77,11 @@ void TilingDragBus::SetFloating(const QString &id, bool on)
     m_drag->setFloating(id, on);
 }
 
+void TilingDragBus::SetFloated(const QString &id, const QString &group)
+{
+    m_drag->setFloated(id, group);
+}
+
 TilingDragKeys::TilingDragKeys(TilingDrag *drag)
     : InputEventFilter(InputFilterOrder::TabBox)
     , m_drag(drag)
@@ -205,12 +210,17 @@ TilingDrag::TilingDrag()
 void TilingDrag::watchMoves(Window *window)
 {
     QObject::connect(window, &Window::interactiveMoveResizeStarted, &m_context, [this, window] {
-        if (!m_on || !window->isInteractiveMove() || window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+        // In a floated container too: i3 ignores the request of a window whose own con isn't
+        // floating (handlers.c, _NET_WM_MOVERESIZE), and KWin would move that one window alone.
+        // Not during the helper's own group move, which moves windows by Window::move.
+        auto ours = [this](Window *w) {
+            return w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom) || m_floated.contains(w->internalId().toString());
+        };
+        if (!m_on || !window->isInteractiveMove() || !ours(window)) {
             return;
         }
-        QTimer::singleShot(0, &m_context, [window = QPointer<Window>(window)] {
-            if (window && !window->isDeleted() && window->isInteractiveMove()
-                && window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)) {
+        QTimer::singleShot(0, &m_context, [window = QPointer<Window>(window), ours] {
+            if (window && !window->isDeleted() && window->isInteractiveMove() && ours(window)) {
                 window->cancelInteractiveMoveResize();
             }
         });
@@ -261,7 +271,119 @@ void TilingDrag::setOn(bool on)
     m_offUnanswered = false;
     if (!on) {
         m_floating.clear();     // kwin-i3 gone: a new instance tells its own
+        m_floated.clear();
     }
+}
+
+void TilingDrag::setFloated(const QString &id, const QString &group)
+{
+    if (group.isEmpty()) {
+        m_floated.remove(id);
+    } else {
+        m_floated.insert(id, group);
+    }
+}
+
+bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resize)
+{
+    const QString group = m_floated.value(window->internalId().toString()).section(QLatin1Char(' '), 0, 0);
+    m_group.clear();
+    m_groupStart.clear();
+    QRectF all;
+    for (Window *w : workspace()->windows()) {
+        if (w->isDeleted() || w->isMinimized() || w->isFullScreen()
+            || m_floated.value(w->internalId().toString()).section(QLatin1Char(' '), 0, 0) != group) {
+            continue;
+        }
+        const RectF f = w->frameGeometry();
+        const QRectF frame(f.x(), f.y(), f.width(), f.height());
+        m_group << w;
+        m_groupStart << frame;
+        all = all.isNull() ? frame : all.united(frame);
+    }
+    if (m_group.isEmpty() || all.width() <= 0 || all.height() <= 0) {
+        return false;
+    }
+    // i3's step 3: the press focuses and raises the whole container (con_raise), the pressed
+    // window last.
+    window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+    for (const auto &w : std::as_const(m_group)) {
+        if (w && w != window) {
+            workspace()->raiseWindow(w);
+        }
+    }
+    workspace()->raiseWindow(window);
+    m_groupUnion = all;
+    m_groupPress = event->position;
+    m_groupResize = resize;
+    m_groupLeft = event->position.x() < all.center().x();
+    m_groupTop = event->position.y() < all.center().y();
+    m_groupActive = true;
+    m_taken |= event->button;
+    m_button = event->button;
+    if (!m_keysInstalled && input()) {
+        input()->installInputEventFilter(&m_keys);
+        m_keysInstalled = true;
+    }
+    return true;
+}
+
+// Each motion places every window of the container: moved by the pointer's travel, or scaled
+// into the resized whole (kwin-i3 lays the tree out exactly at the release).
+void TilingDrag::groupMotion(const QPointF &pos)
+{
+    const QPointF d = pos - m_groupPress;
+    QRectF to = m_groupUnion;
+    if (!m_groupResize) {
+        to.translate(d);
+    } else {
+        if (m_groupLeft) {
+            to.setLeft(std::min(to.left() + d.x(), to.right() - 75));
+        } else {
+            to.setRight(std::max(to.right() + d.x(), to.left() + 75));
+        }
+        if (m_groupTop) {
+            to.setTop(std::min(to.top() + d.y(), to.bottom() - 50));
+        } else {
+            to.setBottom(std::max(to.bottom() + d.y(), to.top() + 50));
+        }
+    }
+    const double sx = to.width() / m_groupUnion.width(), sy = to.height() / m_groupUnion.height();
+    for (int i = 0; i < m_group.size(); ++i) {
+        Window *w = m_group[i];
+        if (!w || w->isDeleted()) {
+            continue;
+        }
+        const QRectF &s = m_groupStart[i];
+        if (!m_groupResize) {
+            w->move(s.topLeft() + d);
+        } else {
+            w->moveResize(RectF(to.x() + (s.x() - m_groupUnion.x()) * sx, to.y() + (s.y() - m_groupUnion.y()) * sy,
+                                s.width() * sx, s.height() * sy));
+        }
+    }
+}
+
+// The release, or a key or Escape (i3's drag_pointer reverts on a key: the windows go back).
+void TilingDrag::endGroup(bool revert)
+{
+    if (!m_groupActive) {
+        return;
+    }
+    m_groupActive = false;
+    if (revert) {
+        for (int i = 0; i < m_group.size(); ++i) {
+            if (m_group[i] && !m_group[i]->isDeleted()) {
+                m_group[i]->moveResize(RectF(m_groupStart[i]));
+            }
+        }
+    }
+    m_group.clear();
+    m_groupStart.clear();
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    msg << QStringLiteral("kwin-i3 Floated Moved");
+    QDBusConnection::sessionBus().asyncCall(msg);
 }
 
 void TilingDrag::setFloating(const QString &id, bool on)
@@ -305,6 +427,7 @@ void TilingDrag::cancel()
 // its release ours.
 void TilingDrag::cancelFromOutside()
 {
+    endGroup(true);
     if (m_phase == Phase::Pressed || m_phase == Phase::Drag) {
         cancel();
     }
@@ -370,6 +493,10 @@ bool TilingDrag::pointerMotion(PointerMotionEvent *event)
     if (!dragging()) {
         return false;
     }
+    if (m_groupActive) {
+        groupMotion(event->position);
+        return true;
+    }
     if (m_phase == Phase::Pressed && m_window
         && (!m_threshold || (event->position - m_start).manhattanLength() >= QGuiApplication::styleHints()->startDragDistance())) {
         begin();
@@ -387,6 +514,12 @@ bool TilingDrag::pointerMotion(PointerMotionEvent *event)
 // Escape cancels, as i3's drag_pointer reverts; the button's release stays this filter's.
 bool TilingDrag::keyboardKey(KeyboardKeyEvent *event)
 {
+    if (m_groupActive && event->key == Qt::Key_Escape) {
+        if (event->state == KeyboardKeyState::Pressed) {
+            endGroup(true);
+        }
+        return true;
+    }
     if (m_phase != Phase::Drag || event->key != Qt::Key_Escape) {
         return false;
     }
@@ -403,6 +536,12 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return false;
         }
         m_taken &= ~event->button;
+        if (m_groupActive && event->button == m_button) {
+            endGroup(false);
+            pressDone();
+            hoverAt(event->position);
+            return true;
+        }
         // The drag button's release drops; so does any other button's while a drag runs (i3's
         // drain_drag_events: any release ends it at the pointer, §9 G7). The drag button's own
         // release afterwards is still ours, taken.
@@ -441,6 +580,32 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
     const bool metaShift = mods == (Qt::MetaModifier | Qt::ShiftModifier);
     const bool tiled = window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+    const QString floated = m_floated.value(window->internalId().toString());
+    if (!floated.isEmpty() && !window->isFullScreen()) {
+        // In a floated container (click.c route_click): the floating modifier, Shift or not
+        // (:284), moves it whole (step 5); a title bar resizes against the neighbour above, and
+        // moves it whole only where there is none (steps 6, 7); the client's press is the client's.
+        if (mods == Qt::MetaModifier || metaShift) {
+            return pressGroup(window, event, false);
+        }
+        if (mods != Qt::NoModifier || !window->decoration() || window->decoration()->sectionUnderMouse() != Qt::TitleBarArea) {
+            return false;
+        }
+        const QPointF p = event->position - window->pos();
+        QMouseEvent e(QEvent::MouseButtonPress, p, event->position, event->button, event->buttons, event->modifiers);
+        e.setTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(event->timestamp).count());
+        e.setAccepted(false);
+        QCoreApplication::sendEvent(window->decoration(), &e);
+        if (e.isAccepted()) {
+            return true;    // a title-bar button
+        }
+        if (floated.endsWith(QLatin1String(" top"))) {
+            window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+            takePress(window, Qt::LeftButton, event->position, true, QStringLiteral("top"), false);
+            return true;
+        }
+        return pressGroup(window, event, false);
+    }
     if (metaShift && !tiled) {
         // i3's floating modifier ignores Shift on the left button (click.c:284): a floating window
         // of kwin-i3's moves as with Meta alone, KWin's window action (§9 F1), which KWin itself
@@ -539,6 +704,9 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
         return false;
     }
     Window *window = input()->pointer()->hover();
+    if (window && !window->isDeleted() && !window->isFullScreen() && m_floated.contains(window->internalId().toString())) {
+        return pressGroup(window, event, true);    // a floated container resized whole (click.c, step 6)
+    }
     if (window && !window->isDeleted() && !window->isDesktop() && !GapStrips::isStrip(window)) {
         if (window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
             return false;

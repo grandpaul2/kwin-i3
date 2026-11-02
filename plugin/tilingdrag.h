@@ -19,6 +19,9 @@
 #include <QObject>
 #include <QPointer>
 #include <QPointF>
+#include <QHash>
+#include <QList>
+#include <QRectF>
 #include <QSet>
 #include <QTimer>
 
@@ -53,6 +56,10 @@ public Q_SLOTS:
     // move, which KWin's window action (Meta alone) doesn't start (§9 F1). Told again after every
     // SetOn(true).
     void SetFloating(const QString &id, bool on);
+    // A window in a split or a group floated whole: "group" (its container's key), with " top"
+    // when it has a neighbour above; "" for none. Its presses are kwin-i3's, moving or resizing
+    // the whole container (plan.md "The mouse"), where KWin's would move one window.
+    void SetFloated(const QString &id, const QString &group);
     // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
     // window the bar is drawn with, "#N" after it for that window's further bar, the rect logical
     // and global, n tabs or rows of equal size).
@@ -142,6 +149,7 @@ public:
     std::function<void()> onResizeGapChanged;   // the gap strips follow it (gapstrips.h)
     void warp(int x, int y);
     void setFloating(const QString &id, bool on);
+    void setFloated(const QString &id, const QString &group);
     void cancelFromOutside();
     bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
     TilingDragGrab *grab() { return &m_grab; }
@@ -160,6 +168,13 @@ private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
 
     bool pressResize(KWin::PointerButtonEvent *event);
+    // A floated container moved (Meta+left, its title bar) or resized (Meta+right) whole: its
+    // windows step together on every motion, as one (i3's floating_drag_window,
+    // floating_resize_window from the corner nearest the press); at the release kwin-i3 reads the
+    // new rect back ("Floated Moved").
+    bool pressGroup(KWin::Window *window, KWin::PointerButtonEvent *event, bool resize);
+    void groupMotion(const QPointF &pos);
+    void endGroup(bool revert);
     void begin();
     void cancel();
     void hoverAt(const QPointF &pos);
@@ -178,6 +193,14 @@ private:
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
     QSet<QString> m_floating;         // kwin-i3's floating windows, by internal id (SetFloating)
+    QHash<QString, QString> m_floated;   // SetFloated: internal id -> "group" or "group top"
+    bool m_groupActive = false;
+    bool m_groupResize = false;
+    bool m_groupLeft = false, m_groupTop = false;   // the corner a resize moves
+    QList<QPointer<KWin::Window>> m_group;
+    QList<QRectF> m_groupStart;       // each window's frame at the press
+    QRectF m_groupUnion;              // all of them together at the press
+    QPointF m_groupPress;
     KConfigWatcher::Ptr m_watcher;
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty

@@ -321,6 +321,7 @@ void Hold::grabClose(EffectWindow *w)
 void Hold::onDeleted(EffectWindow *w)
 {
     m_floating.remove(w->internalId().toString());
+    m_floated.remove(w->internalId().toString());
     m_rings.remove(w->internalId().toString());
     eraseBars(w->internalId().toString());
     m_indicatorShown.remove(w->internalId().toString());
@@ -1235,6 +1236,22 @@ PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderView
     KI3_PAINTED;
 }
 
+void Hold::SetFloated(const QString &id, bool on)
+{
+    if (on && windowById(id)) {
+        m_floated.insert(id);
+    } else {
+        m_floated.remove(id);
+    }
+    const auto windows = effects->stackingOrder();
+    for (EffectWindow *w : windows) {
+        if (w->internalId().toString() == id) {
+            updateRadius(w);
+            repaintRing(w, w->frameGeometry());
+        }
+    }
+}
+
 void Hold::SetFloating(const QString &id, bool on)
 {
     if (on && windowById(id)) {
@@ -1252,8 +1269,9 @@ void Hold::SetFloating(const QString &id, bool on)
 
 // ---- the frame --------------------------------------------------------------------------------
 
-// A window in one of kwin-i3's tiles (KWin's custom tiling; quick tiling is a Plasma window's)
-// with no server decoration: kwin-i3 took it, or the client draws its own (CSD), framed alike.
+// A window in one of kwin-i3's tiles (KWin's custom tiling; quick tiling is a Plasma window's),
+// or in a split floated whole (SetFloated), with no server decoration: kwin-i3 took it, or the
+// client draws its own (CSD), framed alike.
 bool Hold::framed(EffectWindow *w) const
 {
     Window *win = w->window();
@@ -1261,7 +1279,8 @@ bool Hold::framed(EffectWindow *w) const
         return false;
     }
     return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom)
-        || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+        || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
+        || m_floated.contains(w->internalId().toString());
 }
 
 // Rounded while framed and roundedCorners is on; set back to none when it stops being either,
