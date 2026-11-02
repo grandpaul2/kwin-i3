@@ -131,17 +131,35 @@ KCM.SimpleKCM {
         }
     }
 
-    component FrameColour: KQC.ColorButton {
-        Layout.preferredWidth: root.frameColumn   // a bar as wide as Frame's dropdowns
+    // A frame colour's row: a bar, then a Default button, together as wide as Frame's dropdowns.
+    // The button greys out at the default (disabled, not hidden: style guide §5).
+    component ColourRow: RowLayout {
         property string settingName
-        property bool applies: true
-        showAlphaChannel: false
-        color: root.settings[settingName]
-        onAccepted: (c) => root.settings[settingName] = c.toString()
-        KCM.SettingStateBinding {
-            configObject: root.settings
-            settingName: parent.settingName
-            extraEnabledConditions: kcm.frameAvailable && parent.applies
+        property string name                  // the bar's accessible name
+        property color shown: root.settings[settingName]
+        readonly property string defaultValue: root.settings["default" + settingName[0].toUpperCase() + settingName.slice(1) + "Value"]
+        readonly property bool applies: kcm.frameAvailable && root.frameDrawn
+        Kirigami.FormData.buddyFor: bar
+        spacing: Kirigami.Units.smallSpacing
+        KQC.ColorButton {
+            id: bar
+            Layout.preferredWidth: root.frameColumn - defaultButton.implicitWidth - parent.spacing
+            showAlphaChannel: false
+            color: parent.shown
+            onAccepted: (c) => root.settings[parent.settingName] = c.toString()
+            Accessible.name: parent.name
+            KCM.SettingStateBinding {
+                configObject: root.settings
+                settingName: bar.parent.settingName
+                extraEnabledConditions: bar.parent.applies
+            }
+        }
+        QQC2.Button {
+            id: defaultButton
+            text: i18nc("@action:button a colour back to its default", "Default")
+            enabled: parent.applies && root.settings[parent.settingName] !== parent.defaultValue
+            onClicked: root.settings[parent.settingName] = parent.defaultValue
+            Accessible.name: i18nc("@action:button", "%1: default", parent.name)
         }
     }
 
@@ -468,30 +486,22 @@ KCM.SimpleKCM {
         // i3's colour classes, two (focused_inactive left out; docs/behaviour.md §7 L3), one
         // colour a row. The split indicator shows only until the focus leaves its window (L4), so
         // the unfocused class's indicator is almost never seen: it keeps its default, off the page.
-        FrameColour {
+        ColourRow {
             Kirigami.FormData.label: i18nc("@label", "Focused frame:")
             settingName: "frameActive"
-            applies: root.frameDrawn
-            Accessible.name: i18nc("@action:button", "Frame colour of the focused window")
+            name: i18nc("@action:button", "Frame colour of the focused window")
         }
-        FrameColour {
+        ColourRow {
             Kirigami.FormData.label: i18nc("@label", "Unfocused frame:")
             settingName: "frameInactive"
-            applies: root.frameDrawn
-            Accessible.name: i18nc("@action:button", "Frame colour of unfocused windows")
+            name: i18nc("@action:button", "Frame colour of unfocused windows")
         }
-        RowLayout {
+        ColourRow {
             Kirigami.FormData.label: i18nc("@label", "Split indicator:")
-            Kirigami.FormData.buddyFor: indicatorBox
-            spacing: Kirigami.Units.smallSpacing
-            FrameColour {
-                id: indicatorBox
-                settingName: "frameIndicatorActive"
-                applies: root.frameDrawn
-                // Empty in kwinrc: the frame's colour, shown as such.
-                color: root.settings.frameIndicatorActive || root.settings.frameActive
-                Accessible.name: i18nc("@action:button", "Split indicator colour")
-            }
+            settingName: "frameIndicatorActive"
+            // Empty in kwinrc: the frame's colour, shown as such.
+            shown: root.settings.frameIndicatorActive || root.settings.frameActive
+            name: i18nc("@action:button", "Split indicator colour")
             Help {
                 topic: i18nc("@item help topic", "the split indicator")
                 toolTipText: i18n("Marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused indicator")
