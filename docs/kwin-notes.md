@@ -278,6 +278,13 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - **Input filter order** (`/usr/include/kwin/input.h`): … TabBox, GlobalShortcut, Effects, …,
   Decoration, WindowAction … A filter at Effects never sees a bound key; key filters that must see
   shortcuts go before GlobalShortcut. An InputEventFilter can't hold an event and replay it.
+  A filter ahead of yours can take a button's release (the lock screen), so a grab ended only by
+  that release never ends: KWin updates the held buttons before running the filters
+  (6.7.5 `pointer_input.cpp:302`, then `:317`), so the next event's `buttons` tells it was lost.
+- **KWin scissors no effect's own GL draws** (`itemrenderer_opengl.cpp` enables the scissor only
+  inside `renderItem`): an overlay drawn in `paintWindow` or `paintScreen` must clip itself to the
+  paint's `deviceRegion`, or a partial repaint blends it again over pixels already holding it.
+- A blocking D-Bus call in a plugin stalls the whole compositor: only async calls.
 - An effect's override cursor shows only while it holds the mouse (`startMouseInterception`); then
   the effects filter takes pointer events before Decoration-order filters. Overview, Grid and
   Window View (`QuickSceneEffect`) hold it the whole time they run (`quickeffect.cpp` 6.7.5:564,
