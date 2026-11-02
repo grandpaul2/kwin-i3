@@ -39,10 +39,14 @@ KCM.SimpleKCM {
 
     // One side of a row: ticked where the setting is that side's; ticking it picks that side
     // (and unticks the other). Clicking a ticked box leaves it ticked: one side is always chosen.
+    // kwin-i3's side is always one thing, the setting turned on, so its box says "Enable"; the
+    // Plasma side is whatever the reader had, so it says nothing.
     component SideBox: QQC2.CheckBox {
         property var row
         property bool kwini3                 // true: the kwin-i3 column
         readonly property bool chosen: !!kcm.setup.wanted[row.id] === kwini3
+        text: kwini3 ? i18nc("@option:check kwin-i3's way for a Plasma setting", "Enable") : ""
+        font: Kirigami.Theme.smallFont
         checked: chosen
         onClicked: { kcm.setup.setWanted(row.id, kwini3); checked = Qt.binding(() => chosen) }
         Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
