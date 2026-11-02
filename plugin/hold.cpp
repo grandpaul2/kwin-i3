@@ -1581,6 +1581,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
+    m[QStringLiteral("floated")] = QStringList(m_floated.cbegin(), m_floated.cend());
     QStringList bars, barRects;
     for (const auto &[id, bar] : m_bars) {
         bars << id;

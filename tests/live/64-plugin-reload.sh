@@ -44,4 +44,16 @@ load_kwin_i3
 check "the script reloaded"                 wait_log 'kwin-i3 loaded$' "$m"
 check "  the tree whole, from the memo"     wait_log '^.{9}MEMO 1 ' "$m"
 check "  H[a T[b c]]"                       wait_tree 1 "H[a T[b c*]]" "$m"
+
+# A container floated whole outlives a new effect too: its windows told again as floated (the
+# effect's load asks a reconfigure, whose tellDrag tells every one anew), their frame and the
+# hold the effect's only while it knows them.
+key "Focus Parent"
+key "Floating Toggle"
+check "T[b c] floated whole"                wait_tree 1 "H[a] ~T[b c]*"
+floated() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -q '"floated" as 2 '; }
+check "  the effect knows b and c"          poll floated
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s "$eid" >/dev/null
+busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s "$eid" >/dev/null
+check "the effect reloaded, told them again" poll floated
 finish
