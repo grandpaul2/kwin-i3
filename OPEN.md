@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-01** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main's script and plugins as loaded at d21a4fd.
+main's script as loaded at 0e19920, its plugins at acccd9d.
 
 ## Stage
 
@@ -93,3 +93,10 @@ way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
 bullet in Install step 7 ("For i3's feel", beside "More than one monitor"): workspaces of a
 monitor that goes away stay on the other for good, as in i3; a workspace output per number, with
 the other screen second, brings them back.
+
+**83. A tiled fullscreen window's neighbours** (found 2026-11-01 with item 73's floated case).
+i3 renders a fullscreen con alone and returns (`render.c:127-144`), its siblings keeping their
+rects. The tiled projection leaves a fullscreen window out once KWin no longer keeps it in a tile
+(`kwin.js` `visibleLeaf`: fullscreen with no tile), so after a rebuild its neighbours may take
+its space, and give it back when it leaves fullscreen. Next: a test-KWin probe (a fullscreen
+window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
