@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # needs: plugin
-# Window modes, pieces (iii)+(iv): a workspace of Plasma windows
+# Window modes, pieces (iii)+(iv): a workspace whose new windows float
 # (floatingWorkspaces), the floating mark kept by the effect (decision 5c), the frame on floating
 # windows (frameOnFloating).
 source "$(dirname "$0")/lib.sh"
@@ -20,12 +20,12 @@ load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "frame on"                            wait_log '^.{9}FRAME on'
 
-# 1. Workspace 3 opens Plasma windows: floating, its title bar, not kept above.
+# 1. Workspace 3 opens Plasma windows: floating, its title bar, kept above as everywhere (§7 L12).
 key "Workspace 3"
 client --title p --color red
 check "p opens floating on workspace 3"     poll floating p 3
 check "  with its title bar"                prop_is p noBorder false
-check "  not kept above (a Plasma window)"  prop_is p keepAbove false
+check "  kept above, as i3"                 prop_is p keepAbove true
 check "  the effect knows it floats"        poll effect_floats p
 
 # 2. Meta+Shift+Space: i3's mode, and back.
@@ -35,16 +35,16 @@ check "  borderless"                        poll prop_is p noBorder true
 key "Floating Toggle"
 check "p floats again, its title bar"       poll prop_is p noBorder false
 
-# 3. Moved to an i3 workspace it stays floating, and floats above as in i3; back, not above.
+# 3. Moved to another workspace it stays floating and above; back, still above.
 key "Move to Workspace 1"
 check "p on workspace 1, floating"          poll floating p 1
 check "  kept above there"                  poll prop_is p keepAbove true
 key "Workspace 1"
 key "Move to Workspace 3"
-check "back on 3: not kept above"           poll prop_is p keepAbove false
+check "back on 3: still kept above"         poll prop_is p keepAbove true
 key "Workspace 3"
 
-# 4. A reload: p is still floating, by the effect's mark (it isn't kept above).
+# 4. A reload: p is still floating, by the effect's mark.
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 m=$(mark); load_kwin_i3
 check "reloaded, with the effect's set"     wait_log '^.{9}ADOPTED with the effect' "$m"

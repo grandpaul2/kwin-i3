@@ -1231,8 +1231,7 @@ var KI3 = (function () {
             r.y = Math.round(a.y + (a.height - r.height) / 2);
         }
     }
-    // A container with a window placed: one not minimized, not fullscreen out of the tiles.
-    // A fullscreen window keeps its share: i3 renders the fullscreen con alone and returns
+    // A container with a window placed: one not minimized. A fullscreen window keeps its share: i3 renders the fullscreen con alone and returns
     // (render.c:127-144), its siblings keeping their rects.
     function shows(k) {
         if (k.win === null) return k.nodes.some(shows);
@@ -1661,17 +1660,12 @@ var KI3 = (function () {
         tellDragFloating(key, false);
         tellFloated(key, false);
     }
-    function plasmaWs(ws) { return !!(ws && Settings.get("floatingWorkspaces")[ws.num]); }
-    // A floating window's look, on its workspace (spec-window-modes R2, decisions 3 and 5):
-    // above the tiled ones as in i3, except on a workspace of Plasma windows while the effect
-    // keeps the floating mark (without it, the flag is the mark everywhere); its own decoration,
-    // or the frame in the floating colours with frameOnFloating. Again on every pass, so a
-    // window moved to another workspace takes that workspace's layering.
+    // A floating window's look: above the tiling ones on every workspace, as i3 (§7 L12); its
+    // own decoration, or the frame in the floating colours with frameOnFloating. Again on every
+    // pass, which also takes back a Keep Above the user cleared.
     function keepAboveOn(w, ws) {
-        var key = id(w);
-        var above = !(frameOn && marks && plasmaWs(ws));
-        if (above) { if (!w.keepAbove) w.keepAbove = true; keptAbove[key] = true; }
-        else if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+        if (!w.keepAbove) w.keepAbove = true;
+        keptAbove[id(w)] = true;
     }
     function lookFloating(w, ws) {
         var key = id(w);
@@ -1986,6 +1980,15 @@ var KI3 = (function () {
         if (!w.deleted && w.noBorder) w.noBorder = false;
     }
 
+    // What a rule's `__focused__` compares with (Rules.matches): the model's focused window and
+    // workspace, before a newcomer takes the focus, as i3's `focused` at manage.
+    function focusCtx(ctx) {
+        ctx = ctx || {};
+        var f = model.focused, fw = focusedWs();
+        ctx.focused = f && f.win !== null && f.win !== undefined ? wins[f.win] || null : null;
+        ctx.focusedWs = fw ? fw.num : null;
+        return ctx;
+    }
     // The focused workspace, or null (no focus yet).
     function focusedWs() {
         var f = model.focused;
@@ -2011,7 +2014,7 @@ var KI3 = (function () {
         });
         // i3's `assign` first (§11 N12; manage.c:289-317): to workspace N, shown or not, or to an
         // output's visible workspace; an output that isn't connected leaves the rule aside.
-        var t = null, assigned = Rules.assignFor(w);
+        var t = null, assigned = Rules.assignFor(w, focusCtx());
         if (assigned && assigned.workspace) {
             Workspaces.ensure(assigned.workspace);
             if (deskOf(assigned.workspace)) {
@@ -2020,8 +2023,10 @@ var KI3 = (function () {
             }
         }
         // An output assignment on top, as i3's con_move_to_output_name after the workspace one:
-        // that output's visible workspace, if the output is here.
-        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, fws ? outputOf(fws) : workspace.activeScreen) : null;
+        // that output's visible workspace, if the output is here. A direction counts from the
+        // window's own output, the workspace rule's if one matched (get_output_for_con).
+        var from = t ? outputOfNum(t.ws) : fws ? outputOf(fws) : workspace.activeScreen;
+        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, from) : null;
         if (assignedOut) {
             var shown = deskNum(workspace.currentDesktopForScreen(assignedOut));
             if (shown >= 1) t = { ws: shown, why: "assign" };
@@ -2124,7 +2129,7 @@ var KI3 = (function () {
     function adoptWindow(w, fresh) {
         var key = id(w);
         if (wins[key]) return;
-        // Kept out of the tree by its kind (dock, root, override-redirect, sticky; §3): a Normal
+        // Kept out of the tree by its kind (dock, root, override-redirect; §3): a Normal
         // one is watched, since a later change of class, transience or desktops can bring it in
         // (reclassify; code review).
         if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
@@ -2135,7 +2140,7 @@ var KI3 = (function () {
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, focusCtx({ ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] }));
         // A window on all desktops that a rule tiles (`floating disable`, as i3's for_window over
         // its sticky float): off all desktops onto its workspace first, KWin's tiles being one
         // desktop's (§3 R3, X4).
@@ -2286,7 +2291,7 @@ var KI3 = (function () {
         if (floatedOf(con)) return;
         var floating = floats(con);
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, focusCtx({ ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] }));
         var wantFloating = kind !== "tiling";      // "sticky" floats too
         if (wantFloating === floating) return;
         if (!wantFloating && con.sticky) unstick(w, con);     // a rule tiles it: off all desktops first (X4)

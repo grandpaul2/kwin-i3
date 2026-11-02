@@ -106,7 +106,8 @@ var Settings = (function () {
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
         // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces taken, given back
         // without (rejected, the default stood in silently).
-        if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz ? sz[1] + "x" + sz[2] : null; }
+        // Below -1 is no size (Rules.parseSize): refused here, so it logs its WARN.
+        if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz && +sz[1] >= -1 && +sz[2] >= -1 ? sz[1] + "x" + sz[2] : null; }
         if (type === "text") return text;                                              // the rules, parsed by Rules
         if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
         // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
@@ -737,12 +738,15 @@ var Tree = (function () {
     // the caller's switch); the one that held the focus is activated again, then the focused
     // workspace's own focus is restored, so pushing never changes the focused workspace unless
     // the sticky window is on it (then it keeps the focus, as i3). Returns the windows moved.
+    // In i3's order (output.c:90-117): the output's workspaces by their focus stack, and on each
+    // its floating containers by its own focus stack.
     M.pushSticky = function (ws, others, oldFocus) {
-        var self = this, moved = [];
-        others.forEach(function (from) {
+        var self = this, moved = [], order = ws.parent ? ws.parent.focus : [];
+        function rank(w) { var i = order.indexOf(w); return i < 0 ? order.length : i; }
+        others.slice().sort(function (a, b) { return rank(a) - rank(b); }).forEach(function (from) {
             if (from === ws) return;
-            from.floating.slice().forEach(function (fc) {
-                if (!isSticky(fc)) return;
+            from.focus.slice().forEach(function (fc) {
+                if (!isFloatingCon(fc) || !isSticky(fc)) return;
                 var wasFocus = !!oldFocus && fc === oldFocus.parent;
                 self.moveToWorkspace(fc, ws, !wasFocus);
                 moved = moved.concat(windowsIn(fc));
@@ -915,6 +919,9 @@ var Tree = (function () {
             }
         }
         con.nodes.slice().forEach(function (c) { flattenCon(model, c); });
+        // tree.c:740-746: then the floating containers, so a redundant pair inside a split
+        // floated whole goes too (a floating container's layout is h, as i3's, floating.c:292).
+        if (con.type === "ws") con.floating.slice().forEach(function (c) { flattenCon(model, c); });
     }
 
     M.flatten = function () {
@@ -1420,8 +1427,10 @@ var Tree = (function () {
 
     // cmd_focus_window_mode("mode_toggle")
     M.focusModeToggle = function () {
-        if (!this.focused || this.focused.type === "ws") return null;
-        var ws = wsOf(this.focused), toFloating = !insideFloating(this.focused);
+        if (!this.focused) return null;
+        // From the workspace itself (focus parent up to it), i3 goes to the floating windows:
+        // con_inside_floating(workspace) is false (commands.c:1404).
+        var ws = wsOf(this.focused), toFloating = this.focused.type === "ws" || !insideFloating(this.focused);
         for (var i = 0; i < ws.focus.length; i++) {
             var c = ws.focus[i];
             if (toFloating !== isFloatingCon(c) || !reachable(c)) continue;
@@ -1994,7 +2003,11 @@ var Rules = (function () {
     }
 
     // All of a rule's criteria must match (match.c). ctx: { ws: the workspace number the window
-    // is on or opens on (null: unknown), kind: its kind before the rule }.
+    // is on or opens on (null: unknown), kind: its kind before the rule, focused: the focused
+    // window, focusedWs: the focused workspace's number }. i3's `__focused__` value matches the
+    // focused window's class, instance, title or role, or the focused workspace (match.c:101-103,
+    // :180-181); as a pattern it would match only that text.
+    var FOCUSED_FIELD = { class: "resourceClass", instance: "resourceName", title: "caption", window_role: "windowRole" };
     function matches(crit, w, ctx) {
         for (var key in crit) {
             var re = crit[key], v;
@@ -2007,7 +2020,13 @@ var Rules = (function () {
             else if (key === "window_role") v = w.windowRole;
             else if (key === "window_type") v = windowType(w);
             else if (key === "workspace") { if (ctx.ws === null || ctx.ws === undefined) return false; v = ctx.ws; }
-            if (!re.test(String(v === undefined || v === null ? "" : v))) return false;
+            var text = String(v === undefined || v === null ? "" : v);
+            if (re.source === "__focused__") {
+                if (key === "workspace" && ctx.focusedWs !== null && ctx.focusedWs !== undefined && text === String(ctx.focusedWs)) continue;
+                var f = FOCUSED_FIELD[key];
+                if (f && ctx.focused && ctx.focused[f] !== undefined && ctx.focused[f] !== null && text === String(ctx.focused[f])) continue;
+            }
+            if (!re.test(text)) return false;
         }
         return true;
     }
@@ -2043,7 +2062,8 @@ var Rules = (function () {
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
             if (ran[i]) continue;
-            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind })) continue;
+            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind,
+                                             focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
             ran[i] = true;
             kind = rules[i].floating ? (sticky ? "sticky" : "floating") : "tiling";
         }
@@ -2058,10 +2078,11 @@ var Rules = (function () {
     // Both kinds, as i3 applies both: the first matching workspace assignment, then the first
     // matching output one on top of it (manage.c:289, :354). -> null, or
     // { workspace, output } with one or both set.
-    function assignFor(w) {
+    function assignFor(w, ctx) {
         var rules = current().assign, out = null;
+        ctx = ctx || {};
         for (var i = 0; i < rules.length; i++) {
-            if (!matches(rules[i].crit, w, { ws: null, kind: null })) continue;
+            if (!matches(rules[i].crit, w, { ws: null, kind: null, focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
             out = out || {};
             if (rules[i].workspace && !out.workspace) out.workspace = rules[i].workspace;
             if (rules[i].output && !out.output) out.output = rules[i].output;
@@ -3566,8 +3587,7 @@ var KI3 = (function () {
             r.y = Math.round(a.y + (a.height - r.height) / 2);
         }
     }
-    // A container with a window placed: one not minimized, not fullscreen out of the tiles.
-    // A fullscreen window keeps its share: i3 renders the fullscreen con alone and returns
+    // A container with a window placed: one not minimized. A fullscreen window keeps its share: i3 renders the fullscreen con alone and returns
     // (render.c:127-144), its siblings keeping their rects.
     function shows(k) {
         if (k.win === null) return k.nodes.some(shows);
@@ -3996,17 +4016,12 @@ var KI3 = (function () {
         tellDragFloating(key, false);
         tellFloated(key, false);
     }
-    function plasmaWs(ws) { return !!(ws && Settings.get("floatingWorkspaces")[ws.num]); }
-    // A floating window's look, on its workspace (spec-window-modes R2, decisions 3 and 5):
-    // above the tiled ones as in i3, except on a workspace of Plasma windows while the effect
-    // keeps the floating mark (without it, the flag is the mark everywhere); its own decoration,
-    // or the frame in the floating colours with frameOnFloating. Again on every pass, so a
-    // window moved to another workspace takes that workspace's layering.
+    // A floating window's look: above the tiling ones on every workspace, as i3 (§7 L12); its
+    // own decoration, or the frame in the floating colours with frameOnFloating. Again on every
+    // pass, which also takes back a Keep Above the user cleared.
     function keepAboveOn(w, ws) {
-        var key = id(w);
-        var above = !(frameOn && marks && plasmaWs(ws));
-        if (above) { if (!w.keepAbove) w.keepAbove = true; keptAbove[key] = true; }
-        else if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+        if (!w.keepAbove) w.keepAbove = true;
+        keptAbove[id(w)] = true;
     }
     function lookFloating(w, ws) {
         var key = id(w);
@@ -4321,6 +4336,15 @@ var KI3 = (function () {
         if (!w.deleted && w.noBorder) w.noBorder = false;
     }
 
+    // What a rule's `__focused__` compares with (Rules.matches): the model's focused window and
+    // workspace, before a newcomer takes the focus, as i3's `focused` at manage.
+    function focusCtx(ctx) {
+        ctx = ctx || {};
+        var f = model.focused, fw = focusedWs();
+        ctx.focused = f && f.win !== null && f.win !== undefined ? wins[f.win] || null : null;
+        ctx.focusedWs = fw ? fw.num : null;
+        return ctx;
+    }
     // The focused workspace, or null (no focus yet).
     function focusedWs() {
         var f = model.focused;
@@ -4346,7 +4370,7 @@ var KI3 = (function () {
         });
         // i3's `assign` first (§11 N12; manage.c:289-317): to workspace N, shown or not, or to an
         // output's visible workspace; an output that isn't connected leaves the rule aside.
-        var t = null, assigned = Rules.assignFor(w);
+        var t = null, assigned = Rules.assignFor(w, focusCtx());
         if (assigned && assigned.workspace) {
             Workspaces.ensure(assigned.workspace);
             if (deskOf(assigned.workspace)) {
@@ -4355,8 +4379,10 @@ var KI3 = (function () {
             }
         }
         // An output assignment on top, as i3's con_move_to_output_name after the workspace one:
-        // that output's visible workspace, if the output is here.
-        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, fws ? outputOf(fws) : workspace.activeScreen) : null;
+        // that output's visible workspace, if the output is here. A direction counts from the
+        // window's own output, the workspace rule's if one matched (get_output_for_con).
+        var from = t ? outputOfNum(t.ws) : fws ? outputOf(fws) : workspace.activeScreen;
+        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, from) : null;
         if (assignedOut) {
             var shown = deskNum(workspace.currentDesktopForScreen(assignedOut));
             if (shown >= 1) t = { ws: shown, why: "assign" };
@@ -4459,7 +4485,7 @@ var KI3 = (function () {
     function adoptWindow(w, fresh) {
         var key = id(w);
         if (wins[key]) return;
-        // Kept out of the tree by its kind (dock, root, override-redirect, sticky; §3): a Normal
+        // Kept out of the tree by its kind (dock, root, override-redirect; §3): a Normal
         // one is watched, since a later change of class, transience or desktops can bring it in
         // (reclassify; code review).
         if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
@@ -4470,7 +4496,7 @@ var KI3 = (function () {
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
         if (!ws) { connectWindow(w); return; }
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, focusCtx({ ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] }));
         // A window on all desktops that a rule tiles (`floating disable`, as i3's for_window over
         // its sticky float): off all desktops onto its workspace first, KWin's tiles being one
         // desktop's (§3 R3, X4).
@@ -4621,7 +4647,7 @@ var KI3 = (function () {
         if (floatedOf(con)) return;
         var floating = floats(con);
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
+        var kind = Rules.classify(w, focusCtx({ ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] }));
         var wantFloating = kind !== "tiling";      // "sticky" floats too
         if (wantFloating === floating) return;
         if (!wantFloating && con.sticky) unstick(w, con);     // a rule tiles it: off all desktops first (X4)

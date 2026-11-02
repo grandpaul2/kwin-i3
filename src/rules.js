@@ -202,7 +202,11 @@ var Rules = (function () {
     }
 
     // All of a rule's criteria must match (match.c). ctx: { ws: the workspace number the window
-    // is on or opens on (null: unknown), kind: its kind before the rule }.
+    // is on or opens on (null: unknown), kind: its kind before the rule, focused: the focused
+    // window, focusedWs: the focused workspace's number }. i3's `__focused__` value matches the
+    // focused window's class, instance, title or role, or the focused workspace (match.c:101-103,
+    // :180-181); as a pattern it would match only that text.
+    var FOCUSED_FIELD = { class: "resourceClass", instance: "resourceName", title: "caption", window_role: "windowRole" };
     function matches(crit, w, ctx) {
         for (var key in crit) {
             var re = crit[key], v;
@@ -215,7 +219,13 @@ var Rules = (function () {
             else if (key === "window_role") v = w.windowRole;
             else if (key === "window_type") v = windowType(w);
             else if (key === "workspace") { if (ctx.ws === null || ctx.ws === undefined) return false; v = ctx.ws; }
-            if (!re.test(String(v === undefined || v === null ? "" : v))) return false;
+            var text = String(v === undefined || v === null ? "" : v);
+            if (re.source === "__focused__") {
+                if (key === "workspace" && ctx.focusedWs !== null && ctx.focusedWs !== undefined && text === String(ctx.focusedWs)) continue;
+                var f = FOCUSED_FIELD[key];
+                if (f && ctx.focused && ctx.focused[f] !== undefined && ctx.focused[f] !== null && text === String(ctx.focused[f])) continue;
+            }
+            if (!re.test(text)) return false;
         }
         return true;
     }
@@ -251,7 +261,8 @@ var Rules = (function () {
         var ran = ctx.ran || {}, rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
             if (ran[i]) continue;
-            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind })) continue;
+            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind,
+                                             focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
             ran[i] = true;
             kind = rules[i].floating ? (sticky ? "sticky" : "floating") : "tiling";
         }
@@ -266,10 +277,11 @@ var Rules = (function () {
     // Both kinds, as i3 applies both: the first matching workspace assignment, then the first
     // matching output one on top of it (manage.c:289, :354). -> null, or
     // { workspace, output } with one or both set.
-    function assignFor(w) {
+    function assignFor(w, ctx) {
         var rules = current().assign, out = null;
+        ctx = ctx || {};
         for (var i = 0; i < rules.length; i++) {
-            if (!matches(rules[i].crit, w, { ws: null, kind: null })) continue;
+            if (!matches(rules[i].crit, w, { ws: null, kind: null, focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
             out = out || {};
             if (rules[i].workspace && !out.workspace) out.workspace = rules[i].workspace;
             if (rules[i].output && !out.output) out.output = rules[i].output;

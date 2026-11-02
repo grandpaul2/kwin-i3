@@ -549,12 +549,15 @@ var Tree = (function () {
     // the caller's switch); the one that held the focus is activated again, then the focused
     // workspace's own focus is restored, so pushing never changes the focused workspace unless
     // the sticky window is on it (then it keeps the focus, as i3). Returns the windows moved.
+    // In i3's order (output.c:90-117): the output's workspaces by their focus stack, and on each
+    // its floating containers by its own focus stack.
     M.pushSticky = function (ws, others, oldFocus) {
-        var self = this, moved = [];
-        others.forEach(function (from) {
+        var self = this, moved = [], order = ws.parent ? ws.parent.focus : [];
+        function rank(w) { var i = order.indexOf(w); return i < 0 ? order.length : i; }
+        others.slice().sort(function (a, b) { return rank(a) - rank(b); }).forEach(function (from) {
             if (from === ws) return;
-            from.floating.slice().forEach(function (fc) {
-                if (!isSticky(fc)) return;
+            from.focus.slice().forEach(function (fc) {
+                if (!isFloatingCon(fc) || !isSticky(fc)) return;
                 var wasFocus = !!oldFocus && fc === oldFocus.parent;
                 self.moveToWorkspace(fc, ws, !wasFocus);
                 moved = moved.concat(windowsIn(fc));
@@ -727,6 +730,9 @@ var Tree = (function () {
             }
         }
         con.nodes.slice().forEach(function (c) { flattenCon(model, c); });
+        // tree.c:740-746: then the floating containers, so a redundant pair inside a split
+        // floated whole goes too (a floating container's layout is h, as i3's, floating.c:292).
+        if (con.type === "ws") con.floating.slice().forEach(function (c) { flattenCon(model, c); });
     }
 
     M.flatten = function () {
@@ -1232,8 +1238,10 @@ var Tree = (function () {
 
     // cmd_focus_window_mode("mode_toggle")
     M.focusModeToggle = function () {
-        if (!this.focused || this.focused.type === "ws") return null;
-        var ws = wsOf(this.focused), toFloating = !insideFloating(this.focused);
+        if (!this.focused) return null;
+        // From the workspace itself (focus parent up to it), i3 goes to the floating windows:
+        // con_inside_floating(workspace) is false (commands.c:1404).
+        var ws = wsOf(this.focused), toFloating = this.focused.type === "ws" || !insideFloating(this.focused);
         for (var i = 0; i < ws.focus.length; i++) {
             var c = ws.focus[i];
             if (toFloating !== isFloatingCon(c) || !reachable(c)) continue;
