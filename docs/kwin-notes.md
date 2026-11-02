@@ -151,6 +151,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   gdb on the test KWin, 2026-10-30: the load's own switch, `OPEN.md` item 53).
 - `Workspace::switchToOutput` focuses a window on that screen (or the desktop); it doesn't move the pointer.
 - A brand-new output shows `initialDesktopForNewOutput`: the activity's last desktop for it, else 1.
+- A press on, or focus follows mouse into, the window that is already active activates nothing:
+  no `windowActivated`, and a script gets no press signal of its own. A press that matters while
+  the active window stays active (i3's focus parent: the container's window pressed) has to come
+  from the helper's input filter (`SetFocusParent`, "Window Pressed").
 
 ## The pointer and focus follows mouse (`pointer_input.cpp`, `input.cpp`; `docs/pointer.md`)
 
@@ -317,6 +321,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Focus follows the mouse there: a pointer left over where windows are being laid out hands
   KWin's focus to whatever lands under it (a hidden tab once, OPEN.md item 82), and the next key
   acts from there. Park it (`point 20 20`) before building a layout a check depends on.
+- It has two outputs, and an empty workspace other than 1 may open on Virtual-1: a probe of what
+  stays on one monitor (a sticky window's push) switches to a workspace shown on that monitor
+  (3 from 1), not to 2.
 - A scenario's bare `wait` waits for every background job, the test clients too, which never
   exit: the run times out at 110 s. Wait on the one PID (`held=$!`, `wait "$held"`).
 
