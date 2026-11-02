@@ -9,7 +9,7 @@ resize, focus on the frame), the resize mode, keys for your keyboard layout, and
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
 **Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
-capture (Install, step 7). Install the `stable` branch: each version there has run on a
+capture (Install, step 6). Install the `stable` branch: each version there has run on a
 desktop for a day and passed every test on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
 2026-10-23), in daily use since 2026-10-22.
 The core of i3 is here, tabbed and stacked layouts included; what is left out is deliberate
@@ -129,29 +129,26 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
 3. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
    paths, only at login. kwin-i3 is running when your windows tile; its settings are in System
    Settings > Window Management.
-4. **Your keys**: `make take-keys`. Some of i3's keys are Plasma's too (Meta+arrows for quick
-   tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
-   Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview stays on the
-   screen's top-left corner and Grid View on Meta+G), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
-   takes each one that clashes from its Plasma shortcut and **prints the list of what it took**.
-   To give them back: `make restore-keys`, which gives each shortcut its own keys back (one you
-   changed since stays as you set it). Rather keep
-   some of Plasma's? Skip this step and take keys one by one on kwin-i3's Keys page (a key Plasma
-   holds is named in its row and moved on Apply).
-5. **For i3's feel**: Plasma's own settings that kwin-i3 is designed around. These are **Plasma's
-   settings, not kwin-i3's**: kwin-i3 never changes them, and you change them back in the same
-   place.
-   - **Focus follows mouse**: System Settings > Window Management > Window Behavior > Focus,
-     *Window activation policy*: "Focus follows mouse (mouse precedence)", and *Delay focus by*:
-     0 ms. Under click to focus, the frame moves only when you click.
-   - **More than one monitor**: System Settings > Virtual Desktops, "Switch desktops independently
-     for each screen" on (off by default). With it off, a workspace switch changes every monitor
-     and windows tile on the wrong one. It takes effect at once.
-   - **Animations off** (optional; i3 has none): System Settings > Quick Settings, *Animation
-     speed* to "Instant".
-6. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
+4. **Plasma's settings and your keys**: System Settings > Window Management > kwin-i3 says "Some
+   of Plasma's settings work against kwin-i3"; **Review…** lists them, each with Plasma's value
+   now and why kwin-i3 wants it changed: focus follows mouse with no delay (under click to focus,
+   the frame moves only when you click); each screen switching workspaces alone (with it off, a
+   workspace switch changes every monitor); no tiling or maximizing at screen edges; Meta+T freed
+   from Plasma's tile editor; Meta and a drag focusing the window it moves; and the keys of
+   kwin-i3's that a Plasma shortcut holds (Meta+arrows for quick tiling, Meta+D, Meta+V, Meta+R,
+   Meta+E, Meta+L, Meta+W for the Overview, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the task
+   manager uses them; the Overview stays on the screen's top-left corner and Grid View on Meta+G),
+   as a key two shortcuts share runs Plasma's, not kwin-i3's. Animations off is there too,
+   unticked (i3 has none). These are **Plasma's settings, not kwin-i3's**: **Change in Plasma**
+   changes the ticked ones, the same as changing them in System Settings, and nothing changes
+   without it. kwin-i3 keeps what each was, and **Give Back** puts it back (one you changed since
+   stays as you set it). In a terminal instead: `make take-keys` takes the keys and prints what
+   it took, `make restore-keys` gives them back. Rather keep some of Plasma's keys? Untick that
+   row and take keys one by one on the Keys page (a key Plasma holds is named in its row and moved
+   on Apply).
+5. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
    Applications > Terminal emulator).
-7. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
+6. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
    `~/kwin-i3/tools/capture`, on a key you don't use (Meta+Shift+B is free on a stock Plasma). Press it
    right after something goes wrong: it asks for a note and saves what kwin-i3 saw in the seconds
    before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
@@ -173,7 +170,7 @@ it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives your short
 back (one you changed since stays as you set it), turns kwin-i3 off, and deletes everything the
 install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
 install; it says where. Then delete `~/kwin-i3` and, if you made one, the bug-report key
-(Install step 7).
+(Install step 6).
 
 With the script alone (no plugins), windows keep Plasma's decoration (Breeze, title bars and all),
 and the keys, the tree, the workspaces and floating work; the settings page says at its top when

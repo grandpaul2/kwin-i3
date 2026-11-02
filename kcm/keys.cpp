@@ -6,6 +6,7 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusMetaType>
+#include <QDBusObjectPath>
 #include <QDir>
 #include <QFile>
 #include <QJsonArray>
@@ -13,6 +14,7 @@
 #include <QJsonObject>
 #include <QSaveFile>
 
+#include <algorithm>
 #include <optional>
 
 #include <KConfig>
@@ -225,11 +227,8 @@ void KeysModel::findHolders()
             s.holder = {};
             if (s.pending.isEmpty() || s.pending == s.current)
                 continue;
-            const auto reply = kga(QStringLiteral("action"), {s.pending[0].toCombined()});
-            const QStringList h = reply.arguments().value(0).toStringList();
-            if (h.size() < 4 || (h[0] == QLatin1String("kwin") && h[1].startsWith(QLatin1String("kwin-i3 "))))
-                continue;
-            s.holder = {h[0], h[1], i18nc("action (application)", "%1 (%2)", h[3], h[2])};
+            const KeyHolder h = keyHolder(s.pending[0].toCombined());
+            s.holder = {h.component, h.action, h.friendly};
         }
     }
 }
@@ -271,55 +270,140 @@ static QJsonArray toJson(const QList<KeySeq> &keys)
     return out;
 }
 
+static QList<KeySeq> fromJson(const QJsonArray &a)
+{
+    QList<KeySeq> out;
+    for (const auto &k : a) {
+        KeySeq s;
+        for (const auto &v : k.toArray())
+            s.keys << v.toInt();
+        while (s.keys.size() < 4)
+            s.keys << 0;
+        out << s;
+    }
+    return out;
+}
+
+static QJsonObject readTaken()
+{
+    QFile f(takenPath());
+    return f.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(f.readAll()).object() : QJsonObject();
+}
+
 static bool writeTaken(const QJsonObject &taken)
 {
+    if (taken.isEmpty())
+        return !QFile::exists(takenPath()) || QFile::remove(takenPath());
     QDir().mkpath(QFileInfo(takenPath()).path());
     QSaveFile out(takenPath());
     return out.open(QIODevice::WriteOnly) && out.write(QJsonDocument(taken).toJson()) >= 0 && out.commit();
 }
 
-// Takes s.pending from its holder, recorded first (an earlier record of the same holder is kept,
-// as take-keys does): not recorded, not taken, since make restore-keys couldn't give it back.
-// After the take, "set" records what the holder was left with: make restore-keys gives the old
-// keys back only where the holder still has exactly that.
-bool KeysModel::take(const Slot &s, QJsonObject &taken)
+KeyHolder keyHolder(int code)
 {
-    const auto keys = keysOf(s.holder.component, s.holder.action);
+    const QStringList h = kga(QStringLiteral("action"), {code}).arguments().value(0).toStringList();
+    if (h.size() < 4 || (h[0] == QLatin1String("kwin") && h[1].startsWith(QLatin1String("kwin-i3 "))))
+        return {};
+    return {h[0], h[1], i18nc("action (application)", "%1 (%2)", h[3], h[2])};
+}
+
+// A holder whose app isn't running doesn't block the key (as tools/take-keys.py).
+bool componentActive(const QString &component)
+{
+    const auto path = kga(QStringLiteral("getComponent"), {component}).arguments().value(0).value<QDBusObjectPath>();
+    if (path.path().isEmpty())
+        return false;
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), path.path(),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("isActive"));
+    return QDBusConnection::sessionBus().call(msg).arguments().value(0).toBool();
+}
+
+// Takes code from its holder, recorded first (an earlier record of the same holder is kept, as
+// take-keys does): not recorded, not taken, since it couldn't be given back. After the take,
+// "set" records what the holder was left with: a give-back writes the old keys only where the
+// holder still has exactly that.
+bool takeKey(const KeyHolder &h, int code)
+{
+    const auto keys = keysOf(h.component, h.action);
     if (!keys)
         return false;
-    const QString id = s.holder.component + QLatin1Char('|') + s.holder.action;
+    QJsonObject taken = readTaken();
+    const QString id = h.component + QLatin1Char('|') + h.action;
     if (!taken.contains(id)) {
-        taken[id] = QJsonObject{{QStringLiteral("component"), s.holder.component},
-                                {QStringLiteral("action"), s.holder.action},
+        taken[id] = QJsonObject{{QStringLiteral("component"), h.component},
+                                {QStringLiteral("action"), h.action},
                                 {QStringLiteral("keys"), toJson(*keys)}};
         if (!writeTaken(taken)) {
             qWarning("kcm_kwin_i3: can't write %s; %s keeps its key", qPrintable(takenPath()), qPrintable(id));
-            taken.remove(id);
             return false;
         }
     }
     QList<KeySeq> kept;
     for (const KeySeq &k : *keys)
-        if (k.keys.value(0) != s.pending[0].toCombined())
+        if (k.keys.value(0) != code)
             kept << k;
-    if (!setKeys(s.holder.component, s.holder.action, kept))
+    if (!setKeys(h.component, h.action, kept))
         return false;
     QJsonObject entry = taken[id].toObject();
-    entry[QStringLiteral("set")] = toJson(keysOf(s.holder.component, s.holder.action).value_or(kept));
+    entry[QStringLiteral("set")] = toJson(keysOf(h.component, h.action).value_or(kept));
     taken[id] = entry;
-    if (!writeTaken(taken))   // the take stands; a stale "set" only makes restore-keys leave it
+    if (!writeTaken(taken))   // the take stands; a stale "set" only makes the give-back leave it
         qWarning("kcm_kwin_i3: can't write %s", qPrintable(takenPath()));
     return true;
 }
 
+static bool sameKeys(const QList<KeySeq> &a, const QList<KeySeq> &b)
+{
+    auto flat = [](const QList<KeySeq> &l) {
+        QList<QList<int>> out;
+        for (const auto &k : l)
+            out << k.keys;
+        std::sort(out.begin(), out.end());
+        return out;
+    };
+    return flat(a) == flat(b);
+}
+
+QStringList takenIds()
+{
+    return readTaken().keys();
+}
+
+// As make restore-keys (tools/take-keys.py restore), for the records `which` accepts.
+int giveBackKeys(const std::function<bool(const QString &id)> &which)
+{
+    QJsonObject taken = readTaken();
+    int failed = 0;
+    for (const QString &id : taken.keys()) {
+        if (!which(id))
+            continue;
+        const QJsonObject e = taken[id].toObject();
+        const QString c = e[QStringLiteral("component")].toString(), a = e[QStringLiteral("action")].toString();
+        const auto now = keysOf(c, a);
+        if (!now) {
+            ++failed;
+            continue;
+        }
+        const QList<KeySeq> old = fromJson(e[QStringLiteral("keys")].toArray());
+        bool unchanged;
+        if (e.contains(QStringLiteral("set")))
+            unchanged = sameKeys(*now, fromJson(e[QStringLiteral("set")].toArray()));
+        else
+            unchanged = std::all_of(now->begin(), now->end(), [&old](const KeySeq &k) {
+                return std::any_of(old.begin(), old.end(), [&k](const KeySeq &o) { return o.keys == k.keys; });
+            });
+        if (!sameKeys(*now, old) && unchanged && !setKeys(c, a, old)) {
+            ++failed;
+            continue;
+        }
+        taken.remove(id);   // given back, already back, or changed since (the user's: it stays)
+    }
+    writeTaken(taken);
+    return failed;
+}
+
 void KeysModel::save()
 {
-    QJsonObject taken;
-    {
-        QFile f(takenPath());
-        if (f.open(QIODevice::ReadOnly))
-            taken = QJsonDocument::fromJson(f.readAll()).object();
-    }
     QStringList failed;
     for (const Row &row : m_rows) {
         for (const Slot &s : row.entries) {
@@ -327,7 +411,8 @@ void KeysModel::save()
                 continue;
             // A key another action holds is taken from it first. If that fails, kwin-i3's action
             // doesn't get it either: both would hold it, and the other one fires.
-            if (!s.holder.component.isEmpty() && !take(s, taken)) {
+            if (!s.holder.component.isEmpty()
+                && !takeKey(KeyHolder{s.holder.component, s.holder.action, s.holder.friendly}, s.pending[0].toCombined())) {
                 failed << s.pending.toString(QKeySequence::NativeText);
                 continue;
             }
@@ -367,4 +452,14 @@ bool KeysModel::isDefaults() const
             if (s.pending != s.def)
                 return false;
     return true;
+}
+
+QList<int> KeysModel::currentKeys() const
+{
+    QList<int> out;
+    for (const Row &row : m_rows)
+        for (const Slot &s : row.entries)
+            if (!s.current.isEmpty())
+                out << s.current[0].toCombined();
+    return out;
 }

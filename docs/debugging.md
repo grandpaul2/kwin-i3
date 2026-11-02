@@ -1,7 +1,7 @@
 # Debugging kwin-i3: the flight recorder
 
 Every bug report comes after the fact: the user sees something, then presses the capture key
-(README, Install step 7). So what matters is the recent past, kept cheaply all the time and saved only on the
+(README, Install step 6). So what matters is the recent past, kept cheaply all the time and saved only on the
 press: a ring in memory, in kwin-i3 and in kwini3hold, stamped to the millisecond. Nothing is
 written to disk or sent over D-Bus until the press.
 

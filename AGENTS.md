@@ -124,7 +124,7 @@ These are the project's rules, not suggestions.
 
 ## Finding bugs
 
-- **Captures**: a key bound to `tools/capture` (README, Install step 7) saves the flight recorder
+- **Captures**: a key bound to `tools/capture` (README, Install step 6) saves the flight recorder
   (kwin-i3's log, kwini3hold's events, the pointer's, the state, a screenshot, a note) to
   `~/.local/state/kwin-i3/captures/<time>/`. **Read it with `tools/capture-read DIR` first**: one
   timeline to the millisecond, the press last. kwin-i3's log never reaches the journal, and

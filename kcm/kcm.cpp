@@ -4,6 +4,7 @@
 // without the plugins. The keys are on a sub-page (keys.cpp).
 
 #include "keys.h"
+#include "setup.h"
 #include "kwini3settings.h"
 
 #include <KApplicationTrader>
@@ -27,6 +28,7 @@ class KWinI3Kcm : public KQuickManagedConfigModule
     Q_OBJECT
     Q_PROPERTY(KWinI3Settings *settings READ settings CONSTANT)
     Q_PROPERTY(KeysModel *keys READ keys CONSTANT)
+    Q_PROPERTY(SetupModel *setup READ setup CONSTANT)
     Q_PROPERTY(bool scriptEnabled MEMBER m_scriptEnabled NOTIFY stateChanged)
     Q_PROPERTY(bool scriptLoaded MEMBER m_scriptLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool holdLoaded MEMBER m_holdLoaded NOTIFY stateChanged)
@@ -39,15 +41,18 @@ public:
         : KQuickManagedConfigModule(parent, data)
         , m_settings(new KWinI3Settings(this))
         , m_keys(new KeysModel(this))
+        , m_setup(new SetupModel(m_keys, this))
     {
         qmlRegisterAnonymousType<KWinI3Settings>("org.kde.kwini3", 1);
         qmlRegisterAnonymousType<KeysModel>("org.kde.kwini3", 1);
+        qmlRegisterAnonymousType<SetupModel>("org.kde.kwini3", 1);
         setButtons(Apply | Default);
         connect(m_keys, &KeysModel::changed, this, &KWinI3Kcm::settingsChanged);
     }
 
     KWinI3Settings *settings() const { return m_settings; }
     KeysModel *keys() const { return m_keys; }
+    SetupModel *setup() const { return m_setup; }
 
     void load() override
     {
@@ -61,6 +66,7 @@ public:
         const bool settings = m_settings->isSaveNeeded();
         KQuickManagedConfigModule::save();
         m_keys->save();
+        m_setup->load();        // a key the Keys page took may have been one of its clashes
         if (settings)
             reconfigure();
         settingsChanged();
@@ -170,6 +176,7 @@ public:
                                                          QStringLiteral("org.freedesktop.login1.Manager"), QStringLiteral("CanSuspend"));
         m_canSuspend = QDBusConnection::systemBus().call(canSuspend).arguments().value(0).toString() == QLatin1String("yes");
         m_keys->load();
+        m_setup->load();
         Q_EMIT stateChanged();
         settingsChanged();
     }
@@ -191,6 +198,7 @@ private:
 
     KWinI3Settings *m_settings;
     KeysModel *m_keys;
+    SetupModel *m_setup;
     bool m_scriptEnabled = false;
     bool m_scriptLoaded = false;
     bool m_holdLoaded = false;

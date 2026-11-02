@@ -9,6 +9,8 @@
 #include <QKeySequence>
 #include <QStringList>
 
+#include <functional>
+
 class KeysModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -36,6 +38,8 @@ public:
     bool isDefaults() const;
 
     Q_INVOKABLE void setKey(int row, int slot, const QKeySequence &key);
+    // Every key kwin-i3's actions hold now (read at load).
+    QList<int> currentKeys() const;
 
 Q_SIGNALS:
     void changed();
@@ -57,7 +61,6 @@ private:
     };
     void findHolders();
     QVariant shown(int row) const;
-    bool take(const Slot &s, QJsonObject &taken);
     QList<Row> m_rows;
     bool m_available = false;
     QString m_error;
@@ -66,3 +69,17 @@ private:
 
 // Whether KWin runs the kwin-i3 script now (the page and this model both ask).
 bool kwinI3Loaded();
+
+// Another action's hold on a key (not kwin-i3's own); empty if none.
+struct KeyHolder {
+    QString component, action, friendly;
+};
+KeyHolder keyHolder(int code);
+bool componentActive(const QString &component);
+// Takes the key from its holder, recorded in make take-keys' save (taken-keys.json) first.
+bool takeKey(const KeyHolder &holder, int code);
+// The save's records, "component|action".
+QStringList takenIds();
+// Gives back the records `which` accepts, as make restore-keys: where the holder still has what
+// kwin-i3 left it. Returns how many couldn't be reached (they stay in the save).
+int giveBackKeys(const std::function<bool(const QString &id)> &which);

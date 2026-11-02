@@ -282,7 +282,8 @@ kwin-i3: none is handled.
 **A workspace is a virtual desktop**, 1 to 10, and lives on one output, **its output**, kept by
 the output's name. i3's workspaces live on outputs the same way; the differences are in the rows.
 Per-output workspaces need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
-reports when it is off with two or more outputs and never sets it (§13).
+reports when it is off with two or more outputs and sets it only on the user's yes, on the
+settings page's Plasma Settings sub-page (§11).
 
 **=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
@@ -697,7 +698,7 @@ with `$mod` as the wizard's Win choice.
 | K18 | Terminal, Launcher | Meta+Return, Meta+D | ≠ | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) is reported as a taken key; a holder that launches the same thing (KRunner's own `_launch`, the default terminal's) is not. i3 starts its terminal with startup notification (`config.keycodes:51`), so its window opens on the workspace it was launched from (`manage.c:336`); here where the focus is when it maps: reason (d), the launch workspace (`plan.md` "Out"; `LATER.md` item 28) |
 | K19 | Back-and-forth, next/prev, output moves (§4), the no-back-and-forth forms (S5), next and primary outputs (S8, S9), Focus Child (§2 T27a) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
-| K21 | Dump State | none | + | `tools/capture`, on a key the user binds (README, Install step 7) |
+| K21 | Dump State | none | + | `tools/capture`, on a key the user binds (README, Install step 6) |
 | K22 | Any other command on a key (`bindsym`, arguments, `mode`, chains) | none | ≠ | kept: no command language, so a key's action takes no arguments, `mode` or chain (§4 S5, S8). Reason (d). |
 | K23 | The volume and media keys (i3's config binds them to `pactl`) | Plasma's | ≠ | hardware is Plasma's (`plan.md` Out), and another component's shortcut stays its own: reasons (d), (e) |
 
@@ -740,7 +741,7 @@ running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys another active
 component holds, and reports them (§13); a holder that launches what the kwin-i3 action launches
 (KRunner's own `_launch` on Meta+D, the default terminal's on Meta+Return) is logged
-(`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them, recording the holders in
+(`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn), recording the holders in
 `~/.local/state/kwin-i3/taken-keys.json` before each change, with what each was left holding
 (`set`). The settings page's Keys page takes a key the same way on Apply, recording it in the same
 file. `make restore-keys` gives each holder its old keys back where it still holds what kwin-i3
@@ -989,7 +990,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 
 - **Banners**: kwin-i3 off (with Turn On, which enables it and reconfigures); on but not running
   (pointing at the journal); running without the plugins (one banner for either: what goes
-  without them is the load notification's, §13).
+  without them is the load notification's, §13); while a Plasma setting kwin-i3 needs differs
+  (the Plasma Settings sub-page's unticked-by-default rows aside), "Some of Plasma's settings work
+  against kwin-i3", with Review… to that sub-page.
 - **Main page**: Tiling (gaps, with **Configure Gaps…**: a sub-page with the outer gap per
   screen edge, `smartGaps`, and each workspace's own inner and outer gap; the new-workspace
   direction, how new workspaces open (`workspaceLayout`), both steps, focus at an edge, the
@@ -1020,6 +1023,24 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   shifted symbol appears with the keys that type it on the current layout; End session's row has
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
+- **Plasma Settings sub-page** (the first-run step, `plan.md` "Install and first run";
+  `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings, a row each
+  where Plasma differs from what kwin-i3 needs or kwin-i3 changed it, with Plasma's value now and
+  help naming Plasma's own page. Focus follows mouse with no delay and the next focus under the
+  pointer (`FocusPolicy`, `DelayFocusInterval`, `NextFocusPrefersMouse`); per-output desktops;
+  focus stealing prevention at Low (shown only above it); screen-edge tiling and maximizing off;
+  Meta+T freed from KWin's Edit Tiles; the window actions' modifier Meta and Meta+left "Activate,
+  raise and move" (6.8's stock); kwin-i3's keys other active shortcuts hold, each taken from every
+  holder in turn (at most five); and, optional and unticked, animations off
+  (`AnimationDurationFactor` 0). **Change in Plasma** changes the ticked rows at once, apart from
+  Apply (Reset and Defaults never touch them): each key's old value (or its absence) and the value
+  written saved first in `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make
+  take-keys' save; KWin reconfigured. **Give Back** (a row) and **Give All Back** write the old
+  value only where Plasma still has the one kwin-i3 wrote; a value changed since stays, its record
+  dropped. Giving per-output desktops back puts every output on one desktop (KWin's,
+  `kwin-notes.md`), and its help says so. `make uninstall` gives all of it back
+  (`tools/plasma-settings.py`, `tools/take-keys.py`). A stock default is read from the installed
+  `kwin.kcfg`, so 6.7's and 6.8's stock window actions are each read right.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and
   the US keys. A key whose holder can't be recorded or freed isn't given to kwin-i3 either.
@@ -1110,7 +1131,7 @@ One notification per load (app "kwin-i3"), its parts collected first:
   system sets none, counts as US). Its part waits at most 3 s for KWin's answer, so a D-Bus call
   that never answers can't hold back the rest of the report.
 - **Per-output desktops off** with two or more outputs: reported at load, and once later if it
-  becomes a problem; never set.
+  becomes a problem; set only from the settings page's Plasma Settings, on the user's yes (§11).
 - **kwin-i3's plugins aren't loaded**: what goes without each, named (`plan.md`: the product is the
   script and both plugins): without the helper, the tiling drag and resize, frame focus, the
   resize mode (Meta+R), floating a container whole, the terminal key (Meta+Return), the

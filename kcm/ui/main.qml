@@ -1,7 +1,7 @@
 // kwin-i3's page: the
-// script's settings as Plasma's own pages lay theirs out, with three sub-pages: Workspaces,
-// Window Rules and Keys. Every control says what it is to a screen reader
-// (tests/live/75-settings-a11y.sh).
+// script's settings as Plasma's own pages lay theirs out, with its sub-pages: Gaps, Workspaces,
+// Window Rules, Keys and Plasma Settings. Every control says what it is to a screen reader
+// (tools/a11y.py audit; docs/style-settings-page.md §6).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -47,6 +47,20 @@ KCM.SimpleKCM {
                         [!kcm.holdLoaded ? i18n("no frame") : "",
                          !kcm.helperLoaded ? i18n("no mouse dragging") : "",
                          !kcm.helperLoaded ? i18n("no resize mode") : ""].filter(s => s).join(", "))
+        }
+        // The first-run step (docs/plan.md, "Install and first run"): while a Plasma setting
+        // kwin-i3 needs differs, the page says so and opens the Plasma Settings sub-page.
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            position: Kirigami.InlineMessage.Position.Header
+            type: Kirigami.MessageType.Information
+            visible: kcm.scriptLoaded && kcm.setup.needed
+            text: i18n("Some of Plasma's settings work against kwin-i3.")
+            actions: Kirigami.Action {
+                text: i18nc("@action:button", "Review…")
+                icon.name: "go-next"
+                onTriggered: kcm.push("PlasmaSettings.qml")
+            }
         }
     }
 
@@ -560,6 +574,20 @@ KCM.SimpleKCM {
             text: i18nc("@action:button", "Configure Keys…")
             icon.name: "configure-shortcuts"
             onClicked: kcm.push("Keys.qml")
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: i18nc("@title:group", "Plasma")
+        }
+        SubPageButton {
+            Kirigami.FormData.label: i18nc("@label", "Settings:")
+            text: i18nc("@action:button", "Configure Plasma Settings…")
+            readonly property var rows: kcm.setup.rows
+            summary: [rows.filter((r) => r.differs && !r.optional).length ? i18np("1 to review", "%1 to review", rows.filter((r) => r.differs && !r.optional).length) : "",
+                      rows.filter((r) => r.changed).length ? i18np("1 changed by kwin-i3", "%1 changed by kwin-i3", rows.filter((r) => r.changed).length) : ""]
+                     .filter((s) => s).join(", ") || i18n("as kwin-i3 needs them")
+            onClicked: kcm.push("PlasmaSettings.qml")
         }
         // warnTakenKeys has no control here while kwin-i3's notifications don't reach Plasma
         // (LATER.md item 56): the checkbox would change nothing a user sees.

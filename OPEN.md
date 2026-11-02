@@ -55,24 +55,20 @@ the settings page's banner says when the plugins aren't loaded. Next: how i3
 tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
 **79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
-takes in item 26). The rules are settled there: one command, one log-out, a Set up section on the
-settings page as the first-run step (current value, kwin-i3's, why; one Apply), every change saved
-first and given back alone, all at once or on removal, never over a change the user made since;
-`make uninstall` leaves nothing. The list, from a survey of stock 6.7.5 and 6.8.2 (`kwin-notes.md`,
-"Config and D-Bus" and "KWin 6.8"): the ten clashing shortcuts `make take-keys` already frees;
-focus follows mouse with no delay; per-output desktops (its give-back collapses the outputs onto
-one desktop: the row says so); focus stealing prevention at Low or None (i3's
-`focus_on_window_activation`); the screen-edge drag's tile and maximize off; Meta+T, the tile
-editor, freed; the window actions' modifier Meta and, on 6.7, `Activate, raise and move`; animations
-off and a 15 px drag distance, optional; Shift at a move's release, named only (no setting). The
-taken keys' save and give-back already follow the rules (`behaviour.md` §8, the taken keys).
-To check: `behaviour.md` G2 names a System Settings page for the drag distance; the
-survey found none. Next: (1) the same save and give-back for the Plasma settings in the
-list, in `make uninstall` too (`make install` and `make uninstall` are built, `tools/`); (2) the Set up section; (3) the README's Install
-rewritten to them, and `behaviour.md` §13's "never set" with it; (4) the install walked as a new
-user on stock CachyOS and PikaOS (`tools/box.sh`). Separate, still open: a rule for Plasma's window
+takes in item 26). Built: `make install` and `make uninstall`; the taken keys' save and give-back;
+the settings page's Plasma Settings sub-page with its banner, its save and `make uninstall`'s
+give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
+names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
+none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
+by step, from `git clone` to the sub-page. Separate, still open: a rule for Plasma's window
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
+
+**85. Two empty headings on the settings page's main page** (found 2026-11-02). `tools/a11y.py
+audit kcmshell6 kwin-i3` reports "an empty heading in the form (a row without a label)" twice,
+on main as it was before the Plasma Settings sub-page; `style-settings-page.md` §6 allows none.
+Next: `a11y.py dump` in a test KWin to find the two rows, then give each a label or fold it into
+its neighbour.
 
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
@@ -85,7 +81,7 @@ order at that moment, then i3's rule against what KWin allows.
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
-bullet in Install step 5 ("For i3's feel", beside "More than one monitor"): workspaces of a
+line in Install step 4 (beside each screen switching workspaces alone): workspaces of a
 monitor that goes away stay on the other for good, as in i3; a workspace output per number, with
 the other screen second, brings them back.
 

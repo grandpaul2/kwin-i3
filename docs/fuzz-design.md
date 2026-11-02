@@ -120,7 +120,7 @@ What a capture holds now, and how to read one: `docs/debugging.md` (the flight r
 - Captures are read later by an agent and turned into live tests.
 
 Making it live means rebuilding, reloading kwin-i3 in the desktop's session (it re-tiles its
-windows once), and binding the launcher's key (README, Install step 7), with the desktop owner's
+windows once), and binding the launcher's key (README, Install step 6), with the desktop owner's
 go.
 
 ## As built (after the design review, 2026-10-22)

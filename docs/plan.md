@@ -194,10 +194,10 @@ follows it:
   choice (the script's link and its enabling, the plugins, the settings page) and is safe to run
   again; the log-out is KWin's, which reads a new script's and plugins' paths only at login; every
   choice waits for the first-run step. Packaging is `LATER.md`'s "Release prep".
-- **The first-run step is the settings page's Set up section**, as keys can be taken only once
-  kwin-i3 is loaded. It lists each Plasma setting kwin-i3 is designed around and each of kwin-i3's
+- **The first-run step is the settings page's Plasma Settings sub-page**, opened from the page's
+  banner while anything kwin-i3 needs differs, as keys can be taken only once kwin-i3 is loaded. It lists each Plasma setting kwin-i3 is designed around and each of kwin-i3's
   keys another shortcut holds: its current value, the one kwin-i3 would set, and why, each said
-  plainly to be **Plasma's, not kwin-i3's**. One Apply sets what the user leaves ticked; nothing
+  plainly to be **Plasma's, not kwin-i3's**. One button sets what the user leaves ticked; nothing
   changes without it. What kwin-i3 needs and i3's stand-ins come ticked, the optional unticked.
   The install's last line points there, and so does the load notification while anything in the
   list differs (`behaviour.md` §13).
@@ -207,7 +207,7 @@ follows it:
   another shortcut holds; and the optional (animations off; i3 has none).
 - **Every change outside kwin-i3's own settings can be undone.** Before kwin-i3 changes a Plasma
   setting or takes a shortcut, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
-  given back alone or all at once from the Set up section, and all on removal. A give-back writes
+  given back alone or all at once from that sub-page, and all on removal. A give-back writes
   the old value only where the current one is still what kwin-i3 set: a change the user made
   since is theirs, and stays.
 - **Removal leaves nothing behind**: `make uninstall` gives back every saved change, disables the

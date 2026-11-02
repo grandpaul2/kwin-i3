@@ -38,6 +38,6 @@ file(CONFIGURE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kwini3settings.kcfg CONTENT "$
 file(CONFIGURE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/kwini3settings.kcfgc @ONLY CONTENT
      "File=kwini3settings.kcfg\nClassName=KWinI3Settings\nMutators=true\nDefaultValueGetters=true\nGenerateProperties=true\nParentInConstructor=true\nNotifiers=true\n")
 
-kcmutils_add_qml_kcm(kcm_kwin_i3 SOURCES kcm.cpp keys.cpp)
+kcmutils_add_qml_kcm(kcm_kwin_i3 SOURCES kcm.cpp keys.cpp setup.cpp)
 kconfig_add_kcfg_files(kcm_kwin_i3 ${CMAKE_CURRENT_BINARY_DIR}/kwini3settings.kcfgc GENERATE_MOC)
 target_link_libraries(kcm_kwin_i3 PRIVATE Qt6::DBus Qt6::Gui Qt6::Qml KF6::KCMUtilsQuick KF6::ConfigCore KF6::ConfigGui KF6::I18n KF6::CoreAddons KF6::Service PkgConfig::XKBCOMMON)

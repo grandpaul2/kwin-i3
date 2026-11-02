@@ -63,20 +63,21 @@ def take():
     saved = json.load(open(STATE)) if os.path.exists(STATE) else {}
     took = 0
     for code in mine:
-        h = holder(code)
-        if not h or h[1].startswith("kwin-i3 ") or not active(h[0]):
-            continue
-        comp, action, friendly = h
-        seqs = keys_of(comp, action)
-        entry = saved.setdefault(comp + "|" + action, {"component": comp, "action": action, "keys": seqs})
-        write(saved)                     # saved before each change, so a failure loses nothing
-        set_keys(comp, action, [s for s in seqs if s[0] != code])
-        entry["set"] = keys_of(comp, action)
-        write(saved)
-        now = holder(code)
-        ok = now and now[1].startswith("kwin-i3 ")
-        print(f"  {name(code)}: taken from {friendly} ({comp})" + ("" if ok else f", but {now} still fires"))
-        took += 1
+        for _ in range(5):                 # a key several shortcuts hold: taken from each in turn
+            h = holder(code)
+            if not h or h[1].startswith("kwin-i3 ") or not active(h[0]):
+                break
+            comp, action, friendly = h
+            seqs = keys_of(comp, action)
+            entry = saved.setdefault(comp + "|" + action, {"component": comp, "action": action, "keys": seqs})
+            write(saved)                   # saved before each change, so a failure loses nothing
+            set_keys(comp, action, [s for s in seqs if s[0] != code])
+            entry["set"] = keys_of(comp, action)
+            write(saved)
+            now = holder(code)
+            ok = not now or now[1].startswith("kwin-i3 ")
+            print(f"  {name(code)}: taken from {friendly} ({comp})" + ("" if ok else f"; {now[2]} holds it too"))
+            took += 1
     print(f"take-keys: {took} taken" + (f"; make restore-keys puts them back ({STATE})" if took else ", nothing was taken"))
 
 
