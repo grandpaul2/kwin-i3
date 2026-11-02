@@ -163,7 +163,8 @@ hunt for; no collision with another word on the page or in Plasma.
 - **The Plasma Settings sub-page is two columns of checkboxes**, titled "Plasma" and "kwin-i3
   (recommended)": one row per setting, named by kwin-i3's behaviour, one box always ticked (where
   the setting is), ticking one unticking the other; "Plasma" means anything but kwin-i3's value,
-  never "default". Under each name one muted line says what the Plasma column means for it; the
+  never "default". Each kwin-i3 box says "Enable" in small text, as kwin-i3's side is always the
+  setting turned on; the Plasma box says nothing, as it is whatever the reader had. Under each name one muted line says what the Plasma column means for it; the
   why and Plasma's own place for the setting go in its help button. Never "now" or "your". The
   choices apply with the page's Apply like any setting; the sub-page has no buttons of its own.
 
