@@ -2710,10 +2710,10 @@ var KI3 = (function () {
     // { bar, rows, members } is the bar's kid: its px come out of the `members` kids after it,
     // which keeps them right when the pair merges into a vertical parent (setSizes).
     var BAR_ROW = 24;
-    function projectGroup(con) {
+    function projectGroup(con, holes) {
         var projected = [], byNode = [];
         con.nodes.forEach(function (child) {
-            var p = project(child);
+            var p = project(child, holes);
             if (p) { projected.push(child); byNode.push(p); }
         });
         if (!projected.length) return null;
@@ -2723,6 +2723,7 @@ var KI3 = (function () {
         var sp = byNode[projected.indexOf(shown)];
         if (projected.length === 1) return sp;
         var hidden = [], anchor = leafOf(sp, shownWindow(shown).win) || leafOf(sp, null), order = [];
+        if (!anchor) return holes ? projectGroup(con, false) : null;   // the shown tab is a hole: no window to hold the others
         projected.forEach(function (child, k) {
             if (child === shown) { order.push(anchor.win); return; }
             var ws = windowsOf(byNode[k]);
@@ -2750,32 +2751,43 @@ var KI3 = (function () {
     }
     // Every window a projection places, extras included.
     function windowsOf(p) {
-        if (p.bar) return [];
+        if (p.bar || p.hole !== undefined) return [];
         if (p.win !== undefined) return [p.win].concat(p.extra || []);
         return [].concat.apply([], p.kids.map(function (k) { return windowsOf(k.p); }));
     }
     // The window leaf of a projection holding `win` (null: the first one).
     function leafOf(p, win) {
-        if (p.bar) return null;
+        if (p.bar || p.hole !== undefined) return null;
         if (p.win !== undefined) return win === null || p.win === win ? p : null;
         for (var i = 0; i < p.kids.length; i++) { var l = leafOf(p.kids[i].p, win); if (l) return l; }
         return null;
     }
 
-    // -> null | { win, extra } | { dir: "h"|"v", kids: [{ p, share }] } (a kid's p may be a bar)
-    function project(con) {
-        if (con.win !== null && con.type !== "ws") return visibleLeaf(con) ? { win: con.win } : null;
-        if (con.layout === "tabbed" || con.layout === "stacked") return projectGroup(con);
+    // -> null | { win, extra } | { hole } | { dir: "h"|"v", kids: [{ p, share }] } (a kid's p may
+    // be a bar or a hole).
+    // holes (the tiles' projection only): a fullscreen window out of KWin's tiles keeps its place
+    // as an empty tile, { hole: win }, as i3 renders a fullscreen con alone and leaves its
+    // siblings' rects (render.c:127-144): the neighbours keep their sizes behind it, and it comes
+    // back to them when fullscreen ends. A projection of holes alone is a hole; the workspace's is
+    // then none (projectTiles).
+    function project(con, holes) {
+        if (con.win !== null && con.type !== "ws") {
+            if (visibleLeaf(con)) return { win: con.win };
+            var w = wins[con.win];
+            return holes && w && !w.minimized ? { hole: con.win } : null;
+        }
+        if (con.layout === "tabbed" || con.layout === "stacked") return projectGroup(con, holes);
         var kids = [];
         var total = 0;
         con.nodes.forEach(function (child) {
-            var p = project(child);
+            var p = project(child, holes);
             if (!p) return;
             kids.push({ p: p, share: child.percent });
             total += child.percent;
         });
         if (!kids.length) return null;
         if (kids.length === 1) return kids[0].p;
+        if (kids.every(function (k) { return k.p.hole !== undefined; })) return kids[0].p;
         var out = { dir: con.layout, kids: [] };
         kids.forEach(function (k) {
             var share = total > 0 ? k.share / total : 1 / kids.length;
@@ -2788,10 +2800,15 @@ var KI3 = (function () {
         return out;
     }
 
+    function projectTiles(ws) {
+        var p = project(ws, true);
+        return p && p.hole !== undefined ? null : p;
+    }
+
     // "H[a V[b c]]" over window ids, without sizes: equal shapes need only a resize.
     function shapeOfProjection(p) {
         if (!p) return "";
-        if (p.bar) return "b";
+        if (p.bar || p.hole !== undefined) return "b";     // an empty leaf tile, as shapeOfTile reads it
         if (p.win !== undefined) return "w:" + [p.win].concat(p.extra || []).map(String).sort().join("+");
         return p.dir + "[" + p.kids.map(function (k) { return shapeOfProjection(k.p); }).join(" ") + "]";
     }
@@ -3086,6 +3103,7 @@ var KI3 = (function () {
     // inner gap, half on each side) added up along a split and the largest across it.
     function minOf(p) {
         if (p.bar) return { w: 0, h: p.rows * BAR_ROW };
+        if (p.hole !== undefined) return { w: 0, h: 0 };
         if (p.win !== undefined) {
             var i = gaps().inner, m = { w: 0, h: 0 };
             [p.win].concat(p.extra || []).forEach(function (k) {      // the tabs behind fit too
@@ -3132,7 +3150,7 @@ var KI3 = (function () {
 
     // Returns true if anything had to change.
     function setSizes(tile, p, rect) {
-        if (p.win !== undefined || p.bar) return false;
+        if (p.win !== undefined || p.bar || p.hole !== undefined) return false;
         var changed = false, h = p.dir === "h", n = h ? snapW : snapH;
         var start = h ? rect.x : rect.y, size = h ? rect.width : rect.height, pos = start;
         var want = p.kids.map(function (k) { return k.share * size * n; });
@@ -3178,7 +3196,7 @@ var KI3 = (function () {
 
     // Build p's shape under `tile`, which has no children. Returns nothing; windows come after.
     function build(tile, p) {
-        if (p.win !== undefined || p.bar) return;
+        if (p.win !== undefined || p.bar || p.hole !== undefined) return;
         var dir = p.dir === "v" ? 2 : 1;
         if (tile.parent) tile.split(dir);          // a leaf becomes a layout with two children
         else { tile.layoutDirection = dir; tile.split(dir); }
@@ -3195,6 +3213,11 @@ var KI3 = (function () {
             tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
             barTiles.push(tile);
             groupBars.push({ con: p.bar, tile: tile });
+            return;
+        }
+        if (p.hole !== undefined) {                    // a fullscreen window's place: an empty tile
+            tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
+            barTiles.push(tile);
             return;
         }
         if (p.win !== undefined) {
@@ -3446,7 +3469,7 @@ var KI3 = (function () {
         passWs = ws;
         delete gapCache[ws.num];            // the settings or the tree may have changed
         floatWhatCannotFit(ws, area);
-        var p = project(ws);
+        var p = projectTiles(ws);
         gapCache[ws.num] = computeGaps(ws, p);   // a float above may have left one window
         refused = false;
         barTiles = []; multiTiles = []; shownTabs = []; groupBars = [];
