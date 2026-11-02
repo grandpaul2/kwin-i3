@@ -49,8 +49,9 @@ public Q_SLOTS:
     // kwin-i3 ends the drag (a window closed on the focused workspace, i3's drain_drag_events;
     // nothing to resize on a ring's side): the presses taken stay taken until released.
     void Cancel();
-    // A window of kwin-i3's floats, or no longer does: Meta+Shift+left on it is float to tile
-    // (§9 G13). Told again after every SetOn(true).
+    // A window of kwin-i3's floats, or no longer does: Meta+Shift+left on it is i3's floating
+    // move, which KWin's window action (Meta alone) doesn't start (§9 F1). Told again after every
+    // SetOn(true).
     void SetFloating(const QString &id, bool on);
     // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
     // window the bar is drawn with, "#N" after it for that window's further bar, the rect logical
@@ -96,12 +97,12 @@ private:
     TilingDrag *m_drag;
 };
 
-// G5's float (Meta+Shift+left on a tiled window) is KWin's own move, and Shift held during a KWin
-// move is its "drop into a custom tile": an outline over each tile passed, and the window tiled at
-// a release with Shift down (KWin 6.7.5 window.cpp:1245, :1108). kwin-i3's windows all sit in
-// custom tiles, so every window passed showed it (A capture, 2026-10-29). Just ahead of
-// KWin's move filter (same weight, installed after it), and only for a move G5 started: what that
-// filter does, with Shift taken out.
+// Meta+Shift+left on a floating window (§9 F1) is i3's floating move, ignoring Shift
+// (click.c:284): KWin's own window action, started by the helper as KWin's fires only on Meta
+// alone (6.7.5 input.cpp:1299). Shift held during a KWin move is its "drop into a custom tile": an
+// outline over each tile passed, and the window tiled at a release with Shift down (window.cpp:1245,
+// :1108), into one of kwin-i3's. Just ahead of KWin's move filter (same weight, installed after
+// it), and only for a move the helper started: what that filter does, with Shift taken out.
 class TilingDragFloat : public KWin::InputEventFilter
 {
 public:
@@ -176,9 +177,6 @@ private:
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
     QSet<QString> m_floating;         // kwin-i3's floating windows, by internal id (SetFloating)
-    // One float or float to tile per press of the keys (§9 G5, G13): set by a
-    // Meta+Shift+left press taken, cleared when Meta or Shift is released.
-    bool m_shiftLatched = false;
     KConfigWatcher::Ptr m_watcher;
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty

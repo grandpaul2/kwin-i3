@@ -175,13 +175,6 @@ TilingDrag::TilingDrag()
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
     loadConfig();
-    // The repress rule (G13): a release of Meta or Shift, seen with the pointer still
-    // (InputRedirection::keyboardModifiersChanged, KWin 6.7.5 input.h:273).
-    QObject::connect(input(), &InputRedirection::keyboardModifiersChanged, &m_context, [this](Qt::KeyboardModifiers now, Qt::KeyboardModifiers) {
-        if (!(now & Qt::MetaModifier) || !(now & Qt::ShiftModifier)) {
-            m_shiftLatched = false;
-        }
-    });
     QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] { loadConfig(); });
     QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] { loadConfig(); });
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
@@ -417,41 +410,30 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
     const bool metaShift = mods == (Qt::MetaModifier | Qt::ShiftModifier);
     const bool tiled = window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
-    if (metaShift && !tiled && m_floating.contains(window->internalId().toString())) {
-        // Float to tile (beyond i3, §9 G13): a floating window of kwin-i3's is
-        // dragged as a tiled one, with no activation (G1), and tiled where it is dropped. With
-        // tiling_drag off or titlebar, KWin's move, as i3's floating_drag_window ignores Shift.
-        if (m_shiftLatched) {
-            m_taken |= Qt::LeftButton;      // the repress rule: nothing until a release
-            return true;
-        }
-        if (!m_modifierDrag) {
+    if (metaShift && !tiled) {
+        // i3's floating modifier ignores Shift on the left button (click.c:284): a floating window
+        // of kwin-i3's moves as with Meta alone, KWin's window action (§9 F1), which KWin itself
+        // starts only on Meta alone (6.7.5 input.cpp:1299). Anything else keeps its press.
+        if (!m_floating.contains(window->internalId().toString()) || window->isFullScreen() || !window->isMovable()) {
             return false;
         }
-        m_shiftLatched = true;
-        takePress(window, Qt::LeftButton, event->position, false, QString(), false);
+        m_float.start(window);      // the move without Shift: no custom-tile drop (TilingDragFloat)
+        window->performMousePressCommand(options->commandAll1(), event->position);
         return true;
     }
     if (!tiled) {
         return false;
     }
-    if (metaShift) {
-        // Meta+Shift: pull it out and float it (beyond i3; the swap
-        // needs no Shift). KWin's own move, as Meta+drag was before the tiling drag: the window
-        // leaves its tile at its floating size and follows the pointer; kwin-i3 floats it where
-        // it is dropped. KWin's move takes the motions and the release from here. Once per press
-        // of the keys, as float to tile (G13): held, a second press does nothing.
-        if (m_shiftLatched) {
-            m_taken |= Qt::LeftButton;
-            return true;
-        }
-        m_shiftLatched = true;
-        m_float.start(window);      // the move without Shift: no custom-tile drop (TilingDragFloat)
-        window->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
-        return true;
-    }
     bool threshold = false;
-    if (mods == Qt::MetaModifier) {
+    if (metaShift) {
+        // i3's swap modifier, read at the press (tiling_drag.c:341): here the same tiling drag as
+        // Meta alone, the centre's bands deciding (§9 G11). With tiling_drag off or titlebar (G3)
+        // the press is the app's, as in i3: KWin's window action, which G4's swallow is for, never
+        // fires with Shift held.
+        if (!m_modifierDrag) {
+            return false;
+        }
+    } else if (mods == Qt::MetaModifier) {
         // Anywhere in the window, with no threshold (i3's floating modifier, click.c), and no
         // activation: i3 starts the drag before it focuses anything (step 2 before 3), and after
         // the drop the focus stays unless the dragged window had it (§9 G1). With

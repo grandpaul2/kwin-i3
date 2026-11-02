@@ -18,6 +18,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   the top makes the two windows a tabbed group, the middle a stacked one, the bottom swaps them;
   dropped in the middle of a window in a group, it joins the group. The centre is kept about as
   wide as tall; beyond it is the beside drop.
+- **The mouse never floats or tiles a window, as in i3**: Meta+Shift+drag is the tiling drag on a
+  tiling window and KWin's move on a floating one; it no longer floats a tiling window or drops a
+  floating one into the tiles. Meta+Shift+Space is the way between them.
 - **Keys**: Meta+W is Plasma's Overview on a stock install; `make take-keys` gives it to Layout
   Tabbed (the Overview stays on the top-left screen corner).
 

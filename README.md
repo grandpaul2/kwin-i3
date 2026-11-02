@@ -75,14 +75,16 @@ Mouse:
   group, it joins it.
   Any button's release drops it there; any key cancels. With tiling windows showing their own title bars (`tiledLook`), dragging a tiling window's title
   bar does the same, and so does dragging a tab out of a group's bar.
-- **Meta+Shift+left-drag on a tiling window** pulls it out at its floating size and floats it where
-  it is dropped, the mouse twin of Meta+Shift+Space: Shift is a float modifier here, where i3's
-  Shift swaps (the middle's bottom third swaps anyway). Without the helper plugin, Meta+left-drag does this.
+- **Meta+Shift+left-drag** is the same drag (i3's Shift would swap at the middle; here the middle's
+  thirds decide). The mouse never floats or tiles a window: Meta+Shift+Space does, as in i3.
+  Without the helper plugin, Meta+left-drag is KWin's own move, which floats the window where it
+  is dropped.
 - **Meta+right-drag on a tiling window**, or in the gap beside one, is i3's tiling resize (helper
   plugin): the pointer jumps onto the nearest edge, a bar follows it, and the sizes change on
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if
   there is none). A plain press in a gap does the same: the gaps are kwin-i3's. Without the helper it is KWin's own resize, kept in the tree.
-- **Meta+left-drag and Meta+right-drag on a floating window** move and resize it: KWin's own.
+- **Meta+left-drag (or Meta+Shift+left-drag) and Meta+right-drag on a floating window** move and
+  resize it: KWin's own.
 
 With the plugins, the 1 px frame starts nothing from the pointer (no resize cursor, no edge drag,
 no title-bar move), and hover and a click on it focus the window, as i3's border does.

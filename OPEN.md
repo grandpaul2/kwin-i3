@@ -73,41 +73,21 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**78. The Meta+Shift drags back to i3's** (the first of three builds from `docs/plan.md` "The
-mouse", in order 78, 74, 73). G5 (Meta+Shift+drag floats a tiling window where dropped), G13 (on
-a floating window, tiles it) and X5 come out: in i3 the mouse never changes a window's kind.
-After: Meta+Shift+left on a tiling window is the tiling drag Meta+left is, the centre's bands
-deciding (Shift adds nothing, `LATER.md` item 80), whatever `tilingDrag` says of plain presses;
-on a floating window a move, as i3's floating modifier ignores Shift on the left button
-(`click.c:284`). KWin's window actions fire only on their exact modifier (6.7.5
-`input.cpp:1299`), so today that press reaches the app (`tests/live/52-mouse.sh:46-51`): the
-helper starts the move itself, Shift taken out as `TilingDragFloat` does (kept, reworded), for a
-movable normal floating window only (not fullscreen, a panel, a popup). With nowhere to drop, a
-Meta+Shift press goes on to the app, as i3's (steps 3, 10): G4's swallow is for Meta alone,
-whose press KWin would turn into a move. Also to read: whether the helper can refuse a client's
-own move request on a tiling window (i3 ignores it, `handlers.c:936`; here it floats,
-`src/kwin.js:2053-2060`, the i3 feature map's C44, `tests/live/51-input.sh:90`). Touches:
-- the helper: `plugin/tilingdrag.cpp` (the Meta+Shift paths, `:178-190`'s once-per-press rule,
-  `:423-426`), `tilingdrag.h` (`SetFloating`, `m_floating`, `m_shiftLatched`, `:52-54`,
-  `:178-180`);
-- the script: `src/kwin.js` `tellDragFloating`/`tellDrag`, `startDrag`'s `drag.type ===
-  "floating"`, `dropOn`, `unfloatForDrop`;
-- user-facing text: the settings page's `tilingDrag` help (`kcm/ui/main.qml:375`), `README.md`'s
-  Meta+Shift bullet (`:78-80`) and its mouse prose, `CHANGELOG.md`'s next entry;
-- `behaviour.md`: G3, G5, G11 ("Shift or not", "as G5 and G13"), G13, X5, N17 ("Shift floats
-  instead of swapping"), T16/T17's wording, §1's helper table;
-- the i3 feature map: A61, B40, B45, B47, R26;
-- tests: `tests/live/86-tiling-drag.sh` (the G5/G13 block), `52-mouse.sh:46-51` (asserts
-  Meta+Shift+left does nothing).
-
-Next: build it.
+**78. An app's own move request on a tiling window** (`behaviour.md` X5; the Meta+Shift drags
+went back to i3's first, G5, G13). i3 ignores a client's move request on a tiling window
+(`handlers.c:936`); here KWin runs it as its own move command (6.7.5
+`xdgshellwindow.cpp:1045-1050`, before any input filter) and the window floats where dropped
+(`src/kwin.js` tileChanged, the i3 feature map's C44, `tests/live/51-input.sh:90`). The helper
+could cancel, at `interactiveMoveResizeStarted`, a move of a tiled window it didn't start; that
+also stops KWin's keyboard Move Window and the window menu's Move on a tiled window, which i3
+has no counterpart of either. Next: decide whether that wider refusal is wanted, then build it.
 
 **74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
 `click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
 `:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press
 with no modifier (`plugin/tilingdrag.cpp:607-609`), so a Meta press on a group's bar falls to the
 general drag, which finds no window there (§9 G8's gap rule: likely the group's shown window, not
-the tab pressed). The port: Meta+left (and Meta+Shift+left, item 78) on a tab drags that tab's
+the tab pressed). The port: Meta+left (and Meta+Shift+left, G5) on a tab drags that tab's
 container at once, a split tab whole (G1's no-focus rule, G14's tab con); dropped as any drag
 (G9-G11); a split tab onto one of its own windows does nothing (i3's guards, `con_swap`
 `con.c:2607`, `con_move_to_target`). With it, i3's right press on a tab: a resize against the
@@ -116,7 +96,7 @@ window menu isn't), and with `tilingDrag` leaving plain title-bar drags out, a l
 the same resize (step 10, `click.c:355-358`); G14 says only step 8 now. `pressBar`
 (`tilingdrag.cpp:607-612`) refuses right presses too: a new path. A split tab dropped on the
 Swap band onto one of its own windows hits `con_swap`'s parent-child guard (`con.c:2607`): the
-port must reach it. Next: after item 78, the helper's `pressBar` and §9's rows.
+port must reach it. Next: the helper's `pressBar` and §9's rows.
 
 **73. Float a container whole** (i3's `floating_enable` on a split or group, `floating.c:233`).
 With a container focused (focus parent), Meta+Shift+Space does nothing: a floating node here is

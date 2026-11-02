@@ -155,11 +155,12 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79). So
   is **a move KWin starts itself**: Meta+drag without the helper (`behaviour.md` F9), or a client
   asking to be moved by its own header bar (GTK, Electron), which floats a tiling window where
-  i3 ignores the request (`handlers.c:936`). Whether the helper can refuse the client's request
-  is `OPEN.md` item 78's to read; until then it is a difference.
-- **Where it can't match**, each a ≠ row with its reason: a press with nothing to do is
+  i3 ignores the request (`handlers.c:936`): KWin runs it as its own move before any input
+  filter (`behaviour.md` X5); the helper refusing it once started is `OPEN.md` item 78.
+- **Where it can't match**, each a ≠ row with its reason: a Meta press with nothing to do is
   swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
-  would float the window); the drag distance is Plasma's setting, not i3's 15 px (G2); a
+  would float the window), and so is a Meta+Shift press with nowhere to drop (G4: the helper
+  takes the press before the tree has counted); the drag distance is Plasma's setting, not i3's 15 px (G2); a
   floating container's resize waits on each app, as the hold does; no mouse bindings (F7, reason
   (d)).
 

@@ -372,7 +372,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "dragging tiling windows")
-                toolTipText: i18n("Drop a tiling window beside another, or on its middle to swap them. Meta+Shift+drag floats it instead. i3: tiling_drag")
+                toolTipText: i18n("Drop a tiling window beside another, or on its middle to group or swap them. Meta+Shift+Space floats it. i3: tiling_drag")
             }
         }
         RowLayout {
