@@ -22,10 +22,10 @@ Contents: 1 the pieces · 2 the tree · 3 window kinds · 4 workspaces and outpu
 
 | piece | what it is | built from | installed by |
 |---|---|---|---|
-| the script | a KWin script, the whole window manager | `src/*.js`, concatenated by `build.sh` into `package/contents/code/main.js` | linking `package/` (README, "Install") |
-| `kwini3hold` | a KWin effect (`CrossFadeEffect`, internal, on by default; needs OpenGL compositing) | `plugin/hold.cpp`, `holdmain.cpp`, `hold.json` | `make plugin-install` |
-| `kwini3helper` | a KWin plugin: frame focus, the tiling drag and resize, the resize mode and terminal key, settings watch, layout keys, popup grace, the gap strips, and a pointer probe for the tools | `plugin/main.cpp`, `helper.cpp`, `framefocus.cpp`, `tilingdrag.cpp`, `resizemode.cpp`, `settingswatch.cpp`, `layoutkeys.cpp`, `popupgrace.cpp`, `gapstrips.cpp`, `pointerprobe.cpp`, `metadata.json` | `make plugin-install` |
-| the settings page | a System Settings module (`kcm_kwin_i3`, Wayland only, under Window Management) | `kcm/` | `make kcm-install` |
+| the script | a KWin script, the whole window manager | `src/*.js`, concatenated by `build.sh` into `package/contents/code/main.js` | `make install` (`tools/install.sh`: linked into KWin's scripts and enabled; README, "Install") |
+| `kwini3hold` | a KWin effect (`CrossFadeEffect`, internal, on by default; needs OpenGL compositing) | `plugin/hold.cpp`, `holdmain.cpp`, `hold.json` | `make plugin-install` (with `make install`) |
+| `kwini3helper` | a KWin plugin: frame focus, the tiling drag and resize, the resize mode and terminal key, settings watch, layout keys, popup grace, the gap strips, and a pointer probe for the tools | `plugin/main.cpp`, `helper.cpp`, `framefocus.cpp`, `tilingdrag.cpp`, `resizemode.cpp`, `settingswatch.cpp`, `layoutkeys.cpp`, `popupgrace.cpp`, `gapstrips.cpp`, `pointerprobe.cpp`, `metadata.json` | `make plugin-install` (with `make install`) |
+| the settings page | a System Settings module (`kcm_kwin_i3`, Wayland only, under Window Management) | `kcm/` | `make kcm-install` (with `make install`) |
 | the Configure form | KWin's generic script form (the cog in KWin Scripts) | `package/contents/ui/config.ui`, `config/main.xml` | with the script |
 | the workspace widget | a Plasma applet, an alternative to the pager | `widget/` | `make widget-install` |
 
@@ -697,7 +697,7 @@ with `$mod` as the wizard's Win choice.
 | K18 | Terminal, Launcher | Meta+Return, Meta+D | ≠ | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) is reported as a taken key; a holder that launches the same thing (KRunner's own `_launch`, the default terminal's) is not. i3 starts its terminal with startup notification (`config.keycodes:51`), so its window opens on the workspace it was launched from (`manage.c:336`); here where the focus is when it maps: reason (d), the launch workspace (`plan.md` "Out"; `LATER.md` item 28) |
 | K19 | Back-and-forth, next/prev, output moves (§4), the no-back-and-forth forms (S5), next and primary outputs (S8, S9), Focus Child (§2 T27a) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
-| K21 | Dump State | none | + | `tools/capture`, on a key the user binds (README, Install step 9) |
+| K21 | Dump State | none | + | `tools/capture`, on a key the user binds (README, Install step 7) |
 | K22 | Any other command on a key (`bindsym`, arguments, `mode`, chains) | none | ≠ | kept: no command language, so a key's action takes no arguments, `mode` or chain (§4 S5, S8). Reason (d). |
 | K23 | The volume and media keys (i3's config binds them to `pactl`) | Plasma's | ≠ | hardware is Plasma's (`plan.md` Out), and another component's shortcut stays its own: reasons (d), (e) |
 

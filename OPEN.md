@@ -67,8 +67,8 @@ editor, freed; the window actions' modifier Meta and, on 6.7, `Activate, raise a
 off and a 15 px drag distance, optional; Shift at a move's release, named only (no setting). The
 taken keys' save and give-back already follow the rules (`behaviour.md` §8, the taken keys).
 To check: `behaviour.md` G2 names a System Settings page for the drag distance; the
-survey found none. Next: (1) `make install` and `make uninstall`, and the same save and
-give-back for the Plasma settings in the list; (2) the Set up section; (3) the README's Install
+survey found none. Next: (1) the same save and give-back for the Plasma settings in the
+list, in `make uninstall` too (`make install` and `make uninstall` are built, `tools/`); (2) the Set up section; (3) the README's Install
 rewritten to them, and `behaviour.md` §13's "never set" with it; (4) the install walked as a new
 user on stock CachyOS and PikaOS (`tools/box.sh`). Separate, still open: a rule for Plasma's window
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
@@ -85,7 +85,7 @@ order at that moment, then i3's rule against what KWin allows.
 **71. The README's monitor paragraph for any monitor** (`LATER.md` item 70's (a)). "On a laptop
 that docks" holds the advice to set workspace outputs, but a desktop's monitor drops out the same
 way (a hotplug blip) and a desktop user skips a laptop paragraph. Next: a
-bullet in Install step 7 ("For i3's feel", beside "More than one monitor"): workspaces of a
+bullet in Install step 5 ("For i3's feel", beside "More than one monitor"): workspaces of a
 monitor that goes away stay on the other for good, as in i3; a workspace output per number, with
 the other screen second, brings them back.
 

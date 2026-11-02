@@ -58,7 +58,7 @@ your KWin loads: do your work in a git worktree, never on a branch there.
   specific reason.
 - **The cause before a fix.** `docs/kwin-notes.md` holds what KWin really does where it surprised
   us; add to it when you find something.
-- **Bug captures**: a key bound to `tools/capture` (README, Install step 9) saves the last minute of kwin-i3's, the plugins' and the pointer's
+- **Bug captures**: a key bound to `tools/capture` (README, Install step 7) saves the last minute of kwin-i3's, the plugins' and the pointer's
   events with a screenshot; `tools/capture-read DIR` reads it (`docs/debugging.md`).
 
 Licence: GPL-2.0-or-later (`LICENSE`, `NOTICE`).

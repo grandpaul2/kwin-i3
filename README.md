@@ -9,7 +9,7 @@ resize, focus on the frame), the resize mode, keys for your keyboard layout, and
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
 **Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
-capture (Install, step 9). Install the `stable` branch: each version there has run on a
+capture (Install, step 7). Install the `stable` branch: each version there has run on a
 desktop for a day and passed every test on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
 2026-10-23), in daily use since 2026-10-22.
 The core of i3 is here, tabbed and stacked layouts included; what is left out is deliberate
@@ -116,21 +116,20 @@ resize cursor until the drag starts).
 
 About ten minutes in a terminal, with one log-out in the middle. **Never alongside another tiling
 script** (Krohnkite, Polonium, …): two scripts would place the same windows, so turn the other one
-off first (System Settings > Window Management > KWin Scripts).
+off first (System Settings > Window Management > KWin Scripts); `make install` stops if one is on.
+Nothing in Plasma is changed without your say, and `make uninstall` takes it all out again.
 
 1. **Get it**, into `~/kwin-i3` (the steps below assume that path):
    `git clone -b stable https://github.com/grandpaul2/kwin-i3 ~/kwin-i3 && cd ~/kwin-i3`.
    `stable` is the tested version; `main` is where the work lands first, a few days ahead.
-2. **The script**: `mkdir -p ~/.local/share/kwin/scripts`, then
-   `ln -s ~/kwin-i3/package ~/.local/share/kwin/scripts/kwin-i3`, then
-   `kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true`.
-3. **The plugins**: `make plugin-install`. They draw the frame and run the mouse (the table
-   below). The first time it may say KWin didn't load them yet: they load at the next login.
-4. **The settings page**: `make kcm-install`. It shows in System Settings > Window Management
-   after the next login.
-5. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
-   paths, only at login. kwin-i3 is running when your windows tile.
-6. **Your keys**: `make take-keys`. Some of i3's keys are Plasma's too (Meta+arrows for quick
+2. **Install**: `make install`. It links the script into KWin and turns it on, builds and
+   installs the plugins (they draw the frame and run the mouse: the table below) and the settings
+   page, and changes nothing else. The first time it may say KWin didn't load the plugins yet:
+   they load at the next login.
+3. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
+   paths, only at login. kwin-i3 is running when your windows tile; its settings are in System
+   Settings > Window Management.
+4. **Your keys**: `make take-keys`. Some of i3's keys are Plasma's too (Meta+arrows for quick
    tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
    Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview stays on the
    screen's top-left corner and Grid View on Meta+G), and a key two shortcuts share runs Plasma's, not kwin-i3's. This
@@ -139,7 +138,7 @@ off first (System Settings > Window Management > KWin Scripts).
    changed since stays as you set it). Rather keep
    some of Plasma's? Skip this step and take keys one by one on kwin-i3's Keys page (a key Plasma
    holds is named in its row and moved on Apply).
-7. **For i3's feel**: Plasma's own settings that kwin-i3 is designed around. These are **Plasma's
+5. **For i3's feel**: Plasma's own settings that kwin-i3 is designed around. These are **Plasma's
    settings, not kwin-i3's**: kwin-i3 never changes them, and you change them back in the same
    place.
    - **Focus follows mouse**: System Settings > Window Management > Window Behavior > Focus,
@@ -150,9 +149,9 @@ off first (System Settings > Window Management > KWin Scripts).
      and windows tile on the wrong one. It takes effect at once.
    - **Animations off** (optional; i3 has none): System Settings > Quick Settings, *Animation
      speed* to "Instant".
-8. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
+6. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
    Applications > Terminal emulator).
-9. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
+7. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
    `~/kwin-i3/tools/capture`, on a key you don't use (Meta+Shift+B is free on a stock Plasma). Press it
    right after something goes wrong: it asks for a note and saves what kwin-i3 saw in the seconds
    before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
@@ -160,21 +159,21 @@ off first (System Settings > Window Management > KWin Scripts).
 **After a Plasma update**: the plugins work only with the KWin version they were built against,
 so after each Plasma update tiling windows have their title bars back until you run
 `cd ~/kwin-i3 && make plugin-install` (the settings page and the script need nothing). **To
-update kwin-i3**: `cd ~/kwin-i3 && git pull && make plugin-install kcm-install`, then the reload
-below. `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
+update kwin-i3**: `cd ~/kwin-i3 && git pull && make install` (it reloads kwin-i3, re-tiling the
+windows once). `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
 `main`: `git checkout stable` once moves it. To go back to an earlier version:
-`git checkout v1.N.M` (the tags), then the same install and reload.
+`git checkout v1.N.M` (the tags), then `make install`.
 
 **On a laptop that docks**: when an output goes away, its workspaces move to the first output for
 good, as in i3. To keep a workspace on the external output, give it a workspace output (the
 settings page's Workspaces, or `workspaceOutputs` below); it goes back when that output returns.
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
-it**: `make restore-keys` (if you ran `make take-keys`), then
-`kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled false`, log out, and delete
-`~/.local/share/kwin/scripts/kwin-i3`, `~/.local/lib/kwin-i3/`, the drop-in
-`~/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf` and
-`~/.config/environment.d/kwin-i3.conf`.
+it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives your shortcuts their keys
+back (one you changed since stays as you set it), turns kwin-i3 off, and deletes everything the
+install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
+install; it says where. Then delete `~/kwin-i3` and, if you made one, the bug-report key
+(Install step 7).
 
 With the script alone (no plugins), windows keep Plasma's decoration (Breeze, title bars and all),
 and the keys, the tree, the workspaces and floating work; the settings page says at its top when

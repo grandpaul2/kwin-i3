@@ -1,4 +1,4 @@
-.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install take-keys restore-keys
+.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install take-keys restore-keys install uninstall
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel is installed (its CMake config); without it,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -45,6 +45,11 @@ kcm-install: kcm
 # The workspace widget (widget/): QML only, nothing to build.
 widget-install:
 	kpackagetool6 -t Plasma/Applet -u widget >/dev/null 2>&1 || kpackagetool6 -t Plasma/Applet -i widget
+# The install's every step that needs no choice, and its undoing (docs/plan.md, "Install and first run").
+install: plugin kcm
+	tools/install.sh
+uninstall:
+	tools/uninstall.sh
 # Free kwin-i3's keys that other shortcuts hold, and put them back.
 take-keys:
 	python3 -I tools/take-keys.py take
