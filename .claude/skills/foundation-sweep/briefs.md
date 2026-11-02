@@ -1,8 +1,10 @@
 # The foundation sweep's briefs
 
-Each agent gets the **common part** and its area's part, with `REPO` (the checkout), `BASE`, `CHANGES` (the commit list
-and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed version) and
-`OUT` (its output file) filled in. The agent knows only what its brief says.
+Each agent gets the **common part** and its area's part, with `REPO` (the checkout), `BASE`,
+`CHANGES` (the commit list and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the
+installed version, and the paths of any KWin files fetched in step 0), `CHECKED` (`check.py`'s
+output after its fixes, usually empty) and `OUT` (its output file) filled in. The agent knows
+only what its brief says. The C areas get the **short** common part.
 
 ## Common part (every finder)
 
@@ -11,6 +13,14 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 > `AGENTS.md`, then `docs/README.md` (one home per fact), `docs/definitions.md` (the words),
 > `docs/philosophy.md` (above all "How a decision is made") and `docs/plan.md` (the scope, the
 > reasons (a)-(f) a difference from i3 may have, the standing decisions).
+>
+> **The short version, for the C areas**, in place of the paragraph above: read
+> `docs/definitions.md` (the words) and, in `docs/plan.md`, "Scope" (the In and Out lists and
+> the reasons (a)-(f)); nothing else of the foundations. Your job is the code against its rows.
+>
+> A script has already checked the marks, the reasons' letters, history in the docs, the
+> tables' shape and §11's defaults; don't report those. What it left: `CHECKED`. Own only your
+> area's facts (below): a fact another area owns, report only if it is high.
 >
 > i3 means its 4.24 release, checked out at `I3`: cite `src/<file>.c:<line>` from there, never
 > from memory and never `next`. KWin is version `KWIN`; for "KWin can't" read
@@ -45,8 +55,9 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 ## A. The foundations
 
 > Your area: the foundation docs against each other, and the words a user reads.
-> 1. `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, and `AGENTS.md`'s rules
->    about docs: contradictions; a fact in two homes; a rule stated two ways; a word used against
+> 1. `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, and `AGENTS.md`'s rules:
+>    contradictions, `AGENTS.md`'s restatements of the decision steps included; a fact in two
+>    homes; a rule stated two ways; a word used against
 >    `definitions.md`; a decision in `plan.md` no longer true of `behaviour.md` or the code; the
 >    In and Out lists against what `behaviour.md` says is built; every claim about i3 in them
 >    checked in `I3`; cases the decision steps can't settle or settle two ways (holes).
@@ -56,11 +67,14 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 > 3. Rows of `docs/i3-feature-map.md` that other docs cite (grep "row ", "finding "): still true?
 >    The map is a dated study: report only rows that a citing doc relies on and that are now
 >    wrong.
+> Not yours: `behaviour.md`'s tables (B and the C areas own them) and i3's line numbers (B).
 
 ## B. The i3 side
 
 > Your area: every row of `docs/behaviour.md` that carries an i3 mark (=, ≠, +).
-> 1. Its i3 side against `I3`: is that what i3 4.24 does? The citation right?
+> 1. Its i3 side against `I3`: is that what i3 4.24 does? The citation right? You own every i3
+>    citation in the docs (`docs/*.md`), the foundations' included: no other area checks line
+>    numbers.
 > 2. Each ≠: does it name one of `plan.md`'s reasons (a)-(f), and does that reason hold? (f) cites the defect in i3; (a)
 >    checked against `kwin-notes.md` and KWin's source; (c) is precedent only for the thing it
 >    names; (d) against the Out list; (e) against Plasma's settings. A ≠ whose reason doesn't
@@ -77,25 +91,28 @@ and diff stat since the base), `I3` (`~/.cache/i3-4.24`), `KWIN` (the installed 
 > `src/placement.js`, `src/settings.js`, against `docs/behaviour.md` §2-4 and §11 (and any row
 > elsewhere citing these files). Each row's kwin-i3 side: does the code do that, exactly? Each
 > behaviour in the code that no row describes (a hole in `behaviour.md`). Known limits still
-> true. Name the function, not the line.
+> true. Name the function, not the line. You alone read §11's table: every setting in
+> `src/settings.js` has its row, its default and range as the code's.
 
 ## C2. The KWin seam
 
-> Your area: `src/kwin.js`, against `docs/behaviour.md` §5, §6, §10, §12-14 (and any row
+> Your area: `src/kwin.js` but its tiling drag and resize (C3's), against `docs/behaviour.md` §5, §6, §10, §12-14 (and any row
 > elsewhere citing it). Each row's kwin-i3 side: does the code do that, exactly? Each behaviour
 > in the code that no row describes. Known limits still true. Name the function, not the line.
 
 ## C3. The plugins
 
-> Your area: `plugin/*.cpp` (kwini3hold, kwini3helper), against `docs/behaviour.md` §1, §7-9 (and
-> any row elsewhere citing a plugin). Each row's side: does the code do that, exactly? Each
+> Your area: `plugin/*.cpp` (kwini3hold, kwini3helper), and the script's side of the tiling drag
+> and resize in `src/kwin.js` (`startDrag`, `dropPlan`, `drop`, `startResize` and their
+> neighbours), against `docs/behaviour.md` §1, §7-9 (and any row elsewhere citing a plugin). Each row's side: does the code do that, exactly? Each
 > behaviour in the code that no row describes. Known limits still true. The messages between
 > script and plugins (§1, "How they talk") as both ends implement them.
 
 ## Checker
 
 > You are checking claims about kwin-i3 (`REPO`, read-only) against their
-> sources. i3 is its 4.24 release at `I3`; KWin is version `KWIN`. For each claim below, read the
+> sources. Don't read the project's foundation docs; read only what each claim needs, and be
+> economical: grep for the function, read it, decide. i3 is its 4.24 release at `I3`; KWin is version `KWIN`. For each claim below, read the
 > sources it cites, and any others you need, and answer: CONFIRMED, REFUTED or PARTIAL, with
 > what you read (file:line). Don't trust the citation: open it. A claim about i3 is checked in
 > i3's source, never from memory. Claims: `CLAIMS` (each: its id, what it says, its citations;

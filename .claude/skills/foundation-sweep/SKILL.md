@@ -13,8 +13,8 @@ but not in its doc, a fact copied into a second home. The sweep finds that drift
 piece from the docs, and leaves the maintainer only what the docs can't settle: **conflicts
 between foundations, never individual issues**.
 
-It runs in six steps. Steps 1 and 3 use agents (and step 5's round two); the rest is the session's own work, ending with an evaluation of the sweep itself. Any agent
-can follow it: where it says "agent", use whatever sub-agent your harness has; never an
+It runs in six steps. Steps 1 and 3 use agents (and step 5's round two); the rest is the
+session's own work, ending with an evaluation of the sweep itself. Any agent can follow it: where it says "agent", use whatever sub-agent your harness has; never an
 orchestrator whose cost can't be bounded at launch.
 
 ## 0. Prepare
@@ -25,7 +25,8 @@ orchestrator whose cost can't be bounded at launch.
    (`git -C ~/.cache/i3-4.24 describe --tags` says `4.24`). Every i3 citation is
    `src/<file>.c:<line>` in that tree.
 2. **KWin's source, the installed version** (`rpm -q kwin`, `pacman -Q kwin`), for any reason (a)
-   "KWin can't" a finding questions: `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`.
+   "KWin can't" a finding questions: `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`, a
+   file fetched once into the working directory and named in the briefs, not by each agent.
    `docs/kwin-notes.md` first: most of what KWin can't do is already there.
 3. **The base**: the last sweep is the last commit whose subject starts `Foundation sweep:`
    (`git log -1 --grep='^Foundation sweep:' --format=%h`; before the first one, `531b86b`, the
@@ -35,22 +36,32 @@ orchestrator whose cost can't be bounded at launch.
 4. **A working directory outside the repo** (the session's scratch directory) holding one file
    per area, so the findings survive the session's context. Nothing from it enters the tree
    (`docs/README.md`: a review is not kept as a file).
+5. **The mechanical checks**, before any agent: `python3 .claude/skills/foundation-sweep/check.py`
+   from the repo root (read-only; a second). It finds what a script can: a ≠ row naming no reason,
+   an = row whose note carries a ≠, history and stamps in the standing docs, a broken table row,
+   `behaviour.md` §11 against the code's defaults. Fix those first, as settled at step 1; what
+   is left goes to every finder as `CHECKED`, already found. On the tree before the first sweep it
+   found 126 lines, the agents' cheapest findings and the ones they missed. A new mechanical
+   check, once a sweep shows one is possible, goes into `check.py`.
 
 ## 1. Find (agents, in the background)
 
 One agent per area, launched together; the briefs are in `briefs.md` beside this file, each
-given the base, the change list, the i3 path and the output file. Five areas by default:
+given the base, the change list, the i3 path, the check's output and the output file. Five areas
+by default, **each fact with one owner**, so nothing is found twice:
 
 | area | reads | against |
 |---|---|---|
-| A. The foundations | `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, `AGENTS.md`'s doc rules; the words a user reads (`README.md`, `CONTRIBUTING.md`, the settings page `kcm/ui/`, the widget) | each other, i3's source, the code for the user's words |
-| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +) | i3 4.24's source; `plan.md`'s reasons (a)-(f) |
-| C1. The model | `src/tree.js`, `outputs.js`, `workspaces.js`, `rules.js`, `placement.js`, `settings.js` | `behaviour.md` §2-4, §11 |
-| C2. The KWin seam | `src/kwin.js` | `behaviour.md` §5, §6, §10, §12-14 |
-| C3. The plugins | `plugin/*.cpp` | `behaviour.md` §1, §7-9 |
+| A. The foundations | `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, `AGENTS.md`'s rules; the words a user reads (`README.md`, `CONTRIBUTING.md`, the settings page `kcm/ui/`, the widget) | each other, i3's source, the code for the user's words; not `behaviour.md`'s tables |
+| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +); **every i3 citation**, in any doc | i3 4.24's source; `plan.md`'s reasons (a)-(f) |
+| C1. The model | `src/tree.js`, `outputs.js`, `workspaces.js`, `rules.js`, `placement.js`, `settings.js` | `behaviour.md` §2-4, **§11 (its only reader)** |
+| C2. The KWin seam | `src/kwin.js` but the tiling drag | `behaviour.md` §5, §6, §10, §12-14 |
+| C3. The plugins | `plugin/*.cpp`, and `src/kwin.js`'s tiling drag and resize (their script side) | `behaviour.md` §1, §7-9 |
 
-Fewer when little changed (merge C1 into C2); never more than six finders. The person stays
-reachable while they run: answer them, and read each area's file as its agent finishes.
+Fewer when little changed (merge C1 into C2); never more than six finders. The C areas compare
+code with rows, a mechanical reading: run them on a cheaper model than the session's (Sonnet
+where the harness offers it) and let the evaluation say whether they missed more. The person
+stays reachable while they run: answer them, and read each area's file as its agent finishes.
 
 **A finding** (every agent writes them in this shape):
 
@@ -85,10 +96,11 @@ Merge duplicates across areas. Then, for each finding, run `philosophy.md`'s ste
 ## 3. Check (agents)
 
 Every finding of severity high, every finding settled as a code fix, every reason finding and
-every step-5 conflict goes to a **checker**: one or two agents not shown the finder's
-conclusion, given only the claim and its citations, asked to confirm or refute each from the
-sources (`briefs.md`, "Checker"). A refuted finding goes; a partial one is restated as checked.
-Medium and low doc-only findings are checked by the session as it fixes them.
+every step-5 conflict goes to a **checker**: one agent not shown the finder's conclusion, given
+only the claim and its citations, reading only the sources they cite, not the foundations
+(`briefs.md`, "Checker"). A refuted finding goes; a partial one is restated as checked. Doc-only
+findings the session can check with a grep are checked as it fixes them. (The first sweep: 24
+claims, 124k tokens, none refuted, four narrowed: worth it for what it narrows.)
 
 ## 4. Report to the maintainer
 
@@ -107,7 +119,10 @@ In the conversation, not a file. Short, numbered once, each number one topic:
 
 - **Docs**: commit as settled, grouped by doc, the commit saying why; the conflicts' edits once
   the maintainer answers. A rule change edits its foundation in the same commit
-  (`philosophy.md`, "The foundations stay true").
+  (`philosophy.md`, "The foundations stay true"), and **every doc that restates the rule**: grep
+  for it (AGENTS.md restates `philosophy.md`'s decision steps; the first sweep's worst round-two
+  finding was one restatement left behind). A row marked "being fixed" names its `OPEN.md` item,
+  and the item names the row. Then `check.py` again: clean before round two.
 - **Code**: by `AGENTS.md` and `docs/testing.md`'s lean runs: the go, the build, `make unit` and
   the changed scenarios, the go to reload. Long runs in the background with a recurring check.
 - **Round two**: one fresh agent reads the edited foundations and the changed rows
@@ -146,5 +161,9 @@ lands.
 
 ## Budget
 
-Five finders, one or two checkers, one or two round-two readers: seven to nine agents, in small
-batches, each read by the session. Say the count before launching; ask before going past it.
+Five finders, one checker, one round-two reader: seven agents, in small batches, each read by the
+session. Say the count and the estimate before launching; ask before going past it. The first
+sweep (base `531b86b`, 269 commits) cost about 1.7M tokens: five finders 263k-318k each (the C
+areas on the session's model), the checker 124k, round two 149k. With the mechanical checks, one
+owner per fact, the shorter common part for the C areas and a cheaper model there, the estimate
+for a sweep that size is about 1.1-1.2M.
