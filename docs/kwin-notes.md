@@ -226,6 +226,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 
 ## Config and D-Bus
 
+- **`reconfigure` returns before the script is loaded again**: `isScriptLoaded` called at once
+  after an `unloadScript` and a `reconfigure` says `false`; a moment later, `true`. The reload's
+  check waits for it (polling a few times over a second), never reading the first answer.
+
 - **A plugin's KConfigWatcher key changes only with `kwriteconfig6 --notify`**: a plain write plus
   `reconfigure` doesn't reach it, and the watcher then ignores a later `--notify` of the same value.
   `--notify` itself can lose its signal under load or on a slow machine: tests send it with
