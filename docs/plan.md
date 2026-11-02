@@ -130,7 +130,8 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   Plasma's settings). The differences are `behaviour.md` F1's.
 - **A split or a group floated whole is kwin-i3's** (i3's floating container holding more than
   one window, `floating.c:291`; `docs/definitions.md`): its windows are KWin floating windows
-  whose frames kwin-i3 lays out as a tiled tree inside the container's rect. A press anywhere in
+  whose frames kwin-i3 lays out as a tiled tree inside the container's rect, in the tiling look
+  (`behaviour.md` L10a: i3's windows inside keep their tiling border). A press anywhere in
   it focuses and raises the whole container (step 3, `con_raise`); Meta+left moves it whole
   (step 5); a left press on a title bar or tab inside it first resizes against the neighbour
   above, and moves it whole only where there is none (steps 6, 7); Meta+right, or its outer edge,
@@ -138,8 +139,9 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   The helper takes all of these, title bars and edges included, ahead of KWin, as KWin moves and
   resizes one window, never several as one (reason (a)). Floating Toggle on a window inside it
   floats that window alone (`floating_enable`: only the container's child carries the floating
-  flag); on the container, it tiles it whole (`floating_disable`). Without the helper: `OPEN.md`
-  item 73 settles it.
+  flag); on the container, it tiles it whole (`floating_disable`). Without the helper, floating a
+  container does nothing and the load report says so, as `behaviour.md` K4 and K18; one saved
+  floating comes back tiled.
 - **A tiling drag drops onto tiling windows and empty visible workspaces only**
   (`is_tiling_drop_target`), never onto a window inside a floating container. i3's check is meant
   for tiling targets, but `con_is_floating` is true of a floating container's direct child alone,

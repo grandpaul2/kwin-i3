@@ -86,8 +86,9 @@ window alone. The model's node ported from `floating_enable` / `floating_disable
 its children, `:331-342`: widths summed, the tallest height, whatever the orientation, as i3
 does). The hard parts: moving several KWin windows as one per motion step, a resize answered by
 each client at its own pace (the hold's kind of wait), raising them together, a group's bar with
-no bar tile to draw over, and each window's own Plasma title bar and edges (L10), which the
-helper must take ahead of KWin's decoration as it takes the gaps (Z9), with a marker of its own
+no bar tile to draw over, and the tiling look's title bars and edges of the windows inside
+(`behaviour.md` L10a), which the helper must take ahead of KWin's decoration as it takes the gaps
+(Z9), with a marker of its own
 (today `m_floating` is per window, so Meta+left would fall to KWin's move of one). Also to
 decide in the build, from i3: keys acting on the whole container (`con_inside_floating`,
 `commands.c:598`, `:672`; T13, T14, K3, T23), a sticky child (`output_push_sticky_windows` moves
