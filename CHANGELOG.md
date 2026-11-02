@@ -21,6 +21,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 - **The mouse never floats or tiles a window, as in i3**: Meta+Shift+drag is the tiling drag on a
   tiling window and KWin's move on a floating one; it no longer floats a tiling window or drops a
   floating one into the tiles. Meta+Shift+Space is the way between them.
+- **A tiling window stays in its tile when an app's own title bar is dragged** (a browser's tab
+  strip, a GNOME app's header bar), and under KWin's Move Window and the window menu's Move, as
+  i3 ignores those for a tiling window (with the helper plugin).
 - **Keys**: Meta+W is Plasma's Overview on a stock install; `make take-keys` gives it to Layout
   Tabbed (the Overview stays on the top-left screen corner).
 

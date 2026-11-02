@@ -79,6 +79,9 @@ Mouse:
   thirds decide). The mouse never floats or tiles a window: Meta+Shift+Space does, as in i3.
   Without the helper plugin, Meta+left-drag is KWin's own move, which floats the window where it
   is dropped.
+- **A tiling window doesn't move any other way**, as in i3: dragging an app's own title bar (a
+  browser's tab strip, a GNOME app's header bar), KWin's Move Window key or the window menu's Move
+  leave it in its tile (helper plugin). Meta+Shift+Space floats it first.
 - **Meta+right-drag on a tiling window**, or in the gap beside one, is i3's tiling resize (helper
   plugin): the pointer jumps onto the nearest edge, a bar follows it, and the sizes change on
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if

@@ -73,15 +73,6 @@ or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
 run in `plan.md`, which the README and the settings page follow.
 
-**78. An app's own move request on a tiling window** (`behaviour.md` X5; the Meta+Shift drags
-went back to i3's first, G5, G13). i3 ignores a client's move request on a tiling window
-(`handlers.c:936`); here KWin runs it as its own move command (6.7.5
-`xdgshellwindow.cpp:1045-1050`, before any input filter) and the window floats where dropped
-(`src/kwin.js` tileChanged, the i3 feature map's C44, `tests/live/51-input.sh:90`). The helper
-could cancel, at `interactiveMoveResizeStarted`, a move of a tiled window it didn't start; that
-also stops KWin's keyboard Move Window and the window menu's Move on a tiled window, which i3
-has no counterpart of either. Next: decide whether that wider refusal is wanted, then build it.
-
 **74. Meta+drag on a tab** (i3's tiling drag from a decoration with the modifier,
 `click.c:251-256`: `tiling_drag(con)` of the tab's container at once, no threshold, no focus;
 `:427`, `:437` route a tab's press to its con). Here the helper's `pressBar` takes only a press

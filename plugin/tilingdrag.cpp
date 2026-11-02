@@ -177,6 +177,10 @@ TilingDrag::TilingDrag()
     loadConfig();
     QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] { loadConfig(); });
     QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] { loadConfig(); });
+    for (Window *window : workspace()->windows()) {
+        watchMoves(window);
+    }
+    QObject::connect(workspace(), &Workspace::windowAdded, &m_context, [this](Window *window) { watchMoves(window); });
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
     m_unanswered.setSingleShot(true);
@@ -188,6 +192,28 @@ TilingDrag::TilingDrag()
             m_phase = Phase::None;
             m_window.clear();
         }
+    });
+}
+
+// A tiling window doesn't move (§10 X5): i3 ignores a client's move request on one
+// (handlers.c:936), and has no keyboard or menu move for it. KWin runs each as its own
+// interactive move (an app's header bar: 6.7.5 xdgshellwindow.cpp:1045; Move Window; the window
+// menu's Move), which would take the window out of its tile at the first step; the helper starts
+// none on a tiled window. Cancelled on the next turn, not inside the signal: KWin's
+// startInteractiveMoveResize still has work after it (window.cpp:1067-1070). A move whose first
+// step came first has untiled the window already, and goes on as before (floating where dropped).
+void TilingDrag::watchMoves(Window *window)
+{
+    QObject::connect(window, &Window::interactiveMoveResizeStarted, &m_context, [this, window] {
+        if (!m_on || !window->isInteractiveMove() || window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+            return;
+        }
+        QTimer::singleShot(0, &m_context, [window = QPointer<Window>(window)] {
+            if (window && !window->isDeleted() && window->isInteractiveMove()
+                && window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)) {
+                window->cancelInteractiveMoveResize();
+            }
+        });
     });
 }
 

@@ -166,6 +166,7 @@ private:
     void takePress(KWin::Window *window, Qt::MouseButton button, const QPointF &pos, bool resize, const QString &side, bool threshold);
     void pressDone();
     void loadConfig();
+    void watchMoves(KWin::Window *window);
 
     TilingDragBus m_bus;
     TilingDragGrab m_grab;

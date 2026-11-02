@@ -153,10 +153,11 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   band already is; the bands decide, for G11's reason (revisited: `LATER.md` item 80).
 - **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
   Shift drag into a tile) are Plasma's, untiling the window (decision 7; `OPEN.md` item 79). So
-  is **a move KWin starts itself**: Meta+drag without the helper (`behaviour.md` F9), or a client
-  asking to be moved by its own header bar (GTK, Electron), which floats a tiling window where
-  i3 ignores the request (`handlers.c:936`): KWin runs it as its own move before any input
-  filter (`behaviour.md` X5); the helper refusing it once started is `OPEN.md` item 78.
+  is **a move KWin starts itself** without the helper (Meta+drag, `behaviour.md` F9). A client
+  asking to be moved by its own header bar (GTK, Electron) would float a tiling window too, where
+  i3 ignores the request (`handlers.c:936`). With the helper, kwin-i3 refuses those on a tiling
+  window as i3 does, KWin's Move Window and the window menu's Move with them: KWin runs each as its
+  own move before any input filter, and the helper cancels it once started (`behaviour.md` X5).
 - **Where it can't match**, each a ≠ row with its reason: a Meta press with nothing to do is
   swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
   would float the window), and so is a Meta+Shift press with nowhere to drop (G4: the helper
