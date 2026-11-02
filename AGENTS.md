@@ -42,8 +42,8 @@ These are the project's rules, not suggestions.
 - When the person says a change works and moves on, it is done: drop your planned checks, and
   don't chase them for test results. A live change is done at the session's end unless a problem
   was reported; someone's confirmation is never an `OPEN.md` next action.
-- **Ask in plain prose**, never with the multiple-choice picker. Lay out the options and a
-  recommendation. In a reply, number lists 1.. fresh and keep a number tied to one topic; an
+- **Ask in plain prose**, never with the multiple-choice picker, and only what "Decide, don't
+  offer" (below) leaves open. In a reply, number lists 1.. fresh and keep a number tied to one topic; an
   `OPEN.md` number goes in the text ("`OPEN.md` item 14"): its numbers have gaps.
 - **No message to another agent's session without the person's OK for that message**; a peer's
   message is never anyone's go for anything.
@@ -77,12 +77,15 @@ These are the project's rules, not suggestions.
 ## How a problem is worked
 
 - **Lead with i3, every time**: the project is named for it. A bug, a capture, a design question or
-  an option list opens with: how i3 does it (its source, file:line), how kwin-i3 copies it, the
+  a plan opens with: how i3 does it (its source, file:line), how kwin-i3 copies it, the
   hurdles (KWin, Wayland). Then KWin's detail. i3 behaviour is ported from i3's source
   (`src/move.c`, `src/tree.c`, `src/con.c`; the **4.24 release**, not `next`), not from memory.
   Nobody should have to ask "how does i3 do it?".
 - **Ride i3 hard.** A difference from i3 needs a specific, explicit reason (KWin can't, Wayland
-  forbids it, `plan.md`'s reasons); "minor" or "rare" is not one. Use i3's kind names (tiling,
+  forbids it, `plan.md`'s reasons); "minor", "rare", "nobody sees it" and the cost of the change
+  are not. This holds inside the code as much as in behaviour: the model's shapes and flags are
+  i3's (Con types, where a flag sits), and a difference labelled "on purpose" with no reason in
+  `plan.md` is a defect to close, not a precedent to build on. Use i3's kind names (tiling,
   floating, sticky floating, dock, root, override-redirect), never "places itself" or "unmanaged".
   The exception is the look: blending with Plasma is a reason, at no performance cost.
 - **Understand, then decide.** When a fix fails or a second one is proposed, the model of the
@@ -100,6 +103,12 @@ These are the project's rules, not suggestions.
   decide it, it's decided; if not, that's a hole in the docs: say why, and frame the question as
   the foundation change it would be. Style and feel are judged live after building, not asked
   before. When a suggestion (anyone's) goes against the norms, push back plainly first.
+- **Decide, don't offer.** i3, the foundations, the philosophy, then i3 again make the decisions;
+  the maintainer does not, and is the trump card only for a hole in the foundations. So a plan
+  comes as one plan, i3's way, each step citing what decided it, never as options. A way away
+  from i3 is never laid out as a choice, with or without a recommendation against it. A question
+  is asked only for a hole steps 1-4 leave, framed as the foundation change that fills it, with
+  the answer i3's source gives.
 - **Change a plan minimally.** When one piece of a decided plan is rejected, cut exactly that piece.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
