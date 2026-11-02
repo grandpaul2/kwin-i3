@@ -41,11 +41,3 @@ none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools
 by step, from `git clone` to the sub-page. Separate, still open: a rule for Plasma's window
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
-
-**83. A tiled fullscreen window's neighbours** (found 2026-11-01 with item 73's floated case).
-i3 renders a fullscreen con alone and returns (`render.c:127-144`), its siblings keeping their
-rects. The tiled projection leaves a fullscreen window out once KWin no longer keeps it in a tile
-(`kwin.js` `visibleLeaf`: fullscreen with no tile), so after a rebuild its neighbours may take
-its space, and give it back when it leaves fullscreen. Next: a test-KWin probe (a fullscreen
-window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
-

@@ -452,8 +452,11 @@ kwin-i3 places tiling windows with KWin's own custom tiles; KWin's
 tiles are the display, the model is the truth. `project` turns the model into a shape KWin's tiles
 can hold:
 
-- minimized windows, and fullscreen windows KWin has taken out of their tile, are left out; their
-  share goes to their siblings;
+- minimized windows are left out, their share going to their siblings; a fullscreen window KWin
+  has taken out of its tile keeps its place in the tiles' projection as an empty tile, so its
+  siblings keep their sizes behind it (i3's `render.c:127-144` renders a fullscreen con alone and
+  leaves its siblings' rects); a tabbed or stacked group showing it, or a workspace of nothing
+  else, has no such tile;
 - one-child splits collapse; a split inside one of the same direction merges into it, shares
   multiplied through;
 - a **tabbed or stacked** container is a vertical pair: an empty bar tile, then the tiles of the
@@ -827,7 +830,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
-| V1 | A window goes fullscreen (Meta+F is KWin's, or the app asks) | it stays in the tree and covers its output, panels too; KWin takes it out of its tile, its siblings fill the space; it gets the focus if its workspace is the focused one (an app going fullscreen on its own included); it rejoins when fullscreen ends. No ring, no gaps | = | i3's `fullscreen` (`CF_OUTPUT`): the container keeps its place, covers the output and the bar, gets the focus (`con_enable_fullscreen`, `con.c:1286`) unless it is on another workspace (`:1287-1289`), no border |
+| V1 | A window goes fullscreen (Meta+F is KWin's, or the app asks) | it stays in the tree and covers its output, panels too; KWin takes it out of its tile, and its place is kept as an empty tile, its siblings keeping their sizes behind it; it gets the focus if its workspace is the focused one (an app going fullscreen on its own included); it rejoins when fullscreen ends. No ring, no gaps | = | i3's `fullscreen` (`CF_OUTPUT`): the container keeps its place, covers the output and the bar, gets the focus (`con_enable_fullscreen`, `con.c:1286`) unless it is on another workspace (`:1287-1289`), no border; its siblings keep their rects (`render.c:127-144` renders it alone and returns) |
 | V2 | A second window goes fullscreen on the same workspace | the first one's fullscreen ends, in the model and then in KWin: the pass ends KWin's fullscreen of any window the tree doesn't hold fullscreen (`endFullscreen`; also after a move brings a fullscreen window where one is, T10, T24) | = | "disable any fullscreen container that would conflict" (`con_enable_fullscreen`, `con.c:1269-1276`). KWin itself allows several |
 | V3 | Fullscreen across all outputs (i3's `fullscreen enable global`) | none | ≠ | reason (a): KWin's fullscreen is one output's area |
 | V4 | A floating window fullscreen (a game, `mpv --fs`) | its workspace's fullscreen window, as a tiling one; a tiling one at the top level wins a tie. Inside a split or group floated whole (T16): the container's other windows keep their places, the fullscreen window keeping its share, and it comes back to it | = | `con_get_fullscreen_con` searches the floating windows too; `render_con` renders the fullscreen con alone and returns (`render.c:127-144`), its siblings keeping their rects |

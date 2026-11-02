@@ -157,13 +157,13 @@ for v in smart ignore leave_fullscreen all; do
     case $v in
         smart|ignore) check "  $v: f keeps the focus over it" poll active_is "f$v"
                       check "    f still fullscreen"  fs_is "f$v" true ;;
-        # kwin-i3 hands the focus back to f (i3: the dialog opens without it); then the GTK dialog's
-        # own activation request (xdg-activation, as GTK presents a dialog) is honoured by KWin now
-        # that no fullscreen window protects the focus (activation.cpp allowWindowActivation), as
-        # i3's focus_on_window_activation smart would honour it: the dialog ends up focused.
+        # i3 ends the fullscreen and opens the dialog without the focus (manage.c: set_focus stays
+        # false while a window was fullscreen); kwin-i3 hands the focus back to f, and f's place
+        # kept in the tiles leaves o where it was, so nothing moves the focus after.
         leave_fullscreen) check "  leave_fullscreen: f leaves fullscreen" poll fs_is "f$v" false
-                      check "    f got the focus back, then the dialog's own request took it" wait_log "^.{9}FULLSCREEN f$v: keeps the focus over o$v dialog"
-                      check "    the dialog focused"  poll active_is "o$v dialog" ;;
+                      check "    f got the focus back" wait_log "^.{9}FULLSCREEN f$v: keeps the focus over o$v dialog"
+                      sleep 0.5
+                      check "    and keeps it"        active_is "f$v" ;;
         all)          check "  all: the dialog (floating) takes the focus" poll active_is "o$v dialog"
                       check "    f still fullscreen"  fs_is "f$v" true ;;
     esac
