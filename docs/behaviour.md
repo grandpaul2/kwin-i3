@@ -623,7 +623,8 @@ before its app answered) is taken when it lands (2026-10-30, probe 98).
 ### The hold (atomic layout)
 
 `kwini3hold`. When a tiling window on a visible workspace is about to
-move or resize, the effect snapshots it and draws the snapshot at the old place. Every other
+move or resize (in a tile, or in a container floated whole, T16: i3 renders its windows with the
+rest of the tree, `x_push_changes`; so its resize by the helper, step by step, is held too), the effect snapshots it and draws the snapshot at the old place. Every other
 window moving within 3 ms joins. When every held window's frame geometry equals what it was asked for, all
 switch at once in one frame; after `holdTimeoutMs` (default 200, Sway's `txn_timeout_ms`) they switch regardless. A held
 window that is no longer visible counts as settled.

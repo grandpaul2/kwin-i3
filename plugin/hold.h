@@ -178,7 +178,7 @@ private:
     void onDeleted(KWin::EffectWindow *w);
     void onAboutToChange(KWin::EffectWindow *w);
 
-    bool tiled(KWin::EffectWindow *w) const;
+    bool tiled(KWin::EffectWindow *w) const;                // in a tile, or floated whole (SetFloated)
     bool holding() const;                                   // a hold, or a new window hidden
     bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
     bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)

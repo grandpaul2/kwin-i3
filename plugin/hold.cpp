@@ -382,10 +382,13 @@ void Hold::onAboutToChange(EffectWindow *w)
 
 // ---- tests on windows -------------------------------------------------------------------------
 
+// In i3's tiling layout: in one of kwin-i3's tiles, or in a container floated whole (SetFloated),
+// whose windows i3 renders with the rest of the tree, in one go (x_push_changes): its resize, a
+// close inside it and a window opening into it are held as a tiled layout's.
 bool Hold::tiled(EffectWindow *w) const
 {
     Window *win = w->window();
-    return win && (win->requestedTile() || win->tile());
+    return win && (win->requestedTile() || win->tile() || m_floated.contains(w->internalId().toString()));
 }
 
 // isHidden() leaves Show Desktop out (KWin window.cpp:4521): Plasma's edit mode and Peek hide
