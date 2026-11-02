@@ -3,8 +3,10 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
-## Unreleased
+## v1.2.0 (2026-11-02)
 
+- **A fullscreen window keeps its place**, as in i3: the windows beside it keep their sizes behind
+  it, rather than taking its space and giving it back when fullscreen ends.
 - **No load notification**: what to fix in a setup (keys other shortcuts hold, a keyboard
   layout without the plugins, the plugins missing, per-output desktops off) is shown on the
   settings page's banners and logged, as i3 tells a user only of a config error. The
