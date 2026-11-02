@@ -64,12 +64,11 @@ focus follows mouse with no delay; per-output desktops (its give-back collapses 
 one desktop: the row says so); focus stealing prevention at Low or None (i3's
 `focus_on_window_activation`); the screen-edge drag's tile and maximize off; Meta+T, the tile
 editor, freed; the window actions' modifier Meta and, on 6.7, `Activate, raise and move`; animations
-off and a 15 px drag distance, optional; Shift at a move's release, named only (no setting). Known
-defects against the rules: `make restore-keys` writes saved keys back over later changes, and
-Install step 6 offers System Settings' Defaults as an undo, which also wipes the user's own
-shortcuts. To check: `behaviour.md` G2 names a System Settings page for the drag distance; the
-survey found none. Next: (1) `make install` and `make uninstall`, with the save and give-back
-shared by `take-keys.py` and the settings page; (2) the Set up section; (3) the README's Install
+off and a 15 px drag distance, optional; Shift at a move's release, named only (no setting). The
+taken keys' save and give-back already follow the rules (`behaviour.md` §8, the taken keys).
+To check: `behaviour.md` G2 names a System Settings page for the drag distance; the
+survey found none. Next: (1) `make install` and `make uninstall`, and the same save and
+give-back for the Plasma settings in the list; (2) the Set up section; (3) the README's Install
 rewritten to them, and `behaviour.md` §13's "never set" with it; (4) the install walked as a new
 user on stock CachyOS and PikaOS (`tools/box.sh`). Separate, still open: a rule for Plasma's window
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
