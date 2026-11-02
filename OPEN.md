@@ -7,7 +7,7 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-01** (the `stable` branch started at v1.1.0 on 2026-10-31, after
+Last reconciled: **2026-11-02** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
 main's script as loaded at 26d741b, its plugins at e0c5ace.
 
@@ -71,7 +71,11 @@ conflicting, standing in for an i3 directive, or harmless; (2) the install walke
 stock CachyOS and PikaOS (`tools/box.sh`), step by step; (3) the foundation question: names only,
 or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs and why and sets
 it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
-run in `plan.md`, which the README and the settings page follow.
+run in `plan.md`, which the README and the settings page follow. Two foundation questions the
+foundation sweep (2026-11-01) folded in here: (5) a rule for Plasma's window actions that have no
+i3 counterpart acting on a window in the tree (minimize, quick tile, Show Desktop, activities,
+Keep Above), today one-off rows; (6) `philosophy.md` "never sets" a Plasma setting against
+`plan.md` reason (e)'s control that changes one when the user asks.
 
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
