@@ -25,6 +25,9 @@ disagree, the KDE HIG decides for a KDE page, and the rule says so.
 2. **Keyword first.** The left edge is what a scanner reads; rows that start alike hide their
    difference. Do "Gaps between windows"; don't "Size of the gaps between windows". KDE-TXT,
    AND, NNG-TOG, MAT-SET.
+2a. **Concrete beats abstract.** A label the reader has to picture ("Keep windows as dropped at
+    screen edges") loses to one naming what they know ("Screen edge tiling", or Plasma's own name
+    for the feature). When a feature has a name in the platform, use that name.
 3. **Short: no longer than KDE's "Configure Keyboard Shortcuts".** One to four words for a field
    label; a checkbox may be a short phrase. KDE-TXT, MS-TOG, CAR-FORM, PRI-FORM.
 4. **Never repeat the section heading in a row.** Under "Gaps", the rows are "Between windows",
@@ -57,7 +60,8 @@ disagree, the KDE HIG decides for a KDE page, and the rule says so.
     "Don't show this message again". KDE-TXT, MS-CB, GN-CB, AND ("block", not "don't allow").
 13. **The label never changes with the state, and never contains "On"/"Off"/"Enabled".** The
     control shows the state. Do "Encrypt installed disks"; don't "Enabled encryption of installed
-    disks". ATL-TOG, PF-SW, PRI-TOG.
+    disks". ATL-TOG, PF-SW, PRI-TOG. Only the muted line under it may change with the state (a
+    current value, or what was there before a change).
 14. **KDE checkbox style: imperative verb, sentence case** ("Show window titles"). GNOME and
     Android name switches with nouns ("Notifications"); a KDE page follows KDE. KDE-TXT.
 15. **If one label can't say what both states do, use two radio buttons** with a full outcome
@@ -111,6 +115,9 @@ disagree, the KDE HIG decides for a KDE page, and the rule says so.
 
 ## 5. Words
 
+30a. **The product's own name is not an internal name**, but use it in a label only when it is
+    the distinguishing word ("Use kwin-i3's command for shared keys"); banners and help may name
+    it freely. Never its file, script or component names.
 31. **The reader's vocabulary, never internal or system names.** "Power Management" not
     "Powerdevil"; "Window Management Plug-Ins" not "KWin Scripts". Check each word: would a
     newcomer who never read the docs say it? KDE-TXT, GN-WS, MS-CP, NNG-HEUR #2.
@@ -182,6 +189,7 @@ Sources say little directly here; these are drawn from the closest rules and mar
     NNG-CONF, APPLE-SET.]
 58. **Never phrase a change as a possession fight** ("Take X from them"). State the result the
     reader sees. [Inference: rules 10, 31.]
-59. **Name the other system once, in the heading or help, not as a prefix on every row.**
-    [Inference: rule 5.]
+59. **Name the other system once per row at most, in that row's description, never as a prefix
+    or a label.** "Plasma:" / "kwin-i3:" prefixes fail; a line "Plasma uses click to focus." under
+    the row passes (`patterns.md` P1 asks each row to say whose setting it is). [Inference: rule 5.]
 60. **"Restore" restores the reader's original, not a default.** Say which. MS-CP.

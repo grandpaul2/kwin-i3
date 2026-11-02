@@ -39,13 +39,17 @@ the platforms differ (`kde.md`).
 10. **A heading must make sense alone; the headings read in order should tell the page's story.**
     SMASH, NNG-PL.
 11. **No group for one control that does nothing for the reader.** (KDE: hide debug switches.)
+11a. **A heading groups two or more rows.** A single row needs none: its own label is its title,
+    and a heading above it would repeat it (`wording.md` 4).
 
 ## 3. The row
 
 12. **Anatomy: name, control, optional one-line description; at most two controls on a row.**
     GN-BL, MS-APPSET (SettingsCard: header, description, control).
 13. **In a KDE FormLayout: label right-aligned in the shared left column ending in a colon,
-    control on the right; a checkbox's text is its own label.** Kirigami FormLayout; KDE pages.
+    control on the right; a checkbox's text is its own label.** A lone checkbox may leave the
+    label column empty; several checkboxes share one group label ("Options:", "Tapping:").
+    Kirigami FormLayout; KDE pages.
 14. **A row whose label column is filled must read as one thing with its control**, not half a
     sentence each (`wording.md` 16). If the label is a category ("Keys:"), the control's own text
     must stand alone.
@@ -90,7 +94,9 @@ Notes:
 21. **A sub-page for a group with its own options, or for settings most readers never need.**
     Its button names it ("Configure Window Rules…") and shows its current state beside it in
     muted text ("5 rules"). GN-BL, M1, AND.
-22. **The sub-page's title matches the button that opens it.** M1.
+22. **The sub-page's title is the noun in the button that opens it**: "Configure Window Rules…"
+    opens "Window Rules"; a banner's "Review Plasma Settings…" opens "Plasma Settings". M1, with
+    KDE's verb-first buttons (`kde.md` 4).
 23. **Two levels at most; no expander inside an expander.** NNG-PD, MS-APPSET.
 24. **A disclosure's label predicts what is inside** ("Advanced: scaling, page order"), never
     "More". NNG-PD, AND.
@@ -109,6 +115,9 @@ Notes:
     way to "not change" it. MS-CP.
 29. **Defaults restores the product's defaults; "give back" restores the reader's own earlier
     value. Say which a control does.** MS-CP.
+29a. **On a page whose controls change another system's settings, Defaults sets them to what the
+    product recommends, and the page's note says so once** ("Defaults ticks every setting
+    tiling needs"). It never touches the other system without Apply.
 30. **Prefer undo to confirmation; confirm only the irreversible.** GN-DLG, APPLE-ALERT,
     NNG-CONF, MS-CONFIRM.
 31. **Irreversible or cross-system actions sit apart** (a separate group at the end, like
