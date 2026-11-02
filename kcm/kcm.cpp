@@ -48,6 +48,7 @@ public:
         qmlRegisterAnonymousType<SetupModel>("org.kde.kwini3", 1);
         setButtons(Apply | Default);
         connect(m_keys, &KeysModel::changed, this, &KWinI3Kcm::settingsChanged);
+        connect(m_setup, &SetupModel::edited, this, &KWinI3Kcm::settingsChanged);
     }
 
     KWinI3Settings *settings() const { return m_settings; }
@@ -66,7 +67,8 @@ public:
         const bool settings = m_settings->isSaveNeeded();
         KQuickManagedConfigModule::save();
         m_keys->save();
-        m_setup->load();        // a key the Keys page took may have been one of its clashes
+        m_setup->save();        // after the keys: a key the Keys page took is no longer a clash
+        m_setup->load();
         if (settings)
             reconfigure();
         settingsChanged();
@@ -76,6 +78,7 @@ public:
     {
         KQuickManagedConfigModule::defaults();
         m_keys->defaults();
+        m_setup->defaults();
     }
 
     // The script is off: turn it on (as KWin Scripts' checkbox does) and have KWin load it.
@@ -187,8 +190,8 @@ Q_SIGNALS:
     void windowPickFailed(const QString &error);
 
 private:
-    bool isSaveNeeded() const override { return m_keys->isSaveNeeded(); }
-    bool isDefaults() const override { return m_keys->isDefaults(); }
+    bool isSaveNeeded() const override { return m_keys->isSaveNeeded() || m_setup->isSaveNeeded(); }
+    bool isDefaults() const override { return m_keys->isDefaults() && m_setup->isDefaults(); }
 
     static void reconfigure()
     {

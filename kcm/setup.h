@@ -1,7 +1,9 @@
 #pragma once
 // The Plasma Settings sub-page's model (docs/plan.md, "Install and first run"): the Plasma
 // settings kwin-i3 is designed around, each with Plasma's value now and the one kwin-i3 would
-// set. Nothing changes but on apply(); each change is saved first (its old value and the value
+// set. A row's tick is a pending edit like any setting on the page: the page's Apply makes it
+// (ticked: kwin-i3's value; unticked where kwin-i3 changed it: Plasma's given back), Reset drops
+// it, Defaults ticks every row kwin-i3 needs. Each change is saved first (its old value and the value
 // written, plasma-settings.json beside make take-keys' save) and given back where Plasma still
 // has what kwin-i3 wrote. Keys go through make take-keys' save (keys.h).
 
@@ -21,18 +23,22 @@ class SetupModel : public QObject
     // give-back carries), optional, differs, changed (by kwin-i3, can be given back), before (what
     // Plasma did before kwin-i3 changed it).
     Q_PROPERTY(QVariantList rows MEMBER m_rows NOTIFY changed)
-    // A row kwin-i3 needs differs from Plasma now: the page's banner.
+    // A Plasma setting kwin-i3 needs differs (the keys aside, on the main page): the banner.
     Q_PROPERTY(bool needed MEMBER m_needed NOTIFY changed)
-    Q_PROPERTY(bool anyChanged MEMBER m_anyChanged NOTIFY changed)
+    // Each row's tick, by id: true for kwin-i3's value. Edited with setWanted().
+    Q_PROPERTY(QVariantMap wanted MEMBER m_wanted NOTIFY changed)
     Q_PROPERTY(QString error MEMBER m_error NOTIFY changed)
 
 public:
     explicit SetupModel(KeysModel *keys, QObject *parent = nullptr);
 
     Q_INVOKABLE void load();
-    Q_INVOKABLE void apply(const QStringList &ids);
-    Q_INVOKABLE void giveBack(const QString &id);
-    Q_INVOKABLE void giveBackAll();
+    Q_INVOKABLE void setWanted(const QString &id, bool on);
+    // The page's Apply, Defaults; whether the ticks differ from Plasma, or from kwin-i3's.
+    void save();
+    void defaults();
+    bool isSaveNeeded() const { return m_wanted != m_initial; }
+    bool isDefaults() const;
 
     struct Change {
         QString file, group, key, value;
@@ -49,12 +55,15 @@ public:
 
 Q_SIGNALS:
     void changed();
+    void edited();      // a tick changed: the page's Apply and Reset follow
 
 private:
     QString effective(const Change &c) const;
     QString before(const Change &c) const;
     bool differs(const Row &r) const;
     bool changedByUs(const Row &r) const;
+    QStringList applyRow(const Row &r);
+    int giveBackRow(const Row &r);
     void reconfigure() const;
     QList<std::pair<int, KeyHolder>> clashes() const;
 
@@ -62,6 +71,6 @@ private:
     QList<Row> m_defs;
     QVariantList m_rows;
     bool m_needed = false;
-    bool m_anyChanged = false;
+    QVariantMap m_wanted, m_initial;
     QString m_error;
 };

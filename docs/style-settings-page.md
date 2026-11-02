@@ -136,8 +136,9 @@ hunt for; no collision with another word on the page or in Plasma.
 - **The Plasma Settings sub-page reads as a review, not a form**: each of Plasma's settings is
   a title, then what Plasma does in a sentence (tagged "Plasma's default" or "changed from
   Plasma's default"), what kwin-i3 needs instead, and why in small text naming Plasma's own page;
-  never a setting's name or value alone, and never "now" or "your". Its button names what it does
-  ("Change Ticked Settings"), not where.
+  never a setting's name or value alone, and never "now" or "your". Each has one tick, "Use
+  kwin-i3's", applied with the page's Apply like any setting, and a small line saying that
+  unticking gives back what Plasma had; the sub-page has no buttons of its own.
 
 ## 5. Explanations, messages, disabled state
 

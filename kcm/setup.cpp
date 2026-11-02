@@ -266,13 +266,13 @@ void SetupModel::load()
 {
     m_rows.clear();
     m_needed = false;
-    m_anyChanged = false;
+    m_initial.clear();
     for (const Row &r : m_defs) {
         const bool d = differs(r), c = changedByUs(r);
         if (!c && (!d || (r.shown && !r.shown())))
             continue;
-        m_needed = m_needed || (d && !r.optional);
-        m_anyChanged = m_anyChanged || c;
+        m_needed = m_needed || (d && !r.optional && r.id != QLatin1String("keys"));
+        m_initial[r.id] = !d;
         const Getter now = [this](const Change &ch) { return effective(ch); };
         const Getter was = [this](const Change &ch) { return before(ch); };
         // Plasma's default where every value is its stock one (a shortcut row has no such tag).
@@ -290,7 +290,64 @@ void SetupModel::load()
                               {QStringLiteral("optional"), r.optional}, {QStringLiteral("differs"), d},
                               {QStringLiteral("changed"), c},       {QStringLiteral("before"), c ? earlier : QString()}};
     }
+    m_wanted = m_initial;
     Q_EMIT changed();
+    Q_EMIT edited();
+}
+
+void SetupModel::setWanted(const QString &id, bool on)
+{
+    if (m_wanted.value(id) == QVariant(on))
+        return;
+    m_wanted[id] = on;
+    Q_EMIT changed();
+    Q_EMIT edited();
+}
+
+void SetupModel::defaults()
+{
+    for (const QVariant &v : std::as_const(m_rows)) {
+        const QVariantMap row = v.toMap();
+        if (!row.value(QStringLiteral("optional")).toBool())
+            m_wanted[row.value(QStringLiteral("id")).toString()] = true;
+    }
+    Q_EMIT changed();
+    Q_EMIT edited();
+}
+
+bool SetupModel::isDefaults() const
+{
+    for (const QVariant &v : m_rows) {
+        const QVariantMap row = v.toMap();
+        if (!row.value(QStringLiteral("optional")).toBool() && !m_wanted.value(row.value(QStringLiteral("id")).toString()).toBool())
+            return false;
+    }
+    return true;
+}
+
+void SetupModel::save()
+{
+    if (!isSaveNeeded())
+        return;
+    QStringList failed;
+    int unreachable = 0;
+    for (const Row &r : m_defs) {
+        if (!m_wanted.contains(r.id) || m_wanted.value(r.id) == m_initial.value(r.id))
+            continue;
+        if (m_wanted.value(r.id).toBool())
+            failed << applyRow(r);
+        else if (changedByUs(r))
+            unreachable += giveBackRow(r);
+    }
+    reconfigure();
+    QStringList errors;
+    if (!failed.isEmpty())
+        errors << i18n("These could not be changed: %1.", failed.join(QStringLiteral(", ")));
+    if (unreachable)
+        errors << i18np("1 shortcut couldn't be reached; it stays saved.", "%1 shortcuts couldn't be reached; they stay saved.", unreachable);
+    m_error = errors.join(QLatin1Char(' '));
+    m_keys->load();
+    load();
 }
 
 void SetupModel::reconfigure() const
@@ -299,89 +356,67 @@ void SetupModel::reconfigure() const
                                                                       QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
 }
 
-void SetupModel::apply(const QStringList &ids)
+// kwin-i3's value for one row; returns what failed.
+QStringList SetupModel::applyRow(const Row &r)
 {
     QStringList failed;
-    for (const Row &r : m_defs) {
-        if (!ids.contains(r.id))
-            continue;
-        if (r.id == QLatin1String("tileEditor")) {
-            if (differs(r) && !takeKey(keyHolder(MetaT), MetaT))
-                failed << r.title;
-            continue;
-        }
-        if (r.id == QLatin1String("keys")) {
-            // A key several shortcuts hold is taken from each in turn, until kwin-i3's fires.
-            for (const auto &[code, first] : clashes()) {
-                KeyHolder h = first;
-                for (int i = 0; i < 5 && !h.component.isEmpty() && componentActive(h.component); ++i) {
-                    if (!takeKey(h, code)) {
-                        failed << QKeySequence(code).toString(QKeySequence::NativeText);
-                        break;
-                    }
-                    h = keyHolder(code);
+    if (r.id == QLatin1String("tileEditor")) {
+        if (differs(r) && !takeKey(keyHolder(MetaT), MetaT))
+            failed << r.title;
+        return failed;
+    }
+    if (r.id == QLatin1String("keys")) {
+        // A key several shortcuts hold is taken from each in turn, until kwin-i3's fires.
+        for (const auto &[code, first] : clashes()) {
+            KeyHolder h = first;
+            for (int i = 0; i < 5 && !h.component.isEmpty() && componentActive(h.component); ++i) {
+                if (!takeKey(h, code)) {
+                    failed << QKeySequence(code).toString(QKeySequence::NativeText);
+                    break;
                 }
+                h = keyHolder(code);
             }
-            continue;
         }
-        for (const Change &c : r.changes) {
-            if (effective(c) == c.value)
-                continue;
-            // Saved before the change, so a failure loses nothing; an earlier save of the same key
-            // keeps its old value (the user's), as make take-keys keeps its first.
-            QJsonObject save = readSave();
-            QJsonObject e = save.value(idOf(c)).toObject();
-            if (e.isEmpty())
-                e = QJsonObject{{QStringLiteral("file"), c.file}, {QStringLiteral("group"), c.group}, {QStringLiteral("key"), c.key},
-                                {QStringLiteral("old"), raw(c)}};
-            e[QStringLiteral("set")] = c.value;
-            save[idOf(c)] = e;
-            if (!writeSave(save)) {
-                failed << r.title;
-                break;
-            }
-            write(c, c.value);
-        }
+        return failed;
     }
-    reconfigure();
-    m_error = failed.isEmpty() ? QString() : i18n("These could not be changed: %1.", failed.join(QStringLiteral(", ")));
-    m_keys->load();
-    load();
+    for (const Change &c : r.changes) {
+        if (effective(c) == c.value)
+            continue;
+        // Saved before the change, so a failure loses nothing; an earlier save of the same key
+        // keeps its old value (the user's), as make take-keys keeps its first.
+        QJsonObject save = readSave();
+        QJsonObject e = save.value(idOf(c)).toObject();
+        if (e.isEmpty())
+            e = QJsonObject{{QStringLiteral("file"), c.file}, {QStringLiteral("group"), c.group}, {QStringLiteral("key"), c.key},
+                            {QStringLiteral("old"), raw(c)}};
+        e[QStringLiteral("set")] = c.value;
+        save[idOf(c)] = e;
+        if (!writeSave(save)) {
+            failed << r.title;
+            break;
+        }
+        write(c, c.value);
+    }
+    return failed;
 }
 
-void SetupModel::giveBack(const QString &id)
+// Plasma's value back for one row, where Plasma still has what kwin-i3 wrote (a change made since
+// is the user's, and stays); returns how many shortcuts couldn't be reached.
+int SetupModel::giveBackRow(const Row &r)
 {
-    int unreachable = 0;
-    for (const Row &r : m_defs) {
-        if (r.id != id)
+    if (r.id == QLatin1String("tileEditor"))
+        return giveBackKeys([](const QString &k) { return k == TileEditor; });
+    if (r.id == QLatin1String("keys"))
+        return giveBackKeys([](const QString &k) { return k != TileEditor; });
+    QJsonObject save = readSave();
+    for (const Change &c : r.changes) {
+        const QJsonObject e = save.value(idOf(c)).toObject();
+        if (e.isEmpty())
             continue;
-        if (r.id == QLatin1String("tileEditor"))
-            unreachable += giveBackKeys([](const QString &k) { return k == TileEditor; });
-        else if (r.id == QLatin1String("keys"))
-            unreachable += giveBackKeys([](const QString &k) { return k != TileEditor; });
-        else {
-            QJsonObject save = readSave();
-            for (const Change &c : r.changes) {
-                const QJsonObject e = save.value(idOf(c)).toObject();
-                if (e.isEmpty())
-                    continue;
-                // Only where Plasma still has what kwin-i3 wrote: a change made since is the user's.
-                if (raw(c) == e[QStringLiteral("set")])
-                    write(c, e[QStringLiteral("old")]);
-                save.remove(idOf(c));
-            }
-            writeSave(save);
-        }
+        if (raw(c) == e[QStringLiteral("set")])
+            write(c, e[QStringLiteral("old")]);
+        save.remove(idOf(c));
     }
-    reconfigure();
-    m_error = unreachable ? i18np("1 shortcut couldn't be reached; it stays saved.", "%1 shortcuts couldn't be reached; they stay saved.", unreachable) : QString();
-    m_keys->load();
-    load();
-}
-
-void SetupModel::giveBackAll()
-{
-    for (const Row &r : m_defs)
-        if (changedByUs(r))
-            giveBack(r.id);
+    writeSave(save);
+    return 0;
 }

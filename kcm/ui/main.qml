@@ -575,6 +575,41 @@ KCM.SimpleKCM {
             icon.name: "configure-shortcuts"
             onClicked: kcm.push("Keys.qml")
         }
+        // kwin-i3's keys other shortcuts hold, taken on Apply and given back unticked (the Plasma
+        // Settings model's "keys" row, kcm/setup.cpp; make take-keys' save).
+        ColumnLayout {
+            readonly property var row: kcm.setup.rows.find((r) => r.id === "keys")
+            visible: !!row
+            Kirigami.FormData.label: i18nc("@label", "Plasma's shortcuts:")
+            Kirigami.FormData.buddyFor: takeKeys
+            spacing: 0
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                QQC2.CheckBox {
+                    id: takeKeys
+                    text: i18nc("@option:check", "Take kwin-i3's keys from them")
+                    checked: !!kcm.setup.wanted["keys"]
+                    onToggled: kcm.setup.setWanted("keys", checked)
+                    Accessible.name: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
+                    Accessible.description: parent.parent.row ? parent.parent.row.plasma : ""
+                }
+                Help {
+                    topic: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
+                    toolTipText: i18n("A key two shortcuts share runs the other one. Taken, each key runs kwin-i3's command, and each Plasma shortcut keeps its other keys. Configure Keys… takes them one at a time instead.")
+                }
+            }
+            QQC2.Label {
+                visible: text !== ""
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+                wrapMode: Text.Wrap
+                color: Kirigami.Theme.disabledTextColor
+                font: Kirigami.Theme.smallFont
+                Accessible.ignored: true
+                readonly property var row: parent.row
+                text: !row ? "" : [row.differs ? row.plasma : "",
+                                   row.changed ? i18n("Unticking this gives the Plasma shortcuts their keys back.") : ""].filter((t) => t).join(" ")
+            }
+        }
 
         Item {
             Kirigami.FormData.isSection: true
@@ -583,7 +618,7 @@ KCM.SimpleKCM {
         SubPageButton {
             Kirigami.FormData.label: i18nc("@label", "Settings:")
             text: i18nc("@action:button", "Configure Plasma Settings…")
-            readonly property var rows: kcm.setup.rows
+            readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
             summary: [rows.filter((r) => r.differs && !r.optional).length ? i18np("1 to review", "%1 to review", rows.filter((r) => r.differs && !r.optional).length) : "",
                       rows.filter((r) => r.changed).length ? i18np("1 changed by kwin-i3", "%1 changed by kwin-i3", rows.filter((r) => r.changed).length) : ""]
                      .filter((s) => s).join(", ") || i18n("as kwin-i3 needs them")

@@ -1027,22 +1027,26 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings, a row each
   where Plasma differs from what kwin-i3 needs or kwin-i3 changed it, each read as a review: what
   Plasma does, in a sentence, tagged Plasma's default or changed from it; what kwin-i3 needs
-  instead and why, naming Plasma's own page; a tick, "Change to kwin-i3's"; once changed, what
-  Plasma had and Give Back. Focus follows mouse with no delay and the next focus under the
-  pointer (`FocusPolicy`, `DelayFocusInterval`, `NextFocusPrefersMouse`); per-output desktops;
-  focus stealing prevention at Low (shown only above it); screen-edge tiling and maximizing off;
-  Meta+T freed from KWin's Edit Tiles; the window actions' modifier Meta and Meta+left "Activate,
-  raise and move" (6.8's stock); kwin-i3's keys other active shortcuts hold, each taken from every
-  holder in turn (at most five); and, optional and unticked, animations off
-  (`AnimationDurationFactor` 0). **Change Ticked Settings** changes the ticked rows at once, apart from
-  Apply (Reset and Defaults never touch them): each key's old value (or its absence) and the value
-  written saved first in `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make
-  take-keys' save; KWin reconfigured. **Give Back** (a row) and **Give All Back** write the old
-  value only where Plasma still has the one kwin-i3 wrote; a value changed since stays, its record
-  dropped. Giving per-output desktops back puts every output on one desktop (KWin's,
-  `kwin-notes.md`), and its help says so. `make uninstall` gives all of it back
-  (`tools/plasma-settings.py`, `tools/take-keys.py`). A stock default is read from the installed
-  `kwin.kcfg`, so 6.7's and 6.8's stock window actions are each read right.
+  instead and why, naming Plasma's own page; a tick, "Use kwin-i3's", ticked where Plasma has
+  kwin-i3's value; once changed, what Plasma had and that unticking gives it back. Focus follows
+  mouse with no delay and the next focus under the pointer (`FocusPolicy`, `DelayFocusInterval`,
+  `NextFocusPrefersMouse`); per-output desktops; focus stealing prevention at Low (shown only
+  above it); screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
+  window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
+  optional, animations off (`AnimationDurationFactor` 0). **kwin-i3's keys other active shortcuts
+  hold** are one tick on the main page's Keys section, "Take kwin-i3's keys from them", listing
+  them, each taken from every holder in turn (at most five); once taken, a line says unticking
+  gives the Plasma shortcuts their keys back. Every tick is an edit like any setting: **Apply**
+  makes it (each key's old value, or its absence, and the value written saved first in
+  `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make take-keys' save; KWin
+  reconfigured), **Reset** drops it, **Defaults** ticks every row but the optional. Unticked where
+  kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
+  kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
+  puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make
+  uninstall` gives all of it back (`tools/plasma-settings.py`, `tools/take-keys.py`). A stock
+  default is read from the installed `kwin.kcfg`, so 6.7's and 6.8's stock window actions are
+  each read right. Opening the sub-page reads Plasma and kwin-i3's keys again, unless the page
+  holds edits not yet applied.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and
   the US keys. A key whose holder can't be recorded or freed isn't given to kwin-i3 either.

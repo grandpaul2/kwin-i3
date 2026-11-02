@@ -1,9 +1,9 @@
 // The Plasma Settings sub-page (docs/plan.md, "Install and first run"): the Plasma settings that
 // work against kwin-i3, each read as a short review: what Plasma does, what kwin-i3 needs instead
-// and why, and a tick to change it (ticked where kwin-i3 needs it, unticked where optional). One
-// button changes the ticked ones, apart from the page's Apply (they are Plasma's, not kwin-i3's:
-// Reset and Defaults never touch them). Each change kwin-i3 made can be given back, where Plasma
-// still has what kwin-i3 wrote (kcm/setup.cpp).
+// and why, and a tick, "Use kwin-i3's", ticked where Plasma has kwin-i3's value. A tick is an edit
+// like any on the page: Apply makes it, Reset drops it, Defaults ticks every row kwin-i3 needs.
+// Unticked where kwin-i3 changed it, Apply gives back what Plasma had, where Plasma still has
+// what kwin-i3 wrote (kcm/setup.cpp). kwin-i3's keys are on the main page, under Keys.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -14,18 +14,9 @@ KCM.SimpleKCM {
     id: page
     title: i18nc("@title", "Plasma Settings")
 
-    readonly property var rows: kcm.setup.rows
-    // The ticks, by row id: a row kwin-i3 needs starts ticked, an optional one not.
-    property var ticked: ({})
-    function resetTicks() {
-        const t = {};
-        rows.forEach((r) => { t[r.id] = r.differs && !r.optional; });
-        ticked = t;
-    }
-    onRowsChanged: resetTicks()
-    // kwin-i3's keys and Plasma's values read again: either may have changed since the page opened.
-    Component.onCompleted: { kcm.refresh(); resetTicks(); }
-    readonly property var chosen: rows.filter((r) => r.differs && ticked[r.id]).map((r) => r.id)
+    readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
+    // Plasma's values and kwin-i3's keys read again, unless the page holds edits Apply hasn't made.
+    Component.onCompleted: if (!kcm.needsSave) kcm.refresh()
 
     header: ColumnLayout {
         spacing: 0
@@ -34,7 +25,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: true
-            text: i18n("Plasma's own settings that work against kwin-i3. Change Ticked Settings changes the ticked ones, the same as System Settings would, and each can be given back here.")
+            text: i18n("Plasma's own settings that work against kwin-i3. A ticked one changes to kwin-i3's with Apply, the same as in System Settings; unticked again, it goes back to what Plasma had.")
         }
         Kirigami.InlineMessage {
             Layout.fillWidth: true
@@ -91,31 +82,23 @@ KCM.SimpleKCM {
                 wrapMode: Text.Wrap
                 color: Kirigami.Theme.disabledTextColor
                 font: Kirigami.Theme.smallFont
-                text: modelData.changed && modelData.note ? modelData.why + " " + modelData.note : modelData.why
+                text: modelData.why
             }
         }
         QQC2.CheckBox {
-            visible: modelData.differs
-            text: i18nc("@option:check", "Change to kwin-i3's")
-            checked: !!page.ticked[modelData.id]
-            onToggled: { const t = Object.assign({}, page.ticked); t[modelData.id] = checked; page.ticked = t; }
-            Accessible.name: i18nc("@option:check", "Change %1 to kwin-i3's", modelData.title)
+            text: i18nc("@option:check", "Use kwin-i3's")
+            checked: !!kcm.setup.wanted[modelData.id]
+            onToggled: kcm.setup.setWanted(modelData.id, checked)
+            Accessible.name: i18nc("@option:check", "Use kwin-i3's %1", modelData.title)
         }
-        RowLayout {
+        QQC2.Label {
             visible: modelData.changed
-            spacing: Kirigami.Units.smallSpacing
-            QQC2.Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: i18nc("what Plasma did before", "Changed to kwin-i3's. Plasma had: %1", modelData.before)
-            }
-            QQC2.Button {
-                text: i18nc("@action:button", "Give Back")
-                icon.name: "edit-undo"
-                Accessible.name: i18nc("@action:button", "Give back %1", modelData.title)
-                Accessible.description: modelData.note
-                onClicked: kcm.setup.giveBack(modelData.id)
-            }
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            color: Kirigami.Theme.disabledTextColor
+            font: Kirigami.Theme.smallFont
+            text: i18nc("what Plasma did before", "Changed by kwin-i3; Plasma had: %1 Unticking this gives that back.", modelData.before)
+                  + (modelData.note ? " " + modelData.note : "")
         }
         Kirigami.Separator {
             Layout.fillWidth: true
@@ -124,7 +107,7 @@ KCM.SimpleKCM {
     }
 
     // A centred column, as Window Rules; not a FormLayout, which re-sorts the rows a Repeater
-    // makes again, so the buttons would land among them.
+    // makes again.
     Item {
         implicitHeight: column.implicitHeight + Kirigami.Units.largeSpacing * 2
         ColumnLayout {
@@ -141,22 +124,6 @@ KCM.SimpleKCM {
             Repeater {
                 model: page.rows
                 delegate: SettingRow {}
-            }
-            RowLayout {
-                Layout.topMargin: Kirigami.Units.largeSpacing
-                spacing: Kirigami.Units.smallSpacing
-                QQC2.Button {
-                    text: i18nc("@action:button", "Change Ticked Settings")
-                    icon.name: "dialog-ok-apply"
-                    enabled: page.chosen.length > 0
-                    onClicked: kcm.setup.apply(page.chosen)
-                }
-                QQC2.Button {
-                    text: i18nc("@action:button", "Give All Back")
-                    icon.name: "edit-undo"
-                    enabled: kcm.setup.anyChanged
-                    onClicked: kcm.setup.giveBackAll()
-                }
             }
         }
     }

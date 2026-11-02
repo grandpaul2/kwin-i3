@@ -197,8 +197,10 @@ follows it:
 - **The first-run step is the settings page's Plasma Settings sub-page**, opened from the page's
   banner while anything kwin-i3 needs differs, as keys can be taken only once kwin-i3 is loaded. It lists each Plasma setting kwin-i3 is designed around and each of kwin-i3's
   keys another shortcut holds: its current value, the one kwin-i3 would set, and why, each said
-  plainly to be **Plasma's, not kwin-i3's**. One button sets what the user leaves ticked; nothing
-  changes without it. What kwin-i3 needs and i3's stand-ins come ticked, the optional unticked.
+  plainly to be **Plasma's, not kwin-i3's**. A tick is an edit like any setting on the page: its
+  Apply makes it, and nothing changes without it; Defaults ticks what kwin-i3 needs and i3's
+  stand-ins, never the optional. kwin-i3's keys that another shortcut holds are one such tick, in
+  the page's Keys section.
   The install's last line points there, and so does the load notification while anything in the
   list differs (`behaviour.md` §13).
 - **The list**: Plasma's settings that stand in for an i3 directive, at i3's value (focus follows
@@ -207,7 +209,7 @@ follows it:
   another shortcut holds; and the optional (animations off; i3 has none).
 - **Every change outside kwin-i3's own settings can be undone.** Before kwin-i3 changes a Plasma
   setting or takes a shortcut, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
-  given back alone or all at once from that sub-page, and all on removal. A give-back writes
+  given back alone or all at once, unticked and applied, and all on removal. A give-back writes
   the old value only where the current one is still what kwin-i3 set: a change the user made
   since is theirs, and stays.
 - **Removal leaves nothing behind**: `make uninstall` gives back every saved change, disables the
