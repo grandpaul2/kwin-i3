@@ -978,7 +978,7 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
-        ws.floating.forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
+        model.floatingWindows(ws).forEach(function (f) { if (wins[f.win]) lookFloating(wins[f.win], ws); });
         passWs = ws;
         delete gapCache[ws.num];            // the settings or the tree may have changed
         floatWhatCannotFit(ws, area);
@@ -1066,9 +1066,12 @@ var KI3 = (function () {
         w.frameGeometry = g;
     }
 
+    // A window in a floating container (i3's con_inside_floating): KWin's floating window, in no tile.
+    function floats(con) { return !!Tree.insideFloating(con); }
+
     function floatWindow(w, why) {
         var con = model.byWin[id(w)];
-        if (!con || con.type === "floating") return;
+        if (!con || floats(con)) return;
         untile(w);
         floatAtRecord(w);
         clampFloating(w);
@@ -1150,7 +1153,7 @@ var KI3 = (function () {
     var crossing = {};
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
-        model.leaves(ws).concat(ws.floating).forEach(function (c) {
+        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
             var w = wins[c.win];
             if (!w) return;
             if (inDrag(w)) return;
@@ -1415,7 +1418,7 @@ var KI3 = (function () {
                 }
                 send(c.win, cls(c), ind, sides.join(" "));
             });
-            ws.floating.forEach(function (c) { if (wins[c.win]) send(c.win, cls(c), "", ""); });
+            model.floatingWindows(ws).forEach(function (c) { if (wins[c.win]) send(c.win, cls(c), "", ""); });
         });
         if (flash && flash.win !== null && wins[flash.win])
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ShowIndicator", flash.win);
@@ -1552,7 +1555,7 @@ var KI3 = (function () {
     // titlebars look too the window's own title bar goes while it is in the group.
     function inBarGroup(w) {
         var c = model.byWin[id(w)];
-        if (!c || c.type !== "con") return false;
+        if (!c || c.type !== "con" || floats(c)) return false;
         for (var p = c.parent; p && p.type !== "ws"; p = p.parent) {
             if ((p.layout === "tabbed" || p.layout === "stacked") &&
                 p.nodes.filter(function (k) { return project(k); }).length > 1) return true;
@@ -1719,7 +1722,7 @@ var KI3 = (function () {
     // floating window over, `smart` the fullscreen window's own transients).
     function fullscreenBlocks(w) {
         var con = model.byWin[id(w)];
-        if (!con || con.type !== "floating" || w.fullScreen) return false;
+        if (!con || !floats(con) || w.fullScreen) return false;
         var fs = model.fullscreenOn(Tree.wsOf(con));
         if (!fs || fs === con || !wins[fs.win]) return false;
         // The fullscreen window's own modal dialog: KWin activates it in its place whatever is
@@ -1889,7 +1892,7 @@ var KI3 = (function () {
         var key = id(w), con = model.byWin[key];
         if (!con) { adoptWindow(w); return; }
         if (Rules.keptOut(w)) { dropWindow(w); return; }
-        var floating = con.type === "floating";
+        var floating = floats(con);
         if (!ruleRan[key]) ruleRan[key] = {};
         var kind = Rules.classify(w, { ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] });
         var wantFloating = kind !== "tiling";      // "sticky" floats too
@@ -2009,7 +2012,7 @@ var KI3 = (function () {
             var con = model.byWin[key];
             if (!con) return;
             var ws = Tree.wsOf(con);
-            if (kind === "resize" && con.type !== "floating") {
+            if (kind === "resize" && !floats(con)) {
                 readBack(ws);
                 // The window was put back in its tile at each step, so it can fit now while the
                 // client's answer to the last step is still in flight, and lands after this
@@ -2052,7 +2055,7 @@ var KI3 = (function () {
                 if (expected[key] === tile || (!tile && expected[key] === null)) return;
             }
             var con = model.byWin[key];
-            if (!con || con.type === "floating" || w.fullScreen || w.minimized) return;
+            if (!con || floats(con) || w.fullScreen || w.minimized) return;
             if (!tile && dragging === "move") {
                 // Dragged out of its tile: it floats where it is dropped (plan, policies).
                 model.floatingEnable(con);
@@ -2175,7 +2178,7 @@ var KI3 = (function () {
     // keys are the tree's, or a floating window KWin holds fullscreen or maximized, whose keys
     // do nothing (nudgeFloating and growFloating take them).
     function floatingWin(c) {
-        var w = c && c.type === "floating" ? wins[c.win] : null;
+        var w = c && floats(c) ? wins[c.win] : null;
         return w && !w.fullScreen && w.maximizeMode === 0 ? w : null;
     }
     function screenAt(x, y) {
@@ -2203,7 +2206,7 @@ var KI3 = (function () {
     // True when the key was a floating window's (done, or refused), false for the tree's.
     function nudgeFloating(c, d) {
         var w = floatingWin(c);
-        if (!w) return c && c.type === "floating";
+        if (!w) return !!c && floats(c);
         var px = Settings.get("floatingStep"), g = w.frameGeometry;
         var r = { x: g.x + (d === "left" ? -px : d === "right" ? px : 0),
                   y: g.y + (d === "up" ? -px : d === "down" ? px : 0), width: g.width, height: g.height };
@@ -2221,7 +2224,7 @@ var KI3 = (function () {
     }
     function growFloating(c, what, sign) {
         var w = floatingWin(c);
-        if (!w) return c && c.type === "floating";
+        if (!w) return !!c && floats(c);
         if (!w.resizeable) return true;
         var px = sign * Settings.get("floatingStep"), g = w.frameGeometry;
         w.frameGeometry = { x: g.x, y: g.y, width: Math.max(1, g.width + (what === "width" ? px : 0)),
@@ -2248,7 +2251,7 @@ var KI3 = (function () {
         dragTold = {};
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
-        if (on) for (var k in model.byWin) if (model.byWin[k].type === "floating" && wins[k]) tellDragFloating(k, true);
+        if (on) for (var k in model.byWin) if (floats(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
         // windows, the frame's room included; spec-tiling-resize.md, B).
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
@@ -2440,7 +2443,7 @@ var KI3 = (function () {
             if (tab) { con = tab; via = f[1]; }
             else if (tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con)) { con = tabDrag.con; via = f[1]; }
             tabDrag = null;
-            var ours = !!con && con.type === "con";
+            var ours = !!con && con.type === "con" && !floats(con);
             if (!ours || !wins[shownWindow(con).win] || !hasDropTargets()) {
                 log("DRAG not started: " + (ours ? "nowhere to drop" : "not a window of kwin-i3's"));
                 return;
@@ -2557,7 +2560,7 @@ var KI3 = (function () {
             var tab = side === "top" && tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con) ? tabDrag.con : null;
             tabDrag = null;
             if (tab) con = tab;
-            var rz = con && con.type === "con" && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
+            var rz = con && con.type === "con" && !floats(con) && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
             if (!rz) { log("RESIZE not started: nothing to resize against" + (side ? " on the " + side : "")); callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel"); return; }
             var timer = new QTimer();
             timer.interval = 16;
@@ -2716,8 +2719,8 @@ var KI3 = (function () {
             if (c.sticky && w) unstick(w, c);
             var n = model.toggleFloating(c);
             if (n && w) {
-                setFloatingLook(w, n.type === "floating");
-                if (n.type === "floating") { untile(w); floatAtRecord(w); clampFloating(w); }
+                setFloatingLook(w, floats(n));
+                if (floats(n)) { untile(w); floatAtRecord(w); clampFloating(w); }
             }
         },
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
@@ -2729,7 +2732,7 @@ var KI3 = (function () {
         "Close": function () {
             var f = model.focused;
             if (f && f.win === null && (f.type === "con" || f.nodes.length || (f.floating && f.floating.length))) {
-                var all = model.leaves(f).concat(f.type === "ws" ? f.floating : []);
+                var all = model.leaves(f).concat(f.type === "ws" ? model.floatingWindows(f) : []);
                 all.forEach(function (c) { if (wins[c.win]) wins[c.win].closeWindow(); });
                 return;
             }
@@ -2807,7 +2810,7 @@ var KI3 = (function () {
         var ws = wsModel(shownOn(s)), others = [];
         Object.keys(model.workspaces).forEach(function (n) {
             var m = model.workspaces[n];
-            if (m !== ws && m.floating.some(function (c) { return c.sticky; }) && outputOf(m) === s) others.push(m);
+            if (m !== ws && m.floating.some(Tree.isSticky) && outputOf(m) === s) others.push(m);
         });
         if (!others.length) return;
         var moved = model.pushSticky(ws, others, old);
@@ -2820,7 +2823,7 @@ var KI3 = (function () {
     // A window put on all desktops (X4): i3's sticky floating. Floated if tiling (its tile left),
     // marked, pushed to what its output shows.
     function makeSticky(w, con) {
-        if (con.type !== "floating") {
+        if (!floats(con)) {
             con = model.toggleFloating(con);
             setFloatingLook(w, true);
             untile(w); floatAtRecord(w); clampFloating(w);
@@ -3361,7 +3364,7 @@ var KI3 = (function () {
                         " percent=" + (+c.percent).toFixed(4) + " focus=" + named(model.focusOrder(c).join(",")));
                     c.nodes.forEach(function (k) { walk(k, depth + 1); });
                 })(ws, 1);
-                ws.floating.forEach(function (f) { out("  ~" + named(String(f.win))); });
+                model.floatingWindows(ws).forEach(function (f) { out("  ~" + named(String(f.win))); });
             });
         });
         part("windows", function () {
@@ -3369,7 +3372,7 @@ var KI3 = (function () {
             workspace.windowList().forEach(function (w) {
                 var m = w.minSize;
                 out([JSON.stringify(String(w.caption)), "class=" + w.resourceClass, "id=" + id(w),
-                     !wins[id(w)] ? "not-in-tree" : model.byWin[id(w)] && model.byWin[id(w)].type === "floating" ? "floating" : "tiled",
+                     !wins[id(w)] ? "not-in-tree" : model.byWin[id(w)] && floats(model.byWin[id(w)]) ? "floating" : "tiled",
                      "rule=" + Rules.classify(w),
                      "frame=" + rect(w.frameGeometry), "client=" + rect(w.clientGeometry),
                      "min=" + Math.round(m.width) + "x" + Math.round(m.height),
@@ -3407,7 +3410,7 @@ var KI3 = (function () {
             Object.keys(model.workspaces).forEach(function (n) {
                 var ws = model.workspaces[n];
                 j.ws[n] = { tiled: model.leaves(ws).map(function (l) { return String(l.win); }),
-                            floating: ws.floating.map(function (f) { return String(f.win); }),
+                            floating: model.floatingWindows(ws).map(function (f) { return String(f.win); }),
                             tree: named(model.describe(n)) };
             });
             out("JSON " + JSON.stringify(j));
@@ -3489,7 +3492,7 @@ var KI3 = (function () {
                 // the first tab. adoptRest sets the global focus after.
                 workspace.stackingOrder.forEach(function (w) {
                     var c = model.byWin[id(w)];
-                    if (c && c.type === "con" && Tree.wsOf(c) === ws) model.focusWin(id(w));
+                    if (c && c.type === "con" && !floats(c) && Tree.wsOf(c) === ws) model.focusWin(id(w));
                 });
             });
         });
@@ -3794,7 +3797,7 @@ var KI3 = (function () {
         // windows lose theirs again on the next pass if the frame is on.
         Object.keys(wins).forEach(function (key) {
             var w = wins[key], con = model.byWin[key];
-            var tiled = con && con.type !== "floating";
+            var tiled = con && !floats(con);
             if (on && tiled && tiledBorderless()) return;
             giveBorder(w);
             if (first && !w.deleted && w.noBorder) w.noBorder = false;
