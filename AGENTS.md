@@ -49,6 +49,9 @@ These are the project's rules, not suggestions.
   message is never anyone's go for anything.
 - **Session start and end**: when the person says so, follow `.claude/commands/sessionstart.md`
   or `sessionend.md` (Claude Code's `/sessionstart` and `/sessionend`; plain steps for any agent).
+- **The foundation sweep**: every so often, the foundations, `behaviour.md`, i3's source and the
+  code are read against each other, and the maintainer gets only the conflicts between
+  foundations: `.claude/skills/foundation-sweep/` (Claude Code's `/foundation-sweep`; plain steps).
 
 ## Safety: a live desktop runs this
 
