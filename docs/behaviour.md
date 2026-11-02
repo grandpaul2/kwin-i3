@@ -40,10 +40,10 @@ runs alone too. What each plugin piece adds, and what happens without it:
 | hold: the memo | keeps the floating set and each workspace's whole tree across a script reload (P3) | a reload reads the tiles back (`plan.md` decision 5): less comes back |
 | helper: frame focus | the ring counts as its window for hover focus, clicks and scroll | hovering the ring focuses nothing; a click there goes to the desktop beneath |
 | helper: tiling drag | i3's tiling drag (title bar or Meta+drag) and Meta+right-drag resize; a floating container moved and resized whole | Meta+drag is KWin's own move, which floats the window where it's dropped; no tiling resize; a container can't be floated whole |
-| helper: resize mode and terminal key | i3's resize mode (K4) and the Terminal key's launch (K18) | neither key works; the load notification says so |
+| helper: resize mode and terminal key | i3's resize mode (K4) and the Terminal key's launch (K18) | neither key works; the settings page's banner says the plugins are missing |
 | helper: gap strips | the gaps take presses (Z2, Z3, Z9) | a press in a gap goes to the desktop beneath |
 | helper: settings watch | the Configure form's Apply applies at once | press Meta+Shift+C after Apply (the settings page applies by itself either way) |
-| helper: layout keys | the position keys (digits, `;`) follow a non-US keyboard layout | the keys are US symbols; a notification at load says so |
+| helper: layout keys | the position keys (digits, `;`) follow a non-US keyboard layout | the keys are US symbols; logged at load (§13) |
 | helper: popup grace | a panel popup survives the pointer crossing the gap to it | with focus follows mouse, the popup closes when the pointer crosses the gap |
 
 `kwini3hold` and `kwini3helper` are built against the installed KWin and refused by any other
@@ -681,7 +681,7 @@ with `$mod` as the wizard's Win choice.
 | K1 | The modifier | Meta | = | i3's wizard offers Win or Alt; Alt is Plasma's menu key |
 | K2 | Focus Left / Down / Up / Right | Meta+Left Down Up Right, Meta+J K L ; | = | §2 `focusDir` |
 | K3 | Move Left / Down / Up / Right | Meta+Shift+arrow, Meta+Shift+J K L, Meta+: | = | tiling: §2 `move`; floating: by `floatingStep` px (i3's 10 px) |
-| K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Resize Mode's own key leave (Meta+R by default; the helper asks kglobalaccel for it at each entry, as i3's default config leaves on the key it enters by, `config.keycodes:180`); the four actions themselves unbound (a user who wants them flat binds them) | ≠ | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; Meta+R exactly, as i3 matches modifiers exactly (`bindings.c`), so Meta+Shift+R doesn't leave; every other key goes on, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`). ≠: **Plasma's shortcuts still run** (volume, screenshot, the launcher), where i3's mode leaves only its own keys bound and every other key reaches the window: reason (e), another component's shortcut stays its own (`philosophy.md`, Plasma does hardware and the rest). The screen locking doesn't leave the mode, as i3. The sign: a banner at the top of the tree's focused window (`SetFocused`), drawn by the effect (`SetMode`), in the frame's active colour, reading "Resize (Esc)", reason (b): i3's bar shows only the mode's name, `resize` (i3bar's binding mode button, `xcb.c:2172`), here with the way out. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing and the load report says so (§13) |
+| K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Resize Mode's own key leave (Meta+R by default; the helper asks kglobalaccel for it at each entry, as i3's default config leaves on the key it enters by, `config.keycodes:180`); the four actions themselves unbound (a user who wants them flat binds them) | ≠ | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; Meta+R exactly, as i3 matches modifiers exactly (`bindings.c`), so Meta+Shift+R doesn't leave; every other key goes on, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`). ≠: **Plasma's shortcuts still run** (volume, screenshot, the launcher), where i3's mode leaves only its own keys bound and every other key reaches the window: reason (e), another component's shortcut stays its own (`philosophy.md`, Plasma does hardware and the rest). The screen locking doesn't leave the mode, as i3. The sign: a banner at the top of the tree's focused window (`SetFocused`), drawn by the effect (`SetMode`), in the frame's active colour, reading "Resize (Esc)", reason (b): i3's bar shows only the mode's name, `resize` (i3bar's binding mode button, `xcb.c:2172`), here with the way out. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing (§13) |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
 | K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: `make take-keys` frees it (the Overview stays on the top-left screen corner and Grid View on Meta+G) |
@@ -738,10 +738,10 @@ beat kwin-i3's (live: Quick Tile Left 141, kwin-i3 Focus Left 504); an app insta
 kwin-i3 that asks for one of its keys loses to it; a holder that isn't active (its app not
 running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 
-At load (with `warnTakenKeys`), kwin-i3 asks kglobalaccel which of its keys another active
-component holds, and reports them (§13); a holder that launches what the kwin-i3 action launches
-(KRunner's own `_launch` on Meta+D, the default terminal's on Meta+Return) is logged
-(`TAKEN-SAME`), not reported: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn; a `TAKEN-SAME` holder is left), recording the holders in
+At load, kwin-i3 asks kglobalaccel which of its keys another active component holds, and logs
+them (`TAKEN`, §13); a holder that launches what the kwin-i3 action launches (KRunner's own
+`_launch` on Meta+D, the default terminal's on Meta+Return) is logged apart (`TAKEN-SAME`), not
+as taken: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn; a `TAKEN-SAME` holder is left), recording the holders in
 `~/.local/state/kwin-i3/taken-keys.json` before each change, with what each was left holding
 (`set`). The settings page's Keys page takes a key the same way on Apply, recording it in the same
 file. A later take from a holder changed since starts its record afresh from its keys then.
@@ -946,7 +946,6 @@ again.
 | `holdEnabled` | on | | §7 | the effect at once |
 | `holdTimeoutMs` | 200 | 10-2000 ms | §7 | the effect at once |
 | `endSession` | `logout` | `logout`, `sleep`, `shutdown`, `ask` | how Exit leaves (§8 K17) | next press |
-| `warnTakenKeys` | on | | the taken-keys part of the load report (§13) | next load |
 | `debugLog` | off | | the D-Bus log, the debug actions; no control on either form | at once (debug actions: next load) |
 
 The plugins accept any colour Qt parses; the script only `#rrggbb` (lowercased). A number out of
@@ -982,7 +981,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 | N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`; `hideEdgeBorders` and `smartGaps` as i3's; `client.focused`, `client.unfocused` as the two frame colours and two indicator colours (`client.focused_inactive` left out, §7 L3) | ≠ | §7 L1-L11, reason (b) |
 | N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out. Reason (d). |
 | N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
-| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `warnTakenKeys`, `debugLog` | kwin-i3's own (§7, §13) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), on neither the page nor the form |
+| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `debugLog` | kwin-i3's own (§7) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), on neither the page nor the form |
 | N22 | `bindsym $mod+Shift+e exec i3-nagbar … exit` (in i3, rebinding the key) | `endSession` (`logout`, `sleep`, `shutdown`, `ask`), on the Keys page in End session's row | = | how Exit leaves, §8 K17 |
 
 ### The settings page
@@ -991,7 +990,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 
 - **Banners**: kwin-i3 off (with Turn On, which enables it and reconfigures); on but not running
   (pointing at the journal); running without the plugins (one banner for either: what goes
-  without them is the load notification's, §13); while a Plasma setting kwin-i3 needs differs
+  without them, §13); while a Plasma setting kwin-i3 needs differs
   (the Plasma Settings sub-page's unticked-by-default rows aside), "Some of Plasma's settings work
   against kwin-i3", with Review… to that sub-page.
 - **Main page**, worded and laid out by the style guide (each lone checkbox under an
@@ -1004,7 +1003,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   colour classes (§7 L3), a row each with the frame's colour and the next-window side's, the
   latter "same as the frame" when empty; `hideEdgeBorders`; corners; frame on floating windows;
   greyed without the effect), Window Rules, Keys (the sub-page, and "Use kwin-i3's keys over
-  Plasma's", below; `warnTakenKeys` has no control), Plasma (the Plasma Settings sub-page, with
+  Plasma's", below), Plasma (the Plasma Settings sub-page, with
   how many rows differ). **A help button** beside each setting with an
   i3 counterpart (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
   focus_wrapping"); the sub-pages' help names theirs. Each is the next Tab stop after its
@@ -1044,7 +1043,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   and unloaded; the global speed untouched). **kwin-i3's keys other active shortcuts
   hold** are one tick on the main page's Keys section, "Use kwin-i3's keys over Plasma's", each taken
   from every holder in turn (at most five), a holder that launches what kwin-i3's action launches
-  (the load report's `TAKEN-SAME`: KRunner on the Launcher's key, the default terminal on the
+  (the load check's `TAKEN-SAME`: KRunner on the Launcher's key, the default terminal on the
   Terminal's) never counted; while it is ticked, one line says unticking restores
   the original keys. Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
@@ -1100,7 +1099,7 @@ Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_wind
 4. Connect KWin's signals; register the hidden drag actions; turn the tiling drag on.
 5. **Ask the effect** for its stats (the answer waited for up to 250 ms, then step 7 runs).
 6. Meanwhile, at once: register the keys, ask the helper to fit them, check taken keys, layout
-   keys and per-output desktops (one notification, §13), place everything. So the keys exist
+   keys, the plugins and per-output desktops (logged, §13), place everything. So the keys exist
    before step 7 has run.
 7. **Adopt every other window**, bottom of the stack first (so the focus order follows
    stacking), and focus KWin's active window.
@@ -1137,26 +1136,25 @@ tiling drag off; the drag cursor ends by itself 500 ms after the script stops re
 
 ## 13. Reports
 
-One notification per load (app "kwin-i3"), its parts collected first:
+i3 tells a user only of a config error, with `i3-nagbar`; otherwise it writes to its log. kwin-i3
+likewise: a setting that doesn't parse logs a `WARN` and uses its default (§11), and what the user
+should fix in their setup is checked at load and logged, where a capture shows it. The user meets
+it on the settings page's banners (§11, "The settings page"), and at install in `make take-keys`'s
+printout. A script's notification can't reach Plasma (KWin's `callDBus` can't send `Notify`'s
+signature, `docs/kwin-notes.md`), and the banners carry everything one would say.
 
-- **Taken keys** (`warnTakenKeys`): kwin-i3's keys another active component holds, with how to free
-  them (System Settings > Shortcuts, or `make take-keys`). Its part waits at most 3 s for the
-  answers. `warnTakenKeys` off leaves out this part only.
-- **Layout keys**: without the helper, any keyboard layout other than US, as
-  kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default where the
-  system sets none, counts as US). Its part waits at most 3 s for KWin's answer, so a D-Bus call
-  that never answers can't hold back the rest of the report.
-- **Per-output desktops off** with two or more outputs: reported at load, and once later if it
-  becomes a problem; set only from the settings page's Plasma Settings, on the user's yes (§11).
-- **kwin-i3's plugins aren't loaded**: what goes without each, named (`plan.md`: the product is the
-  script and both plugins): without the helper, the tiling drag and resize, frame focus, the
-  resize mode (Meta+R), floating a container whole, the terminal key (Meta+Return), the
-  layout-fitted keys and the form's Apply (§8 K4, K18; T16); without the effect, the frame, the
-  tabs of tabbed and stacked groups, the resize mode's banner, the drag highlight and the hold. The
-  helper from KWin's loaded plugins, the effect from its loaded effects.
-
-i3 has no counterpart: it reports a config error with `i3-nagbar`; here a setting that doesn't
-parse logs a `WARN` and uses its default (§11).
+- **Taken keys**: kwin-i3's keys another active component holds (`TAKEN`; §8, "Taken keys"). The
+  page: the "Some of Plasma's settings work against kwin-i3" banner, to the Plasma Settings
+  sub-page, and the Keys section's "Use kwin-i3's keys over Plasma's".
+- **Layout keys**: without the helper, any keyboard layout other than US (`LAYOUTS … not
+  fitted`), as kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default
+  where the system sets none, counts as US). The page: the plugins' banner.
+- **Per-output desktops off** with two or more outputs (`PEROUTPUT`), at load and at each change
+  of the outputs or the setting. The page: the Plasma settings banner, to its sub-page (§11).
+- **kwin-i3's plugins aren't loaded** (`HELPER not loaded`, `EFFECT not loaded`; `plan.md`: the
+  product is the script and both plugins). The page: the plugins' banner, naming the frame, mouse
+  dragging and the resize mode (§1's table has all that goes without each). The helper from KWin's loaded plugins,
+  the effect from its loaded effects.
 
 `Dump State` (the capture key's, K21) sends the outputs, the tree, the windows, a JSON state and the
 in-memory log to `net.local.kwini3.dump`; `tools/capture` saves it with the effect's `Events`

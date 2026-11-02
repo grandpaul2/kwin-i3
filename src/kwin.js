@@ -3206,8 +3206,8 @@ var KI3 = (function () {
             }
             invoke("Window Close");
         },
-        // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the load
-        // report says the mode needs the plugins (checkHelperKeys).
+        // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the settings
+        // page's banner says the plugins aren't loaded.
         "Resize Mode": function () { callDBus(MODE[0], MODE[1], MODE[2], "SetMode", mode ? "" : "resize"); },
         // i3's exit, Plasma's way to leave as endSession says (K17): its logout screen's prompts
         // (log out and shut down ask, then go ahead after 30 s; docs/kwin-notes.md, "Plasma"), or
@@ -3560,53 +3560,23 @@ var KI3 = (function () {
         }
     }
 
-    // ---- the load-time report ---------------------------------------
+    // ---- the load-time checks ---------------------------------------
 
-    // One notification per load for what the user should fix in their setup. Each check opens a
-    // part and closes it with its lines once its D-Bus replies are in; the last close sends it.
-    var report = { open: 0, parts: [] };
-    function reportOpen() { report.open++; }
-    function reportClose(title, lines) {
-        if (lines.length) report.parts.push({ title: title, lines: lines });
-        if (--report.open > 0 || !report.parts.length) return;
-        var parts = report.parts;
-        report.parts = [];
-        // No "kwin-i3:" in the summary: Plasma heads the popup with the app name and icon.
-        function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
-        var summary = parts.length === 1 ? cap(parts[0].title) : parts.length + " things to fix in this setup";
-        if (parts.length > 1) parts.forEach(function (p) { p.title = cap(p.title) + ":"; });
-        var body = parts.map(function (p) {
-            return (parts.length > 1 ? p.title + "\n" : "") + p.lines.join("\n");
-        }).join("\n\n");
-        callDBus("org.freedesktop.Notifications", "/org/freedesktop/Notifications",
-                 "org.freedesktop.Notifications", "Notify", "kwin-i3", 0, "view-split-left-right", summary, body, [], {}, -1);   // the settings page's icon
-        log("REPORT " + summary);
-    }
+    // What the user should fix in their setup, logged at load for a capture to show; the settings
+    // page's banners are where the user meets it (behaviour.md §13). i3 has no load report either:
+    // it says only a config error, with i3-nagbar.
 
-    // Without the helper plugin the keys stay US symbols: a layout that isn't US is reported
-    //. Its part closes once, on the answer or after 3 s, so a
-    // D-Bus call that never answers can't hold back the rest of the report.
+    // Without the helper plugin the keys stay US symbols: a layout that isn't US is logged.
     function checkLayoutKeys() {
-        reportOpen();
-        var closed = false;
-        function close(title, lines) {
-            if (closed) return;
-            closed = true;
-            reportClose(title, lines);
-        }
-        later(3000, function () { close("", []); });
         callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
                  guard("layout keys", function (loaded) {
-            if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); close("", []); return; }
+            if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); return; }
             callDBus("org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts", "getLayoutsList", guard("layout keys", function (list) {
                 // "" is KWin's xkb default, US, where the system sets no layout (Arch's own
                 // default, 2026-10-29: the long name still says English (US)).
                 var names = (list || []).map(function (l) { return String(l[0]) || "us"; });
                 var other = names.filter(function (n) { return n !== "us"; });
                 log("LAYOUTS " + names.join(",") + (other.length ? ", not fitted (no helper)" : ""));
-                close("its keys may not fit the keyboard layout (" + other.join(", ") + ")", other.length ? [
-                    "Meta+Shift+1 … 0 and Meta+; are set for a US keyboard. Install kwin-i3's plugins " +
-                    "(make plugin-install) to fit them to yours, or set them on kwin-i3's settings page."] : []);
             }));
         }));
     }
@@ -3628,17 +3598,6 @@ var KI3 = (function () {
         return false;
     }
     function checkTakenKeys() {
-        if (!Settings.get("warnTakenKeys")) { log("TAKEN not checked (warnTakenKeys off)"); return; }
-        // Closed once, on the answers or after 3 s, as the other parts: a reply that never comes
-        // can't hold back the rest of the report.
-        reportOpen();
-        var closed = false;
-        function close(title, lines) {
-            if (closed) return;
-            closed = true;
-            reportClose(title, lines);
-        }
-        later(3000, function () { close("", []); });
         callDBus(MODE[0], MODE[1], MODE[2], "TerminalService", guard("terminal", function (t) { terminalService = String(t || ""); }));
         callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component", "allShortcutInfos",
                  guard("taken keys", function (infos) {
@@ -3650,10 +3609,6 @@ var KI3 = (function () {
             function done() {
                 taken.sort().forEach(function (t) { log("TAKEN " + t); });
                 log("TAKEN checked " + mine.length + " keys, " + taken.length + " taken");
-                if (taken.length) taken.push("Free them in System Settings > Shortcuts, or run `make take-keys` " +
-                                             "in kwin-i3's folder. Turn this notice off in kwin-i3's settings.");
-                var n = taken.length - 1;
-                close(n + (n === 1 ? " key is" : " keys are") + " taken by other shortcuts", taken);
             }
             if (!left) { done(); return; }
             mine.forEach(function (k) {
@@ -3663,7 +3618,7 @@ var KI3 = (function () {
                     if (!h || !h[1] || String(h[1]).indexOf("kwin-i3 ") === 0) { one(); return; }
                     // A holder that launches what the kwin-i3 action launches:
                     // KRunner's own _launch on the Launcher's key, the default terminal's on the
-                    // Terminal's. Both fire the same thing: nothing to report.
+                    // Terminal's. Both fire the same thing: not taken.
                     if (sameLaunch(k, h)) { log("TAKEN-SAME " + KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")"); one(); return; }
                     callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "getComponent", h[0],
                              guard("taken keys", function (path) {
@@ -3682,54 +3637,27 @@ var KI3 = (function () {
     // Plasma's "Switch desktops independently for each screen" (off by default): with it off a
     // desktop switch changes every monitor, so with two or more, login numbering alone puts
     // both on workspace 2 and windows tile on the wrong one.
-    // Reported, never set: a script's value would last only to the next reconfigure. At load in
-    // the report; later, when it becomes a problem (a second monitor, the setting turned off),
-    // once per load on its own.
-    var perOutputBad = false, perOutputLater = false;
-    // The resize mode (Meta+R) and the terminal (Meta+Return) are the helper's (§8 K4, K18): without
-    // it, said once at load (§13).
-    // The product is the script and its two plugins (plan.md, "Scope"): without either, say what
-    // goes. The helper from KWin's loaded plugins, the effect from its loaded effects (each loaded
-    // under a hashed name: kwini3helper-<hash>, kwini3hold-<hash>).
+    // Logged, never set: a script's value would last only to the next reconfigure; the settings
+    // page's banner offers it (behaviour.md §11). Checked at load and at each change of outputs or
+    // of the setting.
+    // The product is the script and its two plugins (plan.md, "Scope"): without either, logged,
+    // and the settings page's banner says so. The helper from KWin's loaded plugins, the effect
+    // from its loaded effects (each loaded under a hashed name: kwini3helper-<hash>,
+    // kwini3hold-<hash>).
     function checkHelperKeys() {
-        reportOpen();
-        var closed = false, helper = null, effect = null;
-        function close() {
-            if (closed) return;
-            closed = true;
-            var lines = [];
-            if (helper === false) lines.push("Without the helper: no tiling drag or resize with the mouse, no focus from the frame, no resize mode (Meta+R), no floating a container whole, no terminal key (Meta+Return), no keys fitted to your keyboard layout, and the Configure form's Apply needs Meta+Shift+C.");
-            if (effect === false) lines.push("Without the effect: no frame (tiling windows keep their title bars), no tabs on tabbed and stacked groups, no resize-mode banner, no drag highlight, no atomic layout changes.");
-            if (lines.length) lines.push("make plugin-install builds and loads them.");
-            reportClose("kwin-i3's plugins aren't loaded", lines);
-        }
-        function heard() { if (helper !== null && effect !== null) close(); }
-        later(3000, close);
         callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
                  guard("helper keys", function (loaded) {
-            helper = helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
-            if (!helper) log("HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing");
-            heard();
+            helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
+            if (!helperLoaded) log("HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing");
         }));
         callDBus("org.kde.KWin", "/Effects", "org.freedesktop.DBus.Properties", "Get", "org.kde.kwin.Effects", "loadedEffects",
                  guard("effect loaded", function (loaded) {
-            effect = String(loaded).indexOf("kwini3hold") >= 0;
-            if (!effect) log("EFFECT not loaded: no frame, no hold");
-            heard();
+            if (String(loaded).indexOf("kwini3hold") < 0) log("EFFECT not loaded: no frame, no hold");
         }));
     }
-    function checkPerOutput(atLoad) {
-        var was = perOutputBad, n = workspace.screens.length;
-        perOutputBad = n >= 2 && !options.perOutputVirtualDesktops;
-        log("PEROUTPUT " + (perOutputBad ? "off, " + n + " screens" : "ok"));
-        var lines = ["With more than one output, kwin-i3 needs System Settings > Virtual Desktops > " +
-                     "\"Switch desktops independently for each screen\" on. With it off, a desktop switch " +
-                     "changes every output, and windows tile on the wrong one."];
-        if (atLoad) { reportOpen(); reportClose("per-output desktops are off", perOutputBad ? lines : []); return; }
-        if (!perOutputBad || was || perOutputLater) return;
-        perOutputLater = true;
-        reportOpen();
-        reportClose("per-output desktops are off", lines);
+    function checkPerOutput() {
+        var n = workspace.screens.length;
+        log("PEROUTPUT " + (n >= 2 && !options.perOutputVirtualDesktops ? "off, " + n + " screens" : "ok"));
     }
 
     // The setting turned on: each monitor showing a workspace that lives on another one (left
@@ -4214,16 +4142,12 @@ var KI3 = (function () {
         // The helper plugin fits the keys that mean a key position to the keyboard layout
         //. No reply asked: without the plugin, nothing happens.
         callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
-        // All open their part of the report before any can close it: one notification, also when
-        // the parts that answer at once (below) close before the others open theirs.
-        reportOpen();
         checkTakenKeys();
         checkLayoutKeys();
         checkHelperKeys();
-        checkPerOutput(true);
-        reportClose("", []);
+        checkPerOutput();
         options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
-            checkPerOutput(false);
+            checkPerOutput();
             if (options.perOutputVirtualDesktops) reshowHomes();
         }));
         scheduleAll();
@@ -4449,7 +4373,7 @@ var KI3 = (function () {
         return st;
     }
     function screensChanged() {
-        checkPerOutput(false);
+        checkPerOutput();
         var names = Workspaces.ordered().map(function (s) { return s.name; });
         var known = model.outputs().map(function (o) { return o.name; });
         var lost = known.filter(function (n) { return names.indexOf(n) < 0; });

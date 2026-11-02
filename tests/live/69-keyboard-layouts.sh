@@ -18,13 +18,9 @@ runs() {    # runs <keys by position> <action>: the key press runs that kwin-i3 
     press "$1"
     wait_log "^.{9}ACTION $2\$" "$m"
 }
-notes() { grep -c '^NOTIFY' "$KI3_TMP/notify.out"; }
 keys_of() { busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel shortcutKeys as 4 kwin "$1" KWin "$1"; }
 META=$((0x10000000)) ALT=$((0x08000000))
 
-: > "$KI3_TMP/notify.out"                  # there before the first poll reads it
-"$root/tools/fakenotify.py" > "$KI3_TMP/notify.out" 2>&1 &
-poll grep -q READY "$KI3_TMP/notify.out"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 # No layout set: the system's, which KWin names "" where the system sets none (Arch, 2026-10-29).
@@ -47,13 +43,11 @@ check "de: Meta+Shift+7 (/) moves to 7"     runs "Meta+Shift+7" "Move to Workspa
 check "de: Meta+0 shows 10"                 runs "Meta+0" "Workspace 10"
 check "de: Meta+ö (the ; key) focuses right" runs "Meta+;" "Focus Right"
 check "de: Meta+Shift+ö moves right"        runs "Meta+Shift+;" "Move Right"
-# With the helper, a non-US layout is no reason for a notice (39 is the case without it).
+# With the helper, a non-US layout is fitted at the next load too.
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 m=$(mark); load_kwin_i3
 check "reloaded on German"                  wait_log 'kwin-i3 loaded$' "$m"
 check "logged: fitted by the helper"        wait_log '^.{9}LAYOUTS fitted by the helper$' "$m"
-sleep 1
-check "and no notification"                 eval '[[ $(notes) == 0 ]]'
 check "still fitted after the reload"       runs "Meta+Shift+3" "Move to Workspace 3"
 
 # A key the user set is theirs: Workspace 4 on Meta+Alt+4 survives the next layout.

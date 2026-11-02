@@ -116,8 +116,9 @@ matches nothing. i3 has only the config line: its users write it once, so anythi
 blending with Plasma, judged against `plan.md`'s scope. Ideas, none decided: (a) the README's
 paragraph for any monitor, not only docking; (b) a preset on the Workspaces page (alternate odd
 and even, split in halves, or keep where they are now); (c) a hint when an output returns and no
-workspace outputs are set (needs item 56's notifications). (a) is `OPEN.md` item 71. Next: the beta users'
-monitor setups and whether either has lost a layout, then a proposal between (b) and (c).
+workspace outputs are set, dropped: kwin-i3 sends no notifications (`behaviour.md` §13). (a) is
+`OPEN.md` item 71. Next: the beta users' monitor setups and whether either has lost a layout, then
+a proposal on (b).
 
 **18. A standing accessibility check of the settings page** (parked: light tests while in
 development). `tests/live/75-settings-a11y.sh` (in git history) audited every page through `tools/a11y.py`: names, no
@@ -164,7 +165,7 @@ a foundation question, cheap on floating
 plus a hidden workspace, i3's `src/scratchpad.c` first. Our niche's only other entry: krohnkite-i3 (4 stars, no
 releases). For the beta, (a) is a build from source on each user's machine (a package, COPR/AUR
 as PlasmaZones ships, waits for a release): a KWin update breaks the plugins until `make plugin
-plugin-install` runs again, often on CachyOS, so the README says so, and item 56's report is what
+plugin-install` runs again, often on CachyOS, so the README says so, and the settings page's banner
 says the plugins are missing. (a) done in item 4's README pass (2026-10-30: per-distribution packages, rebuild after a Plasma
 update); of (b), supported versions and removal done. Next, toward a release: (b)'s screenshot and a
 "window X won't tile" FAQ, written from the beta's questions; (d) asked as a foundation change

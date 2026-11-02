@@ -633,8 +633,6 @@ KCM.SimpleKCM {
                      .filter((s) => s).join(", ") || i18n("As kwin-i3 needs them")
             onClicked: kcm.push("PlasmaSettings.qml")
         }
-        // warnTakenKeys has no control here while kwin-i3's notifications don't reach Plasma
-        // (LATER.md item 56): the checkbox would change nothing a user sees.
         // debugLog has none either: it only feeds the test KWin's log (docs/debugging.md).
     }
 }

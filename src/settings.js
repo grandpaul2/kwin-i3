@@ -24,7 +24,6 @@ var Settings = (function () {
         floatingMinimumSize: { type: "size", def: "75x50" },                    // i3's floating_minimum_size
         floatingMaximumSize: { type: "size", def: "0x0" },                      // floating_maximum_size: 0x0 all outputs together, -1x-1 none
         debugLog: { type: "bool", def: "false" },
-        warnTakenKeys: { type: "bool", def: "true" },                         // the notice at load
         resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
         floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
         defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },

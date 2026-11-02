@@ -877,23 +877,6 @@
        </property>
       </widget>
      </item>
-     <item row="36" column="0">
-      <widget class="QLabel" name="warnTakenKeysLabel">
-       <property name="text">
-        <string>Options:</string>
-       </property>
-       <property name="buddy">
-        <cstring>kcfg_warnTakenKeys</cstring>
-       </property>
-      </widget>
-     </item>
-     <item row="36" column="1">
-      <widget class="QCheckBox" name="kcfg_warnTakenKeys">
-       <property name="text">
-        <string>Warn about keys other shortcuts use</string>
-       </property>
-      </widget>
-     </item>
      <item row="39" column="0">
       <widget class="QLabel" name="tilingDragLabel">
        <property name="text">

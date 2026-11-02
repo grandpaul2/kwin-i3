@@ -132,7 +132,7 @@ against i3 and the code every so often, to catch what slipped.
 - **The defaults are the product.** During the Stage, the maintainer's desktop runs what a new
   user gets; personal customisations come back later.
 - **The product is the script and its two plugins.** The script alone still runs the tree,
-  workspaces, keys and floating, and its load notification names what is missing without them
-  (`docs/plan.md`, "Scope").
+  workspaces, keys and floating, and the settings page's banner names what is missing without
+  them (`docs/plan.md`, "Scope").
 - **i3's defaults where i3 has one**, unless a row gives one of `docs/plan.md`'s reasons: a
   command i3 binds to no key stays unbound here too.

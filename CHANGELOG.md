@@ -5,6 +5,10 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **No load notification**: what to fix in a setup (keys other shortcuts hold, a keyboard
+  layout without the plugins, the plugins missing, per-output desktops off) is shown on the
+  settings page's banners and logged, as i3 tells a user only of a config error. The
+  `warnTakenKeys` setting, which only turned the notification's taken-keys part off, is gone.
 - **Tabbed and stacked layouts, as i3's**: Meta+W and Meta+S make the focused window's container
   a group, its windows sharing one place under a bar of their titles (one row of tabs, or a row
   each); Meta+E goes back to the split it was. Left/right walk the tabs, up/down the rows; a

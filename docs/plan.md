@@ -46,7 +46,7 @@ floating rules (`docs/definitions.md`); i3's settings for all of these (below). 
 commands that reach a state or a place no bound key reaches, left unbound as i3 leaves them
 (workspace back and forth, next and previous, outputs, Sticky Toggle, the forms with no back and
 forth: `behaviour.md` §4 and §8): a user who wants one binds it. Around them,
-kwin-i3's own: the settings page, the workspace widget, the load notification, the capture key
+kwin-i3's own: the settings page, the workspace widget, the capture key
 and the release key. What each does, exactly: `docs/behaviour.md`.
 
 **Out, with the reason:**
@@ -93,8 +93,8 @@ page. Rule fields (`for_window`, `assign`, `workspace … gaps`) take i3's synta
 i3 users (`docs/philosophy.md`, "Who it is for").
 
 **Keys and Plasma's shortcuts:** kwin-i3's default keys are i3's (`behaviour.md` §8). A key
-another Plasma component already holds stays that component's (reason (e)); the load notification
-names each one and how to free it (§13), and taking them is the user's choice, saved and given
+another Plasma component already holds stays that component's (reason (e)); the settings page's
+Plasma Settings sub-page names each one (§13), and taking them is the user's choice, saved and given
 back as "Install and first run" says.
 
 **Popup grace** (the helper) is kwin-i3's own, for the Plasma audience: with focus follows
@@ -148,7 +148,8 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   resizes one window, never several as one (reason (a)). Floating Toggle on a window inside it
   floats that window alone (`floating_enable`: only the container's child carries the floating
   flag); on the container, it tiles it whole (`floating_disable`). Without the helper, floating a
-  container does nothing and the load report says so, as `behaviour.md` K4 and K18; one saved
+  container does nothing (logged; the settings page's banner says the plugins are missing), as
+  `behaviour.md` K4 and K18; one saved
   floating comes back tiled.
 - **A tiling drag drops onto tiling windows and empty visible workspaces only**
   (`is_tiling_drop_target`), never onto a window inside a floating container. i3's check is meant
@@ -178,8 +179,8 @@ in i3's feel completely, but it works fine without them). The script
 alone runs the tree, workspaces, keys and floating, and is tested alone (every scenario not
 marked `# needs: plugin` runs with no plugin and Breeze, `tests/live/run.sh`). The helper adds the
 mouse (tiling drag, resize, frame focus), the resize mode, the layout keys and the terminal key;
-the effect draws the frame and holds layout changes. Without either, the load notification says
-what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Plasma update.
+the effect draws the frame and holds layout changes. Without either, the settings page's banner
+says what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Plasma update.
 
 ## Install and first run
 
@@ -201,8 +202,7 @@ follows it:
   Apply makes it, and nothing changes without it; Defaults ticks what kwin-i3 needs and i3's
   stand-ins, never the optional. kwin-i3's keys that another shortcut holds are one such tick, in
   the page's Keys section.
-  The install's last line points there, and so does the load notification while anything in the
-  list differs (`behaviour.md` §13).
+  The install's last line points there.
 - **The list**: Plasma's settings that stand in for an i3 directive, at i3's value (focus follows
   mouse with no delay and the next focus under the pointer); the ones kwin-i3 needs (per-output
   desktops, with more than one output); Plasma's features that fight the tree; kwin-i3's keys
