@@ -400,6 +400,7 @@ KCM.SimpleKCM {
                         PatternField { row: ruleRow.index; key: "title"; what: i18nc("@item a rule's criterion", "title") }
                         QQC2.Label { text: i18nc("@label before a pattern", "role"); Accessible.ignored: true }
                         PatternField { row: ruleRow.index; key: "role"; what: i18nc("@item a rule's criterion", "role"); Layout.preferredWidth: Kirigami.Units.gridUnit * 6 }
+                        QQC2.Label { text: i18nc("@label before a window type", "type"); Accessible.ignored: true }
                         QQC2.ComboBox {
                             textRole: "text"
                             valueRole: "value"

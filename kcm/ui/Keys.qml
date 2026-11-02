@@ -121,11 +121,11 @@ KCM.ScrollViewKCM {
                                 anchors.left: item.right
                                 anchors.leftMargin: Kirigami.Units.smallSpacing
                                 anchors.verticalCenter: item.verticalCenter
-                                text: slot.keysText
+                                text: slot.keysText ? i18nc("the keys that type this shortcut's symbol", "typed with %1", slot.keysText) : ""
                                 visible: text !== ""
                                 color: Kirigami.Theme.disabledTextColor
                                 font: Kirigami.Theme.smallFont
-                                Accessible.name: i18nc("the keys that type this shortcut's symbol", "typed with %1", text)
+                                Accessible.name: text
                             }
                             // What the command's keys are inside a mode: after the last key, not the slot, so it doesn't stand off alone.
                             QQC2.Label {

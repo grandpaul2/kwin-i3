@@ -44,10 +44,12 @@ KCM.SimpleKCM {
         property string first: ""
         property bool applies: true
         readonly property string output: page.outputAt(num, slot)
-        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second output", "No other") : i18nc("@item:inlistbox", "Any screen") }]
-            .concat(page.screens.filter((s) => s.name !== first))
+        // The second box says "else" in its own items, so no word between the boxes is needed.
+        function shown(t) { return slot ? i18nc("@item:inlistbox the second screen, used when the first isn't connected", "Else %1", t) : t }
+        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second screen", "No second screen") : i18nc("@item:inlistbox", "Any screen") }]
+            .concat(page.screens.filter((s) => s.name !== first).map((s) => ({ name: s.name, text: shown(s.text) })))
             .concat(output && !page.screens.some((s) => s.name === output)
-                ? [{ name: output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", output) }] : [])
+                ? [{ name: output, text: shown(i18nc("@item:inlistbox output name", "%1 (not connected)", output)) }] : [])
         textRole: "text"
         valueRole: "name"
         Layout.preferredWidth: Kirigami.Units.gridUnit * 13
@@ -70,7 +72,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("Each workspace opens on its screen, or on its second when the first isn't connected.")
+            text: i18n("A workspace given a screen opens there, or on its second screen while the first isn't connected.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
@@ -91,11 +93,10 @@ KCM.SimpleKCM {
 
                 MonitorBox { num: row.num; slot: 0 }
                 // The second box is there on every row (the rows share one shape), greyed with no first.
-                QQC2.Label { text: i18nc("@label between two output boxes", "else"); Accessible.ignored: true; enabled: page.outputAt(row.num, 0) !== "" }
                 MonitorBox { num: row.num; slot: 1; first: page.outputAt(row.num, 0); applies: page.outputAt(row.num, 0) !== "" }
                 QQC2.ComboBox {
-                    model: [{ value: false, text: i18nc("@item:inlistbox new windows are", "Tiling") },
-                            { value: true, text: i18nc("@item:inlistbox new windows are", "Floating") }]
+                    model: [{ value: false, text: i18nc("@item:inlistbox", "New windows tile") },
+                            { value: true, text: i18nc("@item:inlistbox", "New windows float") }]
                     textRole: "text"
                     valueRole: "value"
                     readonly property bool stored: page.plasma.indexOf(row.num) >= 0

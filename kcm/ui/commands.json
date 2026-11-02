@@ -87,7 +87,7 @@
   "group": "Move",
   "commands": [
    {
-    "label": "Move left",
+    "label": "Move window left",
     "actions": [
      [
       "kwin-i3 Move Left",
@@ -100,7 +100,7 @@
     ]
    },
    {
-    "label": "Move down",
+    "label": "Move window down",
     "actions": [
      [
       "kwin-i3 Move Down",
@@ -113,7 +113,7 @@
     ]
    },
    {
-    "label": "Move up",
+    "label": "Move window up",
     "actions": [
      [
       "kwin-i3 Move Up",
@@ -126,7 +126,7 @@
     ]
    },
    {
-    "label": "Move right",
+    "label": "Move window right",
     "actions": [
      [
       "kwin-i3 Move Right",
@@ -284,7 +284,7 @@
   "group": "Workspaces",
   "commands": [
    {
-    "label": "Workspace 1",
+    "label": "Go to workspace 1",
     "actions": [
      [
       "kwin-i3 Workspace 1",
@@ -293,7 +293,7 @@
     ]
    },
    {
-    "label": "Workspace 2",
+    "label": "Go to workspace 2",
     "actions": [
      [
       "kwin-i3 Workspace 2",
@@ -302,7 +302,7 @@
     ]
    },
    {
-    "label": "Workspace 3",
+    "label": "Go to workspace 3",
     "actions": [
      [
       "kwin-i3 Workspace 3",
@@ -311,7 +311,7 @@
     ]
    },
    {
-    "label": "Workspace 4",
+    "label": "Go to workspace 4",
     "actions": [
      [
       "kwin-i3 Workspace 4",
@@ -320,7 +320,7 @@
     ]
    },
    {
-    "label": "Workspace 5",
+    "label": "Go to workspace 5",
     "actions": [
      [
       "kwin-i3 Workspace 5",
@@ -329,7 +329,7 @@
     ]
    },
    {
-    "label": "Workspace 6",
+    "label": "Go to workspace 6",
     "actions": [
      [
       "kwin-i3 Workspace 6",
@@ -338,7 +338,7 @@
     ]
    },
    {
-    "label": "Workspace 7",
+    "label": "Go to workspace 7",
     "actions": [
      [
       "kwin-i3 Workspace 7",
@@ -347,7 +347,7 @@
     ]
    },
    {
-    "label": "Workspace 8",
+    "label": "Go to workspace 8",
     "actions": [
      [
       "kwin-i3 Workspace 8",
@@ -356,7 +356,7 @@
     ]
    },
    {
-    "label": "Workspace 9",
+    "label": "Go to workspace 9",
     "actions": [
      [
       "kwin-i3 Workspace 9",
@@ -365,7 +365,7 @@
     ]
    },
    {
-    "label": "Workspace 10",
+    "label": "Go to workspace 10",
     "actions": [
      [
       "kwin-i3 Workspace 10",
@@ -419,7 +419,7 @@
     ]
    },
    {
-    "label": "Workspace 1, no back and forth",
+    "label": "Go to workspace 1, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 1 (no back-and-forth)",
@@ -428,7 +428,7 @@
     ]
    },
    {
-    "label": "Workspace 2, no back and forth",
+    "label": "Go to workspace 2, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 2 (no back-and-forth)",
@@ -437,7 +437,7 @@
     ]
    },
    {
-    "label": "Workspace 3, no back and forth",
+    "label": "Go to workspace 3, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 3 (no back-and-forth)",
@@ -446,7 +446,7 @@
     ]
    },
    {
-    "label": "Workspace 4, no back and forth",
+    "label": "Go to workspace 4, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 4 (no back-and-forth)",
@@ -455,7 +455,7 @@
     ]
    },
    {
-    "label": "Workspace 5, no back and forth",
+    "label": "Go to workspace 5, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 5 (no back-and-forth)",
@@ -464,7 +464,7 @@
     ]
    },
    {
-    "label": "Workspace 6, no back and forth",
+    "label": "Go to workspace 6, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 6 (no back-and-forth)",
@@ -473,7 +473,7 @@
     ]
    },
    {
-    "label": "Workspace 7, no back and forth",
+    "label": "Go to workspace 7, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 7 (no back-and-forth)",
@@ -482,7 +482,7 @@
     ]
    },
    {
-    "label": "Workspace 8, no back and forth",
+    "label": "Go to workspace 8, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 8 (no back-and-forth)",
@@ -491,7 +491,7 @@
     ]
    },
    {
-    "label": "Workspace 9, no back and forth",
+    "label": "Go to workspace 9, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 9 (no back-and-forth)",
@@ -500,7 +500,7 @@
     ]
    },
    {
-    "label": "Workspace 10, no back and forth",
+    "label": "Go to workspace 10, no back and forth",
     "actions": [
      [
       "kwin-i3 Workspace 10 (no back-and-forth)",

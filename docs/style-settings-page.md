@@ -183,7 +183,7 @@ hunt for; no collision with another word on the page or in Plasma.
   move form in "Move to workspace", in the same order).
 - **A command's label fits the label column**: about 40 characters at the default font, or it is
   cut off with "…" . Checked on a screenshot of the group.
-- **A shifted symbol is named by its keys** beside its button, in muted text: "Meta+! →
+- **A shifted symbol is named by its keys** beside its button, in muted text: "typed with
   Meta+Shift+1".
 - **Clashes are shown in the row, never prompted**: "Meta+E is used by Dolphin (Launch); it will
   be taken from it on Apply." No modal dialog.

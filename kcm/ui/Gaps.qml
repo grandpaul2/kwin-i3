@@ -53,7 +53,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("Here a screen edge or a workspace can differ from the main page.")
+            text: i18n("A gap set here replaces the main page's for that screen edge or workspace; “same” keeps the main page's.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
@@ -63,7 +63,7 @@ KCM.SimpleKCM {
 
     Kirigami.FormLayout {
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Edges:")
+            Kirigami.FormData.label: i18nc("@label", "Extra at screen edges:")
             spacing: Kirigami.Units.smallSpacing
             SideSpinBox { settingName: "gapsTop"; side: i18nc("@item side of the output", "top") }
             SideSpinBox { settingName: "gapsRight"; side: i18nc("@item side of the output", "right") }
@@ -71,13 +71,13 @@ KCM.SimpleKCM {
             SideSpinBox { settingName: "gapsLeft"; side: i18nc("@item side of the output", "left") }
         }
         QQC2.ComboBox {
-            Kirigami.FormData.label: i18nc("@label:listbox", "Lone window:")
+            Kirigami.FormData.label: i18nc("@label:listbox", "With one window:")
             textRole: "text"
             valueRole: "value"
             model: [
                 { text: i18nc("@item:inlistbox", "Usual gaps"), value: "off" },
                 { text: i18nc("@item:inlistbox", "No gaps"), value: "on" },
-                { text: i18nc("@item:inlistbox", "Edge gaps only"), value: "inverse_outer" },
+                { text: i18nc("@item:inlistbox", "Gaps at screen edges only"), value: "inverse_outer" },
             ]
             readonly property string stored: page.settings.smartGaps
             function sync() { currentIndex = indexOfValue(stored) }
@@ -85,7 +85,7 @@ KCM.SimpleKCM {
             onCountChanged: sync()
             Component.onCompleted: sync()
             onActivated: page.settings.smartGaps = currentValue
-            Accessible.name: i18nc("@label:listbox", "Gaps on a workspace with a lone window")
+            Accessible.name: i18nc("@label:listbox", "Gaps on a workspace with one window")
             KCM.SettingStateBinding { configObject: page.settings; settingName: "smartGaps" }
         }
         Item {
@@ -113,7 +113,7 @@ KCM.SimpleKCM {
                     stored: Logic.outerOf(row.own)
                     Accessible.name: i18nc("@label:spinbox", "Workspace %1 extra gap at screen edges", row.num)
                 }
-                QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "at edges, set per side") : i18nc("@label after a gap's size", "at edges"); Accessible.ignored: true }
+                QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "extra at edges, set per side") : i18nc("@label after a gap's size", "extra at edges"); Accessible.ignored: true }
             }
         }
     }
