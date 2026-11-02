@@ -99,6 +99,15 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - `Window`'s delayed-move API (`dontInteractiveMoveResize`, `start/stopDelayedInteractiveMoveResize`)
   is `protected`: a plugin can't cancel a move KWin armed, and a title-bar press arms one by a timer.
 - Shift held during KWin's interactive move means "drop into a custom tile" on release.
+- KWin's window actions (Meta+left move, Meta+right resize) fire only when the modifiers equal
+  `CommandAllModifier` exactly (6.7.5 `input.cpp:1299`): Meta+Shift+left reaches the app.
+- An app's own move request (`xdg_toplevel.move`, a header bar's drag) is run as KWin's own move
+  command (`handleMoveRequested`, `xdgshellwindow.cpp:1045`): no input filter sees it, as for Move
+  Window and the window menu's Move. `cancelInteractiveMoveResize` (public) stops one, but not
+  inside `interactiveMoveResizeStarted`: `startInteractiveMoveResize` goes on after the emit
+  (`window.cpp:1067-1070`), so queue it a turn. A cancel puts the quick-tile mode back
+  (`finishInteractiveMoveResize`, `window.cpp:1082`); the first step of a move takes it off
+  (`:1234`).
 - Spectacle's region overlay is a Normal fullscreen window per output, class `org.kde.spectacle`.
 - KWin shows a script no X11-only property: Plasma's notifications are told by class `org.kde.plasmashell`.
 - `noBorder`'s change signal is `decorationPolicyChanged`; there is no `noBorderChanged` (`window.h:504`).
@@ -298,6 +307,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 
 ## The test KWin (`tools/testkwin.sh`)
 
+- Its KWin logs to the user journal as `kwin_wayland`, with its own PID, and most of its lines
+  don't name the test (a scenario's "No such object path '/kwini3hold'" while the effect loads):
+  read the live KWin's lines by its PID (`.claude/commands/sessionstart.md`).
 - `tools/a11y.py box` finds a control only among the rows a list view has created: one far down
   a long list (the Keys page's End session) isn't there until the list scrolls near it, so `box`
   says "no control named". Set the page's scroll bar first (`a11y.scroll_bars`), then `box`
