@@ -102,7 +102,7 @@ gaps, no press:
   `w-resize` / `e-resize`: Plasma's look where i3 has none. The press there is kwin-i3's resize.
 - **VS Code's border reaches 10 px past its frame, 4 px into the terminal's own content** (it is
   stacked above): a click there never reaches the terminal, and `FrameFocus` takes it as a margin
-  press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). A bug.
+  press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). Closed by `FrameFocus::decide`'s Margin case.
 - Both come from one cause: KWin sends the app no tiled edges for a padded tile (`Tile::anchors`),
   so it keeps its invisible resize border.
 - KWin can't send them for a padded tile, and nothing else sets them (`tile.cpp:190`

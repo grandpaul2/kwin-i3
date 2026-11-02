@@ -32,7 +32,7 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 |---|---|
 | Meta+1 … Meta+0 | show workspace N (on the output it lives on). Workspace N is virtual desktop N; one that doesn't exist yet is created, as i3 creates workspaces, and kept (KWin saves the count) |
 | Meta+Shift+1 … 0, and the shifted symbols | move the window to workspace N |
-| Meta+arrows, Meta+J/K/L/; | focus left/down/up/right, i3's tree-based focus, across outputs at the edge (the pointer follows to the other output, as i3's `mouse_warping output`; only a key moves it, never a window closing) |
+| Meta+arrows, Meta+J/K/L/; | focus left/down/up/right, i3's tree-based focus, across outputs at the edge (the pointer follows to the other output, as i3's `mouse_warping output`; a key, a workspace switch or an activation moves it, never a window closing) |
 | Meta+Shift+arrows, Meta+Shift+J/K/L/; (or Meta+:) | move the window left/down/up/right, i3's `tree_move`, to the next output at the edge |
 | Meta+H / Meta+V | split horizontal / vertical |
 | Meta+E | toggle the split's orientation; in a tabbed or stacked group, back to the split it was |
@@ -91,8 +91,9 @@ Mouse:
 - **Meta+left-drag (or Meta+Shift+left-drag) and Meta+right-drag on a floating window** move and
   resize it: KWin's own.
 
-With the plugins, the 1 px frame starts nothing from the pointer (no resize cursor, no edge drag,
-no title-bar move), and hover and a click on it focus the window, as i3's border does.
+With the plugins, the 1 px frame is its window's, as i3's border is: hover and a click on it focus
+the window, and a drag on it resizes against the neighbour on that side (no title-bar move, no
+resize cursor until the drag starts).
 
 ## Requirements
 
@@ -208,7 +209,7 @@ window once.
 
 ### The settings page
 
-kwin-i3's own page in System Settings > Window Management: every setting, laid out as Plasma's
+kwin-i3's own page in System Settings > Window Management: every setting a user would change (internal values stay in kwinrc), laid out as Plasma's
 pages are, and **Keys…**, where kwin-i3's keys are rebound in one list instead of KWin's. A key
 another shortcut holds is named in its row and taken from it on Apply (`make restore-keys` gives
 it back). Apply takes effect at once, with or without the plugins.
@@ -255,7 +256,7 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | group and key | default | meaning |
 |---|---|---|
 | `[Script-kwin-i3] forWindow` | Spectacle, the password prompt, KRuler, plasmashell's ordinary windows and the desktop portal's dialogs (a screen-share picker, a file chooser) float | i3's `for_window` rules, one per line (or `;`-separated): `[criteria] floating enable` or `floating disable`. Criteria: `class`, `instance`, `title`, `window_role`, `window_type` (`normal`, `dialog`, `utility`, `toolbar`, `splash`, `notification`), `workspace` (its number), `floating`, `tiling`, `all`. A value is a regular expression, quoted or bare as in i3 (`[class=Firefox]`); `window_type` takes one of its words, and `floating`, `tiling` and `all` take none. All in one rule must match. A rule runs at most once per window, when it opens or changes title or class (`docs/behaviour.md` §3) |
-| `[Script-kwin-i3] assign` | empty | i3's `assign` rules: `[criteria] → 5` opens matching windows on workspace 5 (shown or not, without switching a output); `[criteria] output DP-6` on that output's visible workspace |
+| `[Script-kwin-i3] assign` | empty | i3's `assign` rules: `[criteria] → 5` opens matching windows on workspace 5 (shown or not, without switching an output); `[criteria] output DP-6` on that output's visible workspace |
 | `[Script-kwin-i3] floatingMinimumSize`, `floatingMaximumSize` | `75x50`, `0x0` | i3's `floating_minimum_size`/`floating_maximum_size`: a window becoming floating is sized within them; `0x0` means i3's default (75x50; all outputs together), `-1x-1` no limit |
 | `[Script-kwin-i3] gapsInner` | `2` | px between two tiling windows (i3's `gaps inner`; i3's default is 0), 0-100, even: the pickers step by 2 and an odd value counts as the even one below (half a gap on each window would put windows on half pixels) |
 | `[Script-kwin-i3] gapsOuter` | `0` | px added at the output's edge (i3's `gaps outer`: the edge gap is inner + outer), -100-200; below 0 takes from the edge, down to half the inner gap (KWin's limit) |
@@ -272,16 +273,16 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] popupDuringFullscreen` | `smart` | i3's `popup_during_fullscreen`: with a fullscreen window on the workspace, a new window opens behind it and the fullscreen window keeps the focus, except (`smart`) the fullscreen window's own dialogs; `ignore`, no exception (save a modal dialog of the fullscreen window itself, which KWin activates in its place); `leave_fullscreen`, any dialog ends the fullscreen instead; `all`, any floating window shows over it. A window that opens fullscreen itself always takes over |
 | `[Script-kwin-i3] mouseWarping` | `output` | i3's `mouse_warping`: `output` (when the focus moves to another output by a key, a workspace switch or an activation, the pointer goes to the focused window's centre, unless it is on that output already), `none` (the pointer never moves by itself) |
 | `[Script-kwin-i3] endSession` | `logout` | what Meta+Shift+E (i3's exit) does: `logout` (Plasma's log out prompt), `sleep` (at once), `shutdown` (Plasma's shut down prompt), `ask` (Plasma's logout screen, every choice). The prompts go ahead after 30 seconds unless cancelled |
-| `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output A B …`: `1=DP-4 HDMI-A-1, 2=DP-6` (connector names, `kscreen-doctor -o`; a list per workspace, the first connected output wins). At login each output shows the lowest workspace free and not set to another output; an empty workspace with a workspace output opens on its output; a output that appears takes the workspaces set to it and shows its lowest, else a free one. An output that goes away leaves its workspaces on the first output for good: only a workspace output brings one back, as in i3. A reload moves no workspace that exists |
+| `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output A B …`: `1=DP-4 HDMI-A-1, 2=DP-6` (connector names, `kscreen-doctor -o`; a list per workspace, the first connected output wins). At login each output shows the lowest workspace free and not set to another output; an empty workspace with a workspace output opens on its output; an output that appears takes the workspaces set to it and shows its lowest, else a free one. An output that goes away leaves its workspaces on the first output for good: only a workspace output brings one back, as in i3. A reload moves no workspace that exists |
 | `[Script-kwin-i3] workspaceAutoBackAndForth` | false | i3's `workspace_auto_back_and_forth`: Meta+N for the focused workspace shows the one focused before; Meta+Shift+N for it sends the window there |
-| `[Script-kwin-i3] warnTakenKeys` | `true` | at load, check which of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't), for a notification naming them; Plasma doesn't show kwin-i3's notifications yet (`LATER.md` item 56), so for now `make take-keys` is the list |
+| `[Script-kwin-i3] warnTakenKeys` | `true` | at load, check which of kwin-i3's keys another shortcut holds (that one fires, kwin-i3's doesn't), for a notification naming them; Plasma doesn't show kwin-i3's notifications yet (`OPEN.md` item 56), so for now `make take-keys` is the list |
 | `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 2000 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `200` | how long the old layout may be held for a slow window, 10-2000 ms (Sway's too) |
 | `[Script-kwin-i3] frameWidth` | `1` | the frame's width, 1-10 px (i3's `default_border pixel N`; plugins): the tiles leave that much room on each side of a window |
 | `[Script-kwin-i3] frameActive` | `#4c7899` | the frame's colour on the focused window (i3's `client.focused`) |
 | `[Script-kwin-i3] frameInactive` | `#333333` | on every other window, the other output's focused one included (i3's `client.unfocused`; its `focused_inactive` is left out) |
-| `[Script-kwin-i3] frameIndicatorActive`, `frameIndicatorInactive` | `#3daee9`, empty | on a window alone in its split (or on its workspace), the side where the next window opens, right or bottom, in this colour per class (i3's `indicator`); empty: the class's frame colour |
+| `[Script-kwin-i3] frameIndicatorActive`, `frameIndicatorInactive` | `#3daee9`, empty | on a window alone in its split (or on its workspace), after a split key and until the focus leaves it, the side where the next window opens, right or bottom, in this colour per class (i3's `indicator`, which i3 shows always); empty: the class's frame colour |
 | `[Script-kwin-i3] tiledLook` | `frame` | how tiling windows look: `frame` (i3's frame, no title bar), `titlebars` (each keeps its own title bar, as a Plasma window; the maximize button does nothing, as in sway), `bare` (neither; nothing marks the focused window, KWin's Dim Inactive effect can). Plugins: without them, `titlebars` whatever this says |
 | `[Script-kwin-i3] roundedCorners` | `true` | tiling windows' corners rounded 5 px, as Breeze's, the frame following them, in `frame` and `bare` (plugins: without them tiling windows keep their title bars, and with them their theme's corners). Floating windows keep their theme's corners either way |
 | `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. With the plugins, floating windows there aren't kept above the tiled ones; elsewhere they are, as in i3 |

@@ -109,11 +109,15 @@ mode_toggle from the workspace (T23); sticky windows pushed in focus order (R3, 
 `assign … output <direction>` from the window's own output (R19); `__focused__` (R9); the
 `floatingWorkspaces` exception to floating above tiling goes (L12); one validation for floating
 sizes, with its `WARN` (§11); one rule for an out-of-range number, script and plugins alike (§11);
-stale comments in `adoptWindow` and `shows`.
+stale comments in `adoptWindow` and `shows`; `tests/live/mutate.py`'s two dead targets
+(`floatingTitle`, `ignoreClass`).
 (3) **look**: `smartGaps` and `hideEdgeBorders smart` count a lone tabbed or stacked group as one
 (§6, L6, `gaps.c:22-26`); the bars' colours re-told when KWin moves the focus itself (`plan.md`
 "Focus"); the load notification names the group bars and the resize banner among what goes
-without the effect (§13).
+without the effect (§13); the settings page's and the form's words made true (the split indicator
+shown only after a split key, L4; which windows float by default, R2-R7; where a workspace with no
+workspace output opens, S4; "frame", not "border"; the main page's tooltip, the form's "output"
+for the page's "screen": `docs/style-settings-page.md`).
 (4) **plugins**: Release clears the effect's floated marks (known limits); the window-pressed
 report before the tiling drag takes the press (B3); extra modifiers start the drag and resize
 (G1, Z1, `click.c:166`); a group's bar takes any button and a scroll with any modifier (G14,

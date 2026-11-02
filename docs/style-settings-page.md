@@ -50,7 +50,7 @@ guide says nothing, do what Plasma's own pages do.
 - **A window is named by its i3 kind, and only these** (`docs/behaviour.md` §3): **tiling**
   ("tiles", "a tiling window"), **floating** ("floats", "a floating window"), **sticky
   floating** (floating, on every workspace of its output), and where a page ever names them,
-  **dock**, **root**, **override-redirect**. A rule's action is "Float" or "Tile". "Plasma" describes a look ("its own title bar, as a Plasma
+  **dock**, **override-redirect**, and the **root** window (not a kind). A rule's action is "Float" or "Tile". "Plasma" describes a look ("its own title bar, as a Plasma
   window"), never a mode. Never "places itself", "leave alone", "don't manage" or "unmanaged":
   none is true, and "not managed" sends the user looking for where it is.
 - **Every string through `i18nc`** with KDE's context tag (`@label`, `@option:check`,

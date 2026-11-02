@@ -134,6 +134,10 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   drags past the drag distance (step 8). Meta+right and a press on a border resize against the
   neighbour (steps 9, 10); on a group's bar, a right press resizes against the neighbour above, the
   bar being kwin-i3's, not KWin's title bar.
+- **The gaps are kwin-i3's handles**: a press in a gap, or Meta+right there, resizes against the
+  nearest tiling window (`behaviour.md` Z2, Z3b), where i3's gap is the root window and a press
+  focuses the output (`click.c:398-415`): reason (c), judged live. Its own strips cover the gaps
+  so no app's invisible resize band takes them (Z9), as i3's frames clip every client.
 - **One floating window is KWin's**: KWin's window actions move and resize it (Meta+left,
   Meta+right, the title bar, the edges), which is i3's floating modifier for one window, with
   Plasma's title bar, window menu and screen-edge snapping (reason (e): the window actions are

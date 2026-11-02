@@ -89,7 +89,7 @@ These are the project's rules, not suggestions.
   are not. This holds inside the code as much as in behaviour: the model's shapes and flags are
   i3's (Con types, where a flag sits), and a difference labelled "on purpose" with no reason in
   `plan.md` is a defect to close, not a precedent to build on. Use i3's kind names (tiling,
-  floating, sticky floating, dock, root, override-redirect), never "places itself" or "unmanaged".
+  floating, sticky floating, dock, override-redirect, and the root window, which is no kind), never "places itself" or "unmanaged".
   The exception is the look: blending with Plasma is a reason, at no performance cost.
 - **Understand, then decide.** When a fix fails or a second one is proposed, the model of the
   problem is usually wrong: map it fully (i3 first, what KWin allows, measured not guessed), then
@@ -123,7 +123,7 @@ These are the project's rules, not suggestions.
 
 ## Finding bugs
 
-- **Captures**: a key bound to `tools/capture` (README, Install step 4) saves the flight recorder
+- **Captures**: a key bound to `tools/capture` (README, Install step 9) saves the flight recorder
   (kwin-i3's log, kwini3hold's events, the pointer's, the state, a screenshot, a note) to
   `~/.local/state/kwin-i3/captures/<time>/`. **Read it with `tools/capture-read DIR` first**: one
   timeline to the millisecond, the press last. kwin-i3's log never reaches the journal, and

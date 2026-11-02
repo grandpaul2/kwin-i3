@@ -15,6 +15,7 @@ home and point there from the other.
 | how the settings page looks and reads | `style-settings-page.md` |
 | i3's features against kwin-i3, KWin and Plasma (a study, 2026-10-25, cited as "finding N", "row X") | `i3-feature-map.md` |
 | why kwin-i3 builds on KWin's own tile tree (the probe that chose it) | `kwin-tiles.md` |
+| how a press travels through KWin to kwin-i3, and the hover cursor (`kwin-notes.md` holds KWin's traps, this the path) | `pointer.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
 | how an agent works here, and how work lands (pull requests) | `../AGENTS.md` (`../CLAUDE.md` loads it for Claude Code) |
@@ -42,6 +43,7 @@ Edited in place whenever what they describe changes, in the same commit as the c
   is corrected in place.
 
 - **`kwin-tiles.md`**: the probe that chose KWin's tiles; dated, kept for the reasons.
+- **`pointer.md`**: a press's path through KWin 6.7.5 to kwin-i3, kept true as `kwin-notes.md`.
 
 ## Writing one
 

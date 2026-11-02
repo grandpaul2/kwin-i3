@@ -276,7 +276,7 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   right (screenshots look clean; cause below the compositor): tie visual changes to repaints that
   happen anyway, no timer-driven animations.
 - Qt's single-shot QTimer is coarse (±5 %). `useractions.h` isn't buildable from the devel headers.
-- The helper sees modifier releases via `InputRedirection::keyboardModifiersChanged` (`input.h:273`).
+- A plugin can see modifier releases via `InputRedirection::keyboardModifiersChanged` (`input.h:273`); the helper doesn't use it.
 - kconfig_compiler: a newline inside a kcfg `<default>` isn't safe.
 
 ## KWin 6.8 (found on Arch's 6.8.2, 2026-10-29)

@@ -23,8 +23,8 @@ have gone wrong on words that meant two things ("manage", "places itself", "acti
 |---|---|---|---|
 | **tiling window** | a window in the tree's layout; the tree places it | `tiling` (criteria), "tiling window" | a window in one of KWin's tiles |
 | **floating window** | a window in the tree, on its workspace's floating list; you place it | `floating` | a window KWin places; kept above the tiling ones |
-| **dock** | a panel: reserves space, never focused, not in a workspace | dock client (`_NET_WM_WINDOW_TYPE_DOCK`, `manage.c:248`), i3bar | Plasma's panels |
-| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:139`: "Don't manage") | on Wayland: popups, menus, tooltips, Plasma's notifications and OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3) |
+| **dock** | a panel: reserves space, never focused, not in a workspace | dock client (`_NET_WM_WINDOW_TYPE_DOCK`, `manage.c:251`), i3bar | Plasma's panels |
+| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:142-143`: "Don't manage") | on Wayland: popups, menus, tooltips, Plasma's notifications and OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3) |
 
 **How the kind is decided** (i3's `manage.c`, in its order): override-redirect is never in the
 tree; a dock type is a dock; anything else is tiling, unless it floats: by its window type
@@ -60,13 +60,13 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 | word | means | i3 |
 |---|---|---|
 | **tree** | kwin-i3's model of every output's workspaces and their containers (`src/tree.js`); "the model" in older docs is the tree | the tree (`tree.c`) |
-| **container** | any node: a workspace, a split container or a window's container | con |
+| **container** | any node: a workspace, a split container, a window's container, a floating container; above the workspaces, the root, each output and its content (`behaviour.md` §2) | con |
 | **split container** | a container holding others, side by side (`splith`) or one above the other (`splitv`); it draws nothing | split con |
 | **layout** | a container's or workspace's `splith`, `splitv`, `tabbed` or `stacked`; its **orientation** is h or v, tabbed counting as h and stacked as v | `layout`, `con_orientation` |
 | **leaf** | a container holding a window | a window's con |
 | **share** | a child's fraction of its parent along the split | `percent` |
 | **focus stack** | each container's children, most recently focused first | `focus_head` |
-| **the focus** | the one container the tree has focused: a window, a container (after focus parent), or an empty workspace | `focused` |
+| **the focus** | the one container the tree has focused: a window, a container (after focus parent), or a workspace (empty, or reached by focus parent) | `focused` |
 | **group** | a tabbed or stacked container: its children share its place, one shown, under its **bar** (one row of tabs, or one row per child) | a tabbed or stacked con |
 | **floating container** | a container on its workspace's floating list: one floating window, or a split or a group floated whole, its windows laid out inside its rect as a tiled tree and moved and resized as one (`docs/plan.md`, "The mouse": one floating window is KWin's to move, a split or group floated whole kwin-i3's) | `CT_FLOATING_CON` (`floating_enable`, `floating.c:291`) |
 | **flatten** | i3's removal of a redundant split: a one-child split whose child is a split of the other orientation, where the child's orientation matches the grandparent's (`tree.c:657-690`) | `tree_flatten` |
@@ -115,10 +115,10 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **the effect** | the `kwini3hold` KWin effect: the frame, rounded corners, the split indicator, the hold |
 | **the frame** (ring) | the line the effect draws round a tiling window (`frameWidth`); i3's `pixel` border. "Frame" here never means KWin's `frameGeometry` or i3's X frame window; say those in full |
 | **the hold** | the effect freezing a layout change until every window has its new size |
-| **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:410-426`; here a press there resizes, `behaviour.md` Z3) |
-| **gap strip** | the helper's input-only window over a gap, so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
-| **capture** | Meta+Shift+B: kwin-i3's flight recorder saved with the user's note (`docs/debugging.md`) |
-| **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised; not the test app ("the test stage", a Xephyr window) |
+| **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:398-415`; here a press there resizes, `behaviour.md` Z3b) |
+| **gap strip** | the helper's own transparent window over a gap (kwin-i3's, as i3's frame windows are i3's; no kind), so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
+| **capture** | kwin-i3's flight recorder, saved with the user's note by `tools/capture` on a key the user binds (`docs/debugging.md`) |
+| **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised |
 | **the beta** | the Stage's second part: the repo public but unannounced, used by a few early users, their bugs fixed as they come (`OPEN.md`) |
 | **`stable`** | the branch users run: main as of its last promotion, tagged `v1.N.0` (`v1.N.M` for a fix since). main is the development line, ahead of it |
 | **a promotion** | moving `stable` to main after `docs/testing.md` P6's gate |

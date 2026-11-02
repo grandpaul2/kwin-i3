@@ -43,17 +43,6 @@ rules, Focus/Move Up and Down, and a reload with floating or minimized windows, 
 name; the test KWin without `Autolock=false` in its `kscreenlockerrc` and no harness check that
 fails loudly on a locked KWin (a long run could lock).
 
-**30. Focus after a close on a stock install** (finding 8: B51, C26; from OPEN.md 2026-10-26).
-At a workspace's top level and when a floating window closes, KWin's choice stands (`docs/plan.md`,
-"Focus"). With `NextFocusPrefersMouse=true` that is the window under the pointer, the
-accepted pointer/keyboard choice; with a stock install's `false` it is KWin's most recently used,
-which should match i3's workspace focus order but may not (windows kwin-i3 doesn't manage, the
-per-monitor chain). i3's own rule, the yardstick (`con_next_focused`, `tree.c` `tree_close_internal`, read
-2026-10-27): closing a floating window or a top-level tiled one focuses the workspace's next most
-recently focused child, tiled or floating, descended to its focused leaf; with none left, the
-workspace. Next: compare KWin's choice with `false` against that in the test KWin (three tiled,
-one floating, close each), then a proposal or a line in `docs/behaviour.md` §5 saying they agree.
-
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
 only Virtual-1, and loads the plugins whenever they are built); Plasma 6.8 when it lands. Rare and
