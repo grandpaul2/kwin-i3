@@ -67,7 +67,7 @@ KCM.ScrollViewKCM {
                             text: row.setting === "" ? row.label : i18nc("@label:listbox command", "%1:", row.label)
                             elide: Text.ElideRight
                         }
-                        // docs/style-settings-page.md §7; only End session's so far.
+                        // docs/style-settings-page.md, "The Keys sub-page"; only End session's so far.
                         Loader {
                             active: row.setting !== ""
                             visible: active

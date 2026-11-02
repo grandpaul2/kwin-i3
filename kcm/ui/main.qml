@@ -1,7 +1,7 @@
 // kwin-i3's page: the
 // script's settings as Plasma's own pages lay theirs out, with its sub-pages: Gaps, Workspaces,
 // Window Rules, Keys and Plasma Settings. Every control says what it is to a screen reader
-// (tools/a11y.py audit; docs/style-settings-page.md §6).
+// (tools/a11y.py audit; docs/style-settings-page.md, "Accessibility").
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -15,7 +15,7 @@ KCM.SimpleKCM {
 
     readonly property var settings: kcm.settings
     // The dropdowns of a section share one width, its widest one's own, so they end on one line
-    // and no choice is cut; every spin box is one compact width (docs/style-settings-page.md §1).
+    // and no choice is cut; every spin box is one compact width (docs/style-settings-page.md, "Layout").
     readonly property real spinWidth: Kirigami.Units.gridUnit * 6
     readonly property real mouseColumn: Math.max(dragBox.implicitWidth, popupBox.implicitWidth)
     readonly property real workspacesColumn: Math.max(workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth)
@@ -132,7 +132,7 @@ KCM.SimpleKCM {
     }
 
     // A frame colour's row: a bar, then a Default button, together as wide as Frame's dropdowns.
-    // The button greys out at the default (disabled, not hidden: style guide §5).
+    // The button greys out at the default (disabled, not hidden: docs/style-settings-page.md, "Layout").
     component ColourRow: RowLayout {
         property string settingName
         property string name                  // the bar's accessible name

@@ -64,19 +64,6 @@ by step, from `git clone` to the sub-page. Separate, still open: a rule for Plas
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
 
-**86. Mark the recommended choice on every settings page** (2026-11-02; `style-settings-page.md`
-§0, the first rule). Plasma Settings has it (its "kwin-i3 (recommended)" column). Next, on the
-main page and the sub-pages: "(recommended)" after the recommended item in every dropdown (focus
-wrapping, drag tiling windows by, new windows over fullscreen, new workspaces, split direction,
-tiling windows show, hide frame; Gaps' "With one window"); a muted "recommended: 0 px" beside each
-spin box (gaps, key step, width, the Gaps sub-page's); for the main page's checkboxes (layout
-changes, pointer, back and forth, round corners, frame on floating, kwin-i3's keys over Plasma's)
-a muted "(recommended)" after the label where the recommended state is ticked and "(recommended:
-off)" where it is unticked, not Plasma Settings' two columns, which take too much room on a long
-page (the maintainer's call still open: that or the columns). Recommended means kwin-i3's shipped
-default (i3's, or a recorded difference); Defaults picks them all. Window Rules and Keys need no
-per-row mark. Then the settings-pages skill's review (T10, T11, the newcomer test) on the result.
-
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
 f, the hidden tab, right after kwin-i3 focused h (the log: `ACTIVE h (KWin)`, then `ACTIVE f

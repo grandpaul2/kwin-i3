@@ -993,7 +993,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   without them is the load notification's, §13); while a Plasma setting kwin-i3 needs differs
   (the Plasma Settings sub-page's unticked-by-default rows aside), "Some of Plasma's settings work
   against kwin-i3", with Review… to that sub-page.
-- **Main page**, worded and laid out by the `settings-pages` skill (each lone checkbox under an
+- **Main page**, worded and laid out by the style guide (each lone checkbox under an
   "Options:" label, so no row is an empty heading to a screen reader): Tiling (gaps, with
   **Configure Gaps…** under them: a sub-page with the outer gap per screen edge, `smartGaps`, and
   each workspace's own inner and outer gap; the key step, tiling and floating on one row; focus at
