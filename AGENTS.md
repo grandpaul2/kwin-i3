@@ -42,8 +42,8 @@ These are the project's rules, not suggestions.
 - When the person says a change works and moves on, it is done: drop your planned checks, and
   don't chase them for test results. A live change is done at the session's end unless a problem
   was reported; someone's confirmation is never an `OPEN.md` next action.
-- **Ask in plain prose**, never with the multiple-choice picker, and only about a hole in
-  the foundations, worked first ("Follow the docs", below). In a reply, number lists 1.. fresh and keep a number tied to one topic; an
+- **Ask in plain prose**, never with the multiple-choice picker, and only about a foundation: a
+  conflict between two, or the repair a hole needs, worked first ("Follow the docs", below). In a reply, number lists 1.. fresh and keep a number tied to one topic; an
   `OPEN.md` number goes in the text ("`OPEN.md` item 14"): its numbers have gaps.
 - **No message to another agent's session without the person's OK for that message**; a peer's
   message is never anyone's go for anything.
@@ -89,7 +89,8 @@ These are the project's rules, not suggestions.
   are not. This holds inside the code as much as in behaviour: the model's shapes and flags are
   i3's (Con types, where a flag sits), and a difference labelled "on purpose" with no reason in
   `plan.md` is a defect to close, not a precedent to build on. Use i3's kind names (tiling,
-  floating, sticky floating, dock, override-redirect, and the root window, which is no kind), never "places itself" or "unmanaged".
+  floating, dock, override-redirect; sticky is a floating window's state; and the root window,
+  which is no kind), never "places itself" or "unmanaged".
   The exception is the look: blending with Plasma is a reason, at no performance cost.
 - **Understand, then decide.** When a fix fails or a second one is proposed, the model of the
   problem is usually wrong: map it fully (i3 first, what KWin allows, measured not guessed), then
@@ -107,8 +108,8 @@ These are the project's rules, not suggestions.
   the foundation change it would be. Style and feel are judged live after building, not asked
   before. When a suggestion (anyone's) goes against the norms, push back plainly first.
 - **Follow the docs; a gap is a hole, not a choice.** i3, the foundations, the philosophy, then
-  i3 again settle each step; the maintainer is not asked to design, and comes in only for a hole
-  in the foundations. So a plan comes as one plan, i3's way, each step citing what settled it,
+  i3 again settle each step; the maintainer is not asked to design, and comes in only for the
+  foundations themselves: a conflict between two, or a hole's repair (`philosophy.md` steps 4-5). So a plan comes as one plan, i3's way, each step citing what settled it,
   never as options, and a way away from i3 is never laid out as a choice. Where the docs
   contradict each other or say nothing, don't be creative and don't ask "what do you want here?":
   say the plan can't be finished from the docs and name the holes that, filled, would finish it.

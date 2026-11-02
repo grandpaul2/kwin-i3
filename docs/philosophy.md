@@ -55,11 +55,12 @@ In order:
    not a question and not a call to invent. Work it first: the premise that let it open, i3's
    source, what Plasma and KWin allow, the precedents. Then write the missing principle into the
    doc it belongs in, as a proposal, and say it was a hole: a repair to the foundation, not a
-   one-time fix. If the two that settle it two ways are foundations that genuinely conflict, the
+   one-time fix, shown to the maintainer, who takes it or makes it a step-5 question. If the two
+   that settle it two ways are foundations that genuinely conflict, the
    worked recommendation goes to step 5, as the edit it would be.
 5. **The maintainer**, when out of moves: two foundations that genuinely conflict, or the
-   product's direction. The maintainer is brought conflicts between foundations, never
-   individual cases: the project is past the point where one person can make every individual
+   product's direction. The maintainer is brought conflicts between foundations and the
+   repairs holes need, never individual cases: the project is past the point where one person can make every individual
    call. **The maintainer's decisions live in these foundations**: a question
    put to them is a question about a foundation. Before asking, show that steps 1-4 don't
    decide it (the scope, the reasons (a)-(f), the precedent, i3's source), and ask it as the

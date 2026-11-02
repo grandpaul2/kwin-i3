@@ -82,11 +82,12 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   the ones that differ; and the settings page, which shows them with a control that changes
   Plasma's own setting when the user asks. Each says plainly that it is a **Plasma setting, not
   kwin-i3's**, and that changing it there is the same as changing it in System Settings (the same
-  key, the same effect, undone the same way). Built so far: the README's step only; the load
-  notification's and the settings page's places wait on `OPEN.md` items 56 and 79.
+  key, the same effect, undone the same way). Built so far: the README's step, and the load
+  notification's report of per-output desktops (`behaviour.md` §13), which Plasma doesn't show yet
+  (`OPEN.md` item 56); the rest of the notification's and the settings page's places wait on item 79.
 - **(f) i3's result comes from a defect in its code, not from a rule**: an unsigned value that
-  wraps, a size never set, a path that breaks an invariant i3 keeps everywhere else. The ≠ row
-  cites the defect's file:line and follows what i3's code evidently intends; copying the defect
+  wraps, a size never set, a path that breaks an invariant i3's own code enforces elsewhere (both
+  places cited). The ≠ row cites the defect's file:line and follows what i3's code evidently intends; copying the defect
   would give a glitch, not i3's feel.
 
 Not reasons: "minor", "simpler", "someone's old config", "it was already built that way". A row
@@ -292,7 +293,8 @@ table is the home of the rules; this is the why.
 - **What the user sees follows the tree.** The frame's colours, the split indicator, the resize
   banner and the widget are drawn from the tree's focus, never from KWin's active window. A focus
   change KWin makes on its own (focus follows mouse, a click, Alt+Tab) updates the tree and
-  re-tells every one of them, the group bars' colours too, in the same turn.
+  re-tells every one of them, the group bars' colours too, in the same turn (the bars:
+  `behaviour.md` §6, being fixed).
 - **The shape in code** (`src/kwin.js` "---- focus"): the tree owns focus (`src/tree.js`,
   `activate`/`focusUp`); KWin's activations come in at one handler; `applyFocus` sends it out
   after every pass, so a pointer warp lands on settled windows; handing focus back to a
