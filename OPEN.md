@@ -94,3 +94,32 @@ rects. The tiled projection leaves a fullscreen window out once KWin no longer k
 (`kwin.js` `visibleLeaf`: fullscreen with no tile), so after a rebuild its neighbours may take
 its space, and give it back when it leaves fullscreen. Next: a test-KWin probe (a fullscreen
 window in `H[a b]`, a rebuild, b's geometry), then i3's way if it differs.
+
+**84. The foundation sweep's code fixes** (2026-11-01; each checked against i3 4.24 and the
+code). The code breaks a row of `behaviour.md` or i3 with no reason (a)-(f); each row is marked
+"being fixed". Five stages, one live at a time, each with the go to build and to reload, `make
+unit` and the changed scenarios (64 for a plugin stage):
+(1) **fullscreen**: a second fullscreen window ends the first's in KWin too (V2, `con.c:1269`); an
+activation of a window under a fullscreen one, tiling or floating, ends the fullscreen and
+focuses it, as `con_activate_unblock` (V6b, `handlers.c:782-804`), the focus mode toggle too
+(known limits); a window going fullscreen takes the focus unless on another workspace (V1,
+`con.c:1286-1289`).
+(2) **tree and rules**: flatten walks the floating containers (§2, `tree.c:660-749`); focus
+mode_toggle from the workspace (T23); sticky windows pushed in focus order (R3, `output.c:96-117`);
+`assign … output <direction>` from the window's own output (R19); `__focused__` (R9); the
+`floatingWorkspaces` exception to floating above tiling goes (L12); one validation for floating
+sizes, with its `WARN` (§11); one rule for an out-of-range number, script and plugins alike (§11);
+stale comments in `adoptWindow` and `shows`.
+(3) **look**: `smartGaps` and `hideEdgeBorders smart` count a lone tabbed or stacked group as one
+(§6, L6, `gaps.c:22-26`); the bars' colours re-told when KWin moves the focus itself (`plan.md`
+"Focus"); the load notification names the group bars and the resize banner among what goes
+without the effect (§13).
+(4) **plugins**: Release clears the effect's floated marks (known limits); the window-pressed
+report before the tiling drag takes the press (B3); extra modifiers start the drag and resize
+(G1, Z1, `click.c:166`); a group's bar takes any button and a scroll with any modifier (G14,
+G15); Meta+Shift with nowhere to drop goes to the app, the script telling the helper the count
+(G4); a Meta press on a neighbour's band (Z9); the resize mode left by the key it was entered by
+(K4); the helper takes the ring decision from the script (§1).
+(5) **pointer and release**: entering a gap or a panel on the focused output refocuses (B2,
+`handlers.c:91-121`); Release resets only the roots kwin-i3 placed, a user's own tile layout kept
+(Y4, reason (e)). Next: stage 1, with the go.
