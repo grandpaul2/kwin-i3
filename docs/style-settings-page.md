@@ -44,8 +44,8 @@ and can't parse the wording; an i3 user wants i3's defaults without reading. Bot
   its long label and other controls onto one line.
 - **A section's dropdowns are one width**, its widest one's own (`columnWidth`), so they end on
   one line and no choice is cut; **every spin box is one compact width** (`root.spinWidth`);
-  in Frame, every control above Hide frame (the look's dropdown, the width, the colour buttons)
-  takes the spin box width, so the short ones run as one even column.
+  colour buttons are bars as wide as their section's dropdowns, so the column's edge stays
+  straight.
 - **Two values are two rows**, each with its own label ("Gap between windows:", "Extra gap at
   edges:"), never two controls with captions on one line. A row holds a control and its help
   button, in a `RowLayout`, `spacing: Kirigami.Units.smallSpacing`.
