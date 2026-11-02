@@ -107,9 +107,9 @@ commands, focus parent skipping the wrapper (`tree.c:392`), the wrapper closed w
 (`con.c:2246`); a split down to one window stays a split, as i3 (no flattening), and is KWin's to
 move, being one floating window (`plan.md` "The mouse"). Without the helper, floating a container
 does nothing and the load report says so, as K4 and K18. Done: (1) the floating container around
-every floating window (9fee78f, no behaviour change). Next, in commits: (2) `floating_enable` /
-`floating_disable` on a split, unit-tested, the size as `floating.c:331-342` over each window's
-untiled rect; (3) `kwin.js`: its windows laid out in its rect by `frameGeometry`, frames, raised
+every floating window (9fee78f, no behaviour change); (2) the model's `floating_enable` /
+`floating_disable` on a split and `tree_move` out of one, unit-tested (Floating Toggle on a
+container still does nothing live). Next, in commits: (3) `kwin.js`: the size as `floating.c:331-342` over each window's untiled rect, its windows laid out in its rect by `frameGeometry`, frames, raised
 together, sticky, a workspace move, fullscreen; (4) the helper's move, resize, raise, title bars
 and edges; (5) the hold for a resize; (6) docs: `definitions.md`, `behaviour.md` rows, `plan.md`'s
 drop-target row.
