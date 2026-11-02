@@ -241,6 +241,15 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - Read-only live window list: `busctl --user call org.kde.KWin /WindowsRunner org.kde.krunner1 Match
   s <text>` for ids, then `org.kde.KWin getWindowInfo s <uuid>`.
 - busctl's JSON for `a(ai)` nests each sequence one level deeper (`[[k,0,0,0]]`).
+- **Turning `PerOutputVirtualDesktops` off is not a plain revert**: it sets every output's current
+  desktop to the active output's (6.7.5 `virtualdesktops.cpp:984-998`, 6.8.2 `:990-1003`). Turning
+  it on is harmless; both take effect at once.
+- The screen-edge drag's tile and maximize are kwinrc `[Windows] ElectricBorderTiling` and
+  `ElectricBorderMaximize` (both on by default), not `[ElectricBorders]`. Shift held at a move's
+  release quick-tiles the window into a custom tile (6.7.5 `window.cpp:1108`, 6.8.2 `:1095`), with
+  no setting to turn it off.
+- A focus stealing prevention level of Medium or above stops a new window taking focus
+  (`workspace.cpp:931-934`: activated if `mayActivate` or the level is Low or None).
 
 ## Plugins and effects (`plugin/`)
 
@@ -305,6 +314,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - plasmawindowed (the widget in a window, 67) resizes itself once just after it tiles, to its whole
   row of thumbnails (4936 px wide at x -548); kwin-i3's refit puts it back within milliseconds. A
   test reading its geometry waits for it back in its tile (2026-10-31; 6.7 doesn't).
+- The window actions' stock defaults change: `[MouseBindings] CommandAll1` is `Activate, raise
+  and move` and `CommandAll3` `Activate, raise and resize` (`kwin.kcfg:49,55`; the latter new,
+  `options.cpp:843`), where 6.7.5 has `Move` and `Resize`: a floating window moved with Meta+left
+  takes the focus on 6.8, as i3's (`click.c:274`), and keeps the old focus on 6.7.
 
 ## Plasma
 

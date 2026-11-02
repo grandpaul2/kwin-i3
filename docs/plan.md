@@ -72,19 +72,11 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 - **(c) The feel in use**: the verdict on the live desktop, after push back
   (`docs/philosophy.md`, "How a decision is made"), recorded as "judged live".
 - **(d) Out of scope**: the "Out" list above, or what rests on it.
-- **(e) Plasma's own settings are the user's**: kwin-i3 doesn't change them, and where an i3
-  directive is one of them, Plasma's setting stands in for it (focus follows mouse is KWin's
-  focus policy, `focus_on_window_activation` KWin's focus stealing prevention; another
-  component's shortcut stays its own). **Named, never set unasked** (a stock install showed why): the Plasma settings kwin-i3 is designed around (focus follows mouse with
-  no delay and the next focus under the pointer; per-output desktops; kwin-i3's keys free;
-  animations off, optional) are to be named in three places, as i3 asks once at first start
-  (`i3-config-wizard`): a README install step, "For i3's feel"; the load notification, which names
-  the ones that differ; and the settings page, which shows them with a control that changes
-  Plasma's own setting when the user asks. Each says plainly that it is a **Plasma setting, not
-  kwin-i3's**, and that changing it there is the same as changing it in System Settings (the same
-  key, the same effect, undone the same way). Built so far: the README's step, and the load
-  notification's report of per-output desktops (`behaviour.md` §13), which Plasma doesn't show yet
-  (`OPEN.md` item 56); the rest of the notification's and the settings page's places wait on item 79.
+- **(e) Plasma's own settings are the user's**: where an i3 directive is one of them, Plasma's
+  setting stands in for it (focus follows mouse is KWin's focus policy,
+  `focus_on_window_activation` KWin's focus stealing prevention; another component's shortcut
+  stays its own until the user takes it). kwin-i3 changes one only as "Install and first run"
+  (below) allows: named, asked, saved first, given back.
 - **(f) i3's result comes from a defect in its code, not from a rule**: an unsigned value that
   wraps, a size never set, a path that breaks an invariant i3's own code enforces elsewhere (both
   places cited). The ≠ row cites the defect's file:line and follows what i3's code evidently intends; copying the defect
@@ -102,7 +94,8 @@ i3 users (`docs/philosophy.md`, "Who it is for").
 
 **Keys and Plasma's shortcuts:** kwin-i3's default keys are i3's (`behaviour.md` §8). A key
 another Plasma component already holds stays that component's (reason (e)); the load notification
-names each one and how to free it (§13), and taking them is the user's choice.
+names each one and how to free it (§13), and taking them is the user's choice, saved and given
+back as "Install and first run" says.
 
 **Popup grace** (the helper) is kwin-i3's own, for the Plasma audience: with focus follows
 mouse, crossing the gap between a floating panel and its popup would focus the window beneath
@@ -187,6 +180,39 @@ marked `# needs: plugin` runs with no plugin and Breeze, `tests/live/run.sh`). T
 mouse (tiling drag, resize, frame focus), the resize mode, the layout keys and the terminal key;
 the effect draws the frame and holds layout changes. Without either, the load notification says
 what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Plasma update.
+
+## Install and first run
+
+The install is the first thing a new user meets, and the one place kwin-i3 asks to change what
+is theirs: a Plasma user stays only if trying it costs nothing they can't get back. i3's model
+(4.24): its shipped config starts `i3-config-wizard` once (`etc/config:214`), which says what it
+will do, does it only on Enter, quits having changed nothing on Esc
+(`i3-config-wizard/main.c:607`), and exits if a config already exists (`:827-831`). kwin-i3
+follows it:
+
+- **One command, one log-out, one first-run step.** `make install` does every step that needs no
+  choice (the script's link and its enabling, the plugins, the settings page) and is safe to run
+  again; the log-out is KWin's, which reads a new script's and plugins' paths only at login; every
+  choice waits for the first-run step. Packaging is `LATER.md`'s "Release prep".
+- **The first-run step is the settings page's Set up section**, as keys can be taken only once
+  kwin-i3 is loaded. It lists each Plasma setting kwin-i3 is designed around and each of kwin-i3's
+  keys another shortcut holds: its current value, the one kwin-i3 would set, and why, each said
+  plainly to be **Plasma's, not kwin-i3's**. One Apply sets what the user leaves ticked; nothing
+  changes without it. What kwin-i3 needs and i3's stand-ins come ticked, the optional unticked.
+  The install's last line points there, and so does the load notification while anything in the
+  list differs (`behaviour.md` §13).
+- **The list**: Plasma's settings that stand in for an i3 directive, at i3's value (focus follows
+  mouse with no delay and the next focus under the pointer); the ones kwin-i3 needs (per-output
+  desktops, with more than one output); Plasma's features that fight the tree; kwin-i3's keys
+  another shortcut holds; and the optional (animations off; i3 has none).
+- **Every change outside kwin-i3's own settings can be undone.** Before kwin-i3 changes a Plasma
+  setting or takes a shortcut, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
+  given back alone or all at once from the Set up section, and all on removal. A give-back writes
+  the old value only where the current one is still what kwin-i3 set: a change the user made
+  since is theirs, and stays.
+- **Removal leaves nothing behind**: `make uninstall` gives back every saved change, disables the
+  script, and deletes everything the install wrote (the script's link, `~/.local/lib/kwin-i3/`,
+  KWin's drop-in, the session's environment file), naming each.
 
 ## Decisions
 

@@ -95,9 +95,11 @@ against i3 and the code every so often, to catch what slipped.
 - **The seam is who arranges a window.** Tiling: the tree places it. Floating: you place it, in
   the tree. Override-redirect: the window manager doesn't (KRunner, popups, menus). Decoration,
   theme, panels and the rest are Plasma's (`docs/definitions.md`, the kinds).
-- **Plasma's own settings are the user's.** kwin-i3 doesn't change them (focus policy, the
-  shortcuts other components hold); it reports what it needs and the user decides
-  (`docs/behaviour.md` §13). The one it needs, per-output desktops, it reports and never sets.
+- **Plasma's own settings are the user's.** kwin-i3 never changes one unasked (focus policy,
+  per-output desktops, the shortcuts other components hold). It names what it is designed around
+  and why; it changes one only on the user's yes, in a place that says it is Plasma's setting,
+  after saving the old value, and gives it back on one action: i3's `i3-config-wizard` asks once
+  and never overwrites a config that exists (`docs/plan.md`, "Install and first run").
 
 ## How it presents itself
 

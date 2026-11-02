@@ -54,28 +54,26 @@ For the beta, `make take-keys`'s printout at install is the one-time list of the
 the settings page's banner says when the plugins aren't loaded. Next: how i3
 tells a user (i3-nagbar for a config error), then a recommendation between (1) and (2).
 
-**79. The install and first run, re-evaluated** (2026-11-01; takes in item 26). The seam a new
-user meets first is murky in the foundation docs. `plan.md` reason (e) names the Plasma settings
-kwin-i3 is designed around in three places, but only the README's "For i3's feel" exists: the
-load notification never arrives (item 56) and the settings page shows none of them (`LATER.md`
-item 22). That list was built from i3's config, so Plasma features with no i3 counterpart were
-never candidates. Item 26's three, read in KWin 6.7.5's `window.cpp`: a drag to a screen edge
-(`ElectricBorderTiling`, `ElectricBorderMaximize`) already floats the window, KWin untiling it at
-the move's first step (`:1234`, `kwin.js` tileChanged), then quick-tiles it, not "pulled back" as
-`behaviour.md` V12 and the i3 feature map's R11 say; Shift at a move's release (no Plasma setting)
-drops a floating window into kwin-i3's tile under the pointer, two windows in one tile until some
-other pass; Meta+T ("Edit Tiles", KWin's default) edits kwin-i3's tiles. No foundation doc owns the
-install. Next, a session of its own: (1) a survey from Plasma's side: every stock Plasma 6.7/6.8
-setting, shortcut, edge and effect touching windows (`kwin.kcfg`, default shortcuts), each marked
-conflicting, standing in for an i3 directive, or harmless; (2) the install walked as a new user on
-stock CachyOS and PikaOS (`tools/box.sh`), step by step; (3) the foundation question: names only,
-or i3's `i3-config-wizard` way, one first-run step that lists what kwin-i3 needs and why and sets
-it through Plasma's own settings on one yes, with a way back; (4) a home for the install and first
-run in `plan.md`, which the README and the settings page follow. Two foundation questions the
-foundation sweep (2026-11-01) folded in here: (5) a rule for Plasma's window actions that have no
-i3 counterpart acting on a window in the tree (minimize, quick tile, Show Desktop, activities,
-Keep Above), today one-off rows; (6) `philosophy.md` "never sets" a Plasma setting against
-`plan.md` reason (e)'s control that changes one when the user asks.
+**79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
+takes in item 26). The rules are settled there: one command, one log-out, a Set up section on the
+settings page as the first-run step (current value, kwin-i3's, why; one Apply), every change saved
+first and given back alone, all at once or on removal, never over a change the user made since;
+`make uninstall` leaves nothing. The list, from a survey of stock 6.7.5 and 6.8.2 (`kwin-notes.md`,
+"Config and D-Bus" and "KWin 6.8"): the ten clashing shortcuts `make take-keys` already frees;
+focus follows mouse with no delay; per-output desktops (its give-back collapses the outputs onto
+one desktop: the row says so); focus stealing prevention at Low or None (i3's
+`focus_on_window_activation`); the screen-edge drag's tile and maximize off; Meta+T, the tile
+editor, freed; the window actions' modifier Meta and, on 6.7, `Activate, raise and move`; animations
+off and a 15 px drag distance, optional; Shift at a move's release, named only (no setting). Known
+defects against the rules: `make restore-keys` writes saved keys back over later changes, and
+Install step 6 offers System Settings' Defaults as an undo, which also wipes the user's own
+shortcuts. To check: `behaviour.md` G2 names a System Settings page for the drag distance; the
+survey found none. Next: (1) `make install` and `make uninstall`, with the save and give-back
+shared by `take-keys.py` and the settings page; (2) the Set up section; (3) the README's Install
+rewritten to them, and `behaviour.md` §13's "never set" with it; (4) the install walked as a new
+user on stock CachyOS and PikaOS (`tools/box.sh`). Separate, still open: a rule for Plasma's window
+actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
+Desktop, activities, Keep Above), today one-off rows.
 
 **82. A hidden tab focused by KWin** (found 2026-11-01 building scenario 89). With the pointer over
 a tiled tabbed group as a new window opened in its shown tab (`T[f V[g h]]`, h new), KWin activated
