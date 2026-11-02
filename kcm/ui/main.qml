@@ -591,7 +591,6 @@ KCM.SimpleKCM {
                     checked: !!kcm.setup.wanted["keys"]
                     onToggled: kcm.setup.setWanted("keys", checked)
                     Accessible.name: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
-                    Accessible.description: parent.parent.row ? parent.parent.row.plasma : ""
                 }
                 Help {
                     topic: i18nc("@option:check", "Take kwin-i3's keys from Plasma's shortcuts")
@@ -606,8 +605,8 @@ KCM.SimpleKCM {
                 font: Kirigami.Theme.smallFont
                 Accessible.ignored: true
                 readonly property var row: parent.row
-                text: !row ? "" : [row.differs ? row.plasma : "",
-                                   row.changed ? i18n("Unticking this gives the Plasma shortcuts their keys back.") : ""].filter((t) => t).join(" ")
+                // One short line, never the list of keys: what unticking does.
+                text: takeKeys.checked ? i18n("Unticking this restores the original keys.") : ""
             }
         }
 

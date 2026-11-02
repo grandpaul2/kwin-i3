@@ -1034,9 +1034,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   above it); screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
   window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
   optional, animations off (`AnimationDurationFactor` 0). **kwin-i3's keys other active shortcuts
-  hold** are one tick on the main page's Keys section, "Take kwin-i3's keys from them", listing
-  them, each taken from every holder in turn (at most five); once taken, a line says unticking
-  gives the Plasma shortcuts their keys back. Every tick is an edit like any setting: **Apply**
+  hold** are one tick on the main page's Keys section, "Take kwin-i3's keys from them", each taken
+  from every holder in turn (at most five); while it is ticked, one line says unticking restores
+  the original keys. Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
   `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make take-keys' save; KWin
   reconfigured), **Reset** drops it, **Defaults** ticks every row but the optional. Unticked where
