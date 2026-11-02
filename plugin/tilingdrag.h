@@ -66,9 +66,10 @@ public Q_SLOTS:
     // pointer entering it, is told by the hidden "Window Pressed" action: KWin activates it no
     // further, where i3 focuses it (click.c route_click step 3, handlers.c handle_enter_notify).
     void SetFocusParent(const QString &id);
-    // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n" (key the
-    // window the bar is drawn with, "#N" after it for that window's further bar, the rect logical
-    // and global, n tabs or rows of equal size).
+    // kwin-i3's tabbed and stacked groups shown: one line a bar, "key x y w h stacked n floated"
+    // (key the window the bar is drawn with, "#N" after it for that window's further bar, the rect
+    // logical and global, n tabs or rows of equal size; floated 0 for a tiled group, 1 for one
+    // in a floated container (SetFloated), 2 for one there with a neighbour above inside it).
     // A plain left press on a bar, or a scroll over it, over nothing else (the desktop, a gap
     // strip), is the bar's: kwin-i3 is told by its hidden "Tab Click" action and asks TabEvent.
     void SetBars(const QString &spec);
@@ -188,7 +189,8 @@ private:
     // windows step together on every motion, as one (i3's floating_drag_window,
     // floating_resize_window from the corner nearest the press); at the release kwin-i3 reads the
     // new rect back ("Floated Moved").
-    bool pressGroup(KWin::Window *window, KWin::PointerButtonEvent *event, bool resize);
+    // `activate` false: the press focuses by kwin-i3's rule instead (a tab, "Tab Click").
+    bool pressGroup(KWin::Window *window, KWin::PointerButtonEvent *event, bool resize, bool activate = true);
     void groupMotion(const QPointF &pos);
     void endGroup(bool revert);
     void begin();
@@ -241,6 +243,7 @@ private:
         QRectF rect;
         bool stacked = false;
         int n = 0;
+        int floated = 0;              // the spec's last field
     };
     QList<BarSpot> m_bars;            // SetBars
     QString m_tabEvent;               // TabEvent's answer

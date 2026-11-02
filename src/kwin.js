@@ -1750,8 +1750,12 @@ var KI3 = (function () {
                 // decorations again at each step of a floating resize (the helper's, with no pass).
                 // As a ratio of the window's width (in 1/100000), which the helper's scaling keeps.
                 span[key] = b.rect ? Math.round(r.width / a.width * 100000) : null;
+                // A floated group's bar: 2 with a neighbour above inside its container, which a
+                // plain press resizes against (route_click step 6, from the tab pressed, past its
+                // group: resize_find_tiling_participants), else 1 (plugin/tilingdrag.h SetBars).
+                var floated = b.rect ? (model.resizeParticipants(shown, Tree.UP) ? 2 : 1) : 0;
                 helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
-                             con.layout === "stacked" ? 1 : 0, kids.length].join(" "));
+                             con.layout === "stacked" ? 1 : 0, kids.length, floated].join(" "));
                 want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
                                con.layout === "stacked", kids.indexOf(shown), inside ? "focused" : "unfocused",
                                kids.map(barTitle).join("\u001f")];

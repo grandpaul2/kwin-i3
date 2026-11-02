@@ -321,7 +321,7 @@ bool TilingDrag::pressFloatedRing(Window *window, PointerButtonEvent *event)
     return pressGroup(window, event, true);
 }
 
-bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resize)
+bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resize, bool activate)
 {
     const QString group = m_floated.value(window->internalId().toString()).section(QLatin1Char(' '), 0, 0);
     m_group.clear();
@@ -343,7 +343,9 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
     }
     // i3's step 3: the press focuses and raises the whole container (con_raise), the pressed
     // window last.
-    window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+    if (activate) {
+        window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+    }
     for (const auto &w : std::as_const(m_group)) {
         if (w && w != window) {
             workspace()->raiseWindow(w);
@@ -788,7 +790,7 @@ void TilingDrag::setBars(const QString &spec)
     const QStringList lines = spec.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
     for (const QString &line : lines) {
         const QStringList f = line.split(QLatin1Char(' '), Qt::SkipEmptyParts);
-        if (f.size() != 7) {
+        if (f.size() < 7) {
             continue;
         }
         BarSpot b;
@@ -796,6 +798,7 @@ void TilingDrag::setBars(const QString &spec)
         b.rect = QRectF(f[1].toDouble(), f[2].toDouble(), f[3].toDouble(), f[4].toDouble());
         b.stacked = f[5] == QLatin1String("1");
         b.n = f[6].toInt();
+        b.floated = f.size() > 7 ? f[7].toInt() : 0;
         if (b.n > 0 && !b.rect.isEmpty()) {
             m_bars << b;
         }
@@ -810,17 +813,25 @@ QString TilingDrag::tabEvent()
 }
 
 // Over a bar only where no window of anyone's is: KWin's hover there is the desktop, a gap strip of
-// kwin-i3's, or nothing. A floating window, a panel or a popup over the bar keeps its press. The
-// index as i3 lays the tabs out (render_con_tabbed: equal widths; render_con_stacked: equal rows).
+// kwin-i3's, or nothing; for a floated group's bar, no window stacked above its own. A floating
+// window, a panel or a popup over the bar keeps its press. The index as i3 lays the tabs out (render_con_tabbed: equal widths; render_con_stacked: equal rows).
 int TilingDrag::barAt(const QPointF &pos, const BarSpot **bar) const
 {
     Window *hover = input()->pointer()->hover();
-    if (hover && !hover->isDeleted() && !hover->isDesktop() && !GapStrips::isStrip(hover)) {
-        return -1;
-    }
+    const bool covered = hover && !hover->isDeleted() && !hover->isDesktop() && !GapStrips::isStrip(hover);
     for (const BarSpot &b : m_bars) {
         if (!b.rect.contains(pos)) {
             continue;
+        }
+        // A floated group's bar is its container's decoration, above what lies beneath (the
+        // tiled windows), as i3's floating con draws its decorations in its own frame: a window
+        // there keeps the press only when it is stacked above the bar's window.
+        if (covered) {
+            const auto order = workspace()->stackingOrder();
+            Window *own = b.floated ? workspace()->findWindow(QUuid(b.key.section(QLatin1Char('#'), 0, 0))) : nullptr;
+            if (!own || order.indexOf(hover) > order.indexOf(own)) {
+                return -1;
+            }
         }
         *bar = &b;
         const double along = b.stacked ? (pos.y() - b.rect.y()) / b.rect.height() : (pos.x() - b.rect.x()) / b.rect.width();
@@ -843,6 +854,7 @@ void TilingDrag::tellTab(const QString &event)
 // other left or right press focuses the tab by i3's rule (kwin-i3, told by "Tab Click"); 8, with
 // tiling_drag's titlebar a left press is then a tiling drag of the tab past the drag distance;
 // 10, else a left press, and every right press, resizes against the neighbour above (BORDER_TOP).
+// A group in a floated container has steps of its own (below).
 // i3 waits for its threshold there only if the tab wasn't focused; here always (§9 G14: the
 // helper decides at the press, the focus is the tree's). The press is taken with the window the
 // bar is drawn with: kwin-i3 finds the tab from "key:index" (step 2) or its tab click (the rest).
@@ -869,6 +881,21 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
     }
     const bool mod = event->modifiersRelevantForShortcuts & Qt::MetaModifier;
     const bool left = event->button == Qt::LeftButton;
+    if (bar->floated) {
+        // In a floated container (route_click with a floating con): no tiling drag (step 2 is for
+        // tiling cons only); the press focuses the tab (step 3), then the floating modifier's left
+        // moves the container whole and its right resizes it whole (steps 5, 6); a plain press
+        // resizes against the neighbour above inside it (step 6's tiling_resize, BORDER_TOP), and
+        // only where there is none a right press resizes the container whole and a left one moves
+        // it (steps 6, 7). The tab is focused by kwin-i3's rule, so the press activates nothing.
+        tellTab(QStringLiteral("click %1 %2").arg(bar->key).arg(index));
+        if (!mod && bar->floated == 2) {
+            takePress(shown, event->button, event->position, true, QStringLiteral("top"), true);
+        } else {
+            pressGroup(shown, event, !left, false);
+        }
+        return true;
+    }
     if (left && mod && m_modifierDrag) {
         takePress(shown, Qt::LeftButton, event->position, false, QString(), false);
         m_tab = QStringLiteral("%1:%2").arg(bar->key).arg(index);
