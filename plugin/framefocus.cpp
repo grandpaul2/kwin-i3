@@ -204,7 +204,9 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
         }
         return false;
     }
-    noticeFocusParent(input()->pointer()->hover(), event->position, false);
+    if (!(m_drag && m_drag->takesSelectionPress(event))) {
+        noticeFocusParent(input()->pointer()->hover(), event->position, false);
+    }
     // A press starts afresh: a filter before this one may have taken the release of a press
     // taken here, which would otherwise leave the bit set and eat the next release of that
     // button anywhere (review of the change, finding 5).

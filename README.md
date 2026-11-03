@@ -82,7 +82,9 @@ Mouse:
   is dropped (Escape puts it back). On a floating window, or a group floated whole, it is the drag
   above, and the window or group is tiled where it is dropped; the middle's bottom third reads
   Beside, after that window. Once per press: with the keys held, a second press does nothing
-  until Meta or Shift is let go. Meta+Shift+Space does the same from the keyboard, as in i3. With
+  until Meta or Shift is let go. After Meta+A (focus parent), Meta+Shift+drag on one of
+  the highlighted windows floats them all as one: an outline shows where, and they float there.
+  Meta+Shift+Space does the same from the keyboard, as in i3. With
   title-bar drags only (the `tilingDrag` setting), the press goes to the app. Without the helper
   plugin, Meta+left-drag is KWin's own move, which floats the window where it is dropped.
 - **A tiling window doesn't move any other way**, as in i3: dragging an app's own title bar (a

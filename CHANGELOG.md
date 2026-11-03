@@ -9,7 +9,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   dropped (Escape puts it back), and drags a floating window, or a group floated whole, into the
   tiles, with the drop indicator; the middle's bottom third reads Beside there, putting it after
   that window. With Meta and Shift the mouse alone moves, swaps, groups, floats and tiles. i3's
-  swap modifier is gone from the plan: the middle's Swap third already swaps.
+  swap modifier is gone from the plan: the middle's Swap third already swaps. After Meta+A,
+  Meta+Shift+drag on one of the highlighted windows floats them all whole, where an outline
+  shows, as Meta+Shift+Space would.
 
 ## v1.2.0 (2026-11-02)
 

@@ -2440,6 +2440,7 @@ var KI3 = (function () {
     var told = {}, atLoadFloating = {};
     var dragTold = {};                  // the drag helper's floating list (tellDragFloating)
     var focusParentTold = null;         // the helper's focus-parent window (tellFocusParent); null: not told yet
+    var selectionTold = null;           // the helper's selection (tellSelection); null: not told yet
     var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
@@ -4176,6 +4177,33 @@ var KI3 = (function () {
     // While the focus is a container or a workspace (focus parent), the helper is told the window
     // KWin keeps active in it: a press on that window, or focus follows mouse entering it, comes
     // back as "Window Pressed" (windowPressed), as KWin activates it no further.
+    // The focused container's windows, when the focus is a tiled container (i3's focus parent):
+    // Meta+Shift+left on one floats the container whole (§9 G16). "" for a window or a workspace.
+    function tellSelection() {
+        var ids = selection() ? model.leaves(model.focused).map(function (l) { return l.win; }).join(" ") : "";
+        if (selectionTold === ids) return;
+        selectionTold = ids;
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetSelection", ids);
+    }
+    // A container of one window is that window's (G5), as a floating one alone is KWin's.
+    function selection() {
+        var f = model.focused;
+        return f && f.type === "con" && f.win === null && !floats(f) && Tree.wsOf(f) && model.leaves(f).length > 1 ? f : null;
+    }
+    // The selection as it is drawn: its windows' frames and the bars of the groups inside it,
+    // each a tile of its own above its windows (projectGroup).
+    function selectionRect(sel) {
+        var r = conRect(sel), ws = Tree.wsOf(sel);
+        (barsOf[ws.num] || []).forEach(function (b) {
+            if (b.rect || !b.tile || (b.con !== sel && !Tree.hasParent(b.con, sel))) return;
+            var g = windowRect(b.tile);
+            if (!g || g.width <= 0 || g.height <= 0) return;
+            var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
+            r = { x: Math.min(r.x, g.x), y: Math.min(r.y, g.y), width: 0, height: 0 };
+            r.width = x1 - r.x; r.height = y1 - r.y;
+        });
+        return r;
+    }
     function tellFocusParent() {
         var f = model.focused, a = workspace.activeWindow, key = "";
         if (f && (f.type === "ws" || (f.type === "con" && f.win === null)) && a && !a.deleted && model.byWin[id(a)])
@@ -4199,6 +4227,7 @@ var KI3 = (function () {
         indicatorFor = null;
         tellFocused();
         tellFocusParent();
+        tellSelection();
         if (!frameOn || !marks) return;
         var hide = Settings.get("hideEdgeBorders");
         // i3 draws every window in the focused container as focused (x.c: con_inside_focused).
@@ -5162,6 +5191,7 @@ var KI3 = (function () {
         dragTold = {};
         dropTargetsTold = null; floatDropTargetsTold = null; ringToHelperTold = null;   // again with the next pass (tellDragState)
         focusParentTold = on ? null : "";           // again with the next pass (tellFocusParent)
+        selectionTold = on ? null : "";             // again with the next pass (tellSelection)
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
         if (on) for (var k in model.byWin) if (floatsAlone(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
@@ -5288,12 +5318,42 @@ var KI3 = (function () {
             if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || !inTree(con) || con.type !== drag.type) { endDrag("its window is gone"); return; }
             var zw = wins[shownWindow(con).win];
             if (!zw) { endDrag("its window is gone"); return; }
+            if (drag.outline) {
+                drag.at = outlineAt(drag.outline, x, y);
+                if (phase === "drag") { indicate(drag.at, null); return; }
+                floatAtOutline(" at " + x + "," + y);
+                return;
+            }
             drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, PARENT_ZONE);
             if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect), drag.plan); return; }
             dropOn(drag.plan, " at " + x + "," + y);
             return;
         }
         endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    // G16's outline: the container's rect moved with the pointer, kept inside the work area of
+    // the output pressed on.
+    function outlineAt(o, x, y) {
+        var a = areaOf(o.screen, o.ws), r = o.rect;
+        var nx = Math.round(r.x + x - o.sx), ny = Math.round(r.y + y - o.sy);
+        nx = Math.max(a.x, Math.min(nx, a.x + a.width - r.width));
+        ny = Math.max(a.y, Math.min(ny, a.y + a.height - r.height));
+        return { x: nx, y: ny, width: r.width, height: r.height };
+    }
+    // G16's release: the selected container floats whole at the outline (as the Floating Toggle,
+    // T16, but where it was dropped, at the size it had), the focus staying on it. Moved less than
+    // Qt's start-drag distance (10 px) is a click: nothing.
+    function floatAtOutline(where) {
+        var c = drag.con, o = drag.outline, at = drag.at;
+        if (!at || Math.abs(at.x - o.rect.x) + Math.abs(at.y - o.rect.y) < 10) { endDrag("no float" + where); return; }
+        if (!inTree(c) || !model.leaves(c).length) { endDrag("ended, its container is gone" + where); return; }
+        var ws = Tree.wsOf(c);
+        model.leaves(c).forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
+        model.toggleFloating(c);
+        c.parent.rect = { x: at.x, y: at.y, width: at.width, height: at.height, out: outGeometry(o.screen) };
+        endDrag("floated whole, " + at.width + "x" + at.height + " at " + at.x + "," + at.y + where);
+        schedule(ws);
+        wantFocus();
     }
     // The drop, by plan (the drag's last, or the release's).
     function dropOn(plan, where) {
@@ -5329,6 +5389,13 @@ var KI3 = (function () {
             var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
             endDrag((done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px" : "no resize") + why);
             if (done) schedule(ws);
+            return;
+        }
+        if (drag.outline) {
+            // A window of the container closing: the release's float now, of what is left.
+            var left = model.leaves(drag.con).filter(function (l) { return l !== closing; });
+            if (!left.length || !drag.at) { endDrag("ended, no float" + why); return; }
+            floatAtOutline(why);
             return;
         }
         var plan = drag.plan;
@@ -5369,6 +5436,17 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
             var f = String(s).split(" "), con = model.byWin[f[1]];
             if (f[0] !== "drag" || drag) return;
+            if (f[6] === "float") {
+                // Meta+Shift+left on a window of the selection (§9 G16): the selected container,
+                // floated whole at the release. The selection must still hold the pressed window
+                // (the helper's list is told after each pass): otherwise nothing.
+                var sel = selection();
+                if (!con || !sel || !Tree.hasParent(con, sel)) { log("DRAG not started: the selection changed"); return; }
+                var r = selectionRect(sel), sx = Number(f[7]), sy = Number(f[8]);
+                beginDrag(sel, f[1], false, s, { rect: { x: r.x, y: r.y, width: r.width, height: r.height }, sx: sx, sy: sy,
+                                                 screen: screenAt(sx, sy), ws: Tree.wsOf(sel) });
+                return;
+            }
             if (con && floats(con)) {
                 // Only Meta+Shift's press tiles a floating window (the helper says so: "tile"); any
                 // other drag report for one (a Meta press as KWin's untile lands) starts nothing.
@@ -5398,12 +5476,15 @@ var KI3 = (function () {
         }));
     }
     // `via`: the window the helper reports, when it isn't con's own (a tab, a floated container).
-    function beginDrag(con, via, floating, s) {
+    // `outline`: G16's float of the selection, { rect (the container's at the press), sx sy (the
+    // press), screen, ws }; the drag shows where it will float, and drops on nothing.
+    function beginDrag(con, via, floating, s, outline) {
         var timer = new QTimer();
         timer.interval = 16;            // a frame, about: the helper keeps only the last position
         timer.timeout.connect(guard("drag poll", pollDrag));
-        drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null, via: via, floating: floating };
-        log("DRAG " + conCaption(con) + (floating ? " (floating: to tile)" : ""));
+        drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null, via: via, floating: floating,
+                 outline: outline || null, at: null };
+        log("DRAG " + conCaption(con) + (floating ? " (floating: to tile)" : outline ? " (selected: to float)" : ""));
         // The centre's third band: Swap, or Beside for a floating drag, whose bottom band puts it
         // after the target. Told at every drag, so a reloaded effect has it too.
         if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropSwap", !floating);

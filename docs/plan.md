@@ -116,10 +116,12 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
 - **Shift is the float modifier**, beyond i3, reason (c), judged live. In i3 only a command or a
   rule floats or tiles a window (`floating toggle`, `for_window`): a tiling drag never starts from
   anything floating (`click.c:251`, `!floatingcon`), a drop never floats, and a client's own
-  request to move a tiling window is ignored (`handlers.c:936`). Here Meta+Shift+drag changes the
-  kind of what a Meta drag would move: a tiling window floats where it is dropped (KWin's move,
-  which the helper starts; `behaviour.md` G5), and a floating window, or a container floated
-  whole, is dragged as a tiling one and tiled where it is dropped (G13). The reason: with Meta
+  request to move a tiling window is ignored (`handlers.c:936`). Here Meta+Shift+drag does with the
+  mouse what Meta+Shift+Space does with the keys, on what the press is in: a tiling window floats
+  where it is dropped (KWin's move, which the helper starts; `behaviour.md` G5); a container
+  selected with focus parent, pressed on one of its windows, floats whole where its outline is
+  dropped (G16); and a floating window, or a container floated whole, is dragged as a tiling one
+  and tiled where it is dropped (G13). Plain Meta+drag stays i3's, the pressed window. The reason: with Meta
   and Shift the mouse alone moves, swaps, groups, floats and tiles, a large gain in reach for an
   audience whose common tool is the mouse, at no loss: i3's swap modifier, the only meaning Shift
   had, is what the centre's Swap band does at every drop. Meta+Shift+Space stays the key between

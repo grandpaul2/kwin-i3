@@ -83,6 +83,38 @@ void TilingDragBus::SetFloated(const QString &id, const QString &group)
     m_drag->setFloated(id, group);
 }
 
+void TilingDragBus::SetSelection(const QString &ids)
+{
+    m_drag->setSelection(ids);
+}
+
+void TilingDrag::setSelection(const QString &ids)
+{
+    const QStringList list = ids.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    m_selection = QSet<QString>(list.begin(), list.end());
+}
+
+bool TilingDrag::takesSelectionPress(PointerButtonEvent *event) const
+{
+    // The checks pointerButton makes before it reaches the selection's press, so FrameFocus skips
+    // its notice only for a press this filter will take.
+    if (!m_on || !m_modifierDrag || event->button != Qt::LeftButton || m_selection.isEmpty() || dragging()
+        || input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+        return false;
+    }
+    const BarSpot *bar = nullptr;
+    if (barAt(event->position, &bar) >= 0) {
+        return false;
+    }
+    const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
+    if (mods != (Qt::MetaModifier | Qt::ShiftModifier)) {
+        return false;
+    }
+    Window *window = frameOwner(input()->pointer()->hover(), event->position);
+    return window && !window->isDeleted() && !window->isFullScreen() && window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
+        && !m_floated.contains(window->internalId().toString()) && m_selection.contains(window->internalId().toString());
+}
+
 void TilingDragBus::SetFocusParent(const QString &id)
 {
     m_drag->setFocusParent(id);
@@ -306,7 +338,7 @@ QString TilingDrag::state()
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
     const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
                           .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side) + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab)
-                          + (m_toTile ? QStringLiteral(" tile") : QStringLiteral(" -"));
+                          + QLatin1Char(' ') + m_kind + QStringLiteral(" %1 %2").arg(int(m_start.x())).arg(int(m_start.y()));
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -322,6 +354,7 @@ void TilingDrag::setOn(bool on)
         m_floating.clear();     // kwin-i3 gone: a new instance tells its own
         m_floated.clear();
         m_focusParent.clear();
+        m_selection.clear();
     }
 }
 
@@ -588,7 +621,7 @@ void TilingDrag::takePress(Window *window, Qt::MouseButton button, const QPointF
     m_resize = resize;
     m_side = side;
     m_tab.clear();
-    m_toTile = false;
+    m_kind = QStringLiteral("-");
     m_threshold = threshold;
     m_phase = Phase::Pressed;
     if (!m_keysInstalled && input()) {
@@ -778,6 +811,22 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     if (!tiled) {
         return false;
     }
+    if (metaShift && !window->isFullScreen() && m_selection.contains(window->internalId().toString())) {
+        // A window of the selected container (after focus parent): Meta+Shift floats the container
+        // whole, as Meta+Shift+Space would (§9 G16): a drag with an outline, floated at the
+        // release. Taken with no activation, so the selection stays (FrameFocus asked first).
+        if (!m_modifierDrag) {
+            return false;
+        }
+        if (m_shiftLatched) {
+            m_taken |= Qt::LeftButton;
+            return true;
+        }
+        m_shiftLatched = true;
+        takePress(window, Qt::LeftButton, event->position, false, QString(), false);
+        m_kind = QStringLiteral("float");
+        return true;
+    }
     if (metaShift && window->isMovable() && window->isMovableAcrossScreens() && !window->isFullScreen()) {
         // A tiling window: Meta+Shift floats it (§9 G5, beyond i3), by KWin's own move, which
         // pulls it out of its tile; kwin-i3 floats it where it is dropped.
@@ -853,7 +902,7 @@ bool TilingDrag::pressKindChange(Window *window, PointerButtonEvent *event, Wind
         return true;
     }
     takePress(window, Qt::LeftButton, event->position, false, QString(), false);
-    m_toTile = true;                    // told in State: only this press tiles a floating window
+    m_kind = QStringLiteral("tile");    // told in State: only this press tiles a floating window
     return true;
 }
 

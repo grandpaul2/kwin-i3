@@ -38,7 +38,8 @@ public:
     ~TilingDragBus() override;
 
 public Q_SLOTS:
-    // "phase id x y side tab tile": phase none, drag (a resize: "resize"), drop or cancel; id the window's
+    // "phase id x y side tab kind sx sy": kind "tile", "float" or "-" (m_kind); sx sy the press.
+    // Phase none, drag (a resize: "resize"), drop or cancel; id the window's
     // internal id; x y the pointer (the release's, for a drop). A drop or a cancel is answered
     // once, then none.
     QString State();
@@ -65,6 +66,10 @@ public Q_SLOTS:
     // pointer entering it, is told by the hidden "Window Pressed" action: KWin activates it no
     // further, where i3 focuses it (click.c route_click step 3, handlers.c handle_enter_notify).
     void SetFocusParent(const QString &id);
+    // The focused container's windows (i3's focus parent, a tiled container), by internal id,
+    // space-separated; "" when the focus is a window or a workspace. Meta+Shift+left on one of
+    // them floats the container whole (§9 G16). Told after every pass that changes it.
+    void SetSelection(const QString &ids);
     // i3's has_drop_targets (tiling_drag.c:42), counted by kwin-i3 after each pass: with nowhere
     // to drop, a Meta+Shift press goes to the app as i3 replays it (§9 G4). True until told.
     void SetDropTargets(bool any);
@@ -168,6 +173,11 @@ public:
     void setFloating(const QString &id, bool on);
     void setFloated(const QString &id, const QString &group);
     void setFocusParent(const QString &id) { m_focusParent = id; }
+    void setSelection(const QString &ids);
+    // A press this filter will take as G16's (Meta+Shift+left on a window of the selection, with
+    // tilingDrag's modifier): FrameFocus then tells no "Window Pressed", which would collapse
+    // the selection to that window before the drag starts.
+    bool takesSelectionPress(KWin::PointerButtonEvent *event) const;
     void setDropTargets(bool any) { m_dropTargets = any; }
     void setFloatDropTargets(bool any) { m_floatDropTargets = any; }
     void setTiledRing(bool on) { m_tiledRingTold = on ? 1 : 0; }
@@ -248,7 +258,10 @@ private:
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty
     QString m_tab;                    // a Meta press's tab, "key:index", else empty (State)
-    bool m_toTile = false;            // the press is Meta+Shift's tiling drag of a floating one (State, §9 G13)
+    // What a Meta+Shift drag is for (State): "tile" a floating one (§9 G13), "float" the selected
+    // container (G16), "-" anything else.
+    QString m_kind = QStringLiteral("-");
+    QSet<QString> m_selection;        // SetSelection: the focused container's windows, by internal id
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;

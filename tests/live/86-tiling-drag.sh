@@ -301,6 +301,50 @@ check "  c and e tiled together, before b"  poll eval '[[ "$(tree 1)" != *"~"* &
 kclose e
 poll eval '[[ "$(tree 1)" != *e* ]]'
 
+# G16: Meta+Shift+drag on a window of the selected container (Meta+A) floats the container whole,
+# as Meta+Shift+Space would. Pressed on the member the selection doesn't keep active (c, e being
+# KWin's active one): the selection stays. Mid-drag an outline the container's size and the
+# windows still tiled; at the release one floating container at the outline's place.
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; })'
+poll eval '[[ "$(active)" == *c* ]]'
+term e "#ff00ff"
+check "c and e in a split again"            poll eval '[[ "$(tree 1)" == *"V[c e"* ]]'
+key "Focus Parent"
+sleep 0.5
+echo "    $(tree 1)"
+read -r cx cy <<<"$(centre c)"
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 40)) $((cy + 20))" "wait 60" "abs $((cx + 120)) $((cy + 60))" "wait 1000" "btn left up" "wait 60" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" &
+held=$!
+check "G16: mid-drag an outline"            poll eval '[[ -n "$(indicator)" ]]'
+sleep 0.5                                   # the pointer at its last place: the outline where it drops
+mid=$(indicator)
+check "  the windows still tiled"           eval '[[ "$(tree 1)" != *"~"* ]]'
+wait $held
+check "  the container floated whole"       wait_log '^.{9}DRAG floated whole' "$m"
+echo "    $(dropped $m) / $(tree 1)  (outline $mid)"
+check "  one floating container of c and e" poll eval '[[ "$(tree 1)" == *"~"*c*e* ]]'
+check "  at the outline's rect"             eval 'after "$m" | grep -qE "^.{9}DRAG floated whole, ${mid#* } at ${mid%% *}"' \
+    || { echo "    outline $mid"; after "$m" | grep -E '^.{9}DRAG ' | cut -c10- | sed 's/^/    /'; }
+check "  no window pressed: the selection was kept" eval '! after "$m" | grep -qE "^.{9}PRESSED "'
+# Tiled again (the container keeps the focus), then a drag with Escape: nothing changes.
+key "Floating Toggle"
+check "tiled again"                         poll eval '[[ "$(tree 1)" != *"~"* ]]'
+sleep 0.5
+t0=$(tree 1)
+read -r cx cy <<<"$(centre c)"
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 40)) $((cy + 20))" "wait 60" "abs $((cx + 120)) $((cy + 60))" "wait 300" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" "wait 60" "key ${EVDEV[Escape]} down" "key ${EVDEV[Escape]} up" "wait 60" "btn left up"
+check "G16: Escape cancels"                 wait_log '^.{9}DRAG cancelled' "$m"
+sleep 0.3
+check "  nothing changed"                   eval '[[ "$(tree 1)" == "$t0" ]]' || echo "    $t0 -> $(tree 1)"
+kclose e
+poll eval '[[ "$(tree 1)" != *e* ]]'
+
 # A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3). An app that draws its own frame keeps an invisible resize border past it (a GTK
 # header bar here, VS Code live), as KWin reports no tiled edges for a padded tile: a press there
 # stays kwin-i3's (OPEN.md item 43), never the app's own resize, which KWin ran as its live tile
