@@ -3,7 +3,8 @@
 // settings kwin-i3 is designed around, each with Plasma's value now and the one kwin-i3 would
 // set. A row's tick is a pending edit like any setting on the page: the page's Apply makes it
 // (ticked: kwin-i3's value; unticked where kwin-i3 changed it: Plasma's given back), Reset drops
-// it, Defaults ticks every row kwin-i3 needs. Each change is saved first (its old value and the value
+// it, Defaults puts Plasma's back (givePlasmaBack), Pick kwin-i3's for All ticks every row kwin-i3
+// needs (pickKwinI3). Each change is saved first (its old value and the value
 // written, plasma-settings.json beside taken-keys.json) and given back where Plasma still
 // has what kwin-i3 wrote. Meta+T's take goes through taken-keys.json (keys.h); the key override
 // row writes no Plasma setting at all.

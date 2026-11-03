@@ -152,7 +152,7 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    kwin-i3's key wins**, is for the keys kwin-i3 shares with Plasma's shortcuts (Meta+arrows for
    quick tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
    Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them): a shared key runs Plasma's
-   shortcut, not kwin-i3's, unless it is ticked. Ticked, every key set in Configure Keys runs
+   shortcut, not kwin-i3's, unless it is ticked. Ticked, every key set on the Keys tab runs
    kwin-i3's command, and Plasma's shortcuts are left as they are (untick it and they run again;
    the Overview stays on the screen's top-left corner and Grid View on Meta+G). It needs the
    plugins.

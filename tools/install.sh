@@ -54,7 +54,7 @@ if loaded; then
 else
     echo
     echo "install: done. Log out and in once: KWin finds a new script and its plugins only at login."
-    echo "  Then open System Settings > Window Management > kwin-i3: Configure Plasma Settings… lists the"
+    echo "  Then open System Settings > Window Management > kwin-i3: its Plasma tab lists the"
     echo "  Plasma settings and keys kwin-i3 needs, changes the ones you tick, and gives each back."
     echo "  make uninstall takes all of it out again."
 fi

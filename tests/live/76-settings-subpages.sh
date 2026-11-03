@@ -75,7 +75,7 @@ client --title pickme2 --app-id net.local.pickme --color blue
 check "pickme2 floats by the rule"          poll eval '[[ "$(tree 1)" == *"~pickme2"* ]]'
 
 # 2b. Gaps (item 68): workspace 2's own gap between windows, three steps up on the
-#     Tiling tab (from "same", then 0 and 1: a workspace's gap replaces the main page's, as i3's,
+#     Tiling tab (from "same", then 0 and 1: a workspace's gap replaces the one above, as i3's,
 #     2026-10-29), reaches workspaceGaps on Apply. The test clients go first: the floating one sat
 #     over the page, and they held the keyboard.
 kclose pickme2; kclose pickme; sleep 0.3

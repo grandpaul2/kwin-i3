@@ -183,19 +183,10 @@ public:
     {
         for (const QString &key : tabKeys(m_tab))
             setDefault(key);
-        const QStringList rules = splitRules(m_settings->forWindow());
-        if (m_tab == WorkspacesTab) {           // no workspace floats
-            QStringList kept;
-            for (const QString &r : rules)
-                if (!workspaceRule(r))
-                    kept << r;
-            setForWindow(kept);
-        } else if (m_tab == RulesTab) {         // the shipped rules, the workspaces' kept
-            QStringList out = splitRules(m_settings->defaultForWindowValue());
-            for (const QString &r : rules)
-                if (workspaceRule(r))
-                    out << r;
-            setForWindow(out);
+        if (m_tab == WorkspacesTab || m_tab == RulesTab) {
+            const QString target = forWindowTarget();
+            if (m_settings->forWindow() != target)
+                m_settings->setForWindow(target);
         } else if (m_tab == KeysTab) {
             m_keys->defaults();
         } else if (m_tab == PlasmaTab) {
@@ -323,16 +314,8 @@ private:
             if (item && !item->isDefault())
                 return false;
         }
-        const QStringList rules = splitRules(m_settings->forWindow());
-        if (m_tab == WorkspacesTab)
-            return std::none_of(rules.begin(), rules.end(), workspaceRule);
-        if (m_tab == RulesTab) {
-            QStringList others;
-            for (const QString &r : rules)
-                if (!workspaceRule(r))
-                    others << r;
-            return others == splitRules(m_settings->defaultForWindowValue());
-        }
+        if (m_tab == WorkspacesTab || m_tab == RulesTab)
+            return m_settings->forWindow() == forWindowTarget();
         if (m_tab == KeysTab)
             return m_keys->isDefaults();
         if (m_tab == PlasmaTab)
@@ -354,13 +337,25 @@ private:
         if (i >= 0)
             mo->property(i).write(m_settings.get(), item->getDefault());
     }
-    // The shipped rules as the default's own text, so the key leaves kwinrc as any default does.
-    void setForWindow(const QStringList &rules)
+    // forWindow as the tab shown's Defaults leaves it, as text: Workspaces' drops the workspace
+    // rules, Window Rules' puts back the shipped rules and keeps them. The shipped rules alone are
+    // the default's own text, so the key leaves kwinrc as any default does; rules already as they
+    // would be keep their text.
+    QString forWindowTarget() const
     {
-        if (splitRules(m_settings->forWindow()) == rules)
-            return;
-        const QString def = m_settings->defaultForWindowValue();
-        m_settings->setForWindow(rules == splitRules(def) ? def : rules.join(QLatin1Char('\n')));
+        const QString now = m_settings->forWindow(), def = m_settings->defaultForWindowValue();
+        const QStringList rules = splitRules(now);
+        QStringList out;
+        if (m_tab == RulesTab)
+            out = splitRules(def);
+        for (const QString &r : rules)
+            if (workspaceRule(r) == (m_tab == RulesTab))
+                out << r;
+        if (out == splitRules(def))
+            return def;
+        if (out == rules)
+            return now;
+        return out.join(QLatin1Char('\n'));
     }
 
     static void reconfigure()

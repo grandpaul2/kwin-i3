@@ -111,7 +111,7 @@ check "Meta+J: nothing now"                 not_logged '^.{9}ACTION Focus Left$'
 m=$(mark); press Meta+Alt+E
 check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
-# 3. Back on the main page: a gap typed, and from the resize step Tab reaches its help, the
+# 3. Back on the Tiling tab: a gap typed, and from the resize step Tab reaches its help, the
 #    floating step (a row of its own) and the focus choice,
 #    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
 #    with no plugin loaded. Each control's help button is the next Tab stop after it, as on

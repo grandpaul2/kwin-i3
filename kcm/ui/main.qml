@@ -14,6 +14,7 @@ import "settings.js" as Logic
 KCM.AbstractKCM {
     id: root
     framedView: false
+    headerPaddingEnabled: false          // the banners and tabs edge to edge, as the old page's
     readonly property var settings: kcm.settings
 
     header: ColumnLayout {

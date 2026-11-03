@@ -63,16 +63,7 @@ function addRule(text, rule) {
     const t = String(text || "").replace(/\s+$/, "");
     return t === "" ? rule : t + "\n" + rule;
 }
-// The Window Rules button's summary: how many rules of each kind.
-function ruleCounts(settings) {
-    return { rules: splitRules(settings.forWindow).length, assigns: splitRules(settings.assign).length };
-}
 
-// The Workspaces button's summary, as counts the page words: how many workspaces have a monitor
-// set, how many open new windows floating.
-function workspaceCounts(outputsText, floatingText) {
-    return { pinned: Object.keys(parseOutputs(outputsText)).length, plasma: parseWorkspaces(floatingText).length };
-}
 
 // ---- the rules as rows -------------------
 // A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
@@ -175,7 +166,7 @@ function classFromField(text) {
     return t === "" ? "" : /[*+?^${}()|[\]\\]/.test(t) ? t : wholeClass(t);
 }
 
-// A workspace whose new windows float (the Workspaces sub-page): the rule
+// A workspace whose new windows float (the Workspaces tab): the rule
 // [workspace="^N$"] floating enable in forWindow, as src/rules.js reads the old floatingWorkspaces.
 function workspaceRule(n) { return '[workspace="^' + n + '$"] floating enable'; }
 function floatingWorkspaceList(forWindow) {
@@ -193,8 +184,8 @@ function setWorkspaceFloating(forWindow, n, on) {
 // 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0, right: 0, bottom: 0, left: 0 } }. The page
 // sets inner and outer (all four sides) per workspace and writes them back as "N gaps inner M,
 // N gaps outer M"; sides set one by one in kwinrc are kept as they are while the page doesn't
-// touch that workspace. A value set replaces the main page's (as i3's), 0 included; one not set
-// is the main page's.
+// touch that workspace. A value set replaces the Tiling tab's gaps above it (as i3's), 0 included; one
+// not set is those.
 function parseWorkspaceGaps(text) {
     const ws = {};
     String(text || "").split(/[\n;,]/).forEach((e) => {
@@ -223,7 +214,7 @@ function outerOf(g) {
     const v = ["top", "right", "bottom", "left"].map((s) => g[s]);
     return v.every((x) => x === v[0]) ? v[0] : null;
 }
-// value undefined: not set, back to the main page's.
+// value undefined: not set, back to the gaps above.
 function setWorkspaceGap(text, n, which, value) {
     const map = parseWorkspaceGaps(text), g = map[n] || (map[n] = {});
     if (which === "inner") g.inner = value;
@@ -231,12 +222,6 @@ function setWorkspaceGap(text, n, which, value) {
     Object.keys(g).forEach((k) => { if (g[k] === undefined) delete g[k]; });
     if (!Object.keys(g).length) delete map[n];
     return formatWorkspaceGaps(map);
-}
-// The Gaps button's summary.
-function gapsSummary(settings) {
-    const sides = [settings.gapsTop, settings.gapsRight, settings.gapsBottom, settings.gapsLeft].filter((v) => v >= 0).length;
-    const ws = Object.keys(parseWorkspaceGaps(settings.workspaceGaps)).length;
-    return { sides, workspaces: ws, smart: settings.smartGaps };
 }
 
 // floatingWorkspaces as rules, exactly as src/rules.js workspaceRules reads it, for the
@@ -247,7 +232,7 @@ function oldRules(settings) {
 
 if (typeof module !== "undefined") module.exports = {
     parseOutputs, parseOutputLists, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
-    workspaceCounts, ruleCounts, parseRules, parseRule, formatRule, formatRules, wholeClass, workspaceRule,
+    parseRules, parseRule, formatRule, formatRules, wholeClass, workspaceRule,
     floatingWorkspaceList, setWorkspaceFloating, parseWorkspaceGaps, formatWorkspaceGaps, outerOf, setWorkspaceGap,
-    gapsSummary, oldRules,
+    oldRules,
 };

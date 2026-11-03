@@ -39,12 +39,3 @@ test("window rules: a picked window's class becomes a floating rule, matched who
         '[class="^a$"] floating enable', "not twice");
 });
 
-test("window rules: the summary counts rules and assignments", () => {
-    assert.deepStrictEqual(K.ruleCounts({ forWindow: "[all] floating enable; [all] floating disable", assign: "" }), { rules: 2, assigns: 0 });
-    assert.deepStrictEqual(K.ruleCounts({ forWindow: "", assign: '[class="^steam$"] → 5' }), { rules: 0, assigns: 1 });
-});
-
-test("the Workspaces summary's counts", () => {
-    assert.deepStrictEqual(K.workspaceCounts("1=DP-4, 2=DP-6", "3"), { pinned: 2, plasma: 1 });
-    assert.deepStrictEqual(K.workspaceCounts("", ""), { pinned: 0, plasma: 0 });
-});
