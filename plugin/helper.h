@@ -36,5 +36,6 @@ private:
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;
     KeyOverride m_keyOverride;     // PROBE
+    KeyOverrideAfter m_keyOverrideAfter{&m_keyOverride};
     ResizeMode m_resizeMode;        // installs its key filter itself, only while the mode is on
 };

@@ -14,6 +14,7 @@ Helper::Helper()
     KWin::input()->installInputEventFilter(m_tilingDrag.grab());
     KWin::input()->installInputEventFilter(m_tilingDrag.floatMove());   // ahead of KWin's move filter, its weight
     KWin::input()->installInputEventFilter(&m_keyOverride);
+    KWin::input()->installInputEventFilter(&m_keyOverrideAfter);
 }
 
 Helper::~Helper()
@@ -26,5 +27,6 @@ Helper::~Helper()
         KWin::input()->uninstallInputEventFilter(m_tilingDrag.grab());
         KWin::input()->uninstallInputEventFilter(m_tilingDrag.floatMove());
         KWin::input()->uninstallInputEventFilter(&m_keyOverride);
+        KWin::input()->uninstallInputEventFilter(&m_keyOverrideAfter);
     }
 }
