@@ -42,3 +42,19 @@ none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools
 by step, from `git clone` to the sub-page. Separate, still open: a rule for Plasma's window
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
+
+**87. The frame missing on windows sliding away** (2026-11-03). A desktop switch to a workspace
+with no framed window shown, with none shown on the other output either, and the start of Show
+Desktop's Window Aperture, draw the departing windows without their frame: `Hold::isActive`
+counts only shown windows, so the effect sits out of the paint. Seen live only. Next: its spec
+and the spec's review.
+
+**88. Floating windows never dimmed by Dim Inactive** (2026-11-03). Dim Inactive skips windows
+kept above unless its `DimKeepAbove` is set (6.7.5 `diminactive.cpp:184`), and kwin-i3 keeps
+every floating window above (`behaviour.md` L12); the settings page suggests Dim Inactive for
+the bare look. Next: its spec, after item 87.
+
+**89. The frame flat while Glide opens a window** (2026-11-03). Glide tilts a window by moving
+its quads (6.7.5 `glide.cpp:110-151`); the frame follows only translation, scale and opacity, so
+it fades in as a flat rectangle at the tile while the window swings in. Seen with Glide chosen
+on the Animations page, not the default. Next: its spec, after item 88.
