@@ -46,8 +46,10 @@ These are the project's rules, not suggestions.
   2. **Review**: an outside agent given the spec and the code it touches, not your conclusions,
      asked what is wrong, what breaks, and the smallest version. Its verdict and the adjusted plan
      go to the maintainer, whose go on the spec is the go to build.
-  3. **Build** to the spec in a worktree, then an outside review of the diff against the spec.
-     Every finding is checked against the code before it is fixed or answered.
+  3. **Build** to the spec in a worktree. A large change (several features, or one that reaches
+     across the script and the plugins in new ways) then gets an outside review of the diff
+     against the spec; a small change or addition rests on the spec's review and its tests. Every
+     finding is checked against the code before it is fixed or answered.
   4. **Test** as `docs/testing.md` says, then live with the go, as below.
 
   The spec and its reviews are working notes, outside the tree: the maintainer's in their private
