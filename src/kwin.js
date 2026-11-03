@@ -2941,14 +2941,12 @@ var KI3 = (function () {
         if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetOutline",
                               r ? r.x : 0, r ? r.y : 0, r ? r.width : 0, r ? r.height : 0);
     }
-    // G16's outline: the container's rect moved with the pointer, kept inside the work area of
-    // the output pressed on.
+    // G16's outline: the container's rect moved with the pointer, unbounded, as a floated
+    // container's move (F1a) and i3's floating_drag_window: kept inside the output, a container
+    // nearly as large as it couldn't move at all.
     function outlineAt(o, x, y) {
-        var a = areaOf(o.screen, o.ws), r = o.rect;
-        var nx = Math.round(r.x + x - o.sx), ny = Math.round(r.y + y - o.sy);
-        nx = Math.max(a.x, Math.min(nx, a.x + a.width - r.width));
-        ny = Math.max(a.y, Math.min(ny, a.y + a.height - r.height));
-        return { x: nx, y: ny, width: r.width, height: r.height };
+        var r = o.rect;
+        return { x: Math.round(r.x + x - o.sx), y: Math.round(r.y + y - o.sy), width: r.width, height: r.height };
     }
     // G16's release: the selected container floats whole at the outline (as the Floating Toggle,
     // T16, but where it was dropped, at the size it had), the focus staying on it. Moved less than
@@ -2960,8 +2958,13 @@ var KI3 = (function () {
         var ws = Tree.wsOf(c);
         model.leaves(c).forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
         model.toggleFloating(c);
-        c.parent.rect = { x: at.x, y: at.y, width: at.width, height: at.height, out: outGeometry(o.screen) };
+        // Dropped over another output: there, on its shown workspace, as a floated container moved
+        // there by the mouse (floatedMovedTo).
+        var on = screenAt(at.x + at.width / 2, at.y + at.height / 2) || screenOverlapping(at) || o.screen;
+        c.parent.rect = { x: at.x, y: at.y, width: at.width, height: at.height, out: outGeometry(on) };
         endDrag("floated whole, " + at.width + "x" + at.height + " at " + at.x + "," + at.y + where);
+        var to = on !== outputOf(ws) ? shownWs(on) : null;
+        if (to) { model.moveToWorkspace(c, to); schedule(to); }
         schedule(ws);
         wantFocus();
     }
