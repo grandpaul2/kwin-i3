@@ -36,32 +36,36 @@ These are the project's rules, not suggestions.
   **the merge is the go**.
 - **The maintainer's go decides what goes in**: behaviour, scope, a new test, anything that changes
   a foundation doc. Most calls are already decided by the docs (below); ask only what they can't.
-- **Every change to `src/`, `plugin/` or `tools/capture` gets an outside review**, by its kind:
+- **Spec before work, the spec reviewed before building.** Every change to `src/`, `plugin/` or
+  `tools/capture`, bug fixes included, starts as a spec, and an outside review of the spec comes
+  before any code: it is where a wrong tree is caught, while turning back is cheap. Two workflows,
+  by the change's size; the only changes outside both are docs alone and the settings page's look,
+  judged live.
 
-  | the change | its review |
-  |---|---|
-  | a change to behaviour, or a feature beyond i3 | the spec's, before building (below); the diff's too if large |
-  | a bug fix whose cause is named | the diff's, before its tests (the bug path, "Finding bugs") |
-  | the settings page's look, judged live; docs alone | none |
+  **A smaller change** (one feature or one fix, in the script or in one plugin): **one review**.
+  1. **Spec**: i3 first (its source, file:line); for a bug, the cause named from the evidence
+     (the capture, a test-KWin trace, KWin's source). Then what changes, the `behaviour.md` rows
+     and any foundation it touches, the blast radius (every path the change runs through: other
+     modifiers, the helper's filters, floating containers, other outputs, every animation and
+     effect, with and without the plugins), and the runs that will check it (existing scenarios;
+     a new test only with the go).
+  2. **The spec's review**: an outside agent given the spec and the code it touches, not your
+     conclusions, asked what is wrong, what breaks, and the smallest version. Its report in a file.
+  3. **The maintainer's go**: they hear the review's verdict and the adjusted plan; their go on
+     the spec is the go to build. **An answer is not a go**: answering a question builds nothing.
+  4. **Build** to the spec in a worktree; **test** as `docs/testing.md` says; **live** with the go
+     ("Safety").
 
-- **A change to behaviour goes spec, review, adjust, build, test**, for its blast radius and to
-  keep the whole consistent, more than for the beta's own risk. It covers what a user would
-  notice from `src/`, `plugin/` or `tools/capture`, and every feature beyond i3 in full:
-  1. **Spec**: i3 first (its source, file:line), then what changes, the `behaviour.md` rows and
-     any foundation it touches, the blast radius (every path the change runs through: other
-     modifiers, the helper's filters, floating containers, other outputs, with and without the
-     plugins), and the runs that will check it (existing scenarios; a new test only with the go).
-  2. **Review**: an outside agent given the spec and the code it touches, not your conclusions,
-     asked what is wrong, what breaks, and the smallest version. Its verdict and the adjusted plan
-     go to the maintainer, whose go on the spec is the go to build.
-  3. **Build** to the spec in a worktree. A large change (several features, or one that reaches
-     across the script and the plugins in new ways) then gets an outside review of the diff
-     against the spec; a small change or addition rests on the spec's review and its tests. Every
-     finding is checked against the code before it is fixed or answered.
-  4. **Test** as `docs/testing.md` says, then live with the go, as below.
+  **A larger change** (several features, or one that reaches across the script and the plugins
+  in new ways): **two reviews**, the smaller workflow's steps 1-3, then:
+  4. **Build** to the spec in a worktree.
+  5. **The diff's review**: an outside agent given the spec and the diff, not your conclusions,
+     its report in a file. Every finding is checked against the code before it is fixed or
+     answered, and the maintainer hears what was found and done.
+  6. **Test** as `docs/testing.md` says; **live** with the go ("Safety").
 
-  The spec and its reviews are working notes, outside the tree: the maintainer's in their private
-  notes, a contributor's in the pull request.
+  When unsure which, it is the larger. The spec and its reviews are working notes, outside the
+  tree: the maintainer's in their private notes, a contributor's in the pull request.
 - **The safety rules below apply to whoever's live desktop runs kwin-i3**: on a contributor's
   machine, their desktop and their go to reload it. The go for what goes into main stays the
   maintainer's.
@@ -156,17 +160,9 @@ These are the project's rules, not suggestions.
   `~/.local/state/kwin-i3/captures/<time>/`. **Read it with `tools/capture-read DIR` first**: one
   timeline to the millisecond, the press last. kwin-i3's log never reaches the journal, and
   `debugLog` does nothing live (`docs/debugging.md`).
-- **The bug path**, for a capture, a bug report or a red: each step before the next.
-  1. **Diagnosis**: i3 first, then the cause named from the evidence (the capture, a test-KWin
-     trace, KWin's source), the proposed fix and the runs that will check it.
-  2. **The go** to change.
-  3. **The fix** in a worktree, with a live test watched red first where one can show it.
-  4. **The diff's review**: an outside agent given the cause and the diff, not your conclusions,
-     asked what is wrong, what breaks, and the smallest version; each finding checked against
-     the code before it is fixed or answered.
-  5. **Its tests** (`docs/testing.md`), then **live** with the go ("Safety").
-
-  A cause not yet named is not on this path: it goes back to step 1.
+- **A capture, a bug report or a red** gets a diagnosis first (i3, then the cause named from the
+  evidence); its fix is a change like any other, through the smaller or larger workflow ("How
+  work lands"), with a live test watched red before the fix where one can show it.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
   **Not during the Stage** (`LATER.md`, "Reliability"), and when it returns, in runs of 5 minutes
   or less. `tests/fuzz/run.py --reshrink SEED` shrinks a saved failure again.
