@@ -3776,11 +3776,23 @@ var KI3 = (function () {
         });
         return best || shownWindow(c);
     }
+    // With the effect drawing, the drag was an outline and the helper placed the windows once at
+    // the release (§9 F1b): their places are asked from it, since a client may not have committed
+    // a resize yet; the outline is cleared once the pass has laid them out.
     function floatedMoved() {
+        if (!frameOn) { floatedMovedTo(null); return; }
+        callDBus(DRAG[0], DRAG[1], DRAG[2], "GroupPlaced", guard("floated moved", function (s) {
+            var f = String(s || "").split(" ");
+            floatedMovedTo(f.length >= 5 ? { x: Number(f[0]), y: Number(f[1]), width: Number(f[2]), height: Number(f[3]), key: f[4] } : null);
+            later(150, function () { callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetOutline", 0, 0, 0, 0); });
+        }));
+    }
+    function floatedMovedTo(placed) {
         shownWorkspaces().forEach(function (v) {
             v.ws.floating.slice().forEach(function (fc) {
                 if (!fc.rect || !fc.laid || !floatedOf(fc)) return;
-                var now = union(model.leaves(fc).map(function (l) { return wins[l.win]; })
+                var mine = placed && "c" + model.leaves(fc)[0].win === placed.key;
+                var now = mine ? placed : union(model.leaves(fc).map(function (l) { return wins[l.win]; })
                     .filter(function (w) { return w && !w.fullScreen && !w.minimized; })
                     .map(function (w) { return w.frameGeometry; }));
                 var was = fc.laid, r = fc.rect;
@@ -5186,10 +5198,11 @@ var KI3 = (function () {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloating", key, on);
     }
     var dropTargetsTold = null, floatDropTargetsTold = null, ringToHelperTold = null;     // tellDragState
+    var outlineShownTold = null;        // the helper's SetOutlineShown (tellDragState)
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         dragTold = {};
-        dropTargetsTold = null; floatDropTargetsTold = null; ringToHelperTold = null;   // again with the next pass (tellDragState)
+        dropTargetsTold = null; floatDropTargetsTold = null; ringToHelperTold = null; outlineShownTold = null;   // again with the next pass (tellDragState)
         focusParentTold = on ? null : "";           // again with the next pass (tellFocusParent)
         selectionTold = on ? null : "";             // again with the next pass (tellSelection)
         barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
@@ -5231,6 +5244,7 @@ var KI3 = (function () {
     function tellDragState() {
         var d = hasDropTargets(), fd = hasDropTargets(true), r = tiledRing();
         if (d !== dropTargetsTold) { dropTargetsTold = d; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetDropTargets", d); }
+        if (frameOn !== outlineShownTold) { outlineShownTold = frameOn; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOutlineShown", frameOn); }
         if (fd !== floatDropTargetsTold) { floatDropTargetsTold = fd; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloatDropTargets", fd); }
         if (r !== ringToHelperTold) { ringToHelperTold = r; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetTiledRing", r); }
     }
@@ -5320,7 +5334,7 @@ var KI3 = (function () {
             if (!zw) { endDrag("its window is gone"); return; }
             if (drag.outline) {
                 drag.at = outlineAt(drag.outline, x, y);
-                if (phase === "drag") { indicate(drag.at, null); return; }
+                if (phase === "drag") { outline(drag.at); return; }
                 floatAtOutline(" at " + x + "," + y);
                 return;
             }
@@ -5330,6 +5344,12 @@ var KI3 = (function () {
             return;
         }
         endDrag(phase === "cancel" ? "cancelled" : "ended");
+    }
+    // G16's outline on the effect, sent on every poll so it is renewed while the drag lasts (the
+    // effect clears it 500 ms after the last).
+    function outline(r) {
+        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetOutline",
+                              r ? r.x : 0, r ? r.y : 0, r ? r.width : 0, r ? r.height : 0);
     }
     // G16's outline: the container's rect moved with the pointer, kept inside the work area of
     // the output pressed on.
@@ -5407,6 +5427,7 @@ var KI3 = (function () {
     }
     function endDrag(why) {
         var tag = drag.resize ? "RESIZE " : "DRAG ";
+        if (drag.outline) outline(null);
         indicate(null);
         dragCursor(false);
         drag.timer.stop();

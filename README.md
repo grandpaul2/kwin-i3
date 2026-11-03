@@ -95,6 +95,8 @@ Mouse:
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if
   there is none). A plain press in a gap does the same: the gaps are kwin-i3's. Without the helper it is KWin's own resize, kept in the tree.
 - **Meta+left-drag and Meta+right-drag on a floating window** move and resize it: KWin's own.
+  A split or group floated whole moves and resizes as one, an outline showing where while you
+  drag, the windows placed once when you let go.
 
 With the plugins, the 1 px frame is its window's, as i3's border is: hover and a click on it focus
 the window, and a drag on it resizes against the neighbour on that side (no title-bar move, no

@@ -24,6 +24,7 @@ active() { kjs "log(workspace.activeWindow ? workspace.activeWindow.caption : 'n
 dropped() { wait_log "^.{9}DRAG (dropped|no drop|cancelled|not started)" "$1" && after "$1" | grep -E '^.{9}DRAG ' | tail -1 | cut -c10-; }
 wid() { fc "$1" | cut -d" " -f2 | cut -dx -f1; }
 indicator() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"drop" s "[^"]*"' | cut -d'"' -f4; }
+outline() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"outline" s "[^"]*"' | cut -d'"' -f4; }
 # A title-bar drag in steps, as a hand would (past the start-drag distance).
 tdrag() {
     local x1=$1 y1=$2 x2=$3 y2=$4 s; local -a c=("abs $x1 $y1" "wait 30" "btn left down")
@@ -318,9 +319,9 @@ m=$(mark)
     "abs $((cx + 40)) $((cy + 20))" "wait 60" "abs $((cx + 120)) $((cy + 60))" "wait 1000" "btn left up" "wait 60" \
     "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" &
 held=$!
-check "G16: mid-drag an outline"            poll eval '[[ -n "$(indicator)" ]]'
+check "G16: mid-drag an outline"            poll eval '[[ -n "$(outline)" && -z "$(indicator)" ]]'
 sleep 0.5                                   # the pointer at its last place: the outline where it drops
-mid=$(indicator)
+mid=$(outline)
 check "  the windows still tiled"           eval '[[ "$(tree 1)" != *"~"* ]]'
 wait $held
 check "  the container floated whole"       wait_log '^.{9}DRAG floated whole' "$m"

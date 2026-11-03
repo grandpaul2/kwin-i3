@@ -12,6 +12,9 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
   swap modifier is gone from the plan: the middle's Swap third already swaps. After Meta+A,
   Meta+Shift+drag on one of the highlighted windows floats them all whole, where an outline
   shows, as Meta+Shift+Space would.
+- **A split or group floated whole moves and resizes as an outline**: the windows are placed once,
+  at the release, so a large container no longer stutters as each window redraws; a single
+  floating window still moves live.
 
 ## v1.2.0 (2026-11-02)
 

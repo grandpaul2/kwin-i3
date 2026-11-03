@@ -77,7 +77,9 @@ read -r ix iy iw ih < <(xywh i)
     "btn right up" "key ${EVDEV[Meta]} up" &
 held=$!
 sleep 0.9
-check "  mid-resize: the bar still on f"    onbarof f || echo "    bar $(barrect) / f $(xywh f)"
+# An outline only while it lasts (§9 F1b): the windows are placed once, at the release.
+check "  mid-resize: an outline, i not resized yet" eval '[[ -n "$(busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o "\"outline\" s \"[^\"]*\"" | cut -d\" -f4)" && "$(xywh i)" == "$ix $iy $iw $ih" ]]' \
+    || echo "    i $(xywh i), was $ix $iy $iw $ih"
 wait "$held"
 check "  and after"                         poll onbarof f || echo "    bar $(barrect) / f $(xywh f)"
 finish

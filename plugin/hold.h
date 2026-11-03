@@ -106,6 +106,11 @@ public Q_SLOTS:
     // drop, drawn over everything in the tiled frame's active colour, half transparent; a width
     // or height of 0 clears it. In logical pixels, global.
     void SetDropIndicator(int x, int y, int width, int height);
+    // A rect's outline: its edge 2 px wide, in the indicator's colour, nothing inside, over
+    // everything: where a floated container (§9 F1b) or a selection (G16) goes while it is
+    // dragged. A width or height of 0 clears it; unrenewed for 500 ms it clears by itself, so no
+    // end of a drag (the helper or kwin-i3 gone) can leave it on screen.
+    void SetOutline(int x, int y, int width, int height);
     // kwin-i3's tiling drag over a window's centre (§9 G11): the centre's rect, drawn as one
     // rounded outline cut in three (tabbed, stacked, swap), each third with a small picture of its
     // result and its name, the one under the pointer (`active`, 0-2) filled as the indicator.
@@ -309,6 +314,8 @@ private:
     void paintBands(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, const KWin::Region &deviceRegion);
     Qt::CursorShape m_dragShape = Qt::SizeAllCursor;        // the shape it grabs with now
     QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
+    KWin::RectF m_outline;                                  // SetOutline; empty when none
+    QTimer m_outlineExpiry;                                 // SetOutline: clears it unless renewed
 
     QHash<KWin::EffectWindow *, Held> m_held;
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet

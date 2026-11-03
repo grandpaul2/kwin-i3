@@ -110,6 +110,9 @@ Hold::Hold()
     m_dragCursor.setSingleShot(true);
     m_dragCursor.setInterval(500);
     connect(&m_dragCursor, &QTimer::timeout, this, [this] { effects->stopMouseInterception(this); });
+    m_outlineExpiry.setSingleShot(true);
+    m_outlineExpiry.setInterval(500);
+    connect(&m_outlineExpiry, &QTimer::timeout, this, [this] { SetOutline(0, 0, 0, 0); });
 
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
@@ -711,7 +714,7 @@ bool Hold::holding() const
 // is hidden whole (hideEdgeBorders), a setup too rare for a cache.
 bool Hold::isActive() const
 {
-    if (holding() || !m_drop.isEmpty() || !m_bands.isEmpty() || !m_mode.isEmpty()) {
+    if (holding() || !m_drop.isEmpty() || !m_bands.isEmpty() || !m_mode.isEmpty() || !m_outline.isEmpty()) {
         return true;
     }
     const auto windows = effects->stackingOrder();
@@ -1222,6 +1225,28 @@ void Hold::SetDragCursor(bool on, int shape)
     m_dragCursor.start();
 }
 
+void Hold::SetOutline(int x, int y, int width, int height)
+{
+    const auto clamp = [](int v) { return std::clamp(v, -100000, 100000); };
+    x = clamp(x), y = clamp(y), width = clamp(width), height = clamp(height);
+    const RectF outline = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
+    if (outline.isEmpty()) {
+        m_outlineExpiry.stop();
+    } else {
+        m_outlineExpiry.start();
+    }
+    if (outline == m_outline) {
+        return;
+    }
+    if (!m_outline.isEmpty()) {
+        effects->addRepaint(m_outline.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+    if (!outline.isEmpty()) {
+        effects->addRepaint(outline.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+    m_outline = outline;
+}
+
 void Hold::SetDropIndicator(int x, int y, int width, int height)
 {
     // Far past any output, the rounding to device pixels would overflow.
@@ -1252,18 +1277,32 @@ PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderView
             paintBands(renderTarget, viewport, deviceRegion);
         }
     });
-    if (m_drop.isEmpty() || !m_bands.isEmpty()) {
-        KI3_PAINTED;                     // over a centre, the thirds draw their own highlight
+    // The rects to fill: the indicator (but over a centre, where the thirds draw their own
+    // highlight), and the outline's four edges, 2 px each, inside its rect.
+    QList<RectF> fills;
+    if (!m_drop.isEmpty() && m_bands.isEmpty()) {
+        fills << m_drop;
+    }
+    if (!m_outline.isEmpty()) {
+        const RectF &o = m_outline;
+        const double t = std::min({2.0, o.width() / 2, o.height() / 2});
+        fills << RectF(o.x(), o.y(), o.width(), t) << RectF(o.x(), o.bottom() - t, o.width(), t)
+              << RectF(o.x(), o.y() + t, t, o.height() - 2 * t) << RectF(o.right() - t, o.y() + t, t, o.height() - 2 * t);
+    }
+    if (fills.isEmpty()) {
+        KI3_PAINTED;
     }
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
-    const Rect device(std::round(m_drop.x() * scale) - origin.x(), std::round(m_drop.y() * scale) - origin.y(),
-                      std::round(m_drop.width() * scale), std::round(m_drop.height() * scale));
     QList<QVector2D> verts;
-    for (const Rect &r : (deviceRegion & device).rects()) {
-        const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
-        verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
-              << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+    for (const RectF &f : fills) {
+        const Rect device(std::round(f.x() * scale) - origin.x(), std::round(f.y() * scale) - origin.y(),
+                          std::round(f.width() * scale), std::round(f.height() * scale));
+        for (const Rect &r : (deviceRegion & device).rects()) {
+            const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
+            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
+                  << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+        }
     }
     if (verts.isEmpty()) {
         KI3_PAINTED;
@@ -1595,6 +1634,7 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
     m[QStringLiteral("tiledRing")] = m_tiledRing;
     m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
+    m[QStringLiteral("outline")] = m_outline.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_outline.x()).arg(m_outline.y()).arg(m_outline.width()).arg(m_outline.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
     m[QStringLiteral("floated")] = QStringList(m_floated.cbegin(), m_floated.cend());

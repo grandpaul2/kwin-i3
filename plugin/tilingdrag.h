@@ -70,6 +70,12 @@ public Q_SLOTS:
     // space-separated; "" when the focus is a window or a workspace. Meta+Shift+left on one of
     // them floats the container whole (§9 G16). Told after every pass that changes it.
     void SetSelection(const QString &ids);
+    // Whether kwini3hold draws (kwin-i3's frame on): a floated container's move and resize then
+    // show an outline and place the windows once, at the release (§9 F1b); without it, live.
+    void SetOutlineShown(bool on);
+    // Where the last outlined move or resize put the container's windows (their union, and the
+    // container's key as SetFloated named it: "x y w h key"), once; "" for none. The release's places, which a client may not have committed yet.
+    QString GroupPlaced();
     // i3's has_drop_targets (tiling_drag.c:42), counted by kwin-i3 after each pass: with nowhere
     // to drop, a Meta+Shift press goes to the app as i3 replays it (§9 G4). True until told.
     void SetDropTargets(bool any);
@@ -174,6 +180,8 @@ public:
     void setFloated(const QString &id, const QString &group);
     void setFocusParent(const QString &id) { m_focusParent = id; }
     void setSelection(const QString &ids);
+    void setOutlineShown(bool on) { m_outlineShown = on; }
+    QString groupPlaced();
     // A press this filter will take as G16's (Meta+Shift+left on a window of the selection, with
     // tilingDrag's modifier): FrameFocus then tells no "Window Pressed", which would collapse
     // the selection to that window before the drag starts.
@@ -224,6 +232,8 @@ private:
     // `activate` false: the press focuses by kwin-i3's rule instead (a tab, "Tab Click").
     bool pressGroup(KWin::Window *window, KWin::PointerButtonEvent *event, bool resize, bool activate = true);
     void groupMotion(const QPointF &pos);
+    QRectF placeGroup(const QRectF &to);     // the windows into `to`, as the drag scales them
+    void tellOutline(const QRectF &rect);    // kwini3hold's SetOutline, empty to clear
     void endGroup(bool revert);
     void begin();
     void cancel();
@@ -250,6 +260,13 @@ private:
     bool m_groupLeft = false, m_groupTop = false;   // the corner a resize moves
     QList<QPointer<KWin::Window>> m_group;
     QList<QRectF> m_groupStart;       // each window's frame at the press
+    bool m_outlineShown = false;      // SetOutlineShown
+    QRectF m_groupTo;                 // the outlined drag's rect for the windows, null until a motion
+    QMarginsF m_groupBars;            // the floated bars beside the windows: the outline's margins
+    QRectF m_groupPlaced;             // GroupPlaced
+    QString m_groupKey;               // the dragged container's key (SetFloated's group), for GroupPlaced
+    QTimer m_outlineSend;             // at most one SetOutline per frame
+    QTimer m_outlineRenew;            // the effect's outline renewed while the drag lasts
     QRectF m_groupUnion;              // all of them together at the press
     QPointF m_groupPress;
     QElapsedTimer m_groupCursorTold;  // the effect's cursor, asked again while the drag lasts

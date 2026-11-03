@@ -88,6 +88,33 @@ void TilingDragBus::SetSelection(const QString &ids)
     m_drag->setSelection(ids);
 }
 
+void TilingDragBus::SetOutlineShown(bool on)
+{
+    m_drag->setOutlineShown(on);
+}
+
+QString TilingDragBus::GroupPlaced()
+{
+    return m_drag->groupPlaced();
+}
+
+QString TilingDrag::groupPlaced()
+{
+    const QRectF r = m_groupPlaced;
+    m_groupPlaced = QRectF();
+    return r.isNull() ? QString() : QStringLiteral("%1 %2 %3 %4 %5").arg(std::lround(r.x())).arg(std::lround(r.y())).arg(std::lround(r.width())).arg(std::lround(r.height())).arg(m_groupKey);
+}
+
+void TilingDrag::tellOutline(const QRectF &rect)
+{
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3hold"),
+                                              QStringLiteral("net.local.kwini3hold"), QStringLiteral("SetOutline"));
+    const bool on = rect.isValid() && !rect.isEmpty();
+    msg << int(on ? std::lround(rect.x()) : 0) << int(on ? std::lround(rect.y()) : 0)
+        << int(on ? std::lround(rect.width()) : 0) << int(on ? std::lround(rect.height()) : 0);
+    QDBusConnection::sessionBus().asyncCall(msg);
+}
+
 void TilingDrag::setSelection(const QString &ids)
 {
     const QStringList list = ids.split(QLatin1Char(' '), Qt::SkipEmptyParts);
@@ -258,6 +285,18 @@ TilingDrag::TilingDrag()
     QObject::connect(workspace(), &Workspace::windowAdded, &m_context, [this](Window *window) { watchMoves(window); });
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
+    // The outlined group drag (§9 F1b): the rect to the effect at most once a frame, and again
+    // every 200 ms while the drag lasts (the effect clears it 500 ms after the last).
+    m_outlineSend.setSingleShot(true);
+    m_outlineSend.setInterval(16);
+    m_outlineRenew.setInterval(200);
+    const auto sendOutline = [this] {
+        if (m_groupActive && m_groupTo.isValid()) {
+            tellOutline(m_groupTo.marginsAdded(m_groupBars));
+        }
+    };
+    QObject::connect(&m_outlineSend, &QTimer::timeout, &m_context, sendOutline);
+    QObject::connect(&m_outlineRenew, &QTimer::timeout, &m_context, sendOutline);
     m_unanswered.setSingleShot(true);
     m_unanswered.setInterval(500);
     QObject::connect(&m_unanswered, &QTimer::timeout, &m_bus, [this] {
@@ -309,6 +348,9 @@ void TilingDrag::watchMoves(Window *window)
 
 TilingDrag::~TilingDrag()
 {
+    if (m_groupActive && m_outlineShown) {
+        tellOutline(QRectF());       // unloaded mid-drag (the effect's expiry is the backstop)
+    }
     if (m_keysInstalled && input()) {
         input()->uninstallInputEventFilter(&m_keys);
     }
@@ -352,6 +394,9 @@ void TilingDrag::setOn(bool on)
     m_offUnanswered = false;
     if (!on) {
         m_floating.clear();     // kwin-i3 gone: a new instance tells its own
+        if (m_groupActive && m_outlineShown) {
+            tellOutline(QRectF());
+        }
         m_floated.clear();
         m_focusParent.clear();
         m_selection.clear();
@@ -454,6 +499,28 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
     }
     workspace()->raiseWindow(window);
     m_groupUnion = all;
+    // The floated groups' bars among these windows (SetBars, floated 1 or 2): the outline is the
+    // container as drawn, its bars with its windows.
+    QRectF drawn = all;
+    for (const BarSpot &bar : std::as_const(m_bars)) {
+        if (bar.floated == 0) {
+            continue;
+        }
+        const QString key = bar.key.section(QLatin1Char('#'), 0, 0);
+        for (const auto &w : std::as_const(m_group)) {
+            if (w && w->internalId().toString() == key) {
+                drawn = drawn.united(bar.rect);
+                break;
+            }
+        }
+    }
+    m_groupBars = QMarginsF(all.left() - drawn.left(), all.top() - drawn.top(), drawn.right() - all.right(), drawn.bottom() - all.bottom());
+    m_groupTo = QRectF();
+    m_groupPlaced = QRectF();
+    m_groupKey = group;
+    if (m_outlineShown) {
+        m_outlineRenew.start();
+    }
     m_groupPress = event->position;
     m_groupResize = resize;
     m_groupLeft = event->position.x() < all.center().x();
@@ -508,20 +575,39 @@ void TilingDrag::groupMotion(const QPointF &pos)
             to.setBottom(std::max(to.bottom() + d.y(), to.top() + 50));
         }
     }
+    if (m_outlineShown) {
+        // An outline only, the windows placed once at the release (§9 F1b).
+        m_groupTo = to;
+        if (!m_outlineSend.isActive()) {
+            m_outlineSend.start();
+        }
+        return;
+    }
+    placeGroup(to);
+}
+
+QRectF TilingDrag::placeGroup(const QRectF &to)
+{
+    const QPointF d = to.topLeft() - m_groupUnion.topLeft();
     const double sx = to.width() / m_groupUnion.width(), sy = to.height() / m_groupUnion.height();
+    QRectF placed;
     for (int i = 0; i < m_group.size(); ++i) {
         Window *w = m_group[i];
         if (!w || w->isDeleted()) {
             continue;
         }
         const QRectF &s = m_groupStart[i];
+        QRectF r;
         if (!m_groupResize) {
-            w->move(s.topLeft() + d);
+            r = QRectF(s.topLeft() + d, s.size());
+            w->move(r.topLeft());
         } else {
-            w->moveResize(RectF(to.x() + (s.x() - m_groupUnion.x()) * sx, to.y() + (s.y() - m_groupUnion.y()) * sy,
-                                s.width() * sx, s.height() * sy));
+            r = QRectF(to.x() + (s.x() - m_groupUnion.x()) * sx, to.y() + (s.y() - m_groupUnion.y()) * sy, s.width() * sx, s.height() * sy);
+            w->moveResize(RectF(r));
         }
+        placed = placed.isNull() ? r : placed.united(r);
     }
+    return placed;
 }
 
 // The release, or a key or Escape (i3's drag_pointer reverts on a key: the windows go back).
@@ -532,6 +618,18 @@ void TilingDrag::endGroup(bool revert)
     }
     m_groupActive = false;
     tellGroupCursor(false);
+    m_outlineSend.stop();
+    m_outlineRenew.stop();
+    if (m_outlineShown) {
+        // Outlined: the windows placed once now, the outline left for kwin-i3 to clear once its
+        // pass has laid them out (no flash of the old layout); a revert or no motion clears it.
+        if (!revert && m_groupTo.isValid()) {
+            m_groupPlaced = placeGroup(m_groupTo);
+        } else {
+            tellOutline(QRectF());
+        }
+        revert = false;               // nothing moved to put back
+    }
     if (revert) {
         for (int i = 0; i < m_group.size(); ++i) {
             if (m_group[i] && !m_group[i]->isDeleted()) {
