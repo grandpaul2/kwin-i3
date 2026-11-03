@@ -16,6 +16,9 @@ KCM.SimpleKCM {
     title: i18nc("@title", "Plasma Settings")
 
     readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
+    // The height of a row's title line (the name and its help button, taller than a checkbox),
+    // so the boxes centre on the name rather than sit at the row's top.
+    readonly property real titleHeight: titleProbe.implicitHeight
     // Plasma's values and kwin-i3's keys read again, unless the page holds edits Apply hasn't made.
     Component.onCompleted: if (!kcm.needsSave) kcm.refresh()
 
@@ -50,6 +53,7 @@ KCM.SimpleKCM {
         checked: chosen
         onClicked: { kcm.setup.setWanted(row.id, kwini3); checked = Qt.binding(() => chosen) }
         Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
+        Layout.topMargin: Math.max(0, (page.titleHeight - implicitHeight) / 2)
         Accessible.name: kwini3 ? i18nc("@option:check a setting, kwin-i3's way", "%1: kwin-i3", row.title)
                                 : i18nc("@option:check a setting, Plasma's way", "%1: Plasma", row.title)
     }
@@ -58,6 +62,13 @@ KCM.SimpleKCM {
     // makes again.
     Item {
         implicitHeight: column.implicitHeight + Kirigami.Units.largeSpacing * 2
+        RowLayout {
+            id: titleProbe
+            visible: false
+            spacing: Kirigami.Units.smallSpacing
+            QQC2.Label { text: "M" }
+            Kirigami.ContextualHelpButton {}
+        }
         ColumnLayout {
             id: column
             anchors.horizontalCenter: parent.horizontalCenter
