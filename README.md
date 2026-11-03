@@ -84,6 +84,8 @@ Mouse:
   Beside, after that window. Once per press: with the keys held, a second press does nothing
   until Meta or Shift is let go. After Meta+A (focus parent), Meta+Shift+drag on one of
   the highlighted windows floats them all as one: an outline shows where, and they float there.
+  With focus follows mouse, the pointer entering another window first focuses that window alone,
+  as in i3, so press where the pointer already is.
   Meta+Shift+Space does the same from the keyboard, as in i3. With
   title-bar drags only (the `tilingDrag` setting), the press goes to the app. Without the helper
   plugin, Meta+left-drag is KWin's own move, which floats the window where it is dropped.
