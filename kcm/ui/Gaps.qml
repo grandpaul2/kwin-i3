@@ -23,10 +23,10 @@ KCM.SimpleKCM {
         from: -1; to: 200
         value: page.settings[settingName]
         onValueModified: page.settings[settingName] = value
-        textFromValue: (v) => v < 0 ? i18nc("@item:valuesuffix a side's gap is the outer gap", "%1: same", side)
-                                    : i18nc("@item:valuesuffix a side's gap in pixels", "%1: %2 px", side, v)
+        textFromValue: (v) => v < 0 ? i18nc("@item:valuesuffix a side's gap is the outer gap", "same")
+                                    : i18nc("@item:valuesuffix a gap in pixels", "%1 px", v)
         valueFromText: (text) => { const m = /-?\d+/.exec(text); return m ? parseInt(m[0]) : -1; }
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 8
+        Layout.preferredWidth: page.boxWidth
         Accessible.name: i18nc("@label:spinbox", "Extra gap at the %1 edge of the screen", side)
         KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
     }
@@ -36,14 +36,16 @@ KCM.SimpleKCM {
         property int num
         property string which          // "inner" or "outer"
         property var stored            // undefined: not set
+        property bool perSide: false   // the outer gap set per side in kwinrc: "same" isn't true
         readonly property int same: from
         from: which === "inner" ? -1 : -101; to: which === "inner" ? 100 : 200
         value: stored === undefined || stored === null ? same : stored
         onValueModified: page.settings.workspaceGaps = Logic.setWorkspaceGap(page.settings.workspaceGaps, num, which, value === same ? undefined : value)
-        textFromValue: (v) => v === same ? i18nc("@item:valuesuffix a workspace's gap is the main page's", "same")
+        textFromValue: (v) => v === same ? (perSide ? i18nc("@item:valuesuffix a workspace's outer gap, set per side in kwinrc", "per side")
+                                                    : i18nc("@item:valuesuffix a workspace's gap is the main page's", "same"))
                                          : i18nc("@item:valuesuffix a gap in pixels", "%1 px", v)
         valueFromText: (text) => { const m = /-?\d+/.exec(text); return m ? parseInt(m[0]) : same; }
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 6
+        Layout.preferredWidth: page.boxWidth
         KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceGaps" }
     }
 
@@ -61,7 +63,27 @@ KCM.SimpleKCM {
         }
     }
 
+    readonly property real boxWidth: Kirigami.Units.gridUnit * 6
+    // The workspace columns' headings are longer: wider columns, further apart.
+    readonly property real workspaceWidth: Kirigami.Units.gridUnit * 8
+    readonly property real workspaceSpacing: Kirigami.Units.gridUnit
+    // A row of column headings, each as wide as the box under it (as the Workspaces page).
+    component Headings: RowLayout {
+        id: headings
+        property var titles
+        property real columnWidth: page.boxWidth
+        spacing: Kirigami.Units.smallSpacing
+        Repeater {
+            model: headings.titles
+            Kirigami.Heading { required property string modelData; level: 5; text: modelData; Layout.preferredWidth: headings.columnWidth }
+        }
+    }
+
     Kirigami.FormLayout {
+        Headings {
+            titles: [i18nc("@title:column side of the screen", "Top"), i18nc("@title:column side of the screen", "Right"),
+                     i18nc("@title:column side of the screen", "Bottom"), i18nc("@title:column side of the screen", "Left")]
+        }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Extra at screen edges:")
             spacing: Kirigami.Units.smallSpacing
@@ -92,6 +114,11 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Each workspace")
         }
+        Headings {
+            titles: [i18nc("@title:column a workspace's gap", "Between windows"), i18nc("@title:column a workspace's gap", "Extra at edges")]
+            columnWidth: page.workspaceWidth
+            spacing: page.workspaceSpacing
+        }
         Repeater {
             model: 10
             RowLayout {
@@ -100,20 +127,20 @@ KCM.SimpleKCM {
                 readonly property int num: index + 1
                 readonly property var own: page.perWorkspace[num] || {}
                 Kirigami.FormData.label: i18nc("@label", "Workspace %1:", num)
-                spacing: Kirigami.Units.smallSpacing
+                spacing: page.workspaceSpacing
                 WorkspaceSpinBox {
                     num: row.num; which: "inner"
                     stored: row.own.inner
+                    Layout.preferredWidth: page.workspaceWidth
                     Accessible.name: i18nc("@label:spinbox", "Workspace %1 gap between windows", row.num)
                 }
-                QQC2.Label { text: i18nc("@label after a gap's size", "between windows"); Accessible.ignored: true }
-                Item { implicitWidth: Kirigami.Units.largeSpacing }
                 WorkspaceSpinBox {
                     num: row.num; which: "outer"
                     stored: Logic.outerOf(row.own)
+                    perSide: Logic.outerOf(row.own) === null
+                    Layout.preferredWidth: page.workspaceWidth
                     Accessible.name: i18nc("@label:spinbox", "Workspace %1 extra gap at screen edges", row.num)
                 }
-                QQC2.Label { text: Logic.outerOf(row.own) === null ? i18nc("@label after a gap's size, set per side in kwinrc", "extra at edges, set per side") : i18nc("@label after a gap's size", "extra at edges"); Accessible.ignored: true }
             }
         }
     }

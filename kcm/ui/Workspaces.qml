@@ -44,15 +44,14 @@ KCM.SimpleKCM {
         property string first: ""
         property bool applies: true
         readonly property string output: page.outputAt(num, slot)
-        // The second box says "else" in its own items, so no word between the boxes is needed.
-        function shown(t) { return slot ? i18nc("@item:inlistbox the second screen, used when the first isn't connected", "Else %1", t) : t }
-        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second screen", "No second screen") : i18nc("@item:inlistbox", "Any screen") }]
-            .concat(page.screens.filter((s) => s.name !== first).map((s) => ({ name: s.name, text: shown(s.text) })))
+        // The column headings above say which box is which, so the items are plain names.
+        model: [{ name: "", text: slot ? i18nc("@item:inlistbox no second screen", "None") : i18nc("@item:inlistbox", "Any screen") }]
+            .concat(page.screens.filter((s) => s.name !== first))
             .concat(output && !page.screens.some((s) => s.name === output)
-                ? [{ name: output, text: shown(i18nc("@item:inlistbox output name", "%1 (not connected)", output)) }] : [])
+                ? [{ name: output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", output) }] : [])
         textRole: "text"
         valueRole: "name"
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 13
+        Layout.preferredWidth: page.screenWidth
         // Re-synced rather than bound: a choice breaks a binding, and Reset and Defaults
         // must still show (as main.qml's ChoiceBox).
         function sync() { currentIndex = Math.max(0, indexOfValue(output)) }
@@ -80,7 +79,17 @@ KCM.SimpleKCM {
         }
     }
 
+    readonly property real screenWidth: Kirigami.Units.gridUnit * 13
+    readonly property real newWidth: Kirigami.Units.gridUnit * 7
+
     Kirigami.FormLayout {
+        // The columns' headings, over the boxes as the Plasma Settings page's.
+        RowLayout {
+            spacing: Kirigami.Units.smallSpacing
+            Kirigami.Heading { level: 5; text: i18nc("@title:column a workspace's screen", "Screen"); Layout.preferredWidth: page.screenWidth }
+            Kirigami.Heading { level: 5; text: i18nc("@title:column the screen used when the first isn't connected", "Else"); Layout.preferredWidth: page.screenWidth }
+            Kirigami.Heading { level: 5; text: i18nc("@title:column how a workspace's new windows open", "New windows"); Layout.preferredWidth: page.newWidth }
+        }
         Repeater {
             model: 10
             RowLayout {
@@ -95,8 +104,9 @@ KCM.SimpleKCM {
                 // The second box is there on every row (the rows share one shape), greyed with no first.
                 MonitorBox { num: row.num; slot: 1; first: page.outputAt(row.num, 0); applies: page.outputAt(row.num, 0) !== "" }
                 QQC2.ComboBox {
-                    model: [{ value: false, text: i18nc("@item:inlistbox", "New windows tile") },
-                            { value: true, text: i18nc("@item:inlistbox", "New windows float") }]
+                    model: [{ value: false, text: i18nc("@item:inlistbox a workspace's new windows", "Tile") },
+                            { value: true, text: i18nc("@item:inlistbox a workspace's new windows", "Float") }]
+                    Layout.preferredWidth: page.newWidth
                     textRole: "text"
                     valueRole: "value"
                     readonly property bool stored: page.plasma.indexOf(row.num) >= 0
