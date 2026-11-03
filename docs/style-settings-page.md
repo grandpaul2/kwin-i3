@@ -5,18 +5,39 @@ look and read. **These are suggestions, just enough to set a page up**: the main
 page its look on the live page, and that look is final. Where a live page and this file differ,
 the page wins and this file is brought in line. No set of rules makes a page feel right, so a
 change is built from these suggestions, checked on a screenshot, and handed over; it is not
-polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's own pages do (Virtual Desktops, Window
-Behavior, Display Configuration): open the Plasma page and match it.
+polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's
+own pages do (Virtual Desktops, Window Behavior, Display Configuration, Window Rules): open the
+Plasma page and match it. The finished pages are the best example: the main page, Gaps,
+Workspaces, Window Rules, Keys and Plasma Settings.
 
 ## Layout
 
-- **One `Kirigami.FormLayout`** per page: a centred column with the labels right-aligned in one
-  column, and no group boxes. Sections are headings in sentence case ("Tiling", "Frame"). There
-  is never an "Advanced" section.
+- **A form page is one `Kirigami.FormLayout`** (the main page, Gaps, Workspaces): a centred
+  column with the labels right-aligned in one column, and no group boxes. Sections are headings in
+  sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A page of items that a
+  `Repeater` makes in another shape (Window Rules, Plasma Settings) is a centred `ColumnLayout` at
+  most 34 grid units wide instead, since a FormLayout re-sorts a Repeater's rows.
 - **One label and one control a row.** Two values are two rows, each with its own label ("Gap
   between windows:", "Extra gap at edges:"). Never put captions, a second control or an icon that
   comes and goes on the same line. A control's help button sits after it, in a `RowLayout` with
   `spacing: Kirigami.Units.smallSpacing`.
+- **The same few values for each of a set** (each workspace's screens, each screen edge's gap)
+  are one row per member, labelled by it ("Workspace 3:"), with **column headings** above the
+  boxes: a level-5 `Kirigami.Heading` in sentence case ("Screen", "Else", "New windows"), each as
+  wide as the box under it. The boxes then hold plain values ("8 px", "same", "Tile", a screen's
+  name), with no words before or after them. Where a heading is longer than its box, the column
+  widens and the columns move apart (a grid unit between them) until the headings read apart.
+- **A list the reader adds to** (Window Rules) is a framed list: the View colours, a border of
+  `Kirigami.ColorUtils.linearInterpolation(background, text, Kirigami.Theme.frameContrast)`,
+  rounded by `Kirigami.Units.cornerRadius`, a `Kirigami.Separator` between items. Every item has
+  the same shape: no line that shows only when it is set, no toggle that opens more. Groups (the
+  shipped items, the reader's) are a list each under a heading. Adding sits in the page's footer
+  (a `QQC2.ToolBar`, right-aligned), in view at any scroll; a new item scrolls into view with its
+  first field focused. An empty list says so in a `Kirigami.PlaceholderMessage` with the add
+  action in it.
+- **Two columns of checkboxes** (Plasma Settings) have their column titles as level-5 headings
+  over the boxes, and each box is centred on its row's first line (the name and its help button),
+  not on the row's top.
 - **A straight right edge.** A section's dropdowns share the width of its widest choice. Every
   spin box has one compact width. A colour is a bar as wide as its section's dropdowns, Default
   button included. Wide reads better than narrow.
@@ -28,7 +49,8 @@ Behavior, Display Configuration): open the Plasma page and match it.
 - **Rare or long settings go on a sub-page**, opened by a button named for what it holds
   ("Configure Gaps…"), with a one-line grey summary beside it.
 - **No paragraphs on the page.** An explanation goes in a `Kirigami.ContextualHelpButton`
-  beside its control. A state goes in a banner at the top (`Kirigami.InlineMessage`): kwin-i3
+  beside its control. A sub-page may open with one line saying what it is for, in its header,
+  with the page's help button at its end. A state goes in a banner at the top (`Kirigami.InlineMessage`): kwin-i3
   off, not running, the plugins not loaded.
 
 ## Words
@@ -76,7 +98,8 @@ Behavior, Display Configuration): open the Plasma page and match it.
 ## Accessibility
 
 - **Every control has a name of its own** through its form label, else an `Accessible.name`
-  in full ("Workspace 3 output"). Side labels that only repeat it are `Accessible.ignored`.
+  in full, its row and its column together ("Workspace 3 screen", "Workspace 2 gap between
+  windows"); a main-page checkbox's is its full name. Side labels that only repeat it are `Accessible.ignored`.
 - **Tab reaches every control in reading order.** Fonts, colours and contrast come from
   Kirigami, never hard-coded.
 
@@ -109,6 +132,7 @@ section is all greyed.
 | thing | i3 | the page's word | why |
 |---|---|---|---|
 | a monitor | output | **screen** | Plasma's word; help names i3's directive. The docs keep "output" |
+| a workspace's next screen | `workspace N output A B` | **Else** (the column), **None** | the first connected one is used |
 | window kinds | tiling, floating | **tiling, floating**; actions **Tile, Float** | i3's kinds |
 | on every workspace | sticky | **sticky** | i3's word; Plasma's "all desktops" would be untrue (one screen only) |
 | the window's border | border | **frame** | Plasma's word; "border" is a decoration's size in Plasma |
