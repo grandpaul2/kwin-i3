@@ -1002,10 +1002,10 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   each workspace's own inner and outer gap; the key step, tiling and floating on one row; focus at
   an edge; the hold), Mouse and focus (`mouseWarping` as a checkbox, `tilingDrag`,
   `popupDuringFullscreen`), Workspaces (how new workspaces open (`workspaceLayout`), their split
-  direction, auto back-and-forth, and the Workspaces sub-page), Frame (`tiledLook`, width; the two
+  direction, auto back-and-forth, the Workspaces sub-page, and the Window Rules sub-page), Frame (`tiledLook`, width; the two
   colour classes (§7 L3), a row each with the frame's colour and the next-window side's, the
   latter "same as the frame" when empty; `hideEdgeBorders`; corners; frame on floating windows;
-  greyed without the effect), Window Rules, Keys (the sub-page, and "Use kwin-i3's keys over
+  greyed without the effect), Keys (the sub-page, and "Use kwin-i3's keys over
   Plasma's", below), Plasma (the Plasma Settings sub-page, with
   how many rows differ). **A help button** beside each setting with an
   i3 counterpart (§11's N table): what it does in a sentence or two, then i3's directive ("i3:

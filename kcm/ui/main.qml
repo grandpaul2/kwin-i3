@@ -427,6 +427,14 @@ KCM.SimpleKCM {
                    counts.plasma ? i18np("1 floating", "%1 floating", counts.plasma) : ""].filter(s => s).join(", ")
             onClicked: kcm.push("Workspaces.qml")
         }
+        SubPageButton {
+            Kirigami.FormData.label: i18nc("@label", "Specific windows:")
+            text: i18nc("@action:button", "Configure Window Rules…")
+            readonly property var counts: Logic.ruleCounts(root.settings)
+            summary: i18np("1 rule", "%1 rules", counts.rules + counts.assigns)
+                   + (counts.assigns ? ", " + i18np("1 to a workspace or screen", "%1 to a workspace or screen", counts.assigns) : "")
+            onClicked: kcm.push("WindowRules.qml")
+        }
 
         Item {
             Kirigami.FormData.isSection: true
@@ -557,19 +565,6 @@ KCM.SimpleKCM {
                     toolTipText: i18n("Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
                 }
             }
-        }
-
-        Item {
-            Kirigami.FormData.isSection: true
-            Kirigami.FormData.label: i18nc("@title:group", "Window rules")
-        }
-        SubPageButton {
-            Kirigami.FormData.label: i18nc("@label", "Specific windows:")
-            text: i18nc("@action:button", "Configure Window Rules…")
-            readonly property var counts: Logic.ruleCounts(root.settings)
-            summary: i18np("1 rule", "%1 rules", counts.rules + counts.assigns)
-                   + (counts.assigns ? ", " + i18np("1 to a workspace or screen", "%1 to a workspace or screen", counts.assigns) : "")
-            onClicked: kcm.push("WindowRules.qml")
         }
 
         Item {
