@@ -62,7 +62,10 @@ kept with the `OPEN.md` item that names it.
 
 A `log()` or `note()` is one push into an array, so log decisions and KWin's answers, not loops
 or per-frame work. A temporary trace line goes in a worktree, never in `src/` on main (`make test`
-and `make fuzz` build `src/` as it stands). The sizes: `LOG_KEEP` in `src/log.js`,
+and `make fuzz` build `src/` as it stands). `log()` itself goes out through `callDBus`, so a
+wrapper that logs every `callDBus` must pass the log's own call straight through: one that
+doesn't logs its own logging without end, and the test KWin grows until the kernel kills it.
+Run such a trace under a memory cap (`systemd-run --user --scope -p MemoryMax=3G`). The sizes: `LOG_KEEP` in `src/log.js`,
 `s_eventsKeep` in `plugin/hold.cpp` and `plugin/pointerprobe.cpp`. The pointer's crossings are
 the one per-event cost: each motion runs `findToplevel` again (KWin runs it once already) and
 `FrameFocus::decide`, two walks of the stacking order; a line only at a crossing. Tests: `70-capture` (the dump and the log), `80-capture-hold`
