@@ -1,5 +1,5 @@
 #pragma once
-// The Keys sub-page's model: one row per command,
+// The Keys tab's model: one row per command,
 // each with the one to three kwin-i3 actions that are its keys. Edits are pending until save().
 // A key another shortcut also holds is set all the same: which of the two runs is the key
 // override's (keysOverride, plugin/keyoverride.h), never a key taken from its holder.

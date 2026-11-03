@@ -139,14 +139,14 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    paths, only at login. kwin-i3 is running when your windows tile; its settings are in System
    Settings > Window Management.
 4. **Plasma's settings and your keys**: System Settings > Window Management > kwin-i3 says "Some
-   of Plasma's settings work against kwin-i3"; **Review…** lists them, each with what Plasma does,
+   of Plasma's settings work against kwin-i3"; **Review…** opens its Plasma tab, which lists them, each with what Plasma does,
    what kwin-i3 needs instead, and why: focus follows mouse with no delay (under click to focus,
    the frame moves only when you click); each screen switching workspaces alone (with it off, a
    workspace switch changes every monitor); no tiling or maximizing at screen edges; Meta+T freed
    from Plasma's tile editor; Meta and a drag focusing the window it moves; and, optional,
    window animations set to None (opening and closing, maximizing, minimizing, full screen and
    desktop switching; i3 has none; the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each one you
-   want (or press **Defaults**, which ticks them all), then **Apply**, the
+   want (or press **Pick kwin-i3's for All**, which ticks all but the optional), then **Apply**, the
    same as changing them in System Settings. kwin-i3 keeps what each was: untick it and Apply to
    put it back (one you changed since stays as you set it). The last row, **On a key conflict,
    kwin-i3's key wins**, is for the keys kwin-i3 shares with Plasma's shortcuts (Meta+arrows for
@@ -156,8 +156,8 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    kwin-i3's command, and Plasma's shortcuts are left as they are (untick it and they run again;
    the Overview stays on the screen's top-left corner and Grid View on Meta+G). It needs the
    plugins.
-   **With two or more monitors**, give each workspace its screen too (the main page's
-   **Configure Workspaces…**): when a monitor goes away, unplugged or only for a moment (a cable,
+   **With two or more monitors**, give each workspace its screen too (the
+   **Workspaces** tab): when a monitor goes away, unplugged or only for a moment (a cable,
    a monitor waking), its workspaces move to another for good, as in i3. A workspace given a screen,
    with the other as its second, moves back when its screen returns.
 5. **A terminal on Meta+Return**: kwin-i3 opens your default terminal (System Settings > Default
@@ -216,11 +216,14 @@ window once.
 
 ### The settings page
 
-kwin-i3's own page in System Settings > Window Management: every setting a user would change (internal values stay in kwinrc), laid out as Plasma's
-pages are, and **Keys…**, where kwin-i3's keys are rebound in one list instead of KWin's. A key
-another shortcut also holds is set all the same: which of the two runs is the key override's
-(Plasma Settings, "On a key conflict, kwin-i3's key wins"). Apply takes effect at once, with or
-without the plugins.
+kwin-i3's own page in System Settings > Window Management: every setting a user would change
+(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: Tiling, Mouse & Focus,
+Workspaces, Window Rules, Frame, **Keys** (kwin-i3's keys rebound in one list instead of KWin's)
+and **Plasma** (Plasma's own settings kwin-i3 works best with). A key another shortcut also holds
+is set all the same: which of the two runs is the key override's (the Plasma tab, "On a key
+conflict, kwin-i3's key wins"). Apply takes effect at once, with or without the plugins.
+**Defaults** resets only the tab shown: kwin-i3's settings to their defaults, or, on the Plasma
+tab, Plasma's settings back to what they were before kwin-i3 changed them.
 
 `make kcm-install` builds it (needs `kf6-kcmutils-devel` and `kf6-ki18n-devel`) and puts it in
 `~/.local/lib/kwin-i3/kcm-plugins`, with `~/.config/environment.d/kwin-i3.conf` adding that to the

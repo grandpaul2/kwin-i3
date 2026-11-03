@@ -8,7 +8,7 @@
                                     its label's), no two alike, no empty heading; prints each
                                     failure, status 1 if any
   a11y.py box APP PAGE NAME         scroll NAME into view; print its centre "x y", window coords
-                                    (PAGE "-": anywhere in the app, as the shell's Navigate Back)
+                                    (PAGE "-": anywhere in the app, as the shell's Apply)
   a11y.py focused APP               the name of the control with the keyboard focus
   a11y.py focus APP PAGE NAME       give NAME the keyboard focus (no click: a click opens a combo box)
   a11y.py names APP PAGE            every control's name, one per line, in tree order
@@ -26,7 +26,7 @@ gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi  # noqa: E402
 
 CONTROLS = {"push button", "button", "check box", "radio button", "combo box", "spin button",
-            "toggle button", "slider", "text", "color chooser"}
+            "toggle button", "slider", "text", "color chooser", "page tab"}
 S = Atspi.StateType
 
 
@@ -97,8 +97,9 @@ def controls(app):
 
 
 def page(app, title):
-    """The page titled TITLE: kcmshell6 puts each page (the main one, a pushed sub-page) in a panel
-    named for its title, and keeps the main page in the tree under a sub-page."""
+    """The page titled TITLE: kcmshell6 puts the module in a panel named for it ("kwin-i3", the
+    banners and the tab bar), and each tab's page in a panel named for the tab, showing while it is
+    the tab shown."""
     for _ in range(50):
         for a, _ in walk(app):
             if a.get_role_name() == "panel" and a.get_name() == title and has(a, S.SHOWING):
@@ -232,7 +233,8 @@ def fixed(app, a):
 def box(app, n):
     a = find(app, n)
     h = viewport(app)
-    if not in_view(a, h) and has(a, S.SHOWING) and fixed(app, a):
+    # A tab sits in the tab bar above every page's scroller: never scrolled.
+    if a.get_role_name() == "page tab" or (not in_view(a, h) and has(a, S.SHOWING) and fixed(app, a)):
         h = (-100000, 100000)
     if not in_view(a, h):
         # The page's vertical scroll bar, set through its value (0-100) until the control is in

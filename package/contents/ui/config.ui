@@ -11,7 +11,7 @@
    <item>
     <widget class="QLabel" name="applyHint">
      <property name="text">
-      <string>With the kwin-i3 plugins installed, Apply takes effect at once. Without them, press Meta+Shift+C after Apply.</string>
+      <string>System Settings > Window Management > kwin-i3 is the full page: there, Defaults resets one tab; here it resets every setting. With the kwin-i3 plugins installed, Apply takes effect at once. Without them, press Meta+Shift+C after Apply.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

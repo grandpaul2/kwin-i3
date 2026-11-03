@@ -68,9 +68,9 @@ check "enabled in kwinrc"                   test "$(kreadconfig6 --file kwinrc -
 check "the warning goes"                    poll not_looks on 600 94 $WARN
 check "kwin-i3 tiles the page"              wait_geom kwin-i3 "0,0 1280x720"
 
-# 2. Keys: the sub-page, from its button.
-click_named kwin-i3 "Configure Keys…"
-sleep 0.5                                   # the sub-page slides in
+# 2. Keys: its tab.
+click_named kwin-i3 "Keys"
+sleep 0.5
 shot keys
 # A shifted symbol is named by its keys beside its button:
 # Move right's Meta+: gets "Meta+Shift+;", Focus right's Meta+; nothing.
@@ -79,8 +79,15 @@ inked() {   # inked <shot> <x1> <y1> <x2> <y2>: pixels clearly not the white bac
 a = sys.argv; img = Image.open(a[1]).convert("RGB")
 print(sum(1 for x in range(int(a[2]), int(a[4])) for y in range(int(a[3]), int(a[5])) if sum(img.getpixel((x, y))) < 600))' "$KI3_TMP/$1.png" "$2" "$3" "$4" "$5"
 }
-check "Meta+: is named Meta+Shift+; beside it" test "$(inked keys 705 545 775 562)" -gt 30
-check "Meta+; has no name beside it"        test "$(inked keys 705 271 775 288)" -eq 0
+# beside_key <slot's name> <shot>: ink in the band right of a key's button, on its row: the
+# row found (and scrolled into view) by its name, the band where the name beside it would be.
+beside_key() {
+    local xy cx cy; xy=$($A11Y box kcmshell6 Keys "$1") || { echo -1; return; }
+    read -r cx cy <<<"$xy"; sleep 0.3; shot "$2"
+    inked "$2" 705 $((wy + cy - 8)) 775 $((wy + cy + 9))
+}
+check "Meta+: is named Meta+Shift+; beside it" test "$(beside_key "Move window right, key 2: Meta+:" keys-move)" -gt 30
+check "Meta+; has no name beside it"        test "$(beside_key "Focus right, key 2: Meta+;" keys-focus)" -eq 0
 # Focus left's second key (Meta+J) becomes Meta+Alt+J, free; Focus up's second (Meta+L) becomes
 # Meta+Alt+E, which the stand-in also holds: set all the same, with no note, and the stand-in keeps
 # it (which of the two runs is the key override's, Plasma Settings; nothing is taken).
@@ -109,7 +116,7 @@ check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus U
 #    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
 #    with no plugin loaded. Each control's help button is the next Tab stop after it, as on
 #    Plasma's own pages.
-click_named - "Navigate Back"; sleep 0.5
+click_named kwin-i3 "Tiling"; sleep 0.5
 shot main
 click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
@@ -129,14 +136,18 @@ check "the gap is on screen"                wait_geom kwin-i3 "9,9 1262x702"   #
 sleep 1
 check "one reload for one Apply"            test "$(after "$m" | grep -c '^.\{9\}SETTINGS ')" == 1
 
-# 4. Defaults, Apply: the page's entries leave kwinrc (absent = default), the keys are the
-#    defaults again, and the gap goes. The window is 8 px in now, so are its buttons. Last:
-#    this also clears the test KWin's debugLog, and with it kwin-i3's log.
+# 4. Defaults resets the tab shown: on Tiling, its entries leave kwinrc (absent = default) and the
+#    gap goes, the keys untouched; on Keys, the keys are the defaults again. The window is 8 px in
+#    now, so are its buttons. debugLog is on no tab: Defaults leaves it.
 shot before-defaults
 click_named - Defaults; click_named - Apply
 check "gapsInner gone from kwinrc"          poll conf_is gapsInner ""
 check "focusWrapping gone"                  conf_is focusWrapping ""
-check "Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
+check "  the keys untouched"                test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $MAJ 0 0 0"
+check "  debugLog untouched"                conf_is debugLog true
+click_named kwin-i3 "Keys"; sleep 0.5
+click_named - Defaults; click_named - Apply
+check "Keys: Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
 check "Focus Up (L) is Meta+L again"        test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $((0x1000004C)) 0 0 0"
 check "the default gap (2, none more at the edge)" wait_geom kwin-i3 "3,3 1274x714"
 check "no invariant failures or errors"     clean_log

@@ -1,7 +1,7 @@
 // kcm_kwin_i3: kwin-i3's page in System Settings > Window Management.
 // The settings are the script's own (main.xml, kwinrc [Script-kwin-i3]); Apply writes them and
 // asks KWin to reconfigure, which reaches the script and the plugins, so it takes effect with or
-// without the plugins. The keys are on a sub-page (keys.cpp).
+// without the plugins. The keys are on the Keys tab (keys.cpp).
 
 #include "keys.h"
 #include "setup.h"
@@ -20,8 +20,89 @@
 #include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QDBusVariant>
+#include <QMetaProperty>
 #include <QQmlEngine>
+#include <QRegularExpression>
 #include <QTimer>
+
+#include <memory>
+
+// The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
+// what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
+enum Tab { TilingTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab, PlasmaTab };
+
+// Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
+// the rest Window Rules'. debugLog, holdTimeoutMs (internal) and floatingWorkspaces (read into
+// rules) are on no tab, so Defaults never touches them.
+static QStringList tabKeys(int tab)
+{
+    switch (tab) {
+    case TilingTab:
+        return {QStringLiteral("gapsInner"), QStringLiteral("gapsOuter"), QStringLiteral("gapsTop"), QStringLiteral("gapsRight"),
+                QStringLiteral("gapsBottom"), QStringLiteral("gapsLeft"), QStringLiteral("smartGaps"), QStringLiteral("workspaceGaps"),
+                QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusWrapping"), QStringLiteral("holdEnabled")};
+    case MouseTab:
+        return {QStringLiteral("mouseWarping"), QStringLiteral("tilingDrag"), QStringLiteral("popupDuringFullscreen")};
+    case WorkspacesTab:
+        return {QStringLiteral("workspaceLayout"), QStringLiteral("defaultOrientation"), QStringLiteral("workspaceAutoBackAndForth"),
+                QStringLiteral("workspaceOutputs")};
+    case RulesTab:
+        return {QStringLiteral("assign"), QStringLiteral("floatingMinimumSize"), QStringLiteral("floatingMaximumSize")};
+    case FrameTab:
+        return {QStringLiteral("tiledLook"), QStringLiteral("frameWidth"), QStringLiteral("frameActive"), QStringLiteral("frameInactive"),
+                QStringLiteral("frameIndicatorActive"), QStringLiteral("frameIndicatorInactive"), QStringLiteral("hideEdgeBorders"),
+                QStringLiteral("roundedCorners"), QStringLiteral("frameOnFloating")};
+    case KeysTab:
+        return {QStringLiteral("endSession")};
+    case PlasmaTab:
+        return {QStringLiteral("keysOverride")};      // off: Plasma's shortcuts keep shared keys
+    }
+    return {};
+}
+
+// The rules of a forWindow text, as ui/settings.js splitRules (and the script's src/rules.js): a
+// line or a ';' outside quotes ends a rule; trimmed, empty ones dropped.
+static QStringList splitRules(const QString &text)
+{
+    QStringList out;
+    QString cur;
+    bool quoted = false;
+    for (int i = 0; i < text.size(); ++i) {
+        const QChar c = text.at(i);
+        if (c == QLatin1Char('\\') && quoted && i + 1 < text.size()) {
+            cur += c;
+            cur += text.at(++i);
+            continue;
+        }
+        if (c == QLatin1Char('"'))
+            quoted = !quoted;
+        if (c == QLatin1Char('\n') || c == QLatin1Char('\r')) {
+            out << cur;
+            cur.clear();
+            quoted = false;
+            continue;
+        }
+        if (c == QLatin1Char(';') && !quoted) {
+            out << cur;
+            cur.clear();
+            continue;
+        }
+        cur += c;
+    }
+    out << cur;
+    QStringList kept;
+    for (const QString &r : std::as_const(out))
+        if (!r.trimmed().isEmpty())
+            kept << r.trimmed();
+    return kept;
+}
+
+// A workspace's floating rule, the Workspaces tab's (settings.js floatingWorkspaceList).
+static bool workspaceRule(const QString &rule)
+{
+    static const QRegularExpression re(QStringLiteral(R"(^\[workspace="\^[0-9]+\$"\]\s*floating\s+enable$)"));
+    return re.match(rule).hasMatch();
+}
 
 class KWinI3Kcm : public KQuickManagedConfigModule
 {
@@ -35,11 +116,15 @@ class KWinI3Kcm : public KQuickManagedConfigModule
     Q_PROPERTY(bool helperLoaded MEMBER m_helperLoaded NOTIFY stateChanged)
     Q_PROPERTY(bool frameAvailable MEMBER m_frameAvailable NOTIFY stateChanged)
     Q_PROPERTY(bool canSuspend MEMBER m_canSuspend NOTIFY stateChanged)
+    Q_PROPERTY(int currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged)
 
 public:
     KWinI3Kcm(QObject *parent, const KPluginMetaData &data)
         : KQuickManagedConfigModule(parent, data)
-        , m_settings(new KWinI3Settings(this))
+        // Not a child of the module: a managed module folds every child skeleton's isDefaults()
+        // into the Defaults button, which here answers for the tab shown (kcmutils 6.31
+        // kquickmanagedconfigmodule.cpp:17-23, :74-91). Its load, save and signals by hand.
+        , m_settings(new KWinI3Settings(nullptr))
         , m_keys(new KeysModel(this))
         , m_setup(new SetupModel(m_keys, this))
     {
@@ -47,17 +132,32 @@ public:
         qmlRegisterAnonymousType<KeysModel>("org.kde.kwini3", 1);
         qmlRegisterAnonymousType<SetupModel>("org.kde.kwini3", 1);
         setButtons(Apply | Default);
+        // Every setting's change re-asks Apply's and Defaults' state, as registerSettings does.
+        const QMetaObject *mo = m_settings->metaObject();
+        const QMetaMethod changed = metaObject()->method(metaObject()->indexOfMethod("settingsChanged()"));
+        for (int i = mo->propertyOffset(); i < mo->propertyCount(); ++i)
+            if (mo->property(i).hasNotifySignal())
+                connect(m_settings.get(), mo->property(i).notifySignal(), this, changed);
         connect(m_keys, &KeysModel::changed, this, &KWinI3Kcm::settingsChanged);
         connect(m_setup, &SetupModel::edited, this, &KWinI3Kcm::settingsChanged);
     }
 
-    KWinI3Settings *settings() const { return m_settings; }
+    KWinI3Settings *settings() const { return m_settings.get(); }
+    int currentTab() const { return m_tab; }
+    void setCurrentTab(int tab)
+    {
+        if (tab == m_tab)
+            return;
+        m_tab = tab;
+        Q_EMIT currentTabChanged();
+        settingsChanged();      // Defaults greys or not for the tab now shown
+    }
     KeysModel *keys() const { return m_keys; }
     SetupModel *setup() const { return m_setup; }
 
     void load() override
     {
-        KQuickManagedConfigModule::load();
+        m_settings->load();
         refresh();
     }
 
@@ -65,7 +165,7 @@ public:
     {
         // Keys take effect in kglobalaccel; only a setting needs KWin to re-read kwinrc.
         const bool settings = m_settings->isSaveNeeded();
-        KQuickManagedConfigModule::save();
+        m_settings->save();
         m_keys->save();
         m_setup->save();
         m_setup->load();
@@ -78,11 +178,30 @@ public:
         settingsChanged();
     }
 
+    // The tab shown, and only it: Plasma's back to Plasma, kwin-i3's to its defaults.
     void defaults() override
     {
-        KQuickManagedConfigModule::defaults();
-        m_keys->defaults();
-        m_setup->defaults();
+        for (const QString &key : tabKeys(m_tab))
+            setDefault(key);
+        const QStringList rules = splitRules(m_settings->forWindow());
+        if (m_tab == WorkspacesTab) {           // no workspace floats
+            QStringList kept;
+            for (const QString &r : rules)
+                if (!workspaceRule(r))
+                    kept << r;
+            setForWindow(kept);
+        } else if (m_tab == RulesTab) {         // the shipped rules, the workspaces' kept
+            QStringList out = splitRules(m_settings->defaultForWindowValue());
+            for (const QString &r : rules)
+                if (workspaceRule(r))
+                    out << r;
+            setForWindow(out);
+        } else if (m_tab == KeysTab) {
+            m_keys->defaults();
+        } else if (m_tab == PlasmaTab) {
+            m_setup->givePlasmaBack();
+        }
+        settingsChanged();
     }
 
     // The script is off: turn it on (as KWin Scripts' checkbox does) and have KWin load it.
@@ -97,7 +216,7 @@ public:
         QTimer::singleShot(1000, this, &KWinI3Kcm::refresh);
     }
 
-    // A setting's default as main.xml has it: the Window Rules sub-page marks default entries.
+    // A setting's default as main.xml has it: the Window Rules tab marks default entries.
     Q_INVOKABLE QVariant defaultValue(const QString &key) const
     {
         const KConfigSkeletonItem *item = m_settings->findItem(key);
@@ -105,7 +224,7 @@ public:
     }
 
     // The installed applications, by name, each with the window class its windows have (the
-    // Window Rules sub-page's application chooser): a Wayland app id is its desktop file's name;
+    // Window Rules tab's application chooser): a Wayland app id is its desktop file's name;
     // an X11 window's class is the StartupWMClass, which KWin reads lowercased. One entry per
     // class, sorted by name.
     Q_INVOKABLE QVariantList applications() const
@@ -134,7 +253,7 @@ public:
         return out;
     }
 
-    // Pick a Window (the Window Rules sub-page): KWin's interactive selection, as Window Rules'
+    // Pick a Window (the Window Rules tab): KWin's interactive selection, as Window Rules'
     // Detect Window Properties uses it (dbusinterface.cpp queryWindowInfo). The user clicks a
     // window; its class, name, role and title come back, or nothing (Escape, or a window KWin
     // doesn't manage).
@@ -190,12 +309,59 @@ public:
 
 Q_SIGNALS:
     void stateChanged();
+    void currentTabChanged();
     void windowPicked(const QVariantMap &info);
     void windowPickFailed(const QString &error);
 
 private:
-    bool isSaveNeeded() const override { return m_keys->isSaveNeeded() || m_setup->isSaveNeeded(); }
-    bool isDefaults() const override { return m_keys->isDefaults() && m_setup->isDefaults(); }
+    bool isSaveNeeded() const override { return m_settings->isSaveNeeded() || m_keys->isSaveNeeded() || m_setup->isSaveNeeded(); }
+    // The tab shown at its defaults (as defaults() makes it).
+    bool isDefaults() const override
+    {
+        for (const QString &key : tabKeys(m_tab)) {
+            const KConfigSkeletonItem *item = m_settings->findItem(key);
+            if (item && !item->isDefault())
+                return false;
+        }
+        const QStringList rules = splitRules(m_settings->forWindow());
+        if (m_tab == WorkspacesTab)
+            return std::none_of(rules.begin(), rules.end(), workspaceRule);
+        if (m_tab == RulesTab) {
+            QStringList others;
+            for (const QString &r : rules)
+                if (!workspaceRule(r))
+                    others << r;
+            return others == splitRules(m_settings->defaultForWindowValue());
+        }
+        if (m_tab == KeysTab)
+            return m_keys->isDefaults();
+        if (m_tab == PlasmaTab)
+            return m_setup->isPlasmaBack();
+        return true;
+    }
+
+    // A setting to its default through its property, so the page's bindings and the change
+    // signal see it.
+    void setDefault(const QString &key)
+    {
+        KConfigSkeletonItem *item = m_settings->findItem(key);
+        if (!item)
+            return;
+        QString name = item->name();
+        name[0] = name[0].toLower();
+        const QMetaObject *mo = m_settings->metaObject();
+        const int i = mo->indexOfProperty(name.toUtf8().constData());
+        if (i >= 0)
+            mo->property(i).write(m_settings.get(), item->getDefault());
+    }
+    // The shipped rules as the default's own text, so the key leaves kwinrc as any default does.
+    void setForWindow(const QStringList &rules)
+    {
+        if (splitRules(m_settings->forWindow()) == rules)
+            return;
+        const QString def = m_settings->defaultForWindowValue();
+        m_settings->setForWindow(rules == splitRules(def) ? def : rules.join(QLatin1Char('\n')));
+    }
 
     static void reconfigure()
     {
@@ -203,7 +369,8 @@ private:
             QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
     }
 
-    KWinI3Settings *m_settings;
+    std::unique_ptr<KWinI3Settings> m_settings;
+    int m_tab = TilingTab;
     KeysModel *m_keys;
     SetupModel *m_setup;
     bool m_scriptEnabled = false;

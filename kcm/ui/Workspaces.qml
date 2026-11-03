@@ -1,4 +1,5 @@
-// The Workspaces sub-page: each workspace's
+// The Workspaces tab: new workspaces' layout and split direction (workspaceLayout,
+// defaultOrientation), back and forth (workspaceAutoBackAndForth); then each workspace's
 // monitors in order (workspaceOutputs, "1=DP-4 HDMI-A-1": the first connected one is used, as
 // i3's workspace N output A B), and whether its new windows open floating (the rule
 // [workspace="^N$"] floating enable in forWindow, as the old floatingWorkspaces is read), one
@@ -79,10 +80,70 @@ KCM.SimpleKCM {
         }
     }
 
+    readonly property real workspacesColumn: Math.max(workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth)
     readonly property real screenWidth: Kirigami.Units.gridUnit * 13
     readonly property real newWidth: Kirigami.Units.gridUnit * 7
 
     Kirigami.FormLayout {
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "New workspaces:")
+            Kirigami.FormData.buddyFor: workspaceLayoutBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: workspaceLayoutBox
+                columnWidth: page.workspacesColumn
+                settingName: "workspaceLayout"
+                model: [
+                    { text: i18nc("@item:inlistbox", "Split"), value: "default" },
+                    { text: i18nc("@item:inlistbox", "Tabbed"), value: "tabbed" },
+                    { text: i18nc("@item:inlistbox", "Stacked"), value: "stacking" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "new workspaces")
+                toolTipText: i18n("How the windows of a workspace made from now on are arranged: split, or one group shown as tabs or as stacked rows. A layout key changes it later. i3: workspace_layout")
+            }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "Split direction:")
+            Kirigami.FormData.buddyFor: orientationBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: orientationBox
+                columnWidth: page.workspacesColumn
+                settingName: "defaultOrientation"
+                model: [
+                    { text: i18nc("@item:inlistbox", "By screen shape"), value: "auto" },
+                    { text: i18nc("@item:inlistbox", "Side by side"), value: "horizontal" },
+                    { text: i18nc("@item:inlistbox", "Top to bottom"), value: "vertical" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "the split direction")
+                toolTipText: i18n("Which way a new workspace's windows split. By screen shape: top to bottom on a screen taller than wide, side by side otherwise. i3: default_orientation")
+            }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Workspace back and forth:")
+            Kirigami.FormData.buddyFor: backAndForthBox
+            spacing: Kirigami.Units.smallSpacing
+            Tick {
+                id: backAndForthBox
+                name: i18nc("@option:check", "Repeat a workspace key to go back and forth")
+                checked: page.settings.workspaceAutoBackAndForth
+                onToggled: page.settings.workspaceAutoBackAndForth = checked
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceAutoBackAndForth" }
+            }
+            Help {
+                topic: i18nc("@item help topic", "back and forth")
+                toolTipText: i18n("Pressing the key of the current workspace goes to the previous one. i3: workspace_auto_back_and_forth")
+            }
+        }
+
+        Item {
+            Kirigami.FormData.isSection: true
+            Kirigami.FormData.label: i18nc("@title:group", "Each workspace")
+        }
         // The columns' headings, over the boxes as the Plasma Settings page's.
         RowLayout {
             spacing: Kirigami.Units.smallSpacing

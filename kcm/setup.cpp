@@ -381,7 +381,7 @@ void SetupModel::setWanted(const QString &id, bool on)
     Q_EMIT edited();
 }
 
-void SetupModel::defaults()
+void SetupModel::pickKwinI3()
 {
     for (const QVariant &v : std::as_const(m_rows)) {
         const QVariantMap row = v.toMap();
@@ -392,12 +392,29 @@ void SetupModel::defaults()
     Q_EMIT edited();
 }
 
-bool SetupModel::isDefaults() const
+// A row kwin-i3 changed goes back to Plasma; one it didn't change is Plasma's already, whichever
+// column it shows (a setting that happens to be kwin-i3's value is the reader's own).
+void SetupModel::givePlasmaBack()
+{
+    for (const QVariant &v : std::as_const(m_rows)) {
+        const QVariantMap row = v.toMap();
+        const QString id = row.value(QStringLiteral("id")).toString();
+        if (id != QLatin1String("keys"))
+            m_wanted[id] = row.value(QStringLiteral("changed")).toBool() ? false : m_initial.value(id);
+    }
+    Q_EMIT changed();
+    Q_EMIT edited();
+}
+
+bool SetupModel::isPlasmaBack() const
 {
     for (const QVariant &v : m_rows) {
         const QVariantMap row = v.toMap();
-        if (!row.value(QStringLiteral("optional")).toBool() && row.value(QStringLiteral("id")) != QLatin1String("keys")
-            && !m_wanted.value(row.value(QStringLiteral("id")).toString()).toBool())
+        const QString id = row.value(QStringLiteral("id")).toString();
+        if (id == QLatin1String("keys"))
+            continue;
+        const QVariant want = row.value(QStringLiteral("changed")).toBool() ? QVariant(false) : m_initial.value(id);
+        if (m_wanted.value(id) != want)
             return false;
     }
     return true;

@@ -1,5 +1,5 @@
 #pragma once
-// The Plasma Settings sub-page's model (docs/plan.md, "Install and first run"): the Plasma
+// The Plasma tab's model (docs/plan.md, "Install and first run"): the Plasma
 // settings kwin-i3 is designed around, each with Plasma's value now and the one kwin-i3 would
 // set. A row's tick is a pending edit like any setting on the page: the page's Apply makes it
 // (ticked: kwin-i3's value; unticked where kwin-i3 changed it: Plasma's given back), Reset drops
@@ -38,9 +38,13 @@ public:
     Q_INVOKABLE void setWanted(const QString &id, bool on);
     // The page's Apply, Defaults; whether the ticks differ from Plasma, or from kwin-i3's.
     void save();
-    void defaults();
+    // Defaults on the Plasma tab: every row kwin-i3 changed to the Plasma column (Apply gives back
+    // what Plasma had before), the rest as they are.
+    void givePlasmaBack();
+    bool isPlasmaBack() const;
+    // The tab's "Pick kwin-i3's for All": kwin-i3's column on every row but the optional.
+    Q_INVOKABLE void pickKwinI3();
     bool isSaveNeeded() const { return m_wanted != m_initial; }
-    bool isDefaults() const;
 
     struct Change {
         QString file, group, key, value;

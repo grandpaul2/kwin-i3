@@ -1,4 +1,4 @@
-// The Keys sub-page: kwin-i3's commands, grouped,
+// The Keys tab: kwin-i3's commands, grouped,
 // each with its keys. Changes wait for Apply; a key another shortcut holds says so in its row.
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -67,7 +67,7 @@ KCM.ScrollViewKCM {
                             text: row.setting === "" ? row.label : i18nc("@label:listbox command", "%1:", row.label)
                             elide: Text.ElideRight
                         }
-                        // docs/style-settings-page.md, "The Keys sub-page"; only End session's so far.
+                        // docs/style-settings-page.md, "The Keys tab"; only End session's so far.
                         Loader {
                             active: row.setting !== ""
                             visible: active

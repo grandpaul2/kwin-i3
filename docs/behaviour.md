@@ -283,7 +283,7 @@ kwin-i3: none is handled.
 the output's name. i3's workspaces live on outputs the same way; the differences are in the rows.
 Per-output workspaces need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
 reports when it is off with two or more outputs and sets it only on the user's yes, on the
-settings page's Plasma Settings sub-page (§11).
+settings page's Plasma tab (§11).
 
 **=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
@@ -747,7 +747,7 @@ them (`TAKEN`, §13); a holder that launches what the kwin-i3 action launches (K
 `_launch` on Meta+D, the default terminal's on Meta+Return) is logged apart (`TAKEN-SAME`), not
 as shared: both fire the same thing.
 
-**The key override** (`keysOverride`; the Plasma Settings sub-page's "On a key conflict,
+**The key override** (`keysOverride`; the Plasma tab's "On a key conflict,
 kwin-i3's key wins"). i3 grabs its own bound keys (`bindings.c:155`), so its binding runs whatever
 else wants the key; here that is behind a setting, off by default, reason (e): another
 component's shortcut stays its own until the user chooses kwin-i3's (`plan.md`). While on, every key one of kwin-i3's actions holds
@@ -757,7 +757,7 @@ action on the press and lets the press on with its key changed to one no shortcu
 kglobalacceld runs nothing and its modifier-only state resets (Meta alone, the launcher, doesn't
 fire on Meta's release, probe 92); a filter right after takes that press, its repeats and its
 release, so no window sees them. kwin-i3's keys are the ones kglobalaccel holds for its actions now
-(a key bound on the Keys sub-page, a layout refit), read again when a layout fit ends, on KWin's
+(a key bound on the Keys tab, a layout refit), read again when a layout fit ends, on KWin's
 reconfigure and when the page applies keys. Not while a window inhibits shortcuts (as KWin's own
 filter), nor during Alt+Tab or the lock screen (their filters come first). An action gone (kwin-i3
 unloaded) takes no key. Without the helper there is no override: a shared key runs its first
@@ -1005,50 +1005,48 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 
 `kcm/`, `docs/style-settings-page.md` for how it looks and reads.
 
-- **Banners**: kwin-i3 off (with Turn On, which enables it and reconfigures); on but not running
-  (pointing at the journal); running without the plugins (one banner for either: what goes
-  without them, §13); while a Plasma setting kwin-i3 needs differs
-  (the Plasma Settings sub-page's unticked-by-default rows aside), "Some of Plasma's settings work
-  against kwin-i3", with Review… to that sub-page.
-- **Main page**, worded and laid out by the style guide (each checkbox's name its row's
-  label, the box marked "(recommended)" (the hold, the pointer, kwin-i3's keys) or "(optional)",
-  its full name its screen reader name): Tiling (gaps, with
-  **Configure Gaps…** under them: a sub-page with the outer gap per screen edge, `smartGaps`, and
-  each workspace's own inner and outer gap; the key step, tiling and floating on one row; focus at
-  an edge; the hold), Mouse and focus (`mouseWarping` as a checkbox, `tilingDrag`,
-  `popupDuringFullscreen`), Workspaces (how new workspaces open (`workspaceLayout`), their split
-  direction, auto back-and-forth, the Workspaces sub-page, and the Window Rules sub-page), Frame (`tiledLook`, width; the two
-  colour classes (§7 L3), a row each with the frame's colour and the next-window side's, the
-  latter "same as the frame" when empty; `hideEdgeBorders`; corners; frame on floating windows;
-  greyed without the effect), Keys (the sub-page), Plasma (the Plasma Settings sub-page, with
-  how many rows differ). **A help button** beside each setting with an
-  i3 counterpart (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
-  focus_wrapping"); the sub-pages' help names theirs. Each is the next Tab stop after its
-  control, as on Plasma's pages.
-- **Workspaces sub-page**: for each of the ten, its outputs in order (the page says screens) (the first, and a second
+- **Banners**, above the tabs: kwin-i3 off (with Turn On, which enables it and reconfigures); on
+  but not running (pointing at the journal); running without the plugins (one banner for either:
+  what goes without them, §13); while a Plasma setting kwin-i3 needs differs (the Plasma tab's
+  unticked-by-default rows aside), "Some of Plasma's settings work against kwin-i3", with
+  Review… to the Plasma tab.
+- **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
+  checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
+  "(optional)", its full name its screen reader name): **Tiling** (the gaps, the key step, tiling
+  and floating, focus at an edge, the hold; then the outer gap per screen edge, `smartGaps`, and
+  each workspace's own inner and outer gap), **Mouse & Focus** (`mouseWarping` as a checkbox,
+  `tilingDrag`, `popupDuringFullscreen`), **Workspaces** (how new workspaces open
+  (`workspaceLayout`), their split direction, auto back-and-forth; then each workspace's screens
+  and new windows), **Window Rules**, **Frame** (`tiledLook`, width; the two colour classes (§7
+  L3), a row each with the frame's colour and the next-window side's, the latter "same as the
+  frame" when empty; `hideEdgeBorders`; corners; frame on floating windows; greyed without the
+  effect), **Keys**, **Plasma**. **A help button** beside each setting with an i3 counterpart
+  (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
+  focus_wrapping"). Each is the next Tab stop after its control, as on Plasma's pages.
+- **Workspaces tab**, each workspace: for each of the ten, its outputs in order (the page says screens) (the first, and a second
   used when the first isn't connected; any, a connected one, or a stored one listed as not
   connected; a longer list in kwinrc keeps its tail) and new windows tiling or floating (the
   rule `[workspace="^N$"] floating enable` in `forWindow`).
-- **Window Rules sub-page**: one box per rule of `forWindow` and `assign`, in the order the
+- **Window Rules tab**: one box per rule of `forWindow` and `assign`, in the order the
   script runs them, in a framed list with a line between rules, every box the same: its
   application and what it does (floats, tiles, opens on workspace N, opens on output X) on the
   first line, its title and role (a pattern each) and window type always on the second. The
   shipped rules, when they run first, are a list of their own ("Defaults") above "Your rules",
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
   with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
-  window picker: a rule with the clicked window's class, matched whole) sit in the page's
+  window picker: a rule with the clicked window's class, matched whole) sit in the tab's
   footer, always in view; a new rule scrolls into view with its application box focused. Below, the floating sizes (`floatingMinimumSize`,
   `floatingMaximumSize`). `floatingWorkspaces` becomes rules when the page reads it, as the
   script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
   the key out of kwinrc.
-- **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
+- **Keys tab**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key another component also holds is set all the same, with no note (which runs is the key
   override's, §8 "Shared keys"); Apply asks the helper to read kwin-i3's keys again; a
   shifted symbol appears with the keys that type it on the current layout; End session's row has
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
-- **Plasma Settings sub-page** (the first-run step, `plan.md` "Install and first run";
-  `kcm/setup.cpp`; also from the main page's Plasma section): Plasma's own settings that matter
+- **Plasma tab** (the first-run step, `plan.md` "Install and first run"; `kcm/setup.cpp`):
+  Plasma's own settings that matter
   to tiling, shown for convenience, every one always: two columns of checkboxes, "Plasma" and
   "kwin-i3 (recommended)", ticking one unticking the other, the one ticked being where the
   setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
@@ -1063,21 +1061,27 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   optional, the window animations set to None (Plasma's Animations page: every effect of the
   open/close, maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`,
   and unloaded; the global speed untouched); and the key override (§8, "Shared keys"), a setting
-  of kwin-i3's own shown as this page's last row, its boxes writing `keysOverride` (greyed without
+  of kwin-i3's own shown as this tab's last row, its boxes writing `keysOverride` (greyed without
   the plugins; its line lists the keys Plasma's shortcuts run instead while it is off). Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
   `~/.local/state/kwin-i3/plasma-settings.json`, Meta+T's in `taken-keys.json`; KWin
-  reconfigured), **Reset** drops it, **Defaults** ticks every row but the optional and the key override (off, its default). Unticked where
+  reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3 changed to
+  the Plasma column, the others as they are, the key override off), **Pick kwin-i3's for All**
+  ticks every row but the optional, and the key override where the plugins run. Unticked where
   kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
   kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
   puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make
   uninstall` gives all of it back (`tools/plasma-settings.py`, `tools/take-keys.py`). A stock
   default is read from the installed `kwin.kcfg`, so 6.7's and 6.8's stock window actions are
-  each read right. Opening the sub-page reads Plasma and kwin-i3's keys again, unless the page
+  each read right. Showing the tab reads Plasma and kwin-i3's keys again, unless the page
   holds edits not yet applied.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
-  default is removed from kwinrc rather than written. **Defaults** resets both to `main.xml`'s and
-  the US keys. A key whose holder can't be recorded or freed isn't given to kwin-i3 either.
+  default is removed from kwinrc rather than written. **Reset** drops every edit. **Defaults**
+  resets the tab shown, and greys when it is at its defaults: a kwin-i3 tab's settings to
+  `main.xml`'s (the Keys tab's keys to the US keys and `endSession`'s), Window Rules' rules to the
+  shipped ones and Workspaces' floating workspaces to none (both kept in `forWindow`, each tab
+  its own part); the Plasma tab as above. `debugLog`, `holdTimeoutMs` and `floatingWorkspaces`,
+  on no tab, are never reset by it.
 
 ### The workspace widget
 
@@ -1163,12 +1167,12 @@ signature, `docs/kwin-notes.md`), and the banners carry everything one would say
 
 - **Shared keys**: kwin-i3's keys another active component holds (`TAKEN`; §8, "Shared keys"). The
   page: while the key override is off, the "Some of Plasma's settings work against kwin-i3"
-  banner, to the Plasma Settings sub-page and its key override row.
+  banner, to the Plasma tab and its key override row.
 - **Layout keys**: without the helper, any keyboard layout other than US (`LAYOUTS … not
   fitted`), as kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default
   where the system sets none, counts as US). The page: the plugins' banner.
 - **Per-output desktops off** with two or more outputs (`PEROUTPUT`), at load and at each change
-  of the outputs or the setting. The page: the Plasma settings banner, to its sub-page (§11).
+  of the outputs or the setting. The page: the Plasma settings banner, to its tab (§11).
 - **kwin-i3's plugins aren't loaded** (`HELPER not loaded`, `EFFECT not loaded`; `plan.md`: the
   product is the script and both plugins). The page: the plugins' banner, naming the frame, mouse
   dragging and the resize mode (§1's table has all that goes without each). The helper from KWin's loaded plugins,

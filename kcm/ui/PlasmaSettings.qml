@@ -1,9 +1,10 @@
-// The Plasma Settings sub-page (docs/plan.md, "Install and first run"): Plasma's own settings
+// The Plasma tab (docs/plan.md, "Install and first run"): Plasma's own settings
 // that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
 // columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
 // muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
-// on the page: Apply makes it, Reset drops it, Defaults picks kwin-i3 for all but the optional
-// and the key override (a setting of kwin-i3's own, off by default).
+// on the page: Apply makes it, Reset drops it, Defaults puts Plasma's back (each row kwin-i3
+// changed to the Plasma column, the key override off), Pick kwin-i3's for All picks kwin-i3's for
+// all but the optional.
 // Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
 // reader had before kwin-i3 changed it, and make uninstall can put everything back.
 import QtQuick
@@ -14,14 +15,15 @@ import org.kde.kcmutils as KCM
 
 KCM.SimpleKCM {
     id: page
-    title: i18nc("@title", "Plasma Settings")
+    title: i18nc("@title", "Plasma")
 
     readonly property var rows: kcm.setup.rows
     // The height of a row's title line (the name and its help button, taller than a checkbox),
     // so the boxes centre on the name rather than sit at the row's top.
     readonly property real titleHeight: titleProbe.implicitHeight
-    // Plasma's values and kwin-i3's keys read again, unless the page holds edits Apply hasn't made.
-    Component.onCompleted: if (!kcm.needsSave) kcm.refresh()
+    // Plasma's values and kwin-i3's keys read again each time the tab is shown (every tab loads
+    // with the page), unless the page holds edits Apply hasn't made.
+    onVisibleChanged: if (visible && !kcm.needsSave) kcm.refresh()
 
     header: ColumnLayout {
         spacing: 0
@@ -30,7 +32,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: true
-            text: i18n("Plasma's own settings that matter to kwin-i3, shown here for convenience. A change applies with Apply, as in System Settings.")
+            text: i18n("Plasma's own settings that matter to kwin-i3, shown here for convenience. A change applies with Apply, as in System Settings; Defaults puts Plasma's back.")
         }
         Kirigami.InlineMessage {
             Layout.fillWidth: true
@@ -46,7 +48,7 @@ KCM.SimpleKCM {
     // kwin-i3's side is always one thing, the setting turned on, so its box says "Enable"; the
     // Plasma side is whatever the reader had, so it says nothing.
     // The key override's row is a setting of kwin-i3's own (keysOverride): its boxes write that
-    // setting, as any on the main page, and need the plugins.
+    // setting, as any on the other tabs, and need the plugins.
     component SideBox: QQC2.CheckBox {
         property var row
         property bool kwini3                 // true: the kwin-i3 column
@@ -86,6 +88,18 @@ KCM.SimpleKCM {
             y: Kirigami.Units.largeSpacing
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.largeSpacing
+            // Defaults puts Plasma's back; this picks kwin-i3's (recommended) column for every row
+            // but the optional, the key override with them where the plugins can run it.
+            QQC2.Button {
+                Layout.alignment: Qt.AlignRight
+                text: i18nc("@action:button", "Pick kwin-i3's for All")
+                icon.name: "checkmark"
+                onClicked: {
+                    kcm.setup.pickKwinI3();
+                    if (kcm.helperLoaded)
+                        kcm.settings.keysOverride = true;
+                }
+            }
             GridLayout {
                 id: grid
                 Layout.fillWidth: true

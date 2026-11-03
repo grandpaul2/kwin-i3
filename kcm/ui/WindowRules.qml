@@ -1,4 +1,4 @@
-// The Window Rules sub-page (rows with
+// The Window Rules tab (rows with
 // fields): one rule of i3's for_window and
 // assign per line, in the order the script runs them: its application (a whole name shown plain)
 // and what it does (floats, tiles, opens on a workspace, opens on a monitor), its title, role and

@@ -103,9 +103,14 @@ against i3 and the code every so often, to catch what slipped.
 
 ## How it presents itself
 
-- **It says what to pick.** Defaults is the recommended setup (i3's defaults), and where its page
-  changes Plasma's own settings it marks kwin-i3's choice as recommended on the control itself;
-  the user still makes every change (`docs/style-settings-page.md`, "Saying what to pick").
+- **It says what to pick.** The page marks what is recommended on the control itself (a
+  checkbox's "(recommended)", the Plasma tab's "kwin-i3 (recommended)" column), and the user
+  makes every change (`docs/style-settings-page.md`, "Saying what to pick").
+- **Defaults means "back to the default", as on every Plasma page**, for the tab shown and only
+  it: what is Plasma's goes back to Plasma (each Plasma setting to what it was before kwin-i3
+  changed it, the key override off); what is kwin-i3's own goes to kwin-i3's default, i3's where
+  i3 has one. Never kwin-i3's changes to Plasma's settings, and never the reader's data on another
+  tab (their window rules, their workspaces' screens).
 - **kwin-i3 is the window manager**, and says so. Its workspaces, outputs and keyboard focus
   apply to every window in the tree. No soft lies ("we won't touch your windows"): a user who
   meets something kwin-i3 does needs a model for why, and the truth is the only one that holds.
@@ -130,7 +135,8 @@ against i3 and the code every so often, to catch what slipped.
 ## Defaults
 
 - **The defaults are the product.** During the Stage, the maintainer's desktop runs what a new
-  user gets; personal customisations come back later.
+  user gets, kwin-i3's recommended Plasma settings included; personal customisations come back
+  later.
 - **The product is the script and its two plugins.** The script alone still runs the tree,
   workspaces, keys and floating, and the settings page's banner names what is missing without
   them (`docs/plan.md`, "Scope").
