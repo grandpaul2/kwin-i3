@@ -17,7 +17,7 @@ STANDING = ["docs/behaviour.md", "docs/plan.md", "docs/philosophy.md", "docs/def
 MARKS = ("=", "≠", "+")
 ROW = re.compile(r"\| ([A-Z]\d+[a-z]?) \|")
 PIPE = re.compile(r"(?<!\\)\|")
-REASON = re.compile(r"[Rr]easons? \(|\([a-f]\)")
+REASON = re.compile(r"[Rr]easons? \(|\([a-g]\)")
 
 
 def cells(line):
@@ -39,7 +39,7 @@ def check_marks(out):
     for n, rid, mark, note in rows():
         fixing = "being fixed" in note.lower()
         if mark == "≠" and not fixing and not REASON.search(note):
-            out.append(f"behaviour.md:{n} {rid}: ≠ with no reason (a)-(f)")
+            out.append(f"behaviour.md:{n} {rid}: ≠ with no reason (a)-(g)")
         if mark == "=" and "≠" in note:
             out.append(f"behaviour.md:{n} {rid}: marked = but its note carries a ≠")
 

@@ -81,6 +81,11 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   wraps, a size never set, a path that breaks an invariant i3's own code enforces elsewhere (both
   places cited). The ≠ row cites the defect's file:line and follows what i3's code evidently intends; copying the defect
   would give a glitch, not i3's feel.
+- **(g) Plasma's minimize and restore are the user's**: i3 rejects a minimize (`handlers.c:849-858`),
+  but a task manager button that snaps back is a fault a Plasma user can't undo without knowing
+  i3 (`docs/philosophy.md`, "Who it is for"). It covers an action that takes a window out of the
+  layout while its place stays in the tree; one that places, sizes, stacks or changes a window's
+  kind is not covered, and a new way to hide a window argues its own case.
 
 Not reasons: "minor", "simpler", "someone's old config", "it was already built that way". A row
 whose only reason is one of these goes back to i3's, or finds a real reason. **The list of
@@ -102,11 +107,21 @@ mouse, crossing the gap between a floating panel and its popup would focus the w
 and close the popup (KDE bug 511162), so the helper lengthens KWin's focus delay while a popup is
 up and puts the user's value back; it changes no saved setting (reason (e); `behaviour.md` F10).
 
-**Plasma's own tiling** on a kwin-i3 workspace: a drag out of a tile, a screen-edge drag
-included, is the user untiling the window and floats it (KWin untiles at the move's first step);
-a quick tile by key and Meta+T's tile editor are pulled back into the tree on the next pass
-(decision 7, `behaviour.md` V12). What kwin-i3 does with Plasma's window actions that have no i3
-counterpart, as a rule, is `OPEN.md` item 79's.
+**Plasma's window actions** on a window in the tree, on a desktop kwin-i3 has placed (one it
+never placed keeps KWin's tiles, `behaviour.md` Y4), follow i3's handling of requests from outside
+its model (`handlers.c:675-991`):
+- one i3 translates into the tree is translated as i3 does: fullscreen (V1), a desktop (V9), all
+  desktops (V10);
+- one that would place, size or change the kind of a tiling window is refused, as i3 ignores
+  those (`:722-723`, `:936`): maximize and a quick tile by key are put back, Meta+T's editor
+  overwritten (decision 7; V8, V12), a move KWin starts cancelled by the helper (X5), floating
+  only without it; Keep Above and Keep Below are kwin-i3's on its windows (L12);
+- minimize takes the window out of the layout, its place kept (V7, reason (g));
+- a floating window's own actions are KWin's ("The mouse", F1);
+- Show Desktop changes nothing in the tree: the hidden tiles are only not hit (B2, F8b).
+
+Not covered yet, each its own item or row: activities (R15, `LATER.md` "Reliability"), a user's
+Keep Above on a floating window (`LATER.md` item 27), window rules, No Border, shade.
 
 ## The mouse
 
@@ -174,8 +189,9 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   tiled (G13) has Beside in the bottom band instead: after the target, as i3's centre drop, since
   after tiling a swap would send the target to the tiles' focus.
 - **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
-  Shift drag into a tile) are Plasma's ("Plasma's own tiling", above; `OPEN.md` item 79). So
-  is **a move KWin starts itself** without the helper (Meta+drag, `behaviour.md` F9). A client
+  Shift drag into a tile) place a tiling window, so the tree puts it back ("Plasma's window
+  actions", above). **A move KWin starts itself** without the helper (Meta+drag, `behaviour.md`
+  F9) floats the window, reason (a). A client
   asking to be moved by its own header bar (GTK, Electron) would float a tiling window too, where
   i3 ignores the request (`handlers.c:936`). With the helper, kwin-i3 refuses those on a tiling
   window as i3 does, KWin's Move Window and the window menu's Move with them: KWin runs each as its

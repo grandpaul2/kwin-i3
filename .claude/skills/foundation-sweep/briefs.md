@@ -12,11 +12,11 @@ only what its brief says. The C areas get the **short** common part.
 > `REPO` (read-only: change nothing, run no test, reload nothing). Read
 > `AGENTS.md`, then `docs/README.md` (one home per fact), `docs/definitions.md` (the words),
 > `docs/philosophy.md` (above all "How a decision is made") and `docs/plan.md` (the scope, the
-> reasons (a)-(f) a difference from i3 may have, the standing decisions).
+> reasons (a)-(g) a difference from i3 may have, the standing decisions).
 >
 > **The short version, for the C areas**, in place of the paragraph above: read
 > `docs/definitions.md` (the words) and, in `docs/plan.md`, "Scope" (the In and Out lists and
-> the reasons (a)-(f)); nothing else of the foundations. Your job is the code against its rows.
+> the reasons (a)-(g)); nothing else of the foundations. Your job is the code against its rows.
 >
 > A script has already checked the marks, the reasons' letters, history in the docs, the
 > tables' shape and §11's defaults; don't report those. What it left: `CHECKED`. Own only your
@@ -44,7 +44,7 @@ only what its brief says. The C areas get the **short** common part.
 > ```
 >
 > Classes: conflict (two docs say opposite things), home (a fact in two homes or the wrong one),
-> i3 (i3 misstated or a citation wrong), reason (a ≠ with no reason (a)-(f), a reason that
+> i3 (i3 misstated or a citation wrong), reason (a ≠ with no reason (a)-(g), a reason that
 > doesn't hold, or an = that is a ≠), code (code and `docs/behaviour.md` disagree), words (what
 > a user reads isn't true of the code), word (not `definitions.md`'s word), hole (a case the
 > foundations don't settle, or settle two ways). High: it misleads a decision or a user, or the
@@ -75,7 +75,7 @@ only what its brief says. The C areas get the **short** common part.
 > 1. Its i3 side against `I3`: is that what i3 4.24 does? The citation right? You own every i3
 >    citation in the docs (`docs/*.md`), the foundations' included: no other area checks line
 >    numbers.
-> 2. Each ≠: does it name one of `plan.md`'s reasons (a)-(f), and does that reason hold? (f) cites the defect in i3; (a)
+> 2. Each ≠: does it name one of `plan.md`'s reasons (a)-(g), and does that reason hold? (f) cites the defect in i3; (a)
 >    checked against `kwin-notes.md` and KWin's source; (c) is precedent only for the thing it
 >    names; (d) against the Out list; (e) against Plasma's settings. A ≠ whose reason doesn't
 >    hold is a defect (`AGENTS.md`, "Ride i3 hard").

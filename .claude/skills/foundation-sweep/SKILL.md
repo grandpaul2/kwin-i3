@@ -53,7 +53,7 @@ by default, **each fact with one owner**, so nothing is found twice:
 | area | reads | against |
 |---|---|---|
 | A. The foundations | `definitions.md`, `philosophy.md`, `plan.md`, `docs/README.md`, `AGENTS.md`'s rules; the words a user reads (`README.md`, `CONTRIBUTING.md`, the settings page `kcm/ui/`, the widget) | each other, i3's source, the code for the user's words; not `behaviour.md`'s tables |
-| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +); **every i3 citation**, in any doc | i3 4.24's source; `plan.md`'s reasons (a)-(f) |
+| B. The i3 side | every `behaviour.md` row with an i3 mark (=, ≠, +); **every i3 citation**, in any doc | i3 4.24's source; `plan.md`'s reasons (a)-(g) |
 | C1. The model | `src/tree.js`, `outputs.js`, `workspaces.js`, `rules.js`, `placement.js`, `settings.js` | `behaviour.md` §2-4, **§11 (its only reader)** |
 | C2. The KWin seam | `src/kwin.js` but the tiling drag | `behaviour.md` §5, §6, §10, §12-14 |
 | C3. The plugins | `plugin/*.cpp`, and `src/kwin.js`'s tiling drag and resize (their script side) | `behaviour.md` §1, §7-9 |
@@ -77,7 +77,7 @@ stays reachable while they run: answer them, and read each area's file as its ag
 
 The classes: **conflict** two docs say opposite things; **home** a fact in two homes or the
 wrong one (`docs/README.md`); **i3** i3 misstated or a citation wrong; **reason** a ≠ with no
-reason (a)-(f), a reason that doesn't hold, or an = that is a ≠; **code** the code and
+reason (a)-(g), a reason that doesn't hold, or an = that is a ≠; **code** the code and
 `behaviour.md` disagree; **words** what a user reads isn't true of the code; **word** a word not
 `definitions.md`'s; **hole** a case the foundations don't settle, or settle two ways.
 
@@ -108,7 +108,7 @@ In the conversation, not a file. Short, numbered once, each number one topic:
 
 1. **The conflicts** (step 5 only), grouped by the foundation they would change. Each: the two
    sides, cited; i3's way (file:line); the precedents (row ids, decision numbers); the reasons
-   (a)-(f) that bear; **the recommendation, written as the edit to the foundation**, with cost
+   (a)-(g) that bear; **the recommendation, written as the edit to the foundation**, with cost
    against value. Never as options away from i3 (`AGENTS.md`, "Follow the docs").
 2. **The holes closed at step 4**: each one line, the principle written and where.
 3. **Fixed without asking**: counts per class and per doc, one line each; the notable ones named.

@@ -63,7 +63,7 @@ In order:
    repairs holes need, never individual cases: the project is past the point where one person can make every individual
    call. **The maintainer's decisions live in these foundations**: a question
    put to them is a question about a foundation. Before asking, show that steps 1-4 don't
-   decide it (the scope, the reasons (a)-(f), the precedent, i3's source), and ask it as the
+   decide it (the scope, the reasons (a)-(g), the precedent, i3's source), and ask it as the
    change to a foundation it would be. A question the docs already answer, asked anyway, can undo
    a decision already made there.
 

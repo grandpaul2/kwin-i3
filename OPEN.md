@@ -39,9 +39,7 @@ the settings page's Plasma Settings sub-page with its banner, its save and `make
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
-by step, from `git clone` to the sub-page. Separate, still open: a rule for Plasma's window
-actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
-Desktop, activities, Keep Above), today one-off rows.
+by step, from `git clone` to the sub-page.
 
 **89. The frame flat while Glide opens a window** (2026-11-03). Glide tilts a window by moving
 its quads (6.7.5 `glide.cpp:110-151`); the frame follows only translation, scale and opacity, so
