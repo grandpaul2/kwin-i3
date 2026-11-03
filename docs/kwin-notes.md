@@ -205,7 +205,19 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   holder with the lower serial (probe 91: stock Quick Tile Left and kwin-i3's Focus Left both on
   Meta+Left, the filter's press ran Focus Left). KWin's own shortcut filter skips while a window
   inhibits shortcuts (`waylandServer()->isKeyboardShortcutsInhibited()`, `input.cpp:1077-1084`):
-  such a filter must too.
+  such a filter must too. **But a press kept from kglobalacceld breaks Meta alone**: its
+  modifier-only state (Meta opens the launcher on release) resets only on a non-modifier key event
+  reaching it (kglobalacceld 6.7.5 `globalshortcutsregistry.cpp:498-519`), and nothing a plugin can
+  reach resets it (`GlobalShortcutsManager` isn't exported; 6.8.2 calls `KGlobalAccelD`
+  directly). Taken outright, Meta+Left's release of Meta opened the launcher (probe 92); its
+  release let through fixed only Left-up-first. What works on both versions: the filter sets the
+  press's `key` to `Qt::Key_unknown` and lets it on (the shortcut filter passes `event->key` to
+  kglobalacceld, 6.7.5 and 6.8.2 `input.cpp:1080`), so kglobalacceld resets and matches nothing;
+  a second filter right after `GlobalShortcut` takes it (`addFilteredKey`) before any window
+  sees it. Probe 92: no launcher in either release order, and no window got the key.
+- **Filters of one weight run newest first**: `installInputEventFilter` inserts at the
+  `lower_bound` of its weight (6.7.5 `input.cpp:2952`), so a plugin's filter at `TabBox` runs
+  before KWin's own TabBox filter.
 - `doRegister` of `<app>.desktop` then `invokeShortcut _launch` launches the app even with no
   `X-KDE-Shortcuts`.
 - Window actions (`[MouseBindings] CommandAll*`) take exactly one modifier, Meta or Alt.
