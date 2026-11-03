@@ -1860,7 +1860,15 @@ var KI3 = (function () {
                 }
                 send(c.win, cls(c), ind, sides.join(" "));
             });
-            model.floatingWindows(ws).forEach(function (c) { if (wins[c.win]) send(c.win, cls(c), "", ""); });
+            model.floatingWindows(ws).forEach(function (c) {
+                if (!wins[c.win]) return;
+                // i3's x.c:589-591: alone in a split, the floating container itself not counting
+                // (L4, L10a); a window floating alone (L10, L11) has none, nor one left alone in a
+                // floated split, which is KWin's.
+                var pl = c.parent.layout, ind = floatedOf(c) && c.parent.type !== "floating" && c.parent.nodes.length === 1
+                    && (pl === "h" || pl === "v") ? (pl === "h" ? "right" : "bottom") : "";
+                send(c.win, cls(c), ind, "");
+            });
         });
         if (flash && flash.win !== null && wins[flash.win])
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ShowIndicator", flash.win);
