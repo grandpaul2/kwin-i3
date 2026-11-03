@@ -353,6 +353,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   surface commit (`behaviour.md` Y1).
 - Wrapping a Kirigami `FormLayout` control in a `RowLayout` moves its label off it; give the control
   its own `Accessible.name` and the label `buddyFor` (Kirigami 6.31 sets `labelledBy` on the row).
+- Effects treat Keep Above windows apart, so with kwin-i3 every floating window (`behaviour.md`
+  L12): Dim Inactive leaves them undimmed unless its "Keep above windows" (`DimKeepAbove`) is
+  ticked, off by default (6.7.5 `diminactive.cpp:184`, `diminactive.kcfg:17-18`); Slide Back
+  neither slides them nor slides others away from them (`slideback.cpp:94`, `:167`, `:307`).
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
   pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. kwin-i3 leaves it as the
   distribution ships it (a keep-below workaround was declined).

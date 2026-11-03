@@ -49,12 +49,7 @@ Desktop's Window Aperture, draw the departing windows without their frame: `Hold
 counts only shown windows, so the effect sits out of the paint. Seen live only. Next: its spec
 and the spec's review.
 
-**88. Floating windows never dimmed by Dim Inactive** (2026-11-03). Dim Inactive skips windows
-kept above unless its `DimKeepAbove` is set (6.7.5 `diminactive.cpp:184`), and kwin-i3 keeps
-every floating window above (`behaviour.md` L12); the settings page suggests Dim Inactive for
-the bare look. Next: its spec, after item 87.
-
 **89. The frame flat while Glide opens a window** (2026-11-03). Glide tilts a window by moving
 its quads (6.7.5 `glide.cpp:110-151`); the frame follows only translation, scale and opacity, so
 it fades in as a flat rectangle at the tile while the window swings in. Seen with Glide chosen
-on the Animations page, not the default. Next: its spec, after item 88.
+on the Animations page, not the default. Next: its spec, after item 87.

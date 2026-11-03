@@ -482,7 +482,7 @@ KCM.SimpleKCM {
               Layout.maximumWidth: Kirigami.Units.gridUnit * 24
               wrapMode: Text.Wrap
               font: Kirigami.Theme.smallFont
-              text: i18nc("@info", "Nothing marks the focused window; the Dim Inactive effect can.")
+              text: i18nc("@info", "Nothing marks the focused window; the Dim Inactive effect can, with its \"Keep above windows\" ticked, as floating windows are kept above.")
         }
         }
         RowLayout {
