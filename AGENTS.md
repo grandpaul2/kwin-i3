@@ -36,6 +36,14 @@ These are the project's rules, not suggestions.
   **the merge is the go**.
 - **The maintainer's go decides what goes in**: behaviour, scope, a new test, anything that changes
   a foundation doc. Most calls are already decided by the docs (below); ask only what they can't.
+- **Every change to `src/`, `plugin/` or `tools/capture` gets an outside review**, by its kind:
+
+  | the change | its review |
+  |---|---|
+  | a change to behaviour, or a feature beyond i3 | the spec's, before building (below); the diff's too if large |
+  | a bug fix whose cause is named | the diff's, before its tests (the bug path, "Finding bugs") |
+  | the settings page's look, judged live; docs alone | none |
+
 - **A change to behaviour goes spec, review, adjust, build, test**, for its blast radius and to
   keep the whole consistent, more than for the beta's own risk. It covers what a user would
   notice from `src/`, `plugin/` or `tools/capture`, and every feature beyond i3 in full:
@@ -53,8 +61,7 @@ These are the project's rules, not suggestions.
   4. **Test** as `docs/testing.md` says, then live with the go, as below.
 
   The spec and its reviews are working notes, outside the tree: the maintainer's in their private
-  notes, a contributor's in the pull request. A bug fix whose cause is named needs only the diff
-  review and its test. The settings page's look, judged live, and docs alone need neither.
+  notes, a contributor's in the pull request.
 - **The safety rules below apply to whoever's live desktop runs kwin-i3**: on a contributor's
   machine, their desktop and their go to reload it. The go for what goes into main stays the
   maintainer's.
@@ -148,8 +155,18 @@ These are the project's rules, not suggestions.
   (kwin-i3's log, kwini3hold's events, the pointer's, the state, a screenshot, a note) to
   `~/.local/state/kwin-i3/captures/<time>/`. **Read it with `tools/capture-read DIR` first**: one
   timeline to the millisecond, the press last. kwin-i3's log never reaches the journal, and
-  `debugLog` does nothing live (`docs/debugging.md`). Each one gets a diagnosis first; with the go,
-  a live test watched red, then the fix.
+  `debugLog` does nothing live (`docs/debugging.md`).
+- **The bug path**, for a capture, a bug report or a red: each step before the next.
+  1. **Diagnosis**: i3 first, then the cause named from the evidence (the capture, a test-KWin
+     trace, KWin's source), the proposed fix and the runs that will check it.
+  2. **The go** to change.
+  3. **The fix** in a worktree, with a live test watched red first where one can show it.
+  4. **The diff's review**: an outside agent given the cause and the diff, not your conclusions,
+     asked what is wrong, what breaks, and the smallest version; each finding checked against
+     the code before it is fixed or answered.
+  5. **Its tests** (`docs/testing.md`), then **live** with the go ("Safety").
+
+  A cause not yet named is not on this path: it goes back to step 1.
 - **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
   **Not during the Stage** (`LATER.md`, "Reliability"), and when it returns, in runs of 5 minutes
   or less. `tests/fuzz/run.py --reshrink SEED` shrinks a saved failure again.

@@ -19,7 +19,7 @@ Starting a kwin-i3 session. Please:
 4. **Bug captures on this machine** (if the directory exists): `ls -t ~/.local/state/kwin-i3/captures/`. Each is a Meta+Shift+B
    press, that is, something the person at this desk saw go wrong. Say how many there are and when the newest is from, and offer
    to diagnose them. Diagnosing one starts with `tools/capture-read DIR`: the timeline before the
-   press, with their note (`docs/debugging.md`). A fix needs the go (AGENTS.md, "Nothing goes live"). Captures already
+   press, with their note (`docs/debugging.md`). A fix goes the bug path (AGENTS.md, "Finding bugs"): diagnosis, the go, the fix, the diff's outside review, its tests, live. Captures already
    worked on are deleted at the end of the session that handled them, so all of these are new,
    except those an `OPEN.md` item names as kept.
 5. **A promotion due** (the maintainer's sessions only): `git log -1 --format=%cs origin/stable`
