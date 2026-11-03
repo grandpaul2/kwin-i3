@@ -708,7 +708,7 @@ bool Hold::holding() const
     return m_open || !m_hidden.isEmpty();
 }
 
-// While a framed window is shown, for the paint hooks; the screen-wide repaint only while holding.
+// While a framed window is shown or painted, for the paint hooks; the screen-wide repaint only while holding.
 // Per paint and window: cheap checks first (holding, a drop, the mode), then the stacking order
 // until the first shown ring; ringed() builds a window's id string only for a framed window. Kept
 // as is at the review of 2026-10-28: the allocations happen only when every framed window's ring
@@ -721,8 +721,11 @@ bool Hold::isActive() const
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
         // A group's bar too: in the titlebars and bare looks no window has a ring, and the
-        // effect sat out of the paint chain, so no bar was drawn.
-        if ((ringed(w) || hasBar(w)) && shown(w)) {
+        // effect sat out of the paint chain, so no bar was drawn. And a window not shown that
+        // KWin paints all the same, while an effect holds it visible (Slide's departing desktop,
+        // Window Aperture's Show Desktop): its item is visible exactly then (6.7.5
+        // scene/windowitem.cpp:160-192), and its ring goes with it.
+        if ((ringed(w) || hasBar(w)) && (shown(w) || w->windowItem()->isVisible())) {
             return true;
         }
     }
