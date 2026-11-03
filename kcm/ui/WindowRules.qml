@@ -2,9 +2,11 @@
 // fields): one rule of i3's for_window and
 // assign per line, in the order the script runs them: its application (a whole name shown plain)
 // and what it does (floats, tiles, opens on a workspace, opens on a monitor), its title, role and
-// type on a second line when set or asked for. The defaults are a group of their own when they
+// type always on a second line. The defaults are a group of their own when they
 // run first; a rule the row can't show (other criteria) is edited as text. Pick a Window
-// (KWin's queryWindowInfo) fills a new row's application in. Below, the floating sizes.
+// (KWin's queryWindowInfo) fills a new row's application in. Each rule is a box of its own in a
+// framed list (the defaults one, the reader's another); adding sits in the footer. Below, the
+// floating sizes.
 // settings.js reads and writes the two strings (parseRules, formatRules).
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -50,6 +52,7 @@ KCM.SimpleKCM {
         write();
     }
     function add(row) {
+        focusIndex = rows.length;
         rows = rows.concat([Object.assign({ kind: "float", cls: "", title: "", role: "", type: "" }, row)]);
         write();
     }
@@ -222,6 +225,279 @@ KCM.SimpleKCM {
         return n;
     }
 
+    // One rule, the same box for every one: its application and what it does on the first line,
+    // with its marks and the remove button; its title, role and type always on the second. A rule
+    // the fields can't show (other criteria) is its text on the first line, and the second says so.
+    property int focusIndex: -1         // a rule just added: its application box takes the focus
+    component RuleItem: ColumnLayout {
+        id: ruleRow
+        property int index
+        readonly property var rule: page.rows[index] || ({})
+        readonly property bool isRaw: rule.kind === "raw"
+        readonly property bool isDefault: page.defaults.indexOf(Logic.formatRule(rule)) >= 0
+        readonly property var plain: Logic.plainName(rule.cls)
+        readonly property var app: plain !== null ? page.appOf(plain) : null
+        spacing: Kirigami.Units.smallSpacing
+        Component.onCompleted: if (index === page.focusIndex) Qt.callLater(() => {
+            page.focusIndex = -1;
+            page.reveal(ruleRow);
+            appBox.forceActiveFocus();
+        })
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Kirigami.Units.smallSpacing
+
+            // A rule the fields can't show: its text.
+            QQC2.TextField {
+                visible: ruleRow.isRaw
+                Layout.fillWidth: true
+                font.family: "monospace"
+                text: ruleRow.rule.text || ""
+                onEditingFinished: if (ruleRow.isRaw && ruleRow.rule.text !== text) page.set(ruleRow.index, "text", text)
+                Accessible.name: i18nc("@label:textbox", "Rule %1, as text", ruleRow.index + 1)
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
+            }
+            // The application: chosen by name from the installed ones, or typed. A
+            // whole name shows as the application's name if installed, else plain; any
+            // other pattern as typed, in monospace.
+            QQC2.ComboBox {
+                id: appBox
+                visible: !ruleRow.isRaw
+                editable: true
+                Layout.fillWidth: true
+                Layout.minimumWidth: Kirigami.Units.gridUnit * 7
+                model: page.apps
+                textRole: "name"
+                valueRole: "id"
+                readonly property string shown: ruleRow.app ? ruleRow.app.name
+                    : ruleRow.plain !== null ? ruleRow.plain : (ruleRow.rule.cls || "")
+                font.family: ruleRow.plain === null && ruleRow.rule.cls ? "monospace" : Kirigami.Theme.defaultFont.family
+                function sync() {
+                    currentIndex = ruleRow.app ? page.apps.indexOf(ruleRow.app) : -1;
+                    editText = shown;
+                }
+                onShownChanged: sync()
+                Component.onCompleted: sync()
+                // An empty box: what it's for, or that the rule matches by title, role or
+                // type alone (an editable ComboBox has no placeholder of its own).
+                QQC2.Label {
+                    x: appBox.leftPadding
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: appBox.editText === "" && !appBox.activeFocus
+                    text: ruleRow.rule.title || ruleRow.rule.role || ruleRow.rule.type
+                        ? i18nc("@info:placeholder an application field left empty", "any application")
+                        : i18nc("@info:placeholder", "Choose an application")
+                    color: Kirigami.Theme.disabledTextColor
+                    Accessible.ignored: true
+                }
+                // A name from the list stores that application's class whole; anything
+                // else as Logic.classFromField reads it.
+                function commit(text) {
+                    const t = String(text).trim();
+                    const hit = page.apps.find((a) => a.name === t);
+                    const cls = hit ? Logic.wholeClass(hit.id) : Logic.classFromField(t);
+                    if (cls !== (ruleRow.rule.cls || "")) page.set(ruleRow.index, "cls", cls);
+                    else sync();
+                }
+                onActivated: (i) => commit(page.apps[i].name)
+                onAccepted: commit(editText)
+                onActiveFocusChanged: if (!activeFocus && !ruleRow.isRaw) commit(editText)
+                Accessible.name: i18nc("@label:textbox", "Rule %1: application", ruleRow.index + 1)
+                // The class the rule matches, when the box shows a name.
+                Accessible.description: ruleRow.app ? ruleRow.app.id : ""
+                QQC2.ToolTip.text: ruleRow.app ? ruleRow.app.id : ""
+                QQC2.ToolTip.visible: hovered && !!ruleRow.app
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
+            }
+            QQC2.Label { visible: !ruleRow.isRaw; text: "→"; Accessible.ignored: true }
+            QQC2.ComboBox {
+                visible: !ruleRow.isRaw
+                textRole: "text"
+                valueRole: "value"
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+                model: [
+                    { text: i18nc("@item:inlistbox what a rule does", "Float"), value: "float" },
+                    { text: i18nc("@item:inlistbox what a rule does", "Tile"), value: "tile" },
+                    { text: i18nc("@item:inlistbox what a rule does", "Workspace…"), value: "workspace" },
+                    { text: i18nc("@item:inlistbox what a rule does", "Screen…"), value: "output" },
+                ]
+                readonly property string stored: ruleRow.rule.kind
+                function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
+                onStoredChanged: sync()
+                Component.onCompleted: sync()
+                onActivated: page.set(ruleRow.index, "kind", currentValue)
+                Accessible.name: i18nc("@label:listbox", "Rule %1: what it does", ruleRow.index + 1)
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
+            }
+            QQC2.SpinBox {
+                visible: ruleRow.rule.kind === "workspace"
+                from: 1; to: 10
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 4
+                value: ruleRow.rule.workspace || 1
+                onValueModified: page.set(ruleRow.index, "workspace", value)
+                Accessible.name: i18nc("@label:spinbox", "Rule %1: the workspace it opens on", ruleRow.index + 1)
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
+            }
+            QQC2.ComboBox {
+                visible: ruleRow.rule.kind === "output"
+                textRole: "text"
+                valueRole: "name"
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+                // The connected monitors, and the one set if it isn't connected now.
+                model: Qt.application.screens.map((s) => ({ name: s.name, text: s.model ? i18nc("output name — model", "%1 — %2", s.name, s.model) : s.name }))
+                    .concat(ruleRow.rule.output && !Qt.application.screens.some((s) => s.name === ruleRow.rule.output)
+                        ? [{ name: ruleRow.rule.output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", ruleRow.rule.output) }] : [])
+                readonly property string stored: ruleRow.rule.output || ""
+                // A row just switched to "opens on monitor" takes the first monitor; reading never writes.
+                function sync() { currentIndex = Math.max(0, indexOfValue(stored)); if (ruleRow.rule.kind === "output" && stored === "" && count) page.set(ruleRow.index, "output", currentValue) }
+                onStoredChanged: sync()
+                onModelChanged: sync()
+                Component.onCompleted: sync()
+                onActivated: page.set(ruleRow.index, "output", currentValue)
+                Accessible.name: i18nc("@label:listbox", "Rule %1: the screen it opens on", ruleRow.index + 1)
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
+            }
+            Item { visible: !ruleRow.isRaw; Layout.fillWidth: true }
+            // A row with no pattern is not written (it would match every window): said, not
+            // lost silently at the next reopening.
+            QQC2.Label {
+                visible: !ruleRow.isRaw && Logic.formatRule(ruleRow.rule) === ""
+                text: i18nc("@info:status a rule with no pattern", "not saved: needs a pattern")
+                color: Kirigami.Theme.neutralTextColor
+            }
+            // Marked only when the defaults aren't a group of their own.
+            QQC2.Label {
+                visible: ruleRow.isDefault && page.defaultCount === 0
+                text: i18nc("@label a rule kwin-i3 ships", "default")
+                color: Kirigami.Theme.disabledTextColor
+                Accessible.ignored: true
+            }
+            QQC2.ToolButton {
+                icon.name: "edit-delete-remove"
+                onClicked: page.remove(ruleRow.index)
+                Accessible.name: i18nc("@action:button", "Remove rule %1", ruleRow.index + 1)
+                QQC2.ToolTip.text: i18nc("@info:tooltip", "Remove this rule")
+                QQC2.ToolTip.visible: hovered
+            }
+        }
+        RowLayout {
+            visible: !ruleRow.isRaw
+            Layout.leftMargin: Kirigami.Units.gridUnit
+            spacing: Kirigami.Units.smallSpacing
+            QQC2.Label { text: i18nc("@label before a pattern", "title"); font: Kirigami.Theme.smallFont; color: Kirigami.Theme.disabledTextColor; Accessible.ignored: true }
+            PatternField { row: ruleRow.index; key: "title"; what: i18nc("@item a rule's criterion", "title") }
+            QQC2.Label { text: i18nc("@label before a pattern", "role"); font: Kirigami.Theme.smallFont; color: Kirigami.Theme.disabledTextColor; Accessible.ignored: true }
+            PatternField { row: ruleRow.index; key: "role"; what: i18nc("@item a rule's criterion", "role"); Layout.preferredWidth: Kirigami.Units.gridUnit * 6 }
+            QQC2.Label { text: i18nc("@label before a window type", "type"); font: Kirigami.Theme.smallFont; color: Kirigami.Theme.disabledTextColor; Accessible.ignored: true }
+            QQC2.ComboBox {
+                textRole: "text"
+                valueRole: "value"
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 7
+                model: [
+                    { text: i18nc("@item:inlistbox window type", "any type"), value: "" },
+                    { text: i18nc("@item:inlistbox window type", "normal"), value: "normal" },
+                    { text: i18nc("@item:inlistbox window type", "dialog"), value: "dialog" },
+                    { text: i18nc("@item:inlistbox window type", "utility"), value: "utility" },
+                    { text: i18nc("@item:inlistbox window type", "toolbar"), value: "toolbar" },
+                    { text: i18nc("@item:inlistbox window type", "splash"), value: "splash" },
+                ]
+                readonly property string stored: ruleRow.rule.type || ""
+                function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
+                onStoredChanged: sync()
+                Component.onCompleted: sync()
+                onActivated: page.set(ruleRow.index, "type", currentValue)
+                Accessible.name: i18nc("@label:listbox", "Rule %1: window type", ruleRow.index + 1)
+                KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
+            }
+        }
+        QQC2.Label {
+            visible: ruleRow.isRaw
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            color: Kirigami.Theme.disabledTextColor
+            text: i18nc("@info a rule shown as its text", "Shown as text: it matches on more than the application, title, role and type.")
+        }
+    }
+
+    // Scrolls the page so an item shows.
+    function reveal(item) {
+        const f = page.flickable;
+        const y = item.mapToItem(f.contentItem, 0, 0).y;
+        if (y < f.contentY || y + item.height > f.contentY + f.height)
+            f.contentY = Math.max(0, Math.min(y - Kirigami.Units.gridUnit, f.contentHeight - f.height));
+    }
+
+    // A group of rules (rows from..to) in a framed list, a line between each, as Plasma's own
+    // rule list; empty, it says so and offers Add Rule.
+    component RuleList: Rectangle {
+        id: group
+        property int from
+        property int to
+        property string emptyText
+        property string emptyExplanation
+        Layout.fillWidth: true
+        implicitHeight: list.implicitHeight + Kirigami.Units.largeSpacing * 2
+        Kirigami.Theme.colorSet: Kirigami.Theme.View
+        Kirigami.Theme.inherit: false
+        color: Kirigami.Theme.backgroundColor
+        radius: Kirigami.Units.cornerRadius
+        border.color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.backgroundColor, Kirigami.Theme.textColor, Kirigami.Theme.frameContrast)
+        ColumnLayout {
+            id: list
+            x: Kirigami.Units.largeSpacing
+            y: Kirigami.Units.largeSpacing
+            width: parent.width - Kirigami.Units.largeSpacing * 2
+            spacing: Kirigami.Units.largeSpacing
+            Repeater {
+                model: Math.max(0, group.to - group.from)
+                delegate: ColumnLayout {
+                    id: cell
+                    required property int index
+                    Layout.fillWidth: true
+                    spacing: Kirigami.Units.largeSpacing
+                    Kirigami.Separator { visible: cell.index > 0; Layout.fillWidth: true }
+                    RuleItem { index: group.from + cell.index; Layout.fillWidth: true }
+                }
+            }
+            Kirigami.PlaceholderMessage {
+                visible: group.to <= group.from
+                Layout.fillWidth: true
+                Layout.margins: Kirigami.Units.largeSpacing
+                text: group.emptyText
+                explanation: group.emptyExplanation
+                helpfulAction: Kirigami.Action {
+                    text: i18nc("@action:button", "Add Rule")
+                    icon.name: "list-add"
+                    onTriggered: page.add({})
+                }
+            }
+        }
+    }
+
+    // Adding stays in view however far the page scrolls, where Plasma's rule page keeps it.
+    footer: QQC2.ToolBar {
+        position: QQC2.ToolBar.Footer
+        RowLayout {
+            anchors.fill: parent
+            spacing: Kirigami.Units.smallSpacing
+            Item { Layout.fillWidth: true }
+            QQC2.Button {
+                text: i18nc("@action:button", "Add Rule")
+                icon.name: "list-add"
+                onClicked: page.add({})
+                Accessible.name: i18nc("@action:button", "Add a rule")
+            }
+            QQC2.Button {
+                text: i18nc("@action:button", "Pick a Window…")
+                icon.name: "edit-select"
+                Accessible.name: i18nc("@action:button", "Pick a window: add a rule for its application")
+                enabled: !page.picking
+                onClicked: { page.picking = true; message.visible = false; kcm.pickWindow(); }
+            }
+        }
+    }
+
     Item {
         implicitHeight: column.implicitHeight + Kirigami.Units.largeSpacing * 2
         ColumnLayout {
@@ -231,242 +507,27 @@ KCM.SimpleKCM {
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.smallSpacing
 
+            // The defaults, when they run first: a group of their own above the reader's.
             Kirigami.Heading {
-                visible: page.defaultCount === 0
+                visible: page.defaultCount > 0
                 level: 2
-                text: i18nc("@title:group", "Rules")
+                text: i18nc("@title:group the rules kwin-i3 ships", "Defaults")
             }
-            Repeater {
-                model: page.rows.length
-                // One line per rule: the application and what the rule does; its title, role and
-                // type on a second line, shown when set or opened with More.
-                delegate: ColumnLayout {
-                    id: ruleRow
-                    required property int index
-                    readonly property var rule: page.rows[index]
-                    readonly property bool isRaw: rule.kind === "raw"
-                    readonly property bool isDefault: page.defaults.indexOf(Logic.formatRule(rule)) >= 0
-                    readonly property var plain: Logic.plainName(rule.cls)
-                    readonly property var app: plain !== null ? page.appOf(plain) : null
-                    property bool more: false
-                    readonly property bool showMore: !isRaw && (more || !!rule.title || !!rule.role || !!rule.type)
-                    Layout.fillWidth: true
-                    spacing: Kirigami.Units.smallSpacing
-
-                    Kirigami.Heading {
-                        visible: page.defaultCount > 0 && (ruleRow.index === 0 || ruleRow.index === page.defaultCount)
-                        Layout.topMargin: ruleRow.index === 0 ? 0 : Kirigami.Units.largeSpacing
-                        level: 2
-                        text: ruleRow.index === 0 ? i18nc("@title:group the rules kwin-i3 ships", "Defaults")
-                                                  : i18nc("@title:group", "Your rules")
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: Kirigami.Units.smallSpacing
-
-                        // A rule the fields can't show: its text.
-                        QQC2.TextField {
-                            visible: ruleRow.isRaw
-                            Layout.fillWidth: true
-                            font.family: "monospace"
-                            text: ruleRow.rule.text || ""
-                            onEditingFinished: if (ruleRow.isRaw && ruleRow.rule.text !== text) page.set(ruleRow.index, "text", text)
-                            Accessible.name: i18nc("@label:textbox", "Rule %1, as text", ruleRow.index + 1)
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
-                        }
-                        // The application: chosen by name from the installed ones, or typed. A
-                        // whole name shows as the application's name if installed, else plain; any
-                        // other pattern as typed, in monospace.
-                        QQC2.ComboBox {
-                            id: appBox
-                            visible: !ruleRow.isRaw
-                            editable: true
-                            Layout.fillWidth: true
-                            Layout.minimumWidth: Kirigami.Units.gridUnit * 7
-                            model: page.apps
-                            textRole: "name"
-                            valueRole: "id"
-                            readonly property string shown: ruleRow.app ? ruleRow.app.name
-                                : ruleRow.plain !== null ? ruleRow.plain : (ruleRow.rule.cls || "")
-                            font.family: ruleRow.plain === null && ruleRow.rule.cls ? "monospace" : Kirigami.Theme.defaultFont.family
-                            function sync() {
-                                currentIndex = ruleRow.app ? page.apps.indexOf(ruleRow.app) : -1;
-                                editText = shown;
-                            }
-                            onShownChanged: sync()
-                            Component.onCompleted: sync()
-                            // An empty box: what it's for, or that the rule matches by title, role or
-                            // type alone (an editable ComboBox has no placeholder of its own).
-                            QQC2.Label {
-                                x: appBox.leftPadding
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: appBox.editText === "" && !appBox.activeFocus
-                                text: ruleRow.rule.title || ruleRow.rule.role || ruleRow.rule.type
-                                    ? i18nc("@info:placeholder an application field left empty", "any application")
-                                    : i18nc("@info:placeholder", "Choose an application")
-                                color: Kirigami.Theme.disabledTextColor
-                                Accessible.ignored: true
-                            }
-                            // A name from the list stores that application's class whole; anything
-                            // else as Logic.classFromField reads it.
-                            function commit(text) {
-                                const t = String(text).trim();
-                                const hit = page.apps.find((a) => a.name === t);
-                                const cls = hit ? Logic.wholeClass(hit.id) : Logic.classFromField(t);
-                                if (cls !== (ruleRow.rule.cls || "")) page.set(ruleRow.index, "cls", cls);
-                                else sync();
-                            }
-                            onActivated: (i) => commit(page.apps[i].name)
-                            onAccepted: commit(editText)
-                            onActiveFocusChanged: if (!activeFocus && !ruleRow.isRaw) commit(editText)
-                            Accessible.name: i18nc("@label:textbox", "Rule %1: application", ruleRow.index + 1)
-                            // The class the rule matches, when the box shows a name.
-                            Accessible.description: ruleRow.app ? ruleRow.app.id : ""
-                            QQC2.ToolTip.text: ruleRow.app ? ruleRow.app.id : ""
-                            QQC2.ToolTip.visible: hovered && !!ruleRow.app
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
-                        }
-                        QQC2.Label { visible: !ruleRow.isRaw; text: "→"; Accessible.ignored: true }
-                        QQC2.ComboBox {
-                            visible: !ruleRow.isRaw
-                            textRole: "text"
-                            valueRole: "value"
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
-                            model: [
-                                { text: i18nc("@item:inlistbox what a rule does", "Float"), value: "float" },
-                                { text: i18nc("@item:inlistbox what a rule does", "Tile"), value: "tile" },
-                                { text: i18nc("@item:inlistbox what a rule does", "Workspace…"), value: "workspace" },
-                                { text: i18nc("@item:inlistbox what a rule does", "Screen…"), value: "output" },
-                            ]
-                            readonly property string stored: ruleRow.rule.kind
-                            function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
-                            onStoredChanged: sync()
-                            Component.onCompleted: sync()
-                            onActivated: page.set(ruleRow.index, "kind", currentValue)
-                            Accessible.name: i18nc("@label:listbox", "Rule %1: what it does", ruleRow.index + 1)
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
-                        }
-                        QQC2.SpinBox {
-                            visible: ruleRow.rule.kind === "workspace"
-                            from: 1; to: 10
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 4
-                            value: ruleRow.rule.workspace || 1
-                            onValueModified: page.set(ruleRow.index, "workspace", value)
-                            Accessible.name: i18nc("@label:spinbox", "Rule %1: the workspace it opens on", ruleRow.index + 1)
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
-                        }
-                        QQC2.ComboBox {
-                            visible: ruleRow.rule.kind === "output"
-                            textRole: "text"
-                            valueRole: "name"
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
-                            // The connected monitors, and the one set if it isn't connected now.
-                            model: Qt.application.screens.map((s) => ({ name: s.name, text: s.model ? i18nc("output name — model", "%1 — %2", s.name, s.model) : s.name }))
-                                .concat(ruleRow.rule.output && !Qt.application.screens.some((s) => s.name === ruleRow.rule.output)
-                                    ? [{ name: ruleRow.rule.output, text: i18nc("@item:inlistbox output name", "%1 (not connected)", ruleRow.rule.output) }] : [])
-                            readonly property string stored: ruleRow.rule.output || ""
-                            // A row just switched to "opens on monitor" takes the first monitor; reading never writes.
-                            function sync() { currentIndex = Math.max(0, indexOfValue(stored)); if (ruleRow.rule.kind === "output" && stored === "" && count) page.set(ruleRow.index, "output", currentValue) }
-                            onStoredChanged: sync()
-                            onModelChanged: sync()
-                            Component.onCompleted: sync()
-                            onActivated: page.set(ruleRow.index, "output", currentValue)
-                            Accessible.name: i18nc("@label:listbox", "Rule %1: the screen it opens on", ruleRow.index + 1)
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "assign" }
-                        }
-                        Item { visible: !ruleRow.isRaw; Layout.fillWidth: true }
-                        // A row with no pattern is not written (it would match every window): said, not
-                        // lost silently at the next reopening.
-                        QQC2.Label {
-                            visible: !ruleRow.isRaw && Logic.formatRule(ruleRow.rule) === ""
-                            text: i18nc("@info:status a rule with no pattern", "not saved: needs a pattern")
-                            color: Kirigami.Theme.neutralTextColor
-                        }
-                        // Marked only when the defaults aren't a group of their own.
-                        QQC2.Label {
-                            visible: ruleRow.isDefault && page.defaultCount === 0
-                            text: i18nc("@label a rule kwin-i3 ships", "default")
-                            color: Kirigami.Theme.disabledTextColor
-                            Accessible.ignored: true
-                        }
-                        QQC2.ToolButton {
-                            visible: !ruleRow.isRaw
-                            enabled: !ruleRow.rule.title && !ruleRow.rule.role && !ruleRow.rule.type
-                            icon.name: ruleRow.showMore ? "arrow-up" : "arrow-down"
-                            checkable: true
-                            checked: ruleRow.showMore
-                            onToggled: ruleRow.more = checked
-                            Accessible.name: i18nc("@action:button", "Rule %1: title, role and type", ruleRow.index + 1)
-                            QQC2.ToolTip.text: i18nc("@info:tooltip", "Title, role and type")
-                            QQC2.ToolTip.visible: hovered
-                        }
-                        QQC2.ToolButton {
-                            icon.name: "edit-delete-remove"
-                            onClicked: page.remove(ruleRow.index)
-                            Accessible.name: i18nc("@action:button", "Remove rule %1", ruleRow.index + 1)
-                            QQC2.ToolTip.text: i18nc("@info:tooltip", "Remove this rule")
-                            QQC2.ToolTip.visible: hovered
-                        }
-                    }
-                    RowLayout {
-                        visible: ruleRow.showMore
-                        Layout.leftMargin: Kirigami.Units.gridUnit
-                        spacing: Kirigami.Units.smallSpacing
-                        QQC2.Label { text: i18nc("@label before a pattern", "title"); Accessible.ignored: true }
-                        PatternField { row: ruleRow.index; key: "title"; what: i18nc("@item a rule's criterion", "title") }
-                        QQC2.Label { text: i18nc("@label before a pattern", "role"); Accessible.ignored: true }
-                        PatternField { row: ruleRow.index; key: "role"; what: i18nc("@item a rule's criterion", "role"); Layout.preferredWidth: Kirigami.Units.gridUnit * 6 }
-                        QQC2.Label { text: i18nc("@label before a window type", "type"); Accessible.ignored: true }
-                        QQC2.ComboBox {
-                            textRole: "text"
-                            valueRole: "value"
-                            Layout.preferredWidth: Kirigami.Units.gridUnit * 7
-                            model: [
-                                { text: i18nc("@item:inlistbox window type", "any type"), value: "" },
-                                { text: i18nc("@item:inlistbox window type", "normal"), value: "normal" },
-                                { text: i18nc("@item:inlistbox window type", "dialog"), value: "dialog" },
-                                { text: i18nc("@item:inlistbox window type", "utility"), value: "utility" },
-                                { text: i18nc("@item:inlistbox window type", "toolbar"), value: "toolbar" },
-                                { text: i18nc("@item:inlistbox window type", "splash"), value: "splash" },
-                            ]
-                            readonly property string stored: ruleRow.rule.type || ""
-                            function sync() { currentIndex = Math.max(0, indexOfValue(stored)) }
-                            onStoredChanged: sync()
-                            Component.onCompleted: sync()
-                            onActivated: page.set(ruleRow.index, "type", currentValue)
-                            Accessible.name: i18nc("@label:listbox", "Rule %1: window type", ruleRow.index + 1)
-                            KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
-                        }
-                    }
-                }
+            RuleList {
+                visible: page.defaultCount > 0
+                from: 0
+                to: page.defaultCount
             }
-            QQC2.Label {
-                visible: page.rows.length === 0
-                text: i18n("No rules. Dialogs and the other windows that float by themselves float; the rest tile.")
-                color: Kirigami.Theme.disabledTextColor
+            Kirigami.Heading {
+                Layout.topMargin: page.defaultCount > 0 ? Kirigami.Units.largeSpacing : 0
+                level: 2
+                text: page.defaultCount > 0 ? i18nc("@title:group", "Your rules") : i18nc("@title:group", "Rules")
             }
-            QQC2.Label {
-                visible: page.rows.length > 1
-                text: i18n("For float or tile, the last matching rule wins.")
-                color: Kirigami.Theme.disabledTextColor
-                font: Kirigami.Theme.smallFont
-            }
-            RowLayout {
-                Layout.topMargin: Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.smallSpacing
-                QQC2.Button {
-                    text: i18nc("@action:button", "Add Rule")
-                    icon.name: "list-add"
-                    onClicked: page.add({})
-                    Accessible.name: i18nc("@action:button", "Add a rule")
-                }
-                QQC2.Button {
-                    text: i18nc("@action:button", "Pick a Window…")
-                    icon.name: "edit-select"
-                    Accessible.name: i18nc("@action:button", "Pick a window: add a rule for its application")
-                    enabled: !page.picking
-                    onClicked: { page.picking = true; message.visible = false; kcm.pickWindow(); }
-                }
+            RuleList {
+                from: page.defaultCount
+                to: page.rows.length
+                emptyText: page.defaultCount > 0 ? i18n("No rules of your own") : i18n("No rules")
+                emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
             }
 
             Kirigami.Heading {

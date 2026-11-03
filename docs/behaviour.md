@@ -1016,12 +1016,15 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   used when the first isn't connected; any, a connected one, or a stored one listed as not
   connected; a longer list in kwinrc keeps its tail) and new windows tiling or floating (the
   rule `[workspace="^N$"] floating enable` in `forWindow`).
-- **Window Rules sub-page**: one row per rule of `forWindow` and `assign`, in the order the
-  script runs them: what it matches (application, title, role: a pattern each; the window type)
-  and what it does (floats, tiles, opens on workspace N, opens on output X); the shipped rules
-  listed like any other, marked "default"; a rule with other criteria shown as text and edited
-  there; Add Rule and Pick a Window… (KWin's window picker: a row with the clicked window's
-  class, matched whole). Below, the floating sizes (`floatingMinimumSize`,
+- **Window Rules sub-page**: one box per rule of `forWindow` and `assign`, in the order the
+  script runs them, in a framed list with a line between rules, every box the same: its
+  application and what it does (floats, tiles, opens on workspace N, opens on output X) on the
+  first line, its title and role (a pattern each) and window type always on the second. The
+  shipped rules, when they run first, are a list of their own ("Defaults") above "Your rules",
+  else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
+  with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
+  window picker: a rule with the clicked window's class, matched whole) sit in the page's
+  footer, always in view; a new rule scrolls into view with its application box focused. Below, the floating sizes (`floatingMinimumSize`,
   `floatingMaximumSize`). `floatingWorkspaces` becomes rules when the page reads it, as the
   script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
   the key out of kwinrc.
