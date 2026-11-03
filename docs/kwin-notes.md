@@ -376,6 +376,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   before building a layout a check depends on. A settled group never does it: with the pointer
   anywhere over `T[f V[g]]`, a window h opened into V took f into its tile behind it, f stayed
   lowest in the stacking and KWin activated only h (probe, branch `probe-hidden-tab`).
+  A floated window's ring is the window beneath it to KWin's hover: a pointer that never moved,
+  left where a floated container's ring lands (the screen's centre is the seam of a floated
+  two-window split), activates that window at the next stacking change (the raise of a focus
+  pass inside the container). Moved onto the ring, the helper focuses the ring's window (§9 F2).
 - It has two outputs, and an empty workspace other than 1 may open on Virtual-1: a probe of what
   stays on one monitor (a sticky window's push) switches to a workspace shown on that monitor
   (3 from 1), not to 2.
