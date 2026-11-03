@@ -318,6 +318,16 @@ private:
     QTimer m_outlineExpiry;                                 // SetOutline: clears it unless renewed
 
     QHash<KWin::EffectWindow *, Held> m_held;
+    // Where and how opaque each window's ring and bars were last drawn (an earlier effect's paint
+    // data, Scale's opening say), and the ring places to repaint after this frame when that moved.
+    struct Drawn
+    {
+        KWin::RectF rect;
+        double opacity = 1;
+    };
+    QHash<KWin::EffectWindow *, Drawn> m_drawn;
+    QList<QPair<QPointer<KWin::EffectWindow>, KWin::RectF>> m_ringDamage;
+    void trackDrawn(KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
     QSet<KWin::EffectWindow *> m_pendingClose; // kept, waiting for a neighbour
     QList<QPointer<KWin::EffectWindow>> m_dragging;

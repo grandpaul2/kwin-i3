@@ -338,6 +338,7 @@ void Hold::onDeleted(EffectWindow *w)
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
+    m_drawn.remove(w);
     m_pendingClose.remove(w);
     m_dragging.removeAll(w);
     queueCheck();
@@ -776,10 +777,14 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     KI3_PAINT(effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data));
-    if (ringed(w) && !m_hidden.contains(w)) {
+    const bool hidden = m_hidden.contains(w), ringedNow = ringed(w), barred = hasBar(w);
+    if ((ringedNow || barred) && !hidden && !m_held.contains(w)) {
+        trackDrawn(w, data);
+    }
+    if (ringedNow && !hidden) {
         paintFrame(renderTarget, viewport, w, deviceRegion, data);
     }
-    if (!m_hidden.contains(w) && !w->isDeleted() && hasBar(w)) {
+    if (!hidden && !w->isDeleted() && barred) {
         paintBars(renderTarget, viewport, w, deviceRegion, data);
     }
     if (!m_mode.isEmpty() && !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId && !w->isDeleted() && !m_hidden.contains(w)) {
@@ -1573,9 +1578,44 @@ PaintResult Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewp
     return CrossFadeEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
 }
 
+// The ring and the bars lie outside the window, so an effect animating the window repaints only
+// the window's own rect (AnimationEffect: its expanded geometry, scaled; 6.7.5
+// animationeffect.cpp:912-922 and :683 at the end): each frame the ring is drawn clipped to that,
+// its corners only, and it stays so once the animation ends. So where an earlier effect moved,
+// scaled or faded the window since the last paint, the old ring and the new are repainted next
+// frame. AnimationEffect advances its timeline in prePaintWindow (animationeffect.cpp:469-489),
+// so the paint in which an animation ends already has identity data and differs from the one
+// before: the whole ring is repainted the frame after. That needs the exact compare below; a
+// tolerance would swallow the last step. A held snapshot is left out: the hold repaints the whole
+// screen meanwhile.
+void Hold::trackDrawn(EffectWindow *w, const WindowPaintData &data)
+{
+    const RectF cur = w->frameGeometry();
+    const Drawn now{RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(),
+                          cur.width() * data.xScale(), cur.height() * data.yScale()),
+                    std::clamp(data.opacity(), 0.0, 1.0)};
+    auto it = m_drawn.find(w);
+    if (it == m_drawn.end()) {
+        m_drawn.insert(w, now);     // an animation changes it at the next paint, which repaints
+        return;
+    }
+    if (it->rect != now.rect || it->opacity != now.opacity) {
+        m_ringDamage.append({QPointer<EffectWindow>(w), it->rect});
+        m_ringDamage.append({QPointer<EffectWindow>(w), now.rect});
+        *it = now;
+    }
+}
+
 void Hold::postPaintScreen()
 {
     ++m_stats.frames;
+    // Added after the paint, for the next frame (as AnimationEffect does in its postPaintScreen).
+    const auto damage = std::exchange(m_ringDamage, {});
+    for (const auto &[w, rect] : damage) {
+        if (w) {
+            repaintRing(w, rect);
+        }
+    }
     if (holding()) {
         ++m_stats.framesHolding;
         effects->addRepaintFull();
