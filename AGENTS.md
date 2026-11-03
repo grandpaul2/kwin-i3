@@ -99,8 +99,8 @@ These are the project's rules, not suggestions.
   The reload: `busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s
   kwin-i3`, then `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`, then
   `isScriptLoaded`. It re-tiles the windows once. Other actions that reach the live desktop, each
-  with the go: `make plugin-install` (loads into the running KWin), `make kcm-install`,
-  `make widget-install`, `make take-keys` and `make restore-keys`.
+  with the go: `make plugin-install` (loads into the running KWin), `make kcm-install` and
+  `make widget-install`.
 - **Nothing that shows a window on a live desktop** without saying so first.
 - **sudo**: propose the command and let your agent's approval prompt ask. Never ask for a password.
 - **Before asking the person to act at the desk**, look for a read-only query (D-Bus, the journal,

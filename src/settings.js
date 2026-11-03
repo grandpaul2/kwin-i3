@@ -69,6 +69,9 @@ var Settings = (function () {
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "200", min: 10, max: 2000 },
+        // A key kwin-i3 and a Plasma shortcut share runs kwin-i3's command while on (the helper's
+        // key filter, plugin/keyoverride.h); off, Plasma's, as kglobalaccel decides alone.
+        keysOverride: { type: "bool", def: "false" },
     };
     var values = {};
 

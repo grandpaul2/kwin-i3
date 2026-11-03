@@ -688,7 +688,7 @@ with `$mod` as the wizard's Win choice.
 | K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Resize Mode's own key leave (Meta+R by default; the helper asks kglobalaccel for it at each entry, as i3's default config leaves on the key it enters by, `config.keycodes:180`); the four actions themselves unbound (a user who wants them flat binds them) | ≠ | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; Meta+R exactly, as i3 matches modifiers exactly (`bindings.c`), so Meta+Shift+R doesn't leave; every other key goes on, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`). ≠: **Plasma's shortcuts still run** (volume, screenshot, the launcher), where i3's mode leaves only its own keys bound and every other key reaches the window: reason (e), another component's shortcut stays its own (`philosophy.md`, Plasma does hardware and the rest). The screen locking doesn't leave the mode, as i3. The sign: a banner at the top of the tree's focused window (`SetFocused`), drawn by the effect (`SetMode`), in the frame's active colour, reading "Resize (Esc)", reason (b): i3's bar shows only the mode's name, `resize` (i3bar's binding mode button, `xcb.c:2172`), here with the way out. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing (§13) |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
-| K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: `make take-keys` frees it (the Overview stays on the top-left screen corner and Grid View on Meta+G) |
+| K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: with the key override on, Meta+W runs kwin-i3's (§8, "Shared keys"; the Overview stays on the top-left screen corner and Grid View on Meta+G) |
 | K8 | Focus Parent | Meta+A | = | `focus parent` (§2 T27) |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
@@ -731,7 +731,7 @@ last (recorded in `~/.config/kwini3helperrc`, `[LayoutKeys]`); a key the user bo
 key with no symbol on the layout is emptied. A key set by hand to the US default counts as kwin-i3's. One fit runs
 at a time; a change during one queues another.
 
-### Taken keys
+### Shared keys
 
 **Which holder wins a shared key**: kglobalaccel gives the key to every action that asks
 (`registerShortcut` never fails), and a press runs **the active holder registered first, ever**:
@@ -745,15 +745,26 @@ running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 At load, kwin-i3 asks kglobalaccel which of its keys another active component holds, and logs
 them (`TAKEN`, §13); a holder that launches what the kwin-i3 action launches (KRunner's own
 `_launch` on Meta+D, the default terminal's on Meta+Return) is logged apart (`TAKEN-SAME`), not
-as taken: both fire the same thing. `make take-keys` frees them (a key several shortcuts hold, from each in turn; a `TAKEN-SAME` holder is left), recording the holders in
-`~/.local/state/kwin-i3/taken-keys.json` before each change, with what each was left holding
-(`set`). The settings page's Keys page takes a key the same way on Apply, recording it in the same
-file. A later take from a holder changed since starts its record afresh from its keys then.
-`make restore-keys` gives each holder its old keys back where it still holds what kwin-i3
-left it; one changed since keeps the change, and its old keys are printed (`plan.md`, "Install and
-first run": a change the user made since is theirs). A record from before `set` was kept counts as
-unchanged where the holder holds no key its old keys didn't. A holder that can't be reached stays
-in the save for a later run.
+as shared: both fire the same thing.
+
+**The key override** (`keysOverride`; the Plasma Settings sub-page's "On a key conflict,
+kwin-i3's key wins"). i3 grabs its own bound keys (`bindings.c:155`), so its binding runs whatever
+else wants the key; here that is behind a setting, off by default, reason (e): another
+component's shortcut stays its own until the user chooses kwin-i3's (`plan.md`). While on, every key one of kwin-i3's actions holds
+runs that action, and no other holder's, with **no other shortcut changed**. The helper
+(`plugin/keyoverride.h`) does it: a filter ahead of KWin's global shortcut filter triggers kwin-i3's
+action on the press and lets the press on with its key changed to one no shortcut has, so
+kglobalacceld runs nothing and its modifier-only state resets (Meta alone, the launcher, doesn't
+fire on Meta's release, probe 92); a filter right after takes that press, its repeats and its
+release, so no window sees them. kwin-i3's keys are the ones kglobalaccel holds for its actions now
+(a key bound on the Keys sub-page, a layout refit), read again when a layout fit ends, on KWin's
+reconfigure and when the page applies keys. Not while a window inhibits shortcuts (as KWin's own
+filter), nor during Alt+Tab or the lock screen (their filters come first). An action gone (kwin-i3
+unloaded) takes no key. Without the helper there is no override: a shared key runs its first
+holder's. Plasma's "Free Meta+T" row is a separate thing: it takes Meta+T from Edit Tiles, recorded
+in `~/.local/state/kwin-i3/taken-keys.json`, given back by unticking it or by `make uninstall`.
+An earlier kwin-i3 took shared keys from their holders; `make install` gives every such record
+back once (`tools/take-keys.py migrate`) and turns the override on in its place.
 
 ---
 
@@ -1032,7 +1043,8 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
   the key out of kwinrc.
 - **Keys sub-page**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
-  key held by another component is named and taken on Apply (recorded for `make restore-keys`); a
+  key another component also holds is set all the same, with no note (which runs is the key
+  override's, §8 "Shared keys"); Apply asks the helper to read kwin-i3's keys again; a
   shifted symbol appears with the keys that type it on the current layout; End session's row has
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
@@ -1051,15 +1063,12 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
   optional, the window animations set to None (Plasma's Animations page: every effect of the
   open/close, maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`,
-  and unloaded; the global speed untouched). **kwin-i3's keys other active shortcuts
-  hold** are one tick on the main page's Keys section, "Use kwin-i3's keys over Plasma's", each taken
-  from every holder in turn (at most five), a holder that launches what kwin-i3's action launches
-  (the load check's `TAKEN-SAME`: KRunner on the Launcher's key, the default terminal on the
-  Terminal's) never counted; while it is ticked, one line says unticking restores
-  the original keys. Every tick is an edit like any setting: **Apply**
+  and unloaded; the global speed untouched); and the key override (§8, "Shared keys"), a setting
+  of kwin-i3's own shown as this page's last row, its boxes writing `keysOverride` (greyed without
+  the plugins; its line lists the keys Plasma's shortcuts run instead while it is off). Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
-  `~/.local/state/kwin-i3/plasma-settings.json`, the keys in make take-keys' save; KWin
-  reconfigured), **Reset** drops it, **Defaults** ticks every row but the optional. Unticked where
+  `~/.local/state/kwin-i3/plasma-settings.json`, Meta+T's in `taken-keys.json`; KWin
+  reconfigured), **Reset** drops it, **Defaults** ticks every row but the optional and the key override (off, its default). Unticked where
   kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
   kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
   puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make
@@ -1150,13 +1159,12 @@ tiling drag off; the drag cursor ends by itself 500 ms after the script stops re
 i3 tells a user only of a config error, with `i3-nagbar`; otherwise it writes to its log. kwin-i3
 likewise: a setting that doesn't parse logs a `WARN` and uses its default (§11), and what the user
 should fix in their setup is checked at load and logged, where a capture shows it. The user meets
-it on the settings page's banners (§11, "The settings page"), and at install in `make take-keys`'s
-printout. A script's notification can't reach Plasma (KWin's `callDBus` can't send `Notify`'s
+it on the settings page's banners (§11, "The settings page"). A script's notification can't reach Plasma (KWin's `callDBus` can't send `Notify`'s
 signature, `docs/kwin-notes.md`), and the banners carry everything one would say.
 
-- **Taken keys**: kwin-i3's keys another active component holds (`TAKEN`; §8, "Taken keys"). The
-  page: the "Some of Plasma's settings work against kwin-i3" banner, to the Plasma Settings
-  sub-page, and the Keys section's "Use kwin-i3's keys over Plasma's".
+- **Shared keys**: kwin-i3's keys another active component holds (`TAKEN`; §8, "Shared keys"). The
+  page: while the key override is off, the "Some of Plasma's settings work against kwin-i3"
+  banner, to the Plasma Settings sub-page and its key override row.
 - **Layout keys**: without the helper, any keyboard layout other than US (`LAYOUTS … not
   fitted`), as kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default
   where the system sets none, counts as US). The page: the plugins' banner.

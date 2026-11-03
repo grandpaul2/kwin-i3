@@ -179,10 +179,14 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     };
     m_defs << actions;
 
-    Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "Use kwin-i3's keys over Plasma's"),
+    // The key override (keysOverride, a setting of kwin-i3's own, written by the page's settings,
+    // not by this model): described here as one of Plasma's rows, since what it decides is
+    // whether Plasma's shortcuts keep the keys they share with kwin-i3. Plasma's shortcuts are
+    // never changed (plugin/keyoverride.h).
+    Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "On a key conflict, kwin-i3's key wins"),
                 {},
-                i18n("A key two shortcuts share runs only one of them."),
-                {}, false, {}, nullptr};
+                i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them. Ticked, kwin-i3's command runs; unticked, Plasma's. Plasma's shortcuts are not changed either way, and the override needs kwin-i3's plugins."),
+                i18n("A key Plasma also uses runs Plasma's shortcut unless this is ticked."), false, {}, nullptr};
     keysRow.plasma = [this](const Getter &) {
         const auto c = clashes();
         QStringList out;
@@ -190,7 +194,8 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
             out << i18nc("key: the Plasma shortcut it runs", "%1: %2", QKeySequence(code).toString(QKeySequence::NativeText), h.friendly);
         const QString list = out.size() > 4 ? i18nc("first four, then a count", "%1; and %2 more", out.mid(0, 4).join(QStringLiteral("; ")), out.size() - 4)
                                             : out.join(QStringLiteral("; "));
-        return i18np("1 of kwin-i3's keys runs a Plasma shortcut instead: %2.", "%1 of kwin-i3's keys run Plasma shortcuts instead: %2.", c.size(), list);
+        return c.isEmpty() ? i18n("No Plasma shortcut shares a key with kwin-i3.")
+                           : i18np("1 shared key runs Plasma's shortcut: %2.", "%1 shared keys run Plasma's shortcuts: %2.", c.size(), list);
     };
     m_defs << keysRow;
 
@@ -253,6 +258,8 @@ QString SetupModel::plasmaSide(const Change &c) const
 // return to.
 void SetupModel::setPlasmaSide(const Row &r)
 {
+    if (r.id == QLatin1String("keys"))
+        return;                 // the page's settings write keysOverride
     if (r.id == QLatin1String("tileEditor")) {
         restoreKeyDefault(QStringLiteral("kwin"), QStringLiteral("Edit Tiles"), int(Qt::META) | Qt::Key_T);
         return;
@@ -263,6 +270,14 @@ void SetupModel::setPlasmaSide(const Row &r)
             continue;
         write(c, p == stock(c) ? QJsonValue(QJsonValue::Null) : QJsonValue(p));
     }
+}
+
+// The key override as kwinrc has it now (the page's settings write it).
+bool SetupModel::keysOverride() const
+{
+    auto config = KSharedConfig::openConfig(QStringLiteral("kwinrc"));
+    config->reparseConfiguration();
+    return KConfigGroup(config, QStringLiteral("Script-kwin-i3")).readEntry("keysOverride", false);
 }
 
 QString SetupModel::effective(const Change &c) const
@@ -306,7 +321,7 @@ bool SetupModel::differs(const Row &r) const
         return h.component + QLatin1Char('|') + h.action == TileEditor;
     }
     if (r.id == QLatin1String("keys"))
-        return m_keys->available() && !clashes().isEmpty();
+        return !keysOverride();
     return std::any_of(r.changes.begin(), r.changes.end(), [this](const Change &c) { return effective(c) != c.value; });
 }
 
@@ -316,7 +331,7 @@ bool SetupModel::changedByUs(const Row &r) const
     if (r.id == QLatin1String("tileEditor"))
         return taken.contains(TileEditor);
     if (r.id == QLatin1String("keys"))
-        return std::any_of(taken.begin(), taken.end(), [](const QString &id) { return id != TileEditor; });
+        return keysOverride();      // on: there is a Plasma side to go back to
     const QJsonObject save = readSave();
     return std::any_of(r.changes.begin(), r.changes.end(), [&save](const Change &c) { return save.contains(idOf(c)); });
 }
@@ -330,7 +345,9 @@ void SetupModel::load()
         // Every row is shown, as KDE's rule is disabled, not hidden: one Plasma already matches and
         // kwin-i3 didn't change ("settled") is ticked and disabled, with nothing to give back.
         const bool d = differs(r), c = changedByUs(r);
-        m_needed = m_needed || (d && !r.optional && r.id != QLatin1String("keys"));
+        // The key override counts only while a key is shared: off with nothing shared, nothing works
+        // against kwin-i3.
+        m_needed = m_needed || (d && !r.optional && (r.id != QLatin1String("keys") || (m_keys->available() && !clashes().isEmpty())));
         m_initial[r.id] = !d;
         const Getter now = [this](const Change &ch) { return effective(ch); };
         const Getter was = [this](const Change &ch) { return before(ch); };
@@ -340,8 +357,7 @@ void SetupModel::load()
             status = std::all_of(r.changes.begin(), r.changes.end(), [this](const Change &ch) { return effective(ch) == stock(ch); })
                 ? QStringLiteral("default") : QStringLiteral("changed");
         const Getter plasmaG = [this](const Change &ch) { const QString p = plasmaSide(ch); return p.isEmpty() ? effective(ch) : p; };
-        const QString earlier = r.id == QLatin1String("keys")         ? i18n("These keys ran Plasma's shortcuts.")
-                                                                      : r.plasma(was);
+        const QString earlier = r.plasma(was);
         m_rows << QVariantMap{{QStringLiteral("id"), r.id},         {QStringLiteral("title"), r.title},
                               {QStringLiteral("plasma"), d ? r.plasma(now) : QString()},
                               {QStringLiteral("status"), status},   {QStringLiteral("kwini3"), r.kwini3},
@@ -371,7 +387,7 @@ void SetupModel::defaults()
 {
     for (const QVariant &v : std::as_const(m_rows)) {
         const QVariantMap row = v.toMap();
-        if (!row.value(QStringLiteral("optional")).toBool())
+        if (!row.value(QStringLiteral("optional")).toBool() && row.value(QStringLiteral("id")) != QLatin1String("keys"))
             m_wanted[row.value(QStringLiteral("id")).toString()] = true;
     }
     Q_EMIT changed();
@@ -382,7 +398,8 @@ bool SetupModel::isDefaults() const
 {
     for (const QVariant &v : m_rows) {
         const QVariantMap row = v.toMap();
-        if (!row.value(QStringLiteral("optional")).toBool() && !m_wanted.value(row.value(QStringLiteral("id")).toString()).toBool())
+        if (!row.value(QStringLiteral("optional")).toBool() && row.value(QStringLiteral("id")) != QLatin1String("keys")
+            && !m_wanted.value(row.value(QStringLiteral("id")).toString()).toBool())
             return false;
     }
     return true;
@@ -440,31 +457,13 @@ QStringList SetupModel::applyRow(const Row &r)
             failed << r.title;
         return failed;
     }
-    if (r.id == QLatin1String("keys")) {
-        // A key several shortcuts hold is taken from each in turn, until kwin-i3's fires.
-        for (const auto &[code, first] : clashes()) {
-            KeyHolder h = first;
-            const QString action = [&] {
-                for (const auto &[c, a] : m_keys->currentKeys())
-                    if (c == code)
-                        return a;
-                return QString();
-            }();
-            for (int i = 0; i < 5 && !h.component.isEmpty() && !sameLaunch(action, h) && componentActive(h.component); ++i) {
-                if (!takeKey(h, code)) {
-                    failed << QKeySequence(code).toString(QKeySequence::NativeText);
-                    break;
-                }
-                h = keyHolder(code);
-            }
-        }
-        return failed;
-    }
+    if (r.id == QLatin1String("keys"))
+        return failed;          // the page's settings write keysOverride
     for (const Change &c : r.changes) {
         if (effective(c) == c.value)
             continue;
         // Saved before the change, so a failure loses nothing; an earlier save of the same key
-        // keeps its old value (the user's), as make take-keys keeps its first.
+        // keeps its old value (the user's), as taken-keys.json keeps its first.
         QJsonObject save = readSave();
         QJsonObject e = save.value(idOf(c)).toObject();
         if (e.isEmpty())
@@ -488,7 +487,7 @@ int SetupModel::giveBackRow(const Row &r)
     if (r.id == QLatin1String("tileEditor"))
         return giveBackKeys([](const QString &k) { return k == TileEditor; });
     if (r.id == QLatin1String("keys"))
-        return giveBackKeys([](const QString &k) { return k != TileEditor; });
+        return 0;               // the page's settings write keysOverride
     QJsonObject save = readSave();
     for (const Change &c : r.changes) {
         const QJsonObject e = save.value(idOf(c)).toObject();

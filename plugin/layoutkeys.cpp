@@ -228,12 +228,27 @@ void LayoutKeys::FitKeys()
     apply(wants, lines.join(QLatin1Char('\n')));
 }
 
+void LayoutKeys::RefreshKeys()
+{
+    if (onKeysChanged) {
+        onKeysChanged();
+    }
+}
+
+QString LayoutKeys::OverridePlan() const
+{
+    return onOverridePlan ? onOverridePlan() : QString();
+}
+
 // The fit is over: its plan is published (the live tests wait for it, so it must not show before
 // the keys are kglobalaccel's), and a fit asked for meanwhile runs.
 void LayoutKeys::done(const QString &plan)
 {
     m_plan = plan;
     m_busy = false;
+    if (onKeysChanged) {
+        onKeysChanged();
+    }
     if (m_again) {
         QMetaObject::invokeMethod(this, &LayoutKeys::FitKeys, Qt::QueuedConnection);
     }

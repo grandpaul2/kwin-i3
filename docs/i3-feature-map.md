@@ -76,7 +76,7 @@ them, with their tags.
 **Stock-install gaps** (the README pass, `OPEN.md` item 4)
 12. **Focus follows mouse comes from the studied desktop's configuration** (B48, C82): a stock Plasma is click-to-focus
    (already `OPEN.md` item 4(e)).
-13. **22 keys clash with Plasma's defaults until `make take-keys`** (R1-R7, A96): Meta+arrows,
+13. **22 keys clash with Plasma's defaults unless the key override is on** (R1-R7, A96): Meta+arrows,
    Meta+Ctrl+arrows (the resize keys, KWin's desktop switch), Meta+Shift+Left/Right, Meta+1..0,
    Meta+V, Meta+L, Meta+E. README overstates the zoom clash: only Meta+0 (R-rows).
 14. **No Meta+Return terminal** outside the studied desktop's configuration (D74).
@@ -110,7 +110,7 @@ knowledge, not read line by line. "Live" = the file as read today (2026-10-25): 
 `kglobalshortcutsrc` the first field of a KWin entry is the current key, and KWin's stock
 Meta+arrow / Meta+Ctrl+arrow / Meta+Shift+Left/Right entries are currently `none`, so there is no
 collision on the studied desktop's desktop today (a stranger's stock Plasma has them: README Install step 2 and
-`make take-keys`). Criteria keys themselves are slice B's; here only "needs criteria" is noted.
+the key override). Criteria keys themselves are slice B's; here only "needs criteria" is noted.
 
 Owner key: K kwin-i3 (script unless said), KW stock KWin, P Plasma, UC the studied desktop's own configuration, none a hole,
 OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
@@ -142,7 +142,7 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 | A16 | `focus output <name>` / `<dir>` / `primary` / `next` | focus the named/directional output | K (script), directional forms only | | `Focus Output Left/Right/Up/Down` in `UNBOUND`, `src/kwin.js:1393`; live entries exist, unbound | C | Named-output, `primary`, `next` absent. By-name is the part with no equivalent; directional is what a user wants. Unbound by default, as in i3 (spec-workspace-commands) |
 | A17 | `focus output` with several outputs listed (`focus output left right`) | try each in turn (the `FOCUS_OUTPUT` loop) | none | | | C | Rare |
 | A18 | `focus workspace` (`cmd_focus(1)`) | focus the workspace container (moves focus to the workspace itself) | none | | tree has `ws` as focusable only when empty (`fromWs` in `focusDir`) | C | Only used with `focus parent`-style climbing; same fate as A12 |
-| A19 | bare `focus` (with criteria) | focus the window matched by criteria, switching workspace/output if needed | none; partly KW/P | P: Overview (Meta+W on a stock install, which `make take-keys` gives to Layout Tabbed), task manager click, KRunner "Windows"; KW activation is followed by the tree (`Tree.activate`) | no criteria addressing; but any KWin-side activation is followed (`desktopsChanged`, activation hooks) | C | "Jump to window by name" has owners in Plasma, harmless duplicate: kwin-i3 follows whatever activates |
+| A19 | bare `focus` (with criteria) | focus the window matched by criteria, switching workspace/output if needed | none; partly KW/P | P: Overview (Meta+W on a stock install, which the key override gives to Layout Tabbed), task manager click, KRunner "Windows"; KW activation is followed by the tree (`Tree.activate`) | no criteria addressing; but any KWin-side activation is followed (`desktopsChanged`, activation hooks) | C | "Jump to window by name" has owners in Plasma, harmless duplicate: kwin-i3 follows whatever activates |
 
 ### 2. move
 
@@ -264,7 +264,7 @@ OOS out of scope by `docs/plan.md` "Scope", n/a no meaning here.
 
 | # | i3 item (exact form) | What i3 does (one line) | Owner here | Also done by | How / evidence | Tag | Note |
 |---|---|---|---|---|---|---|---|
-| A96 | KWin's stock keys on kwin-i3's Meta+arrows / Meta+Ctrl+arrows / Meta+Shift+Left/Right / Meta+E / Meta+L | (n/a, default shortcut collision) | K vs KW/P | KW default `Window Quick Tile *`, `Switch One Desktop *`, `Window to Next/Previous Screen`; Dolphin (Meta+E); Lock (Meta+L) | live `kglobalshortcutsrc`: each KWin action's current key is `none` today, the default column still lists them; so no live conflict now | C | A conflict on a stock Plasma: the other holder's action fires, not kwin-i3's. `make take-keys` handles it; README step 2. the studied desktop's setup avoids it by clearing |
+| A96 | KWin's stock keys on kwin-i3's Meta+arrows / Meta+Ctrl+arrows / Meta+Shift+Left/Right / Meta+E / Meta+L | (n/a, default shortcut collision) | K vs KW/P | KW default `Window Quick Tile *`, `Switch One Desktop *`, `Window to Next/Previous Screen`; Dolphin (Meta+E); Lock (Meta+L) | live `kglobalshortcutsrc`: each KWin action's current key is `none` today, the default column still lists them; so no live conflict now | C | A conflict on a stock Plasma: the other holder's action fires, not kwin-i3's. the key override handles it; README step 4. the studied desktop's setup avoids it by clearing |
 | A97 | Meta+D (live: `[services][org.kde.krunner.desktop] _launch=Meta+D`) vs `Show Desktop` default Meta+D | (not an i3 command) | P | KW `Show Desktop` default Meta+D (current `none`) | live `kglobalshortcutsrc` | C | Note only: the earlier feature map said Meta+D is fuzzel; the live file shows KRunner on Meta+D (Stage rule: defaults). No conflict today |
 | A98 | Meta+Alt+arrows `Switch Window <dir>` (KWin) | geometric directional focus | KW | K Focus (tree-based) | live: current `none`, default Meta+Alt+arrows | C | If left bound, two directional focus systems: harmless, but they disagree on which window is "left" in nested layouts |
 | A99 | Alt+Tab `Walk Through Windows` | cycle recency | KW | K follows activation | live: Alt+Tab / Meta+Tab bound | C | Not a conflict; kwin-i3's focus stack follows |
@@ -412,7 +412,7 @@ Plan "Scope" row quoted below as **Scope-config**: "i3's config file and `i3-msg
 | B92 | `bindsym ... exec --no-startup-id` | no launch feedback | n/a | | | D | |
 | B93 | `mode "name" { bindsym ... }` / `mode --pango_markup "name"` | a binding mode with its own keys | none, by limit | | plan Behaviour: "a script cannot register keys that exist only inside a mode" | C | Known limit. The resize mode is built as direct keys (Meta+Ctrl+arrows). Others (system mode, passthrough/Hide mode) have no route. |
 | B94 | `mode` bindings inside the block (`bindsym` / `bindcode` / `bind` flags) | | none | | follows B93 | C | |
-| B95 | `bindsym Mod+r mode "resize"` + `resize` keys | step 10 ppt | K | | direct keys Meta+Ctrl+arrows / J K L ;, `resizeStep` 1-50 % | C | Difference: no mode, no Escape. Two owners hold Meta+Ctrl+arrows in a stock Plasma: KWin "Switch One Desktop" (README Install step 2); `make take-keys` frees them. A conflict on a stock install (the held key fires, not kwin-i3's). |
+| B95 | `bindsym Mod+r mode "resize"` + `resize` keys | step 10 ppt | K | | direct keys Meta+Ctrl+arrows / J K L ;, `resizeStep` 1-50 % | C | Difference: no mode, no Escape. Two owners hold Meta+Ctrl+arrows in a stock Plasma: KWin "Switch One Desktop" (README Install step 2); the key override runs kwin-i3's. A conflict on a stock install (the held key fires, not kwin-i3's). |
 
 **Startup, IPC, misc**
 
@@ -757,7 +757,7 @@ Owner key: K kwin-i3 (script / kwini3hold / kwini3helper / widget / settings pag
 
 | # | i3 item (exact form) | What it does to a tiled window | Owner here | Also done by | How / evidence | Tag | Note |
 |---|---|---|---|---|---|---|---|
-| R1 | Quick Tile Left/Right/Top/Bottom on **Meta+Left/Right/Up/Down** (stock) | Puts the window in KWin's quick-tile slot (left/right half, top = maximize, bottom) | KW | K: same four keys are Focus; a press runs the first holder | live default column: `Window Quick Tile Left=none,Meta+Left` etc.; kwin-i3 `Focus Left=Meta+Left`. Quick tiles live in a separate `QuickRootTile` per desktop (`tilemanager.cpp:69,128-138`), not kwin-i3's custom root. Load check names the keys (`kwin.js:1510-1540`); `make take-keys` frees them; Keys list takes them on Apply | C | Real conflict on a stock install until take-keys runs: Meta+Left tiles instead of focusing. Handled by report + opt-in fix, and only seen at load |
+| R1 | Quick Tile Left/Right/Top/Bottom on **Meta+Left/Right/Up/Down** (stock) | Puts the window in KWin's quick-tile slot (left/right half, top = maximize, bottom) | KW | K: same four keys are Focus; a press runs the first holder | live default column: `Window Quick Tile Left=none,Meta+Left` etc.; kwin-i3 `Focus Left=Meta+Left`. Quick tiles live in a separate `QuickRootTile` per desktop (`tilemanager.cpp:69,128-138`), not kwin-i3's custom root. Load check names the keys (`kwin.js:1510-1540`); the key override runs kwin-i3's on them, Plasma's shortcuts unchanged | C | Real conflict on a stock install until take-keys runs: Meta+Left tiles instead of focusing. Handled by report + opt-in fix, and only seen at load |
 | R2 | Switch One Desktop Left/Right/Up/Down on **Meta+Ctrl+arrows** (stock) | Switch the current desktop of the active output | KW | K: Grow/Shrink Width/Height | live default col; same mechanism as R1 | C | Conflict until take-keys; if KWin wins, kwin-i3 sees an "outside" desktop switch (`SHOWN ... (outside)`) and follows, so nothing breaks but the resize key does nothing |
 | R3 | Window to Next/Previous Screen on **Meta+Shift+Right/Left** (stock) | Moves the window to the other monitor | KW | K: Move Right/Left (tree_move) | live default col | C | Conflict until take-keys. If KWin wins the window moves outside the tree's logic; `desktopsChanged` follows it as a workspace move, so it ends consistent but not as i3's move |
 | R4 | plasmashell "Activate Task Manager Entry 1..9" on **Meta+1..9** (stock) | Activate/launch the N-th task-manager entry (raises that window, may switch desktop) | P | K: Workspace N | live default col; plasmashell is an active component so its action wins | C | Nine of the 22 clashing keys. Conflict until take-keys |

@@ -68,6 +68,6 @@ grep -qs '^\[Script-kwin-i3\]' "${XDG_CONFIG_HOME:-$HOME/.config}/kwinrc" &&
     echo "  Kept: your kwin-i3 settings, for a later install (the [Script-kwin-i3] group in ~/.config/kwinrc: delete it to remove them)."
 [[ -d $state/captures ]] && echo "  Kept: your bug captures in $state/captures (rm -r $state to remove them)."
 [[ -f $state/plasma-settings.json ]] && echo "  Kept: Plasma settings that couldn't be given back yet, in $state/plasma-settings.json: run tools/plasma-settings.py restore again later."
-[[ -f $state/taken-keys.json ]] && echo "  Kept: keys that couldn't be given back yet, in $state/taken-keys.json: run make restore-keys again later."
+[[ -f $state/taken-keys.json ]] && echo "  Kept: keys that couldn't be given back yet, in $state/taken-keys.json: run python3 tools/take-keys.py restore again later."
 [[ -d $state && -z $(ls -A "$state") ]] && rmdir "$state"
 echo "  This checkout ($here) is yours to delete."

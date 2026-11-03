@@ -8,6 +8,8 @@ Helper::Helper()
     , m_gapStrips([this] { return m_tilingDrag.resizeGap(); }, [this] { return m_frameFocus.frameWidth(); })
 {
     m_tilingDrag.onResizeGapChanged = [this] { m_gapStrips.dirty(); };
+    m_layoutKeys.onKeysChanged = [this] { m_keyOverride.refresh(); };
+    m_layoutKeys.onOverridePlan = [this] { return m_keyOverride.plan(); };
     KWin::input()->installInputEventFilter(&m_pointerProbe);
     KWin::input()->installInputEventFilter(&m_frameFocus);
     KWin::input()->installInputEventFilter(&m_tilingDrag);
@@ -19,6 +21,8 @@ Helper::~Helper()
 {
     if (KWin::input()) {
         m_tilingDrag.onResizeGapChanged = nullptr;
+        m_layoutKeys.onKeysChanged = nullptr;
+        m_layoutKeys.onOverridePlan = nullptr;
         KWin::input()->uninstallInputEventFilter(&m_pointerProbe);
         KWin::input()->uninstallInputEventFilter(&m_frameFocus);
         KWin::input()->uninstallInputEventFilter(&m_tilingDrag);

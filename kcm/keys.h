@@ -1,8 +1,8 @@
 #pragma once
 // The Keys sub-page's model: one row per command,
-// each with the one to three kwin-i3 actions that are its keys. Edits are pending until save();
-// a key another shortcut holds is named in its row and taken from that holder on save, recorded
-// where make take-keys records (so make restore-keys gives it back).
+// each with the one to three kwin-i3 actions that are its keys. Edits are pending until save().
+// A key another shortcut also holds is set all the same: which of the two runs is the key
+// override's (keysOverride, plugin/keyoverride.h), never a key taken from its holder.
 
 #include <QAbstractListModel>
 #include <QJsonObject>
@@ -46,20 +46,15 @@ Q_SIGNALS:
     void availableChanged();
 
 private:
-    struct Holder {
-        QString component, action, friendly;
-    };
     struct Slot {
         QString action;
         QKeySequence def, current, pending;
-        Holder holder; // a foreign holder of pending, taken from on save; empty if none
     };
     struct Row {
         QString group, label, note;      // note: muted text beside the keys ("in resize mode: J, Left")
         QString setting;                 // a setting that shapes the command (endSession), shown after its keys
         QList<Slot> entries;
     };
-    void findHolders();
     QVariant shown(int row) const;
     QList<Row> m_rows;
     bool m_available = false;
@@ -76,12 +71,13 @@ struct KeyHolder {
 };
 KeyHolder keyHolder(int code);
 bool componentActive(const QString &component);
-// Takes the key from its holder, recorded in make take-keys' save (taken-keys.json) first.
+// Takes the key from its holder, recorded in taken-keys.json first (only the Plasma Settings
+// page's "Free Meta+T" row takes a key now).
 bool takeKey(const KeyHolder &holder, int code);
 // Gives an action the key back where no shortcut holds it (a row moved to Plasma's side).
 void restoreKeyDefault(const QString &component, const QString &action, int code);
 // The save's records, "component|action".
 QStringList takenIds();
-// Gives back the records `which` accepts, as make restore-keys: where the holder still has what
+// Gives back the records `which` accepts, as tools/take-keys.py restore: where the holder still has what
 // kwin-i3 left it. Returns how many couldn't be reached (they stay in the save).
 int giveBackKeys(const std::function<bool(const QString &id)> &which);

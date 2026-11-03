@@ -110,8 +110,8 @@ Workspaces, Window Rules, Keys and Plasma Settings.
   default key has an empty slot.
 - **A command's label** says what it does from the user's side and fits the label column (about
   40 characters).
-- **A clash is shown in its row**, never in a dialog: "Meta+E is used by Dolphin (Launch); it will
-  be taken from it on Apply."
+- **A key another shortcut also holds is set like any other**, with no note: which of the two
+  runs is the key override's (the Plasma Settings sub-page), never asked per key.
 - A setting that shapes a command (End session) is a dropdown in that command's row.
 
 ## The cog's form (`config.ui`)

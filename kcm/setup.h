@@ -4,8 +4,9 @@
 // set. A row's tick is a pending edit like any setting on the page: the page's Apply makes it
 // (ticked: kwin-i3's value; unticked where kwin-i3 changed it: Plasma's given back), Reset drops
 // it, Defaults ticks every row kwin-i3 needs. Each change is saved first (its old value and the value
-// written, plasma-settings.json beside make take-keys' save) and given back where Plasma still
-// has what kwin-i3 wrote. Keys go through make take-keys' save (keys.h).
+// written, plasma-settings.json beside taken-keys.json) and given back where Plasma still
+// has what kwin-i3 wrote. Meta+T's take goes through taken-keys.json (keys.h); the key override
+// row writes no Plasma setting at all.
 
 #include "keys.h"
 
@@ -64,6 +65,7 @@ private:
     QString before(const Change &c) const;
     QString plasmaSide(const Change &c) const;
     void setPlasmaSide(const Row &r);
+    bool keysOverride() const;
     bool differs(const Row &r) const;
     bool changedByUs(const Row &r) const;
     QStringList applyRow(const Row &r);

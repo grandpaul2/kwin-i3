@@ -2,7 +2,8 @@
 // that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
 // columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
 // muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
-// on the page: Apply makes it, Reset drops it, Defaults picks kwin-i3 for all but the optional.
+// on the page: Apply makes it, Reset drops it, Defaults picks kwin-i3 for all but the optional
+// and the key override (a setting of kwin-i3's own, off by default).
 // Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
 // reader had before kwin-i3 changed it, and make uninstall can put everything back.
 import QtQuick
@@ -15,7 +16,7 @@ KCM.SimpleKCM {
     id: page
     title: i18nc("@title", "Plasma Settings")
 
-    readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
+    readonly property var rows: kcm.setup.rows
     // The height of a row's title line (the name and its help button, taller than a checkbox),
     // so the boxes centre on the name rather than sit at the row's top.
     readonly property real titleHeight: titleProbe.implicitHeight
@@ -29,7 +30,7 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: true
-            text: i18n("Plasma's own settings that matter to kwin-i3, shown here for convenience. A change applies with Apply, as in System Settings; Defaults picks kwin-i3's for all but the optional.")
+            text: i18n("Plasma's own settings that matter to kwin-i3, shown here for convenience. A change applies with Apply, as in System Settings.")
         }
         Kirigami.InlineMessage {
             Layout.fillWidth: true
@@ -44,14 +45,24 @@ KCM.SimpleKCM {
     // (and unticks the other). Clicking a ticked box leaves it ticked: one side is always chosen.
     // kwin-i3's side is always one thing, the setting turned on, so its box says "Enable"; the
     // Plasma side is whatever the reader had, so it says nothing.
+    // The key override's row is a setting of kwin-i3's own (keysOverride): its boxes write that
+    // setting, as any on the main page, and need the plugins.
     component SideBox: QQC2.CheckBox {
         property var row
         property bool kwini3                 // true: the kwin-i3 column
-        readonly property bool chosen: !!kcm.setup.wanted[row.id] === kwini3
+        readonly property bool isOverride: row.id === "keys"
+        readonly property bool chosen: (isOverride ? !!kcm.settings.keysOverride : !!kcm.setup.wanted[row.id]) === kwini3
         text: kwini3 ? i18nc("@option:check kwin-i3's way for a Plasma setting", "Enable") : ""
         font: Kirigami.Theme.smallFont
         checked: chosen
-        onClicked: { kcm.setup.setWanted(row.id, kwini3); checked = Qt.binding(() => chosen) }
+        enabled: !isOverride || kcm.helperLoaded
+        onClicked: {
+            if (isOverride)
+                kcm.settings.keysOverride = kwini3;
+            else
+                kcm.setup.setWanted(row.id, kwini3);
+            checked = Qt.binding(() => chosen);
+        }
         Layout.alignment: Qt.AlignHCenter | Qt.AlignTop
         Layout.topMargin: Math.max(0, (page.titleHeight - implicitHeight) / 2)
         Accessible.name: kwini3 ? i18nc("@option:check a setting, kwin-i3's way", "%1: kwin-i3", row.title)

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # stock: own
-# The keys kwin-i3 didn't get: a key another action holds is shown on
-# kwin-i3's action too, but only the first holder's fires. At load, the log names the taken ones;
-# make take-keys frees them and make restore-keys gives them back.
+# needs: plugin
+# Shared keys: a key another action holds is shown on kwin-i3's action too, but only the first
+# holder's fires. At load, the log names them; the key override (keysOverride, the helper) runs
+# kwin-i3's on them while on, with every holder's keys left as they are.
 source "$(dirname "$0")/lib.sh"
 kga() { busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel "$@"; }
 keys_of() { kga shortcutKeys as 4 "$1" "$2" x "$2"; }
@@ -48,27 +49,35 @@ for c in "${chords[@]}"; do
     action=${c%%|*} chord=${c#*|}
     m=$(mark); press "$chord"
     WAIT=$w poll fired "$action" "$m" || dead+=("$chord")
+    # With the helper, Resize Mode's key enters the mode, in which kwin-i3 ignores its own keys:
+    # left at once, as Escape leaves it.
+    [[ $action == "Resize Mode" ]] && { press Escape; sleep 0.2; }
     w=2
 done
 dead_s=$(printf '%s\n' "${dead[@]}" | sort | tr '\n' ' ')
 check "the keys that don't fire are the reported ones: '$dead_s'" test "$dead_s" == "$taken"
 
-# 3. make take-keys: both fire kwin-i3's action now; the stand-in keeps its other key.
-out=$(cd "$root" && make -s take-keys 2>&1)
-check "take-keys took two"                  grep -q 'take-keys: 2 taken' <<<"$out"
+# 3. The key override on: both run kwin-i3's action; no holder's keys change, nothing is saved.
+kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key keysOverride true
+plan() { busctl --user call org.kde.KWin /kwini3helper net.local.kwini3helper OverridePlan; }
+plan_on() { [[ "$(plan)" == "s \"on"* && "$(plan)" == *"Meta+Left = kwin-i3 Focus Left"* ]]; }
+plan_off() { [[ "$(plan)" == "s \"off"* ]]; }
+check "the override is on, with Meta+Left"  poll plan_on
 m=$(mark); press Meta+Left
 check "Meta+Left: kwin-i3's Focus Left"     wait_log '^.{9}ACTION Focus Left$' "$m"
 m=$(mark); press Meta+E
 check "Meta+E: kwin-i3's Toggle Split"      wait_log '^.{9}ACTION Toggle Split$' "$m"
-check "the stand-in keeps Meta+Shift+F11"   test "$(keys_of fakeapp Launch)" == "a(ai) 1 4 $MSF11 0 0 0"
+check "Quick Tile Left keeps its keys"      test "$(keys_of kwin "Window Quick Tile Left")" == "$before_tile"
+check "the stand-in keeps its keys"         test "$(keys_of fakeapp Launch)" == "$before_fake"
 check "the inactive one keeps Meta+H"       test "$(keys_of ghostapp Launch)" == "a(ai) 1 4 $MH 0 0 0"
-check "the save exists"                     test -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
+check "nothing is saved"                    test ! -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
 
-# 4. make restore-keys: exactly the keys they had, and the save is gone.
-(cd "$root" && make -s restore-keys >/dev/null 2>&1)
-check "Quick Tile Left has its keys back"   test "$(keys_of kwin "Window Quick Tile Left")" == "$before_tile"
-check "the stand-in has its keys back"      test "$(keys_of fakeapp Launch)" == "$before_fake"
-check "the save is gone"                    test ! -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
+# 4. Off again: the holders' run, kwin-i3's doesn't.
+kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key keysOverride false
+check "the override is off"                 poll plan_off
+m=$(mark); press Meta+E
+sleep 0.5
+check "Meta+E: not kwin-i3's"               eval '! after "$m" | grep -qE "^.{9}ACTION Toggle Split$"'
 
 check "no invariant failures or errors"     clean_log
 finish

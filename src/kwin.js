@@ -3650,7 +3650,7 @@ var KI3 = (function () {
 
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
-        // Meta+W is Plasma's Overview on a stock install: make take-keys frees it, as any other.
+        // Meta+W is Plasma's Overview on a stock install: the key override runs kwin-i3's, as any other.
         "Layout Stacking": ["Meta+S"], "Layout Tabbed": ["Meta+W"], "Focus Parent": ["Meta+A"],
         "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
         "Fullscreen": ["Meta+F"], "Close": ["Meta+Shift+Q"],

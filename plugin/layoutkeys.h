@@ -31,6 +31,16 @@ public Q_SLOTS:
     void FitKeys();
     // For the live tests and bug reports: the layouts and each action's keys, as last fitted.
     QString Plan() const;
+    // The settings page, after it applied keys: kwin-i3's keys changed (onKeysChanged).
+    void RefreshKeys();
+    // For the live tests and bug reports: the key override's state and table (onOverridePlan).
+    QString OverridePlan() const;
+
+public:
+    // Set by the helper: a fit has ended, or the page applied keys (the key override reads them
+    // again); and the override's plan, for OverridePlan.
+    std::function<void()> onKeysChanged;
+    std::function<QString()> onOverridePlan;
 
 private:
     struct Want {

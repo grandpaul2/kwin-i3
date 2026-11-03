@@ -134,7 +134,7 @@ RC
 # The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
 # the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
 # locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom, Meta+W opened the Overview). The focus settings above are that desktop's too.
-# Stock mode keeps Plasma's shortcuts and frees the keys as the README does, by make take-keys
+# Stock mode keeps Plasma's shortcuts and turns the key override on as the README says
 # (tests/live/lib.sh, load_kwin_i3).
 [[ ${KI3_STOCK:-} == 1 ]] || cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
 [kwin]

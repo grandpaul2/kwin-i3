@@ -94,7 +94,8 @@ bool kwinI3Loaded()
     return reply.type() == QDBusMessage::ReplyMessage && reply.arguments().value(0).toBool();
 }
 
-// make take-keys' record (tools/take-keys.py), so make restore-keys gives back what the page took.
+// Where Meta+T's take is recorded (the Plasma Settings row), the record tools/take-keys.py gives
+// back (make uninstall).
 static QString takenPath()
 {
     const QString state = qEnvironmentVariable("XDG_STATE_HOME", QDir::homePath() + QStringLiteral("/.local/state"));
@@ -179,8 +180,7 @@ QVariant KeysModel::data(const QModelIndex &index, int role) const
                                {QStringLiteral("keyCode"), s.pending.isEmpty() ? 0 : s.pending[0].toCombined()},
                                {QStringLiteral("defaultCode"), s.def.isEmpty() ? 0 : s.def[0].toCombined()},
                                {QStringLiteral("keyText"), s.pending.toString(QKeySequence::NativeText)},
-                               {QStringLiteral("defaultText"), s.def.toString(QKeySequence::NativeText)},
-                               {QStringLiteral("holder"), s.holder.friendly}};
+                               {QStringLiteral("defaultText"), s.def.toString(QKeySequence::NativeText)}};
         return out;
     }
     }
@@ -220,19 +220,6 @@ void KeysModel::load()
         Q_EMIT availableChanged();
 }
 
-void KeysModel::findHolders()
-{
-    for (Row &row : m_rows) {
-        for (Slot &s : row.entries) {
-            s.holder = {};
-            if (s.pending.isEmpty() || s.pending == s.current)
-                continue;
-            const KeyHolder h = keyHolder(s.pending[0].toCombined());
-            s.holder = {h.component, h.action, h.friendly};
-        }
-    }
-}
-
 QVariant KeysModel::shown(int row) const
 {
     return data(index(row), SlotsRole);
@@ -253,7 +240,6 @@ void KeysModel::setKey(int r, int slot, const QKeySequence &key)
                     s.pending = QKeySequence();
     }
     m_rows[r].entries[slot].pending = key;
-    findHolders();
     // Only the rows that changed: a reset row rebuilds its key items, and the one just edited
     // would lose the keyboard focus.
     for (int i = 0; i < m_rows.size(); ++i)
@@ -321,7 +307,7 @@ bool componentActive(const QString &component)
 static bool stillAsLeft(const QJsonObject &e, const QList<KeySeq> &now);
 
 // Takes code from its holder, recorded first (an earlier record of the same holder is kept, as
-// take-keys does, while the holder still has what kwin-i3 left it; one the user has changed since
+// the tool did, while the holder still has what kwin-i3 left it; one the user has changed since
 // starts afresh from its keys now, which are theirs): not recorded, not taken, since it couldn't
 // be given back. After the take, "set" records what the holder was left with: a give-back writes
 // the old keys only where the holder still has exactly that.
@@ -384,7 +370,7 @@ QStringList takenIds()
     return readTaken().keys();
 }
 
-// As make restore-keys (tools/take-keys.py restore), for the records `which` accepts.
+// As tools/take-keys.py restore (make uninstall), for the records `which` accepts.
 int giveBackKeys(const std::function<bool(const QString &id)> &which)
 {
     QJsonObject taken = readTaken();
@@ -417,13 +403,6 @@ void KeysModel::save()
         for (const Slot &s : row.entries) {
             if (s.pending == s.current)
                 continue;
-            // A key another action holds is taken from it first. If that fails, kwin-i3's action
-            // doesn't get it either: both would hold it, and the other one fires.
-            if (!s.holder.component.isEmpty()
-                && !takeKey(KeyHolder{s.holder.component, s.holder.action, s.holder.friendly}, s.pending[0].toCombined())) {
-                failed << s.pending.toString(QKeySequence::NativeText);
-                continue;
-            }
             if (!setKeys(QStringLiteral("kwin"), s.action, s.pending.isEmpty() ? QList<KeySeq>{} : QList<KeySeq>{toBus(s.pending)}))
                 failed << s.pending.toString(QKeySequence::NativeText);
         }
@@ -438,7 +417,6 @@ void KeysModel::defaults()
     for (Row &row : m_rows)
         for (Slot &s : row.entries)
             s.pending = s.def;
-    findHolders();
     if (!m_rows.isEmpty())
         Q_EMIT dataChanged(index(0), index(m_rows.size() - 1));
     Q_EMIT changed();

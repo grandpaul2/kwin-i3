@@ -148,15 +148,14 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    desktop switching; i3 has none; the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each one you
    want (or press **Defaults**, which ticks them all), then **Apply**, the
    same as changing them in System Settings. kwin-i3 keeps what each was: untick it and Apply to
-   put it back (one you changed since stays as you set it). On the main page, under Keys, **Use
-   kwin-i3's keys over Plasma's** takes the keys of kwin-i3's that a Plasma shortcut holds
-   (Meta+arrows for quick tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the
-   Overview, Meta+0, Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them; the Overview
-   stays on the screen's top-left corner and Grid View on Meta+G), as a key two shortcuts share
-   runs Plasma's, not kwin-i3's: ticked, every key set in Configure Keys that a Plasma shortcut
-   also holds runs kwin-i3's command; unticked again, the Plasma shortcuts get their original
-   keys back. In a terminal: `make take-keys` takes the keys and
-   prints what it took, `make restore-keys` gives them back.
+   put it back (one you changed since stays as you set it). The last row, **On a key conflict,
+   kwin-i3's key wins**, is for the keys kwin-i3 shares with Plasma's shortcuts (Meta+arrows for
+   quick tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
+   Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them): a shared key runs Plasma's
+   shortcut, not kwin-i3's, unless it is ticked. Ticked, every key set in Configure Keys runs
+   kwin-i3's command, and Plasma's shortcuts are left as they are (untick it and they run again;
+   the Overview stays on the screen's top-left corner and Grid View on Meta+G). It needs the
+   plugins.
    **With two or more monitors**, give each workspace its screen too (the main page's
    **Configure Workspaces…**): when a monitor goes away, unplugged or only for a moment (a cable,
    a monitor waking), its workspaces move to another for good, as in i3. A workspace given a screen,
@@ -219,8 +218,9 @@ window once.
 
 kwin-i3's own page in System Settings > Window Management: every setting a user would change (internal values stay in kwinrc), laid out as Plasma's
 pages are, and **Keys…**, where kwin-i3's keys are rebound in one list instead of KWin's. A key
-another shortcut holds is named in its row and taken from it on Apply (`make restore-keys` gives
-it back). Apply takes effect at once, with or without the plugins.
+another shortcut also holds is set all the same: which of the two runs is the key override's
+(Plasma Settings, "On a key conflict, kwin-i3's key wins"). Apply takes effect at once, with or
+without the plugins.
 
 `make kcm-install` builds it (needs `kf6-kcmutils-devel` and `kf6-ki18n-devel`) and puts it in
 `~/.local/lib/kwin-i3/kcm-plugins`, with `~/.config/environment.d/kwin-i3.conf` adding that to the

@@ -82,40 +82,27 @@ print(sum(1 for x in range(int(a[2]), int(a[4])) for y in range(int(a[3]), int(a
 check "Meta+: is named Meta+Shift+; beside it" test "$(inked keys 705 545 775 562)" -gt 30
 check "Meta+; has no name beside it"        test "$(inked keys 705 271 775 288)" -eq 0
 # Focus left's second key (Meta+J) becomes Meta+Alt+J, free; Focus up's second (Meta+L) becomes
-# Meta+Alt+E, which the stand-in holds: its row says so, and nothing changes before Apply.
+# Meta+Alt+E, which the stand-in also holds: set all the same, with no note, and the stand-in keeps
+# it (which of the two runs is the key override's, Plasma Settings; nothing is taken).
 click_named Keys "Focus left, key 2: Meta+J"; press Meta+Alt+J; sleep 0.5
 click_named Keys "Focus up, key 2: Meta+L"; press Meta+Alt+E; sleep 0.5
 shot keys-set
-NEUTRAL=246,116,0                           # Breeze's neutral text (the clash note)
-check "the clash note under Focus up"       test "$(count_near keys-set 8 252 600 272 $NEUTRAL)" -gt 100
-check "and none under Focus left"           test "$(count_near keys-set 8 150 600 168 $NEUTRAL)" -eq 0
-check "before Apply, the stand-in keeps its key" test "$(keys_of fakeapp Launch)" == "$before_fake"
+NEUTRAL=246,116,0                           # Breeze's neutral text (a note under a row)
+check "no note under Focus up"              test "$(count_near keys-set 8 252 600 272 $NEUTRAL)" -eq 0
 check "before Apply, Meta+J is still Focus Left's" test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"
 click_named - Apply
 check "Apply: Focus Left (J) is Meta+Alt+J"  poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $MAJ 0 0 0"
 check "Apply: Focus Up (L) is Meta+Alt+E"    test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $MAE 0 0 0"
-check "the stand-in lost only Meta+Alt+E"    test "$(key_set fakeapp Launch)" == "$(printf '%s\n' $MAF $MSF11 | sort -n | tr '\n' ' ')"
-check "what it took is recorded"            test -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
+check "the stand-in keeps all its keys"     test "$(keys_of fakeapp Launch)" == "$before_fake"
+check "nothing is recorded"                 test ! -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
 m=$(mark); press Meta+Alt+J
 check "Meta+Alt+J: Focus Left"              wait_log '^.{9}ACTION Focus Left$' "$m"
-m=$(mark); press Meta+Alt+E
-check "Meta+Alt+E: Focus Up"                wait_log '^.{9}ACTION Focus Up$' "$m"
 m=$(mark); press Meta+J
 check "Meta+J: nothing now"                 not_logged '^.{9}ACTION Focus Left$' "$m"
-(cd "$root" && make -s restore-keys >/dev/null 2>&1)
-check "make restore-keys gives it back"     test "$(keys_of fakeapp Launch)" == "$before_fake"
-# A take that can't be recorded isn't made, and kwin-i3's action doesn't get the key either (both
-# would hold it, and the stand-in's fires): Focus down's Meta+K to Meta+Alt+F, the record's
-# directory read-only.
-chmod 500 "$XDG_STATE_HOME/kwin-i3"
-click_named Keys "Focus down, key 2: Meta+K"; press Meta+Alt+F; sleep 0.5
-click_named - Apply; sleep 1
-ERROR=218,68,83                             # Breeze's negative (error) colour
-shot keys-failed
-chmod 700 "$XDG_STATE_HOME/kwin-i3"
-check "unrecorded: the stand-in keeps Meta+Alt+F" test "$(keys_of fakeapp Launch)" == "$before_fake"
-check "and Focus Down (K) keeps Meta+K"     test "$(keys_of kwin "kwin-i3 Focus Down (K)")" == "a(ai) 1 4 $((0x1000004B)) 0 0 0"
-check "the page says so"                    test "$(count_near keys-failed 0 76 1280 116 $ERROR)" -gt 200
+# No plugins here, so no key override: the shared key runs the stand-in's shortcut (35 drives
+# the override).
+m=$(mark); press Meta+Alt+E
+check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
 # 3. Back on the main page: a gap typed, and from the resize step Tab reaches its help, the
 #    floating step (a row of its own) and the focus choice,

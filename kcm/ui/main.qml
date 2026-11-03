@@ -587,45 +587,6 @@ KCM.SimpleKCM {
             icon.name: "configure-shortcuts"
             onClicked: kcm.push("Keys.qml")
         }
-        // kwin-i3's keys that a Plasma shortcut also holds: ticked, they run kwin-i3's commands (taken
-        // from the Plasma shortcuts on Apply); unticked, the Plasma shortcuts get their original keys
-        // back (the Plasma Settings model's "keys" row, kcm/setup.cpp; make take-keys' save).
-        ColumnLayout {
-            readonly property var row: kcm.setup.rows.find((r) => r.id === "keys")
-            visible: !!row
-            Kirigami.FormData.label: i18nc("@label", "kwin-i3's keys over Plasma's:")
-            Kirigami.FormData.buddyFor: takeKeys
-            spacing: 0
-            RowLayout {
-                spacing: Kirigami.Units.smallSpacing
-                Tick {
-                    id: takeKeys
-                    name: i18nc("@option:check", "Use kwin-i3's keys over Plasma's")
-                    recommended: true
-                    // kwin-i3's keys are known only while it runs (KeysModel.available).
-                    enabled: kcm.keys.available && !(parent.parent.row && parent.parent.row.settled)
-                    checked: !!kcm.setup.wanted["keys"]
-                    onToggled: kcm.setup.setWanted("keys", checked)
-                    Accessible.description: keysNote.text
-                }
-                Help {
-                    topic: i18nc("@item help topic", "kwin-i3's keys over Plasma's")
-                    toolTipText: i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them: Meta+D is Plasma's Show Desktop and kwin-i3's launcher. Ticked, such keys run kwin-i3's commands; each Plasma shortcut keeps its other keys.")
-                }
-            }
-            QQC2.Label {
-                id: keysNote
-                Layout.maximumWidth: Kirigami.Units.gridUnit * 24
-                wrapMode: Text.Wrap
-                color: Kirigami.Theme.disabledTextColor
-                font: Kirigami.Theme.smallFont
-                Accessible.ignored: true
-                text: !kcm.keys.available ? i18n("kwin-i3 isn't running, so its keys can't be checked.")
-                    : parent.row && parent.row.settled ? i18n("No Plasma shortcut shares a key with kwin-i3.")
-                                                       : i18n("Unticking this and applying restores Plasma's original keys.")
-            }
-        }
-
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Plasma")
@@ -633,7 +594,7 @@ KCM.SimpleKCM {
         SubPageButton {
             Kirigami.FormData.label: i18nc("@label", "Settings:")
             text: i18nc("@action:button", "Configure Plasma Settings…")
-            readonly property var rows: kcm.setup.rows.filter((r) => r.id !== "keys")
+            readonly property var rows: kcm.setup.rows
             summary: [rows.filter((r) => r.differs).length ? i18np("1 to review", "%1 to review", rows.filter((r) => r.differs).length) : "",
                       rows.filter((r) => r.changed).length ? i18np("1 changed by kwin-i3", "%1 changed by kwin-i3", rows.filter((r) => r.changed).length) : ""]
                      .filter((s) => s).join(", ") || i18n("As kwin-i3 needs them")

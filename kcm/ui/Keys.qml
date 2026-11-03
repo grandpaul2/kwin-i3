@@ -174,18 +174,6 @@ KCM.ScrollViewKCM {
                         Layout.fillWidth: true
                     }
                 }
-                Repeater {
-                    model: row.keySlots
-                    QQC2.Label {
-                        required property var modelData
-                        visible: modelData.holder !== ""
-                        Layout.fillWidth: true
-                        wrapMode: Text.Wrap
-                        color: Kirigami.Theme.neutralTextColor
-                        text: i18n("%1 belongs to %2; Apply moves it here.",
-                                   modelData.keyText, modelData.holder)
-                    }
-                }
             }
         }
     }

@@ -67,8 +67,12 @@ public:
         const bool settings = m_settings->isSaveNeeded();
         KQuickManagedConfigModule::save();
         m_keys->save();
-        m_setup->save();        // after the keys: a key the Keys page took is no longer a clash
+        m_setup->save();
         m_setup->load();
+        // The helper's key override reads kwin-i3's keys again (a key bound here); without the
+        // plugins nothing answers.
+        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
+            QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3helper"), QStringLiteral("net.local.kwini3helper"), QStringLiteral("RefreshKeys")));
         if (settings)
             reconfigure();
         settingsChanged();

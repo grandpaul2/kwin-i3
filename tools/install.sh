@@ -34,6 +34,13 @@ kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true
 
 "$here/tools/plugin-install.sh"
 "$here/tools/kcm-install.sh"
+# Keys an earlier kwin-i3 took from Plasma's shortcuts go back, once the new helper is loaded
+# (plugin-install, above): a reader who had taken them chose kwin-i3's keys, so the key override
+# is turned on in their place (keysOverride; Plasma's shortcuts stay as they are from now on).
+if [[ $(python3 -I "$here/tools/take-keys.py" migrate | tee /dev/stderr | tail -1) == migrated ]]; then
+    kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key keysOverride true
+    echo "  kwin-i3's keys now win a key conflict by the key override, with Plasma's shortcuts unchanged."
+fi
 
 loaded() { [[ $(busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting isScriptLoaded s kwin-i3 2>/dev/null) == "b true" ]]; }
 if loaded; then
