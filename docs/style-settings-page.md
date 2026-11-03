@@ -1,12 +1,11 @@
-# Style guide: kwin-i3's settings pages
+# Style suggestions: kwin-i3's settings pages
 
 How the System Settings page (`kcm/ui/`) and the cog's form (`package/contents/ui/config.ui`)
-look and read. A change that needs a rule changed changes it here first, with the maintainer's go.
-
-**What this guide is for: the groundwork.** No set of rules makes a page feel right: the last
-touches come from a person looking at the live page. So a change is built to these rules,
-checked on a screenshot, and handed over. It is not polished by more rules, reviews or test
-readers. When this guide says nothing, do what Plasma's own pages do (Virtual Desktops, Window
+look and read. **These are suggestions, just enough to set a page up**: the maintainer gives each
+page its look on the live page, and that look is final. Where a live page and this file differ,
+the page wins and this file is brought in line. No set of rules makes a page feel right, so a
+change is built from these suggestions, checked on a screenshot, and handed over; it is not
+polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's own pages do (Virtual Desktops, Window
 Behavior, Display Configuration): open the Plasma page and match it.
 
 ## Layout
@@ -35,7 +34,10 @@ Behavior, Display Configuration): open the Plasma page and match it.
 ## Words
 
 - **Sentence case** everywhere. A field label is short and ends in a colon ("Resize step:").
-- **A checkbox says what is true when it's ticked**, positively: "Round the corners of tiling
+- **A checkbox on the main page** has its name as the row's label, on the left as the other rows,
+  and says "(recommended)" or "(optional)" beside the box; the full name is its screen reader
+  name. Recommended: a box whose off state breaks part of how kwin-i3 works or feels.
+- **A checkbox's name says what is true when it's ticked**, positively: "Round the corners of tiling
   windows", never "Disable…" or "When unticked…".
 - **Name what a setting does**, not how it is built: "Show layout changes all at once", not
   "Atomic layout".
@@ -53,7 +55,7 @@ Behavior, Display Configuration): open the Plasma page and match it.
 ## Saying what to pick
 
 - **Defaults is the recommended setup**: i3's default where i3 has one, else kwin-i3's own. The
-  main page and its sub-pages don't mark a recommended choice on each control.
+  main page's checkboxes say which are recommended (above); other controls aren't marked.
 - **Where the page changes Plasma's own settings** (the Plasma Settings sub-page), the choice is
   marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one box ticked a row. The kwin-i3
   box says "Enable" in small text. The Plasma box says nothing, because the page doesn't claim to

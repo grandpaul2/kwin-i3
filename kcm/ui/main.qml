@@ -99,6 +99,16 @@ KCM.SimpleKCM {
         Accessible.name: i18nc("@action:button", "More about %1", topic)
     }
 
+    // A checkbox whose name is the row's label, on the left as the page's other rows; the box
+    // itself says whether it is recommended, so a new reader keeps the ones that matter on.
+    // `name` is what a screen reader reads.
+    component Tick: QQC2.CheckBox {
+        property string name
+        property bool recommended
+        text: recommended ? i18nc("@option:check", "(recommended)") : i18nc("@option:check", "(optional)")
+        Accessible.name: name
+    }
+
     // A spin box that shows its unit: "8 px".
     component UnitSpinBox: QQC2.SpinBox {
         Layout.preferredWidth: root.spinWidth
@@ -282,12 +292,13 @@ KCM.SimpleKCM {
         }
         // holdEnabled; holdTimeoutMs is an internal value, kwinrc only (plan.md, "Settings").
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Options:")
+            Kirigami.FormData.label: i18nc("@label", "Layout changes all at once:")
             Kirigami.FormData.buddyFor: holdBox
             spacing: Kirigami.Units.smallSpacing
-            QQC2.CheckBox {
+            Tick {
                 id: holdBox
-                text: i18nc("@option:check", "Show layout changes all at once")
+                name: i18nc("@option:check", "Show layout changes all at once")
+                recommended: true
                 checked: root.settings.holdEnabled
                 onToggled: root.settings.holdEnabled = checked
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "holdEnabled"; extraEnabledConditions: kcm.holdLoaded }
@@ -303,12 +314,13 @@ KCM.SimpleKCM {
             Kirigami.FormData.label: i18nc("@title:group", "Mouse & focus")
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Options:")
+            Kirigami.FormData.label: i18nc("@label", "Pointer follows the focus:")
             Kirigami.FormData.buddyFor: warpBox
             spacing: Kirigami.Units.smallSpacing
-            QQC2.CheckBox {
+            Tick {
                 id: warpBox
-                text: i18nc("@option:check", "Move the pointer with focus to another screen")
+                name: i18nc("@option:check", "Move the pointer with focus to another screen")
+                recommended: true
                 checked: root.settings.mouseWarping === "output"
                 onToggled: root.settings.mouseWarping = checked ? "output" : "none"
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
@@ -403,12 +415,12 @@ KCM.SimpleKCM {
             }
         }
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Options:")
+            Kirigami.FormData.label: i18nc("@label", "Workspace back and forth:")
             Kirigami.FormData.buddyFor: backAndForthBox
             spacing: Kirigami.Units.smallSpacing
-            QQC2.CheckBox {
+            Tick {
                 id: backAndForthBox
-                text: i18nc("@option:check", "Repeat a workspace key to go back and forth")
+                name: i18nc("@option:check", "Repeat a workspace key to go back and forth")
                 checked: root.settings.workspaceAutoBackAndForth
                 onToggled: root.settings.workspaceAutoBackAndForth = checked
                 KCM.SettingStateBinding { configObject: root.settings; settingName: "workspaceAutoBackAndForth" }
@@ -540,30 +552,28 @@ KCM.SimpleKCM {
         }
         // Drawn by kwini3hold, so they need the plugins too; a title bar brings its theme's corners.
         // A floating window's frame uses the same colour classes (§7 L11).
-        ColumnLayout {
-            Kirigami.FormData.label: i18nc("@label", "Options:")
-            Kirigami.FormData.buddyFor: cornersBox
-            spacing: 0
-            QQC2.CheckBox {
-                id: cornersBox
-                text: i18nc("@option:check", "Round the corners of tiling windows")
-                checked: root.settings.roundedCorners
-                onToggled: root.settings.roundedCorners = checked
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
+        Tick {
+            id: cornersBox
+            Kirigami.FormData.label: i18nc("@label", "Rounded corners:")
+            name: i18nc("@option:check", "Round the corners of tiling windows")
+            checked: root.settings.roundedCorners
+            onToggled: root.settings.roundedCorners = checked
+            KCM.SettingStateBinding { configObject: root.settings; settingName: "roundedCorners"; extraEnabledConditions: kcm.frameAvailable && root.settings.tiledLook !== "titlebars" }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Frame on floating windows:")
+            Kirigami.FormData.buddyFor: floatingFrameBox
+            spacing: Kirigami.Units.smallSpacing
+            Tick {
+                id: floatingFrameBox
+                name: i18nc("@option:check", "Draw the frame on floating windows too")
+                checked: root.settings.frameOnFloating
+                onToggled: root.settings.frameOnFloating = checked
+                KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
             }
-            RowLayout {
-                spacing: Kirigami.Units.smallSpacing
-                QQC2.CheckBox {
-                    id: floatingFrameBox
-                    text: i18nc("@option:check", "Draw the frame on floating windows too")
-                    checked: root.settings.frameOnFloating
-                    onToggled: root.settings.frameOnFloating = checked
-                    KCM.SettingStateBinding { configObject: root.settings; settingName: "frameOnFloating"; extraEnabledConditions: kcm.frameAvailable }
-                }
-                Help {
-                    topic: i18nc("@item help topic", "the frame on floating windows")
-                    toolTipText: i18n("Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
-                }
+            Help {
+                topic: i18nc("@item help topic", "the frame on floating windows")
+                toolTipText: i18n("Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
             }
         }
 
@@ -583,14 +593,15 @@ KCM.SimpleKCM {
         ColumnLayout {
             readonly property var row: kcm.setup.rows.find((r) => r.id === "keys")
             visible: !!row
-            Kirigami.FormData.label: i18nc("@label", "Options:")
+            Kirigami.FormData.label: i18nc("@label", "kwin-i3's keys over Plasma's:")
             Kirigami.FormData.buddyFor: takeKeys
             spacing: 0
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
-                QQC2.CheckBox {
+                Tick {
                     id: takeKeys
-                    text: i18nc("@option:check", "Use kwin-i3's keys over Plasma's")
+                    name: i18nc("@option:check", "Use kwin-i3's keys over Plasma's")
+                    recommended: true
                     // kwin-i3's keys are known only while it runs (KeysModel.available).
                     enabled: kcm.keys.available && !(parent.parent.row && parent.parent.row.settled)
                     checked: !!kcm.setup.wanted["keys"]
