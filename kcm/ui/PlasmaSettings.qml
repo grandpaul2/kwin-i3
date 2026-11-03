@@ -96,7 +96,10 @@ KCM.SimpleKCM {
                         spacing: 0
                         RowLayout {
                             spacing: Kirigami.Units.smallSpacing
-                            QQC2.Label { text: modelData.title }
+                            QQC2.Label {
+                                text: modelData.optional ? i18nc("@option:check %1 a setting's title", "%1 (Optional)", modelData.title)
+                                                         : modelData.title
+                            }
                             Kirigami.ContextualHelpButton {
                                 toolTipText: modelData.why
                                 Accessible.name: i18nc("@action:button", "More about %1", modelData.title)
@@ -107,8 +110,7 @@ KCM.SimpleKCM {
                             wrapMode: Text.Wrap
                             color: Kirigami.Theme.disabledTextColor
                             font: Kirigami.Theme.smallFont
-                            text: [modelData.optional ? i18nc("@info", "Optional.") : "",
-                                   modelData.plasmaSide,
+                            text: [modelData.plasmaSide,
                                    modelData.note].filter((t) => t).join(" ")
                         }
                     }

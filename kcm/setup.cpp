@@ -202,7 +202,7 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
         return Change{QStringLiteral("kwinrc"), QStringLiteral("Plugins"), effect + QStringLiteral("Enabled"), QStringLiteral("false"),
                       onByDefault ? QStringLiteral("true") : QStringLiteral("false")};
     };
-    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Set window animations to None"),
+    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Set window animations to none"),
              {},
              i18n("Opening and closing, maximizing, minimizing, full screen and virtual desktop switching, each set to None, as i3 has none. Other animations and the animation speed stay as they are. Plasma's setting: Animations, Desktop animations."),
              {}, true,
