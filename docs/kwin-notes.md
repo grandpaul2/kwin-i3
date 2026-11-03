@@ -281,6 +281,16 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   the looks without a ring until a shown bar counted).
 - A held snapshot is drawn at the window's old frame (the paint data's translate and scale), so
   anything drawn relative to that window must use its old values too until the hold releases.
+- **What an effect draws in `paintWindow` follows only the paint data** (translate, scale,
+  opacity). An `OffscreenEffect` (Glide, Wobbly, Magic Lamp, Fall Apart) renders the window's
+  item tree into a texture sized to `expandedGeometry` and draws it on its own deformed quads
+  (6.7.5 `offscreeneffect.cpp:109-143`, `:236-261`; Glide's matrix `glide.cpp:109-151`), which no
+  other effect can read. A child item of the window's `WindowItem` goes into that texture and
+  deforms with the window: an `OutlinedBorderItem` (exported, in 6.7.0 and 6.8.2) around the
+  frame, outside it, widens `expandedGeometry` by its thickness and tilts whole under Glide
+  (probe 90, test KWin with `KWIN_EFFECTS_FORCE_ANIMATIONS=1`). The renderer draws only its own
+  item types (image, outlined border, surface, decoration, shadow): a subclass of `Item` draws
+  nothing.
 - KWin's exported CMake targets name `Qt6::Widgets` (`KWinTargets.cmake`): a plugin that uses no
   widget still finds the component, or its configure fails (2026-10-30).
   Unloading one in a running KWin leaves its library loaded: anything it connected must end with it.
