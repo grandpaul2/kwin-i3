@@ -17,6 +17,18 @@ activities are the likeliest). When the Stage ends, suggested order: 5, then 30.
 
 ## Reliability
 
+**90. Plasma's window effects read against the hold, not yet seen** (2026-11-03). A sweep of
+6.7.5's window animations against `kwini3hold` found these possible, none confirmed or seen:
+Wobbly Windows during a tiling drag (it keeps the window redirected after the drop: the ring off
+the wobbling window, the hold's snapshot of it not drawn); the ring dropped at once under Squash
+and Magic Lamp minimize and a floating framed window's close animation (`ringed` is false for
+minimized and deleted windows); Stretch still running when kwin-i3 refits a window leaving
+fullscreen; Blur lost on a held window while the hold lasts; Dialog Parent dimming a parent but
+not its ring; Fall Apart on a tiled close, by effect load order; a window mid-Glide or mid-Magic
+Lamp snapshotted deformed; Eye on Screen's 1 px ring speck near scale 0, as Scale's opening shows
+too. Each is cosmetic and behind a non-default effect but the minimize ones. Next: a live look
+with each effect on, and a spec for any seen. Waits: the Stage, none seen by a user.
+
 **45. A press past a monitor edge disagreed with the probe** (2026-10-28, test
 KWin). VS Code's invisible band reached 1-3 px across the edge onto the other monitor: the probe
 said `margin`, the real press passed (`FrameFocus pass`). Suspected, not proven: per-output
