@@ -3,6 +3,14 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
+## Unreleased
+
+- **Shift is the float modifier**: Meta+Shift+drag pulls a tiling window out to float where it is
+  dropped (Escape puts it back), and drags a floating window, or a group floated whole, into the
+  tiles, with the drop indicator; the middle's bottom third reads Beside there, putting it after
+  that window. With Meta and Shift the mouse alone moves, swaps, groups, floats and tiles. i3's
+  swap modifier is gone from the plan: the middle's Swap third already swaps.
+
 ## v1.2.0 (2026-11-02)
 
 - **A fullscreen window keeps its place**, as in i3: the windows beside it keep their sizes behind

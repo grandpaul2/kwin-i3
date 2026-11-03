@@ -60,6 +60,13 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   bar-over-content pair merges into a vertical parent, and its bar's px come from its own kids.
 - Scripts have `workspace.raiseWindow(w)` (6.7.5 `workspace_wrapper.h:471`): above all others in
   its layer, so not above a kept-above (floating) window.
+- **A tile held across a pass is gone**: kwin-i3's passes make new tiles, so a `w.tile` kept in a
+  variable reads `undefined` after one, and two tiles are never compared by identity. Ask the
+  question another way (whose root it hangs from: `workspace.rootTile(output, desktop)`).
+- **A cancelled interactive move re-tiles by position** (6.7.5 `window.cpp:1083-1088`): back to
+  the start geometry, then `setQuickTileMode(Custom, start centre)`, which picks whatever custom
+  tile is under that point now, not the one the move started from. A release at a screen edge
+  sets a quick tile instead, one whose root is no custom root tile.
 
 ## Windows and Wayland clients (`window.cpp`, `xdgshellwindow.cpp`)
 

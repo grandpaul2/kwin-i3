@@ -77,19 +77,22 @@ Mouse:
   bar does the same, and so does dragging a tab out of a group's bar. Meta+drag on a tab drags
   that tab at once without switching to it; a right-drag on a tab (or a left one, with title-bar
   drags off) resizes the group against the window above it, as i3.
-- **Meta+Shift+left-drag** is the same drag (i3's Shift would swap at the middle; here the middle's
-  thirds decide). The mouse never floats or tiles a window: Meta+Shift+Space does, as in i3.
-  Without the helper plugin, Meta+left-drag is KWin's own move, which floats the window where it
-  is dropped.
+- **Meta+Shift+left-drag floats or tiles** (beyond i3, whose Shift would swap at the middle; here
+  the middle's bottom third swaps). On a tiling window it pulls the window out, to float where it
+  is dropped (Escape puts it back). On a floating window, or a group floated whole, it is the drag
+  above, and the window or group is tiled where it is dropped; the middle's bottom third reads
+  Beside, after that window. Once per press: with the keys held, a second press does nothing
+  until Meta or Shift is let go. Meta+Shift+Space does the same from the keyboard, as in i3. With
+  title-bar drags only (the `tilingDrag` setting), the press goes to the app. Without the helper
+  plugin, Meta+left-drag is KWin's own move, which floats the window where it is dropped.
 - **A tiling window doesn't move any other way**, as in i3: dragging an app's own title bar (a
   browser's tab strip, a GNOME app's header bar), KWin's Move Window key or the window menu's Move
-  leave it in its tile (helper plugin). Meta+Shift+Space floats it first.
+  leave it in its tile (helper plugin). Meta+Shift+drag or Meta+Shift+Space floats it first.
 - **Meta+right-drag on a tiling window**, or in the gap beside one, is i3's tiling resize (helper
   plugin): the pointer jumps onto the nearest edge, a bar follows it, and the sizes change on
   release, against the nearest container with a neighbour on that side, as in i3 (nothing if
   there is none). A plain press in a gap does the same: the gaps are kwin-i3's. Without the helper it is KWin's own resize, kept in the tree.
-- **Meta+left-drag (or Meta+Shift+left-drag) and Meta+right-drag on a floating window** move and
-  resize it: KWin's own.
+- **Meta+left-drag and Meta+right-drag on a floating window** move and resize it: KWin's own.
 
 With the plugins, the 1 px frame is its window's, as i3's border is: hover and a click on it focus
 the window, and a drag on it resizes against the neighbour on that side (no title-bar move, no

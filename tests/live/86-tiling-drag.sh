@@ -195,17 +195,32 @@ drag Meta right 640 360 760 420
 check "  Meta+right resized it (KWin's), still floating" poll eval '[[ "$(fc c)" != "$g0" && "$(tree 1)" == "V[H[b]] ~c*" ]]'
 echo "    c $g0 -> $(fc c)"
 
-# Meta+Shift+left on a floating window is i3's floating move, Shift ignored (§9 G13): the helper
-# starts KWin's move, which KWin's own action (Meta alone) wouldn't. Released over b with Shift
-# held, it never reads as KWin's custom-tile drop (an outline window over b, c tiled into b's tile
-# at the release; a capture, 2026-10-29): the helper takes Shift out of that move. d keeps two
-# windows tiled: a lone window is in the root tile, which KWin's RootTile::pick never picks
-# (6.7.5 customtile.cpp:461), so there would be nothing to drop into.
+# Shift is the float modifier (§9 G5, G13, beyond i3): Meta+Shift+drag changes the kind of what a
+# Meta drag would move. G13: the floating c onto b's right side, inside the sibling zone: tiled
+# after b. With the keys still held, a second press on c does nothing (once per press of the keys).
 floating_c() { [[ "$(tree 1)" == *"~c"* ]]; }
+tiled_c() { [[ "$(tree 1)" != *"~c"* && "$(tree 1)" == *"b"*"c"* ]]; }
+read -r cx cy <<<"$(centre c)"; g=$(fc b); bw=${g#* }; bw=${bw%x*}
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 20)) $cy" "wait 60" "abs $((bw - 100)) 360" "wait 60" "btn left up" "wait 600" \
+    "abs 960 360" "wait 60" "btn left down" "wait 30" "abs 900 300" "wait 60" "abs 700 200" "wait 60" "btn left up" "wait 300" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up"
+check "G13: the floating c dropped on b's right side: tiled after b" wait_log '^.{9}DRAG dropped sibling .*\(tiled\)' "$m"
+echo "    $(dropped $m) / $(tree 1)"
+sleep 0.3
+check "  the keys held, a second press did nothing: still tiled" tiled_c
+check "  no move after the drop"            eval '! after "$m" | grep -qE "^.{9}DRAG start move"'
+
+# G5: the keys pressed again, Meta+Shift+drag of the tiled c floats it, by KWin's move. Released
+# over b with Shift held, it never reads as KWin's custom-tile drop (an outline window over b, c
+# tiled into b's tile at the release): the helper takes Shift out of that move. d keeps two
+# windows tiled once c is out: a lone window is in the root tile, which KWin's RootTile::pick
+# never picks (6.7.5 customtile.cpp:461), so there would be nothing to drop into.
 term d "#ffff00"
-check "d tiled beside b"                  poll eval '[[ "$(tree 1)" == *b*d* && "$(fc d)" == *x718 ]]'
+wait_tree 1 "V[H[b c d*]]" >/dev/null
 read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
-g0=$(fc c); nwin() { kjs 'log(workspace.windowList().filter(function (w) { return w.caption !== "kwin-i3 gap"; }).length)'; }   # the gap strips come and go as c moves
+nwin() { kjs 'log(workspace.windowList().filter(function (w) { return w.caption !== "kwin-i3 gap"; }).length)'; }   # the gap strips come and go as c moves
 n0=$(nwin)
 m=$(mark)
 "$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
@@ -215,29 +230,76 @@ held=$!
 sleep 0.7
 n1=$(nwin)
 wait $held
-check "G13: Meta+Shift+drag moved the floating c, still floating" poll eval '[[ "$(fc c)" != "$g0" ]] && floating_c'
-check "  no tiling drag"                    eval '! after "$m" | grep -qE "^.{9}DRAG (dropped|cancelled|no drop|not started|c$)"'
+check "G5: Meta+Shift+drag of the tiled c floats it" poll floating_c
+check "  no tiling drag"                    eval '! after "$m" | grep -qE "^.{9}DRAG (dropped|cancelled|no drop|not started)"'
 check "  no tile outline over b mid-drag"   eval '[[ "$n1" == "$n0" ]]' || echo "    windows: $n0 before, $n1 mid-drag"
 check "  released with Shift: c never tiled by KWin" eval '! after "$m" | grep -qE "^.{9}GEOM c .* -> [0-9]+,[0-9]+ [0-9]+x718$"' \
     || after "$m" | grep -E '^.{9}GEOM c ' | cut -c10- | sed 's/^/    /'
-kclose d
-poll eval '[[ "$(tree 1)" != *d* ]]'
 
-# Meta+Shift+left on a tiling window is the tiling drag of Meta+left (§9 G5): Shift adds nothing
-# and never floats it. c tiled again, dragged onto b's left side.
+# G5's cancel: c tiled again between b and d, then Meta+Shift-dragged and Escape pressed mid-move
+# (after Meta is let go: Meta+Esc is Plasma's System Monitor key): back in its place, tiled.
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; })'
 poll eval '[[ "$(active)" == *c* ]]'
 key "Floating Toggle"
 check "c tiled again"                       poll eval '[[ "$(tree 1)" != *"~c"* ]]'
-# The tree changes first, the frame in the pass after: pressed at its floating rect's centre, the
-# drag took b. Read c's centre once it is back at its tile's height.
+key "Move Left"
+check "  between b and d"                   wait_tree 1 "V[H[b c* d]]"
 poll eval '[[ "$(fc c)" == *x718 ]]'
+read -r cx cy <<<"$(centre c)"
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx - 40)) $((cy - 40))" "wait 60" "abs $((cx - 200)) $((cy - 100))" "wait 300" \
+    "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" "wait 60" "key ${EVDEV[Escape]} down" "key ${EVDEV[Escape]} up" "wait 300" "btn left up"
+check "G5: Escape mid-move: c back in its place" wait_log '^.{9}FLOAT c: the move was cancelled, back in its place' "$m"
+check "  the tree as it was"                poll eval '[[ "$(tree 1)" == "V[H[b c* d]]" ]]'
+echo "    $(tree 1)"
+kclose d
+poll eval '[[ "$(tree 1)" != *d* ]]'
+
+# G13 onto b's centre, bottom band: after b, no swap (b stays tiled); and a key cancels.
+key "Floating Toggle"
+check "c floats again"                      poll floating_c
+read -r cx cy <<<"$(centre c)"; read -r bx by <<<"$(centre b)"
+g=$(fc b); bh=${g##*x}; bw=${g#* }; bw=${bw%x*}; bs=$(( (bw < bh ? bw : bh) * 3 / 10 ))
+ch=$(( bh - 2 * bs )); cap=$(( (bw - 2 * bs) * 5 / 4 )); (( ch > cap )) && ch=$cap   # the centre, capped (§9 G9)
+r=${g#*,}; by=$(( ${r%% *} + (bh - ch) / 2 + ch * 5 / 6 ))   # the bottom band's middle
+m=$(mark)
+drag Meta+Shift left "$cx" "$cy" "$bx" "$by"
+check "G13: onto b's centre, bottom band: after b, no swap" wait_log '^.{9}DRAG dropped center .*\(tiled\)' "$m"
+echo "    $(dropped $m) / $(tree 1)"
+check "  c tiled, b still tiled"            poll tiled_c
+key "Floating Toggle"
+check "c floats again"                      poll floating_c
+read -r cx cy <<<"$(centre c)"
+m=$(mark)
+"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+    "abs $((cx + 40)) $cy" "wait 60" "abs 100 360" "wait 60" "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" "wait 40" \
+    "key ${EVDEV[X]} down" "key ${EVDEV[X]} up" "wait 60" "btn left up"
+check "G13: a key cancels"                  wait_log '^.{9}DRAG cancelled' "$m"
+sleep 0.3
+check "  c still floating"                  floating_c
+
+# G13 on a container floated whole: c and e in a split, floated whole (focus parent, Floating
+# Toggle), then Meta+Shift+dragged by c onto b's left side: tiled whole, before b.
+key "Floating Toggle"
+check "c tiled again"                       poll eval '[[ "$(tree 1)" != *"~c"* ]]'
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; })'
+poll eval '[[ "$(active)" == *c* ]]'
+key "Split V"; term e "#ff00ff"
+check "c and e in a split beside b"         poll eval '[[ "$(tree 1)" == *"V[c e"* ]]'
+echo "    $(tree 1)"
+key "Focus Parent"; key "Floating Toggle"
+check "the split floated whole"             poll eval '[[ "$(tree 1)" == *"~"*c*e* ]]'
+echo "    $(tree 1)"
+sleep 0.5
 read -r cx cy <<<"$(centre c)"; g=$(fc b); bx=${g%%,*}
 m=$(mark)
 drag Meta+Shift left "$cx" "$cy" $((bx + 100)) 360
-check "G5: Meta+Shift+drag of the tiled c: a tiling drag" wait_log '^.{9}DRAG dropped sibling left' "$m"
+check "G13: the floated split dropped on b's left side: tiled whole" wait_log '^.{9}DRAG dropped sibling left.*\(tiled\)' "$m"
 echo "    $(dropped $m) / $(tree 1)"
-check "  c before b, still tiled"           poll eval '[[ "$(tree 1)" != *"~c"* && "$(tree 1)" == *"c"*"b"* ]]'
+check "  c and e tiled together, before b"  poll eval '[[ "$(tree 1)" != *"~"* && "$(tree 1)" == *c*e*b* ]]'
+kclose e
+poll eval '[[ "$(tree 1)" != *e* ]]'
 
 # A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3). An app that draws its own frame keeps an invisible resize border past it (a GTK
 # header bar here, VS Code live), as KWin reports no tiled edges for a padded tile: a press there

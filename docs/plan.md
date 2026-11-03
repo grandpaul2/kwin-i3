@@ -62,7 +62,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 | fullscreen's global mode (`fullscreen global`) | KWin's fullscreen is per output; one window across all outputs isn't something its tiles or fullscreen can hold (reason (a)) |
 | an X11 session | Plasma's direction is Wayland, and the plugins are Wayland-only |
 | the launch workspace (i3's `startup_ws`, `manage.c:336`: a window opens where it was launched, for programs i3 started with startup notification) | a window opens on the workspace focused when it appears (`behaviour.md` C1, reason (d)); for programs a launcher, Steam or a game client starts, i3 did the same. A maybe for the release, kwin-i3's own Terminal key first: `LATER.md`, item 28 |
-| mouse chords beyond i3's, and any mouse way to change a window's kind | i3's own mouse is in instead ("The mouse", below); one chord was ever used (2026-10-22 to 10-24), and the Meta+Shift drags that floated and tiled a window took i3's swap modifier and left a floating container no meaning |
+| mouse chords beyond i3's, but for the float modifier; i3's swap modifier (`tiling_drag swap_modifier`) | i3's own mouse is in instead ("The mouse", below), with Shift as the float modifier; the centre's Swap band (`behaviour.md` G11) swaps at every centre drop, so a swap modifier would add nothing |
 
 **The reasons a difference from i3 may have** (each ≠ row in `docs/behaviour.md` names one):
 - **(a) KWin or Wayland can't do i3's**: KWin tells a script no activation's source, a Wayland
@@ -113,14 +113,19 @@ counterpart, as a rule, is `OPEN.md` item 79's.
 i3 4.24's `route_click` (`click.c:169-362`) is the model, step by step; `docs/behaviour.md` §9
 has a row for each case. Where the line runs between kwin-i3 and Plasma:
 
-- **kwin-i3's mouse never changes a window's kind.** In i3 only a command or a rule floats or
-  tiles a window (`floating toggle`, `for_window`): a tiling drag never starts from anything
-  floating (`click.c:251`, `!floatingcon`), a drop never floats, and a client's own request to
-  move a tiling window is ignored (`handlers.c:936`). Meta+Shift+Space is the way between them.
-  Meta+Shift+left is i3's too: on a tiling window a tiling drag (i3's swap modifier, below), on a
-  floating one a move, i3's floating modifier ignoring Shift on the left button (`click.c:284`).
-  KWin's window actions fire only on their exact modifier (6.7.5 `input.cpp:1299`), so that move
-  is the helper's to start.
+- **Shift is the float modifier**, beyond i3, reason (c), judged live. In i3 only a command or a
+  rule floats or tiles a window (`floating toggle`, `for_window`): a tiling drag never starts from
+  anything floating (`click.c:251`, `!floatingcon`), a drop never floats, and a client's own
+  request to move a tiling window is ignored (`handlers.c:936`). Here Meta+Shift+drag changes the
+  kind of what a Meta drag would move: a tiling window floats where it is dropped (KWin's move,
+  which the helper starts; `behaviour.md` G5), and a floating window, or a container floated
+  whole, is dragged as a tiling one and tiled where it is dropped (G13). The reason: with Meta
+  and Shift the mouse alone moves, swaps, groups, floats and tiles, a large gain in reach for an
+  audience whose common tool is the mouse, at no loss: i3's swap modifier, the only meaning Shift
+  had, is what the centre's Swap band does at every drop. Meta+Shift+Space stays the key between
+  them, and no other press changes a window's kind: a client's own move request on a tiling
+  window is refused, as in i3. KWin's window actions fire only on their exact modifier (6.7.5
+  `input.cpp:1299`), so these presses are the helper's to take.
 - **kwin-i3 takes every press on the tree**: tiling windows, a group's bar and its tabs, and
   floating containers, each as i3 routes it. Meta+left is a tiling drag of the pressed container
   at once, without focusing it (step 2): on a tab, that tab's container, a split tab whole
@@ -158,9 +163,11 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   container wins: an accident of i3's code, not a rule, and following it would make a drop change
   a window's kind. Not followed, reason (f), as `behaviour.md` G8.
 - **The centre of a drop** is `behaviour.md` G11's three bands (Tabbed, Stacked, Swap; reason
-  (c), judged live), whatever is dragged. **Shift adds nothing there**: i3's swap modifier
-  (`tiling_drag.c:341`, read at the press) would make the whole centre a swap, which the bottom
-  band already is; the bands decide, for G11's reason (revisited: `LATER.md` item 80).
+  (c), judged live), whatever is dragged. **i3's swap modifier is out of scope**
+  (`tiling_drag.c:341`, read at the press): it would make the whole centre a swap, which the bottom
+  band already is, and Shift is the float modifier (above). A floating window or container being
+  tiled (G13) has Beside in the bottom band instead: after the target, as i3's centre drop, since
+  after tiling a swap would send the target to the tiles' focus.
 - **KWin's own tools on the tiles** (quick tile, a screen-edge drag, Meta+T's tile editor, a
   Shift drag into a tile) are Plasma's ("Plasma's own tiling", above; `OPEN.md` item 79). So
   is **a move KWin starts itself** without the helper (Meta+drag, `behaviour.md` F9). A client

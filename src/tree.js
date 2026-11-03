@@ -1241,6 +1241,49 @@ var Tree = (function () {
         return con;
     };
 
+    // A floating container's child tiled by a drag (behaviour.md G13, beyond i3: Shift is the
+    // float modifier): floating_disable and the tiling drop as one step. Nothing changes when the
+    // drop can't land (a centre drop that the workspace's fullscreen focus refuses,
+    // focusPermits, the one refusal the drop's paths make), so the con stays floating where it
+    // was. The centre's bottom band puts it after the target, never a swap. Returns true if the
+    // tree changed.
+    M.dropFloatingRefused = function (con, plan) {
+        if (!con || !isFloating(con) || !plan || !plan.target) return true;
+        return plan.type === CENTER && plan.target.type !== "ws" && !focusPermits(this, wsOf(plan.target));
+    };
+    M.dropFloating = function (con, plan) {
+        if (this.dropFloatingRefused(con, plan)) return false;
+        this.floatingDisable(con);
+        this.drop(con, plan, false);
+        return true;
+    };
+
+    // Where a tiled con sits, to put it back there (behaviour.md G5: a float by a drag that was
+    // cancelled): the sibling after it, else the one before, and every sibling's share; null
+    // when it is alone.
+    M.placeOf = function (con) {
+        var p = con.parent, sib = p ? p.nodes : [], i = sib.indexOf(con);
+        if (i < 0 || sib.length < 2) return null;
+        var at = i + 1 < sib.length ? { target: sib[i + 1], position: "before" } : { target: sib[i - 1], position: "after" };
+        at.shares = sib.map(function (k) { return { con: k, percent: k.percent }; });
+        return at;
+    };
+    // floating_disable, then back at `place` if its sibling is still tiled where it was (a parent
+    // left with one child stays, onRemoveChild), every share as it was; otherwise where
+    // floating_disable puts it, as the Floating Toggle does.
+    M.floatBack = function (con, place) {
+        if (!con || !isFloating(con)) return null;
+        var t = place && place.target;
+        var standing = !!t && !!t.parent && t.parent.nodes.indexOf(t) >= 0 && !!wsOf(t) && !insideFloating(t) && wsOf(t) === wsOf(con);
+        this.floatingDisable(con);
+        if (!standing) return con;
+        this.insertConInto(con, t, place.position);
+        var p = con.parent, same = place.shares.length === p.nodes.length &&
+            place.shares.every(function (s) { return s.con.parent === p; });
+        if (same) place.shares.forEach(function (s) { s.con.percent = s.percent; });
+        return con;
+    };
+
     M.toggleFloating = function (con) {
         if (!con) return null;
         return isFloating(con) ? this.floatingDisable(con) : this.floatingEnable(con);
@@ -1610,6 +1653,7 @@ var Tree = (function () {
         numVisibleChildren: numVisibleChildren,
         isFloating: isFloating,
         insideFloating: insideFloating,
+        hasParent: hasParent,
         isSticky: isSticky,
         orient: orient,
         nextWorkspace: nextWorkspace,

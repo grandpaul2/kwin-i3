@@ -1636,6 +1636,18 @@ void Hold::SetDropBands(int x, int y, int width, int height, int active)
     }
 }
 
+void Hold::SetDropSwap(bool swap)
+{
+    if (swap == m_bandSwap) {
+        return;
+    }
+    m_bandSwap = swap;
+    m_bandsImage.active = -2;              // the third band's name changed: drawn again
+    if (!m_bands.isEmpty()) {
+        effects->addRepaint(m_bands.adjusted(-1, -1, 1, 1).toAlignedRect());
+    }
+}
+
 // The window's centre as one rounded outline cut in three (§9 G11), over everything as the
 // indicator is: the third under the pointer filled as the indicator (which isn't drawn while the
 // thirds are), and in each third a small picture of what a drop there makes and its name. Kept
@@ -1676,7 +1688,7 @@ void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &vi
         p.drawPath(pill);
         // In each third, small: a picture of the result and its name, white over a dark edge so
         // it reads over any window.
-        const QString names[3] = {QStringLiteral("Tabbed"), QStringLiteral("Stacked"), QStringLiteral("Swap")};
+        const QString names[3] = {QStringLiteral("Tabbed"), QStringLiteral("Stacked"), m_bandSwap ? QStringLiteral("Swap") : QStringLiteral("Beside")};
         QFont font = QGuiApplication::font();
         font.setBold(true);
         const QFontMetrics fm(font);
@@ -1703,6 +1715,11 @@ void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &vi
                     path.moveTo(win.left(), win.top() + 2 * row);
                     path.lineTo(win.right(), win.top() + 2 * row);
                 }
+            } else if (!m_bandSwap) {
+                // Beside: two windows side by side, the dropped one after the target.
+                const double w = (s - 3 * lw) / 2, h = s * 0.62, y0 = icon.y() + (s - h) / 2;
+                path.addRoundedRect(QRectF(icon.x() + lw, y0, w, h), s / 20, s / 20);
+                path.addRoundedRect(QRectF(icon.x() + 2 * lw + w, y0, w, h), s / 20, s / 20);
             } else {
                 const double w = s * 0.2, h = s * 0.62, y0 = icon.y() + (s - h) / 2;
                 path.addRoundedRect(QRectF(icon.x() + lw, y0, w, h), s / 20, s / 20);

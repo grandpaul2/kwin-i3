@@ -111,6 +111,10 @@ public Q_SLOTS:
     // result and its name, the one under the pointer (`active`, 0-2) filled as the indicator.
     // A width or height of 0 clears them.
     void SetDropBands(int x, int y, int width, int height, int active);
+    // What the third band does: true a swap (a tiling window dragged, §9 G11), false the dropped
+    // window put beside the target (a floating window or container being tiled, G13), drawn as
+    // "Beside". Stays as told.
+    void SetDropSwap(bool swap);
     // kwin-i3's tiling drag: i3's move cursor while it lasts. KWin shows an effect's cursor only
     // while the effect holds the mouse (CursorImage::reevaluteSource), so on grabs it; the
     // helper's drag filter sits ahead of KWin's effects filter and keeps the drag's input. Renewed
@@ -293,6 +297,7 @@ private:
     KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
     KWin::RectF m_bands;                                    // SetDropBands; empty when none
     int m_bandActive = -1;
+    bool m_bandSwap = true;                                 // SetDropSwap
     struct BandsImage {
         std::unique_ptr<KWin::GLTexture> texture;
         QSize size;                                         // device pixels

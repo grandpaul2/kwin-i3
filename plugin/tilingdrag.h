@@ -38,7 +38,7 @@ public:
     ~TilingDragBus() override;
 
 public Q_SLOTS:
-    // "phase id x y": phase none, drag (a resize: "resize"), drop or cancel; id the window's
+    // "phase id x y side tab tile": phase none, drag (a resize: "resize"), drop or cancel; id the window's
     // internal id; x y the pointer (the release's, for a drop). A drop or a cancel is answered
     // once, then none.
     QString State();
@@ -53,9 +53,8 @@ public Q_SLOTS:
     // kwin-i3 ends the drag (a window closed on the focused workspace, i3's drain_drag_events;
     // nothing to resize on a ring's side): the presses taken stay taken until released.
     void Cancel();
-    // A window of kwin-i3's floats, or no longer does: Meta+Shift+left on it is i3's floating
-    // move, which KWin's window action (Meta alone) doesn't start (§9 F1). Told again after every
-    // SetOn(true).
+    // A window of kwin-i3's floats alone, or no longer does: Meta+Shift+left on it tiles it, by a
+    // tiling drag (§9 G13). Told again after every SetOn(true).
     void SetFloating(const QString &id, bool on);
     // A window in a split or a group floated whole: "group" (its container's key), with " top"
     // when it has a neighbour above; "" for none. Its presses are kwin-i3's, moving or resizing
@@ -69,6 +68,9 @@ public Q_SLOTS:
     // i3's has_drop_targets (tiling_drag.c:42), counted by kwin-i3 after each pass: with nowhere
     // to drop, a Meta+Shift press goes to the app as i3 replays it (§9 G4). True until told.
     void SetDropTargets(bool any);
+    // Somewhere to drop a floating window or container (one tiled window or empty workspace
+    // shown is enough): with none, a Meta+Shift press on one goes to the app (§9 G4, G13).
+    void SetFloatDropTargets(bool any);
     // Whether tiling windows have the frame's ring (the script's verdict, which it tells the
     // effect too: SetTiledRing): frame focus counts the ring only then (§1).
     void SetTiledRing(bool on);
@@ -117,17 +119,19 @@ private:
     TilingDrag *m_drag;
 };
 
-// Meta+Shift+left on a floating window (§9 F1) is i3's floating move, ignoring Shift
-// (click.c:284): KWin's own window action, started by the helper as KWin's fires only on Meta
-// alone (6.7.5 input.cpp:1299). Shift held during a KWin move is its "drop into a custom tile": an
-// outline over each tile passed, and the window tiled at a release with Shift down (window.cpp:1245,
-// :1108), into one of kwin-i3's. Just ahead of KWin's move filter (same weight, installed after
-// it), and only for a move the helper started: what that filter does, with Shift taken out.
+// Meta+Shift+left on a tiling window floats it (§9 G5): KWin's own move, started by the helper,
+// pulls it out of its tile. Shift held during a KWin move is its "drop into a custom tile": an
+// outline over each tile passed, and the window tiled at a release with Shift down (KWin 6.7.5
+// window.cpp:1245, :1108), into one of kwin-i3's. Just ahead of KWin's move filter (same weight,
+// installed after it), and only for the move the helper started: what that filter does, with
+// Shift taken out. That move is also the one X5's refusal lets through (watchMoves).
 class TilingDragFloat : public KWin::InputEventFilter
 {
 public:
     TilingDragFloat();
     void start(KWin::Window *window);
+    KWin::Window *window() const;
+    void clear();
 
     bool pointerMotion(KWin::PointerMotionEvent *event) override;
     bool pointerButton(KWin::PointerButtonEvent *event) override;
@@ -165,6 +169,7 @@ public:
     void setFloated(const QString &id, const QString &group);
     void setFocusParent(const QString &id) { m_focusParent = id; }
     void setDropTargets(bool any) { m_dropTargets = any; }
+    void setFloatDropTargets(bool any) { m_floatDropTargets = any; }
     void setTiledRing(bool on) { m_tiledRingTold = on ? 1 : 0; }
     // The script's ring verdict: 1 on, 0 off, -1 not told yet (FrameFocus falls back to kwinrc).
     int tiledRingTold() const { return m_tiledRingTold; }
@@ -201,6 +206,7 @@ private:
     enum class Phase { None, Pressed, Drag, Drop, Cancel };
 
     bool pressResize(KWin::PointerButtonEvent *event);
+    bool pressKindChange(KWin::Window *window, KWin::PointerButtonEvent *event, KWin::Window *floatIt);
     // A floated container moved (Meta+left, its title bar) or resized (Meta+right) whole: its
     // windows step together on every motion, as one (i3's floating_drag_window,
     // floating_resize_window from the corner nearest the press); at the release kwin-i3 reads the
@@ -242,6 +248,7 @@ private:
     QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
     QString m_side;                   // a ring press's side, else empty
     QString m_tab;                    // a Meta press's tab, "key:index", else empty (State)
+    bool m_toTile = false;            // the press is Meta+Shift's tiling drag of a floating one (State, §9 G13)
     QPointer<KWin::Window> m_window;  // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;
@@ -269,6 +276,11 @@ private:
     int m_scrollV120 = 0;             // a scroll not yet a whole step, in 120ths of one
     QString m_focusParent;            // SetFocusParent
     bool m_dropTargets = true;        // SetDropTargets
+    bool m_floatDropTargets = true;   // SetFloatDropTargets
+    // One float or tile per press of the keys (§9 G5, G13): set by a Meta+Shift+left press taken,
+    // cleared when Meta or Shift is released, so the window just changed, still under the pointer
+    // with the keys held, isn't changed straight back by a second press.
+    bool m_shiftLatched = false;
     int m_tiledRingTold = -1;         // SetTiledRing
     // The tab under pos on a bar no other window covers: its bar, and the index; -1 for none.
     int barAt(const QPointF &pos, const BarSpot **bar) const;

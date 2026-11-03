@@ -93,6 +93,11 @@ void TilingDragBus::SetDropTargets(bool any)
     m_drag->setDropTargets(any);
 }
 
+void TilingDragBus::SetFloatDropTargets(bool any)
+{
+    m_drag->setFloatDropTargets(any);
+}
+
 void TilingDragBus::SetTiledRing(bool on)
 {
     m_drag->setTiledRing(on);
@@ -141,6 +146,16 @@ TilingDragFloat::TilingDragFloat()
 void TilingDragFloat::start(Window *window)
 {
     m_window = window;
+}
+
+Window *TilingDragFloat::window() const
+{
+    return m_window;
+}
+
+void TilingDragFloat::clear()
+{
+    m_window.clear();
 }
 
 Window *TilingDragFloat::active() const
@@ -196,6 +211,13 @@ TilingDrag::TilingDrag()
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
     loadConfig();
+    // The latch (§9 G5, G13): a release of Meta or Shift, seen with the pointer still
+    // (InputRedirection::keyboardModifiersChanged, KWin 6.7.5 input.h:273).
+    QObject::connect(input(), &InputRedirection::keyboardModifiersChanged, &m_context, [this](Qt::KeyboardModifiers now, Qt::KeyboardModifiers) {
+        if (!(now & Qt::MetaModifier) || !(now & Qt::ShiftModifier)) {
+            m_shiftLatched = false;
+        }
+    });
     QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] { loadConfig(); });
     QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] { loadConfig(); });
     for (Window *window : workspace()->windows()) {
@@ -223,9 +245,19 @@ TilingDrag::TilingDrag()
 // none on a tiled window. Cancelled on the next turn, not inside the signal: KWin's
 // startInteractiveMoveResize still has work after it (window.cpp:1067-1070). A move whose first
 // step came first has untiled the window already, and goes on as before (floating where dropped).
+// The one move let through is the helper's own float (§9 G5, TilingDragFloat), for as long as it
+// lasts: ended any way (a release, Escape), the exemption goes with it.
 void TilingDrag::watchMoves(Window *window)
 {
+    QObject::connect(window, &Window::interactiveMoveResizeFinished, &m_context, [this, window] {
+        if (m_float.window() == window) {
+            m_float.clear();
+        }
+    });
     QObject::connect(window, &Window::interactiveMoveResizeStarted, &m_context, [this, window] {
+        if (m_float.window() == window) {
+            return;
+        }
         // In a floated container too: i3 ignores the request of a window whose own con isn't
         // floating (handlers.c, _NET_WM_MOVERESIZE), and KWin would move that one window alone.
         // Not during the helper's own group move, which moves windows by Window::move.
@@ -273,7 +305,8 @@ QString TilingDrag::state()
     }
     const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
     const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
-                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side) + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab);
+                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side) + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab)
+                          + (m_toTile ? QStringLiteral(" tile") : QStringLiteral(" -"));
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -555,6 +588,7 @@ void TilingDrag::takePress(Window *window, Qt::MouseButton button, const QPointF
     m_resize = resize;
     m_side = side;
     m_tab.clear();
+    m_toTile = false;
     m_threshold = threshold;
     m_phase = Phase::Pressed;
     if (!m_keysInstalled && input()) {
@@ -703,9 +737,15 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     const bool tiled = window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
     const QString floated = m_floated.value(window->internalId().toString());
     if (!floated.isEmpty() && !window->isFullScreen()) {
-        // In a floated container (click.c route_click): the floating modifier, Shift or not
-        // (:284), moves it whole (step 5); a title bar resizes against the neighbour above, and
-        // moves it whole only where there is none (steps 6, 7); the client's press is the client's.
+        // In a floated container (click.c route_click): Meta+Shift tiles it whole, by a tiling drag
+        // of the container (§9 G13, beyond i3: Shift is the float modifier, changing the kind of
+        // what a Meta drag would move); with tilingDrag's modifier left out, or nowhere to drop,
+        // the press is the app's (G3, G4). The floating modifier alone moves it whole (step 5); a
+        // title bar resizes against the neighbour above, and moves it whole only where there is
+        // none (steps 6, 7); the client's press is the client's.
+        if (metaShift) {
+            return pressKindChange(window, event, nullptr);
+        }
         if (mods & Qt::MetaModifier) {
             return pressGroup(window, event, false);
         }
@@ -728,18 +768,20 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return pressGroup(window, event, false);
     }
     if (metaShift && !tiled) {
-        // i3's floating modifier ignores Shift on the left button (click.c:284): a floating window
-        // of kwin-i3's moves as with Meta alone, KWin's window action (§9 F1), which KWin itself
-        // starts only on Meta alone (6.7.5 input.cpp:1299). Anything else keeps its press.
-        if (!m_floating.contains(window->internalId().toString()) || window->isFullScreen() || !window->isMovable()) {
+        // A floating window of kwin-i3's: Meta+Shift tiles it, by a tiling drag (§9 G13, beyond
+        // i3). Anything else, a fullscreen window among them, keeps its press.
+        if (!m_floating.contains(window->internalId().toString()) || window->isFullScreen()) {
             return false;
         }
-        m_float.start(window);      // the move without Shift: no custom-tile drop (TilingDragFloat)
-        window->performMousePressCommand(options->commandAll1(), event->position);
-        return true;
+        return pressKindChange(window, event, nullptr);
     }
     if (!tiled) {
         return false;
+    }
+    if (metaShift && window->isMovable() && window->isMovableAcrossScreens() && !window->isFullScreen()) {
+        // A tiling window: Meta+Shift floats it (§9 G5, beyond i3), by KWin's own move, which
+        // pulls it out of its tile; kwin-i3 floats it where it is dropped.
+        return pressKindChange(window, event, window);
     }
     bool threshold = false;
     if (metaShift || metaMore) {
@@ -787,6 +829,31 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         threshold = true;
     }
     takePress(window, Qt::LeftButton, event->position, false, QString(), threshold);
+    return true;
+}
+
+// Meta+Shift+left on a window's body (§9 G5, G13): Shift is the float modifier, changing the kind
+// of what a Meta drag would move. `floatIt` set: that tiling window floats, by KWin's move;
+// otherwise the floating window or container is dragged as a tiling one and tiled where dropped.
+// With tilingDrag's modifier left out, or (to tile) nowhere to drop, the press is the app's, as
+// G3 and G4 say of Meta+Shift. Once per press of the keys (m_shiftLatched), set at the press taken.
+bool TilingDrag::pressKindChange(Window *window, PointerButtonEvent *event, Window *floatIt)
+{
+    if (!m_modifierDrag || (!floatIt && !m_floatDropTargets)) {
+        return false;
+    }
+    if (m_shiftLatched) {
+        m_taken |= Qt::LeftButton;      // nothing until Meta or Shift is released
+        return true;
+    }
+    m_shiftLatched = true;
+    if (floatIt) {
+        m_float.start(floatIt);         // the move without Shift: no custom-tile drop (TilingDragFloat)
+        floatIt->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
+        return true;
+    }
+    takePress(window, Qt::LeftButton, event->position, false, QString(), false);
+    m_toTile = true;                    // told in State: only this press tiles a floating window
     return true;
 }
 

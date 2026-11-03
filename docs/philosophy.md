@@ -30,8 +30,8 @@ manager has to rebuild what a desktop environment already gives, at every update
 2. **Second, and still important: Plasma users** who want a full-powered window manager without
    changing much. With what kwin-i3 adds and what Plasma already has, most of the experience is
    reachable with the Meta key and any two-button pointer alone:
-   Meta+drag to rearrange tiles, Meta+right-drag to resize, Meta+Shift+Space between tiling and
-   floating. The keys are the route for whatever a touchpad makes awkward.
+   Meta+drag to rearrange tiles, Meta+Shift+drag to float or tile a window, Meta+right-drag to
+   resize, Meta+Shift+Space between tiling and floating. The keys are the route for whatever a touchpad makes awkward.
 
 What follows from the order: i3's behaviour and words win a tie, and nothing a Plasma user
 meets first should need i3 knowledge to undo (a floating window looks like any Plasma window;
