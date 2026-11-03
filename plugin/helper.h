@@ -14,6 +14,7 @@
 #include "pointerprobe.h"
 #include "popupgrace.h"
 #include "resizemode.h"
+#include "keyoverride.h"
 #include "settingswatch.h"
 #include "tilingdrag.h"
 
@@ -34,5 +35,6 @@ private:
     SettingsWatch m_settingsWatch;
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;
+    KeyOverride m_keyOverride;     // PROBE
     ResizeMode m_resizeMode;        // installs its key filter itself, only while the mode is on
 };
