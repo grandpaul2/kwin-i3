@@ -57,8 +57,9 @@ Behavior, Display Configuration): open the Plasma page and match it.
 - **Where the page changes Plasma's own settings** (the Plasma Settings sub-page), the choice is
   marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one box ticked a row. The kwin-i3
   box says "Enable" in small text. The Plasma box says nothing, because the page doesn't claim to
-  know Plasma's value. One muted line under each name says what the Plasma column means for it,
-  and the rest goes in its help. The user makes every change, through the page's Apply.
+  know Plasma's value. One muted line under each name says what the Plasma column means for it:
+  "Plasma: " and the value in the words of Plasma's own settings ("Plasma: Click to focus"), never
+  what the setting does. That, and where Plasma keeps it, goes in its help. The user makes every change, through the page's Apply.
 
 ## Controls
 

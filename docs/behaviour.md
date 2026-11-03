@@ -1034,7 +1034,8 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   to tiling, shown for convenience, every one always: two columns of checkboxes, "Plasma" and
   "kwin-i3 (recommended)", ticking one unticking the other, the one ticked being where the
   setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
-  what the Plasma column means for it, and its help button why kwin-i3 wants its way and where
+  what the Plasma column means for it, as "Plasma: " and the value in Plasma's own words
+  ("Plasma: Focus follows mouse, 300 ms delay"), and its help button why kwin-i3 wants its way and where
   Plasma keeps the setting. Choosing Plasma gives back what the reader had before kwin-i3
   changed it, or, where kwin-i3 changed nothing, Plasma's stock value (focus stealing prevention
   Medium and Meta+drag Move, whose stock values are kwin-i3's own), saving nothing. The rows: Focus follows

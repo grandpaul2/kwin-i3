@@ -1,7 +1,7 @@
 // The Plasma Settings sub-page (docs/plan.md, "Install and first run"): Plasma's own settings
 // that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
 // columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
-// muted line under a name says what the Plasma column means for it. A choice is an edit like any
+// muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
 // on the page: Apply makes it, Reset drops it, Defaults picks kwin-i3 for all but the optional.
 // Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
 // reader had before kwin-i3 changed it, and make uninstall can put everything back.
