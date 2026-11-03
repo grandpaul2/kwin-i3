@@ -12,6 +12,9 @@
 #include <opengl/glvertexbuffer.h>
 #include <scene/borderradius.h>
 #include <scene/windowitem.h>
+#include <scene/outlinedborderitem.h>
+#include <QPointer>
+#include <QFile>
 #include <window.h>
 #include <workspace.h>
 
@@ -756,10 +759,45 @@ void Hold::prePaintScreen(ScreenPrePaintData &data)
     effects->prePaintScreen(data);
 }
 
+// PROBE (never merged): the ring as a child item of the window's scene item, 4 px magenta.
+static QHash<EffectWindow *, QPointer<OutlinedBorderItem>> s_probeItems;
+static void probeLog(const QString &line)
+{
+    QFile f(QString::fromLocal8Bit(qgetenv("KI3_TMP")) + QStringLiteral("/probe.txt"));
+    if (f.open(QIODevice::Append | QIODevice::Text)) {
+        f.write((QTime::currentTime().toString(QStringLiteral("HH:mm:ss.zzz ")) + line + QLatin1Char('\n')).toUtf8());
+    }
+}
+static void probeItem(EffectWindow *w)
+{
+    WindowItem *wi = w->windowItem();
+    if (!wi || w->isDeleted()) {
+        return;
+    }
+    const RectF inner(QPointF(0, 0), w->frameGeometry().size());   // outside the window, where the frame sits
+    auto &item = s_probeItems[w];
+    if (!item) {
+        item = new OutlinedBorderItem(inner, BorderOutline(4, QColor(255, 0, 255)), wi);
+        probeLog(QStringLiteral("item added to %1 frame %2").arg(w->caption(), (QStringLiteral("%1,%2 %3x%4").arg(w->frameGeometry().x()).arg(w->frameGeometry().y()).arg(w->frameGeometry().width()).arg(w->frameGeometry().height()))));
+    } else if (item->innerRect() != inner) {
+        item->setInnerRect(inner);
+    }
+    static QHash<EffectWindow *, RectF> lastExp;
+    const RectF e = w->expandedGeometry();
+    if (lastExp.value(w) != e) {
+        lastExp[w] = e;
+        const RectF f = w->frameGeometry();
+        probeLog(QStringLiteral("%1 expanded %2,%3 %4x%5 frame %6,%7 %8x%9").arg(w->caption()).arg(e.x()).arg(e.y()).arg(e.width()).arg(e.height()).arg(f.x()).arg(f.y()).arg(f.width()).arg(f.height()));
+    }
+}
+
 void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData &data)
 {
     // Transformed: painted beyond its own rect (a snapshot at its old frame, or its ring), with
     // the region still visible at its place in the stack (WorkspaceScene::paintSimpleScreen).
+    if (ringed(w)) {
+        probeItem(w);
+    }
     if (m_held.contains(w) || m_hidden.contains(w) || ringed(w) || hasBar(w)) {
         data.setTransformed();
     }
