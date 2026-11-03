@@ -329,6 +329,10 @@ private:
     QList<QPair<QPointer<KWin::EffectWindow>, KWin::RectF>> m_ringDamage;
     void trackDrawn(KWin::EffectWindow *w, const KWin::WindowPaintData &data);
     QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
+    // Windows that opened while Glide was loaded: no ring while another effect draws the window
+    // from its own copy (Glide's tilt, which the ring can't follow; behaviour.md L18). Cleared at
+    // the first paint that finds none, ringed or not.
+    QSet<KWin::EffectWindow *> m_opening;
     QSet<KWin::EffectWindow *> m_pendingClose; // kept, waiting for a neighbour
     QList<QPointer<KWin::EffectWindow>> m_dragging;
     QStringList m_events;                                   // note(): the last 500, for Events

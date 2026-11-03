@@ -251,6 +251,12 @@ void Hold::watchWindow(EffectWindow *w)
 void Hold::onAdded(EffectWindow *w)
 {
     watchWindow(w);
+    // Glide opens it tilted (its own quads, glide.cpp:109-151), which a ring drawn from the paint
+    // data can't follow: none until Glide lets it go (paintWindow). Ahead of the hold's own
+    // checks: the ring is drawn with the hold off too.
+    if (effects->isEffectLoaded(QStringLiteral("glide"))) {
+        m_opening.insert(w);
+    }
     if (!m_enabled || !supported()) {
         return;
     }
@@ -338,6 +344,7 @@ void Hold::onDeleted(EffectWindow *w)
     m_rounded.remove(w->internalId().toString());
     m_held.remove(w);
     m_hidden.remove(w);
+    m_opening.remove(w);
     m_drawn.remove(w);
     m_pendingClose.remove(w);
     m_dragging.removeAll(w);
@@ -780,7 +787,28 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
         data.setCrossFadeProgress(0);   // the snapshot only, never the live window
     }
     KI3_PAINT(effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data));
-    const bool hidden = m_hidden.contains(w), ringedNow = ringed(w), barred = hasBar(w);
+    const bool hidden = m_hidden.contains(w), barred = hasBar(w);
+    bool ringedNow = ringed(w);
+    // Opening under Glide (onAdded): while an effect draws the window from its own copy (an item
+    // effect on its window item, scene/item.cpp:705; Glide's from windowAdded to its last frame,
+    // glide.cpp:161-166), no ring. A hidden window holds the hold's own item effect, and a held
+    // one its snapshot's, so neither tells: both wait. The first paint without one ends it, and
+    // the whole ring is repainted next frame (this paint was clipped to the window's rect, as at
+    // the end of any animation, trackDrawn); Glide repaints the window on its last frame.
+    if (!hidden && !m_held.contains(w)) {
+        if (auto it = m_opening.find(w); it != m_opening.end()) {
+            if (w->windowItem()->hasEffects()) {
+                ringedNow = false;
+            } else {
+                m_opening.erase(it);
+                if (ringedNow) {
+                    const RectF cur = w->frameGeometry();
+                    m_ringDamage.append({QPointer<EffectWindow>(w), RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(),
+                                                                          cur.width() * data.xScale(), cur.height() * data.yScale())});
+                }
+            }
+        }
+    }
     if ((ringedNow || barred) && !hidden && !m_held.contains(w)) {
         trackDrawn(w, data);
     }

@@ -40,8 +40,3 @@ give-back (`behaviour.md` §11); the README's Install to match. To check: `behav
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
 by step, from `git clone` to the sub-page.
-
-**89. The frame flat while Glide opens a window** (2026-11-03). Glide tilts a window by moving
-its quads (6.7.5 `glide.cpp:110-151`); the frame follows only translation, scale and opacity, so
-it fades in as a flat rectangle at the tile while the window swings in. Seen with Glide chosen
-on the Animations page, not the default. Next: its spec.

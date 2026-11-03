@@ -601,6 +601,7 @@ that it fits Plasma better.
 | L15 | Colours, width | colours forced opaque; width 1-10 | + | |
 | L16 | The hold: windows that change together switch in one frame | `kwini3hold` | + | i3 has no compositor and draws one tree at once; the hold gives that on KWin |
 | L17 | Without the effect | every tiling window keeps its title bar | + | |
+| L18 | A window opening under Glide (Plasma's Animations page; not the default, Scale is) | no ring until Glide's animation ends, then the ring at once | + | Glide tilts the window on its own quads, which a ring drawn from the paint data can't follow (`docs/kwin-notes.md`, "Plugins and effects"); a window the hold catches mid-animation keeps a flat ring for those frames |
 
 ### Tiling windows
 

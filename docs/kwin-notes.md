@@ -290,7 +290,16 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   frame, outside it, widens `expandedGeometry` by its thickness and tilts whole under Glide
   (probe 90, test KWin with `KWIN_EFFECTS_FORCE_ANIMATIONS=1`). The renderer draws only its own
   item types (image, outlined border, surface, decoration, shadow): a subclass of `Item` draws
-  nothing.
+  nothing. Such an item is the effect's to own and delete (an `Item` deletes no child), and a
+  change to it must be told as the window's damage, or an offscreen effect keeps drawing its stale
+  copy (`offscreeneffect.cpp:73-74`); and it can't match the ring's device-pixel edges at a
+  fractional scale nor its square corners. So kwini3hold draws no ring while Glide opens a window
+  (`behaviour.md` L18), seen by an item effect on the window item (`Item::hasEffects`, held from
+  Glide's `windowAdded` to its last frame).
+- **The Animations page's exclusive groups are the page's only** (6.7.5
+  `kcms/common/effectsmodel.cpp:193-194`):
+  KWin's loader loads two of Scale, Glide and Fade side by side if `[Plugins]` says so, and the
+  first to take a window's add grab animates it.
 - KWin's exported CMake targets name `Qt6::Widgets` (`KWinTargets.cmake`): a plugin that uses no
   widget still finds the component, or its configure fails (2026-10-30).
   Unloading one in a running KWin leaves its library loaded: anything it connected must end with it.
