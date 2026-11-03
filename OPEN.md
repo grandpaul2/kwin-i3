@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31, after
 `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main at c048b7f: script (plugins at e75a727) (settings page at 20cea84). `stable` is at
+main at c048b7f: script (plugins at fc6ba4b) (settings page at 20cea84). `stable` is at
 `v1.2.0` (2026-11-02, e915726's code).
 
 ## Stage
@@ -43,13 +43,7 @@ by step, from `git clone` to the sub-page. Separate, still open: a rule for Plas
 actions that have no i3 counterpart acting on a window in the tree (minimize, quick tile, Show
 Desktop, activities, Keep Above), today one-off rows.
 
-**87. The frame missing on windows sliding away** (2026-11-03). A desktop switch to a workspace
-with no framed window shown, with none shown on the other output either, and the start of Show
-Desktop's Window Aperture, draw the departing windows without their frame: `Hold::isActive`
-counts only shown windows, so the effect sits out of the paint. Seen live only. Next: its spec
-and the spec's review.
-
 **89. The frame flat while Glide opens a window** (2026-11-03). Glide tilts a window by moving
 its quads (6.7.5 `glide.cpp:110-151`); the frame follows only translation, scale and opacity, so
 it fades in as a flat rectangle at the tile while the window swings in. Seen with Glide chosen
-on the Animations page, not the default. Next: its spec, after item 87.
+on the Animations page, not the default. Next: its spec.
