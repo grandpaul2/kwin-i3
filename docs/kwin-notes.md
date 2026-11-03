@@ -380,6 +380,10 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   left where a floated container's ring lands (the screen's centre is the seam of a floated
   two-window split), activates that window at the next stacking change (the raise of a focus
   pass inside the container). Moved onto the ring, the helper focuses the ring's window (§9 F2).
+- It runs no animations: on its software renderer `animationsSupported()` is false, so Scale,
+  Glide, Slide and the rest don't load, unless `KWIN_EFFECTS_FORCE_ANIMATIONS=1` is set (6.7.5
+  `effect/effecthandler.cpp:1415-1423`). Its screenshots render the whole scene, so a missed
+  repaint never shows there either: a bug in what the screen repaints is seen only live.
 - It has two outputs, and an empty workspace other than 1 may open on Virtual-1: a probe of what
   stays on one monitor (a sticky window's push) switches to a workspace shown on that monitor
   (3 from 1), not to 2.
