@@ -121,7 +121,10 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   where it is dropped (KWin's move, which the helper starts; `behaviour.md` G5); a container
   selected with focus parent, pressed on one of its windows, floats whole where its outline is
   dropped (G16); and a floating window, or a container floated whole, is dragged as a tiling one
-  and tiled where it is dropped (G13). Plain Meta+drag stays i3's, the pressed window. The reason: with Meta
+  and tiled where it is dropped (G13). Plain Meta+drag stays i3's, the pressed window. **One
+  exception, judged live**: in a container floated whole, the drag takes the whole container
+  (it tiles it whole, as a Meta drag moves it whole, F1a), while Meta+Shift+Space on one of its
+  windows floats that window out alone (T16, i3's `floating_enable` of the focused window). The reason: with Meta
   and Shift the mouse alone moves, swaps, groups, floats and tiles, a large gain in reach for an
   audience whose common tool is the mouse, at no loss: i3's swap modifier, the only meaning Shift
   had, is what the centre's Swap band does at every drop. Meta+Shift+Space stays the key between
