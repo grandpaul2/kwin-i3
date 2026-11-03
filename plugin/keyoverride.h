@@ -14,7 +14,9 @@
 // kwin-i3's keys: its script's actions (each a QAction named "kwin-i3 …", a child of the script,
 // KWin's Script::registerShortcut) with their keys from kglobalaccel, read asynchronously (a
 // blocking call from inside KWin waits on itself) when a layout fit ends (the script asks for one
-// as it loads), on KWin's reconfigure, and when the settings page applies keys (RefreshKeys).
+// as it loads), on KWin's reconfigure, when the settings page applies keys (RefreshKeys), and
+// when kglobalacceld says one of kwin-i3's actions was rebound elsewhere. A two-key sequence
+// counts by its first key (kwin-i3 binds single keys).
 // An action gone (the script unloaded) is skipped: no key is taken for it. Not while a window
 // inhibits shortcuts, as KWin's own filter; Alt+Tab's filter and the lock screen's come first.
 #pragma once
@@ -27,6 +29,9 @@
 #include <QObject>
 #include <QPointer>
 #include <QSet>
+#include <QTimer>
+
+class QDBusMessage;
 
 class QAction;
 
@@ -43,6 +48,9 @@ public:
     void refresh();
     // For the live tests and bug reports: on or off, and each key with its action.
     QString plan() const;
+
+private Q_SLOTS:
+    void onShortcutsChanged(const QDBusMessage &message);
 
 private:
     class After : public KWin::InputEventFilter
@@ -61,6 +69,7 @@ private:
     QHash<int, QPointer<QAction>> m_keys;       // a Qt key combination -> kwin-i3's action
     QSet<quint32> m_marked;                     // scan codes on their way to After
     int m_generation = 0;                       // a refresh's answers, stale once another starts
+    QTimer m_coalesce;                          // a burst of rebinds, one refresh
     KConfigWatcher::Ptr m_watcher;
     After m_after;
 };

@@ -34,7 +34,7 @@ audience and the lines drawn: `docs/philosophy.md`.
 ## Open
 
 **79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
-takes in item 26). Built: `make install` and `make uninstall`; the taken keys' save and give-back;
+takes in item 26). Built: `make install` and `make uninstall`; the key override (`behaviour.md` §8, "Shared keys");
 the settings page's Plasma Settings sub-page with its banner, its save and `make uninstall`'s
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found

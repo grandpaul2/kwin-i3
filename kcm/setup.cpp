@@ -320,8 +320,8 @@ bool SetupModel::differs(const Row &r) const
         const KeyHolder h = keyHolder(MetaT);
         return h.component + QLatin1Char('|') + h.action == TileEditor;
     }
-    if (r.id == QLatin1String("keys"))
-        return !keysOverride();
+    if (r.id == QLatin1String("keys"))      // off, with a key shared: Plasma's shortcut runs it
+        return !keysOverride() && m_keys->available() && !clashes().isEmpty();
     return std::any_of(r.changes.begin(), r.changes.end(), [this](const Change &c) { return effective(c) != c.value; });
 }
 
@@ -345,9 +345,7 @@ void SetupModel::load()
         // Every row is shown, as KDE's rule is disabled, not hidden: one Plasma already matches and
         // kwin-i3 didn't change ("settled") is ticked and disabled, with nothing to give back.
         const bool d = differs(r), c = changedByUs(r);
-        // The key override counts only while a key is shared: off with nothing shared, nothing works
-        // against kwin-i3.
-        m_needed = m_needed || (d && !r.optional && (r.id != QLatin1String("keys") || (m_keys->available() && !clashes().isEmpty())));
+        m_needed = m_needed || (d && !r.optional);
         m_initial[r.id] = !d;
         const Getter now = [this](const Change &ch) { return effective(ch); };
         const Getter was = [this](const Change &ch) { return before(ch); };

@@ -10,6 +10,8 @@
 #include <KSharedConfig>
 
 #include <QAction>
+#include <QDBusConnection>
+#include <QDBusMessage>
 #include <QKeySequence>
 
 #include <memory>
@@ -29,6 +31,15 @@ KeyOverride::KeyOverride()
         load();
         refresh();
     });
+    // A key rebound elsewhere (System Settings' Shortcuts page, or any other foreign change) is
+    // told to the action's owner as yourShortcutsChanged (kglobalacceld 6.7.5
+    // kglobalacceld.cpp:541-553): one of kwin-i3's, and the table is read again, once a burst ends.
+    m_coalesce.setSingleShot(true);
+    m_coalesce.setInterval(0);
+    connect(&m_coalesce, &QTimer::timeout, this, &KeyOverride::refresh);
+    QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
+                                          QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("yourShortcutsChanged"),
+                                          this, SLOT(onShortcutsChanged(QDBusMessage)));
     refresh();
     // Installed whether on or off: off, both filters pass every event at their first test.
     input()->installInputEventFilter(this);
@@ -40,6 +51,14 @@ KeyOverride::~KeyOverride()
     if (input()) {
         input()->uninstallInputEventFilter(this);
         input()->uninstallInputEventFilter(&m_after);
+    }
+}
+
+void KeyOverride::onShortcutsChanged(const QDBusMessage &message)
+{
+    const QStringList id = message.arguments().value(0).toStringList();
+    if (id.value(0) == QLatin1String("kwin") && id.value(1).startsWith(s_prefix)) {
+        m_coalesce.start();
     }
 }
 
@@ -100,6 +119,12 @@ QString KeyOverride::plan() const
 // layout's symbol with the modifiers that matter for shortcuts (Shift dropped on a symbol it made).
 bool KeyOverride::keyboardKey(KeyboardKeyEvent *event)
 {
+    // A new press forgets an old mark of its key: a filter ahead of these (the resize mode taking
+    // its key's release, Alt+Tab, the lock screen) can take a marked key's release, and the mark
+    // would swallow the key's next press anywhere.
+    if (event->state == KeyboardKeyState::Pressed) {
+        m_marked.remove(event->nativeScanCode);
+    }
     if (!m_on || event->state == KeyboardKeyState::Released || waylandServer()->isKeyboardShortcutsInhibited()) {
         return false;
     }

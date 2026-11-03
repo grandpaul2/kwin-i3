@@ -50,4 +50,3 @@ install: plugin kcm
 	tools/install.sh
 uninstall:
 	tools/uninstall.sh
-# Free kwin-i3's keys that other shortcuts hold, and put them back.
