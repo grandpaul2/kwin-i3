@@ -36,6 +36,23 @@ These are the project's rules, not suggestions.
   **the merge is the go**.
 - **The maintainer's go decides what goes in**: behaviour, scope, a new test, anything that changes
   a foundation doc. Most calls are already decided by the docs (below); ask only what they can't.
+- **A change to behaviour goes spec, review, adjust, build, test**, for its blast radius and to
+  keep the whole consistent, more than for the beta's own risk. It covers what a user would
+  notice from `src/`, `plugin/` or `tools/capture`, and every feature beyond i3 in full:
+  1. **Spec**: i3 first (its source, file:line), then what changes, the `behaviour.md` rows and
+     any foundation it touches, the blast radius (every path the change runs through: other
+     modifiers, the helper's filters, floating containers, other outputs, with and without the
+     plugins), and the runs that will check it (existing scenarios; a new test only with the go).
+  2. **Review**: an outside agent given the spec and the code it touches, not your conclusions,
+     asked what is wrong, what breaks, and the smallest version. Its verdict and the adjusted plan
+     go to the maintainer, whose go on the spec is the go to build.
+  3. **Build** to the spec in a worktree, then an outside review of the diff against the spec.
+     Every finding is checked against the code before it is fixed or answered.
+  4. **Test** as `docs/testing.md` says, then live with the go, as below.
+
+  The spec and its reviews are working notes, outside the tree: the maintainer's in their private
+  notes, a contributor's in the pull request. A bug fix whose cause is named needs only the diff
+  review and its test. The settings page's look, judged live, and docs alone need neither.
 - **The safety rules below apply to whoever's live desktop runs kwin-i3**: on a contributor's
   machine, their desktop and their go to reload it. The go for what goes into main stays the
   maintainer's.
