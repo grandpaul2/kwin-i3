@@ -198,6 +198,14 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   the active holder with the **lowest serial**; serials are given at first registration and kept
   in `~/.local/state/kglobalshortcutsstaterc` (Plasma's own actions beat a script's). An inactive
   holder (app not running) doesn't block. Freed from its holder, the key works at once.
+- **A key filter ahead of `GlobalShortcut` wins a shared key without touching anyone's
+  shortcuts**: the filters run in order and the first that takes an event ends it (6.7.5
+  `input.h:154-166`; order `LockScreen`, `ScreenEdge`, `TabBox`, `GlobalShortcut`, `:367-372`), so
+  a filter that takes the press and runs the script's action (`invokeShortcut`) keeps it from the
+  holder with the lower serial (probe 91: stock Quick Tile Left and kwin-i3's Focus Left both on
+  Meta+Left, the filter's press ran Focus Left). KWin's own shortcut filter skips while a window
+  inhibits shortcuts (`waylandServer()->isKeyboardShortcutsInhibited()`, `input.cpp:1077-1084`):
+  such a filter must too.
 - `doRegister` of `<app>.desktop` then `invokeShortcut _launch` launches the app even with no
   `X-KDE-Shortcuts`.
 - Window actions (`[MouseBindings] CommandAll*`) take exactly one modifier, Meta or Alt.
