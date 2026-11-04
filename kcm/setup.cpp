@@ -52,7 +52,7 @@ static KConfigGroup groupOf(const SetupModel::Change &c)
 }
 
 // A key's stock value, as the installed KWin declares it (kwin.kcfg), so a KWin whose stock
-// changed (6.8's window actions) is read right.
+// changed is read right.
 static QString stock(const SetupModel::Change &c)
 {
     if (!c.stock.isEmpty())

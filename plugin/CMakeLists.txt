@@ -1,5 +1,5 @@
-# kwini3helper: kwin-i3's KWin plugin: focus on the frame, settings
-# that apply on Apply, i3's tiling drag, keys
+# kwini3helper: kwin-i3's KWin plugin: focus on the frame, i3's tiling drag, kwin-i3's keys over
+# Plasma's, keys
 # fitted to the keyboard layout, panel popups' grace
 #, i3's resize mode. kwini3mouse until 2026-10-24.
 # kwini3hold: atomic layout changes and i3's frame around tiled windows, a KWin effect

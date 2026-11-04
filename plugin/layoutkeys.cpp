@@ -235,6 +235,13 @@ void LayoutKeys::RefreshKeys()
     }
 }
 
+void LayoutKeys::SetReleased(bool released)
+{
+    if (onReleased) {
+        onReleased(released);
+    }
+}
+
 QString LayoutKeys::OverridePlan() const
 {
     return onOverridePlan ? onOverridePlan() : QString();

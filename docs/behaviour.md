@@ -820,7 +820,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | F8 | No drag or resize starts while a game holds the pointer or shortcuts are inhibited | the press is the app's | + | |
 | F8b | A window Show Desktop hides (Plasma's edit mode turns it on), or one on another activity | has no ring, frame or gap: a click or hover where it sits reaches what is shown there (KWin's `isShown`, not `isHidden`, which leaves Show Desktop out) | = | i3 routes clicks to mapped windows only |
 | F9 | **Without the helper** | Meta+drag is KWin's own move: the window leaves its tile and floats where dropped | + | |
-| F10 | **Popup grace**: a panel popup active | KWin's focus delay is 1.5 s, so crossing the gap between a floating panel and its popup doesn't focus the window beneath (KDE bug 511162); any other activation puts back the user's `DelayFocusInterval`, read fresh from kwinrc (KWin's default, 300 ms, when the key isn't there) | + | i3's popups grab the pointer (§5 B7) |
+| F10 | **Popup grace**: a panel popup active | KWin's focus delay is 1.5 s, so crossing the gap between a floating panel and its popup doesn't focus the window beneath (KDE bug 511162); any other activation puts back kwin-i3's: none with `focusFollowsMouse` on (B1), else Plasma's `DelayFocusInterval`, read fresh from kwinrc (KWin's default, 300 ms, when the key isn't there) | + | i3's popups grab the pointer (§5 B7) |
 
 ---
 
@@ -917,7 +917,7 @@ logs a `WARN` and uses the default.
 
 **When a change applies**: the script reads its settings at load and at every KWin reconfigure.
 The settings page sends one on Apply; after a hand edit of kwinrc, press Meta+Shift+C (i3's
-reload). The plugins watch kwinrc themselves. On a reconfigure with changes: the rules reclassify every window
+reload). The plugins read kwinrc again on that reconfigure, and at once on a `--notify` write. On a reconfigure with changes: the rules reclassify every window
 if a rule list changed, the ring is told if `tiledLook` changed, and every workspace is placed
 again.
 

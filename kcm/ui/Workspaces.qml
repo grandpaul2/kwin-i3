@@ -2,8 +2,7 @@
 // defaultOrientation), back and forth (workspaceAutoBackAndForth); then each workspace's
 // monitors in order (workspaceOutputs, "1=DP-4 HDMI-A-1": the first connected one is used, as
 // i3's workspace N output A B), and whether its new windows open floating (the rule
-// [workspace="^N$"] floating enable in forWindow), one
-// row per workspace.
+// [workspace="^N$"] floating enable in forWindow), one row per workspace.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts

@@ -35,12 +35,17 @@ public Q_SLOTS:
     void RefreshKeys();
     // For the live tests and bug reports: the key override's state and table (onOverridePlan).
     QString OverridePlan() const;
+    // The script: true at its release (Meta+Ctrl+Shift+Q, a failed load), false at its load. The
+    // key override holds no key while released, as kwin-i3's actions then do nothing
+    // (onReleased).
+    void SetReleased(bool released);
 
 public:
     // Set by the helper: a fit has ended, or the page applied keys (the key override reads them
     // again); and the override's plan, for OverridePlan.
     std::function<void()> onKeysChanged;
     std::function<QString()> onOverridePlan;
+    std::function<void(bool)> onReleased;
 
 private:
     struct Want {

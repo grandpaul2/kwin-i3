@@ -15,7 +15,7 @@ pix() { "$shot" same "$png" "$1" "$2" "$3" 2; }
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
-form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+unset_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 
 # Square corners: these pixel checks are of the square frame (78 has the rounded one).
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key roundedCorners false
@@ -52,7 +52,7 @@ check "  b's bottom and c's right gone too" eval 'pix 300 719 $BG && pix 1279 36
 check "  the seam between V[a b] and c stays" eval 'pix 639 180 $INACT && pix 640 360 $INACT'
 set_setting hideEdgeBorders smart
 check "smart, three windows: every side drawn" poll eval 'capture && pix 0 180 $INACT && pix 1279 360 $INACT && pix 300 719 $ACT'
-form_del hideEdgeBorders
+unset_setting hideEdgeBorders
 check "none: as before"                     poll eval 'capture && pix 0 180 $INACT && pix 1 180 $RED'
 
 # i3's resize from a border (§9 Z3): a left drag on c's left ring resizes c against

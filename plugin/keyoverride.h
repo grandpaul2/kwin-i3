@@ -48,6 +48,8 @@ public:
 
     // kwin-i3's actions and their keys, read again.
     void refresh();
+    // The script released (its actions do nothing): no key held until it loads again.
+    void setReleased(bool released);
     // For the live tests and bug reports: on or off, and each key with its action.
     QString plan() const;
 
@@ -68,6 +70,7 @@ private:
     void load();
 
     bool m_on = false;
+    bool m_released = false;
     QHash<int, QPointer<QAction>> m_keys;       // a Qt key combination -> kwin-i3's action
     QSet<int> m_held;                           // the tile editor's keys: held, no action run
     QSet<quint32> m_marked;                     // scan codes on their way to After

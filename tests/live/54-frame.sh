@@ -108,18 +108,18 @@ point 300 360
 
 # 5. The settings: frameWidth leaves room for a wider frame, colours change live.
 set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
-form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+unset_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 set_setting frameWidth 3
 check "frameWidth 3: 3 px of room"          geom_is a "3,3 634x714"
 check "  and 6 between: b"                  geom_is b "643,3 634x714"
 check "  the frame fills it"                eval 'poll pixel_is 0 360 $ACTIVE && pixel_is 2 360 $ACTIVE && pixel_is 637 360 $ACTIVE && pixel_is 640 360 $INACTIVE && pixel_is 642 360 $INACTIVE'
 set_setting frameActive "#ff0000"
 check "frameActive: red"                    poll pixel_is 0 360 255,0,0
-form_del frameActive; form_del frameWidth
+unset_setting frameActive; unset_setting frameWidth
 check "deleted: 1 px again"                 geom_is a "1,1 638x718"
 set_setting holdEnabled false
 check "holdEnabled off: the frame stays"    poll pixel_is 0 360 $ACTIVE
-form_del holdEnabled
+unset_setting holdEnabled
 
 # 6. The effect goes: tiled windows get their title bars back, no padding; it comes back: frames.
 eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"')

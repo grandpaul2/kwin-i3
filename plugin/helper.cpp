@@ -10,6 +10,7 @@ Helper::Helper()
     m_tilingDrag.onResizeGapChanged = [this] { m_gapStrips.dirty(); };
     m_layoutKeys.onKeysChanged = [this] { m_keyOverride.refresh(); };
     m_layoutKeys.onOverridePlan = [this] { return m_keyOverride.plan(); };
+    m_layoutKeys.onReleased = [this](bool released) { m_keyOverride.setReleased(released); };
     KWin::input()->installInputEventFilter(&m_pointerProbe);
     KWin::input()->installInputEventFilter(&m_frameFocus);
     KWin::input()->installInputEventFilter(&m_tilingDrag);
@@ -23,6 +24,7 @@ Helper::~Helper()
         m_tilingDrag.onResizeGapChanged = nullptr;
         m_layoutKeys.onKeysChanged = nullptr;
         m_layoutKeys.onOverridePlan = nullptr;
+        m_layoutKeys.onReleased = nullptr;
         KWin::input()->uninstallInputEventFilter(&m_pointerProbe);
         KWin::input()->uninstallInputEventFilter(&m_frameFocus);
         KWin::input()->uninstallInputEventFilter(&m_tilingDrag);

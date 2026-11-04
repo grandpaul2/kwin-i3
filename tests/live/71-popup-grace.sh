@@ -5,7 +5,7 @@
 # needs: plugin
 # Panel popups forgive a stray pointer: with focus follows mouse and no
 # delay (the author's settings, as the test KWin has them), kwini3helper raises KWin's focus delay
-# to 1.5 s while a panel popup has the focus, and puts the user's 0 back otherwise. The popup is
+# to 1.5 s while a panel popup has the focus, and puts kwin-i3's 0 back otherwise. The popup is
 # a stand-in (tools/popupclient.py, an X11 window KWin classes as an applet popup: the test KWins
 # have no Plasma panel); the pointer is moved with real input (tools/inject.py).
 source "$(dirname "$0")/lib.sh"
@@ -46,7 +46,7 @@ point 900 300; t=$(now)
 check "left on a: a takes the focus"        within 4 active_is a
 ms=$(since "$t")
 check "after about 1.5 s (took ${ms} ms)"   test "$ms" -ge 1300 -a "$ms" -le 2500
-check "a has it: the user's 0 is back"      poll delay_is 0
+check "a has it: kwin-i3's 0 is back"      poll delay_is 0
 
 # 4. A click is deliberate: at once, grace or not.
 point 250 500
@@ -68,14 +68,14 @@ check "onto a: at once"                     within 1 active_is a
 ' ' ')"
 check "in under 0.3 s (took $(since "$t") ms)" test "$(since "$t")" -le 300
 
-# 6. The plugin unloaded while a popup has the focus: the user's value is put back.
+# 6. The plugin unloaded while a popup has the focus: kwin-i3's value is put back.
 popup pop2
 activate pop2
 check "pop2 active, the grace on"           poll delay_is 1500
 for p in $(busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -oE '"kwini3helper[^"]*"' | tr -d '"'); do
     busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins UnloadPlugin s "$p" >/dev/null
 done
-check "unloaded: the delay is the user's 0" poll delay_is 0
+check "unloaded: the delay is kwin-i3's 0" poll delay_is 0
 
 check "no invariant failures or errors"     clean_log
 finish

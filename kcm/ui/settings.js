@@ -23,7 +23,6 @@ function formatOutputs(map) {
         .map((n) => n + "=" + map[n]).join(", ");
 }
 
-
 // The window rules: i3's for_window and assign rules as text,
 // one rule per line or `;`-separated (the script's reading, src/rules.js split).
 // splitRules gives the rules, trimmed, empty ones dropped.
@@ -53,7 +52,6 @@ function addRule(text, rule) {
     const t = String(text || "").replace(/\s+$/, "");
     return t === "" ? rule : t + "\n" + rule;
 }
-
 
 // ---- the rules as rows -------------------
 // A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
@@ -213,7 +211,6 @@ function setWorkspaceGap(text, n, which, value) {
     if (!Object.keys(g).length) delete map[n];
     return formatWorkspaceGaps(map);
 }
-
 
 if (typeof module !== "undefined") module.exports = {
     parseOutputs, parseOutputLists, formatOutputs, splitRules, pickRule, addRule,

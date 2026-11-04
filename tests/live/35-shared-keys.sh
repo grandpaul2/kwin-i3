@@ -32,7 +32,10 @@ check "Quick Tile Left keeps its keys"      test "$(keys_of kwin "Window Quick T
 check "the stand-in keeps its keys"         test "$(keys_of fakeapp Launch)" == "$before_fake"
 
 # 2. Off: the holders' run, kwin-i3's doesn't.
+# --notify can lose its signal under load (kwin-notes, "Config and D-Bus"): the helper also reads
+# the setting on KWin's reconfigure.
 kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key keysOverride false
+busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 check "the override is off"                 poll plan_off
 m=$(mark); press Meta+E
 sleep 0.5

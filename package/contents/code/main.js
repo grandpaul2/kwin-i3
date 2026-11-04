@@ -5629,7 +5629,7 @@ var KI3 = (function () {
         if (released) return;
         var ffm = focusFollowsMouse();
         options.focusPolicy = ffm ? 1 : 0;
-        options.nextFocusPrefersMouse = true;
+        options.nextFocusPrefersMouse = ffm;
         options.delayFocusInterval = 0;
         options.focusStealingPreventionLevel = 1;
         options.electricBorderTiling = false;
@@ -6257,6 +6257,8 @@ var KI3 = (function () {
                 } catch (e) { log("ERROR in release (tiles): " + e); }
             });
         });
+        // The helper's key override holds no key now (kwin-i3's actions do nothing after this).
+        try { callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "SetReleased", true); } catch (e) { log("ERROR in release (keys): " + e); }
         // Plasma's own values for what winOptions wrote (kwinrc was never changed).
         try { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); } catch (e) { log("ERROR in release (options): " + e); }
         log("RELEASED");
@@ -6672,6 +6674,7 @@ var KI3 = (function () {
         registerKeys();
         // The helper plugin fits the keys that mean a key position to the keyboard layout
         //. No reply asked: without the plugin, nothing happens.
+        callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "SetReleased", false);
         callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
         checkLayoutKeys();
         checkHelperKeys();

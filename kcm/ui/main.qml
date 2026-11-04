@@ -150,7 +150,6 @@ KCM.AbstractKCM {
         Kirigami.Separator { Layout.fillWidth: true }
     }
 
-
     StackLayout {
         anchors.fill: parent
         currentIndex: tabs.currentIndex

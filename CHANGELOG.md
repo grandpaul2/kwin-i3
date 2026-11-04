@@ -5,6 +5,24 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **What i3 decides, kwin-i3 decides while it runs, and Plasma's settings stay as you set them.**
+  Focus follows the mouse at once (a setting of kwin-i3's own on the Tiling tab, on by default
+  as in i3), a new window takes the focus, nothing tiles or maximizes at a screen edge, and
+  Meta and a drag focus the window they move: none of it is written into Plasma's settings any
+  more, and Plasma's own values are back when kwin-i3 is released or removed. The Plasma tab
+  keeps only what kwin-i3 can't decide itself: per-output desktops and the optional animations.
+  Values an earlier version's Plasma tab wrote stay as they are: change them in System Settings
+  if you want Plasma's back.
+- **kwin-i3's keys win a key Plasma's shortcuts share, by default**, and Meta+T no longer opens
+  Plasma's tile editor: the key override is on, its checkbox now on the Keys tab (it needs the
+  plugins). Plasma's shortcuts are not changed. Keys an earlier version took are not given back
+  by `make install` any more: `make uninstall` of that version, or System Settings' Shortcuts,
+  restores them.
+- **One place for the settings**: the settings page. The cog beside kwin-i3 in KWin Scripts opens
+  it; the old Configure form is gone. A hand edit of `~/.config/kwinrc` takes Meta+Shift+C, as
+  i3's reload. The `floatingWorkspaces` key is gone: the Workspaces tab's "new windows float"
+  writes i3's `for_window [workspace="^N$"] floating enable`, which does the same.
+
 ## v1.3.0 (2026-11-03)
 
 - **The settings page is in tabs**, as Plasma's Window Behavior page: Plasma, Tiling, Gaps, Mouse &

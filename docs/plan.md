@@ -112,7 +112,7 @@ from another shortcut.
 **Popup grace** (the helper) is kwin-i3's own, for the Plasma audience: with focus follows
 mouse, crossing the gap between a floating panel and its popup would focus the window beneath
 and close the popup (KDE bug 511162), so the helper lengthens KWin's focus delay while a popup is
-up and puts the user's value back; it changes no saved setting (reason (e); `behaviour.md` F10).
+up and puts kwin-i3's value back (none); it changes no saved setting (reason (e); `behaviour.md` F10).
 
 **Plasma's window actions** on a window in the tree, on a desktop kwin-i3 has placed (one it
 never placed keeps KWin's tiles, `behaviour.md` Y4), follow i3's handling of requests from outside

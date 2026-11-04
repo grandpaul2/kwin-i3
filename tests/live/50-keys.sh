@@ -42,6 +42,9 @@ for c in "${chords[@]}"; do
     action=${c%%|*} chord=${c#*|}
     m=$(mark); press "$chord"
     WAIT=$w poll one_action "$action" "$m" || missed+=("$chord -> wanted '$action', got '$(after "$m" | grep -E '^.{9}ACTION ' | cut -c17- | tr '\n' ',')'")
+    # With the helper, Resize Mode's key enters the mode, in which kwin-i3 ignores its own keys:
+    # left at once, as Escape leaves it (as 35).
+    [[ $action == "Resize Mode" ]] && { press Escape; sleep 0.2; }
     w=2
 done
 check "all ${#chords[@]} default keys fire exactly their action" test ${#missed[@]} -eq 0

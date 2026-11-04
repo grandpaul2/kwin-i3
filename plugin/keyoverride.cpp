@@ -90,7 +90,7 @@ void KeyOverride::refresh()
             }
         }
     }
-    if (actions.isEmpty()) {
+    if (actions.isEmpty() || m_released) {
         m_keys.clear();         // kwin-i3 not running: nothing held, the tile editor's key included
         m_held.clear();
         return;
@@ -128,6 +128,18 @@ void KeyOverride::refresh()
     }
 }
 
+void KeyOverride::setReleased(bool released)
+{
+    m_released = released;
+    if (released) {
+        ++m_generation;         // a refresh under way is dropped
+        m_keys.clear();
+        m_held.clear();
+    } else {
+        refresh();
+    }
+}
+
 QString KeyOverride::plan() const
 {
     QStringList lines;
@@ -140,7 +152,7 @@ QString KeyOverride::plan() const
         lines << QKeySequence(key).toString() + QStringLiteral(" = ") + s_tileEditor + QStringLiteral(" (held)");
     }
     lines.sort();
-    lines.prepend(m_on ? QStringLiteral("on") : QStringLiteral("off"));
+    lines.prepend(m_released ? QStringLiteral("released") : m_on ? QStringLiteral("on") : QStringLiteral("off"));
     return lines.join(QLatin1Char('\n'));
 }
 
