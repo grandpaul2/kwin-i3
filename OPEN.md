@@ -48,7 +48,8 @@ settings page if KWin's script list loads a KCM named by `X-KDE-ConfigModule` (`
 module.cpp` `configure` passes the script's metadata to `KCMultiDialog`: to probe). With it go
 the helper's settings watch (Apply applies: the page applies by itself, and a hand edit of
 `kwinrc` takes Meta+Shift+C, as i3's config reload), the form's unit tests
-and its `behaviour.md` rows (29, 45). `config/main.xml` stays: the page's settings class is built
+and its `behaviour.md` rows (29, 45), and the `floatingWorkspaces` key, read and rewritten as a rule
+though no beta install had it (no migration, `plan.md`). `config/main.xml` stays: the page's settings class is built
 from it. Next: the spec.
 
 **91. Plasma's settings won at runtime** (2026-11-03; `philosophy.md` "The line between i3 and
@@ -67,6 +68,6 @@ restore and `kcm/keys.cpp`'s record go; the script's load-time taken-key check (
 override's own row; `tools/testkwin.sh`'s stock-shortcut unbind (133-165) and its stock/own modes
 go, the scenarios that press real keys running with the plugins. To check in the spec: whether
 the window actions and window animations can also be won at runtime (then they leave the Plasma
-tab too); `popupgrace.cpp` puts back `kwinrc`'s delay where it should put back kwin-i3's. Open:
-what an upgrade owes an install that ticked v1.3.0's focus rows (their values are in `kwinrc`).
+tab too); `popupgrace.cpp` puts back `kwinrc`'s delay where it should put back kwin-i3's. No migration
+(`plan.md`, "An upgrade carries no migration"): `make install`'s `take-keys.py migrate` goes.
 Next: the code spec.

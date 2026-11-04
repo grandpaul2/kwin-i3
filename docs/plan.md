@@ -251,6 +251,9 @@ follows it:
   given back alone or all at once, unticked and applied, and all on removal. A give-back writes
   the old value only where the current one is still what kwin-i3 set: a change the user made
   since is theirs, and stays.
+- **An upgrade carries no migration** before a public release: state an earlier version left
+  (an old setting, a record, a Plasma value it wrote) is not read, converted or given back. The
+  beta's users are few and reachable, and a migration is code kept for one upgrade.
 - **Removal leaves nothing behind**: `make uninstall` gives back every saved change, disables the
   script, and deletes everything the install wrote (the script's link, `~/.local/lib/kwin-i3/`,
   KWin's drop-in, the session's environment file), naming each.
