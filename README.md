@@ -258,8 +258,7 @@ Scripts opens it too), or by hand in `~/.config/kwinrc`, all in `[Script-kwin-i3
 Apply applies at once. After a hand edit, press **Meta+Shift+C**, or log in again: the reload key
 asks KWin to reconfigure, as i3's reload does. Everything, the script and the
 two plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
-reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled` and `TimeoutMs`, before
-2026-10-24) is still read where `holdEnabled` or `holdTimeoutMs` is missing.
+reaches the plugins directly.
 
 | group and key | default | meaning |
 |---|---|---|

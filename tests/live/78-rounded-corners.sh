@@ -132,7 +132,7 @@ capture; echo "    g at $gxy:"; corner $((gx - 1)) $((gy - 1))
 check "g rounded, the frame along it"       rounded "$gx" "$gy" $ACT 0,0,255
 
 # Mid-hold (a slow client, as in 57): the held layout keeps its corners.
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key TimeoutMs 400; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key holdTimeoutMs 400; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 kclose g; sleep 0.3
 client --title c --color blue --resize-delay 0.4
 check "a | c"                               wait_tree 1 "H[a c*]"

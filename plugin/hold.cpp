@@ -61,10 +61,8 @@ struct BlendState {
 };
 }
 
-// kwin-i3's settings group; the old [kwin-i3-hold] keys are still read
-// where the new ones are missing.
+// kwin-i3's settings group.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
-static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
 static const int s_quietMs = 3;
 static const int s_landMs = 1000;  // a new window still drawing its tile at the release: hidden this long at most    // kwin-i3's second pass comes microseconds after the first
@@ -88,7 +86,7 @@ Hold::Hold()
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
     connect(m_watcher.get(), &KConfigWatcher::configChanged, this, [this](const KConfigGroup &group) {
-        if (group.name() == s_group || group.name() == s_oldGroup) {
+        if (group.name() == s_group) {
             loadConfig();
         }
     });
@@ -163,10 +161,9 @@ void Hold::loadConfig()
     }
     auto config = m_watcher->config();
     config->reparseConfiguration();
-    const KConfigGroup group = config->group(s_group), old = config->group(s_oldGroup);
-    m_enabled = group.hasKey("holdEnabled") ? group.readEntry("holdEnabled", true) : old.readEntry("Enabled", true);
-    m_timeoutMs = group.hasKey("holdTimeoutMs") ? group.readEntry("holdTimeoutMs", 200)
-                                                : old.readEntry("TimeoutMs", 200);   // tests raise it to capture mid-hold
+    const KConfigGroup group = config->group(s_group);
+    m_enabled = group.readEntry("holdEnabled", true);
+    m_timeoutMs = group.readEntry("holdTimeoutMs", 200);   // tests raise it to capture mid-hold
     // Out of its range (10-2000 ms, settings.js), the default, as the script reads it (§11): a
     // layout never waits longer than 2 s, nor not at all (a negative timer never fires).
     if (m_timeoutMs < 10 || m_timeoutMs > 2000) {

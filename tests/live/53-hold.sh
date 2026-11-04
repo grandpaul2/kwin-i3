@@ -20,7 +20,7 @@ stats() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwi
     python3 -c 'import json,sys; d=json.load(sys.stdin)["data"][0]; print("\n".join("%s=%s"%(k,v["data"]) for k,v in sorted(d.items())))'; }
 stat() { stats | grep "^$1=" | cut -d= -f2; }
 # The watcher's notification is slow under the parallel suite; KWin's reconfigure is immediate.
-hold_set() { kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+hold_set() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "hold$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 _stat_is() { [[ "$(stat "$1")" == "$2" ]]; }
 wait_stat() { poll _stat_is "$1" "$2" && return 0; echo "    $1 is $(stat "$1"), wanted $2"; return 1; }
 # The first config read under the full parallel suite (17 KWins starting at once) took more than
@@ -43,9 +43,9 @@ reconf() { busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdEnabled false; reconf
 check "holdEnabled false (kwin-i3's key): off" wait_stat enabled False
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdEnabled --delete; reconf
-check "deleted: on again (the old key's default)" wait_stat enabled True
+check "deleted: on again (the default)" wait_stat enabled True
 hold_set Enabled true
-hold_set TimeoutMs 400                      # room for a screenshot mid-hold (the default is 100)
+hold_set TimeoutMs 400                      # room for a screenshot mid-hold (the default is 200)
 check "the config reached it"               wait_stat_slow timeoutMs 400
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'

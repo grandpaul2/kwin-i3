@@ -958,8 +958,7 @@ again.
 
 The plugins accept any colour Qt parses; the script only `#rrggbb` (lowercased). A number out of
 its range falls back to the default whole, in the script and the plugins alike (`frameWidth`,
-`holdTimeoutMs`). A list skips a bad entry and keeps the rest. The effect still
-reads `[kwin-i3-hold] Enabled` and `TimeoutMs` where the new keys are missing.
+`holdTimeoutMs`). A list skips a bad entry and keeps the rest.
 
 **N. Against i3's config** (i3 4.24 `parser-specs/config.spec`, the full
 list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-socket`,

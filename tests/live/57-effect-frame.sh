@@ -94,7 +94,7 @@ check "floating b has its title bar back"   eval 'f=$(fc b); [[ ${f%% client*} !
 
 # Mid-hold: a slow client keeps the old layout on screen (kwini3hold); its frames stay with it.
 kclose b; sleep 0.3
-kwriteconfig6 --notify --file kwinrc --group kwin-i3-hold --key TimeoutMs 2000; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key holdTimeoutMs 2000; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 sleep 0.5
 # 2 s, not 0.4: the screenshot after the key must land inside the hold, under load too (item 34).
 client --title c --color blue --resize-delay 2
