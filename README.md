@@ -168,30 +168,33 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
 
 **After a Plasma update**: the plugins work only with the KWin version they were built against,
-so after each Plasma update tiling windows have their title bars back until you run
-`cd ~/kwin-i3 && make plugin-install` (the settings page and the script need nothing). **To
+so after each Plasma update, until you run `cd ~/kwin-i3 && make plugin-install`, tiling windows
+have their title bars back and the key override is off: a key kwin-i3 shares with Plasma runs
+Plasma's shortcut (Meta+L locks the screen, Meta+arrows quick-tile). The settings page and the
+script need nothing. **To
 update kwin-i3**: `cd ~/kwin-i3 && git pull && make install` (it reloads kwin-i3, re-tiling the
 windows once). `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
 `main`: `git checkout stable` once moves it. To go back to an earlier version:
 `git checkout v1.N.M` (the tags), then `make install`.
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
-it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives your shortcuts their keys
-back (one you changed since stays as you set it), turns kwin-i3 off, and deletes everything the
-install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
+it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives back every Plasma setting the
+Plasma tab changed and Meta+T to Plasma's tile editor (one you changed since stays as you set it),
+turns kwin-i3 off, and deletes everything the install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
 install; it says where. Then delete `~/kwin-i3` and, if you made one, the bug-report key
 (Install step 6).
 
 With the script alone (no plugins), windows keep Plasma's decoration (Breeze, title bars and all),
-and the keys, the tree, the workspaces and floating work; the settings page says at its top when
-the plugins aren't loaded.
+and the keys, the tree, the workspaces and floating work, except that a key kwin-i3 shares with
+Plasma's shortcuts runs Plasma's (the key override is the helper's); the settings page says at
+its top when the plugins aren't loaded.
 
 ### The plugins
 
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | the tiling drag's highlight and move cursor; i3's 1 px frame around tiling windows (width and colours in the settings), blue on the active one: tiling windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiling windows keep their title bars; on a fast output, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page |
+| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone; and **the key override**: with "On a key conflict, kwin-i3's key wins" ticked, a key kwin-i3 shares with Plasma's shortcuts runs kwin-i3's command | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page; a shared key runs Plasma's shortcut |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
@@ -203,7 +206,7 @@ KWin finds the effect only through the drop-in, so it loads at that next login. 
 
 **The upkeep**: both plugins are refused by any KWin version other than the one they were built
 against, so after every Plasma update they are off until `make plugin-install` runs again; until
-then tiling windows have their title bars. One source builds against 6.7 and 6.8 (6.8 changed the
+then tiling windows have their title bars and shared keys run Plasma's shortcuts. One source builds against 6.7 and 6.8 (6.8 changed the
 effects' paint calls), so the update needs only that.
 
 **Plain GTK 4 apps** (GTK 4 without libadwaita, with Plasma's title bar) learn their largest size

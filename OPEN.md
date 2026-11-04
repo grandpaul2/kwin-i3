@@ -39,4 +39,5 @@ the settings page's Plasma tab with its banner, its save and `make uninstall`'s
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
-by step, from `git clone` to the Plasma tab.
+by step, from `git clone` to the Plasma tab, the key override row ticked included; and with the
+plugins not built: what the Plasma tab's banner and its greyed override row then say.
