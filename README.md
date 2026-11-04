@@ -240,7 +240,10 @@ output showing it, as i3bar does), each at its own output's shape with its windo
 ones marked (more strongly on the output with focus); a click is Meta+N, a scroll goes to the
 next or previous one. `make widget-install` (QML only: nothing to build, nothing to redo after a
 Plasma update), then on the panel: right-click the pager, *Show Alternatives*, *kwin-i3
-Workspaces* (or *Add Widgets*). Its settings: *Numbers only*, for a small panel. A workspace's
+Workspaces* (or *Add Widgets*). It is meant to sit just right of the application launcher, where
+the pager is on a new panel. One added from *Add Widgets* lands at the panel's right end: to move
+it, right-click the panel, *Show Panel Configuration*, and drag it there (anywhere else works too).
+Its settings: *Numbers only*, for a small panel. A workspace's
 name is its desktop's, set in System Settings > Virtual Desktops: a named one is labelled
 "2 mail" (kwin-i3 never renames a desktop). The widget is kwin-i3's: without kwin-i3 running, a
 click does nothing (use Plasma's pager there).
