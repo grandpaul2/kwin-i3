@@ -1047,8 +1047,8 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Plasma tab** (the first-run step, `plan.md` "Install and first run"; `kcm/setup.cpp`):
   Plasma's own settings that matter
-  to tiling, shown for convenience, every one always: two columns of checkboxes, "Plasma" and
-  "kwin-i3 (recommended)", ticking one unticking the other, the one ticked being where the
+  to tiling, shown for convenience, every one always: two columns of radio buttons, "Plasma" and
+  "kwin-i3 (recommended)", choosing one unchoosing the other, the one chosen being where the
   setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
   what the Plasma column means for it, as "Plasma: " and the value in Plasma's own words
   ("Plasma: Focus follows mouse, 300 ms delay"), and its help button why kwin-i3 wants its way and where

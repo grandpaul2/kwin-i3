@@ -1,6 +1,7 @@
 // The Plasma tab (docs/plan.md, "Install and first run"): Plasma's own settings
 // that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
-// columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
+// columns of radio buttons, "Plasma" and "kwin-i3 (recommended)", one chosen a row, as Plasma's
+// own pages show a choice between two ways (Task Switcher's filters). The
 // muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
 // on the page: Apply makes it, Reset drops it, Defaults puts Plasma's back (each row kwin-i3
 // changed to the Plasma column, the key override off).
@@ -42,13 +43,15 @@ KCM.SimpleKCM {
         }
     }
 
-    // One side of a row: ticked where the setting is that side's; ticking it picks that side
-    // (and unticks the other). Clicking a ticked box leaves it ticked: one side is always chosen.
+    // One side of a row: chosen where the setting is that side's; choosing it picks that side
+    // (and the other side's goes off). Clicking a chosen one leaves it chosen. Not autoExclusive:
+    // every row's buttons share the grid as parent, and each row is exclusive by its own model.
     // kwin-i3's side is always one thing, the setting turned on, so its box says "Enable"; the
     // Plasma side is whatever the reader had, so it says nothing.
     // The key override's row is a setting of kwin-i3's own (keysOverride): its boxes write that
     // setting, as any on the other tabs, and need the plugins.
-    component SideBox: QQC2.CheckBox {
+    component SideBox: QQC2.RadioButton {
+        autoExclusive: false
         property var row
         property bool kwini3                 // true: the kwin-i3 column
         readonly property bool isOverride: row.id === "keys"

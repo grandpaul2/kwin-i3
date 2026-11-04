@@ -81,8 +81,9 @@ Focus, Workspaces, Window Rules, Frame and Keys.
   Plasma tab's kwin-i3 column. Defaults is the default, not the recommendation: on a kwin-i3 tab
   i3's default where i3 has one, else kwin-i3's own; on the Plasma tab, Plasma's own values back.
 - **Where the page changes Plasma's own settings** (the Plasma tab), the choice is
-  marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one box ticked a row. The kwin-i3
-  box says "Enable" in small text. The Plasma box says nothing, because the page doesn't claim to
+  marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one radio button chosen a row,
+  as Plasma's own pages show a choice between two ways. The kwin-i3 button says "Enable" in small
+  text. The Plasma button says nothing, because the page doesn't claim to
   know Plasma's value. One muted line under each name says what the Plasma column means for it:
   "Plasma: " and the value in the words of Plasma's own settings ("Plasma: Click to focus"), never
   what the setting does. That, and where Plasma keeps it, goes in its help. The user makes every change, through the page's Apply.
