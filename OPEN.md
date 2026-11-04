@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main at 63f30ad: script and plugins (settings page at 5dcec07). `stable` is at
+main at 63f30ad: script and plugins (settings page at 14dc75f). `stable` is at
 `v1.3.0` (2026-11-03, 8a42986).
 
 ## Stage
