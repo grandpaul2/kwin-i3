@@ -1870,9 +1870,16 @@ var Rules = (function () {
     // where i3 would never see them: a built-in list, not a setting (R5). Spectacle's region
     // overlays (one Normal fullscreen window per output, probe 93) are override-redirect too
     // in the tree they would gather on the focused workspace. An
-    // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu in i3.
+    // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu's grab
+    // in i3, except one KWin activates only as its fallback (fallbackOnly).
     var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
                             "kwin_wayland", "ksmserver-logout-greeter"];
+    // KWin's fallback only: the video bridge's idle window never asks for the keyboard, yet KWin
+    // activates it when nothing else is left (an empty desktop). It holds nothing: i3's bindings
+    // yield only to a client's keyboard grab (bindings.c:177, passive grabs on the root), and
+    // i3 never focuses an override-redirect window (manage.c:141-143).
+    var FALLBACK_ONLY = ["xwaylandvideobridge"];
+    function fallbackOnly(w) { return !!w && (has(FALLBACK_ONLY, w.resourceClass) || has(FALLBACK_ONLY, w.resourceName)); }
     var SPECTACLE = ["spectacle", "org.kde.spectacle"];
     var PLASMASHELL = /^(org\.kde\.)?plasmashell$/;
     function i3Kind(w) {
@@ -2138,7 +2145,7 @@ var Rules = (function () {
         return m && +m[1] >= -1 && +m[2] >= -1 ? { w: +m[1], h: +m[2] } : null;
     }
 
-    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, managed: managed, assignFor: assignFor,
+    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, fallbackOnly: fallbackOnly, managed: managed, assignFor: assignFor,
              parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType };
 })();
 
@@ -5025,10 +5032,11 @@ var KI3 = (function () {
         // A passive pass (no key action: a window closed, a reload, a monitor change) leaves an
         // open window kwin-i3 doesn't manage with the focus: a panel popup, a dialog, KRunner.
         // Taking it closed the tray's popups when their tooltip went. When
-        // that window closes, its own pass brings kwin-i3's focus back. The desktop and the
-        // panel hold the focus only when nothing else does, so they don't count.
+        // that window closes, its own pass brings kwin-i3's focus back. The desktop, the panel
+        // and the video bridge (Rules.fallbackOnly) hold the focus only when nothing else does,
+        // so they don't count.
         var a = workspace.activeWindow;
-        if (!byKey && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock) return;
+        if (!byKey && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock && !Rules.fallbackOnly(a)) return;
         // Except with Show Desktop on: then the desktop holds the focus on purpose (Plasma's edit
         // mode turns it on as the panel's menu closes, and the menu closing is this pass), and
         // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
@@ -5076,7 +5084,7 @@ var KI3 = (function () {
             // desktop window doesn't keep it either (i3's root click, §5 B4: the Show Desktop
             // check above has already let this pass through).
             var ac = a && !a.deleted ? model.byWin[id(a)] : null;
-            if (f.type === "ws" && ((ac && Tree.wsOf(ac) !== ws) || (a && !a.deleted && a.desktopWindow))) workspace.activeWindow = null;
+            if (f.type === "ws" && ((ac && Tree.wsOf(ac) !== ws) || (a && !a.deleted && (a.desktopWindow || Rules.fallbackOnly(a))))) workspace.activeWindow = null;
             return;
         }
         var w = wins[f.win];
@@ -5773,10 +5781,12 @@ var KI3 = (function () {
     }
     // While an override-redirect window has the keyboard (KRunner, a menu, a panel popup), no
     // key of kwin-i3's fires, as i3's bindings don't while dmenu holds it; Escape first (§5
-    // A3-A5; panel popups included). The safety valve and the dump are not keys.
+    // A3-A5; panel popups included). Not the video bridge KWin falls back to on an empty desktop
+    // (Rules.fallbackOnly): it holds nothing. The safety valve and the dump are not keys.
+    function fallbackActive() { var a = workspace.activeWindow; return !!a && !a.deleted && Rules.fallbackOnly(a); }
     function keyboardHeld(name) {
         var a = workspace.activeWindow;
-        if (!a || a.deleted || wins[id(a)] || Rules.i3Kind(a) !== "override-redirect") return false;
+        if (!a || a.deleted || wins[id(a)] || Rules.i3Kind(a) !== "override-redirect" || Rules.fallbackOnly(a)) return false;
         log("KEY " + name + " ignored: " + shortCaption(a) + " has the keyboard");
         return true;
     }
@@ -5839,7 +5849,9 @@ var KI3 = (function () {
         "Focus Mode Toggle": function () { model.focusModeToggle(); },
         // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
         // not; a stock Plasma binds neither key.
-        "Fullscreen": function () { invoke("Window Fullscreen"); },
+        // Not on the window KWin falls back to (Rules.fallbackOnly): i3's kill and fullscreen on
+        // an empty workspace do nothing.
+        "Fullscreen": function () { if (!fallbackActive()) invoke("Window Fullscreen"); },
         // i3's kill on a container (focus parent) closes every window in it, on a workspace
         // every window there, floating ones too (con_close); else KWin's own, on any window.
         "Close": function () {
@@ -5849,7 +5861,7 @@ var KI3 = (function () {
                 all.forEach(function (c) { if (wins[c.win]) wins[c.win].closeWindow(); });
                 return;
             }
-            invoke("Window Close");
+            if (!fallbackActive()) invoke("Window Close");
         },
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the settings
         // page's banner says the plugins aren't loaded.

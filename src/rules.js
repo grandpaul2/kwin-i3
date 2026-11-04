@@ -21,9 +21,16 @@ var Rules = (function () {
     // where i3 would never see them: a built-in list, not a setting (R5). Spectacle's region
     // overlays (one Normal fullscreen window per output, probe 93) are override-redirect too
     // in the tree they would gather on the focused workspace. An
-    // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu in i3.
+    // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu's grab
+    // in i3, except one KWin activates only as its fallback (fallbackOnly).
     var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
                             "kwin_wayland", "ksmserver-logout-greeter"];
+    // KWin's fallback only: the video bridge's idle window never asks for the keyboard, yet KWin
+    // activates it when nothing else is left (an empty desktop). It holds nothing: i3's bindings
+    // yield only to a client's keyboard grab (bindings.c:177, passive grabs on the root), and
+    // i3 never focuses an override-redirect window (manage.c:141-143).
+    var FALLBACK_ONLY = ["xwaylandvideobridge"];
+    function fallbackOnly(w) { return !!w && (has(FALLBACK_ONLY, w.resourceClass) || has(FALLBACK_ONLY, w.resourceName)); }
     var SPECTACLE = ["spectacle", "org.kde.spectacle"];
     var PLASMASHELL = /^(org\.kde\.)?plasmashell$/;
     function i3Kind(w) {
@@ -289,7 +296,7 @@ var Rules = (function () {
         return m && +m[1] >= -1 && +m[2] >= -1 ? { w: +m[1], h: +m[2] } : null;
     }
 
-    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, managed: managed, assignFor: assignFor,
+    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, fallbackOnly: fallbackOnly, managed: managed, assignFor: assignFor,
              parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType };
 })();
 

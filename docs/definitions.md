@@ -24,7 +24,7 @@ have gone wrong on words that meant two things ("manage", "places itself", "acti
 | **tiling window** | a window in the tree's layout; the tree places it | `tiling` (criteria), "tiling window" | a window in one of KWin's tiles |
 | **floating window** | a window in the tree, on its workspace's floating list; you place it | `floating` | a window KWin places; kept above the tiling ones |
 | **dock** | a panel: reserves space, never focused, not in a workspace | dock client (`_NET_WM_WINDOW_TYPE_DOCK`, `manage.c:251`), i3bar | Plasma's panels |
-| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:142-143`: "Don't manage") | on Wayland: popups, menus, tooltips, Plasma's notifications and OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3) |
+| **override-redirect window** | not in the tree: never placed or focused by the window manager; it takes the keyboard itself, and focus is where it was when it goes | override-redirect (`manage.c:142-143`: "Don't manage") | on Wayland: popups, menus, tooltips, Plasma's notifications and OSDs, Plasma's shell surfaces (KRunner), and Plasma's system windows (`kded5`, the video bridge; a built-in list, `behaviour.md` §3). The video bridge is KWin's fallback only: active on an empty desktop, it holds no keyboard (`behaviour.md` R5) |
 
 **How the kind is decided** (i3's `manage.c`, in its order): override-redirect is never in the
 tree; a dock type is a dock; anything else is tiling, unless it floats: by its window type
