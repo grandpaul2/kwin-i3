@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # needs: plugin
+# timing: alone
 # i3's tiling drag: a tiled window's title bar dragged, or
 # Meta+drag anywhere in it, drops by tiling_drag.c's zones while the window stays put: sibling
 # beside the target, parent out to the workspace's edge, the centre's bottom band swapped with it
