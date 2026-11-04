@@ -294,6 +294,15 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   no setting to turn it off.
 - A focus stealing prevention level of Medium or above stops a new window taking focus
   (`workspace.cpp:931-934`: activated if `mayActivate` or the level is Low or None).
+- **A script can write KWin's live options, and kwinrc stays as it is** (probe 93, 6.7.5):
+  `options.focusPolicy` (an enum, by number: 0 click, 1 follow mouse), `delayFocusInterval`,
+  `nextFocusPrefersMouse`, `focusStealingPreventionLevel`, `electricBorderTiling` and
+  `electricBorderMaximize` each hold when written. A `reconfigure` sets every one back to kwinrc's
+  (`Options::updateSettings`, `options.cpp:657`) and then emits `options.configChanged`, where a
+  script writes them again. Under click to focus the focus delay is forced to 0
+  (`setDelayFocusInterval`, `options.cpp:221-224`): write the policy before the delay. Under
+  FocusUnderMouse or FocusStrictlyUnderMouse the focus stealing level is forced to None
+  (`options.cpp:334-336`): write the policy first.
 
 ## Plugins and effects (`plugin/`)
 
