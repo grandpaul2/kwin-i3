@@ -711,7 +711,6 @@ with `$mod` as the wizard's Win choice.
   crossing to another output joins the workspace visible there. A resize grows or shrinks to the
   right and down; a window that isn't resizable doesn't. A floating window that is fullscreen or
   maximized ignores these keys.
-- **Retired actions** are unregistered at every load.
 - **Debug actions** (`Selftest …`) are registered only when `debugLog` is on at load.
 
 ### Keyboard layouts

@@ -19,11 +19,9 @@
 class SetupModel : public QObject
 {
     Q_OBJECT
-    // One map per row shown: id, title, plasma (what Plasma does, in a sentence), plasmaDefault
-    // (that is Plasma's default), kwini3 (what kwin-i3 needs instead), why, note (a caution the
-    // give-back carries), optional, differs, changed (by kwin-i3, can be given back), before (what
-    // Plasma did before kwin-i3 changed it), settled (Plasma already has it and kwin-i3 didn't
-    // change it: shown ticked and disabled).
+    // One map per row shown: id, title, why, note (a caution the give-back carries), optional,
+    // changed (by kwin-i3, can be given back), plasmaSide (the Plasma column's line: Plasma's
+    // current way where it differs, else what choosing Plasma brings back).
     Q_PROPERTY(QVariantList rows MEMBER m_rows NOTIFY changed)
     // A Plasma setting kwin-i3 needs differs (the keys aside, on the main page): the banner.
     Q_PROPERTY(bool needed MEMBER m_needed NOTIFY changed)
@@ -52,7 +50,7 @@ public:
     // A value as Plasma holds it, from wherever it is read (Plasma's settings, or the save).
     using Getter = std::function<QString(const Change &)>;
     struct Row {
-        QString id, title, kwini3, why, note;
+        QString id, title, why, note;
         bool optional = false;
         QList<Change> changes;                       // config rows
         std::function<QString(const Getter &)> plasma; // what Plasma does with these values

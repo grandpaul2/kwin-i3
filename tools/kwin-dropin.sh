@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # The systemd drop-in for KWin's unit, written by make plugin-install and make kcm-install alike:
-# QT_PLUGIN_PATH for KWin (the plugins' dir). (Until 2026-10-24 also tools/frame-guard.sh before
-# every KWin start, for the retired kwini3frame decoration.)
+# QT_PLUGIN_PATH for KWin (the plugins' dir).
 # Environment= replaces the session's QT_PLUGIN_PATH for KWin, and every app KWin launches (an
 # app on a global shortcut: kglobalaccel runs in KWin) inherits KWin's, so the settings page's dir
 # goes in too when it is installed; without it, such a System Settings lacks the page

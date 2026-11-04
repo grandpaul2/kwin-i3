@@ -43,7 +43,7 @@ click_named() {
 }
 
 # A stand-in app holds Meta+Alt+E and Meta+Alt+F, and Meta+Shift+F11 to show a holder keeps its other keys,
-# registered as a running app registers (as 35-taken-keys.sh).
+# registered as a running app registers (as 35-shared-keys.sh).
 MAE=$((0x18000045)) MAF=$((0x18000046)) MAJ=$((0x1800004A)) MSF11=$((0x1300003A))
 kga doRegister as 4 fakeapp Launch "Fake App" "Launch Fake App" >/dev/null
 kga setShortcutKeys 'asa(ai)u' 4 fakeapp Launch "Fake App" "Launch Fake App" 3 4 $MAE 0 0 0 4 $MSF11 0 0 0 4 $MAF 0 0 0 2 >/dev/null

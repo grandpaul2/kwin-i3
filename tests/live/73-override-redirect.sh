@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # needs: xwayland
-# Windows kwin-i3 doesn't manage (tooltips, notifications, OSDs, panel popups, dialogs) coming and
-# going change nothing you can see: not the focus, not the pointer, not what a monitor shows
-# (seen: a tray popup closing at once, the pointer jumping after the start menu).
+# Windows outside the tree (override-redirect: tooltips, notifications, OSDs, panel popups) and
+# dialogs coming and going change nothing you can see: not the focus, not the pointer, not what a
+# monitor shows (seen: a tray popup closing at once, the pointer jumping after the start menu).
 # Each case takes a snapshot, lets one come and go, and compares. The windows are stand-ins
 # (tools/popupclient.py, X11 windows of each type: the test KWins have no Plasma shell).
 # Virtual-0 at x 0, Virtual-1 at x 1280.

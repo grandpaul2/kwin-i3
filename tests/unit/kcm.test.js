@@ -23,10 +23,10 @@ function registered() {
     assert.ok(unbound, "UNBOUND not found in src/kwin.js");
     const UNBOUND = Function("NAMES", "gotoWorkspace", "moveToWorkspace", "focusOutput", "moveToOutput", "moveWorkspaceToOutput",
                              unbound[1] + "return UNBOUND;")(get(/var NAMES = (\[[^\]]*\]);/), null, null, null, null, null);
-    Function("KEYS", "NAMES", "SHIFTED", "RETIRED", "KWIN_OWN", "UNBOUND", "registerShortcut", "act", "guard", "actions", "log",
+    Function("KEYS", "NAMES", "SHIFTED", "KWIN_OWN", "UNBOUND", "registerShortcut", "act", "guard", "actions", "log",
              "gotoWorkspace", "moveToWorkspace", "DEBUG_LOG", "callDBus", fn[0] + "registerKeys();")(
         get(/var KEYS = (\{[\s\S]*?\n    \});/), get(/var NAMES = (\[[^\]]*\]);/), get(/var SHIFTED = (\[[^\]]*\]);/),
-        [], {}, UNBOUND, reg, () => null, () => null, {}, () => {}, null, null, false, () => {});
+        {}, UNBOUND, reg, () => null, () => null, {}, () => {}, null, null, false, () => {});
     // start()'s own two, outside registerKeys.
     for (const m of src.matchAll(/registerShortcut\("(kwin-i3 (?:Release|Dump State))",\s*"[^"]*",\s*"([^"]*)"/g))
         out.push([m[1], m[2]]);
@@ -44,11 +44,6 @@ test("every action the script registers has its row and default on the Keys page
 test("no key is registered in its dead Shift+symbol form", () => {
     for (const [action, key] of registered())
         assert.ok(!/Shift\+([0-9;',./\[\]\\=`-])$/.test(key), `${action}: ${key} never fires`);
-});
-
-test("the retired actions are not registered", () => {
-    const names = registered().map((r) => r[0]);
-    for (const a of ["kwin-i3 Move Right (;)", "kwin-i3 Move to Workspace 1"]) assert.ok(!names.includes(a), a);
 });
 
 test("the workspace commands are registered with no key", () => {

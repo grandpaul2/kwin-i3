@@ -52,13 +52,11 @@ static KConfigGroup groupOf(const SetupModel::Change &c)
 }
 
 // A key's stock value, as the installed KWin declares it (kwin.kcfg), so a KWin whose stock
-// changed (6.8's window actions) is read right; kdeglobals' one key here is Plasma's 1.
+// changed (6.8's window actions) is read right.
 static QString stock(const SetupModel::Change &c)
 {
     if (!c.stock.isEmpty())
         return c.stock;
-    if (c.file == QLatin1String("kdeglobals"))
-        return QStringLiteral("1");
     static QString kcfg;
     if (kcfg.isNull()) {
         QFile f(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("config.kcfg/kwin.kcfg")));
@@ -103,7 +101,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     // (docs/style-settings-page.md, "Saying what to pick").
     const auto said = [](const QString &v) { return i18nc("@info Plasma's value for a setting, in Plasma's own words", "Plasma: %1", v); };
     Row focus{QStringLiteral("focus"), i18nc("@option:check", "Focus follows the mouse"),
-              {},
               i18n("The window under the pointer takes the focus at once, and when a window closes, the one under the pointer takes it, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus follows mouse (mouse precedence)\" with no delay."),
               {}, false,
               {w(QStringLiteral("FocusPolicy"), QStringLiteral("FocusFollowsMouse")), w(QStringLiteral("DelayFocusInterval"), QStringLiteral("0")),
@@ -126,7 +123,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     m_defs << focus;
 
     Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Switch workspaces independently for each screen"),
-                  {},
                   i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Turned off, every screen is put on the same workspace. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
                   {}, false,
                   {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr};
@@ -136,7 +132,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     m_defs << perOutput;
 
     Row stealing{QStringLiteral("focusStealing"), i18nc("@option:check", "Let new windows take the focus"),
-                 {},
                  i18n("A new window takes the focus, as in i3. Plasma's setting: Window Management > Window Behavior > Focus, \"Focus stealing prevention\" at Low."),
                  {}, false, {Change{QStringLiteral("kwinrc"), QStringLiteral("Windows"), QStringLiteral("FocusStealingPreventionLevel"), QStringLiteral("1"), {}, QStringLiteral("2")}}, nullptr};
     stealing.plasma = [ch = stealing.changes, said](const Getter &g) {
@@ -146,7 +141,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     m_defs << stealing;
 
     Row edges{QStringLiteral("edges"), i18nc("@option:check", "Drop windows at screen edges without tiling them"),
-              {},
               i18n("Plasma's edge tiling places a window outside kwin-i3's layout. Holding Shift as a drag ends does the same, and no setting turns that off. Plasma's setting: Window Management > Screen Edges."),
               {}, false,
               {w(QStringLiteral("ElectricBorderTiling"), QStringLiteral("false")), w(QStringLiteral("ElectricBorderMaximize"), QStringLiteral("false"))},
@@ -161,14 +155,12 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     m_defs << edges;
 
     Row tiles{QStringLiteral("tileEditor"), i18nc("@option:check", "Free Meta+T from Plasma's tile editor"),
-              {},
               i18n("Plasma's tile editor changes the tiles kwin-i3 lays out. Plasma's shortcut: Keyboard > Shortcuts, Window Management, \"Toggle Tiles Editor\"."),
               {}, false, {}, nullptr};
     tiles.plasma = [said](const Getter &) { return said(i18nc("@item a shortcut", "Meta+T opens Edit Tiles")); };
     m_defs << tiles;
 
     Row actions{QStringLiteral("windowActions"), i18nc("@option:check", "Meta and a drag focus the window they move"),
-                {},
                 i18n("Meta and a drag move a floating window and focus it, as in i3. Plasma's setting: Window Management > Window Behavior > Window Actions."),
                 {}, false,
                 {mb(QStringLiteral("CommandAllKey"), QStringLiteral("Meta")), Change{QStringLiteral("kwinrc"), QStringLiteral("MouseBindings"), QStringLiteral("CommandAll1"), QStringLiteral("Activate, raise and move"), {}, QStringLiteral("Move")}},
@@ -184,7 +176,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     // whether Plasma's shortcuts keep the keys they share with kwin-i3. Plasma's shortcuts are
     // never changed (plugin/keyoverride.h).
     Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "On a key conflict, kwin-i3's key wins"),
-                {},
                 i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them. Enabled, kwin-i3's command runs; otherwise Plasma's. Plasma's shortcuts are not changed either way, and the override needs kwin-i3's plugins."),
                 i18n("A key Plasma also uses runs Plasma's shortcut unless this is enabled."), false, {}, nullptr};
     // How many, not which: on a stock Plasma they are many, and a few named would only stand in
@@ -205,7 +196,6 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
                       onByDefault ? QStringLiteral("true") : QStringLiteral("false")};
     };
     Row anim{QStringLiteral("animations"), i18nc("@option:check", "Set window animations to none"),
-             {},
              i18n("Opening and closing, maximizing, minimizing, full screen and virtual desktop switching, each set to None, as i3 has none. Other animations and the animation speed stay as they are. Plasma's setting: Animations, Desktop animations."),
              {}, true,
              {fx(QStringLiteral("scale"), true), fx(QStringLiteral("glide"), false), fx(QStringLiteral("fade"), false),
@@ -339,27 +329,17 @@ void SetupModel::load()
     m_needed = false;
     m_initial.clear();
     for (const Row &r : m_defs) {
-        // Every row is shown, as KDE's rule is disabled, not hidden: one Plasma already matches and
-        // kwin-i3 didn't change ("settled") is ticked and disabled, with nothing to give back.
+        // Every row is shown, as KDE's rule is disabled, not hidden.
         const bool d = differs(r), c = changedByUs(r);
         m_needed = m_needed || (d && !r.optional);
         m_initial[r.id] = !d;
         const Getter now = [this](const Change &ch) { return effective(ch); };
         const Getter was = [this](const Change &ch) { return before(ch); };
-        // Plasma's default where every value is its stock one (a shortcut row has no such tag).
-        QString status;
-        if (!r.changes.isEmpty())
-            status = std::all_of(r.changes.begin(), r.changes.end(), [this](const Change &ch) { return effective(ch) == stock(ch); })
-                ? QStringLiteral("default") : QStringLiteral("changed");
         const Getter plasmaG = [this](const Change &ch) { const QString p = plasmaSide(ch); return p.isEmpty() ? effective(ch) : p; };
         const QString earlier = r.plasma(was);
         m_rows << QVariantMap{{QStringLiteral("id"), r.id},         {QStringLiteral("title"), r.title},
-                              {QStringLiteral("plasma"), d ? r.plasma(now) : QString()},
-                              {QStringLiteral("status"), status},   {QStringLiteral("kwini3"), r.kwini3},
                               {QStringLiteral("why"), r.why},       {QStringLiteral("note"), r.note},
-                              {QStringLiteral("optional"), r.optional}, {QStringLiteral("differs"), d},
-                              {QStringLiteral("changed"), c},       {QStringLiteral("before"), c ? earlier : QString()},
-                              {QStringLiteral("settled"), !d && !c},
+                              {QStringLiteral("optional"), r.optional}, {QStringLiteral("changed"), c},
                               // What the Plasma column means for this row: Plasma's current way where
                               // it differs, else what choosing Plasma brings back.
                               {QStringLiteral("plasmaSide"), d ? r.plasma(now) : c ? earlier : r.plasma(plasmaG)}};

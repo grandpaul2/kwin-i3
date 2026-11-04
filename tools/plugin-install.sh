@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # make plugin-install: put the built kwini3helper (a plugin) and kwini3hold (an effect, which also
 # draws the frame) into a user plugin dir and (re)load them in the running KWin, without a relog.
-# The kwini3frame decoration (until 2026-10-24) is removed, and if it
-# was the selected decoration, Plasma's default (Breeze) is selected again.
 #   KI3_PLUGIN_ROOT   the Qt plugin dir (default ~/.local/lib/kwin-i3/qt6plugins); KWin finds it
 #                     through QT_PLUGIN_PATH, which a systemd drop-in gives KWin's unit only. The
 #                     drop-in is written here; it takes effect at the next login, once. Set
@@ -18,7 +16,6 @@ effect=${KI3_EFFECT_SO:-$here/plugin/build/bin/kwin/effects/plugins/kwini3hold.s
 root=${KI3_PLUGIN_ROOT:-$HOME/.local/lib/kwin-i3/qt6plugins}
 dir=$root/kwin/plugins
 edir=$root/kwin/effects/plugins
-fdir=$root/org.kde.kdecoration3
 [[ -f $built ]] || { echo "plugin-install: no $built (make plugin)" >&2; exit 1; }
 [[ -f $effect ]] || { echo "plugin-install: no $effect (make plugin)" >&2; exit 1; }
 
@@ -36,7 +33,6 @@ place() {
     echo "${name%.so}"
 }
 id=$(place "$built" "$dir" kwini3helper)
-rm -f "$dir"/kwini3mouse*.so          # its name until 2026-10-24
 eid=$(place "$effect" "$edir" kwini3hold)
 
 [[ -z ${KI3_PLUGIN_ROOT:-} ]] && "$here/tools/kwin-dropin.sh"
@@ -44,8 +40,7 @@ eid=$(place "$effect" "$edir" kwini3hold)
 prop() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins "$1" 2>/dev/null; }
 busctl --user status org.kde.KWin >/dev/null 2>&1 || { echo "no KWin on this bus: installed only"; exit 0; }
 # A plugin's id is its file name (Qt ignores an "Id" in the metadata), so each build has its own.
-# kwini3mouse: the same plugin under its name until 2026-10-24.
-for old in $(prop LoadedPlugins | grep -oE '"kwini3(helper|mouse)[^"]*"' | tr -d '"'); do
+for old in $(prop LoadedPlugins | grep -oE '"kwini3helper[^"]*"' | tr -d '"'); do
     # not fatal: the new one must still load (review, 2026-10-24)
     [[ $old == "$id" ]] || busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins UnloadPlugin s "$old" || true
 done
@@ -75,14 +70,3 @@ else
     echo "KWin did not load the effect $eid (not seen yet, or built for another KWin version?)" >&2
 fi
 
-# The retired decoration (kwini3frame, until 2026-10-24): if it is selected, Plasma's default
-# decoration again (the key removed: KWin's default is Breeze), and a reconfigure re-decorates
-# every window at once (DecorationBridge::reconfigure); then its files go. Not for a test root.
-[[ -n ${KI3_PLUGIN_ROOT:-} ]] && exit 0
-deco() { kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library; }
-if [[ "$(deco)" == kwini3frame* ]]; then
-    kwriteconfig6 --file kwinrc --group org.kde.kdecoration2 --key library --delete
-    busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-    echo "the kwini3frame decoration is retired: Plasma's default decoration is selected again"
-fi
-rm -f "$fdir"/kwini3frame*.so "$fdir"/kwini3frame.version

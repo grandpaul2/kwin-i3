@@ -2444,7 +2444,6 @@ var KI3 = (function () {
     var dragTold = {};                  // the drag helper's floating list (tellDragFloating)
     var focusParentTold = null;         // the helper's focus-parent window (tellFocusParent); null: not told yet
     var selectionTold = null;           // the helper's selection (tellSelection); null: not told yet
-    var marks = false;              // the effect answers with its floating set (an older one doesn't)
     var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
     var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
     var rebuildAgain = false, rebuiltFor = "";
@@ -4153,7 +4152,7 @@ var KI3 = (function () {
     }
     function tellFloating(w, on) {
         var key = id(w);
-        if (!frameOn || !marks || told[key] === on) return;
+        if (!frameOn || !effectSeen || told[key] === on) return;
         told[key] = on;
         callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
     }
@@ -4243,7 +4242,7 @@ var KI3 = (function () {
         tellFocused();
         tellFocusParent();
         tellSelection();
-        if (!frameOn || !marks) return;
+        if (!frameOn || !effectSeen) return;
         var hide = Settings.get("hideEdgeBorders");
         // i3 draws every window in the focused container as focused (x.c: con_inside_focused).
         function cls(c) {
@@ -4445,7 +4444,7 @@ var KI3 = (function () {
                ws.nodes.filter(function (k) { return project(k); }).length > 1;
     }
     // The effect draws the ring as the script says, so the ring and the tiles' room for it change
-    // in the same pass (spec, item 3). An older effect without the call ignores it.
+    // in the same pass (spec, item 3).
     function tellRing() {
         if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetTiledRing", tiledRing());
     }
@@ -4717,8 +4716,8 @@ var KI3 = (function () {
     // The effect hides a new window for 20 ms by itself, until its tile places it (hold.cpp
     // onAdded). A newcomer kwin-i3 moves to another output or desktop would show at KWin's spot
     // first: the effect is told to keep it hidden up to `ms` (HoldNew), and `then` (the pass
-    // that moves it) runs once the effect has that, or after 50 ms with no answer (an effect
-    // without the method). After the pass, HoldNew(id, 0) shows one no tile placed (a floating
+    // that moves it) runs once the effect has that, or after 50 ms with no answer (a slow
+    // reply). After the pass, HoldNew(id, 0) shows one no tile placed (a floating
     // window); a tiled one joined the hold and shows at its release (flush).
     function holdNew(w, ms, then) {
         var key = id(w), done = false;
@@ -5029,7 +5028,7 @@ var KI3 = (function () {
         // the state, so a pass that finds the desktop (or the panel) active asks KWin, and a pass
         // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
         // window is left to focus on a monitor is also the desktop: that pass still brings the
-        // focus back (73-places-itself). The answer rides on focusPending, so it is the pass it
+        // focus back (73-override-redirect). The answer rides on focusPending, so it is the pass it
         // brought that has it, however long a rebuild holds that pass (review).
         if (!byKey && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
             callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
@@ -5061,7 +5060,7 @@ var KI3 = (function () {
         if (f.type === "ws" || f.win === null) {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
-            // needs no guard of its own (a fault here alone changed nothing, 73-places-itself).
+            // needs no guard of its own (a fault here alone changed nothing, 73-override-redirect).
             if (workspace.activeScreen !== s) invoke("Switch to Screen " + Workspaces.ordered().indexOf(s));
             if (warp) invoke("MoveMouseToCenter");
             // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
@@ -6058,8 +6057,6 @@ var KI3 = (function () {
     }
 
     var SHIFTED = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"];
-    // Actions registered before and dead (2026-10-24: a Shift+symbol key fires only its symbol form).
-    var RETIRED = ["kwin-i3 Move Right (;)"].concat(NAMES.map(function (k, i) { return "kwin-i3 Move to Workspace " + (i + 1); }));
 
     var KEYS = {
         "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
@@ -6159,11 +6156,6 @@ var KI3 = (function () {
         Object.keys(UNBOUND).forEach(function (name) {
             registerShortcut("kwin-i3 " + name, "kwin-i3: " + name.toLowerCase(), "", act(name, UNBOUND[name]));
         });
-        // The retired actions leave KWin's shortcut list (and Plasma's Shortcuts page): never
-        // registered again, so this is a no-op after the first load without them.
-        RETIRED.forEach(function (a) {
-            callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "unregister", "kwin", a);
-        });
         // Only with debug logging (the live tests): an action that throws, to prove the guard
         // logs it and kwin-i3 carries on. No key; never registered in normal use.
         if (DEBUG_LOG) {
@@ -6199,7 +6191,7 @@ var KI3 = (function () {
     // returns true, and shortcutKeys shows it), but a press runs only the first holder's.
     // KGlobalAccel.action(key) names that one (probed 2026-10-24), but a holder whose component
     // isn't active (its app not running and not launched by kglobalaccel) doesn't block the key:
-    // kwin-i3's fires (35-taken-keys.sh). kwin-i3's current keys come from kglobalaccel, so a
+    // kwin-i3's fires (35-shared-keys.sh). kwin-i3's current keys come from kglobalaccel, so a
     // key the user rebound is the one checked.
     // The terminal the helper launches (kdeglobals' TerminalService), asked at load for the
     // taken-key check; "" without the helper.
@@ -6772,10 +6764,10 @@ var KI3 = (function () {
     // after a load (KWin's own start-up reconfigure), with nothing changed.
     var RULE_KEYS = ["forWindow", "assign", "floatingWorkspaces"];
     // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
-    // asks for one when it loads or goes). Only an effect that draws the frame answers with
-    // frameWidth (an older kwini3hold answers too: review of the change, finding 1). callDBus calls
-    // back only on a reply: no answer within a second is a miss, and two misses in a row turn the
-    // frame off (one slow answer must not re-tile everything; finding 3).
+    // asks for one when it loads or goes): its answer says whether it can draw the frame
+    // (supported). callDBus calls back only on a reply: no answer within a second is a miss, and
+    // two misses in a row turn the frame off (one slow answer must not re-tile everything;
+    // finding 3).
     // after(m): run once with the first answer, or with null after 250 ms (the load path).
     var effectAsk = 0, frameMisses = 0, frameKnown = false;
     function checkFrame(after) {
@@ -6786,7 +6778,6 @@ var KI3 = (function () {
             answered = true;
             if (n === effectAsk) {
                 frameMisses = 0;
-                marks = !!(m && m.floating && m.floating.length !== undefined);
                 effectSeen = !!m;
                 if (!m || m.focused !== focusTold) focusTold = null;     // a reloaded effect: tell it again
                 // The frame first, so the windows adopted below see it (review of (iii)+(iv), 3).
@@ -6794,7 +6785,7 @@ var KI3 = (function () {
                 tellRing();             // again on every answer: a reloaded effect starts with the ring on
                 // An effect that lost what it was told (reloaded while the frame stayed on): tell
                 // it again (finding 1).
-                if (marks) {
+                if (m) {
                     var has = {};
                     for (var i = 0; i < m.floating.length; i++) has[m.floating[i]] = true;
                     var lost = Object.keys(told).some(function (k) { return told[k] === true && !has[k]; });
