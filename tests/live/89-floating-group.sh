@@ -25,10 +25,10 @@ key "Focus Parent"
 key "Floating Toggle"
 check "T[d e] floated whole"                wait_tree 1 "H[a] ~T[d e]*"
 barrect() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"barRects" as [0-9]* "[^"]*"' | cut -d'"' -f4 | tr ',x' '  '; }
-onbar() {   # the bar 24 px tall, right above e's ring, its width e's and both rings
+onbar() {   # the bar 24 px tall, right on e (no top ring under a bar), its width e's and both rings
     local x y w h ex ey ew eh
     read -r x y w h < <(barrect); read -r ex ey ew eh < <(xywh e)
-    [[ -n $x && $h == 24 && $((y + 25)) == "$ey" && $((x + 1)) == "$ex" && $w == $((ew + 2)) ]]
+    [[ -n $x && $h == 24 && $((y + 24)) == "$ey" && $((x + 1)) == "$ex" && $w == $((ew + 2)) ]]
 }
 check "  its bar on e's top edge"           poll onbar || echo "    bar $(barrect) / e $(xywh e)"
 read -r ex ey ew eh < <(xywh e)
@@ -64,10 +64,10 @@ key "Floating Toggle"
 check "floated whole"                       wait_tree 1 "H[a] ~T[V[f i] V[g h]]*"
 check "  its windows' own sizes, not the floor" poll eval 'read -r _ _ w _ < <(xywh f); (( w >= 300 ))'
 near() { local d=$(( $1 - $2 )); (( d >= -1 && d <= 1 )); }
-onbarof() {   # the bar right above window $1's ring, as wide as it and both rings
+onbarof() {   # the bar right on window $1 (no top ring), as wide as it and both rings
     local x y w h ex ey ew eh
     read -r x y w h < <(barrect); read -r ex ey ew eh < <(xywh "$1")
-    [[ -n $x && $h == 24 ]] && near $((y + 25)) "$ey" && near $((x + 1)) "$ex" && near "$w" $((ew + 2))
+    [[ -n $x && $h == 24 ]] && near $((y + 24)) "$ey" && near $((x + 1)) "$ex" && near "$w" $((ew + 2))
 }
 check "  its bar on f, the tab's top window"  poll onbarof f || echo "    bar $(barrect) / f $(xywh f)"
 # Meta+right near i's bottom-right corner, up and left, held for a moment.

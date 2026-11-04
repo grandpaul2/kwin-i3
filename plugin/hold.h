@@ -12,6 +12,7 @@
 #include <effect/effectwindow.h>
 #include <effect/offscreeneffect.h>
 #include <opengl/gltexture.h>
+#include <scene/borderradius.h>
 #include <scene/item.h>
 
 #include <KConfigWatcher>
@@ -90,7 +91,9 @@ public Q_SLOTS:
     // active window colours it, as before the first call); the indicator side, "right" or
     // "bottom", drawn in the class's indicator colour on a window alone in its split, else "";
     // and the sides hidden at the output's edge (hide_edge_borders), "left right top bottom" in
-    // any mix, "" for none. Sent only when it changes; the script reads back the ids it holds
+    // any mix, "" for none; "bar" with them for a window under a group's bar (i3's BS_NORMAL
+    // child: the bar takes the top border's place, con.c:1889-1893), its top hidden and its top
+    // corners square, the bar rounding them instead. Sent only when it changes; the script reads back the ids it holds
     // from Stats ("rings") after a reload of either side.
     void SetRing(const QString &id, const QString &cls, const QString &indicator, const QString &hidden);
     // kwin-i3 says whether tiled windows get the ring (tiledLook "frame"; not "bare", where they
@@ -144,7 +147,8 @@ public Q_SLOTS:
     // the window's frame's top left, `width` by `height` (the group may be wider than the window
     // it is painted with: a shown child that is a split); one row of equal tabs, or
     // (`stacked`) one row per title; `active` the shown one's index, drawn in the class's colour,
-    // `cls` "focused" or "unfocused"; the titles joined by U+001F. Empty titles: no bar. Drawn
+    // `cls` "focused" or "unfocused", followed by " round" for a bar whose two top corners are
+    // rounded (roundedCorners, a group's topmost bar: no other bar above it); the titles joined by U+001F. Empty titles: no bar. Drawn
     // with the window, so whatever is above the window covers its bar too. `id` is the bar's
     // key: the window's id, or "id#N" for a further bar drawn with the same window (groups
     // nested in one another show the same window, each with its own bar).
@@ -202,6 +206,7 @@ private:
         int cls = 0;                                        // 0 focused, 1 unfocused
         int indicator = 0;                                  // 0 none, else the Side (Right or Bottom)
         int hidden = 0;                                     // Sides not drawn
+        bool bar = false;                                   // under a group's bar: top square
     };
     struct Bar
     {
@@ -210,7 +215,7 @@ private:
     };
     Ring ringOf(KWin::EffectWindow *w) const;
     void repaintRingOf(const QString &id);
-    QList<Bar> ring(const KWin::RectF &frame, double scale, double radius, const Ring &how) const;
+    QList<Bar> ring(const KWin::RectF &frame, double scale, const KWin::BorderRadius &radius, const Ring &how) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
     void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     KWin::EffectWindow *windowById(const QString &id) const;
@@ -219,7 +224,7 @@ private:
     KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const;   // logical, above `frame`
     void repaintBar(KWin::EffectWindow *w, const QString &key);  // that one bar, where it is now
     void paintBars(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
-    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, TabBar &bar, const KWin::RectF &drawn, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, TabBar &bar, const KWin::RectF &drawn, double radius, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -261,6 +266,8 @@ private:
         bool stacked = false;
         int active = 0;
         int cls = 0;                                        // 0 focused, 1 unfocused, as Ring
+        bool round = false;                                 // its top corners rounded (SetBar's "round")
+        double radius = 0;                                  // logical, drawn with
         QStringList titles;
         std::unique_ptr<KWin::GLTexture> texture;
         QSize size;                                         // the texture's, device pixels

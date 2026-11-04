@@ -344,6 +344,23 @@ var KI3 = (function () {
     // { bar, rows, members } is the bar's kid: its px come out of the `members` kids after it,
     // which keeps them right when the pair merges into a vertical parent (setSizes).
     var BAR_ROW = 24;
+    // A bar tile's height: its rows, less the ring's room where a window is right under it. That
+    // window has no top ring (i3's BS_NORMAL child: the bar is its top border, con.c:1889-1893),
+    // so the bar, drawn from the tile's top edge as a neighbour's ring, ends at the window's top.
+    // A bar right over another bar keeps its rows: that bar starts where a ring would.
+    function ringRoom(ws) { var d = gaps(ws); return (d.inner - d.gap) / 2; }
+    function barPx(bp, ws) { return bp.rows * BAR_ROW - (bp.flush ? ringRoom(ws) : 0); }
+    // A con right under a group's bar (i3's BS_NORMAL child, con_border_style, con.c:1943-1948):
+    // climbing, every split's first shown child in a vertical one, any in a horizontal one, up to
+    // a group showing more than one child. A group of one has no bar: its child alone.
+    function underBar(c) {
+        for (var k = c, p = c.parent; p && p.type !== "ws" && p.type !== "floating"; k = p, p = p.parent) {
+            var shown = p.nodes.filter(function (n) { return project(n); });
+            if (p.layout === "tabbed" || p.layout === "stacked") { if (shown.length > 1) return true; continue; }
+            if (Tree.orient(p) === "v" && shown[0] !== k) return false;
+        }
+        return false;
+    }
     function projectGroup(con, holes) {
         var projected = [], byNode = [];
         con.nodes.forEach(function (child) {
@@ -368,7 +385,8 @@ var KI3 = (function () {
         // The tile lists them in the tabs' order, so a reload reads the order back (specOf).
         anchor.order = anchor.order ? anchor.order.concat(hidden) : order;
         var members = sp.dir === "v" ? sp.kids : [{ p: sp, share: 1 }];
-        var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length };
+        var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length,
+                    flush: !(members[0].p && members[0].p.bar) };
         return { dir: "v", kids: [{ p: bar, share: 0 }].concat(members) };
     }
     // The window a container shows: down its focus stacks to a window, past the tree's focus (the
@@ -737,7 +755,7 @@ var KI3 = (function () {
     // The smallest a projected subtree can be, in pixels: windows' minimum sizes (each with the
     // inner gap, half on each side) added up along a split and the largest across it.
     function minOf(p) {
-        if (p.bar) return { w: 0, h: p.rows * BAR_ROW };
+        if (p.bar) return { w: 0, h: barPx(p) };
         if (p.hole !== undefined) return { w: 0, h: 0 };
         if (p.win !== undefined) {
             var i = gaps().inner, m = { w: 0, h: 0 };
@@ -792,7 +810,7 @@ var KI3 = (function () {
         // A bar takes its rows' px out of its group's members, whatever the shares merged into.
         p.kids.forEach(function (k, i) {
             if (!k.p.bar) return;
-            var bar = k.p.rows * BAR_ROW, total = 0, j;
+            var bar = barPx(k.p), total = 0, j;
             for (j = i + 1; j <= i + k.p.members; j++) total += want[j];
             var scale = total > bar ? (total - bar) / total : 0;
             for (j = i + 1; j <= i + k.p.members; j++) want[j] *= scale;
@@ -1294,9 +1312,10 @@ var KI3 = (function () {
         if (c.win !== null) {
             var w = wins[c.win];
             if (!w || w.fullScreen || w.minimized) return;     // a fullscreen one: KWin's frame, its share kept
-            // The ring inside the window's share, as i3's border is inside its con's rect.
-            var f = tiledRing() ? Settings.get("frameWidth") : 0;
-            var wr = { x: r.x + f, y: r.y + f, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - 2 * f) };
+            // The ring inside the window's share, as i3's border is inside its con's rect; under a
+            // group's bar no top ring, the bar taking its place (con.c:1889-1893).
+            var f = tiledRing() ? Settings.get("frameWidth") : 0, ft = underBar(c) ? 0 : f;
+            var wr = { x: r.x + f, y: r.y + ft, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - f - ft) };
             if (!exactRect(w.frameGeometry, wr)) w.frameGeometry = wr;
             floatedLaid[c.win] = wr;
             laid.push(wr);
@@ -1683,7 +1702,12 @@ var KI3 = (function () {
                 if (!shown) return null;
                 e = extent(shown);
                 shown._extent = e;
-                if (e && n > 1) e = { x: e.x, y: Math.max(lo.y, e.y - (c.layout === "stacked" ? n : 1) * BAR_ROW), x2: e.x2, y2: e.y2 };
+                if (e && n > 1) {
+                    // The bar tile above: its rows, less the ring's room over a window (barPx).
+                    var sp = project(shown), onBar = sp && sp.dir === "v" && sp.kids[0].p.bar;
+                    var bh = (c.layout === "stacked" ? n : 1) * BAR_ROW - (onBar ? 0 : ringRoom(ws));
+                    e = { x: e.x, y: Math.max(lo.y, e.y - bh), x2: e.x2, y2: e.y2 };
+                }
                 return e;
             }
             c.nodes.forEach(function (k) {
@@ -1868,6 +1892,8 @@ var KI3 = (function () {
                     if (hide !== "horizontal") { if (eq(r.x, rr.x)) sides.push("left"); if (eq(r.x + r.width, rr.x + rr.width)) sides.push("right"); }
                     if (hide !== "vertical") { if (eq(r.y, rr.y)) sides.push("top"); if (eq(r.y + r.height, rr.y + rr.height)) sides.push("bottom"); }
                 }
+                // Under a group's bar: no top ring, the top corners square (hold.h SetRing "bar").
+                if (g.ring && underBar(c)) sides = sides.filter(function (x) { return x !== "top"; }).concat(["bar"]);
                 send(c.win, cls(c), ind, sides.join(" "));
             });
             model.floatingWindows(ws).forEach(function (c) {
@@ -1877,7 +1903,7 @@ var KI3 = (function () {
                 // floated split, which is KWin's.
                 var pl = c.parent.layout, ind = floatedOf(c) && c.parent.type !== "floating" && c.parent.nodes.length === 1
                     && (pl === "h" || pl === "v") ? (pl === "h" ? "right" : "bottom") : "";
-                send(c.win, cls(c), ind, "");
+                send(c.win, cls(c), ind, floatedOf(c) && underBar(c) ? "bar" : "");
             });
         });
         if (flash && flash.win !== null && wins[flash.win])
@@ -1922,6 +1948,9 @@ var KI3 = (function () {
                 // A floated window's target, as a tiled one's tile: its frame may not have landed.
                 var a = b.rect ? floatedLaid[leaf.win] || w.frameGeometry : windowRect(t), r = b.rect || tiledBarRect(b, v.ws), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
+                // The topmost bar's top corners rounded, as the ring's below it; square in the
+                // title-bar look, where the window keeps its decoration.
+                var round = Settings.get("roundedCorners") && (b.rect || tiledRing()) && !underBar(con);
                 // Groups nested in one another show the same window, each with its own bar (i3
                 // draws every tabbed container's decorations): the first by the window's id, the
                 // next "id#1", "id#2" (plugin/hold.h SetBar).
@@ -1940,7 +1969,7 @@ var KI3 = (function () {
                 helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
                              con.layout === "stacked" ? 1 : 0, kids.length, floated].join(" "));
                 want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
-                               con.layout === "stacked", kids.indexOf(shown), inside ? "focused" : "unfocused",
+                               con.layout === "stacked", kids.indexOf(shown), (inside ? "focused" : "unfocused") + (round ? " round" : ""),
                                kids.map(barTitle).join("\u001f")];
             });
         });
