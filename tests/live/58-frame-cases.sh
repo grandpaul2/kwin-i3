@@ -14,7 +14,7 @@ px() { "$shot" probe "$png" "$1" "$2"; }
 pix() { "$shot" same "$png" "$1" "$2" "$3" 2; }
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
-form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 
 # Square corners: these pixel checks are of the square frame (78 has the rounded one).
@@ -30,9 +30,9 @@ check "a | c"                               wait_tree 1 "H[a c*]"
 key "Focus Left"; key "Split V"
 client --title b --color lime
 check "H[V[a b] c]"                         wait_tree 1 "H[V[a b*] c]"
-form_set gapsOuter 10
+set_setting gapsOuter 10
 check "an outer gap: a inset"               poll eval '[[ "$(geom a)" == 11,11* ]]'
-form_set gapsOuter 0       # the test KWin's pinned value (testkwin.sh); deleting it would give the default 0 too
+set_setting gapsOuter 0       # the test KWin's pinned value (testkwin.sh); deleting it would give the default 0 too
 check "and back: a 1 px from the edge"      poll eval '[[ "$(geom a)" == 1,1* ]]'
 check "b likewise, at the left edge"        poll eval '[[ "$(geom b)" == 1,* ]]'
 sleep 0.3; capture
@@ -46,11 +46,11 @@ check "c: frame at the right edge"          eval 'pix 1279 360 $INACT && pix 127
 # at the output's edges (the strip stays empty: the background) and keeps the seam between V[a b]
 # and c; `smart` with three windows hides nothing; `none` again.
 BG=0,0,0
-form_set hideEdgeBorders both
+set_setting hideEdgeBorders both
 check "both: a's left side gone, the strip empty" poll eval 'capture && pix 0 180 $BG && pix 1 180 $RED'
 check "  b's bottom and c's right gone too" eval 'pix 300 719 $BG && pix 1279 360 $BG'
 check "  the seam between V[a b] and c stays" eval 'pix 639 180 $INACT && pix 640 360 $INACT'
-form_set hideEdgeBorders smart
+set_setting hideEdgeBorders smart
 check "smart, three windows: every side drawn" poll eval 'capture && pix 0 180 $INACT && pix 1279 360 $INACT && pix 300 719 $ACT'
 form_del hideEdgeBorders
 check "none: as before"                     poll eval 'capture && pix 0 180 $INACT && pix 1 180 $RED'

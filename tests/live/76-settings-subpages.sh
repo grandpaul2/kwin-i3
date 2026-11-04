@@ -104,6 +104,5 @@ click_named - Defaults
 click_named - Apply
 check "Workspaces: no workspaceOutputs"     poll conf_is workspaceOutputs ""
 check "  no forWindow (the default)"        conf_is forWindow ""
-check "no floatingWorkspaces"               conf_is floatingWorkspaces ""
 check "no invariant failures or errors"     clean_log
 finish

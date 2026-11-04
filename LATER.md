@@ -164,10 +164,6 @@ if a user asks for it.
 
 ## Upstream
 
-**2. Settings**: done and hand-checked. Left: the one-line
-KWin fix upstream (`ScriptingConfig::reload` in `genericscriptedconfig.cpp`), so the Configure
-form's Apply applies without the plugins too (the settings page's Apply already does).
-
 **kwriteconfig6 --notify loses its signal** (found 2026-10-29, OPEN.md item 50): it sends KConfig's
 `ConfigChanged` with a fire-and-forget `QDBusConnection::send` (`kconfig.cpp`, `notifyClients`)
 and exits; on the slower laptop 4 writes in 30 reached the file but never the bus. A KConfig bug

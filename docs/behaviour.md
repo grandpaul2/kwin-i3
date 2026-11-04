@@ -24,9 +24,8 @@ Contents: 1 the pieces · 2 the tree · 3 window kinds · 4 workspaces and outpu
 |---|---|---|---|
 | the script | a KWin script, the whole window manager | `src/*.js`, concatenated by `build.sh` into `package/contents/code/main.js` | `make install` (`tools/install.sh`: linked into KWin's scripts and enabled; README, "Install") |
 | `kwini3hold` | a KWin effect (`CrossFadeEffect`, internal, on by default; needs OpenGL compositing) | `plugin/hold.cpp`, `holdmain.cpp`, `hold.json` | `make plugin-install` (with `make install`) |
-| `kwini3helper` | a KWin plugin: frame focus, the tiling drag and resize, the resize mode and terminal key, settings watch, layout keys, popup grace, the gap strips, and a pointer probe for the tools | `plugin/main.cpp`, `helper.cpp`, `framefocus.cpp`, `tilingdrag.cpp`, `resizemode.cpp`, `settingswatch.cpp`, `layoutkeys.cpp`, `popupgrace.cpp`, `gapstrips.cpp`, `pointerprobe.cpp`, `metadata.json` | `make plugin-install` (with `make install`) |
+| `kwini3helper` | a KWin plugin: frame focus, the tiling drag and resize, the resize mode and terminal key, the key override, layout keys, popup grace, the gap strips, and a pointer probe for the tools | `plugin/main.cpp`, `helper.cpp`, `framefocus.cpp`, `tilingdrag.cpp`, `resizemode.cpp`, `keyoverride.cpp`, `layoutkeys.cpp`, `popupgrace.cpp`, `gapstrips.cpp`, `pointerprobe.cpp`, `metadata.json` | `make plugin-install` (with `make install`) |
 | the settings page | a System Settings module (`kcm_kwin_i3`, Wayland only, under Window Management) | `kcm/` | `make kcm-install` (with `make install`) |
-| the Configure form | KWin's generic script form (the cog in KWin Scripts) | `package/contents/ui/config.ui`, `config/main.xml` | with the script |
 | the workspace widget | a Plasma applet, an alternative to the pager | `widget/` | `make widget-install` |
 
 **The product is the script and its two plugins** (`docs/philosophy.md`, "Defaults"); the script
@@ -42,7 +41,6 @@ runs alone too. What each plugin piece adds, and what happens without it:
 | helper: tiling drag | i3's tiling drag (title bar or Meta+drag) and Meta+right-drag resize; a floating container moved and resized whole | Meta+drag is KWin's own move, which floats the window where it's dropped; no tiling resize; a container can't be floated whole |
 | helper: resize mode and terminal key | i3's resize mode (K4) and the Terminal key's launch (K18) | neither key works; the settings page's banner says the plugins are missing |
 | helper: gap strips | the gaps take presses (Z2, Z3, Z9) | a press in a gap goes to the desktop beneath |
-| helper: settings watch | the Configure form's Apply applies at once | press Meta+Shift+C after Apply (the settings page applies by itself either way) |
 | helper: layout keys | the position keys (digits, `;`) follow a non-US keyboard layout | the keys are US symbols; logged at load (§13) |
 | helper: popup grace | a panel popup survives the pointer crossing the gap to it | with focus follows mouse, the popup closes when the pointer crosses the gap |
 
@@ -220,9 +218,8 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
 | R6 | Transient, modal, or a fixed size (not resizable; a fullscreen window: fixed unless its minimum and maximum differ) | floating | = | `manage.c`: transient_for (or a leader that is managed), `_NET_WM_STATE_MODAL`, min = max |
 | R7 | KWin's type is dialog, utility, toolbar or splash (R2) | floating | = | `floatsByDefault` |
 | R8 | Its title is exactly `kwin-i3 capture note` | floating | + | `tools/capture`'s box |
-| R9 | The `forWindow` rules, i3's `for_window [criteria] floating enable \| disable`, in order, each at most once per window (X2): `class`, `instance`, `title`, `window_role`, `window_type` (a keyword, case-insensitive, as i3's `match.c`: `normal`, `dialog`, `utility`, `toolbar`, `splash`; `notification` (another app's notification-type window, R2); i3's `menu`, `dropdown_menu`, `popup_menu`, `tooltip` are read but never match, those windows being kept out of the tree, R1; the page offers the five), `workspace` (the number it opens on), `floating`, `tiling`, `all`; a value quoted (`\"` inside) or bare, as i3's `word` (up to a space, a quote or the `]`); the others regular expressions, case-sensitive, read as i3's PCRE2 as far as JavaScript can: JavaScript's strict syntax first, then a leading `(?i)` as case-insensitive and loose escapes (`\-`, `\ `); all in one rule must match | as the last matching rule says | ≠ | `Rules.classify`; a pattern still unreadable (possessive quantifiers, atomic groups), or another command, skips the rule with a `WARN` (≠: i3 reads those; reason (a), JavaScript has no PCRE2). `window_type=normal` matches every window of no other type, where i3 gives a typeless X11 window no type and `normal` misses it: KWin has no typeless windows (reason (a)). i3's `__focused__` value matches the focused window's class, instance, title or role, or the focused workspace, as i3's (`match.c:101-103`, `:180-181`); at a window's opening that is the focus before it. The old `floatingWorkspaces` (`[workspace="^N$"]`) is read on as rules before `forWindow`'s (R11). |
+| R9 | The `forWindow` rules, i3's `for_window [criteria] floating enable \| disable`, in order, each at most once per window (X2): `class`, `instance`, `title`, `window_role`, `window_type` (a keyword, case-insensitive, as i3's `match.c`: `normal`, `dialog`, `utility`, `toolbar`, `splash`; `notification` (another app's notification-type window, R2); i3's `menu`, `dropdown_menu`, `popup_menu`, `tooltip` are read but never match, those windows being kept out of the tree, R1; the page offers the five), `workspace` (the number it opens on), `floating`, `tiling`, `all`; a value quoted (`\"` inside) or bare, as i3's `word` (up to a space, a quote or the `]`); the others regular expressions, case-sensitive, read as i3's PCRE2 as far as JavaScript can: JavaScript's strict syntax first, then a leading `(?i)` as case-insensitive and loose escapes (`\-`, `\ `); all in one rule must match | as the last matching rule says | ≠ | `Rules.classify`; a pattern still unreadable (possessive quantifiers, atomic groups), or another command, skips the rule with a `WARN` (≠: i3 reads those; reason (a), JavaScript has no PCRE2). `window_type=normal` matches every window of no other type, where i3 gives a typeless X11 window no type and `normal` misses it: KWin has no typeless windows (reason (a)). i3's `__focused__` value matches the focused window's class, instance, title or role, or the focused workspace, as i3's (`match.c:101-103`, `:180-181`); at a window's opening that is the focus before it. |
 | R10 | Otherwise | tiling | = | |
-| R11 | A new window on a workspace in `floatingWorkspaces` | floating | = | read as `for_window [workspace="^N$"] floating enable` (R9, §11 N13); the settings page turns the key into such rules when it next applies |
 | R12 | After a reload: the rules say tiling, but it is in no tile and kept above (or in the effect's floating set) | floating | + | It was floating before the reload |
 | R13 | On two or more desktops, not all | not adopted until it is on one (or all: R3) | ≠ | i3 has no such state (`_NET_WM_DESKTOP` is one or all); reason (a): a workspace is one virtual desktop and KWin's tiles belong to one, so such a window has no one place in the tree |
 | R14 | Maximized when adopted | unmaximized | = | i3 has no maximize and ignores the request (V8) |
@@ -892,8 +889,8 @@ One that should change becomes an `OPEN.md` or `LATER.md` item.
 - **The workspace widget** on a thin panel with many workspaces in use has no overflow (each
   button shrinks to an 8 px floor; "Numbers only" helps); visible and focused workspaces differ only
   by their fill.
-- **A window adopted late on a workspace in `floatingWorkspaces`** (as above) opens tiling: only a
-  window new to kwin-i3 takes the workspace's floating.
+- **A window adopted late on a workspace with a `[workspace=…] floating enable` rule** (as above)
+  opens tiling: only a window new to kwin-i3 takes the workspace's floating.
 - **Keep Above is kwin-i3's on its windows**: a user's own Keep Above is cleared when the window is
   tiled, and unticking it on a floating window doesn't stick (won't-fix, i3 has no such flag;
   `LATER.md` item 27).
@@ -913,15 +910,14 @@ One that should change becomes an `OPEN.md` or `LATER.md` item.
 ## 11. Settings
 
 **Where they live**: kwinrc `[Script-kwin-i3]`. `src/settings.js` is the table (types, defaults,
-ranges); `package/contents/config/main.xml` and `config.ui` follow it (`tests/unit/` keeps the
-three together); the settings page builds its config from `main.xml`. A value that doesn't parse
+ranges); `package/contents/config/main.xml` follows it (`tests/unit/` keeps the two together);
+the settings page builds its config from `main.xml`, and is the one place to change them
+(`philosophy.md`; KWin Scripts' cog opens it too, `package/metadata.json`). A value that doesn't parse
 logs a `WARN` and uses the default.
 
 **When a change applies**: the script reads its settings at load and at every KWin reconfigure.
-The settings page sends one on Apply (with the helper loaded, its settings watch sends a
-second, which finds nothing changed). The Configure form doesn't; the helper's settings watch
-does it for it (100 ms after kwinrc's group changes); without the helper, press Meta+Shift+C. The
-plugins watch kwinrc themselves. On a reconfigure with changes: the rules reclassify every window
+The settings page sends one on Apply; after a hand edit of kwinrc, press Meta+Shift+C (i3's
+reload). The plugins watch kwinrc themselves. On a reconfigure with changes: the rules reclassify every window
 if a rule list changed, the ring is told if `tiledLook` changed, and every workspace is placed
 again.
 
@@ -949,7 +945,6 @@ again.
 | `assign` | empty | i3's `assign` rules (§3 R19) | where a new window opens | new windows |
 | `floatingMinimumSize` | `75x50` | `WxH`, 0 i3's default, -1 none | §3 R20 | a window becoming floating |
 | `floatingMaximumSize` | `0x0` (all outputs together) | `WxH`, -1 none | §3 R20 | a window becoming floating |
-| `floatingWorkspaces` | empty | numbers 1-10 | read as `[workspace="^N$"] floating enable` (R11) | as `forWindow` |
 | `tiledLook` | `frame` | `frame`, `titlebars`, `bare` | §7 | next pass |
 | `frameWidth` | 1 | 1-10 px | the ring | next pass; the effect at once |
 | `frameActive`, `frameInactive` | `#4c7899`, `#333333` | `#rrggbb` | the ring's colour classes, i3's `focused`, `unfocused` (§7 L3) | the effect at once |
@@ -986,7 +981,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 | N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
 | N11 | `workspace N output X …` | `workspaceOutputs`, a list per number | = | |
 | N12 | `assign [criteria] → workspace N \| output X` | `assign` (§3 R19) | = | |
-| N13 | `for_window [criteria] floating enable \| disable` | `forWindow` (§3 R9); `floatingWorkspaces` read as rules (R11) | = | |
+| N13 | `for_window [criteria] floating enable \| disable` | `forWindow` (§3 R9; the Workspaces tab's per-workspace floating writes `[workspace="^N$"] floating enable` there) | = | |
 | N14 | (no i3 option) the ignore lists | none: Plasma's system windows are built in (§3 R5) | + | |
 | N15 | `floating_minimum_size`, `floating_maximum_size` (75x50; all outputs combined) | `floatingMinimumSize`, `floatingMaximumSize` (§3 R20) | = | |
 | N16 | `floating_modifier` | Meta, fixed | ≠ | kept: KWin's window-action modifier, which kwin-i3 needs as Meta (§9 F7). Reason (a). |
@@ -994,7 +989,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 | N18 | `default_border`, `default_floating_border`, `hide_edge_borders`, `smart_gaps`, `client.*` | `tiledLook`, `frameWidth`, `frameOnFloating`; `hideEdgeBorders` and `smartGaps` as i3's; `client.focused`, `client.unfocused` as the two frame colours and two indicator colours (`client.focused_inactive` left out, §7 L3) | ≠ | §7 L1-L11, reason (b) |
 | N19 | `force_display_urgency_hint`, `show_marks`, `title_align`, `for_window … title_format` | none | ≠ | kept: urgency, marks and i3's own title bars are out. Reason (d). |
 | N20 | `resize … 10 px or 10 ppt` (in a binding) | `resizeStep`, `floatingStep` | = | a setting, as a key takes no arguments |
-| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `debugLog` | kwin-i3's own (§7) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), on neither the page nor the form |
+| N21 | (no i3 option) `roundedCorners`, `holdEnabled`, `holdTimeoutMs`, `debugLog` | kwin-i3's own (§7) | + | `holdTimeoutMs` and `debugLog` are internal values: kwinrc only (`plan.md`, Settings), not on the page |
 | N22 | `bindsym $mod+Shift+e exec i3-nagbar … exit` (in i3, rebinding the key) | `endSession` (`logout`, `sleep`, `shutdown`, `ask`), on the Keys page in End session's row | = | how Exit leaves, §8 K17 |
 
 ### The settings page
@@ -1032,9 +1027,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
   window picker: a rule with the clicked window's class, matched whole) sit in the tab's
   footer, always in view; a new rule scrolls into view with its application box focused. Below, new windows over a fullscreen one (`popupDuringFullscreen`), then the floating sizes (`floatingMinimumSize`,
-  `floatingMaximumSize`). `floatingWorkspaces` becomes rules when the page reads it, as the
-  script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
-  the key out of kwinrc.
+  `floatingMaximumSize`).
 - **Keys tab**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key another component also holds is set all the same, with no note (which runs is the key
   override's, §8 "Shared keys", its checkbox above the list, greyed without the helper); Apply
@@ -1070,8 +1063,8 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   resets the tab shown, and greys when it is at its defaults: a kwin-i3 tab's settings to
   `main.xml`'s (the Keys tab's keys to the US keys and `endSession`'s), Window Rules' rules to the
   shipped ones and Workspaces' floating workspaces to none (both kept in `forWindow`, each tab
-  its own part); the Plasma tab as above. `debugLog`, `holdTimeoutMs` and `floatingWorkspaces`,
-  on no tab, are never reset by it.
+  its own part); the Plasma tab as above. `debugLog` and `holdTimeoutMs`, on no tab,
+  are never reset by it.
 
 ### The workspace widget
 
@@ -1202,7 +1195,6 @@ C7, C9, D7) and in `docs/kwin-notes.md`.
 | calls every fullscreen window not resizable | uses min/max size for fullscreen windows |
 | refuses to tile a fullscreen window | keeps it in the tree out of the tiles |
 | KPackage caches a package linked while KWin runs | it can't be turned on until the next login (README) |
-| the generic script config form tells KWin nothing on Apply | the helper's settings watch reconfigures |
 | shortcuts match the typed symbol, not the key | the helper refits the position keys |
 | Shift+; arrives as `:` | Move Right's second key is Meta+: |
 | a GTK 4 client keeps within bounds sent only with its first configure | asks 0 × 0, then its tile |

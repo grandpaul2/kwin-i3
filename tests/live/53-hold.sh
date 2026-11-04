@@ -37,12 +37,12 @@ between() { python3 -c "import sys; sys.exit(0 if float('$2') <= float('$1') <= 
 
 check "the effect is loaded"                effect_loaded true
 check "and supported (OpenGL)"              _stat_is supported True
-# The config form's keys ([Script-kwin-i3]), written plainly as the form does: kwini3helper has
-# KWin reconfigure, and the effect hears Workspace::configChanged (no --notify, no reload key).
-form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; }
-form_set holdEnabled false
-check "holdEnabled false (form key, plain write): off" wait_stat enabled False
-kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdEnabled --delete
+# kwin-i3's own key ([Script-kwin-i3]), written as a hand edit and taken as Meta+Shift+C takes it
+# (a KWin reconfigure): the effect hears Workspace::configChanged.
+reconf() { busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdEnabled false; reconf
+check "holdEnabled false (kwin-i3's key): off" wait_stat enabled False
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key holdEnabled --delete; reconf
 check "deleted: on again (the old key's default)" wait_stat enabled True
 hold_set Enabled true
 hold_set TimeoutMs 400                      # room for a screenshot mid-hold (the default is 100)

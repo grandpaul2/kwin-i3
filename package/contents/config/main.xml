@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- kwin-i3's settings form: KWin's generic scripted KCM reads and writes these entries in
-     kwinrc [Script-kwin-i3]. src/settings.js is the table they follow (types, defaults);
-     tests/unit/settings.test.js holds this file, config.ui and that table together. -->
+<!-- kwin-i3's settings: the settings page's class is generated from these entries (kcm/), which
+     live in kwinrc [Script-kwin-i3]. src/settings.js is the table they follow (types, defaults);
+     tests/unit/settings.test.js holds this file and that table together. -->
 <kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
@@ -117,9 +117,6 @@
       <default>#3daee9</default>
     </entry>
     <entry name="frameIndicatorInactive" type="String">
-      <default></default>
-    </entry>
-    <entry name="floatingWorkspaces" type="String">
       <default></default>
     </entry>
     <entry name="frameOnFloating" type="Bool">

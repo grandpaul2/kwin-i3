@@ -32,8 +32,8 @@
 enum Tab { PlasmaTab, TilingTab, GapsTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
-// the rest Window Rules'. debugLog, holdTimeoutMs (internal) and floatingWorkspaces (read into
-// rules) are on no tab, so Defaults never touches them.
+// the rest Window Rules'. debugLog and holdTimeoutMs (internal) are on no tab, so Defaults never
+// touches them.
 static QStringList tabKeys(int tab)
 {
     switch (tab) {
@@ -105,6 +105,19 @@ static bool workspaceRule(const QString &rule)
     return re.match(rule).hasMatch();
 }
 
+// The page's own metadata, whatever it is handed. KWin Scripts' cog loads this plugin with the
+// script's metadata (package/metadata.json X-KDE-ConfigModule; KCMUtils KPluginModel::findConfig
+// pairs the script's raw metadata with this plugin's file), whose id is the script's, and
+// KQuickConfigModule finds its QML under the id (qrc:/kcm/<id>/main.qml): read again from the
+// plugin's own file, the id is kcm_kwin_i3 and the page loads.
+static KPluginMetaData ownMetaData(const KPluginMetaData &given)
+{
+    if (given.pluginId() == QLatin1String("kcm_kwin_i3"))
+        return given;
+    const KPluginMetaData own(given.fileName());
+    return own.isValid() && own.pluginId() == QLatin1String("kcm_kwin_i3") ? own : given;
+}
+
 class KWinI3Kcm : public KQuickManagedConfigModule
 {
     Q_OBJECT
@@ -121,7 +134,7 @@ class KWinI3Kcm : public KQuickManagedConfigModule
 
 public:
     KWinI3Kcm(QObject *parent, const KPluginMetaData &data)
-        : KQuickManagedConfigModule(parent, data)
+        : KQuickManagedConfigModule(parent, ownMetaData(data))
         // Not a child of the module: a managed module folds every child skeleton's isDefaults()
         // into the Defaults button, which here answers for the tab shown (kcmutils 6.31
         // kquickmanagedconfigmodule.cpp:17-23, :74-91). Its load, save and signals by hand.
@@ -280,7 +293,7 @@ public:
         });
         m_frameAvailable = m_holdLoaded;    // the effect draws the frame
         // The helper (kwini3helper, a KWin plugin): the tiling drag and resize, frame focus, the
-        // resize mode, the layout keys, the Configure form's Apply.
+        // resize mode, the layout keys, the key override.
         auto plugins = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Plugins"),
                                                       QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
         plugins << QStringLiteral("org.kde.KWin.Plugins") << QStringLiteral("LoadedPlugins");

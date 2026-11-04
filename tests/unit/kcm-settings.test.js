@@ -18,12 +18,6 @@ test("workspace monitors: read as the script reads them, written back in order",
     assert.strictEqual(K.formatOutputs({}), "");
 });
 
-test("Plasma-window workspaces: whole numbers 1-10, sorted, once each", () => {
-    assert.deepStrictEqual(K.parseWorkspaces("7, 3, 3, 0, 11, x, 2.5"), [3, 7]);
-    assert.strictEqual(K.formatWorkspaces([7, 3]), "3, 7");
-    assert.strictEqual(K.formatWorkspaces([]), "");
-});
-
 test("window rules: split on line breaks and on ; outside quotes, as the script reads them", () => {
     assert.deepStrictEqual(K.splitRules('[class="^a$"] floating enable; [title="x;y"] floating disable\n\n [all] floating enable '),
         ['[class="^a$"] floating enable', '[title="x;y"] floating disable', '[all] floating enable']);

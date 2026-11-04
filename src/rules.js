@@ -1,7 +1,7 @@
 // Which kind each window is (docs/behaviour.md §3): i3's kinds,
 // decided as i3's manage.c decides them, then the user's rules in i3's own syntax (`forWindow`:
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
-// kwinrc's [Script-kwin-i3] group (src/settings.js); `floatingWorkspaces` is read as rules too.
+// kwinrc's [Script-kwin-i3] group (src/settings.js).
 //
 // Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
 // output) are in the tree; "dock" (a panel), "root" (the desktop window) and
@@ -182,20 +182,13 @@ var Rules = (function () {
         return out;
     }
 
-    // `floatingWorkspaces` as rules: `[workspace="^N$"] floating enable` each (R11), first.
-    function workspaceRules() {
-        return Object.keys(S("floatingWorkspaces")).map(function (n) {
-            return { crit: { workspace: new RegExp("^" + n + "$", "u") }, floating: true, src: "floatingWorkspaces " + n };
-        });
-    }
-
     // Parsed once per text (the settings are re-read on every KWin reconfigure).
     var cache = { key: null, forWindow: null, assign: null };
     function current() {
-        var key = JSON.stringify([S("forWindow"), S("assign"), S("floatingWorkspaces")]);
+        var key = JSON.stringify([S("forWindow"), S("assign")]);
         if (cache.key !== key) {
             cache.key = key;
-            cache.forWindow = workspaceRules().concat(parseForWindow(S("forWindow")));
+            cache.forWindow = parseForWindow(S("forWindow"));
             cache.assign = parseAssign(S("assign"));
         }
         return cache;

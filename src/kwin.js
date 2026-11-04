@@ -3450,7 +3450,7 @@ var KI3 = (function () {
         "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
         "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
-        // new values. The config form saves without telling KWin.
+        // new values (a hand edit of kwinrc is taken so).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
@@ -4317,7 +4317,7 @@ var KI3 = (function () {
 
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
     // after a load (KWin's own start-up reconfigure), with nothing changed.
-    var RULE_KEYS = ["forWindow", "assign", "floatingWorkspaces"];
+    var RULE_KEYS = ["forWindow", "assign"];
     // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
     // asks for one when it loads or goes): its answer says whether it can draw the frame
     // (supported). callDBus calls back only on a reply: no answer within a second is a miss, and

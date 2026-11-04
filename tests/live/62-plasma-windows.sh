@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
 # Window modes, pieces (iii)+(iv): a workspace whose new windows float
-# (floatingWorkspaces), the floating mark kept by the effect (decision 5c), the frame on floating
+# (a for_window rule on its number), the floating mark kept by the effect (decision 5c), the frame on floating
 # windows (frameOnFloating).
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
@@ -10,12 +10,15 @@ ACT=76,120,153     # the focused class (§7 L3; floating windows have no colours
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 floating() { [[ "$(tree "$2")" == *"~$1"* ]]; }
-form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 uuid() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(String(w.internalId)); })"; }
 effect_floats() { local u; u=$(uuid "$1"); [[ -n $u ]] && busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -qF "$u"; }
 pixel_is() { "$shot" capture Virtual-0 "$png" && "$shot" same "$png" "$1" "$2" "$3" 2; }
 
-form_set floatingWorkspaces "3"
+# The shipped window rules (main.xml's default) and workspace 3's, as the Workspaces tab writes it:
+# i3's for_window [workspace="^3$"] floating enable.
+rules=$(sed -n '/<entry name="forWindow"/{n;s/.*<default>\(.*\)<\/default>.*/\1/p}' "$root/package/contents/config/main.xml")
+set_setting forWindow "$rules; [workspace=\"^3\$\"] floating enable"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 check "frame on"                            wait_log '^.{9}FRAME on'
@@ -59,7 +62,7 @@ check "t tiles on workspace 1"              wait_tree 1 "H[t*]"
 #    L11; p is the focused window).
 key "Workspace 3"
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "p") workspace.activeWindow = w; });' >/dev/null
-form_set frameOnFloating true
+set_setting frameOnFloating true
 check "frameOnFloating: p borderless"       poll prop_is p noBorder true
 g=$(geom p); px=${g%%,*}; r=${g#*,}; py=${r%% *}; s=${g#* }; ph=${s#*x}
 check "  its frame, the focused colour, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $ACT
@@ -75,7 +78,7 @@ eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects load
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s "$eid" >/dev/null
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s "$eid" >/dev/null
 check "effect reloaded: it knows p floats again" poll effect_floats p
-form_set frameOnFloating false
+set_setting frameOnFloating false
 check "off: its title bar back"             poll prop_is p noBorder false
 check "no invariant failures or errors"     clean_log
 finish

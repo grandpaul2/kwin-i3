@@ -255,7 +255,8 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - KPackage caches the script list at KWin's first look: a package linked after KWin started is
   never seen until a login. KWin rescans on every `Scripting.start` / reconfigure and **unloads** a
   listed package that isn't enabled.
-- KWin 6.7.5's generic script config form saves and tells KWin nothing.
+- KWin 6.7.5's generic script config form (`kcm_kwin4_genericscripted`) saves and tells KWin
+  nothing; kwin-i3 has no such form (its metadata names its own page for the cog).
 - Live recovery: a one-off script via `loadScript` + `start` + `unloadScript`; a bad `loadScript`
   path still registers a name (unload it).
 - A declarative (QML) script's `KNotification` does reach Plasma; the desktop portal refuses KWin as

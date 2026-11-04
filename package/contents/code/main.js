@@ -21,13 +21,13 @@ function log(line) {
 // ---- src/settings.js
 // Settings: every key in kwinrc's [Script-kwin-i3] group, with its type and default
 //. The plugins read theirs too (the frame's, the hold's,
-// tilingDrag), each with its own fallback for a value this table would refuse. The one table the config form (package/contents/config/
-// main.xml) and the README follow; tests/unit/settings.test.js holds the three together.
+// tilingDrag), each with its own fallback for a value this table would refuse. The one table
+// package/contents/config/main.xml (the settings page's class) and the README follow;
+// tests/unit/settings.test.js holds the table and main.xml together.
 //
 // Read at load and again on every KWin reconfigure (options.configChanged; Meta+Shift+C asks for
-// one): the config form writes the file and tells KWin nothing (genericscriptedconfig.cpp
-// ScriptingConfig::reload is a TODO in 6.7.5), and a script sees a new value only once KWin has
-// reparsed its config. load() returns the keys whose value changed.
+// one; the settings page's Apply asks for one too): a script sees a new value only once KWin has
+// reparsed its config, so a hand edit of kwinrc takes Meta+Shift+C, as i3's reload. load() returns the keys whose value changed.
 
 var Settings = (function () {
     // The window rules in i3's syntax, one per line (src/rules.js parses them; docs/behaviour.md
@@ -74,7 +74,7 @@ var Settings = (function () {
         // i3's hide_edge_borders (§7 L6): smart and smart_no_gaps drop a lone window's ring; the
         // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
         hideEdgeBorders: { type: "choice", def: "none", choices: ["none", "vertical", "horizontal", "both", "smart", "smart_no_gaps"] },
-        // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the form has them.
+        // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the page has them.
         // i3's colour classes (§7 L3): focused and unfocused (focused_inactive left out); the indicator is the side where the next window opens on a
         // window alone in its split (L4), an empty colour being the class's frame colour.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
@@ -82,9 +82,7 @@ var Settings = (function () {
         frameInactive: { type: "colour", def: "#333333" },
         frameIndicatorActive: { type: "colour", def: "#3daee9" },
         frameIndicatorInactive: { type: "colour", def: "" },
-        // Window modes: workspaces whose new windows open floating, as
-        // Plasma windows; and the frame on floating windows too, in the same colour classes (L11).
-        floatingWorkspaces: { type: "workspaces", def: "" },                     // "3, 7"
+        // The frame on floating windows too, in the same colour classes (L11).
         frameOnFloating: { type: "bool", def: "false" },
         // How tiled windows look: i3's frame, their own title bars, or
         // neither. Without kwini3hold every one is "titlebars".
@@ -100,7 +98,7 @@ var Settings = (function () {
     };
     var values = {};
 
-    // Every value is read as text (KConfig stores text) and parsed here, so a value the form
+    // Every value is read as text (KConfig stores text) and parsed here, so a value the page
     // wrote and one written by hand read the same; one that doesn't parse is the default.
     function parse(t, text) {
         var type = t.type;
@@ -149,17 +147,6 @@ var Settings = (function () {
                 else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT [OUTPUT …], N 1-10)");
             });
             return out;
-        }
-        // Workspace numbers, 1-10: { N: true }. Anything else is skipped (and logged).
-        if (type === "workspaces") {
-            var set = {};
-            text.split(",").forEach(function (e) {
-                e = e.trim();
-                if (!e) return;
-                if (/^[0-9]+$/.test(e) && +e >= 1 && +e <= 10) set[+e] = true;
-                else log("WARN setting floatingWorkspaces: ignoring \"" + e + "\" (want workspace numbers 1-10)");
-            });
-            return set;
         }
         if (type === "bool") {
             if (text === "true") return true;
@@ -1863,7 +1850,7 @@ if (typeof module !== "undefined") module.exports = Tree;
 // Which kind each window is (docs/behaviour.md §3): i3's kinds,
 // decided as i3's manage.c decides them, then the user's rules in i3's own syntax (`forWindow`:
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
-// kwinrc's [Script-kwin-i3] group (src/settings.js); `floatingWorkspaces` is read as rules too.
+// kwinrc's [Script-kwin-i3] group (src/settings.js).
 //
 // Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
 // output) are in the tree; "dock" (a panel), "root" (the desktop window) and
@@ -2044,20 +2031,13 @@ var Rules = (function () {
         return out;
     }
 
-    // `floatingWorkspaces` as rules: `[workspace="^N$"] floating enable` each (R11), first.
-    function workspaceRules() {
-        return Object.keys(S("floatingWorkspaces")).map(function (n) {
-            return { crit: { workspace: new RegExp("^" + n + "$", "u") }, floating: true, src: "floatingWorkspaces " + n };
-        });
-    }
-
     // Parsed once per text (the settings are re-read on every KWin reconfigure).
     var cache = { key: null, forWindow: null, assign: null };
     function current() {
-        var key = JSON.stringify([S("forWindow"), S("assign"), S("floatingWorkspaces")]);
+        var key = JSON.stringify([S("forWindow"), S("assign")]);
         if (cache.key !== key) {
             cache.key = key;
-            cache.forWindow = workspaceRules().concat(parseForWindow(S("forWindow")));
+            cache.forWindow = parseForWindow(S("forWindow"));
             cache.assign = parseAssign(S("assign"));
         }
         return cache;
@@ -5839,7 +5819,7 @@ var KI3 = (function () {
         "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
         "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
-        // new values. The config form saves without telling KWin.
+        // new values (a hand edit of kwinrc is taken so).
         "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
     };
     Object.keys(DIRS).forEach(function (d) {
@@ -6706,7 +6686,7 @@ var KI3 = (function () {
 
     // KWin reconfigured: take the settings again and act on what changed. Also called once just
     // after a load (KWin's own start-up reconfigure), with nothing changed.
-    var RULE_KEYS = ["forWindow", "assign", "floatingWorkspaces"];
+    var RULE_KEYS = ["forWindow", "assign"];
     // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
     // asks for one when it loads or goes): its answer says whether it can draw the frame
     // (supported). callDBus calls back only on a reply: no answer within a second is a miss, and

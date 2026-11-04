@@ -287,7 +287,7 @@ private:
     QList<BarCall> m_barsHeld;
     QHash<QString, QString> m_memo;                         // SetMemo, by desktop id
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
-    // means the class's frame colour (the form's empty value).
+    // means the class's frame colour (the setting's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};
     QColor m_indicatorColour[2]{QColor(0x3d, 0xae, 0xe9), QColor()};
     bool m_frameOnFloating = false;

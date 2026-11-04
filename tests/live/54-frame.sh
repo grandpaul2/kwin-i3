@@ -107,17 +107,17 @@ check "a focused, at its half again"        eval 'wait_tree 1 "H[a* b]" && geom_
 point 300 360
 
 # 5. The settings: frameWidth leaves room for a wider frame, colours change live.
-form_set() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 form_del() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" --delete; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
-form_set frameWidth 3
+set_setting frameWidth 3
 check "frameWidth 3: 3 px of room"          geom_is a "3,3 634x714"
 check "  and 6 between: b"                  geom_is b "643,3 634x714"
 check "  the frame fills it"                eval 'poll pixel_is 0 360 $ACTIVE && pixel_is 2 360 $ACTIVE && pixel_is 637 360 $ACTIVE && pixel_is 640 360 $INACTIVE && pixel_is 642 360 $INACTIVE'
-form_set frameActive "#ff0000"
+set_setting frameActive "#ff0000"
 check "frameActive: red"                    poll pixel_is 0 360 255,0,0
 form_del frameActive; form_del frameWidth
 check "deleted: 1 px again"                 geom_is a "1,1 638x718"
-form_set holdEnabled false
+set_setting holdEnabled false
 check "holdEnabled off: the frame stays"    poll pixel_is 0 360 $ACTIVE
 form_del holdEnabled
 

@@ -111,7 +111,7 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **reconcile** | making one workspace's KWin tiles match the tree |
 | **root tile** | KWin's top tile for one output and one virtual desktop |
 | **the script** | kwin-i3 itself, `package/` (`src/` built into `main.js`) |
-| **the helper** | the `kwini3helper` KWin plugin: frame focus, tiling drag and resize, the resize mode, popup grace, layout keys, the terminal key, settings watch |
+| **the helper** | the `kwini3helper` KWin plugin: frame focus, tiling drag and resize, the resize mode, popup grace, layout keys, the terminal key, the key override |
 | **the effect** | the `kwini3hold` KWin effect: the frame, rounded corners, the split indicator, the hold |
 | **the frame** (ring) | the line the effect draws round a tiling window (`frameWidth`); i3's `pixel` border. "Frame" here never means KWin's `frameGeometry` or i3's X frame window; say those in full |
 | **the hold** | the effect freezing a layout change until every window has its new size |

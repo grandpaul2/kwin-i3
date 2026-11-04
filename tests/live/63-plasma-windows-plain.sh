@@ -6,7 +6,10 @@ source "$(dirname "$0")/lib.sh"
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 floating() { [[ "$(tree "$2" "${3:-0}")" == *"~$1"* ]]; }
-kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key floatingWorkspaces "3"
+# The shipped window rules (main.xml's default) and workspace 3's, as the Workspaces tab writes it:
+# i3's for_window [workspace="^3$"] floating enable.
+rules=$(sed -n '/<entry name="forWindow"/{n;s/.*<default>\(.*\)<\/default>.*/\1/p}' "$root/package/contents/config/main.xml")
+kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key forWindow "$rules; [workspace=\"^3\$\"] floating enable"
 busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'

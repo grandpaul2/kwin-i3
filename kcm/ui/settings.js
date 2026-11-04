@@ -23,16 +23,6 @@ function formatOutputs(map) {
         .map((n) => n + "=" + map[n]).join(", ");
 }
 
-// "3, 7" -> [3, 7]; as the script: whole numbers 1-10.
-function parseWorkspaces(text) {
-    const seen = {};
-    String(text || "").split(",").map((s) => s.trim()).filter((s) => /^[0-9]+$/.test(s))
-        .map(Number).filter((n) => n >= 1 && n <= 10).forEach((n) => { seen[n] = true; });
-    return Object.keys(seen).map(Number).sort((a, b) => a - b);
-}
-function formatWorkspaces(list) {
-    return parseWorkspaces(list.join(",")).join(", ");
-}
 
 // The window rules: i3's for_window and assign rules as text,
 // one rule per line or `;`-separated (the script's reading, src/rules.js split).
@@ -167,7 +157,7 @@ function classFromField(text) {
 }
 
 // A workspace whose new windows float (the Workspaces tab): the rule
-// [workspace="^N$"] floating enable in forWindow, as src/rules.js reads the old floatingWorkspaces.
+// [workspace="^N$"] floating enable in forWindow, i3's own way to float a workspace's new windows.
 function workspaceRule(n) { return '[workspace="^' + n + '$"] floating enable'; }
 function floatingWorkspaceList(forWindow) {
     const out = [];
@@ -224,15 +214,9 @@ function setWorkspaceGap(text, n, which, value) {
     return formatWorkspaceGaps(map);
 }
 
-// floatingWorkspaces as rules, exactly as src/rules.js workspaceRules reads it, for the
-// migration the page makes at load (main.qml). -> the rules to append to forWindow.
-function oldRules(settings) {
-    return parseWorkspaces(settings.floatingWorkspaces).map(workspaceRule);
-}
 
 if (typeof module !== "undefined") module.exports = {
-    parseOutputs, parseOutputLists, formatOutputs, parseWorkspaces, formatWorkspaces, splitRules, pickRule, addRule,
+    parseOutputs, parseOutputLists, formatOutputs, splitRules, pickRule, addRule,
     parseRules, parseRule, formatRule, formatRules, wholeClass, workspaceRule,
     floatingWorkspaceList, setWorkspaceFloating, parseWorkspaceGaps, formatWorkspaceGaps, outerOf, setWorkspaceGap,
-    oldRules,
 };

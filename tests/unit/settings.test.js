@@ -1,7 +1,7 @@
-// The settings table (src/settings.js), the form's entries (package/contents/config/main.xml) and
-// its widgets (package/contents/ui/config.ui) name the same keys with the same types and defaults,
-// and Settings parses what the form writes. A key added to one and not the
-// others would be a setting nobody can set, or a field that does nothing.
+// The settings table (src/settings.js) and the settings' entries (package/contents/config/main.xml,
+// from which the settings page's class is generated) name the same keys with the same types and
+// defaults, and Settings parses what the page writes. A key added to one and not the other would
+// be a setting nobody can set, or a field that does nothing.
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
@@ -22,7 +22,7 @@ function loadSettings(conf) {
     return { S, logs, store, debug: ctx.DEBUG_LOG };
 }
 
-const KCFG_TYPE = { list: "String", string: "String", text: "String", size: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", workspaces: "String", wsgaps: "String" };
+const KCFG_TYPE = { list: "String", string: "String", text: "String", size: "String", bool: "Bool", int: "Int", choice: "String", outputs: "String", colour: "String", wsgaps: "String" };
 
 function xmlEntries() {
     const out = {};
@@ -47,15 +47,12 @@ test("main.xml has every setting, with its type and default, and nothing else", 
     assert.deepStrictEqual(xmlEntries(), want);
 });
 
-test("config.ui has one kcfg_ widget per main.xml entry", () => {
-    const ui = read("package/contents/ui/config.ui");
-    const widgets = [...ui.matchAll(/<widget class="[^"]+" name="kcfg_([^"]+)"/g)].map((m) => m[1]).sort();
-    assert.deepStrictEqual(widgets, Object.keys(xmlEntries()).sort());
-});
-
-test("metadata.json names the generic scripted config module", () => {
+// The KWin Scripts cog opens the settings page: the plugin it names is the page's, whose QML is
+// found under its own id (kcm/kcm.cpp gives the page its own metadata whatever it is handed).
+test("metadata.json names the settings page as the script's config module", () => {
     const meta = JSON.parse(read("package/metadata.json"));
-    assert.strictEqual(meta["X-KDE-ConfigModule"], "kwin/effects/configs/kcm_kwin4_genericscripted");
+    assert.strictEqual(meta["X-KDE-ConfigModule"], "plasma/kcms/systemsettings/kcm_kwin_i3");
+    assert.match(read("kcm/CMakeLists.txt"), /kcmutils_add_qml_kcm\(kcm_kwin_i3[\s)]/);
 });
 
 test("defaults: debugLog off, the default rules", () => {
@@ -67,7 +64,7 @@ test("defaults: debugLog off, the default rules", () => {
     assert.strictEqual(S.get("workspaceAutoBackAndForth"), false, "off, as i3's default");
 });
 
-test("what the form writes parses: a bool as text", () => {
+test("what the page writes parses: a bool as text", () => {
     const { S, debug } = loadSettings({ debugLog: "true" });
     assert.strictEqual(S.get("debugLog"), true);
     assert.strictEqual(debug(), true);
@@ -82,43 +79,27 @@ test("a bool that doesn't parse is the default, with a warning", () => {
 test("load() reports exactly the keys that changed", () => {
     const { S, store } = loadSettings({});
     assert.deepStrictEqual(S.load(), []);
-    store.floatingWorkspaces = "3";
+    store.resizeStep = "40";
     store.floatingMaximumSize = "0x0";       // the default, written out: no change
-    assert.deepStrictEqual(S.load(), ["floatingWorkspaces"]);
-    assert.deepStrictEqual(S.get("floatingWorkspaces"), { 3: true });
+    assert.deepStrictEqual(S.load(), ["resizeStep"]);
+    assert.strictEqual(S.get("resizeStep"), 40);
     assert.deepStrictEqual(S.load(), []);
 });
 
-// The two files as Qt and KConfig read them: uic parses config.ui as QUiLoader would, and
-// kconfig_compiler the kcfg (which wants a group name; KWin's KConfigLoader takes the empty one
-// the stock scripts use, so one is put in for the check). Skipped where the tools are missing.
-test("uic and kconfig_compiler accept the form", (t) => {
+// main.xml as KConfig reads it: kconfig_compiler the kcfg (which wants a group name; KWin's
+// KConfigLoader takes the empty one the stock scripts use, so one is put in for the check).
+// Skipped where the tool is missing.
+test("kconfig_compiler accepts main.xml", (t) => {
     const { execFileSync } = require("node:child_process");
     const os = require("node:os");
-    const uic = ["/usr/lib64/qt6/libexec/uic", "/usr/lib/qt6/libexec/uic", "/usr/lib/qt6/uic"].find(fs.existsSync);
     const kcc = ["/usr/libexec/kf6/kconfig_compiler_kf6", "/usr/lib/kf6/kconfig_compiler_kf6"].find(fs.existsSync);
-    if (!uic || !kcc) { t.skip("uic or kconfig_compiler_kf6 not installed"); return; }
+    if (!kcc) { t.skip("kconfig_compiler_kf6 not installed"); return; }
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ki3-form-"));
     try {
-        execFileSync(uic, [path.join(root, "package/contents/ui/config.ui"), "-o", path.join(dir, "ui.h")], { stdio: "pipe" });
         fs.writeFileSync(path.join(dir, "x.kcfg"), read("package/contents/config/main.xml").replace('<group name="">', '<group name="Script-kwin-i3">'));
         fs.writeFileSync(path.join(dir, "x.kcfgc"), "File=x.kcfg\nClassName=X\n");
         execFileSync(kcc, ["x.kcfg", "x.kcfgc"], { cwd: dir, stdio: "pipe" });
     } finally { fs.rmSync(dir, { recursive: true, force: true }); }
-});
-
-// A choice is stored as its text (the combo box is bound by kcfg_property=currentText), so the
-// form's items must be exactly the table's choices, in its order.
-test("each choice's combo box lists exactly the table's choices", () => {
-    const { S } = loadSettings({});
-    const ui = read("package/contents/ui/config.ui");
-    for (const [k, t] of Object.entries(S.table)) {
-        if (t.type !== "choice") continue;
-        const block = ui.split(`name="kcfg_${k}"`)[1].split("</widget>")[0];
-        assert.match(block, /name="kcfg_property"[^>]*>\s*<cstring>currentText<\/cstring>/, k + ": bound by text");
-        const items = [...block.matchAll(/<item>\s*<property name="text">\s*<string>([^<]*)<\/string>/g)].map((m) => m[1]);
-        assert.deepStrictEqual(items, t.choices, k);
-    }
 });
 
 test("an int: in range parses, out of range or not a number is the default", () => {
@@ -145,15 +126,6 @@ test("workspaceOutputs: N=OUTPUT pairs, or a list of outputs per number (the fir
     const { S, logs } = loadSettings({ workspaceOutputs: "1=DP-4, 11=DP-6, two=DP-6, 3=, =DP-1" });
     assert.deepStrictEqual(S.get("workspaceOutputs"), { 1: ["DP-4"] });
     assert.strictEqual(logs.filter((l) => /WARN setting workspaceOutputs/.test(l)).length, 4, logs.join("\n"));
-});
-
-test("floatingWorkspaces: whole numbers 1-10; anything else skipped and logged", () => {
-    assert.deepStrictEqual(loadSettings({}).S.get("floatingWorkspaces"), {});
-    assert.deepStrictEqual(loadSettings({ floatingWorkspaces: "3, 7,10" }).S.get("floatingWorkspaces"), { 3: true, 7: true, 10: true });
-    assert.deepStrictEqual(loadSettings({ floatingWorkspaces: "3,3" }).S.get("floatingWorkspaces"), { 3: true });
-    const { S, logs } = loadSettings({ floatingWorkspaces: "0, 11, x, 3abc, 2" });
-    assert.deepStrictEqual(S.get("floatingWorkspaces"), { 2: true });
-    assert.strictEqual(logs.filter((l) => /WARN setting floatingWorkspaces/.test(l)).length, 4, logs.join("\n"));
 });
 
 test("a colour: #rrggbb, else the default", () => {

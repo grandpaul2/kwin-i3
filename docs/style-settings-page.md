@@ -1,7 +1,6 @@
 # Style suggestions: kwin-i3's settings pages
 
-How the System Settings page (`kcm/ui/`) and the cog's form (`package/contents/ui/config.ui`)
-look and read. **These are suggestions, just enough to set a page up**: the maintainer gives each
+How the System Settings page (`kcm/ui/`) looks and reads. **These are suggestions, just enough to set a page up**: the maintainer gives each
 page its look on the live page, and that look is final. Where a live page and this file differ,
 the page wins and this file is brought in line. No set of rules makes a page feel right, so a
 change is built from these suggestions, checked on a screenshot, and handed over; it is not
@@ -116,14 +115,6 @@ Window Rules, Frame and Keys.
 - **A key another shortcut also holds is set like any other**, with no note: which of the two
   runs is the key override's (its checkbox atop the Keys tab), never asked per key.
 - A setting that shapes a command (End session) is a dropdown in that command's row.
-
-## The cog's form (`config.ui`)
-
-Plain Qt widgets that work with no compiled page installed. It follows the page's sections and
-wording, one `QFormLayout` a section, with a short tooltip on every control. Where a tab has a
-list (rules, each workspace's screens), the form keeps a typed field. Its Defaults is KWin's,
-over the whole form, which a script can't scope: its first line points to the System Settings
-page.
 
 ## Checking a change
 

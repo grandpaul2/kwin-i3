@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Settings and the reload: a plain write, as the config form makes, changes
+# Settings and the reload: a plain write, as a hand edit of kwinrc makes, changes
 # nothing until Reload Settings (Meta+Shift+C, i3's reload) has KWin reconfigure; then the script
 # takes the new values and acts only on what changed. The rules: a window follows a changed
 # verdict, one floated by hand under an unchanged verdict stays.

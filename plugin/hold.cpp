@@ -61,7 +61,7 @@ struct BlendState {
 };
 }
 
-// The config form's group; the old [kwin-i3-hold] keys are still read
+// kwin-i3's settings group; the old [kwin-i3-hold] keys are still read
 // where the new ones are missing.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const QString s_oldGroup = QStringLiteral("kwin-i3-hold");

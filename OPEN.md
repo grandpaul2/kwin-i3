@@ -41,13 +41,3 @@ names a System Settings page for the drag distance, and the survey of stock 6.7.
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
 by step, from `git clone` to the Plasma tab; and with the plugins not built: what the Plasma
 tab's banner and the Keys tab's greyed override then say.
-
-**93. One place for the settings** (2026-11-04; `philosophy.md` "How it presents itself").
-The Configure form (`package/contents/ui/config.ui`, KWin Scripts' cog) goes; the cog opens the
-settings page if KWin's script list loads a KCM named by `X-KDE-ConfigModule` (`kcms/scripts/
-module.cpp` `configure` passes the script's metadata to `KCMultiDialog`: to probe). With it go
-the helper's settings watch (Apply applies: the page applies by itself, and a hand edit of
-`kwinrc` takes Meta+Shift+C, as i3's config reload), the form's unit tests
-and its `behaviour.md` rows (29, 45), and the `floatingWorkspaces` key, read and rewritten as a rule
-though no beta install had it (no migration, `plan.md`). `config/main.xml` stays: the page's settings class is built
-from it. Next: the spec.

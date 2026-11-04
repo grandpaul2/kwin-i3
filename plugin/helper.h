@@ -1,5 +1,5 @@
 // kwini3helper: kwin-i3's KWin plugin, jobs a script can't do (README, "Optional: the plugins").
-// Focus on the frame (framefocus.h), settings that apply on Apply (settingswatch.h), the keys
+// Focus on the frame (framefocus.h), the keys
 // that mean a key position fitted to the keyboard layout (layoutkeys.h), panel popups that
 // forgive a stray pointer (popupgrace.h), i3's tiling drag (tilingdrag.h), and i3's resize mode
 // with the terminal launch (resizemode.h), the pointer probe (pointerprobe.h), and kwin-i3's keys
@@ -16,7 +16,6 @@
 #include "pointerprobe.h"
 #include "popupgrace.h"
 #include "resizemode.h"
-#include "settingswatch.h"
 #include "tilingdrag.h"
 
 #include <plugin.h>
@@ -33,7 +32,6 @@ private:
     FrameFocus m_frameFocus;
     PointerProbe m_pointerProbe;    // after FrameFocus, which it reads (and is told by)
     GapStrips m_gapStrips;          // after both: reads TilingDrag's reach, FrameFocus's frame
-    SettingsWatch m_settingsWatch;
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;
     ResizeMode m_resizeMode;        // installs its key filter itself, only while the mode is on

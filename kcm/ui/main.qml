@@ -150,23 +150,6 @@ KCM.AbstractKCM {
         Kirigami.Separator { Layout.fillWidth: true }
     }
 
-    // floatingWorkspaces becomes rules the moment the page reads it: the rows
-    // show them, and Apply writes the rules and takes the key out of kwinrc (a setting at its
-    // default is removed). As src/rules.js reads it at load.
-    function migrateOld() {
-        const s = root.settings;
-        const rules = Logic.oldRules(s);
-        if (!rules.length && !s.floatingWorkspaces) return;
-        let text = s.forWindow;
-        rules.forEach((r) => { text = Logic.addRule(text, r); });
-        s.forWindow = text;
-        s.floatingWorkspaces = "";
-    }
-    Component.onCompleted: migrateOld()
-    Connections {
-        target: root.settings
-        function onFloatingWorkspacesChanged() { root.migrateOld() }
-    }
 
     StackLayout {
         anchors.fill: parent

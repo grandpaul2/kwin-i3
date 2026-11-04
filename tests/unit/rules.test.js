@@ -11,7 +11,7 @@ const path = require("node:path");
 // its WARN lines.
 const src = fs.readFileSync(path.join(__dirname, "../../src/rules.js"), "utf8");
 function rules(settings) {
-    const values = Object.assign({ forWindow: "", assign: "", floatingWorkspaces: {},
+    const values = Object.assign({ forWindow: "", assign: "",
                                    floatingMinimumSize: "75x50", floatingMaximumSize: "0x0" }, settings);
     const logs = [];
     const R = Function("Settings", "log", "module", src + "\nreturn Rules;")({ get: (k) => values[k] }, (l) => logs.push(l), undefined);
@@ -143,7 +143,7 @@ test("classify: criteria match class, instance, title, window_role, window_type,
     assert.strictEqual(kind(R, { resourceName: "term" }), "floating");
     assert.strictEqual(kind(R, { windowRole: "pop" }), "floating");
     assert.strictEqual(kind(R, { dialog: true, normalWindow: false, resourceClass: "x" }), "tiling", "floating disable tiles a dialog");
-    assert.strictEqual(kind(R, { resourceClass: "x" }, { ws: 3 }), "floating", "the workspace it opens on (floatingWorkspaces as a criterion)");
+    assert.strictEqual(kind(R, { resourceClass: "x" }, { ws: 3 }), "floating", "the workspace it opens on");
     assert.strictEqual(kind(R, { resourceClass: "x" }, { ws: 2 }), "tiling");
     // Rules run in order, each seeing the kind the ones before left (i3): [floating] after an
     // enable undoes it, and alone it sees the default float.
@@ -172,15 +172,6 @@ test("assignFor: the first matching assign, as workspace or output; none without
     assert.deepStrictEqual(R.assignFor(win({ resourceClass: "steam" })), { workspace: 5 });
     assert.deepStrictEqual(R.assignFor(win({ resourceClass: "discord" })), { output: "DP-6" });
     assert.strictEqual(R.assignFor(win({ resourceClass: "kate" })), null);
-});
-
-// ---- floatingWorkspaces as rules (R11) -----------------------------------------------------------
-
-test("floatingWorkspaces: a rule per workspace, before forWindow", () => {
-    const { R } = rules({ floatingWorkspaces: { 3: true }, forWindow: '[class="^gimp$"] floating disable' });
-    assert.strictEqual(kind(R, { caption: "Firefox" }, { ws: 3 }), "floating", "a Floating workspace");
-    assert.strictEqual(kind(R, { caption: "Firefox" }, { ws: 1 }), "tiling");
-    assert.strictEqual(kind(R, { resourceClass: "gimp" }, { ws: 3 }), "tiling", "forWindow runs after: the user's disable wins");
 });
 
 test("parseSize: WxH with 0 and -1; anything else null", () => {

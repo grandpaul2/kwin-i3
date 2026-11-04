@@ -191,7 +191,7 @@ its top when the plugins aren't loaded.
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | the tiling drag's highlight and move cursor; i3's 1 px frame around tiling windows (width and colours in the settings), blue on the active one: tiling windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiling windows keep their title bars; on a fast output, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone; and **the key override**: with "On a key conflict, kwin-i3's key wins" on (the default), a key kwin-i3 shares with Plasma's shortcuts runs kwin-i3's command, and Meta+T doesn't open Plasma's tile editor | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page; a shared key runs Plasma's shortcut |
+| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone; and **the key override**: with "On a key conflict, kwin-i3's key wins" on (the default), a key kwin-i3 shares with Plasma's shortcuts runs kwin-i3's command, and Meta+T doesn't open Plasma's tile editor | with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page; a shared key runs Plasma's shortcut |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
@@ -253,13 +253,10 @@ the tiling windows, and moves it by key. **Dock**: Plasma's panels. **Override-r
 menus, notifications, KRunner and Plasma's system windows, which no window manager places;
 kwin-i3 never tiles, floats, moves or resizes them, as i3 doesn't.
 
-kwin-i3's page in System Settings > Window Management (above), or System Settings > Window
-Management > KWin Scripts > kwin-i3 > Configure, or by hand in
-`~/.config/kwinrc`, all in `[Script-kwin-i3]`. On the page, Apply applies at once. In the
-Configure form, with the plugins, a save applies at once
-(`kwini3helper` watches the file and has KWin reconfigure). Without them, press **Meta+Shift+C**
-after a save, or log in again: KWin 6.7.5's generic script form saves without telling KWin, and
-the reload key asks KWin to reconfigure, as i3's reload does. Everything, the script and the
+kwin-i3's page in System Settings > Window Management (above; the cog beside kwin-i3 in KWin
+Scripts opens it too), or by hand in `~/.config/kwinrc`, all in `[Script-kwin-i3]`. On the page,
+Apply applies at once. After a hand edit, press **Meta+Shift+C**, or log in again: the reload key
+asks KWin to reconfigure, as i3's reload does. Everything, the script and the
 two plugins, takes its new values on that reconfigure; a `kwriteconfig6 --notify` write still
 reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled` and `TimeoutMs`, before
 2026-10-24) is still read where `holdEnabled` or `holdTimeoutMs` is missing.
@@ -295,7 +292,6 @@ reaches the plugins directly. The effect's old group (`[kwin-i3-hold]` `Enabled`
 | `[Script-kwin-i3] frameIndicatorActive`, `frameIndicatorInactive` | `#3daee9`, empty | on a window alone in its split (or on its workspace), after a split key and until the focus leaves it, the side where the next window opens, right or bottom, in this colour per class (i3's `indicator`, which i3 shows always); empty: the class's frame colour |
 | `[Script-kwin-i3] tiledLook` | `frame` | how tiling windows look: `frame` (i3's frame, no title bar), `titlebars` (each keeps its own title bar, as a Plasma window; the maximize button does nothing, as in sway), `bare` (neither; nothing marks the focused window, KWin's Dim Inactive effect can, with its "Keep above windows" ticked, as floating windows are kept above). Plugins: without them, `titlebars` whatever this says |
 | `[Script-kwin-i3] roundedCorners` | `true` | tiling windows' corners rounded 5 px, as Breeze's, the frame following them, in `frame` and `bare` (plugins: without them tiling windows keep their title bars, and with them their theme's corners). Floating windows keep their theme's corners either way |
-| `[Script-kwin-i3] floatingWorkspaces` | empty | workspaces where new windows float: `3, 7`. A window that opens there floats, with its own title bar, as a Plasma window (Meta+Shift+Space tiles it); it keeps its mode when moved. Floating windows stay above tiling ones there too, as in i3 |
 | `[Script-kwin-i3] frameOnFloating` | `false` | floating windows lose their title bar too and get the frame in the same colours (plugins; not a window that draws its own title bar). How kwin-i3 remembers a floating window across a reload: with the plugins, the effect keeps the set; without them, KWin's keep-above flag, which kwin-i3 sets on every floating window and treats as its own (a window you keep above yourself, in no tile when kwin-i3 loads, is adopted as floating) |
 
 **An app that floats at its old tiled size**: a floated window comes back at the size it opened
