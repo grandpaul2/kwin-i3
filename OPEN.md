@@ -42,6 +42,15 @@ none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools
 by step, from `git clone` to the Plasma tab, the key override row ticked included; and with the
 plugins not built: what the Plasma tab's banner and its greyed override row then say.
 
+**93. One place for the settings** (2026-11-04; `philosophy.md` "How it presents itself").
+The Configure form (`package/contents/ui/config.ui`, KWin Scripts' cog) goes; the cog opens the
+settings page if KWin's script list loads a KCM named by `X-KDE-ConfigModule` (`kcms/scripts/
+module.cpp` `configure` passes the script's metadata to `KCMultiDialog`: to probe). With it go
+the helper's settings watch (Apply applies: the page applies by itself, and a hand edit of
+`kwinrc` takes Meta+Shift+C, as i3's config reload), the form's unit tests
+and its `behaviour.md` rows (29, 45). `config/main.xml` stays: the page's settings class is built
+from it. Next: the spec.
+
 **91. Plasma's settings won at runtime** (2026-11-03; `philosophy.md` "The line between i3 and
 Plasma", `plan.md` reason (e) and "Install and first run", decided; the code still writes them).
 The script makes focus follows mouse (with no delay, next focus under the pointer; a setting of
@@ -49,9 +58,15 @@ its own, i3's `focus_follows_mouse`), a new window's focus (stealing prevention 
 screen-edge tiling and maximizing off through KWin's live options (probe 93), setting them again
 on each reconfigure; Release reconfigures so Plasma's return; popup grace puts back kwin-i3's
 delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and animations.
-`behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Open in it:
-the key override's default (off from the old reason (e); i3 grabs its keys); `tools/testkwin.sh`'s
-default mode unbinds Plasma's stock shortcuts as the maintainer's desktop once did (133-165), and
-that desktop now runs them at Plasma's defaults with the override enabled; the key override row's
-count runs `kcm/setup.cpp`'s clash scan up to four times a load, where once would do. Next: the
-code spec.
+`behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Settled by
+the foundations since (designed for the plugins; Meta+T and kwin-i3's keys won at runtime): the
+key override on by default, a setting of kwin-i3's own, off the Plasma tab; Meta+T kept from the
+tile editor by the helper's key filter, so `taken-keys.json`, `tools/take-keys.py`'s take and
+restore and `kcm/keys.cpp`'s record go; the script's load-time taken-key check (`TAKEN`,
+`src/keyname.js`, the helper's `TerminalService`) goes, with the clash scan kept only for the
+override's own row; `tools/testkwin.sh`'s stock-shortcut unbind (133-165) and its stock/own modes
+go, the scenarios that press real keys running with the plugins. To check in the spec: whether
+the window actions and window animations can also be won at runtime (then they leave the Plasma
+tab too); `popupgrace.cpp` puts back `kwinrc`'s delay where it should put back kwin-i3's. Open:
+what an upgrade owes an install that ticked v1.3.0's focus rows (their values are in `kwinrc`).
+Next: the code spec.

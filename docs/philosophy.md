@@ -25,8 +25,8 @@ manager has to rebuild what a desktop environment already gives, at every update
    lacks i3's reach and doesn't work for everyone; with X11 going away, they need somewhere stable
    to land. They know i3's words and keys, and kwin-i3 keeps both. They carry
    their i3 config over by hand: the settings page has plain controls, each one's help naming its
-   i3 directive, and shows as i3's own text a rule its rows can't hold; the Configure form and
-   `kwinrc` take i3's syntax (`for_window`, `assign`, `workspace … gaps`), on purpose.
+   i3 directive, and shows as i3's own text a rule its rows can't hold; `kwinrc` takes i3's
+   syntax (`for_window`, `assign`, `workspace … gaps`), on purpose.
 2. **Second, and still important: Plasma users** who want a full-powered window manager without
    changing much. With what kwin-i3 adds and what Plasma already has, most of the experience is
    reachable with the Meta key and any two-button pointer alone:
@@ -35,7 +35,8 @@ manager has to rebuild what a desktop environment already gives, at every update
 
 What follows from the order: i3's behaviour and words win a tie, and nothing a Plasma user
 meets first should need i3 knowledge to undo (a floating window looks like any Plasma window;
-the settings page says what each word means; i3's syntax is in the Configure form, not the page).
+the settings page says what each word means, and shows i3's syntax only for a rule its rows can't
+hold).
 
 ## How a decision is made
 
@@ -102,9 +103,8 @@ against i3 and the code every so often, to catch what slipped.
   in force again when kwin-i3 is released or removed; until then a Plasma page may show a value
   kwin-i3 overrides, and kwin-i3's own page is where it is changed. kwin-i3 writes nothing of
   Plasma's for this, so there is nothing to give back.
-- **What kwin-i3 can't win at runtime, the user changes.** Where it can't, or winning would fail
-  badly without the plugins (per-output desktops, window animations, the window actions, Meta+T
-  from the tile editor), Plasma's setting stays the user's: kwin-i3 names what it is designed
+- **What kwin-i3 can't win at runtime, the user changes.** Where it can't (per-output desktops,
+  window animations, the window actions), Plasma's setting stays the user's: kwin-i3 names what it is designed
   around and why, and changes one only on the user's yes, in a place that says it is Plasma's
   setting, after saving the old value, and gives it back on one action: i3's `i3-config-wizard`
   asks once and never overwrites a config that exists (`docs/plan.md`, "Install and first run").
@@ -116,9 +116,12 @@ against i3 and the code every so often, to catch what slipped.
   makes every change (`docs/style-settings-page.md`, "Saying what to pick").
 - **Defaults means "back to the default", as on every Plasma page**, for the tab shown and only
   it: what is Plasma's goes back to Plasma (each Plasma setting to what it was before kwin-i3
-  changed it, the key override off); what is kwin-i3's own goes to kwin-i3's default, i3's where
+  changed it); what is kwin-i3's own goes to kwin-i3's default, i3's where
   i3 has one. Never kwin-i3's changes to Plasma's settings, and never the reader's data on another
   tab (their window rules, their workspaces' screens).
+- **One place for its settings: the settings page.** Plasma's KWin Scripts page opens it too.
+  `kwinrc` holds the same settings, in i3's syntax where i3 has one, for a user who writes it by
+  hand.
 - **kwin-i3 is the window manager**, and says so. Its workspaces, outputs and keyboard focus
   apply to every window in the tree. No soft lies ("we won't touch your windows"): a user who
   meets something kwin-i3 does needs a model for why, and the truth is the only one that holds.
@@ -145,8 +148,9 @@ against i3 and the code every so often, to catch what slipped.
 - **The defaults are the product.** During the Stage, the maintainer's desktop runs what a new
   user gets, kwin-i3's recommended Plasma settings included; personal customisations come back
   later.
-- **The product is the script and its two plugins.** The script alone still runs the tree,
-  workspaces, keys and floating, and the settings page's banner names what is missing without
-  them (`docs/plan.md`, "Scope").
+- **The product is the script and its two plugins**, and it is designed for both: no default,
+  rule, setting or test is chosen for the script running without them. It still runs the tree,
+  workspaces, keys and floating then, and the settings page's banner names what is missing
+  (`docs/plan.md`, "Scope").
 - **i3's defaults where i3 has one**, unless a row gives one of `docs/plan.md`'s reasons: a
   command i3 binds to no key stays unbound here too.

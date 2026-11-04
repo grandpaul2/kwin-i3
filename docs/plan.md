@@ -77,11 +77,10 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   is (`docs/philosophy.md`, "The line between i3 and Plasma"): focus follows mouse over KWin's
   focus policy, a new window's focus over focus stealing prevention, the tree over screen-edge
   tiling, all through KWin's live options, which a reconfigure resets and kwin-i3 sets again
-  (`docs/kwin-notes.md`, "Config and D-Bus"). Where it can't win at runtime, or winning would
-  fail badly without the plugins (per-output desktops, window animations, the window actions,
-  Meta+T from the tile editor), Plasma's setting stands in for i3's, and kwin-i3 changes it only
-  as "Install and first run" (below) allows: named, asked, saved first, given back. A shortcut
-  another component holds runs its own on a shared key unless the user turns on the key override.
+  (`docs/kwin-notes.md`, "Config and D-Bus"); kwin-i3's keys over Plasma's shortcuts and Meta+T
+  over the tile editor, through the helper's key filter. Where it can't win at runtime
+  (per-output desktops, window animations, the window actions), Plasma's setting stands in for i3's, and kwin-i3 changes it only
+  as "Install and first run" (below) allows: named, asked, saved first, given back.
 - **(f) i3's result comes from a defect in its code, not from a rule**: an unsigned value that
   wraps, a size never set, a path that breaks an invariant i3's own code enforces elsewhere (both
   places cited). The ≠ row cites the defect's file:line and follows what i3's code evidently intends; copying the defect
@@ -103,12 +102,11 @@ page. Rule fields (`for_window`, `assign`, `workspace … gaps`) take i3's synta
 i3 users (`docs/philosophy.md`, "Who it is for").
 
 **Keys and Plasma's shortcuts:** kwin-i3's default keys are i3's (`behaviour.md` §8). A key
-another Plasma component also holds runs that component's shortcut (reason (e)) unless the user
-turns on the key override, "On a key conflict, kwin-i3's key wins" (the Plasma
-tab): then kwin-i3's command runs, as i3 grabs its own keys, and **no other shortcut is
-changed**: the helper catches kwin-i3's keys ahead of Plasma's shortcuts (`behaviour.md` §8,
-"Shared keys"). kwin-i3 never takes a key from another shortcut, but Meta+T from Plasma's tile
-editor, a Plasma tab row of its own.
+another Plasma component also holds runs kwin-i3's command, as i3 grabs its own keys, and **no
+other shortcut is changed**: the helper catches kwin-i3's keys ahead of Plasma's shortcuts
+(`behaviour.md` §8, "Shared keys"), and Meta+T likewise ahead of Plasma's tile editor. The user
+can turn the override off, "On a key conflict, kwin-i3's key wins". kwin-i3 never takes a key
+from another shortcut.
 
 **Popup grace** (the helper) is kwin-i3's own, for the Plasma audience: with focus follows
 mouse, crossing the gap between a floating panel and its popup would focus the window beneath
@@ -232,24 +230,24 @@ follows it:
   again; the log-out is KWin's, which reads a new script's and plugins' paths only at login; every
   choice waits for the first-run step. Packaging is `LATER.md`'s "Release prep".
 - **The first-run step is the settings page's Plasma tab**, opened from the page's
-  banner while anything kwin-i3 needs differs, as shared keys are known only once kwin-i3 is loaded. It lists each Plasma setting on the list (below), and the key override with
-  the keys kwin-i3 shares with Plasma's shortcuts: its current value, the one kwin-i3 would set, and why, each said
-  plainly to be **Plasma's, not kwin-i3's**. A tick is an edit like any setting on the page: its
-  Apply makes it, and nothing changes without it; **Defaults** puts Plasma's
-  back (each row kwin-i3 changed to the Plasma column, the key override off), as Defaults on any
-  Plasma page does (`docs/philosophy.md`).
+  banner while anything kwin-i3 needs differs. It lists each Plasma setting on the list (below):
+  its current value, the one kwin-i3 would set, and why, each said plainly to be **Plasma's, not
+  kwin-i3's**. A tick is an edit like any setting on the page: its Apply makes it, and nothing
+  changes without it; **Defaults** puts Plasma's back (each row kwin-i3 changed to the Plasma
+  column), as Defaults on any Plasma page does (`docs/philosophy.md`).
   The install's last line points there.
 - **The list**: only what kwin-i3 can't win at runtime (reason (e)): the Plasma settings kwin-i3
   needs (per-output desktops, with more than one output); the ones that stand in for i3's (the
-  window actions; Meta+T freed from the tile editor); the key override, for kwin-i3's keys another
-  shortcut holds; and the optional (window animations set to None, not the global speed; i3 has
+  window actions); and the optional (window animations set to None, not the global speed; i3 has
   none).
 - **What kwin-i3 wins at runtime asks nothing**: focus follows mouse with no delay and the next
-  focus under the pointer, a new window's focus, screen-edge tiling and maximizing off. Each is in
+  focus under the pointer, a new window's focus, screen-edge tiling and maximizing off, kwin-i3's
+  keys over the Plasma shortcuts that share them, Meta+T kept from the tile editor. Each is in
   force while kwin-i3 runs and Plasma's own again when it is released or removed; focus follows
-  mouse is a setting of kwin-i3's own (i3's `focus_follows_mouse`), the others are the tree's.
+  mouse and the key override are settings of kwin-i3's own (i3's `focus_follows_mouse`; the
+  override on, as i3 grabs its keys), the others are the tree's.
 - **Every change outside kwin-i3's own settings can be undone.** Before kwin-i3 changes a Plasma
-  setting or takes Meta+T from the tile editor, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
+  setting, it saves the old value (`~/.local/state/kwin-i3/`). Each one is
   given back alone or all at once, unticked and applied, and all on removal. A give-back writes
   the old value only where the current one is still what kwin-i3 set: a change the user made
   since is theirs, and stays.
