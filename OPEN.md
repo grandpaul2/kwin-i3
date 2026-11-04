@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main at 63f30ad: script and plugins (settings page at 710995a). `stable` is at
+main at 63f30ad: script and plugins (settings page at 4c80283). `stable` is at
 `v1.3.0` (2026-11-03, 8a42986).
 
 ## Stage
@@ -51,8 +51,3 @@ on each reconfigure; Release reconfigures so Plasma's return; popup grace puts b
 delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and animations.
 `behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Open in it:
 the key override's default (off from the old reason (e); i3 grabs its keys). Next: the code spec.
-
-**92. The settings page opens slowly** (2026-11-03): about 500 synchronous D-Bus calls on open,
-the clash scan run up to four times per load (`kcm/setup.cpp` `clashes()`, one `keyHolder` per
-key) and everything read twice (`PlasmaSettings.qml:25` refreshes on first show). Next: a small
-spec, one `allShortcutInfos` read and no double read; separate from item 91.
