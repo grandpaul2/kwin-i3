@@ -187,15 +187,12 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
                 {},
                 i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them. Enabled, kwin-i3's command runs; otherwise Plasma's. Plasma's shortcuts are not changed either way, and the override needs kwin-i3's plugins."),
                 i18n("A key Plasma also uses runs Plasma's shortcut unless this is enabled."), false, {}, nullptr};
+    // How many, not which: on a stock Plasma they are many, and a few named would only stand in
+    // for the rest. Said the same whichever way the row is set; the note says which one runs.
     keysRow.plasma = [this](const Getter &) {
-        const auto c = clashes();
-        QStringList out;
-        for (const auto &[code, h] : c)
-            out << i18nc("key: the Plasma shortcut it runs", "%1: %2", QKeySequence(code).toString(QKeySequence::NativeText), h.friendly);
-        const QString list = out.size() > 4 ? i18nc("first four, then a count", "%1; and %2 more", out.mid(0, 4).join(QStringLiteral("; ")), out.size() - 4)
-                                            : out.join(QStringLiteral("; "));
-        return c.isEmpty() ? i18n("No Plasma shortcut shares a key with kwin-i3.")
-                           : i18np("1 shared key runs Plasma's shortcut: %2.", "%1 shared keys run Plasma's shortcuts: %2.", c.size(), list);
+        const int n = clashes().size();
+        return n == 0 ? i18n("No Plasma shortcut shares a key with kwin-i3.")
+                      : i18np("Plasma's shortcuts share 1 key with kwin-i3.", "Plasma's shortcuts share %1 keys with kwin-i3.", n);
     };
     m_defs << keysRow;
 

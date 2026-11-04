@@ -1062,7 +1062,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   open/close, maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`,
   and unloaded; the global speed untouched); and the key override (§8, "Shared keys"), a setting
   of kwin-i3's own shown as this tab's last row, its boxes writing `keysOverride` (greyed without
-  the plugins; its line lists the keys Plasma's shortcuts run instead while it is off). Every tick is an edit like any setting: **Apply**
+  the plugins; its line says how many of kwin-i3's keys Plasma's shortcuts share, not which). Every tick is an edit like any setting: **Apply**
   makes it (each key's old value, or its absence, and the value written saved first in
   `~/.local/state/kwin-i3/plasma-settings.json`, Meta+T's in `taken-keys.json`; KWin
   reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3 changed to
