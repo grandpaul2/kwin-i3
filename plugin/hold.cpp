@@ -1237,6 +1237,16 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
             QPainterPath edge;
             edge.addRect(QRectF(side ? width - line : 0, bar.height, line, radius));
             p.fillPath(fill.intersected(edge), borderColour(above));
+            // The bottom line dips with the ring's corner: over the corner it leaves the bar's
+            // edge and runs along the ring's outer arc, one line wide, down to the side.
+            const QRectF corner(x0, bar.height - line, radius, radius + line);
+            QPainterPath straight;
+            straight.addRect(QRectF(side ? x0 : line, bar.height - line, radius - line, line));
+            p.fillPath(straight, tabColour(above));
+            QPainterPath band, square;
+            band.addEllipse(QRectF(side ? width - 2 * radius - line : -line, bar.height - line, 2 * (radius + line), 2 * (radius + line)));
+            square.addRect(corner);
+            p.fillPath(band.subtracted(arc).intersected(square), borderColour(above));
         }
         p.end();
         bar.radius = radius;
