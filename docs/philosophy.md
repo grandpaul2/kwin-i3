@@ -95,11 +95,19 @@ against i3 and the code every so often, to catch what slipped.
 - **The seam is who arranges a window.** Tiling: the tree places it. Floating: you place it, in
   the tree. Override-redirect: the window manager doesn't (KRunner, popups, menus). Decoration,
   theme, panels and the rest are Plasma's (`docs/definitions.md`, the kinds).
-- **Plasma's own settings are the user's.** kwin-i3 never changes one unasked (focus policy,
-  per-output desktops, the shortcuts other components hold). It names what it is designed around
-  and why; it changes one only on the user's yes, in a place that says it is Plasma's setting,
-  after saving the old value, and gives it back on one action: i3's `i3-config-wizard` asks once
-  and never overwrites a config that exists (`docs/plan.md`, "Install and first run").
+- **What i3 decides, kwin-i3 decides at runtime; Plasma's settings stay as the user set them.**
+  Where a Plasma setting covers something i3 decides itself (focus follows mouse, a new window's
+  focus) or a Plasma feature fights the tree (screen-edge tiling), kwin-i3 wins while it runs, as
+  i3 grabs its own keys whatever else wants them, and leaves the setting as it is. The setting is
+  in force again when kwin-i3 is released or removed; until then a Plasma page may show a value
+  kwin-i3 overrides, and kwin-i3's own page is where it is changed. kwin-i3 writes nothing of
+  Plasma's for this, so there is nothing to give back.
+- **What kwin-i3 can't win at runtime, the user changes.** Where it can't, or winning would fail
+  badly without the plugins (per-output desktops, window animations, the window actions, Meta+T
+  from the tile editor), Plasma's setting stays the user's: kwin-i3 names what it is designed
+  around and why, and changes one only on the user's yes, in a place that says it is Plasma's
+  setting, after saving the old value, and gives it back on one action: i3's `i3-config-wizard`
+  asks once and never overwrites a config that exists (`docs/plan.md`, "Install and first run").
 
 ## How it presents itself
 

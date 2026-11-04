@@ -41,3 +41,18 @@ names a System Settings page for the drag distance, and the survey of stock 6.7.
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
 by step, from `git clone` to the Plasma tab, the key override row ticked included; and with the
 plugins not built: what the Plasma tab's banner and its greyed override row then say.
+
+**91. Plasma's settings won at runtime** (2026-11-03; `philosophy.md` "The line between i3 and
+Plasma", `plan.md` reason (e) and "Install and first run", decided; the code still writes them).
+The script makes focus follows mouse (with no delay, next focus under the pointer; a setting of
+its own, i3's `focus_follows_mouse`), a new window's focus (stealing prevention Low) and
+screen-edge tiling and maximizing off through KWin's live options (probe 93), setting them again
+on each reconfigure; Release reconfigures so Plasma's return; popup grace puts back kwin-i3's
+delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and animations.
+`behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Open in it:
+the key override's default (off from the old reason (e); i3 grabs its keys). Next: the code spec.
+
+**92. The settings page opens slowly** (2026-11-03): about 500 synchronous D-Bus calls on open,
+the clash scan run up to four times per load (`kcm/setup.cpp` `clashes()`, one `keyHolder` per
+key) and everything read twice (`PlasmaSettings.qml:25` refreshes on first show). Next: a small
+spec, one `allShortcutInfos` read and no double read; separate from item 91.
