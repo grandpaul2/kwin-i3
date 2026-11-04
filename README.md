@@ -217,9 +217,9 @@ window once.
 ### The settings page
 
 kwin-i3's own page in System Settings > Window Management: every setting a user would change
-(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: Tiling, Gaps, Mouse &
-Focus, Workspaces, Window Rules, Frame, **Keys** (kwin-i3's keys rebound in one list instead of KWin's)
-and **Plasma** (Plasma's own settings kwin-i3 works best with). A key another shortcut also holds
+(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: **Plasma** (Plasma's
+own settings kwin-i3 works best with), Tiling, Gaps, Mouse & Focus, Workspaces, Window Rules, Frame
+and **Keys** (kwin-i3's keys rebound in one list instead of KWin's). A key another shortcut also holds
 is set all the same: which of the two runs is the key override's (the Plasma tab, "On a key
 conflict, kwin-i3's key wins"). Apply takes effect at once, with or without the plugins.
 **Defaults** resets only the tab shown: kwin-i3's settings to their defaults, or, on the Plasma

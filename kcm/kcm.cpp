@@ -29,7 +29,7 @@
 
 // The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
 // what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
-enum Tab { TilingTab, GapsTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab, PlasmaTab };
+enum Tab { PlasmaTab, TilingTab, GapsTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
 // the rest Window Rules'. debugLog, holdTimeoutMs (internal) and floatingWorkspaces (read into
@@ -366,7 +366,7 @@ private:
     }
 
     std::unique_ptr<KWinI3Settings> m_settings;
-    int m_tab = TilingTab;
+    int m_tab = PlasmaTab;      // the first tab, shown when the page opens
     KeysModel *m_keys;
     SetupModel *m_setup;
     bool m_scriptEnabled = false;

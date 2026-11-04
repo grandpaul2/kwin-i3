@@ -1,5 +1,5 @@
 // kwin-i3's page: the script's settings as Plasma's own pages lay theirs out, in tabs (as Window
-// Behavior's): Tiling, Gaps, Mouse & Focus, Workspaces, Window Rules, Frame, Keys and Plasma, each a page
+// Behavior's): Plasma, Tiling, Gaps, Mouse & Focus, Workspaces, Window Rules, Frame and Keys, each a page
 // of its own file, loaded by name ("Keys" is also QtQuick's attached Keys). The banners say the
 // state above every tab. Defaults resets the tab shown (kcm.currentTab, kcm.cpp). Every control
 // says what it is to a screen reader (tools/a11y.py audit; docs/style-settings-page.md,
@@ -62,7 +62,7 @@ KCM.AbstractKCM {
             actions: Kirigami.Action {
                 text: i18nc("@action:button", "Review Plasma Settings…")
                 icon.name: "go-next"
-                onTriggered: tabs.currentIndex = tabs.count - 1   // the Plasma tab, the last
+                onTriggered: tabs.currentIndex = 0   // the Plasma tab, the first
             }
         }
         // Plasma's Window Behavior tabs: a QTabWidget in document mode, expanding (KWin
@@ -78,9 +78,9 @@ KCM.AbstractKCM {
             id: tabs
             property int currentIndex: 0
             readonly property int count: tabNames.length
-            readonly property var tabNames: [i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"), i18nc("@title:tab", "Mouse & Focus"),
-                i18nc("@title:tab", "Workspaces"), i18nc("@title:tab", "Window Rules"), i18nc("@title:tab", "Frame"),
-                i18nc("@title:tab", "Keys"), i18nc("@title:tab", "Plasma")]
+            readonly property var tabNames: [i18nc("@title:tab", "Plasma"), i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"),
+                i18nc("@title:tab", "Mouse & Focus"), i18nc("@title:tab", "Workspaces"), i18nc("@title:tab", "Window Rules"),
+                i18nc("@title:tab", "Frame"), i18nc("@title:tab", "Keys")]
             Layout.fillWidth: true
             Layout.preferredHeight: 34
             implicitHeight: 34
@@ -172,7 +172,7 @@ KCM.AbstractKCM {
         anchors.fill: parent
         currentIndex: tabs.currentIndex
         Repeater {
-            model: ["Tiling.qml", "Gaps.qml", "MouseFocus.qml", "Workspaces.qml", "WindowRules.qml", "Frame.qml", "Keys.qml", "PlasmaSettings.qml"]
+            model: ["PlasmaSettings.qml", "Tiling.qml", "Gaps.qml", "MouseFocus.qml", "Workspaces.qml", "WindowRules.qml", "Frame.qml", "Keys.qml"]
             Loader { required property string modelData; source: modelData }
         }
     }

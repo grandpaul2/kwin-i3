@@ -7,8 +7,8 @@ the page wins and this file is brought in line. No set of rules makes a page fee
 change is built from these suggestions, checked on a screenshot, and handed over; it is not
 polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's
 own pages do (Virtual Desktops, Window Behavior, Display Configuration, Window Rules): open the
-Plasma page and match it. The finished tabs are the best example: Tiling, Gaps, Mouse & Focus,
-Workspaces, Window Rules, Frame, Keys and Plasma.
+Plasma page and match it. The finished tabs are the best example: Plasma, Tiling, Gaps, Mouse &
+Focus, Workspaces, Window Rules, Frame and Keys.
 
 ## Layout
 
@@ -46,8 +46,8 @@ Workspaces, Window Rules, Frame, Keys and Plasma.
 - **A way back from a slip.** Every edit waits for Apply. Reset drops every edit; Defaults
   resets the tab shown (`docs/philosophy.md`, "How it presents itself"). A row where a slip is easy and hard to undo by hand (a colour) also gets a Default
   button of its own, greyed at the default.
-- **The page is tabs**, as Plasma's Window Behavior: Tiling, Gaps, Mouse & Focus, Workspaces,
-  Window Rules, Frame, Keys, Plasma, in Window Behavior's tab bar (flat, as wide as the page, drawn
+- **The page is tabs**, as Plasma's Window Behavior: Plasma first (the first-run step), then
+  Tiling, Gaps, Mouse & Focus, Workspaces, Window Rules, Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
   to Breeze's document-mode recipe, `kcm/ui/main.qml`), each a page of its own file under the banners and the tab bar. A tab
   may open with one line saying what it is for, in its header, with its help button at its end.
 - **No paragraphs on the page.** An explanation goes in a `Kirigami.ContextualHelpButton`

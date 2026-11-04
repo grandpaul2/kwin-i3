@@ -1012,7 +1012,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   Review… to the Plasma tab.
 - **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
   checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
-  "(optional)", its full name its screen reader name): **Tiling** (the key step, tiling and
+  "(optional)", its full name its screen reader name): **Plasma** first (below), **Tiling** (the key step, tiling and
   floating, focus at an edge, the hold), **Gaps** (the gaps; then the outer gap per screen edge,
   `smartGaps`, and each workspace's own inner and outer gap), **Mouse & Focus** (`mouseWarping` as a checkbox,
   `tilingDrag`, `popupDuringFullscreen`), **Workspaces** (how new workspaces open
@@ -1020,7 +1020,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   and new windows), **Window Rules**, **Frame** (`tiledLook`, width; the two colour classes (§7
   L3), a row each with the frame's colour and the next-window side's, the latter "same as the
   frame" when empty; `hideEdgeBorders`; corners; frame on floating windows; greyed without the
-  effect), **Keys**, **Plasma**. **A help button** beside each setting with an i3 counterpart
+  effect), **Keys**. **A help button** beside each setting with an i3 counterpart
   (§11's N table): what it does in a sentence or two, then i3's directive ("i3:
   focus_wrapping"). Each is the next Tab stop after its control, as on Plasma's pages.
 - **Workspaces tab**, each workspace: for each of the ten, its outputs in order (the page says screens) (the first, and a second
