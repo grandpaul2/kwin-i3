@@ -5,6 +5,24 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **The settings page is in tabs**, as Plasma's Window Behavior page: Plasma, Tiling, Gaps, Mouse &
+  Focus, Workspaces, Window Rules, Frame, Keys. **Defaults resets only the tab shown**, as on any
+  Plasma page: kwin-i3's settings go to their defaults, and on the Plasma tab Plasma's own settings
+  go back to what they were before kwin-i3 changed them. Before, one Defaults reset every setting,
+  your window rules and workspace screens included, and ticked kwin-i3's way for Plasma's settings.
+- **kwin-i3's keys override Plasma's instead of taking them**: the Plasma tab's "On a key
+  conflict, kwin-i3's key wins" runs kwin-i3's command on a key it shares with a Plasma shortcut,
+  and Plasma's shortcuts are left as they are (untick it and they run again; it needs the
+  plugins). `make take-keys` and `make restore-keys` are gone; `make install` gives back any keys
+  an earlier version took and turns the override on in their place. Holding Meta alone still
+  opens the launcher only when no other key was pressed with it.
+- **The Keys tab sets keys only**: a key another shortcut also holds is set without a note and
+  without being taken; which one runs is the key override's.
+- **No flat frame under Glide**: with Glide as the window animation, a new window's frame
+  appears when it has finished swinging in, not as a flat rectangle while it tilts.
+- **The frame follows window effects more closely**: it is repainted after an effect animates a
+  window, and drawn on a window an effect shows off its desktop (Slide, Show Desktop's).
+- **The split indicator** shows inside a split or group floated whole.
 - **Shift is the float modifier**: Meta+Shift+drag pulls a tiling window out to float where it is
   dropped (Escape puts it back), and drags a floating window, or a group floated whole, into the
   tiles, with the drop indicator; the middle's bottom third reads Beside there, putting it after
