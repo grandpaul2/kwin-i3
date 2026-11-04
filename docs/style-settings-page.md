@@ -12,7 +12,7 @@ Focus, Workspaces, Window Rules, Frame and Keys.
 
 ## Layout
 
-- **A form page is one `Kirigami.FormLayout`** (Tiling, Gaps, Mouse & Focus, Workspaces, Frame): a centred
+- **A form page is one `Kirigami.FormLayout`** (Tiling, Gaps, Workspaces, Frame): a centred
   column with the labels right-aligned in one column, and no group boxes. Sections are headings in
   sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A page of items that a
   `Repeater` makes in another shape (Window Rules, Plasma Settings) is a centred `ColumnLayout` at
@@ -47,7 +47,7 @@ Focus, Workspaces, Window Rules, Frame and Keys.
   resets the tab shown (`docs/philosophy.md`, "How it presents itself"). A row where a slip is easy and hard to undo by hand (a colour) also gets a Default
   button of its own, greyed at the default.
 - **The page is tabs**, as Plasma's Window Behavior: Plasma first (the first-run step), then
-  Tiling, Gaps, Mouse & Focus, Workspaces, Window Rules, Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
+  Tiling, Gaps, Workspaces, Window Rules, Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
   to Breeze's document-mode recipe, `kcm/ui/main.qml`), each a page of its own file under the banners and the tab bar. A tab
   may open with one line saying what it is for, in its header, with its help button at its end.
 - **No paragraphs on the page.** An explanation goes in a `Kirigami.ContextualHelpButton`

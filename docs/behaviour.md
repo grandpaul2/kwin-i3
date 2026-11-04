@@ -1013,9 +1013,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
 - **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
   checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
   "(optional)", its full name its screen reader name): **Plasma** first (below), **Tiling** (the key step, tiling and
-  floating, focus at an edge, the hold), **Gaps** (the gaps; then the outer gap per screen edge,
-  `smartGaps`, and each workspace's own inner and outer gap), **Mouse & Focus** (`mouseWarping` as a checkbox,
-  `tilingDrag`, `popupDuringFullscreen`), **Workspaces** (how new workspaces open
+  floating; `mouseWarping` as a checkbox; focus at an edge; `tilingDrag`; the hold), **Gaps** (the
+  gaps; then the outer gap per screen edge, `smartGaps`, and each workspace's own inner and outer
+  gap), **Workspaces** (how new workspaces open
   (`workspaceLayout`), their split direction, auto back-and-forth; then each workspace's screens
   and new windows), **Window Rules**, **Frame** (`tiledLook`, width; the two colour classes (§7
   L3), a row each with the frame's colour and the next-window side's, the latter "same as the
@@ -1035,7 +1035,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
   with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
   window picker: a rule with the clicked window's class, matched whole) sit in the tab's
-  footer, always in view; a new rule scrolls into view with its application box focused. Below, the floating sizes (`floatingMinimumSize`,
+  footer, always in view; a new rule scrolls into view with its application box focused. Below, new windows over a fullscreen one (`popupDuringFullscreen`), then the floating sizes (`floatingMinimumSize`,
   `floatingMaximumSize`). `floatingWorkspaces` becomes rules when the page reads it, as the
   script reads it (§3 R11), so the rows show them and the first Apply writes the rules and takes
   the key out of kwinrc.

@@ -112,7 +112,8 @@ m=$(mark); press Meta+Alt+E
 check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
 # 3. A gap typed on the Gaps tab; on the Tiling tab, from the resize step Tab reaches its help,
-#    the floating step (a row of its own) and the focus choice, where Down picks the next one.
+#    the floating step (a row of its own), the pointer box and its help, and the focus choice,
+#    where Down picks the next one.
 #    One Apply: both in kwinrc, one reload, and the gap on screen with no plugin loaded. Each
 #    control's help button is the next Tab stop after it, as on Plasma's own pages.
 click_named kwin-i3 "Gaps"; sleep 0.5
@@ -124,6 +125,8 @@ check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell
 press Tab
 check "then the floating step"              test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
 press Tab
+check "then the pointer box"                test "$($A11Y focused kcmshell6)" == "Move the pointer with focus to another screen"
+press Tab; press Tab
 # A combo box is named by its current choice.
 check "then the focus choice" test "$($A11Y focused kcmshell6)" == "Next screen, then wrap"
 press Down

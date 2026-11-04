@@ -5,8 +5,8 @@
 // type always on a second line. The defaults are a group of their own when they
 // run first; a rule the row can't show (other criteria) is edited as text. Pick a Window
 // (KWin's queryWindowInfo) fills a new row's application in. Each rule is a box of its own in a
-// framed list (the defaults one, the reader's another); adding sits in the footer. Below, the
-// floating sizes.
+// framed list (the defaults one, the reader's another); adding sits in the footer. Below, new
+// windows over a fullscreen one (popupDuringFullscreen), then the floating sizes.
 // settings.js reads and writes the two strings (parseRules, formatRules).
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -536,6 +536,30 @@ KCM.SimpleKCM {
                 to: page.rows.length
                 emptyText: page.defaultCount > 0 ? i18n("No rules of your own") : i18n("No rules")
                 emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
+            }
+
+            Kirigami.Heading {
+                level: 2
+                Layout.topMargin: Kirigami.Units.largeSpacing * 2
+                text: i18nc("@title:group", "New windows over fullscreen")
+            }
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                ChoiceBox {
+                    id: popupBox
+                    settingName: "popupDuringFullscreen"
+                    Accessible.name: i18nc("@label:listbox", "New windows over fullscreen")
+                    model: [
+                        { text: i18nc("@item:inlistbox", "Behind; the fullscreen app's dialogs in front"), value: "smart" },
+                        { text: i18nc("@item:inlistbox", "Always behind"), value: "ignore" },
+                        { text: i18nc("@item:inlistbox", "The fullscreen app's dialogs end fullscreen"), value: "leave_fullscreen" },
+                        { text: i18nc("@item:inlistbox", "Floating ones in front"), value: "all" },
+                    ]
+                }
+                Help {
+                    topic: i18nc("@item help topic", "new windows in fullscreen")
+                    toolTipText: i18n("Where a window goes when it opens on a workspace that has a fullscreen window. i3: popup_during_fullscreen")
+                }
             }
 
             Kirigami.Heading {

@@ -1,5 +1,6 @@
-// The Tiling tab: how far a key moves or resizes (resizeStep, floatingStep), where the focus goes
-// from the last window (focusWrapping), and layout changes all at once (holdEnabled).
+// The Tiling tab: how far a key moves or resizes (resizeStep, floatingStep), the pointer following
+// the focus (mouseWarping), where the focus goes from the last window (focusWrapping), the tiling
+// drag (tilingDrag), and layout changes all at once (holdEnabled).
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -10,6 +11,8 @@ KCM.SimpleKCM {
     id: root
     title: i18nc("@title", "Tiling")
     readonly property var settings: kcm.settings
+    // The dropdowns share one width, the widest one's own (docs/style-settings-page.md, "Layout").
+    readonly property real listColumn: Math.max(wrappingBox.implicitWidth, dragBox.implicitWidth)
 
     Kirigami.FormLayout {
         // How far one key press goes: a share of the split for tiling windows, pixels for floating
@@ -43,11 +46,29 @@ KCM.SimpleKCM {
             KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
         }
         RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Pointer follows the focus:")
+            Kirigami.FormData.buddyFor: warpBox
+            spacing: Kirigami.Units.smallSpacing
+            Tick {
+                id: warpBox
+                name: i18nc("@option:check", "Move the pointer with focus to another screen")
+                recommended: true
+                checked: root.settings.mouseWarping === "output"
+                onToggled: root.settings.mouseWarping = checked ? "output" : "none"
+                KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
+            }
+            Help {
+                topic: i18nc("@item help topic", "the pointer")
+                toolTipText: i18n("When a key moves the focus to another screen, the pointer goes to the middle of the focused window. i3: mouse_warping")
+            }
+        }
+        RowLayout {
             Kirigami.FormData.label: i18nc("@label:listbox", "Focus wrapping:")
             Kirigami.FormData.buddyFor: wrappingBox
             spacing: Kirigami.Units.smallSpacing
             ChoiceBox {
                 id: wrappingBox
+                columnWidth: root.listColumn
                 settingName: "focusWrapping"
                 model: [
                     { text: i18nc("@item:inlistbox", "Next screen, then wrap"), value: "yes" },
@@ -59,6 +80,27 @@ KCM.SimpleKCM {
             Help {
                 topic: i18nc("@item help topic", "focus wrapping")
                 toolTipText: i18n("Where focus goes from the last window in a direction. Always wrap stays inside the split. i3: focus_wrapping")
+            }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label:listbox", "Drag tiling windows by:")
+            Kirigami.FormData.buddyFor: dragBox
+            spacing: Kirigami.Units.smallSpacing
+            ChoiceBox {
+                id: dragBox
+                columnWidth: root.listColumn
+                settingName: "tilingDrag"
+                applies: kcm.helperLoaded       // plugin/tilingdrag.cpp
+                model: [
+                    { text: i18nc("@item:inlistbox", "Titlebar, or Meta anywhere"), value: "modifier titlebar" },
+                    { text: i18nc("@item:inlistbox", "Meta anywhere"), value: "modifier" },
+                    { text: i18nc("@item:inlistbox", "Titlebar"), value: "titlebar" },
+                    { text: i18nc("@item:inlistbox", "Neither: no dragging"), value: "off" },
+                ]
+            }
+            Help {
+                topic: i18nc("@item help topic", "dragging tiling windows")
+                toolTipText: i18n("Dropped beside another window, a tiling window moves there; dropped on its middle, the two are grouped or swapped. Meta+Shift+drag floats a tiling window, or tiles a floating one. i3: tiling_drag")
             }
         }
         // holdEnabled; holdTimeoutMs is an internal value, kwinrc only (plan.md, "Settings").

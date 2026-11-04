@@ -29,7 +29,7 @@
 
 // The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
 // what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
-enum Tab { PlasmaTab, TilingTab, GapsTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
+enum Tab { PlasmaTab, TilingTab, GapsTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
 // the rest Window Rules'. debugLog, holdTimeoutMs (internal) and floatingWorkspaces (read into
@@ -38,17 +38,17 @@ static QStringList tabKeys(int tab)
 {
     switch (tab) {
     case TilingTab:
-        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusWrapping"), QStringLiteral("holdEnabled")};
+        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("mouseWarping"), QStringLiteral("focusWrapping"),
+                QStringLiteral("tilingDrag"), QStringLiteral("holdEnabled")};
     case GapsTab:
         return {QStringLiteral("gapsInner"), QStringLiteral("gapsOuter"), QStringLiteral("gapsTop"), QStringLiteral("gapsRight"),
                 QStringLiteral("gapsBottom"), QStringLiteral("gapsLeft"), QStringLiteral("smartGaps"), QStringLiteral("workspaceGaps")};
-    case MouseTab:
-        return {QStringLiteral("mouseWarping"), QStringLiteral("tilingDrag"), QStringLiteral("popupDuringFullscreen")};
     case WorkspacesTab:
         return {QStringLiteral("workspaceLayout"), QStringLiteral("defaultOrientation"), QStringLiteral("workspaceAutoBackAndForth"),
                 QStringLiteral("workspaceOutputs")};
     case RulesTab:
-        return {QStringLiteral("assign"), QStringLiteral("floatingMinimumSize"), QStringLiteral("floatingMaximumSize")};
+        return {QStringLiteral("assign"), QStringLiteral("popupDuringFullscreen"), QStringLiteral("floatingMinimumSize"),
+                QStringLiteral("floatingMaximumSize")};
     case FrameTab:
         return {QStringLiteral("tiledLook"), QStringLiteral("frameWidth"), QStringLiteral("frameActive"), QStringLiteral("frameInactive"),
                 QStringLiteral("frameIndicatorActive"), QStringLiteral("frameIndicatorInactive"), QStringLiteral("hideEdgeBorders"),
