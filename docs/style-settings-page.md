@@ -11,11 +11,14 @@ Window Rules, Frame and Keys.
 
 ## Layout
 
-- **A form page is one `Kirigami.FormLayout`** (Tiling, Gaps, Workspaces, Frame): a centred
+- **A form page is `Kirigami.FormLayout`s** (Tiling, Gaps, Workspaces, Frame): a centred
   column with the labels right-aligned in one column, and no group boxes. Sections are headings in
-  sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A page of items that a
-  `Repeater` makes in another shape (Window Rules, Plasma Settings) is a centred `ColumnLayout` at
-  most 34 grid units wide instead, since a FormLayout re-sorts a Repeater's rows.
+  sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A form centres on the
+  line between its labels and its controls, so a wide row (a table's boxes) pulls every label
+  left: a table goes in a form of its own below, each form centred alone (Gaps, Workspaces). A
+  list of items that a `Repeater` makes in another shape (Window Rules' rules) is a centred
+  `ColumnLayout` at most 34 grid units wide instead, below the tab's form, since a FormLayout
+  re-sorts a Repeater's rows.
 - **One label and one control a row.** Two values are two rows, each with its own label ("Gap
   between windows:", "Extra gap at edges:"). Never put captions, a second control or an icon that
   comes and goes on the same line. A control's help button sits after it, in a `RowLayout` with

@@ -155,7 +155,6 @@ KCM.SimpleKCM {
         readonly property string mode: w < 0 || h < 0 ? "none" : custom ? "size" : (w === 0 && h === 0) || (w === defW && h === defH) ? "default" : "size"
         function write(nw, nh) { page.settings[settingName] = nw + "x" + nh }
         spacing: Kirigami.Units.smallSpacing
-        QQC2.Label { text: what; Accessible.ignored: true }
         QQC2.ComboBox {
             textRole: "text"
             valueRole: "value"
@@ -507,20 +506,15 @@ KCM.SimpleKCM {
         }
     }
 
-    Item {
-        implicitHeight: column.implicitHeight + Kirigami.Units.largeSpacing * 2
-        ColumnLayout {
-            id: column
-            anchors.horizontalCenter: parent.horizontalCenter
-            y: Kirigami.Units.largeSpacing
-            width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
-            spacing: Kirigami.Units.smallSpacing
-
-            Kirigami.Heading {
-                level: 2
-                text: i18nc("@title:group", "New windows over fullscreen")
-            }
+    // The settings a form, centred on its label column as the other tabs; the rules below in a
+    // centred column (a FormLayout re-sorts a Repeater's rows).
+    ColumnLayout {
+      spacing: 0
+      Kirigami.FormLayout {
+        Layout.fillWidth: true
             RowLayout {
+                Kirigami.FormData.label: i18nc("@label:listbox", "New windows over fullscreen:")
+                Kirigami.FormData.buddyFor: popupBox
                 spacing: Kirigami.Units.smallSpacing
                 ChoiceBox {
                     id: popupBox
@@ -539,23 +533,29 @@ KCM.SimpleKCM {
                 }
             }
 
-            Kirigami.Heading {
-                level: 2
-                Layout.topMargin: Kirigami.Units.largeSpacing * 2
-                text: i18nc("@title:group", "Floating window sizes")
+            SizeRow {
+                Kirigami.FormData.label: i18nc("@label:listbox", "Smallest floating window:")
+                settingName: "floatingMinimumSize"; what: i18nc("@label", "Smallest")
             }
-            SizeRow { settingName: "floatingMinimumSize"; what: i18nc("@label", "Smallest:") }
-            SizeRow { settingName: "floatingMaximumSize"; what: i18nc("@label", "Largest:"); maximum: true }
-
-            Kirigami.Heading {
-                level: 2
-                Layout.topMargin: Kirigami.Units.largeSpacing * 2
-                text: i18nc("@title:group", "Window animations")
+            SizeRow {
+                Kirigami.FormData.label: i18nc("@label:listbox", "Largest floating window:")
+                settingName: "floatingMaximumSize"; what: i18nc("@label", "Largest"); maximum: true
             }
             RowLayout {
+                Kirigami.FormData.label: i18nc("@label", "Window animations:")
                 spacing: Kirigami.Units.smallSpacing
                 PlasmaTick { row: "animations"; showName: true }
             }
+      }
+      Item {
+        Layout.fillWidth: true
+        implicitHeight: column.implicitHeight + Kirigami.Units.largeSpacing * 2
+        ColumnLayout {
+            id: column
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Kirigami.Units.largeSpacing
+            width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
+            spacing: Kirigami.Units.smallSpacing
 
             // The defaults, when they run first: a group of their own above the reader's.
             Kirigami.Heading {
@@ -581,5 +581,6 @@ KCM.SimpleKCM {
                 emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
             }
         }
+      }
     }
 }

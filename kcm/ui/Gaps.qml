@@ -79,9 +79,13 @@ KCM.SimpleKCM {
         }
     }
 
-    Kirigami.FormLayout {
-        // A row for each size, then the edges and workspaces below. Every row has a label (an
-        // unlabelled FormLayout row would be an empty heading to a screen reader).
+    // Three forms, each centred on its own label column (as the Workspaces tab): in one form the
+    // edges' four boxes widened the field column and pulled every label left of centre. Every
+    // row has a label (an unlabelled FormLayout row would be an empty heading to a screen reader).
+    ColumnLayout {
+      spacing: 0
+      Kirigami.FormLayout {
+        Layout.fillWidth: true
         RowLayout {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Gap between windows:")
             Kirigami.FormData.buddyFor: gapInnerBox
@@ -113,6 +117,9 @@ KCM.SimpleKCM {
             Accessible.name: i18nc("@label:spinbox", "Extra gap at screen edges")
             KCM.SettingStateBinding { configObject: page.settings; settingName: "gapsOuter" }
         }
+      }
+      Kirigami.FormLayout {
+        Layout.fillWidth: true
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Each screen edge")
@@ -147,6 +154,9 @@ KCM.SimpleKCM {
             Accessible.name: i18nc("@label:listbox", "Gaps on a workspace with one window")
             KCM.SettingStateBinding { configObject: page.settings; settingName: "smartGaps" }
         }
+      }
+      Kirigami.FormLayout {
+        Layout.fillWidth: true
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Each workspace")
@@ -180,5 +190,6 @@ KCM.SimpleKCM {
                 }
             }
         }
+      }
     }
 }
