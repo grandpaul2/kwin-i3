@@ -20,8 +20,7 @@ not all of i3: from here the work is making it configurable and reliable, not ad
 
 Why one script rather than a tiling script plus a workspace script: i3's tree has to be the single
 truth, so that windows move *among each other* instead of being contents of fixed divisions.
-`docs/plan.md` has the scope and the decisions, `docs/behaviour.md` what it does, row by row; `docs/kwin-tiles.md` is why it
-builds on KWin's own tile tree.
+`docs/plan.md` has the scope and the decisions, `docs/behaviour.md` what it does, row by row.
 
 ## Keys
 
@@ -354,8 +353,7 @@ A red scenario leaves its output and kwin-i3's log in `tests/live/out/`. `CONTRI
 to start and how a change lands (pull requests); `AGENTS.md` has the working rules in full.
 
 Docs: `docs/README.md` is the map. `docs/philosophy.md` (what it is for), `docs/plan.md` (scope
-and decisions), `docs/behaviour.md` (what it does, exactly), `docs/kwin-tiles.md` (why KWin's own tiles)
-and the test tools' designs (`docs/fuzz-design.md`, `docs/input-tests-design.md`).
+and decisions), `docs/behaviour.md` (what it does, exactly) and the fuzzer's design (`docs/fuzz-design.md`).
 
 ## License
 

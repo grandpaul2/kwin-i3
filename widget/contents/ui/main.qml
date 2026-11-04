@@ -72,7 +72,7 @@ PlasmoidItem {
     Connections { target: Qt.application; function onScreensChanged() { refresh.restart(); } }
     Component.onCompleted: gather()
 
-    // kwin-i3's "Workspace N" (Meta+N), so the widget and the key do the same (decision: spec).
+    // kwin-i3's "Workspace N" (Meta+N), so the widget and the key do the same.
     function show(num) {
         console.debug("kwin-i3 workspaces: show " + num);
         const reply = DBus.SessionBus.asyncCall({

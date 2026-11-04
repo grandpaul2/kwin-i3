@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Real input, part 1: every default key pressed for real. Its own scenario (and KWin): pressing
 # Meta+1..0 for real moves workspaces between monitors, which would skew any test after it.
-# The rest of the real-input tests are 51-input.sh. Designed in
-# docs/input-tests-design.md, revised by its review (git history: `git show 3d98bd2:docs/input-tests-review-2026-10-22.md`).
+# The rest of the real-input tests are 51-input.sh;
+# the input tools are tools/inject.py and lib.sh's press, drag, sdrag and point.
 source "$(dirname "$0")/lib.sh"
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
 output_is() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.output.name); })")" == "$2" ]]; }

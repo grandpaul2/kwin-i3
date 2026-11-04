@@ -13,8 +13,6 @@ home and point there from the other.
 | how to read a bug capture | `debugging.md` |
 | what KWin and Plasma actually do where they surprised us (the traps, from source and probes) | `kwin-notes.md` |
 | how the settings page looks and reads | `style-settings-page.md` |
-| i3's features against kwin-i3, KWin and Plasma (a study, 2026-10-25, cited as "finding N", "row X") | `i3-feature-map.md` |
-| why kwin-i3 builds on KWin's own tile tree (the probe that chose it) | `kwin-tiles.md` |
 | how a press travels through KWin to kwin-i3, and the hover cursor (`kwin-notes.md` holds KWin's traps, this the path) | `pointer.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
@@ -38,11 +36,6 @@ Edited in place whenever what they describe changes, in the same commit as the c
 - **`kwin-notes.md`**: KWin's behaviour as found, by topic; a new trap gets a line, a wrong one is
   corrected in place.
 - **`fuzz-design.md`**: the fuzzer and the capture key (tools still in use).
-- **`input-tests-design.md`**: the real-input live tests (libei; scenarios 50, 51).
-- **`i3-feature-map.md`**: dated, but its row ids are cited across the docs; a row that goes stale
-  is corrected in place.
-
-- **`kwin-tiles.md`**: the probe that chose KWin's tiles; dated, kept for the reasons.
 - **`pointer.md`**: a press's path through KWin 6.7.5 to kwin-i3, kept true as `kwin-notes.md`.
 
 ## Writing one

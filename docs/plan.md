@@ -55,7 +55,7 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
 |---|---|
 | urgency | it was shown in i3's bar, and there is no bar |
 | marks, the scratchpad, i3's restart | outside the core of i3's feel that kwin-i3 copies (the scratchpad is an open question for a release, `LATER.md` item 51); restart is for a new i3 binary, and an install reloads kwin-i3 |
-| i3's explicit forms of a bound command (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | the bound toggles already reach every state they set (i3 feature map, finding 5); a command reaching a state or place no bound key reaches is in (above) |
+| i3's explicit forms of a bound command (`focus next sibling`, `focus tiling`, `layout splith`, `split toggle`, `floating enable`) | the bound toggles already reach every state they set; a command reaching a state or place no bound key reaches is in (above) |
 | a bar, notifications, lock, session control | Plasma's panel, notifications, screen locker and logout (kwin-i3's Exit key leaves Plasma's way, as `endSession` says) |
 | i3's config file, `i3-msg` IPC and a command language (`bindsym`, `mode`, chains) | settings belong in System Settings (and `kwinrc`); a key's action takes no arguments, `mode` or chain (a setting may still shape what an action does, as `resizeStep` does for resize). No scripting surface is promised during the Stage (`LATER.md`, "Release prep") |
 | workspace names, and workspaces past 10 | decision 9 |
@@ -382,7 +382,7 @@ table is the home of the rules; this is the why.
 - **Apps not met yet** (what Krohnkite handled: Steam, Minecraft, Electron apps that re-parent,
   apps opening several windows at once). Each one met becomes a live test with the test client.
 - **Input** is tested through libei in the headless KWin (`tools/inject.py`; scenarios 50, 51, 52,
-  86); what it can't send (scroll) is listed in `LATER.md` items 10 and 11.
+  86); it can't send scroll.
 - **kwinrc churn**: KWin rewrites `[Tiling]` on every tile change. Harmless; kwinrc is not captured.
 - **Cost to KWin: measured small, not a risk** (probe 2026-10-30, test KWin with the plugins, not
   kept): loading kwin-i3 adds about 16 MB to KWin (8 MB heap, 4 MB libraries, 4 MB shared buffers),

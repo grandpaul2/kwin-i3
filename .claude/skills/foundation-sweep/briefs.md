@@ -64,9 +64,6 @@ only what its brief says. The C areas get the **short** common part.
 > 2. `README.md`, `CONTRIBUTING.md`, the settings page (`kcm/ui/`, `kcm/*.cpp`), the widget
 >    (`widget/`): every sentence a user reads, true of the code, implying no opposite
 >    (`AGENTS.md`, "Words a user reads"); `docs/style-settings-page.md` followed.
-> 3. Rows of `docs/i3-feature-map.md` that other docs cite (grep "row ", "finding "): still true?
->    The map is a dated study: report only rows that a citing doc relies on and that are now
->    wrong.
 > Not yours: `behaviour.md`'s tables (B and the C areas own them) and i3's line numbers (B).
 
 ## B. The i3 side

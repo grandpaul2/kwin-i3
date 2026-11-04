@@ -46,14 +46,10 @@ live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`
 reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet sorted (a check to
 add, code to remove, or not visible in the test KWin). The fuller procedure that was in
 `docs/testing.md` before (git 6a58018) is the starting point for the stricter one. Many of the
-faults' from-texts across `tests/live/mutate.py` no longer match the code (over 40 on 2026-11-01:
+faults' from-texts no longer match the code (2026-11-04: 64 of 146 in `tests/live/mutate.py`, 8 of
+20 in `tests/unit/mutate.py`;
 the centre swap, the drop outline added and removed, Meta+Shift, the monitor code moved to the
-model): rewrite them from the code before the run. Test gaps the reviews left (2026-10-22 to 10-24, in git history;
-checked 2026-10-27): the close hold when the fullscreen window is the last on its screen; a
-vertical border dragged inside a V layout and the middle border of three columns; the ignore
-rules, Focus/Move Up and Down, and a reload with floating or minimized windows, in no scenario by
-name; the test KWin without `Autolock=false` in its `kscreenlockerrc` and no harness check that
-fails loudly on a locked KWin (a long run could lock).
+model): rewrite them from the code before the run.
 
 **5. Wider reliability.** Fuzz configurations for one and three monitors, mixed scaling, more than
 one activity, and with no plugins (the fuzzer knows only two 1280x720 outputs at scale 1, unplugs
@@ -75,27 +71,7 @@ campaigns ran that night: the first two found two bugs (63, 64) and I11's false 
 (shadows, sticky and cross-output windows, the resize badge, the screen lagging the dumps), the
 third 23 of 24 clean and one more bug (minimums filling a split exactly); all fixed live.
 
-**10. Window modes**: all four pieces live 2026-10-24 (the frame
-drawn by kwini3hold outside tiled windows; floating windows keep the user's decoration;
-`floatingWorkspaces`, `frameOnFloating`; the effect keeps the floating set; kwini3frame retired;
-the reviews in git history (`git show 3d98bd2:docs/review-window-modes-2026-10-24.md`, `-2-`, `-change-`)). Left:
-- test gaps: a second output with an offset, a desktop switch with slide, scroll on the frame
-  (tools/ei-send can't scroll), a forcing window rule (desktop, maximize, size or no titlebar:
-  each may ping-pong with kwin-i3's placement or frame, i3 feature map finding 10), `borderlessMaximizedWindows`, a window
-  added or closed in the 250 ms at load; rounded corners on a libadwaita app (one that may draw
-  its own corners and shadow, unverified);
-- the known limits written in the spec.
-
-**11. The panel** (Plasma's default, with kwin-i3's workspace widget in place of the pager;
-working). The widget's test gaps: a scroll
-test (tools/ei-send can't scroll), vertical panels and "Numbers only" untested live.
-
-**13. Workspace commands** (back-and-forth, next/prev, the
-output moves, names in the widget), live 2026-10-25, unbound as in i3. Left: live tests for the
-source monitor's lowest-with-windows fallback, the history after a rebuild, the previous workspace
-after an unplug; the widget's names on a vertical panel.
-
-**27. Keep Above and Keep Below on floating windows** (finding 11: R18, R19). kwin-i3 owns Keep
+**27. Keep Above and Keep Below on floating windows**. kwin-i3 owns Keep
 Above on floating windows (the plain script's way to keep them over tiled ones), so a user can't
 turn it off there, and Keep Below is overwritten. Next: whether the plugins' path (the effect's
 floating set) can leave both flags to the user, and the plain script document it.
@@ -104,13 +80,10 @@ floating set) can leave both flags to the user, and the plain script document it
 
 **22. The settings page, finished for a release** (back from `OPEN.md` 2026-10-30: the page
 is fine for the beta, whose users are on US layouts; the screenshot pass and the dropdown's
-arrow keys dropped). Left: (a) Defaults then Apply on a non-US layout writes the US keys until the
+arrow keys dropped). Left: Defaults then Apply on a non-US layout writes the US keys until the
 next layout change or load: the page should call the helper's `FitKeys` after Apply, as i3's
-`bindsym` follows the keymap at once (found reading the code 2026-10-27);
-(b) a section showing the Plasma settings kwin-i3 is designed around, each with a control that
-changes Plasma's own setting, labelled as Plasma's, with the words that changing it here is the
-same as in System Settings (`plan.md` (e)); for the beta the README's "For i3's
-feel" names them. Its accessibility check is item 18.
+`bindsym` follows the keymap at once (found reading the code 2026-10-27). Its accessibility
+check is item 18.
 
 **70. Workspace outputs for a fixed layout across monitors** (found 2026-10-31 from a capture:
 not a bug). A monitor that drops out for a moment (a hotplug, a sleep, a cable) sends its
@@ -148,7 +121,7 @@ return to it; kwin-i3 `behaviour.md` §4, scenarios 42-48; real hardware timing 
 AMD (seen on an NVIDIA desktop: if never on the laptop, it points at NVIDIA). On Plasma 6.8 by
 then, which is where it matters for a release.
 
-**28. Launch workspace, a maybe** (finding 2: C19; from OPEN.md 2026-10-26, parked
+**28. Launch workspace, a maybe** (from OPEN.md 2026-10-26, parked
 as a maybe). i3 puts a window on the workspace it was launched from only when i3 started the program
 itself (`exec`, or dmenu run by it), the window carries the matching `_NET_STARTUP_ID`, and the
 launch finished less than 30 s ago (`startup.c` 4.24). kwin-i3 puts it on the workspace current

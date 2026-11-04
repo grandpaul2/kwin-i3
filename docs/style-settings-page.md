@@ -7,8 +7,8 @@ the page wins and this file is brought in line. No set of rules makes a page fee
 change is built from these suggestions, checked on a screenshot, and handed over; it is not
 polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's
 own pages do (Virtual Desktops, Window Behavior, Display Configuration, Window Rules): open the
-Plasma page and match it. The finished tabs are the best example: Plasma, Tiling, Gaps, Mouse &
-Focus, Workspaces, Window Rules, Frame and Keys.
+Plasma page and match it. The finished tabs are the best example: Plasma, Tiling, Gaps, Workspaces,
+Window Rules, Frame and Keys.
 
 ## Layout
 

@@ -152,7 +152,7 @@ finish() {
     [[ $failed -eq 0 ]]
 }
 
-# Real input (tools/inject.py; see docs/input-tests-design.md and its review).
+# Real input (tools/inject.py: libei, into the test KWin only; it can't scroll).
 #   press "Meta+Shift+V"            one chord: modifiers down, key down/up, modifiers up
 #   drag "Meta" left|right X1 Y1 X2 Y2   button drag with modifiers held, 4 steps
 #   point X Y                       move the pointer
