@@ -109,20 +109,9 @@ KCM.SimpleKCM {
             visible: page.picking
             text: i18n("Click a window. Escape cancels.")
         }
-        RowLayout {
-            spacing: Kirigami.Units.smallSpacing
-            QQC2.Label {
-                Layout.fillWidth: true
-                Layout.margins: Kirigami.Units.largeSpacing
-                wrapMode: Text.Wrap
-                text: i18n("Rules decide which windows float or tile, and where they open.")
-            }
-            Kirigami.ContextualHelpButton {
-                Layout.rightMargin: Kirigami.Units.largeSpacing
-                toolTipText: i18n("A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
-            }
-        }
     }
+    // The rules' help, by the first of their headings: it is the rules' alone, not the settings'.
+    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
 
     // A pattern field: empty means "any".
     component PatternField: QQC2.TextField {
@@ -558,21 +547,20 @@ KCM.SimpleKCM {
             spacing: Kirigami.Units.smallSpacing
 
             // The defaults, when they run first: a group of their own above the reader's.
-            Kirigami.Heading {
+            SectionHeading {
                 visible: page.defaultCount > 0
-                level: 2
-                Layout.topMargin: Kirigami.Units.largeSpacing * 2
                 text: i18nc("@title:group the rules kwin-i3 ships", "Defaults")
+                help: page.rulesHelp
             }
             RuleList {
                 visible: page.defaultCount > 0
                 from: 0
                 to: page.defaultCount
             }
-            Kirigami.Heading {
+            SectionHeading {
                 Layout.topMargin: page.defaultCount > 0 ? Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing * 2
-                level: 2
                 text: page.defaultCount > 0 ? i18nc("@title:group", "Your rules") : i18nc("@title:group", "Rules")
+                help: page.defaultCount > 0 ? "" : page.rulesHelp
             }
             RuleList {
                 from: page.defaultCount

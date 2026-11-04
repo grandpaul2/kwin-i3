@@ -65,20 +65,6 @@ KCM.SimpleKCM {
         KCM.SettingStateBinding { configObject: page.settings; settingName: "workspaceOutputs"; extraEnabledConditions: parent.applies }
     }
 
-    header: RowLayout {
-        spacing: Kirigami.Units.smallSpacing
-        QQC2.Label {
-            Layout.fillWidth: true
-            Layout.margins: Kirigami.Units.largeSpacing
-            wrapMode: Text.Wrap
-            text: i18n("A workspace given a screen opens there, or on its second screen while the first isn't connected.")
-        }
-        Kirigami.ContextualHelpButton {
-            Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("Others open on the screen that has the focus when they are first shown. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
-        }
-    }
-
     readonly property real workspacesColumn: Math.max(workspaceLayoutBox.implicitWidth, orientationBox.implicitWidth)
     readonly property real screenWidth: Kirigami.Units.gridUnit * 10
     readonly property real newWidth: Kirigami.Units.gridUnit * 7
@@ -153,12 +139,13 @@ KCM.SimpleKCM {
             }
         }
 
+        // Its help is the table's alone, so it sits by the table's heading, not atop the tab.
+        SectionHeading {
+            text: i18nc("@title:group", "Each workspace")
+            help: i18n("A workspace given a screen opens there, or on its second screen while the first isn't connected. Others open on the screen that has the focus when they are first shown. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
+        }
         Kirigami.FormLayout {
             Layout.fillWidth: true
-            Item {
-                Kirigami.FormData.isSection: true
-                Kirigami.FormData.label: i18nc("@title:group", "Each workspace")
-            }
             // The columns' headings, over the boxes.
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing

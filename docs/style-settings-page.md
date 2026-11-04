@@ -51,7 +51,10 @@ Window Rules, Frame and Keys.
 - **The page is tabs**, as Plasma's Window Behavior: Plasma first (the first-run step), then
   Tiling, Gaps, Workspaces, Window Rules, Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
   to Breeze's document-mode recipe, `kcm/ui/main.qml`), each a page of its own file under the banners and the tab bar. A tab
-  may open with one line saying what it is for, in its header, with its help button at its end.
+  may open with one line saying what it is for, in its header, with its help button at its end,
+  when the line is true of the whole tab; help for one section sits by that section's heading
+  (`kcm/ui/SectionHeading.qml`, drawn as a FormLayout's section heading), as on Workspaces and
+  Window Rules.
 - **No paragraphs on the page.** An explanation goes in a `Kirigami.ContextualHelpButton`
   beside its control. A state goes in a banner at the top (`Kirigami.InlineMessage`): kwin-i3
   off, not running, the plugins not loaded.
