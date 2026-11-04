@@ -40,4 +40,14 @@ give-back (`behaviour.md` §11); the README's Install to match. To check: `behav
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
 by step, from `git clone` to the banner's Review…; and with the plugins not built: what the
-banners and the Keys tab's greyed override then say.
+banners and the Keys tab's greyed override then say. With it, one wording to settle:
+`tools/install.sh`'s closing lines say the page's banner "names any Plasma setting kwin-i3
+needs", where the README's Install step 4 has the banner for per-screen workspaces only and the
+animations row optional; the two to say the same.
+
+**94. Keys and "one place for its settings"** (2026-11-04). `philosophy.md` says the settings page
+is the one place for kwin-i3's settings, yet its keys are kglobalaccel's (`behaviour.md` §8) and
+Plasma's Shortcuts page shows and changes them too; the two agree (the Keys tab reads
+kglobalaccel at each open), but the line isn't true of keys and names no exception. Next: the
+repair to `philosophy.md`, one clause (keys are set on the Keys tab and kept by kglobalaccel, so
+Plasma's Shortcuts page shows the same keys), for the maintainer's go.
