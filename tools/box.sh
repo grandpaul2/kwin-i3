@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The test KWin on another distribution's KWin, in a podman container (docs/testing.md P5): Plasma
-# 6.8 on a Fedora 44 desktop that has only 6.7. Headless, as tools/testkwin.sh always is. KWin 6.8's
+# The test KWin on another distribution's KWin, in a podman container (docs/testing.md P5): the
+# beta's distributions, Arch's KWin 6.8 and PikaOS's 6.7, on a Fedora desktop. Headless, as tools/testkwin.sh always is. KWin 6.8's
 # virtual backend needs a render node (none: "Found no render device!", no compositing, no window
 # ever resized), so the Mesa-driven ones (AMD, Intel) are passed in; NVIDIA's would need the
 # host's driver libraries at its version.

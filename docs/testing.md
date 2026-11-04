@@ -107,12 +107,14 @@ then.
 
 ## P5. Another KWin (`tools/box.sh`)
 
-A question about KWin 6.8 (a beta user's bug there, a red seen only on 6.8): the scenarios P1 or
-P2 would run, in an Arch container with KWin 6.8.2 on the desktop (`tools/box.sh build` once, then
+A question about another distribution's KWin (a beta user's bug there, a red seen only there):
+the scenarios P1 or P2 would run, in an Arch container with Arch's KWin 6.8.2 (an Arch-based
+user's, CachyOS's) on the desktop (`tools/box.sh build` once, then
 `tools/box.sh run bash -c 'make tools plugin && tests/live/run.sh NN-name.sh'`, in the
 background; `KI3_BOX_OUT=<dir>` keeps a red's output). It copies the checkout and writes nothing
 to it. It renders on the AMD iGPU through Mesa, so its pixels are AMD's, as the laptop's are.
-`KI3_BOX=pika`: PikaOS's KWin 6.7.4 and Debian's package names, the same way. Nothing in either
+`KI3_BOX=pika`: PikaOS's KWin 6.7.4 and Debian's package names, the same way, now the only 6.7
+the gate runs (the host is on 6.8). Nothing in either
 reaches a live desktop: a fix still goes live by P3. (2026-10-30: 10, 53, 64 and 86 green on
 both; 86 eight runs in a row on 6.8, where the laptop had two reds after a plugin rebuild, item
 61, closed as no red reproduced: the next red's kept log reopens it.)
