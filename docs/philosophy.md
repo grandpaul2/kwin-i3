@@ -121,7 +121,8 @@ against i3 and the code every so often, to catch what slipped.
   tab (their window rules, their workspaces' screens).
 - **One place for its settings: the settings page.** Plasma's KWin Scripts page opens it too.
   `kwinrc` holds the same settings, in i3's syntax where i3 has one, for a user who writes it by
-  hand.
+  hand. Keys are set on the Keys tab and kept by kglobalaccel, so Plasma's Shortcuts page shows
+  the same keys.
 - **kwin-i3 is the window manager**, and says so. Its workspaces, outputs and keyboard focus
   apply to every window in the tree. No soft lies ("we won't touch your windows"): a user who
   meets something kwin-i3 does needs a model for why, and the truth is the only one that holds.
