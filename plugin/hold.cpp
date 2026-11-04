@@ -982,14 +982,9 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
         const QStringList sides = hidden.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (const QString &s : sides) {
             r.hidden |= s == QLatin1String("left") ? Left : s == QLatin1String("right") ? Right : s == QLatin1String("top") ? Top : s == QLatin1String("bottom") ? Bottom : 0;
-            if (s == QLatin1String("bar")) {
-                r.hidden |= Top;
-                r.bar = true;
-            }
         }
         m_rings.insert(id, r);
     }
-    updateRadius(windowById(id));      // under a bar or not: its top corners
     repaintRingOf(id);
 }
 
@@ -1023,6 +1018,8 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     const QStringList clsWords = cls.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     bar.cls = clsWords.value(0) == QLatin1String("focused") ? 0 : 1;
     bar.round = clsWords.contains(QLatin1String("round"));
+    bar.fillLeft = clsWords.contains(QLatin1String("fill-left"));
+    bar.fillRight = clsWords.contains(QLatin1String("fill-right"));
     bar.titles = titles.split(QChar(0x1f));
     bar.span = m_barSpan.contains(id);
     bar.ratio = m_barSpan.value(id, 1);
@@ -1107,7 +1104,8 @@ void Hold::repaintBar(EffectWindow *w, const QString &key)
         return;
     }
     const RectF b = barRect(it->second, w->frameGeometry());
-    effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height()) + 1));
+    const double below = s_radius + m_frameWidth + 1;       // the notches it may fill under it
+    effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height() + below) + 1));
 }
 
 // The bar of a tabbed or stacked group, above wherever its shown window is drawn (moved and
@@ -1121,11 +1119,11 @@ void Hold::paintBars(const RenderTarget &renderTarget, const RenderViewport &vie
     const QString id = w->internalId().toString();
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
-    // A rounded bar's top corners as the ring's outer ones below it: the window's radius plus the
-    // frame's width (base.frag's outer radius), the bar spanning the ring's outer width.
+    // A rounded bar's corners as the ring's outer ones: the window's radius plus the frame's width
+    // (base.frag's outer radius), the bar spanning the ring's outer width.
     const double radius = m_roundedCorners ? s_radius + (ringed(w) ? m_frameWidth : 0) : 0;
     for (auto it = m_bars.lower_bound(id); it != m_bars.end() && barWindow(it->first) == id; ++it) {
-        paintBar(renderTarget, viewport, it->second, drawn, it->second.round ? radius : 0, deviceRegion, data);
+        paintBar(renderTarget, viewport, it->second, drawn, radius, deviceRegion, data);
     }
 }
 
@@ -1139,12 +1137,15 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
     }
     if (!bar.texture || bar.scale != scale || bar.width != width || bar.radius != radius) {
         const int n = bar.titles.size();
-        QImage img(QSize(std::lround(width * scale), std::lround(bar.height * scale)), QImage::Format_ARGB32_Premultiplied);
+        // Below the bar, room for the notches it fills: as tall as a corner's radius.
+        const double below = radius > 0 && (bar.fillLeft || bar.fillRight) ? radius : 0;
+        QImage img(QSize(std::lround(width * scale), std::lround((bar.height + below) * scale)), QImage::Format_ARGB32_Premultiplied);
         img.setDevicePixelRatio(scale);
         const QPalette pal = QGuiApplication::palette();
-        img.fill(pal.color(QPalette::Window));
+        img.fill(Qt::transparent);
         QPainter p(&img);
         p.setRenderHint(QPainter::Antialiasing);
+        p.fillRect(QRectF(0, 0, width, bar.height), pal.color(QPalette::Window));
         QFont font = QGuiApplication::font();
         p.setFont(font);
         const QFontMetrics fm(font);
@@ -1168,9 +1169,9 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
             const QRectF text = r.adjusted(8, 0, -8, 0);
             p.drawText(text, Qt::AlignVCenter | Qt::AlignLeft, fm.elidedText(bar.titles[i], Qt::ElideRight, std::max(0, int(text.width()))));
         }
-        if (radius > 0) {
-            // The two top corners cut round, antialiased: the image kept only inside a rect
-            // rounded at the top (its bottom corners pushed below the image).
+        if (radius > 0 && bar.round) {
+            // The topmost bar's two top corners cut round, antialiased (a clip path is not): the
+            // image kept only inside a rect rounded at the top, its bottom corners pushed below.
             QImage mask(img.size(), QImage::Format_ARGB32_Premultiplied);
             mask.setDevicePixelRatio(scale);
             mask.fill(Qt::transparent);
@@ -1182,6 +1183,23 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
             m.end();
             p.setCompositionMode(QPainter::CompositionMode_DestinationIn);
             p.drawImage(QPointF(0, 0), mask);
+            p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+        }
+        // The notches under its corners: between the ring's outer arc (the radius) and the
+        // bar's edge, in the colour of the tab above (a stacked bar's last row).
+        const auto tabColour = [&](int i) {
+            return i == bar.active ? m_frameColour[bar.cls] : pal.color(QPalette::Window);
+        };
+        for (int side = 0; side < 2 && below > 0; ++side) {
+            if (!(side ? bar.fillRight : bar.fillLeft)) {
+                continue;
+            }
+            const double x0 = side ? width - radius : 0;
+            QPainterPath notch;
+            notch.addRect(QRectF(x0, bar.height, radius, radius));
+            QPainterPath arc;
+            arc.addEllipse(QRectF(side ? width - 2 * radius : 0, bar.height, 2 * radius, 2 * radius));
+            p.fillPath(notch.subtracted(arc), tabColour(bar.stacked ? n - 1 : side ? n - 1 : 0));
         }
         p.end();
         bar.radius = radius;
@@ -1440,10 +1458,8 @@ void Hold::updateRadius(EffectWindow *w)
     }
     const QString id = w->internalId().toString();
     if (m_roundedCorners && framed(w)) {
-        // Under a group's bar its top corners are square: the bar's are the rounded ones.
-        const BorderRadius want = m_rings.value(id).bar ? BorderRadius(0, 0, s_radius, s_radius) : BorderRadius(s_radius);
-        if (win->borderRadius() != want) {
-            win->setBorderRadius(want);
+        if (win->borderRadius() != BorderRadius(s_radius)) {
+            win->setBorderRadius(BorderRadius(s_radius));
         }
         m_rounded.insert(id);
     } else if (m_rounded.remove(id) && !w->hasDecoration()) {
@@ -1482,13 +1498,9 @@ void Hold::resetRadii()
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
 // A hidden side is left out, its corners with it (hide_edge_borders: the side at the output's
 // edge; the strip stays empty).
-QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, const BorderRadius &radius, const Ring &how) const
+QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, double radius, const Ring &how) const
 {
-    const double f = m_frameWidth;
-    // Each corner its own radius (a window under a bar is square on top): the top and bottom
-    // bars reach as far into the window as their larger corner, the sides start below that.
-    const double rtl = radius.topLeft(), rtr = radius.topRight(), rbl = radius.bottomLeft(), rbr = radius.bottomRight();
-    const double rt = std::max(rtl, rtr), rb = std::max(rbl, rbr);
+    const double f = m_frameWidth, r = radius;
     const double ix0 = std::round(frame.x() * scale), iy0 = std::round(frame.y() * scale);
     const double ix1 = std::round((frame.x() + frame.width()) * scale), iy1 = std::round((frame.y() + frame.height()) * scale);
     const double ox0 = std::round((frame.x() - f) * scale), oy0 = std::round((frame.y() - f) * scale);
@@ -1497,22 +1509,20 @@ QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, const BorderRadius
     const bool left = !(how.hidden & Left), right = !(how.hidden & Right), top = !(how.hidden & Top), bottom = !(how.hidden & Bottom);
     // Where the top and bottom bars start and end: a hidden side takes its corner away, the
     // tall right bar its own.
-    const double tx0 = left ? ox0 : ix0 + rtl, tx1 = right && !rightTall ? ox1 : ix1 - rtr;
-    const double bx0 = left ? ox0 : ix0 + rbl, bx1 = right && !rightTall ? ox1 : ix1 - rbr;
+    const double hx0 = left ? ox0 : ix0 + r, hx1 = right && !rightTall ? ox1 : ix1 - r;
     QList<Bar> bars;
     if (top) {
-        bars << Bar{RectF(tx0, oy0, tx1 - tx0, iy0 + rt - oy0), how.indicator == Top};
+        bars << Bar{RectF(hx0, oy0, hx1 - hx0, iy0 + r - oy0), how.indicator == Top};
     }
     if (bottom) {
-        bars << Bar{RectF(bx0, iy1 - rb, bx1 - bx0, oy1 - iy1 + rb), how.indicator == Bottom};
+        bars << Bar{RectF(hx0, iy1 - r, hx1 - hx0, oy1 - iy1 + r), how.indicator == Bottom};
     }
     if (left) {
-        bars << Bar{RectF(ox0, iy0 + rt, ix0 + std::max(rtl, rbl) - ox0, iy1 - iy0 - rt - rb), how.indicator == Left};
+        bars << Bar{RectF(ox0, iy0 + r, ix0 + r - ox0, iy1 - iy0 - 2 * r), how.indicator == Left};
     }
     if (right) {
-        const double y0 = rightTall && top ? oy0 : iy0 + rt, y1 = rightTall && bottom ? oy1 : iy1 - rb;
-        const double x0 = ix1 - std::max(rtr, rbr);
-        bars << Bar{RectF(x0, y0, ox1 - x0, y1 - y0), how.indicator == Right};
+        const double y0 = rightTall && top ? oy0 : iy0 + r, y1 = rightTall && bottom ? oy1 : iy1 - r;
+        bars << Bar{RectF(ix1 - r, y0, ox1 - ix1 + r, y1 - y0), how.indicator == Right};
     }
     return bars;
 }
@@ -1550,7 +1560,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
-    const BorderRadius radius = w->window()->borderRadius().scaled(scale).rounded();   // as KWin rounds its clip
+    const double radius = std::round(w->window()->borderRadius().topLeft() * scale);   // as KWin rounds its clip
     const double ix0 = std::round(drawn.x() * scale), iy0 = std::round(drawn.y() * scale);
     const double ix1 = std::round((drawn.x() + drawn.width()) * scale), iy1 = std::round((drawn.y() + drawn.height()) * scale);
     // The class and the indicator side as kwin-i3 said (SetRing), else by KWin's active window;
@@ -1577,7 +1587,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
         return;
     }
     GLVertexBuffer *vbo = GLVertexBuffer::streamingBuffer();
-    if (radius.isNull()) {
+    if (radius <= 0) {
         // Square: plain bars. The border shader would round the outer corner by the frame
         // width even at radius 0 (base.frag: outer radius = radius + thickness).
         ShaderBinder binder(ShaderTrait::UniformColor | ShaderTrait::TransformColorspace);
@@ -1608,7 +1618,7 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     shader->setUniform(GLShader::Mat4Uniform::ModelViewProjectionMatrix, viewport.projectionMatrix());
     shader->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
     shader->setUniform(GLShader::Vec4Uniform::Box, QVector4D((ix0 + ix1) / 2, (iy0 + iy1) / 2, (ix1 - ix0) / 2, (iy1 - iy0) / 2));
-    shader->setUniform(GLShader::Vec4Uniform::CornerRadius, radius.toVector());
+    shader->setUniform(GLShader::Vec4Uniform::CornerRadius, QVector4D(radius, radius, radius, radius));
     shader->setUniform(GLShader::IntUniform::Thickness, int(std::round(m_frameWidth * scale)));
     shader->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     // The shader scales all four channels by coverage: premultiplied, blended always (the

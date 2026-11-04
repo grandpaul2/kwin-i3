@@ -459,13 +459,12 @@ can hold:
 - a **tabbed or stacked** container is a vertical pair: an empty bar tile, then the tiles of the
   child it shows (its focused one). The bar is 24 px for tabbed and 24 px a child for stacked,
   taken out of the group's own share, so the pair stays right when it merges into a vertical
-  parent. It is drawn that tall whatever the gaps, flush on the shown child and in line with
-  its neighbours' rings: KWin pads the bar tile as any tile, and the bar is drawn across that
-  padding, as i3's bar is the group's, inside its gaps, on its child (`gaps.c:62-71`,
-  `render.c:474-477`). The windows right under a bar have no top ring, the bar spanning their
-  rings' outer width in its place, as i3 draws a group's child `normal` (`con.c:1889-1893`,
-  `:1943-1948`); so the bar tile is its rows less the ring's width, except right over another
-  bar. Tiled and floated groups alike. The other children's windows go into the tile of the shown child's focused window,
+  parent. It is drawn that tall whatever the gaps, flush on the shown child's ring and in line
+  with its neighbours' rings: KWin pads the bar tile as any tile, and the bar is drawn across
+  that padding, as i3's bar is the group's, inside its gaps, on its child (`gaps.c:62-71`,
+  `render.c:474-477`). Its window keeps its whole ring, the top side under the bar: ≠ i3, which
+  draws a group's child `normal`, the bar in its top border's place (`con.c:1889-1893`); the
+  look's reason, the bar sitting on the frame as every window's frame shows. The other children's windows go into the tile of the shown child's focused window,
   behind it, and the shown child's window is raised when it isn't on top (i3's raise of a
   group's focused child, `render.c`). A group of one child has no bar and is that child alone,
   as i3 with its `pixel` border (`render_con_tabbed`: the bar only for more than one child or a
@@ -594,7 +593,7 @@ that it fits Plasma better.
 | L6 | `hide_edge_borders`, `smart_gaps` (i3's `smart_borders` is a deprecated alias of `hide_edge_borders smart \| smart_no_gaps`) | `hideEdgeBorders` (`none` default): `smart` draws no ring on a workspace with one visible tiling window, and its tile leaves no room for it; `smart_no_gaps` the same when that workspace has no outer gap; `vertical`, `horizontal`, `both` leave out the ring's left and right, top and bottom, or all sides where the window's tile is at the root's edge and the inner gap is 0 (i3's `con_adjacent_borders`, `con.c:1902`, on the rendered rects: an outer gap moves the workspace's rect, an inner gap moves the window off it). `smartGaps`: §6. Floating windows never | ≠ | i3's `con_border_style` (`con.c:1821-1879`). `vertical`, `horizontal`, `both` leave a strip of the ring's width where the side was: ≠, reason (a), KWin's tiles have one padding for all sides and a root inside its output. `smart` counts visible windows as i3 (`con.c:1827-1828`): a group's hidden tabs don't count |
 | L7 | A window's own look (i3's `border normal \| pixel N \| none`, `border toggle`, `for_window … border`) | one look for all tiling windows | ≠ | kept: no command language (§8 K22), and §3 R9's criteria set floating only. Reason (d). |
 | L8 | `titlebars`: maximize button, title-bar double-click | nothing | + | the tree places it, as sway |
-| L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows; a group's topmost bar has its two top corners rounded as the ring's outer ones, and the windows under it are square on top, so the bar and its window are one rounded shape (not in the title-bar look, where the bar stays square) | ≠ | i3 has square corners. **Kept**: rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded. Reason (b). |
+| L9 | Rounded corners (`roundedCorners`) | on: Breeze's 5 px on tiling framed windows; a group's topmost bar has its two top corners rounded as the ring's outer ones, and its bottom corners fill the notches down to a rounded ring right under them, in the colour of the tab above (not in the title-bar look, where the bar stays square) | ≠ | i3 has square corners. **Kept**: rounded by default, square a choice (the setting off): the floating windows around them are Breeze's, rounded. Reason (b). |
 | L10 | A floating window, alone in its floating container | its own decoration (KWin's title bar and border) | ≠ | i3 gives a window that floated by itself (a dialog, a rule) its `default_floating_border normal 2`, and one floated by Floating Toggle keeps its tiling border (`floating.c:354-356`: only when the float is automatic). Here Plasma's title bar either way, reason (b), as L1: a floating window is moved and resized as Plasma's (`plan.md` "The mouse") |
 | L10a | A window inside a split or group floated whole | the tiling look (L1-L9: the ring, the title bars by the look setting, a group's bar) | = | i3's `floating_enable` changes the border only of what it floats, and only when the float is automatic (`floating.c:354-355`): the windows inside keep their tiling border, and `render_con` lays the floating container out as any tiled container. L10's reason (b) is a Plasma user's one floating window; a floated split is i3's alone (`OPEN.md` item 73) |
 | L11 | A floating window's ring (`frameOnFloating`, off) | L3's classes: `focused`, else `unfocused` (i3's would be `focused_inactive`, left out as L3); no indicator | ≠ | i3's `x.c`. `frameFloatingActive` and `frameFloatingInactive` are no longer read; by default (`frameOnFloating` off) a floating window keeps Plasma's styling, its title bar and no ring. Reason (b). |
