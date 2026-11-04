@@ -7,9 +7,9 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+Last reconciled: **2026-11-04** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-main at 63f30ad: script and plugins (settings page at 20ccd42). `stable` is at
+main at 273e429: script, plugins and settings page. `stable` is at
 `v1.3.0` (2026-11-03, 8a42986).
 
 ## Stage
