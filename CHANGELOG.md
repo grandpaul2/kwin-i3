@@ -5,6 +5,17 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+- **Tabbed and stacked bars keep their height whatever the gaps**, flush on their window and level
+  with its neighbours; before, a larger inner gap made the bar thinner and put the gap between
+  the bar and its window. With rounded corners, the bar's top corners are rounded and its bottom
+  corners follow the window's, so bar and window read as one shape, and every tab has i3's 1 px
+  border in its frame colour.
+- **Keys work on an empty desktop.** KWin gives the invisible Xwayland Video Bridge window the
+  focus when nothing else is open, and every kwin-i3 key was ignored then; Meta+F and
+  Meta+Shift+Q no longer act on that window either.
+- **A floating window reaching onto another monitor keeps the focus** while the pointer moves
+  across the monitors' edge inside it, instead of focusing the other monitor's workspace (and
+  warping the pointer back).
 - **What i3 decides, kwin-i3 decides while it runs, and Plasma's settings stay as you set them.**
   Focus follows the mouse at once (a setting of kwin-i3's own on the Tiling tab, on by default
   as in i3), a new window takes the focus, nothing tiles or maximizes at a screen edge, and
