@@ -1024,8 +1024,8 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
   with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
   window picker: a rule with the clicked window's class, matched whole) sit in the tab's
-  footer, always in view; a new rule scrolls into view with its application box focused. Below, new windows over a fullscreen one (`popupDuringFullscreen`), then the floating sizes (`floatingMinimumSize`,
-  `floatingMaximumSize`).
+  footer, always in view; a new rule scrolls into view with its application box focused. Above the rules, new windows over a fullscreen one (`popupDuringFullscreen`), the floating sizes (`floatingMinimumSize`,
+  `floatingMaximumSize`) and Plasma's window animations (below).
 - **Keys tab**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key another component also holds is set all the same, with no note (which runs is the key
   override's, §8 "Shared keys", its checkbox above the list, greyed without the helper); Apply

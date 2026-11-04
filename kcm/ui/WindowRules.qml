@@ -5,8 +5,9 @@
 // type always on a second line. The defaults are a group of their own when they
 // run first; a rule the row can't show (other criteria) is edited as text. Pick a Window
 // (KWin's queryWindowInfo) fills a new row's application in. Each rule is a box of its own in a
-// framed list (the defaults one, the reader's another); adding sits in the footer. Below, new
-// windows over a fullscreen one (popupDuringFullscreen), then the floating sizes.
+// framed list (the defaults one, the reader's another); adding sits in the footer. Above them,
+// new windows over a fullscreen one (popupDuringFullscreen), the floating sizes and Plasma's
+// window animations; the rules, the longest part, last.
 // settings.js reads and writes the two strings (parseRules, formatRules).
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -515,32 +516,8 @@ KCM.SimpleKCM {
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.smallSpacing
 
-            // The defaults, when they run first: a group of their own above the reader's.
-            Kirigami.Heading {
-                visible: page.defaultCount > 0
-                level: 2
-                text: i18nc("@title:group the rules kwin-i3 ships", "Defaults")
-            }
-            RuleList {
-                visible: page.defaultCount > 0
-                from: 0
-                to: page.defaultCount
-            }
-            Kirigami.Heading {
-                Layout.topMargin: page.defaultCount > 0 ? Kirigami.Units.largeSpacing : 0
-                level: 2
-                text: page.defaultCount > 0 ? i18nc("@title:group", "Your rules") : i18nc("@title:group", "Rules")
-            }
-            RuleList {
-                from: page.defaultCount
-                to: page.rows.length
-                emptyText: page.defaultCount > 0 ? i18n("No rules of your own") : i18n("No rules")
-                emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
-            }
-
             Kirigami.Heading {
                 level: 2
-                Layout.topMargin: Kirigami.Units.largeSpacing * 2
                 text: i18nc("@title:group", "New windows over fullscreen")
             }
             RowLayout {
@@ -578,6 +555,30 @@ KCM.SimpleKCM {
             RowLayout {
                 spacing: Kirigami.Units.smallSpacing
                 PlasmaTick { row: "animations"; showName: true }
+            }
+
+            // The defaults, when they run first: a group of their own above the reader's.
+            Kirigami.Heading {
+                visible: page.defaultCount > 0
+                level: 2
+                Layout.topMargin: Kirigami.Units.largeSpacing * 2
+                text: i18nc("@title:group the rules kwin-i3 ships", "Defaults")
+            }
+            RuleList {
+                visible: page.defaultCount > 0
+                from: 0
+                to: page.defaultCount
+            }
+            Kirigami.Heading {
+                Layout.topMargin: page.defaultCount > 0 ? Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing * 2
+                level: 2
+                text: page.defaultCount > 0 ? i18nc("@title:group", "Your rules") : i18nc("@title:group", "Rules")
+            }
+            RuleList {
+                from: page.defaultCount
+                to: page.rows.length
+                emptyText: page.defaultCount > 0 ? i18n("No rules of your own") : i18n("No rules")
+                emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
             }
         }
     }
