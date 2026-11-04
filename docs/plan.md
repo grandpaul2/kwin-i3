@@ -230,12 +230,13 @@ follows it:
   choice (the script's link and its enabling, the plugins, the settings page) and is safe to run
   again; the log-out is KWin's, which reads a new script's and plugins' paths only at login; every
   choice waits for the first-run step. Packaging is `LATER.md`'s "Release prep".
-- **The first-run step is the settings page's Plasma tab**, opened from the page's
-  banner while anything kwin-i3 needs differs. It lists each Plasma setting on the list (below):
-  its current value, the one kwin-i3 would set, and why, each said plainly to be **Plasma's, not
-  kwin-i3's**. A tick is an edit like any setting on the page: its Apply makes it, and nothing
-  changes without it; **Defaults** puts Plasma's back (each row kwin-i3 changed to the Plasma
-  column), as Defaults on any Plasma page does (`docs/philosophy.md`).
+- **The first-run step is the settings page**, its banner shown while anything kwin-i3 needs
+  differs and opening the tab that holds it. Each Plasma setting on the list (below) is a row on
+  the tab it belongs with (per-output desktops on Workspaces, the animations on Window Rules),
+  its help saying why, and plainly that it is **Plasma's, not kwin-i3's**. A tick is an edit like
+  any setting on the page: its Apply makes it, and nothing changes without it; **Defaults** on
+  its tab puts Plasma's back where kwin-i3 changed it, as Defaults on any Plasma page does
+  (`docs/philosophy.md`).
   The install's last line points there.
 - **The list**: only what kwin-i3 can't win at runtime (reason (e)): the Plasma settings kwin-i3
   needs (per-output desktops, with more than one output); and the optional (window animations set to None, not the global speed; i3 has

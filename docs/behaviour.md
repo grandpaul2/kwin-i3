@@ -280,7 +280,7 @@ kwin-i3: none is handled.
 the output's name. i3's workspaces live on outputs the same way; the differences are in the rows.
 Per-output workspaces need KWin's per-output desktops (`perOutputVirtualDesktops`); kwin-i3
 reports when it is off with two or more outputs and sets it only on the user's yes, on the
-settings page's Plasma tab (§11).
+settings page's Workspaces tab (§11).
 
 **=** as in i3 · **≠** differs (the reason in the note) · **+** no i3 counterpart (Plasma's)
 
@@ -997,9 +997,8 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 
 - **Banners**, above the tabs: kwin-i3 off (with Turn On, which enables it and reconfigures); on
   but not running (pointing at the journal); running without the plugins (one banner for either:
-  what goes without them, §13); while a Plasma setting kwin-i3 needs differs (the Plasma tab's
-  unticked-by-default rows aside), "Some of Plasma's settings work against kwin-i3", with
-  Review… to the Plasma tab.
+  what goes without them, §13); while per-output desktops are off, "Plasma switches workspaces on every screen together, which
+  works against kwin-i3", with Review… to the Workspaces tab.
 - **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
   checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
   "(optional)", its full name its screen reader name): **Plasma** first (below), **Tiling** (the key step, tiling and
@@ -1034,35 +1033,30 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   shifted symbol appears with the keys that type it on the current layout; End session's row has
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
-- **Plasma tab** (the first-run step, `plan.md` "Install and first run"; `kcm/setup.cpp`):
-  the Plasma settings kwin-i3 can't win at runtime, shown for convenience, every one always: two columns of radio buttons, "Plasma" and
-  "kwin-i3 (recommended)", choosing one unchoosing the other, the one chosen being where the
-  setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
-  what the Plasma column means for it, as "Plasma: " and the value in Plasma's own words
-  ("Plasma: On"), and its help button why kwin-i3 wants its way and where Plasma keeps the
-  setting. Choosing Plasma gives back what the reader had before kwin-i3 changed it, or, where
-  kwin-i3 changed nothing, Plasma's stock value, saving nothing. Only what kwin-i3 can't win at
-  runtime (`plan.md` reason (e)): per-output desktops; and, optional, the window animations set to
-  None (Plasma's Animations page: every effect of the open/close, maximize, minimize, full screen
-  and desktop-switching groups off in `[Plugins]`, and unloaded; the global speed untouched).
-  What kwin-i3 wins at runtime has no row: focus follows mouse (B1), a new window's focus (C4),
-  screen-edge tiling and maximizing, the left drag's window action (F1), shared keys and Meta+T
-  (§8). Every tick is an edit like any setting: **Apply** makes it (each key's old value, or its
-  absence, and the value written saved first in `~/.local/state/kwin-i3/plasma-settings.json`;
-  KWin reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3
-  changed to the Plasma column, the others as they are). Unticked where
-  kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
-  kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
-  puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make
-  uninstall` gives all of it back (`tools/plasma-settings.py`). A stock default is read from the
-  installed `kwin.kcfg`. Showing the tab reads Plasma's values again, unless the page holds edits
-  not yet applied.
+- **Plasma's own settings** (the first-run step, `plan.md` "Install and first run";
+  `kcm/setup.cpp`), the two kwin-i3 can't win at runtime (`plan.md` reason (e)), each a row on the
+  tab it belongs with: **Workspaces** "Each screen: Switch workspaces independently for each
+  screen (recommended)" (per-output desktops) and **Window Rules** "Window animations: Set window
+  animations to none (optional)" (Plasma's Animations page: every effect of the open/close,
+  maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`, and unloaded;
+  the global speed untouched). Ticked is kwin-i3's way; the help says why, that the setting is
+  Plasma's, and that changing it here is the same as in System Settings. A tick is an edit like
+  any setting: **Apply** makes it (each key's old value, or its absence, and the value written
+  saved first in `~/.local/state/kwin-i3/plasma-settings.json`; KWin reconfigured), **Reset**
+  drops it, **Defaults** on its tab gives it back if kwin-i3 changed it. Unticked where kwin-i3
+  changed it, Apply writes the old value back only where Plasma still has the one kwin-i3 wrote;
+  a value changed since stays, its record dropped; unticked where kwin-i3 changed nothing, Plasma's
+  stock value, saving nothing. Giving per-output desktops back puts every output on one desktop
+  (KWin's, `kwin-notes.md`). `make uninstall` gives all of it back (`tools/plasma-settings.py`). A
+  stock default is read from the installed `kwin.kcfg`. What kwin-i3 wins at runtime has no row:
+  focus follows mouse (B1), a new window's focus (C4), screen-edge tiling and maximizing, the left
+  drag's window action (F1), shared keys and Meta+T (§8).
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Reset** drops every edit. **Defaults**
   resets the tab shown, and greys when it is at its defaults: a kwin-i3 tab's settings to
   `main.xml`'s (the Keys tab's keys to the US keys and `endSession`'s), Window Rules' rules to the
   shipped ones and Workspaces' floating workspaces to none (both kept in `forWindow`, each tab
-  its own part); the Plasma tab as above. `debugLog` and `holdTimeoutMs`, on no tab,
+  its own part) and each tab's Plasma row given back as above. `debugLog` and `holdTimeoutMs`, on no tab,
   are never reset by it.
 
 ### The workspace widget

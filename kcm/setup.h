@@ -1,6 +1,7 @@
 #pragma once
-// The Plasma tab's model (docs/plan.md, "Install and first run"): the Plasma
-// settings kwin-i3 is designed around, each with Plasma's value now and the one kwin-i3 would
+// The Plasma settings kwin-i3 is designed around (docs/plan.md, "Install and first run"), shown as
+// a row each on the tab they belong with (per-output desktops on Workspaces, the animations on
+// Window Rules), each with Plasma's value now and the one kwin-i3 would
 // set: only what kwin-i3 can't win at runtime (docs/plan.md, reason (e)). A row's tick is a
 // pending edit like any setting on the page: the page's Apply makes it (ticked: kwin-i3's value;
 // unticked where kwin-i3 changed it: Plasma's given back), Reset drops it, Defaults puts Plasma's
@@ -33,10 +34,10 @@ public:
     Q_INVOKABLE void setWanted(const QString &id, bool on);
     // The page's Apply, Defaults; whether the ticks differ from Plasma, or from kwin-i3's.
     void save();
-    // Defaults on the Plasma tab: every row kwin-i3 changed to the Plasma column (Apply gives back
-    // what Plasma had before), the rest as they are.
-    void givePlasmaBack();
-    bool isPlasmaBack() const;
+    // Defaults on the tab that holds row `only`: that row, if kwin-i3 changed it, to Plasma's way
+    // (Apply gives back what Plasma had before); as it is otherwise.
+    void givePlasmaBack(const QString &only);
+    bool isPlasmaBack(const QString &only) const;
     bool isSaveNeeded() const { return m_wanted != m_initial; }
 
     struct Change {

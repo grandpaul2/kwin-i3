@@ -35,9 +35,9 @@ audience and the lines drawn: `docs/philosophy.md`.
 
 **79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
 takes in item 26). Built: `make install` and `make uninstall`; the key override (`behaviour.md` §8, "Shared keys");
-the settings page's Plasma tab with its banner, its save and `make uninstall`'s
+Plasma's own settings as rows on Workspaces and Window Rules, with the banner, their save and `make uninstall`'s
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
-by step, from `git clone` to the Plasma tab; and with the plugins not built: what the Plasma
-tab's banner and the Keys tab's greyed override then say.
+by step, from `git clone` to the banner's Review…; and with the plugins not built: what the
+banners and the Keys tab's greyed override then say.

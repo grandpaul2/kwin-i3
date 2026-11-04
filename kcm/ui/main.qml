@@ -1,5 +1,5 @@
 // kwin-i3's page: the script's settings as Plasma's own pages lay theirs out, in tabs (as Window
-// Behavior's): Plasma, Tiling, Gaps, Workspaces, Window Rules, Frame and Keys, each a page
+// Behavior's): Tiling, Gaps, Workspaces, Window Rules, Frame and Keys, each a page
 // of its own file, loaded by name ("Keys" is also QtQuick's attached Keys). The banners say the
 // state above every tab. Defaults resets the tab shown (kcm.currentTab, kcm.cpp). Every control
 // says what it is to a screen reader (tools/a11y.py audit; docs/style-settings-page.md,
@@ -52,18 +52,26 @@ KCM.AbstractKCM {
                          !kcm.helperLoaded ? i18n("no resize mode") : ""].filter(s => s).join(", "))
         }
         // The first-run step (docs/plan.md, "Install and first run"): while a Plasma setting
-        // kwin-i3 needs differs, the page says so and opens the Plasma tab.
+        // kwin-i3 needs differs (per-output desktops), the page says so and opens its tab.
         Kirigami.InlineMessage {
             Layout.fillWidth: true
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && kcm.setup.needed
-            text: i18n("Some Plasma settings work against kwin-i3.")
+            text: i18n("Plasma switches workspaces on every screen together, which works against kwin-i3.")
             actions: Kirigami.Action {
-                text: i18nc("@action:button", "Review Plasma Settings…")
+                text: i18nc("@action:button", "Review…")
                 icon.name: "go-next"
-                onTriggered: tabs.currentIndex = 0   // the Plasma tab, the first
+                onTriggered: tabs.currentIndex = 2   // Workspaces
             }
+        }
+        // A Plasma setting that couldn't be changed on Apply.
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            position: Kirigami.InlineMessage.Position.Header
+            type: Kirigami.MessageType.Error
+            visible: kcm.setup.error !== ""
+            text: kcm.setup.error
         }
         // Plasma's Window Behavior tabs: a QTabWidget in document mode, expanding (KWin
         // kcms/options/main.cpp:34-36), which Breeze draws flat only for a real QTabBar
@@ -78,7 +86,7 @@ KCM.AbstractKCM {
             id: tabs
             property int currentIndex: 0
             readonly property int count: tabNames.length
-            readonly property var tabNames: [i18nc("@title:tab", "Plasma"), i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"),
+            readonly property var tabNames: [i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"),
                 i18nc("@title:tab", "Workspaces"), i18nc("@title:tab", "Window Rules"),
                 i18nc("@title:tab", "Frame"), i18nc("@title:tab", "Keys")]
             Layout.fillWidth: true
@@ -154,7 +162,7 @@ KCM.AbstractKCM {
         anchors.fill: parent
         currentIndex: tabs.currentIndex
         Repeater {
-            model: ["PlasmaSettings.qml", "Tiling.qml", "Gaps.qml", "Workspaces.qml", "WindowRules.qml", "Frame.qml", "Keys.qml"]
+            model: ["Tiling.qml", "Gaps.qml", "Workspaces.qml", "WindowRules.qml", "Frame.qml", "Keys.qml"]
             Loader { required property string modelData; source: modelData }
         }
     }

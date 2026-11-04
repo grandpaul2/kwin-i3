@@ -76,16 +76,13 @@ Window Rules, Frame and Keys.
 
 ## Saying what to pick
 
-- **What is recommended is marked on the control**: a checkbox's "(recommended)" (above), the
-  Plasma tab's kwin-i3 column. Defaults is the default, not the recommendation: on a kwin-i3 tab
-  i3's default where i3 has one, else kwin-i3's own; on the Plasma tab, Plasma's own values back.
-- **Where the page changes Plasma's own settings** (the Plasma tab), the choice is
-  marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one radio button chosen a row,
-  as Plasma's own pages show a choice between two ways. The kwin-i3 button says "Enable" in small
-  text. The Plasma button says nothing, because the page doesn't claim to
-  know Plasma's value. One muted line under each name says what the Plasma column means for it:
-  "Plasma: " and the value in the words of Plasma's own settings ("Plasma: On"), never
-  what the setting does. That, and where Plasma keeps it, goes in its help. The user makes every change, through the page's Apply.
+- **What is recommended is marked on the control**: a checkbox's "(recommended)" (above).
+  Defaults is the default, not the recommendation: i3's default where i3 has one, else kwin-i3's
+  own; a Plasma setting's row, Plasma's own value back.
+- **Where the page changes Plasma's own settings** (per-output desktops on Workspaces, the
+  animations on Window Rules), the row is a checkbox like any other, ticked being kwin-i3's way;
+  its help says it is Plasma's setting, where Plasma keeps it, and that changing it here is the
+  same as in System Settings. The user makes every change, through the page's Apply.
 
 ## Controls
 

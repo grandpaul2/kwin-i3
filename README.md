@@ -145,13 +145,14 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    Meta+Shift+Left/Right) runs kwin-i3's command, with Meta+T kept from Plasma's tile editor
    (the **Keys** tab's "On a key conflict, kwin-i3's key wins", which needs the plugins; the
    Overview stays on the screen's top-left corner and Grid View on Meta+G). Plasma's own values
-   are back when kwin-i3 is released or removed. What kwin-i3 can't decide this way, System
-   Settings > Window Management > kwin-i3 says "Some of Plasma's settings work against kwin-i3";
-   **Review…** opens its Plasma tab: each screen switching workspaces alone (with it off, a
-   workspace switch changes every monitor); and, optional, window animations set to None
-   (opening and closing, maximizing, minimizing, full screen and desktop switching; i3 has none;
-   the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each
-   one you want, then **Apply**, the same as changing them in System Settings. kwin-i3 keeps
+   are back when kwin-i3 is released or removed. Two things kwin-i3 can't decide this way are
+   rows on the settings page (System Settings > Window Management > kwin-i3): each screen
+   switching workspaces alone, on the **Workspaces** tab (with it off, a workspace switch changes
+   every monitor; the page says so in a banner, with **Review…**); and, optional, window
+   animations set to None, on the **Window Rules** tab (opening and closing, maximizing,
+   minimizing, full screen and desktop switching; i3 has none; the animation speed stays as it
+   is). These are **Plasma's settings, not kwin-i3's**: tick each one you want, then **Apply**,
+   the same as changing them in System Settings. kwin-i3 keeps
    what each was: untick it and Apply to put it back (one you changed since stays as you set it).
    **With two or more monitors**, give each workspace its screen too (the
    **Workspaces** tab): when a monitor goes away, unplugged or only for a moment (a cable,
@@ -176,7 +177,7 @@ windows once). `CHANGELOG.md` says what each version changed. A clone made befor
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
 it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives back every Plasma setting the
-Plasma tab changed (one you changed since stays as you set it),
+settings page changed (one you changed since stays as you set it),
 turns kwin-i3 off, and deletes everything the install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
 install; it says where. Then delete `~/kwin-i3` and, if you made one, the bug-report key
 (Install step 6).
@@ -217,13 +218,13 @@ window once.
 ### The settings page
 
 kwin-i3's own page in System Settings > Window Management: every setting a user would change
-(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: **Plasma** (Plasma's
-own settings kwin-i3 works best with and can't decide while it runs), Tiling, Gaps, Workspaces, Window Rules, Frame
+(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: Tiling, Gaps, Workspaces (with Plasma's per-screen
+workspace switching), Window Rules (with Plasma's window animations), Frame
 and **Keys** (kwin-i3's keys rebound in one list instead of KWin's). A key another shortcut also holds
 is set all the same: which of the two runs is the key override's (the Keys tab, "On a key
 conflict, kwin-i3's key wins", on by default). Apply takes effect at once, with or without the plugins.
-**Defaults** resets only the tab shown: kwin-i3's settings to their defaults, or, on the Plasma
-tab, Plasma's settings back to what they were before kwin-i3 changed them.
+**Defaults** resets only the tab shown: kwin-i3's settings to their defaults, and a Plasma
+setting there back to what it was before kwin-i3 changed it.
 
 `make kcm-install` builds it (needs `kf6-kcmutils-devel` and `kf6-ki18n-devel`) and puts it in
 `~/.local/lib/kwin-i3/kcm-plugins`, with `~/.config/environment.d/kwin-i3.conf` adding that to the

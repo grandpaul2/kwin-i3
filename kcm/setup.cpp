@@ -224,22 +224,26 @@ void SetupModel::setWanted(const QString &id, bool on)
 
 // A row kwin-i3 changed goes back to Plasma; one it didn't change is Plasma's already, whichever
 // column it shows (a setting that happens to be kwin-i3's value is the reader's own).
-void SetupModel::givePlasmaBack()
+void SetupModel::givePlasmaBack(const QString &only)
 {
     for (const QVariant &v : std::as_const(m_rows)) {
         const QVariantMap row = v.toMap();
         const QString id = row.value(QStringLiteral("id")).toString();
+        if (id != only)
+            continue;
         m_wanted[id] = row.value(QStringLiteral("changed")).toBool() ? false : m_initial.value(id);
     }
     Q_EMIT changed();
     Q_EMIT edited();
 }
 
-bool SetupModel::isPlasmaBack() const
+bool SetupModel::isPlasmaBack(const QString &only) const
 {
     for (const QVariant &v : m_rows) {
         const QVariantMap row = v.toMap();
         const QString id = row.value(QStringLiteral("id")).toString();
+        if (id != only)
+            continue;
         const QVariant want = row.value(QStringLiteral("changed")).toBool() ? QVariant(false) : m_initial.value(id);
         if (m_wanted.value(id) != want)
             return false;

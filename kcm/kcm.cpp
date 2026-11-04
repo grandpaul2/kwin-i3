@@ -29,7 +29,7 @@
 
 // The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
 // what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
-enum Tab { PlasmaTab, TilingTab, GapsTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
+enum Tab { TilingTab, GapsTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
 // the rest Window Rules'. debugLog and holdTimeoutMs (internal) are on no tab, so Defaults never
@@ -55,10 +55,14 @@ static QStringList tabKeys(int tab)
                 QStringLiteral("roundedCorners"), QStringLiteral("frameOnFloating")};
     case KeysTab:
         return {QStringLiteral("endSession"), QStringLiteral("keysOverride")};
-    case PlasmaTab:
-        return {};
     }
     return {};
+}
+
+// The Plasma setting a tab shows as one of its rows (kcm/setup.cpp), its Defaults giving it back.
+static QString plasmaRow(int tab)
+{
+    return tab == WorkspacesTab ? QStringLiteral("perOutput") : tab == RulesTab ? QStringLiteral("animations") : QString();
 }
 
 // The rules of a forWindow text, as ui/settings.js splitRules (and the script's src/rules.js): a
@@ -201,10 +205,9 @@ public:
             const QString target = forWindowTarget();
             if (m_settings->forWindow() != target)
                 m_settings->setForWindow(target);
+            m_setup->givePlasmaBack(plasmaRow(m_tab));
         } else if (m_tab == KeysTab) {
             m_keys->defaults();
-        } else if (m_tab == PlasmaTab) {
-            m_setup->givePlasmaBack();
         }
         settingsChanged();
     }
@@ -329,11 +332,9 @@ private:
                 return false;
         }
         if (m_tab == WorkspacesTab || m_tab == RulesTab)
-            return m_settings->forWindow() == forWindowTarget();
+            return m_settings->forWindow() == forWindowTarget() && m_setup->isPlasmaBack(plasmaRow(m_tab));
         if (m_tab == KeysTab)
             return m_keys->isDefaults();
-        if (m_tab == PlasmaTab)
-            return m_setup->isPlasmaBack();
         return true;
     }
 
@@ -379,7 +380,7 @@ private:
     }
 
     std::unique_ptr<KWinI3Settings> m_settings;
-    int m_tab = PlasmaTab;      // the first tab, shown when the page opens
+    int m_tab = TilingTab;      // the first tab, shown when the page opens
     KeysModel *m_keys;
     SetupModel *m_setup;
     bool m_scriptEnabled = false;

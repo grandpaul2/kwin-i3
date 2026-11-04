@@ -569,6 +569,16 @@ KCM.SimpleKCM {
             }
             SizeRow { settingName: "floatingMinimumSize"; what: i18nc("@label", "Smallest:") }
             SizeRow { settingName: "floatingMaximumSize"; what: i18nc("@label", "Largest:"); maximum: true }
+
+            Kirigami.Heading {
+                level: 2
+                Layout.topMargin: Kirigami.Units.largeSpacing * 2
+                text: i18nc("@title:group", "Window animations")
+            }
+            RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                PlasmaTick { row: "animations"; showName: true }
+            }
         }
     }
 }

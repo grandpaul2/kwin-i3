@@ -112,7 +112,7 @@ against i3 and the code every so often, to catch what slipped.
 ## How it presents itself
 
 - **It says what to pick.** The page marks what is recommended on the control itself (a
-  checkbox's "(recommended)", the Plasma tab's "kwin-i3 (recommended)" column), and the user
+  checkbox's "(recommended)", Plasma's own settings' rows included), and the user
   makes every change (`docs/style-settings-page.md`, "Saying what to pick").
 - **Defaults means "back to the default", as on every Plasma page**, for the tab shown and only
   it: what is Plasma's goes back to Plasma (each Plasma setting to what it was before kwin-i3

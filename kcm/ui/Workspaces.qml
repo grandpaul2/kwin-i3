@@ -139,11 +139,18 @@ KCM.SimpleKCM {
             }
         }
 
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Each screen:")
+            Kirigami.FormData.buddyFor: perOutputBox
+            spacing: Kirigami.Units.smallSpacing
+            PlasmaTick { id: perOutputBox; row: "perOutput"; recommended: true }
+        }
+
         Item {
             Kirigami.FormData.isSection: true
             Kirigami.FormData.label: i18nc("@title:group", "Each workspace")
         }
-        // The columns' headings, over the boxes as the Plasma Settings page's.
+        // The columns' headings, over the boxes.
         RowLayout {
             spacing: Kirigami.Units.smallSpacing
             Kirigami.Heading { level: 5; text: i18nc("@title:column a workspace's screen", "Screen"); Layout.preferredWidth: page.screenWidth }
