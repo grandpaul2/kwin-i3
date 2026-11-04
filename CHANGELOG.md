@@ -5,6 +5,8 @@ detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
 ## Unreleased
 
+## v1.3.0 (2026-11-03)
+
 - **The settings page is in tabs**, as Plasma's Window Behavior page: Plasma, Tiling, Gaps, Mouse &
   Focus, Workspaces, Window Rules, Frame, Keys. **Defaults resets only the tab shown**, as on any
   Plasma page: kwin-i3's settings go to their defaults, and on the Plasma tab Plasma's own settings
