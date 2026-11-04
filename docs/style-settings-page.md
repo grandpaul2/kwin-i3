@@ -7,12 +7,12 @@ the page wins and this file is brought in line. No set of rules makes a page fee
 change is built from these suggestions, checked on a screenshot, and handed over; it is not
 polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's
 own pages do (Virtual Desktops, Window Behavior, Display Configuration, Window Rules): open the
-Plasma page and match it. The finished tabs are the best example: Tiling, Mouse & Focus,
+Plasma page and match it. The finished tabs are the best example: Tiling, Gaps, Mouse & Focus,
 Workspaces, Window Rules, Frame, Keys and Plasma.
 
 ## Layout
 
-- **A form page is one `Kirigami.FormLayout`** (Tiling, Mouse & Focus, Workspaces, Frame): a centred
+- **A form page is one `Kirigami.FormLayout`** (Tiling, Gaps, Mouse & Focus, Workspaces, Frame): a centred
   column with the labels right-aligned in one column, and no group boxes. Sections are headings in
   sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A page of items that a
   `Repeater` makes in another shape (Window Rules, Plasma Settings) is a centred `ColumnLayout` at
@@ -46,8 +46,9 @@ Workspaces, Window Rules, Frame, Keys and Plasma.
 - **A way back from a slip.** Every edit waits for Apply. Reset drops every edit; Defaults
   resets the tab shown (`docs/philosophy.md`, "How it presents itself"). A row where a slip is easy and hard to undo by hand (a colour) also gets a Default
   button of its own, greyed at the default.
-- **The page is tabs**, as Plasma's Window Behavior: Tiling, Mouse & Focus, Workspaces, Window
-  Rules, Frame, Keys, Plasma, each a page of its own file under the banners and the tab bar. A tab
+- **The page is tabs**, as Plasma's Window Behavior: Tiling, Gaps, Mouse & Focus, Workspaces,
+  Window Rules, Frame, Keys, Plasma, in Window Behavior's tab bar (flat, as wide as the page, drawn
+  to Breeze's document-mode recipe, `kcm/ui/main.qml`), each a page of its own file under the banners and the tab bar. A tab
   may open with one line saying what it is for, in its header, with its help button at its end.
 - **No paragraphs on the page.** An explanation goes in a `Kirigami.ContextualHelpButton`
   beside its control. A state goes in a banner at the top (`Kirigami.InlineMessage`): kwin-i3
@@ -79,7 +80,6 @@ Workspaces, Window Rules, Frame, Keys and Plasma.
 - **What is recommended is marked on the control**: a checkbox's "(recommended)" (above), the
   Plasma tab's kwin-i3 column. Defaults is the default, not the recommendation: on a kwin-i3 tab
   i3's default where i3 has one, else kwin-i3's own; on the Plasma tab, Plasma's own values back.
-  The Plasma tab's **Pick kwin-i3's for All** ticks the recommended column for all but the optional.
 - **Where the page changes Plasma's own settings** (the Plasma tab), the choice is
   marked: two columns, "Plasma" and "kwin-i3 (recommended)", with one box ticked a row. The kwin-i3
   box says "Enable" in small text. The Plasma box says nothing, because the page doesn't claim to

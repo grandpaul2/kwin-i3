@@ -1012,9 +1012,9 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   Review… to the Plasma tab.
 - **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
   checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
-  "(optional)", its full name its screen reader name): **Tiling** (the gaps, the key step, tiling
-  and floating, focus at an edge, the hold; then the outer gap per screen edge, `smartGaps`, and
-  each workspace's own inner and outer gap), **Mouse & Focus** (`mouseWarping` as a checkbox,
+  "(optional)", its full name its screen reader name): **Tiling** (the key step, tiling and
+  floating, focus at an edge, the hold), **Gaps** (the gaps; then the outer gap per screen edge,
+  `smartGaps`, and each workspace's own inner and outer gap), **Mouse & Focus** (`mouseWarping` as a checkbox,
   `tilingDrag`, `popupDuringFullscreen`), **Workspaces** (how new workspaces open
   (`workspaceLayout`), their split direction, auto back-and-forth; then each workspace's screens
   and new windows), **Window Rules**, **Frame** (`tiledLook`, width; the two colour classes (§7
@@ -1066,8 +1066,7 @@ full list). Only the options that place, focus or look; `bar`, `exec`, `font`, `
   makes it (each key's old value, or its absence, and the value written saved first in
   `~/.local/state/kwin-i3/plasma-settings.json`, Meta+T's in `taken-keys.json`; KWin
   reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3 changed to
-  the Plasma column, the others as they are, the key override off), **Pick kwin-i3's for All**
-  ticks every row but the optional, and the key override where the plugins run. Unticked where
+  the Plasma column, the others as they are, the key override off). Unticked where
   kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
   kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
   puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make

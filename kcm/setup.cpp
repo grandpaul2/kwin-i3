@@ -381,17 +381,6 @@ void SetupModel::setWanted(const QString &id, bool on)
     Q_EMIT edited();
 }
 
-void SetupModel::pickKwinI3()
-{
-    for (const QVariant &v : std::as_const(m_rows)) {
-        const QVariantMap row = v.toMap();
-        if (!row.value(QStringLiteral("optional")).toBool() && row.value(QStringLiteral("id")) != QLatin1String("keys"))
-            m_wanted[row.value(QStringLiteral("id")).toString()] = true;
-    }
-    Q_EMIT changed();
-    Q_EMIT edited();
-}
-
 // A row kwin-i3 changed goes back to Plasma; one it didn't change is Plasma's already, whichever
 // column it shows (a setting that happens to be kwin-i3's value is the reader's own).
 void SetupModel::givePlasmaBack()

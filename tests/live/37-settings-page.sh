@@ -111,14 +111,14 @@ check "Meta+J: nothing now"                 not_logged '^.{9}ACTION Focus Left$'
 m=$(mark); press Meta+Alt+E
 check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
-# 3. Back on the Tiling tab: a gap typed, and from the resize step Tab reaches its help, the
-#    floating step (a row of its own) and the focus choice,
-#    where Down picks the next one. One Apply: both in kwinrc, one reload, and the gap on screen
-#    with no plugin loaded. Each control's help button is the next Tab stop after it, as on
-#    Plasma's own pages.
+# 3. A gap typed on the Gaps tab; on the Tiling tab, from the resize step Tab reaches its help,
+#    the floating step (a row of its own) and the focus choice, where Down picks the next one.
+#    One Apply: both in kwinrc, one reload, and the gap on screen with no plugin loaded. Each
+#    control's help button is the next Tab stop after it, as on Plasma's own pages.
+click_named kwin-i3 "Gaps"; sleep 0.5
+click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Tiling"; sleep 0.5
 shot main
-click_named kwin-i3 "Gap between windows"; press Ctrl+A; press 8
 click_named kwin-i3 "Resize step"; press Tab
 check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell6)" == "More about the key step"
 press Tab
@@ -136,15 +136,18 @@ check "the gap is on screen"                wait_geom kwin-i3 "9,9 1262x702"   #
 sleep 1
 check "one reload for one Apply"            test "$(after "$m" | grep -c '^.\{9\}SETTINGS ')" == 1
 
-# 4. Defaults resets the tab shown: on Tiling, its entries leave kwinrc (absent = default) and the
-#    gap goes, the keys untouched; on Keys, the keys are the defaults again. The window is 8 px in
-#    now, so are its buttons. debugLog is on no tab: Defaults leaves it.
+# 4. Defaults resets the tab shown: on Tiling, its entries leave kwinrc (absent = default), the
+#    gap and the keys untouched; on Gaps, the gap goes; on Keys, the keys are the defaults again.
+#    The window is 8 px in now, so are its buttons. debugLog is on no tab: Defaults leaves it.
 shot before-defaults
 click_named - Defaults; click_named - Apply
-check "gapsInner gone from kwinrc"          poll conf_is gapsInner ""
-check "focusWrapping gone"                  conf_is focusWrapping ""
+check "Tiling: focusWrapping gone"          poll conf_is focusWrapping ""
+check "  gapsInner untouched"               conf_is gapsInner 8
 check "  the keys untouched"                test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $MAJ 0 0 0"
 check "  debugLog untouched"                conf_is debugLog true
+click_named kwin-i3 "Gaps"; sleep 0.5
+click_named - Defaults; click_named - Apply
+check "Gaps: gapsInner gone from kwinrc"    poll conf_is gapsInner ""
 click_named kwin-i3 "Keys"; sleep 0.5
 click_named - Defaults; click_named - Apply
 check "Keys: Focus Left (J) is Meta+J again"      poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $((0x1000004A)) 0 0 0"

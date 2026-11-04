@@ -29,7 +29,7 @@
 
 // The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
 // what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
-enum Tab { TilingTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab, PlasmaTab };
+enum Tab { TilingTab, GapsTab, MouseTab, WorkspacesTab, RulesTab, FrameTab, KeysTab, PlasmaTab };
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
 // the rest Window Rules'. debugLog, holdTimeoutMs (internal) and floatingWorkspaces (read into
@@ -38,9 +38,10 @@ static QStringList tabKeys(int tab)
 {
     switch (tab) {
     case TilingTab:
+        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusWrapping"), QStringLiteral("holdEnabled")};
+    case GapsTab:
         return {QStringLiteral("gapsInner"), QStringLiteral("gapsOuter"), QStringLiteral("gapsTop"), QStringLiteral("gapsRight"),
-                QStringLiteral("gapsBottom"), QStringLiteral("gapsLeft"), QStringLiteral("smartGaps"), QStringLiteral("workspaceGaps"),
-                QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusWrapping"), QStringLiteral("holdEnabled")};
+                QStringLiteral("gapsBottom"), QStringLiteral("gapsLeft"), QStringLiteral("smartGaps"), QStringLiteral("workspaceGaps")};
     case MouseTab:
         return {QStringLiteral("mouseWarping"), QStringLiteral("tilingDrag"), QStringLiteral("popupDuringFullscreen")};
     case WorkspacesTab:

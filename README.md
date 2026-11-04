@@ -146,7 +146,7 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    from Plasma's tile editor; Meta and a drag focusing the window it moves; and, optional,
    window animations set to None (opening and closing, maximizing, minimizing, full screen and
    desktop switching; i3 has none; the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each one you
-   want (or press **Pick kwin-i3's for All**, which ticks all but the optional), then **Apply**, the
+   want, then **Apply**, the
    same as changing them in System Settings. kwin-i3 keeps what each was: untick it and Apply to
    put it back (one you changed since stays as you set it). The last row, **On a key conflict,
    kwin-i3's key wins**, is for the keys kwin-i3 shares with Plasma's shortcuts (Meta+arrows for
@@ -217,8 +217,8 @@ window once.
 ### The settings page
 
 kwin-i3's own page in System Settings > Window Management: every setting a user would change
-(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: Tiling, Mouse & Focus,
-Workspaces, Window Rules, Frame, **Keys** (kwin-i3's keys rebound in one list instead of KWin's)
+(internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: Tiling, Gaps, Mouse &
+Focus, Workspaces, Window Rules, Frame, **Keys** (kwin-i3's keys rebound in one list instead of KWin's)
 and **Plasma** (Plasma's own settings kwin-i3 works best with). A key another shortcut also holds
 is set all the same: which of the two runs is the key override's (the Plasma tab, "On a key
 conflict, kwin-i3's key wins"). Apply takes effect at once, with or without the plugins.

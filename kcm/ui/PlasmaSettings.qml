@@ -3,8 +3,7 @@
 // columns of checkboxes, "Plasma" and "kwin-i3 (recommended)", ticking one unticks the other. The
 // muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
 // on the page: Apply makes it, Reset drops it, Defaults puts Plasma's back (each row kwin-i3
-// changed to the Plasma column, the key override off), Pick kwin-i3's for All picks kwin-i3's for
-// all but the optional.
+// changed to the Plasma column, the key override off).
 // Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
 // reader had before kwin-i3 changed it, and make uninstall can put everything back.
 import QtQuick
@@ -88,18 +87,6 @@ KCM.SimpleKCM {
             y: Kirigami.Units.largeSpacing
             width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 34)
             spacing: Kirigami.Units.largeSpacing
-            // Defaults puts Plasma's back; this picks kwin-i3's (recommended) column for every row
-            // but the optional, the key override with them where the plugins can run it.
-            QQC2.Button {
-                Layout.alignment: Qt.AlignRight
-                text: i18nc("@action:button", "Pick kwin-i3's for All")
-                icon.name: "checkmark"
-                onClicked: {
-                    kcm.setup.pickKwinI3();
-                    if (kcm.helperLoaded)
-                        kcm.settings.keysOverride = true;
-                }
-            }
             GridLayout {
                 id: grid
                 Layout.fillWidth: true

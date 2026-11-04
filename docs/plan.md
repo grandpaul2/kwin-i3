@@ -230,8 +230,7 @@ follows it:
   banner while anything kwin-i3 needs differs, as shared keys are known only once kwin-i3 is loaded. It lists each Plasma setting kwin-i3 is designed around, and the key override with
   the keys kwin-i3 shares with Plasma's shortcuts: its current value, the one kwin-i3 would set, and why, each said
   plainly to be **Plasma's, not kwin-i3's**. A tick is an edit like any setting on the page: its
-  Apply makes it, and nothing changes without it. **Pick kwin-i3's for All** ticks what kwin-i3
-  needs and i3's stand-ins, never the optional, and the key override; **Defaults** puts Plasma's
+  Apply makes it, and nothing changes without it; **Defaults** puts Plasma's
   back (each row kwin-i3 changed to the Plasma column, the key override off), as Defaults on any
   Plasma page does (`docs/philosophy.md`).
   The install's last line points there.
