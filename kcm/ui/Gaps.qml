@@ -55,7 +55,7 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("A gap set below for a screen edge or a workspace replaces the gaps at the top; “same” keeps them.")
+            text: i18n("A gap set below for a screen edge or workspace replaces the main gap setting. “Same” keeps it.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
