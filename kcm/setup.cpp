@@ -185,8 +185,8 @@ SetupModel::SetupModel(KeysModel *keys, QObject *parent)
     // never changed (plugin/keyoverride.h).
     Row keysRow{QStringLiteral("keys"), i18nc("@option:check", "On a key conflict, kwin-i3's key wins"),
                 {},
-                i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them. Ticked, kwin-i3's command runs; unticked, Plasma's. Plasma's shortcuts are not changed either way, and the override needs kwin-i3's plugins."),
-                i18n("A key Plasma also uses runs Plasma's shortcut unless this is ticked."), false, {}, nullptr};
+                i18n("A key that a kwin-i3 command and a Plasma shortcut share runs only one of them. Enabled, kwin-i3's command runs; otherwise Plasma's. Plasma's shortcuts are not changed either way, and the override needs kwin-i3's plugins."),
+                i18n("A key Plasma also uses runs Plasma's shortcut unless this is enabled."), false, {}, nullptr};
     keysRow.plasma = [this](const Getter &) {
         const auto c = clashes();
         QStringList out;
