@@ -1149,22 +1149,22 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
         QFont font = QGuiApplication::font();
         p.setFont(font);
         const QFontMetrics fm(font);
-        const double rowH = bar.stacked ? double(bar.height) / n : bar.height;
+        // A tab's rect: equal widths (a stacked bar's rows equal heights), the last taking what
+        // rounding leaves (render_con_tabbed), its edges on whole device pixels so its border
+        // stays sharp at any scale.
+        const int dw = img.width(), dh = std::lround(bar.height * scale);
+        const auto tabRect = [&](int i) {
+            const double x0 = bar.stacked ? 0 : std::floor(double(dw) * i / n);
+            const double x1 = bar.stacked || i == n - 1 ? dw : std::floor(double(dw) * (i + 1) / n);
+            const double y0 = bar.stacked ? std::round(double(dh) * i / n) : 0;
+            const double y1 = bar.stacked && i < n - 1 ? std::round(double(dh) * (i + 1) / n) : dh;
+            return QRectF(x0 / scale, y0 / scale, (x1 - x0) / scale, (y1 - y0) / scale);
+        };
         for (int i = 0; i < n; ++i) {
-            // A tab's rect: equal widths, the last taking what rounding leaves (render_con_tabbed).
-            const double x0 = bar.stacked ? 0 : std::floor(double(width) * i / n);
-            const double x1 = bar.stacked ? width : (i == n - 1 ? width : std::floor(double(width) * (i + 1) / n));
-            const QRectF r(x0, bar.stacked ? rowH * i : 0, x1 - x0, rowH);
+            const QRectF r = tabRect(i);
             const bool active = i == bar.active;
             const QColor bg = active ? m_frameColour[bar.cls] : pal.color(QPalette::Window);
             p.fillRect(r, bg);
-            p.setPen(QPen(pal.color(QPalette::Mid), 1));
-            if (!bar.stacked && i > 0) {
-                p.drawLine(QPointF(r.left() + 0.5, r.top()), QPointF(r.left() + 0.5, r.bottom()));
-            }
-            if (bar.stacked && i > 0) {
-                p.drawLine(QPointF(r.left(), r.top() + 0.5), QPointF(r.right(), r.top() + 0.5));
-            }
             p.setPen(active ? QColor(Qt::white) : pal.color(QPalette::WindowText));
             const QRectF text = r.adjusted(8, 0, -8, 0);
             p.drawText(text, Qt::AlignVCenter | Qt::AlignLeft, fm.elidedText(bar.titles[i], Qt::ElideRight, std::max(0, int(text.width()))));
@@ -1185,8 +1185,40 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
             p.drawImage(QPointF(0, 0), mask);
             p.setCompositionMode(QPainter::CompositionMode_SourceOver);
         }
+        // Each tab's 1 px border on all four sides, in its class's frame colour (i3's
+        // x_draw_title_border, x.c:363-381: the shown tab the group's class, the others
+        // unfocused, as L3 has no focused_inactive): the band between the tab's shape and that
+        // shape inset by the line, the bar's rounded top followed. Filled, not stroked: a whole
+        // device pixel wide, on whole device pixels. After the mask, which would fade it twice.
+        const double line = std::max(1.0, std::round(scale)) / scale;
+        const auto shape = [&](const QRectF &r, double rad) {
+            QPainterPath path;
+            if (rad <= 0) {
+                path.addRect(r);
+                return path;
+            }
+            path.addRoundedRect(r.adjusted(0, 0, 0, rad), rad, rad);
+            QPainterPath box;
+            box.addRect(r);
+            return path.intersected(box);
+        };
+        const bool rounded = radius > 0 && bar.round;
+        const QRectF whole(0, 0, width, bar.height);
+        const QPainterPath outer = shape(whole, rounded ? radius : 0);
+        const QPainterPath inner = shape(whole.adjusted(line, line, -line, -line), rounded ? std::max(0.0, radius - line) : 0);
+        const auto borderColour = [&](int i) {
+            return i == bar.active ? m_frameColour[bar.cls] : m_frameColour[1];
+        };
+        for (int i = 0; i < n; ++i) {
+            const QRectF r = tabRect(i);
+            QPainterPath tab, inside;
+            tab.addRect(r);
+            inside.addRect(r.adjusted(line, line, -line, -line));
+            p.fillPath(tab.intersected(outer).subtracted(inside.intersected(inner)), borderColour(i));
+        }
         // The notches under its corners: between the ring's outer arc (the radius) and the
-        // bar's edge, in the colour of the tab above (a stacked bar's last row).
+        // bar's edge, in the colour of the tab above (a stacked bar's last row), its border's
+        // outer side carried down to the ring.
         const auto tabColour = [&](int i) {
             return i == bar.active ? m_frameColour[bar.cls] : pal.color(QPalette::Window);
         };
@@ -1199,7 +1231,12 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
             notch.addRect(QRectF(x0, bar.height, radius, radius));
             QPainterPath arc;
             arc.addEllipse(QRectF(side ? width - 2 * radius : 0, bar.height, 2 * radius, 2 * radius));
-            p.fillPath(notch.subtracted(arc), tabColour(bar.stacked ? n - 1 : side ? n - 1 : 0));
+            const int above = bar.stacked ? n - 1 : side ? n - 1 : 0;
+            const QPainterPath fill = notch.subtracted(arc);
+            p.fillPath(fill, tabColour(above));
+            QPainterPath edge;
+            edge.addRect(QRectF(side ? width - line : 0, bar.height, line, radius));
+            p.fillPath(fill.intersected(edge), borderColour(above));
         }
         p.end();
         bar.radius = radius;

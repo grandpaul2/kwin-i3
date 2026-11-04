@@ -464,7 +464,9 @@ can hold:
   that padding, as i3's bar is the group's, inside its gaps, on its child (`gaps.c:62-71`,
   `render.c:474-477`). Its window keeps its whole ring, the top side under the bar: ≠ i3, which
   draws a group's child `normal`, the bar in its top border's place (`con.c:1889-1893`); the
-  look's reason, the bar sitting on the frame as every window's frame shows. The other children's windows go into the tile of the shown child's focused window,
+  look's reason, the bar sitting on the frame as every window's frame shows. Each tab (a
+  stacked bar's row) has i3's 1 px border on all four sides (`x_draw_title_border`,
+  `x.c:363-381`), in its class's frame colour: the shown tab the group's, the others unfocused. The other children's windows go into the tile of the shown child's focused window,
   behind it, and the shown child's window is raised when it isn't on top (i3's raise of a
   group's focused child, `render.c`). A group of one child has no bar and is that child alone,
   as i3 with its `pixel` border (`render_con_tabbed`: the bar only for more than one child or a
