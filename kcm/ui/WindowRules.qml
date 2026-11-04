@@ -241,7 +241,7 @@ KCM.SimpleKCM {
         Component.onCompleted: if (index === page.focusIndex) Qt.callLater(() => {
             page.focusIndex = -1;
             page.reveal(ruleRow);
-            appBox.forceActiveFocus();
+            appBox.contentItem.forceActiveFocus();      // the text field: the box alone takes no typing
         })
         RowLayout {
             Layout.fillWidth: true
@@ -266,7 +266,14 @@ KCM.SimpleKCM {
                 editable: true
                 Layout.fillWidth: true
                 Layout.minimumWidth: Kirigami.Units.gridUnit * 7
-                model: page.apps
+                // The list only while the box is in use: the desktop style measures every entry's
+                // text on each count change to size the popup (org/kde/desktop/ComboBox.qml
+                // onCountChanged), which for every rule's box at once held up the page's opening.
+                // sync() puts the rule's own text back after each model change. Leaving the box
+                // commits the typed text before the model empties and sync() runs, an order Qt
+                // doesn't document: a typed pattern clicked away from must survive.
+                model: activeFocus || popup.visible ? page.apps : []
+                onModelChanged: sync()
                 textRole: "name"
                 valueRole: "id"
                 readonly property string shown: ruleRow.app ? ruleRow.app.name
