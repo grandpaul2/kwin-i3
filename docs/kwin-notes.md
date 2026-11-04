@@ -414,6 +414,14 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   its `parent` is the control it sits in, so `settingName: parent.settingName` works only where
   that control declares `settingName`; inside a stock ComboBox or SpinBox it names no setting (a
   "Unable to assign [undefined]" warning, no highlight). Name the row by its id.
+- **A KWin script's cog loads its `X-KDE-ConfigModule` with the script's metadata** (KCMUtils 6.19
+  `kpluginmodel.cpp:41-58` `findConfig`: the script's raw JSON paired with the plugin's file), so
+  a QML KCM loaded that way looks for `qrc:/kcm/<the script's id>/main.qml` and shows "Could not
+  find resource". `kcm/kcm.cpp` `ownMetaData` reads its own from the plugin's file (an offscreen
+  `KCMultiDialog` probe: red before, green after).
+- **Kirigami's FormLayout stacks every label above its control** once its widest label plus its
+  widest row no longer fit: one long label (or one wide row) anywhere in the form does it to every
+  row. A form of short settings and a wide table is two FormLayouts, each fitting alone.
 - `kcmshell6` logs to the journal unless `QT_FORCE_STDERR_LOGGING=1`; with
   `QT_MESSAGE_PATTERN="%{time process} %{message}"` and `console.warn` in the QML it times a page's
   build, from a worktree's build put first in `QT_PLUGIN_PATH`.
