@@ -95,7 +95,7 @@ SetupModel::SetupModel(QObject *parent)
     // it can be found there; what the setting does is in the row's help
     // (docs/style-settings-page.md, "Saying what to pick").
     const auto said = [](const QString &v) { return i18nc("@info Plasma's value for a setting, in Plasma's own words", "Plasma: %1", v); };
-    Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Switch workspaces independently for each screen"),
+    Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Screens switch workspaces separately"),
                   i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Turned off, every screen is put on the same workspace. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
                   {}, false,
                   {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr};

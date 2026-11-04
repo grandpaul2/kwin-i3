@@ -140,7 +140,7 @@ KCM.SimpleKCM {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18nc("@label", "Each screen:")
+            Kirigami.FormData.label: i18nc("@label", "Screens switch workspaces separately:")
             Kirigami.FormData.buddyFor: perOutputBox
             spacing: Kirigami.Units.smallSpacing
             PlasmaTick { id: perOutputBox; row: "perOutput"; recommended: true }

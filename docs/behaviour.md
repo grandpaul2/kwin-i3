@@ -1035,8 +1035,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Plasma's own settings** (the first-run step, `plan.md` "Install and first run";
   `kcm/setup.cpp`), the two kwin-i3 can't win at runtime (`plan.md` reason (e)), each a row on the
-  tab it belongs with: **Workspaces** "Each screen: Switch workspaces independently for each
-  screen (recommended)" (per-output desktops) and **Window Rules** "Window animations: Set window
+  tab it belongs with: **Workspaces** "Screens switch workspaces separately: (recommended)" (per-output desktops) and **Window Rules** "Window animations: Set window
   animations to none (optional)" (Plasma's Animations page: every effect of the open/close,
   maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`, and unloaded;
   the global speed untouched). Ticked is kwin-i3's way; the help says why, that the setting is
