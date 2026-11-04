@@ -1793,11 +1793,22 @@ var KI3 = (function () {
     }
     // The selection as it is drawn: its windows' frames and the bars of the groups inside it,
     // each a tile of its own above its windows (projectGroup).
+    // A tiled group's bar as drawn: its rows' height whatever the gaps, from its tile's top edge
+    // as a neighbour's ring has it (the window's place less the ring's room) to the shown child's
+    // ring, which is the bar tile's height below. i3's bar is the group's, inside the gaps'
+    // inset, flush on the child (gaps.c:62-71, render.c:474-477): the padding KWin puts round
+    // the bar tile is no gap of i3's.
+    function tiledBarRect(b, ws) {
+        var g = windowRect(b.tile), d = gaps(ws), f = (d.inner - d.gap) / 2;
+        var kids = b.con.nodes.filter(function (k) { return project(k); }).length;
+        return { x: g.x - f, y: g.y - f, width: g.width + 2 * f,
+                 height: BAR_ROW * (b.con.layout === "stacked" ? kids : 1) };
+    }
     function selectionRect(sel) {
         var r = conRect(sel), ws = Tree.wsOf(sel);
         (barsOf[ws.num] || []).forEach(function (b) {
             if (b.rect || !b.tile || (b.con !== sel && !Tree.hasParent(b.con, sel))) return;
-            var g = windowRect(b.tile);
+            var g = tiledBarRect(b, ws);
             if (!g || g.width <= 0 || g.height <= 0) return;
             var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
             r = { x: Math.min(r.x, g.x), y: Math.min(r.y, g.y), width: 0, height: 0 };
@@ -1909,7 +1920,7 @@ var KI3 = (function () {
                 var t = w && !b.rect && expected[leaf.win];
                 if (!w || (!b.rect && (!t || t.windows.indexOf(w) < 0))) return;
                 // A floated window's target, as a tiled one's tile: its frame may not have landed.
-                var a = b.rect ? floatedLaid[leaf.win] || w.frameGeometry : windowRect(t), r = b.rect || windowRect(b.tile), inside = false;
+                var a = b.rect ? floatedLaid[leaf.win] || w.frameGeometry : windowRect(t), r = b.rect || tiledBarRect(b, v.ws), inside = false;
                 for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
                 // Groups nested in one another show the same window, each with its own bar (i3
                 // draws every tabbed container's decorations): the first by the window's id, the
@@ -2597,6 +2608,13 @@ var KI3 = (function () {
     // is off (below).
     var focusedOutput = null;   // the output the focus was last applied or taken on, by name (not focusOutput, the action below)
     function pointerOn() { var p = workspace.cursorPos; return screenAt(p.x, p.y); }
+    // The pointer inside a window's frame: an activation there is the pointer's (KWin's focus
+    // follows mouse on a window reaching onto another output), which i3 never warps (it warps
+    // only for a command: tree.c:617, workspace.c:559).
+    function pointerInside(w) {
+        var p = workspace.cursorPos, g = w.frameGeometry;
+        return p.x >= g.x && p.x < g.x + g.width && p.y >= g.y && p.y < g.y + g.height;
+    }
     function warps() { return Settings.get("mouseWarping") !== "none"; }
     function applyFocus(byKey, checked) {
         var f = model.focused;
@@ -3236,7 +3254,8 @@ var KI3 = (function () {
     // moving onto another output over the root window or a dock focuses that output's visible
     // workspace: its fullscreen window, else its last focus, or the empty workspace, with no
     // warp (the pointer is there). Over a tiling or floating window, KWin's own focus follows
-    // mouse activates it (§5 B1), a turn later (probe 91). Over an override-redirect window (a
+    // mouse activates it (§5 B1), a turn later (probe 91); a window reaching over from another
+    // output is a window here, not the root (windowUnder). Over an override-redirect window (a
     // popup spanning the boundary) the model's focus moves and the popup keeps the keyboard (D7).
     // Per motion this costs one rectangle test per output and one comparison; the hit test runs
     // only while the focus is on another output than the pointer's.
@@ -3288,7 +3307,7 @@ var KI3 = (function () {
             var f = model.focused;
             if (!f || (f.type === "con" && f.win !== null) || focusOf(fws) === f) return;
         }
-        var under = windowUnder(p.x, p.y, s);
+        var under = windowUnder(p.x, p.y);
         if (under && wins[id(under)]) return;           // KWin's focus follows mouse takes it (B1)
         var ws = shownWs(s);
         if (!ws) return;
@@ -3311,15 +3330,19 @@ var KI3 = (function () {
             if (n === showingAsked) desktopShowing = !!showing;
         }));
     }
-    // The topmost window under a point, on the output's visible desktop; null for the bare root.
-    // A tile Show Desktop hides is no window there: the pointer is over the desktop (§5 B1).
-    function windowUnder(x, y, s) {
-        var order = workspace.stackingOrder, desk = workspace.currentDesktopForScreen(s);
+    // The topmost window shown under a point; null for the bare root. Shown wherever its frame
+    // reaches while it is on its own output's visible desktop, as KWin draws it
+    // (Window::isOnCurrentDesktop) and as KWin's own hit test finds it (findToplevel, no output
+    // test): a floating window reaching onto another output is a window there, not the root
+    // (i3: handlers.c:206-210). A tile Show Desktop hides is no window there: the pointer is
+    // over the desktop (§5 B1).
+    function windowUnder(x, y) {
+        var order = workspace.stackingOrder;
         for (var i = order.length - 1; i >= 0; i--) {
             var w = order[i];
-            if (w.deleted || w.minimized || w.hidden || w.output !== s) continue;
+            if (w.deleted || w.minimized || w.hidden || !w.output) continue;
             if (desktopShowing && wins[id(w)]) continue;
-            if (!w.onAllDesktops && w.desktops.indexOf(desk) < 0) continue;
+            if (!w.onAllDesktops && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) continue;
             var g = w.frameGeometry;
             if (x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height) return w;
         }
@@ -4236,7 +4259,7 @@ var KI3 = (function () {
             if (w.output && !closingTree) {
                 var crossed = focusedOutput !== null && focusedOutput !== w.output.name;
                 focusedOutput = w.output.name;
-                if (crossed && !switching && warps() && pointerOn() !== w.output) invoke("MoveMouseToFocus");
+                if (crossed && !switching && warps() && pointerOn() !== w.output && !pointerInside(w)) invoke("MoveMouseToFocus");
             }
             // No pass follows KWin's own activation (focus follows mouse, a click, Alt+Tab): the
             // rings and the group bars' colours are told here, in the same turn (plan.md
