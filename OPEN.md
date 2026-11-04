@@ -53,4 +53,5 @@ delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and 
 the key override's default (off from the old reason (e); i3 grabs its keys); `tools/testkwin.sh`'s
 default mode unbinds Plasma's stock shortcuts as the maintainer's desktop once did (133-165), and
 that desktop now runs them at Plasma's defaults with the override enabled; the key override row's
-count is the clash scan, kept, now read once per load would do. Next: the code spec.
+count runs `kcm/setup.cpp`'s clash scan up to four times a load, where once would do. Next: the
+code spec.
