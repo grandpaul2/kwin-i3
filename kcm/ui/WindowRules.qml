@@ -139,6 +139,7 @@ KCM.SimpleKCM {
     // i3's floating_minimum_size and floating_maximum_size (docs/behaviour.md §3 R20):
     // "WxH"; 0x0 means i3's default (75x50; all monitors together), -1x-1 no limit.
     component SizeRow: RowLayout {
+        id: sizeRow
         property string settingName
         property string what
         property bool maximum: false
@@ -186,7 +187,7 @@ KCM.SimpleKCM {
                               row.h > 0 ? row.h : row.maximum ? Screen.height : 50);
             }
             Accessible.name: i18nc("@label:listbox", "%1 floating window size", what)
-            KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
+            KCM.SettingStateBinding { configObject: page.settings; settingName: sizeRow.settingName }
         }
         QQC2.SpinBox {
             visible: parent.mode === "size"
@@ -196,7 +197,7 @@ KCM.SimpleKCM {
             textFromValue: (v) => i18ncp("@item:valuesuffix pixels", "%1 px", "%1 px", v)
             valueFromText: (t) => parseInt(t)
             Accessible.name: i18nc("@label:spinbox", "%1 floating window width", what)
-            KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
+            KCM.SettingStateBinding { configObject: page.settings; settingName: sizeRow.settingName }
         }
         QQC2.Label { visible: parent.mode === "size"; text: "×"; Accessible.ignored: true }
         QQC2.SpinBox {
@@ -207,7 +208,7 @@ KCM.SimpleKCM {
             textFromValue: (v) => i18ncp("@item:valuesuffix pixels", "%1 px", "%1 px", v)
             valueFromText: (t) => parseInt(t)
             Accessible.name: i18nc("@label:spinbox", "%1 floating window height", what)
-            KCM.SettingStateBinding { configObject: page.settings; settingName: parent.settingName }
+            KCM.SettingStateBinding { configObject: page.settings; settingName: sizeRow.settingName }
         }
     }
 
