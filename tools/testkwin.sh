@@ -12,10 +12,6 @@
 #   KI3_SCALE=<s>                        each output's scale (default 1; 2 or 1.5 for HiDPI): the
 #                                        pixels grow, each output stays 1280x720 logical, so the
 #                                        scenarios' geometry holds (OPEN.md item 50)
-#   KI3_STOCK=1                          Plasma's stock settings instead of the author's: stock
-#                                        shortcuts and focus; the caller
-#                                        sets KI3_DESKTOPS and KI3_PEROUTPUT (run.sh: 1, true)
-#   KI3_FOCUS=mouse                      with KI3_STOCK=1: focus follows mouse after all
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 #   KI3_PACKAGE=1                        kwin-i3 installed as a package (off), as KWin Scripts sees it
 #   KI3_KEEP_LOG=<file>                  kwin-i3's log copied there at teardown (run.sh: a red
@@ -101,16 +97,8 @@ teardown() {
 }
 trap teardown EXIT
 
-# Stock mode (KI3_STOCK=1) leaves out the author's focus settings and Meta-alone line, unless the
-# scenario asks for focus follows mouse (KI3_FOCUS=mouse).
-focus="FocusPolicy=FocusFollowsMouse
-NextFocusPrefersMouse=true
-DelayFocusInterval=0" meta="[ModifierOnlyShortcuts]
-Meta="
-if [[ ${KI3_STOCK:-} == 1 ]]; then
-    meta=""
-    [[ ${KI3_FOCUS:-} == mouse ]] || focus=""
-fi
+# Plasma's stock settings and shortcuts, as a new user's: focus follows mouse, the key override
+# and the rest are kwin-i3's to win at runtime (its defaults).
 cat > "$XDG_CONFIG_HOME/kwinrc" <<RC
 [Desktops]
 Number=${KI3_DESKTOPS:-10}
@@ -118,9 +106,6 @@ Rows=1
 
 [Windows]
 PerOutputVirtualDesktops=${KI3_PEROUTPUT:-true}
-$focus
-
-$meta
 
 [Script-kwin-i3]
 debugLog=true
@@ -131,38 +116,6 @@ RC
 # written for no gaps. 26-gaps deletes the keys to check the defaults.
 # The decoration is Breeze, KWin's default; with the plugins the effect draws the frame around
 # tiled windows.
-# The author's desktop unbinds these stock shortcuts (its setup.sh keeps only its own list);
-# the stock test KWin kept them, and they took kwin-i3's keys (Meta+arrows quick-tiled, Meta+L
-# locked the test KWin, Meta+E launched Dolphin, Meta+0 reset the zoom, Meta+W opened the Overview). The focus settings above are that desktop's too.
-# Stock mode keeps Plasma's shortcuts and turns the key override on as the README says
-# (tests/live/lib.sh, load_kwin_i3).
-[[ ${KI3_STOCK:-} == 1 ]] || cat > "$XDG_CONFIG_HOME/kglobalshortcutsrc" <<'SC'
-[kwin]
-Window Quick Tile Left=none,Meta+Left,Quick Tile Window to the Left
-Window Quick Tile Right=none,Meta+Right,Quick Tile Window to the Right
-Window Quick Tile Top=none,Meta+Up,Quick Tile Window to the Top
-Window Quick Tile Bottom=none,Meta+Down,Quick Tile Window to the Bottom
-Switch One Desktop to the Left=none,Meta+Ctrl+Left,Switch One Desktop to the Left
-Switch One Desktop to the Right=none,Meta+Ctrl+Right,Switch One Desktop to the Right
-Switch One Desktop Up=none,Meta+Ctrl+Up,Switch One Desktop Up
-Switch One Desktop Down=none,Meta+Ctrl+Down,Switch One Desktop Down
-Window to Previous Screen=none,Meta+Shift+Left,Move Window to Previous Screen
-Window to Next Screen=none,Meta+Shift+Right,Move Window to Next Screen
-view_actual_size=none,Meta+0,Zoom to Actual Size
-view_zoom_in=none,Meta++,Zoom In
-view_zoom_out=none,Meta+-,Zoom Out
-Show Desktop=none,Meta+D,Peek at Desktop
-Overview=none,Meta+W,Toggle Overview
-
-[ksmserver]
-Lock Session=none,Meta+L,Lock Session
-
-[services][org.kde.dolphin.desktop]
-_launch=none
-
-[services][org.kde.spectacle.desktop]
-RecordRegion=none
-SC
 export KI3_LOG=$tmp/ki3.log
 # Screenshots (tools/shot.py) without KWin's per-caller permission check: a test is not a
 # desktop app with a .desktop file.

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # needs: kcm
-# stock: own
 # timing: alone
 # kwin-i3's own settings page, driven as a person would: injected
 # clicks and keys on kcmshell6 in the test KWin. No plugins are loaded, so what Apply does here it
@@ -90,7 +89,7 @@ check "Meta+: is named Meta+Shift+; beside it" test "$(beside_key "Move window r
 check "Meta+; has no name beside it"        test "$(beside_key "Focus right, key 2: Meta+;" keys-focus)" -eq 0
 # Focus left's second key (Meta+J) becomes Meta+Alt+J, free; Focus up's second (Meta+L) becomes
 # Meta+Alt+E, which the stand-in also holds: set all the same, with no note, and the stand-in keeps
-# it (which of the two runs is the key override's, Plasma Settings; nothing is taken).
+# it (which of the two runs is the key override's, on the Keys tab).
 click_named Keys "Focus left, key 2: Meta+J"; press Meta+Alt+J; sleep 0.5
 click_named Keys "Focus up, key 2: Meta+L"; press Meta+Alt+E; sleep 0.5
 shot keys-set
@@ -101,7 +100,6 @@ click_named - Apply
 check "Apply: Focus Left (J) is Meta+Alt+J"  poll test "$(keys_of kwin "kwin-i3 Focus Left (J)")" == "a(ai) 1 4 $MAJ 0 0 0"
 check "Apply: Focus Up (L) is Meta+Alt+E"    test "$(keys_of kwin "kwin-i3 Focus Up (L)")" == "a(ai) 1 4 $MAE 0 0 0"
 check "the stand-in keeps all its keys"     test "$(keys_of fakeapp Launch)" == "$before_fake"
-check "nothing is recorded"                 test ! -f "$XDG_STATE_HOME/kwin-i3/taken-keys.json"
 m=$(mark); press Meta+Alt+J
 check "Meta+Alt+J: Focus Left"              wait_log '^.{9}ACTION Focus Left$' "$m"
 m=$(mark); press Meta+J
@@ -112,7 +110,8 @@ m=$(mark); press Meta+Alt+E
 check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
 # 3. A gap typed on the Gaps tab; on the Tiling tab, from the resize step Tab reaches its help,
-#    the floating step (a row of its own), the pointer box and its help, and the focus choice,
+#    the floating step (a row of its own), the focus box and its help, the pointer box and its
+#    help, and the focus choice,
 #    where Down picks the next one.
 #    One Apply: both in kwinrc, one reload, and the gap on screen with no plugin loaded. Each
 #    control's help button is the next Tab stop after it, as on Plasma's own pages.
@@ -125,6 +124,8 @@ check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell
 press Tab
 check "then the floating step"              test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
 press Tab
+check "then the focus box"                  test "$($A11Y focused kcmshell6)" == "Focus follows the mouse"
+press Tab; press Tab
 check "then the pointer box"                test "$($A11Y focused kcmshell6)" == "Move the pointer with focus to another screen"
 press Tab; press Tab
 # A combo box is named by its current choice.

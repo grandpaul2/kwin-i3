@@ -99,7 +99,7 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **KWin's active output** | where KWin opens a new window; it follows every pointer move and every activation | — | `workspace.activeScreen` / `activeOutput()` |
 | **activation** | KWin making a window its active window (a click, focus follows mouse, a new window, an app asking, a pager or task manager, kwin-i3 itself). KWin tells a script none of these sources apart | `_NET_ACTIVE_WINDOW`, with its source (application or pager) | `activateWindow` |
 | **pointer** | the mouse cursor | pointer | cursor |
-| **focus follows mouse** | the pointer entering a window focuses it | `focus_follows_mouse` (default yes) | KWin's focus policy (`FocusFollowsMouse`), the user's Plasma setting; stock Plasma is click to focus |
+| **focus follows mouse** | the pointer entering a window focuses it | `focus_follows_mouse` (default yes) | KWin's focus policy (`FocusFollowsMouse`), which kwin-i3 wins at runtime by its own `focusFollowsMouse`; stock Plasma is click to focus |
 | **pointer warp** | kwin-i3 moving the pointer to the new focus | `mouse_warping` | KWin's MoveMouseToFocus / ToCenter |
 | **passive pass** | a pass of placing (below) that no key started | — | — |
 

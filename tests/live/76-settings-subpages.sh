@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # needs: kcm
-# stock: own
 # timing: alone
 # The settings page's Workspaces, Window Rules and Gaps tabs,
 # driven as a person would, controls found by their accessible names (tools/a11y.py) as in

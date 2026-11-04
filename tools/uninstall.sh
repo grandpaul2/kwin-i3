@@ -17,10 +17,9 @@ fi
 state=${XDG_STATE_HOME:-$HOME/.local/state}/kwin-i3
 gone() { echo "  removed $1"; }
 
-# 1. What kwin-i3 changed outside its own settings, given back first (each where it is still as
+# 1. What kwin-i3 changed of Plasma's settings, given back first (each where it is still as
 #    kwin-i3 left it). A record that can't be given back now stays, and stops the removal of
 #    nothing else: the save is under $state, kept below.
-python3 -I "$here/tools/take-keys.py" restore
 python3 -I "$here/tools/plasma-settings.py" restore
 
 # 2. The script: off, unloaded from the running KWin (windows keep their places, untiled), and its
@@ -68,6 +67,5 @@ grep -qs '^\[Script-kwin-i3\]' "${XDG_CONFIG_HOME:-$HOME/.config}/kwinrc" &&
     echo "  Kept: your kwin-i3 settings, for a later install (the [Script-kwin-i3] group in ~/.config/kwinrc: delete it to remove them)."
 [[ -d $state/captures ]] && echo "  Kept: your bug captures in $state/captures (rm -r $state to remove them)."
 [[ -f $state/plasma-settings.json ]] && echo "  Kept: Plasma settings that couldn't be given back yet, in $state/plasma-settings.json: run tools/plasma-settings.py restore again later."
-[[ -f $state/taken-keys.json ]] && echo "  Kept: keys that couldn't be given back yet, in $state/taken-keys.json: run python3 tools/take-keys.py restore again later."
 [[ -d $state && -z $(ls -A "$state") ]] && rmdir "$state"
 echo "  This checkout ($here) is yours to delete."

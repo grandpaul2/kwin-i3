@@ -19,6 +19,9 @@
 using namespace KWin;
 
 static const QString s_prefix = QStringLiteral("kwin-i3 ");
+// KWin's tile editor (Meta+T): its keys are held while the override is on, so it never changes
+// the tiles kwin-i3 lays out (plan.md, "Keys and Plasma's shortcuts"); i3 has no such editor.
+static const QString s_tileEditor = QStringLiteral("Edit Tiles");
 
 KeyOverride::KeyOverride()
     : InputEventFilter(InputFilterOrder::GlobalShortcut)
@@ -57,7 +60,7 @@ KeyOverride::~KeyOverride()
 void KeyOverride::onShortcutsChanged(const QDBusMessage &message)
 {
     const QStringList id = message.arguments().value(0).toStringList();
-    if (id.value(0) == QLatin1String("kwin") && id.value(1).startsWith(s_prefix)) {
+    if (id.value(0) == QLatin1String("kwin") && (id.value(1).startsWith(s_prefix) || id.value(1) == s_tileEditor)) {
         m_coalesce.start();
     }
 }
@@ -66,7 +69,7 @@ void KeyOverride::load()
 {
     auto config = m_watcher->config();
     config->reparseConfiguration();
-    m_on = config->group(QStringLiteral("Script-kwin-i3")).readEntry("keysOverride", false);
+    m_on = config->group(QStringLiteral("Script-kwin-i3")).readEntry("keysOverride", true);
 }
 
 // Every kwin-i3 action KWin holds now, each one's keys asked for at once; the table is swapped in
@@ -88,14 +91,29 @@ void KeyOverride::refresh()
         }
     }
     if (actions.isEmpty()) {
-        m_keys.clear();
+        m_keys.clear();         // kwin-i3 not running: nothing held, the tile editor's key included
+        m_held.clear();
         return;
     }
     auto table = std::make_shared<QHash<int, QPointer<QAction>>>();
-    auto pending = std::make_shared<int>(actions.size());
+    auto held = std::make_shared<QSet<int>>();
+    auto pending = std::make_shared<int>(actions.size() + 1);
+    // The tile editor's keys, held with no action run.
+    LayoutKeys::askKeys(this, s_tileEditor, [this, generation, table, held, pending](const QList<int> &keys) {
+        if (generation != m_generation) {
+            return;
+        }
+        for (int key : keys) {
+            held->insert(key);
+        }
+        if (--*pending == 0) {
+            m_keys = *table;
+            m_held = *held;
+        }
+    });
     for (QAction *a : std::as_const(actions)) {
         QPointer<QAction> action(a);
-        LayoutKeys::askKeys(this, a->objectName(), [this, generation, table, pending, action](const QList<int> &keys) {
+        LayoutKeys::askKeys(this, a->objectName(), [this, generation, table, held, pending, action](const QList<int> &keys) {
             if (generation != m_generation) {
                 return;     // another refresh started: its table wins
             }
@@ -104,6 +122,7 @@ void KeyOverride::refresh()
             }
             if (--*pending == 0) {
                 m_keys = *table;
+                m_held = *held;
             }
         });
     }
@@ -116,6 +135,9 @@ QString KeyOverride::plan() const
         if (it.value()) {
             lines << QKeySequence(it.key()).toString() + QStringLiteral(" = ") + it.value()->objectName();
         }
+    }
+    for (int key : m_held) {
+        lines << QKeySequence(key).toString() + QStringLiteral(" = ") + s_tileEditor + QStringLiteral(" (held)");
     }
     lines.sort();
     lines.prepend(m_on ? QStringLiteral("on") : QStringLiteral("off"));
@@ -137,10 +159,12 @@ bool KeyOverride::keyboardKey(KeyboardKeyEvent *event)
     }
     const int key = int(event->modifiersRelevantForGlobalShortcuts) | int(event->key);
     const auto it = m_keys.constFind(key);
-    if (it == m_keys.cend() || !it.value()) {
+    // A kwin-i3 key runs its action; the tile editor's, unless kwin-i3 has it too, is only held.
+    const bool act = it != m_keys.cend() && it.value();
+    if (!act && !m_held.contains(key)) {
         return false;
     }
-    if (event->state == KeyboardKeyState::Pressed) {
+    if (act && event->state == KeyboardKeyState::Pressed) {
         // Queued, as kglobalaccel's own trigger comes from its signal: not run inside the input
         // event KWin is still delivering.
         QMetaObject::invokeMethod(it.value().data(), &QAction::trigger, Qt::QueuedConnection);

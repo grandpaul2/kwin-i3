@@ -32,8 +32,8 @@ void PopupGrace::activated(KWin::Window *window)
     }
 }
 
-// The user's own delay, from kwinrc each time (as KWin's Options reads it), so a change made in
-// System Settings while a popup was open is the one put back.
+// The delay as kwin-i3 has it: none with its focus follows mouse on (the script writes 0 live,
+// src/kwin.js winOptions), else Plasma's own from kwinrc, read each time as KWin's Options reads it.
 void PopupGrace::restore()
 {
     if (!m_raised || !KWin::options) {
@@ -42,5 +42,6 @@ void PopupGrace::restore()
     m_raised = false;
     KSharedConfigPtr config = KSharedConfig::openConfig(QStringLiteral("kwinrc"), KConfig::NoGlobals);
     config->reparseConfiguration();
-    KWin::options->setDelayFocusInterval(config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 300));     // kwin.kcfg's default
+    const bool ffm = config->group(QStringLiteral("Script-kwin-i3")).readEntry("focusFollowsMouse", true);
+    KWin::options->setDelayFocusInterval(ffm ? 0 : config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 300));     // kwin.kcfg's default
 }

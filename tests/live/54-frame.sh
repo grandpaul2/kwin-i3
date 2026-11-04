@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# focus: mouse
 # needs: plugin
 # The i3 frame: tiled windows have no decoration and kwini3hold draws
 # the frame in the tiles' padding, outside the window; kwini3helper makes it part of its window for

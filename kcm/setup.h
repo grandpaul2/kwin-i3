@@ -1,14 +1,11 @@
 #pragma once
 // The Plasma tab's model (docs/plan.md, "Install and first run"): the Plasma
 // settings kwin-i3 is designed around, each with Plasma's value now and the one kwin-i3 would
-// set. A row's tick is a pending edit like any setting on the page: the page's Apply makes it
-// (ticked: kwin-i3's value; unticked where kwin-i3 changed it: Plasma's given back), Reset drops
-// it, Defaults puts Plasma's back (givePlasmaBack). Each change is saved first (its old value and the value
-// written, plasma-settings.json beside taken-keys.json) and given back where Plasma still
-// has what kwin-i3 wrote. Meta+T's take goes through taken-keys.json (keys.h); the key override
-// row writes no Plasma setting at all.
-
-#include "keys.h"
+// set: only what kwin-i3 can't win at runtime (docs/plan.md, reason (e)). A row's tick is a
+// pending edit like any setting on the page: the page's Apply makes it (ticked: kwin-i3's value;
+// unticked where kwin-i3 changed it: Plasma's given back), Reset drops it, Defaults puts Plasma's
+// back (givePlasmaBack). Each change is saved first (its old value and the value written,
+// plasma-settings.json) and given back where Plasma still has what kwin-i3 wrote.
 
 #include <QObject>
 #include <QStringList>
@@ -23,14 +20,14 @@ class SetupModel : public QObject
     // changed (by kwin-i3, can be given back), plasmaSide (the Plasma column's line: Plasma's
     // current way where it differs, else what choosing Plasma brings back).
     Q_PROPERTY(QVariantList rows MEMBER m_rows NOTIFY changed)
-    // A Plasma setting kwin-i3 needs differs (the keys aside, on the main page): the banner.
+    // A Plasma setting kwin-i3 needs differs: the banner.
     Q_PROPERTY(bool needed MEMBER m_needed NOTIFY changed)
     // Each row's tick, by id: true for kwin-i3's value. Edited with setWanted().
     Q_PROPERTY(QVariantMap wanted MEMBER m_wanted NOTIFY changed)
     Q_PROPERTY(QString error MEMBER m_error NOTIFY changed)
 
 public:
-    explicit SetupModel(KeysModel *keys, QObject *parent = nullptr);
+    explicit SetupModel(QObject *parent = nullptr);
 
     Q_INVOKABLE void load();
     Q_INVOKABLE void setWanted(const QString &id, bool on);
@@ -65,15 +62,12 @@ private:
     QString before(const Change &c) const;
     QString plasmaSide(const Change &c) const;
     void setPlasmaSide(const Row &r);
-    bool keysOverride() const;
     bool differs(const Row &r) const;
     bool changedByUs(const Row &r) const;
     QStringList applyRow(const Row &r);
-    int giveBackRow(const Row &r);
+    void giveBackRow(const Row &r);
     void reconfigure() const;
-    QList<std::pair<int, KeyHolder>> clashes() const;
 
-    KeysModel *m_keys;
     QList<Row> m_defs;
     QVariantList m_rows;
     bool m_needed = false;

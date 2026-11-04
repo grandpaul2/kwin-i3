@@ -137,24 +137,22 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
 3. **Log out and in.** KWin reads a newly linked script, and the plugins' and settings page's
    paths, only at login. kwin-i3 is running when your windows tile; its settings are in System
    Settings > Window Management.
-4. **Plasma's settings and your keys**: System Settings > Window Management > kwin-i3 says "Some
-   of Plasma's settings work against kwin-i3"; **Review…** opens its Plasma tab, which lists them, each with what Plasma does,
-   what kwin-i3 needs instead, and why: focus follows mouse with no delay (under click to focus,
-   the frame moves only when you click); each screen switching workspaces alone (with it off, a
-   workspace switch changes every monitor); no tiling or maximizing at screen edges; Meta+T freed
-   from Plasma's tile editor; Meta and a drag focusing the window it moves; and, optional,
-   window animations set to None (opening and closing, maximizing, minimizing, full screen and
-   desktop switching; i3 has none; the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each one you
-   want, then **Apply**, the
-   same as changing them in System Settings. kwin-i3 keeps what each was: untick it and Apply to
-   put it back (one you changed since stays as you set it). The last row, **On a key conflict,
-   kwin-i3's key wins**, is for the keys kwin-i3 shares with Plasma's shortcuts (Meta+arrows for
-   quick tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
-   Meta+Shift+Left/Right, Meta+1…9 if the task manager uses them): a shared key runs Plasma's
-   shortcut, not kwin-i3's, unless it is ticked. Ticked, every key set on the Keys tab runs
-   kwin-i3's command, and Plasma's shortcuts are left as they are (untick it and they run again;
-   the Overview stays on the screen's top-left corner and Grid View on Meta+G). It needs the
-   plugins.
+4. **Plasma's settings**: while kwin-i3 runs it decides what i3 decides, leaving Plasma's own
+   settings as they are: focus follows the mouse at once (the **Tiling** tab turns it off), a
+   new window takes the focus, no tiling or maximizing at screen edges, Meta and a drag focus the
+   window it moves, and a key kwin-i3 shares with Plasma's shortcuts (Meta+arrows for quick
+   tiling, Meta+D, Meta+V, Meta+R, Meta+E, Meta+L, Meta+W for the Overview, Meta+0,
+   Meta+Shift+Left/Right) runs kwin-i3's command, with Meta+T kept from Plasma's tile editor
+   (the **Keys** tab's "On a key conflict, kwin-i3's key wins", which needs the plugins; the
+   Overview stays on the screen's top-left corner and Grid View on Meta+G). Plasma's own values
+   are back when kwin-i3 is released or removed. What kwin-i3 can't decide this way, System
+   Settings > Window Management > kwin-i3 says "Some of Plasma's settings work against kwin-i3";
+   **Review…** opens its Plasma tab: each screen switching workspaces alone (with it off, a
+   workspace switch changes every monitor); and, optional, window animations set to None
+   (opening and closing, maximizing, minimizing, full screen and desktop switching; i3 has none;
+   the animation speed stays as it is). These are **Plasma's settings, not kwin-i3's**: tick each
+   one you want, then **Apply**, the same as changing them in System Settings. kwin-i3 keeps
+   what each was: untick it and Apply to put it back (one you changed since stays as you set it).
    **With two or more monitors**, give each workspace its screen too (the
    **Workspaces** tab): when a monitor goes away, unplugged or only for a moment (a cable,
    a monitor waking), its workspaces move to another for good, as in i3. A workspace given a screen,
@@ -168,7 +166,7 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
 
 **After a Plasma update**: the plugins work only with the KWin version they were built against,
 so after each Plasma update, until you run `cd ~/kwin-i3 && make plugin-install`, tiling windows
-have their title bars back and the key override is off: a key kwin-i3 shares with Plasma runs
+have their title bars back and the key override is gone: a key kwin-i3 shares with Plasma runs
 Plasma's shortcut (Meta+L locks the screen, Meta+arrows quick-tile). The settings page and the
 script need nothing. **To
 update kwin-i3**: `cd ~/kwin-i3 && git pull && make install` (it reloads kwin-i3, re-tiling the
@@ -178,7 +176,7 @@ windows once). `CHANGELOG.md` says what each version changed. A clone made befor
 
 **To stop it**: Meta+Ctrl+Shift+Q releases every window until kwin-i3 is loaded again. **To remove
 it**: `cd ~/kwin-i3 && make uninstall`, then log out and in. It gives back every Plasma setting the
-Plasma tab changed and Meta+T to Plasma's tile editor (one you changed since stays as you set it),
+Plasma tab changed (one you changed since stays as you set it),
 turns kwin-i3 off, and deletes everything the install wrote, naming each file. Your kwin-i3 settings and bug captures stay, for a later
 install; it says where. Then delete `~/kwin-i3` and, if you made one, the bug-report key
 (Install step 6).
@@ -193,7 +191,7 @@ its top when the plugins aren't loaded.
 | plugin | adds | without it |
 |---|---|---|
 | `kwini3hold` (an effect) | the tiling drag's highlight and move cursor; i3's 1 px frame around tiling windows (width and colours in the settings), blue on the active one: tiling windows lose their title bars and the frame is drawn in the room the tiles leave, outside the window, so none of the app is covered. Floating windows keep your decoration (Breeze or any theme). And atomic layout changes: windows that move together land in the same frame | tiling windows keep their title bars; on a fast output, a frame or two of wallpaper where a window is about to land |
-| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone; and **the key override**: with "On a key conflict, kwin-i3's key wins" ticked, a key kwin-i3 shares with Plasma's shortcuts runs kwin-i3's command | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page; a shared key runs Plasma's shortcut |
+| `kwini3helper` (a KWin plugin) | **the tiling drag and resize** (Meta+drag, a title-bar drag, Meta+right-drag; see "Mouse" above); focus on the frame: hover on it focuses its window, a click on it activates and raises, as on i3's border (and nothing reaches the desktop beneath); **Apply applies**: a save in the Configure form takes effect at once; **panel popups forgive a stray pointer**: while one has the focus, focus follows mouse waits 1.5 s, so crossing the gap of a floating panel doesn't close it (every other focus change stays as you set it); and **keys for your keyboard layout**: Meta+1 … 0, Meta+Shift+1 … 0 and the `;` keys follow the key position on any layout (KWin matches the symbol a key types, so on German Meta+Shift+2 is Meta+"), refitted when you switch layouts; keys you set yourself are left alone; and **the key override**: with "On a key conflict, kwin-i3's key wins" on (the default), a key kwin-i3 shares with Plasma's shortcuts runs kwin-i3's command, and Meta+T doesn't open Plasma's tile editor | after Apply, press Meta+Shift+C; with focus follows mouse and no delay, a floating panel's popups close when the pointer crosses the gap (turn off the panel's floating); on a layout that isn't US, set those keys on the settings page; a shared key runs Plasma's shortcut |
 
 `make plugin-install` builds both, puts them under `~/.local/lib/kwin-i3/qt6plugins` (a hash in
 each file name: KWin never unloads a library), loads them into the running KWin, and writes a
@@ -220,10 +218,10 @@ window once.
 
 kwin-i3's own page in System Settings > Window Management: every setting a user would change
 (internal values stay in kwinrc), in tabs as Plasma's Window Behavior page: **Plasma** (Plasma's
-own settings kwin-i3 works best with), Tiling, Gaps, Workspaces, Window Rules, Frame
+own settings kwin-i3 works best with and can't decide while it runs), Tiling, Gaps, Workspaces, Window Rules, Frame
 and **Keys** (kwin-i3's keys rebound in one list instead of KWin's). A key another shortcut also holds
-is set all the same: which of the two runs is the key override's (the Plasma tab, "On a key
-conflict, kwin-i3's key wins"). Apply takes effect at once, with or without the plugins.
+is set all the same: which of the two runs is the key override's (the Keys tab, "On a key
+conflict, kwin-i3's key wins", on by default). Apply takes effect at once, with or without the plugins.
 **Defaults** resets only the tab shown: kwin-i3's settings to their defaults, or, on the Plasma
 tab, Plasma's settings back to what they were before kwin-i3 changed them.
 

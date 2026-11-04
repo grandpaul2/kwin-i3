@@ -76,10 +76,11 @@ and the release key. What each does, exactly: `docs/behaviour.md`.
   behaviour so at runtime over any Plasma setting that also covers it, leaving the setting as it
   is (`docs/philosophy.md`, "The line between i3 and Plasma"): focus follows mouse over KWin's
   focus policy, a new window's focus over focus stealing prevention, the tree over screen-edge
-  tiling, all through KWin's live options, which a reconfigure resets and kwin-i3 sets again
+  tiling, i3's modifier drag that focuses over the window actions' left-drag action (the
+  modifier stays the user's, as i3's `floating_modifier`), all through KWin's live options, which a reconfigure resets and kwin-i3 sets again
   (`docs/kwin-notes.md`, "Config and D-Bus"); kwin-i3's keys over Plasma's shortcuts and Meta+T
   over the tile editor, through the helper's key filter. Where it can't win at runtime
-  (per-output desktops, window animations, the window actions), Plasma's setting stands in for i3's, and kwin-i3 changes it only
+  (per-output desktops; window animations, the look, reason (b)), Plasma's setting stands in for i3's, and kwin-i3 changes it only
   as "Install and first run" (below) allows: named, asked, saved first, given back.
 - **(f) i3's result comes from a defect in its code, not from a rule**: an unsigned value that
   wraps, a size never set, a path that breaks an invariant i3's own code enforces elsewhere (both
@@ -165,8 +166,8 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   so no app's invisible resize band takes them (Z9), as i3's frames clip every client.
 - **One floating window is KWin's**: KWin's window actions move and resize it (Meta+left,
   Meta+right, the title bar, the edges), which is i3's floating modifier for one window, with
-  Plasma's title bar, window menu and screen-edge snapping (reason (e): the window actions are
-  Plasma's settings). The differences are `behaviour.md` F1's.
+  Plasma's title bar and window menu (reason (e): the window actions are Plasma's settings, their
+  left drag's action kwin-i3's while it runs). The differences are `behaviour.md` F1's.
 - **A split or a group floated whole is kwin-i3's** (i3's floating container holding more than
   one window, `floating.c:291`; `docs/definitions.md`): its windows are KWin floating windows
   whose frames kwin-i3 lays out as a tiled tree inside the container's rect, in the tiling look
@@ -237,12 +238,11 @@ follows it:
   column), as Defaults on any Plasma page does (`docs/philosophy.md`).
   The install's last line points there.
 - **The list**: only what kwin-i3 can't win at runtime (reason (e)): the Plasma settings kwin-i3
-  needs (per-output desktops, with more than one output); the ones that stand in for i3's (the
-  window actions); and the optional (window animations set to None, not the global speed; i3 has
+  needs (per-output desktops, with more than one output); and the optional (window animations set to None, not the global speed; i3 has
   none).
 - **What kwin-i3 wins at runtime asks nothing**: focus follows mouse with no delay and the next
-  focus under the pointer, a new window's focus, screen-edge tiling and maximizing off, kwin-i3's
-  keys over the Plasma shortcuts that share them, Meta+T kept from the tile editor. Each is in
+  focus under the pointer, a new window's focus, screen-edge tiling and maximizing off, the window
+  actions' left drag activating and raising, kwin-i3's keys over the Plasma shortcuts that share them, Meta+T kept from the tile editor. Each is in
   force while kwin-i3 runs and Plasma's own again when it is released or removed; focus follows
   mouse and the key override are settings of kwin-i3's own (i3's `focus_follows_mouse`; the
   override on, as i3 grabs its keys), the others are the tree's.

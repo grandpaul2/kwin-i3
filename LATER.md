@@ -40,8 +40,8 @@ printed in the sweep). Waits: the Stage, nothing seen live.
 **36. The test depth held back during the Stage** (`docs/testing.md` is lean until
 the Stage ends). Then, each in runs of 5
 minutes or less (never one long run): the fault battery (`make mutate-live`, `make mutate`) and
-faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz campaign; `make
-live-stock`. Waiting there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 36 run
+faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz campaign. Waiting
+there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 36 run
 (2026-10-26: 19 caught, 16 survived, 1 broken by its own text, "the helper not turned on at a
 reconfigure", whose from-text ends mid-line), 23 not run; the survivors not yet sorted (a check to
 add, code to remove, or not visible in the test KWin). The fuller procedure that was in

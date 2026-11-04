@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# needs: plugin
 # Real input, part 1: every default key pressed for real. Its own scenario (and KWin): pressing
 # Meta+1..0 for real moves workspaces between monitors, which would skew any test after it.
 # The rest of the real-input tests are 51-input.sh;

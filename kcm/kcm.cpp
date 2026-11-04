@@ -38,7 +38,7 @@ static QStringList tabKeys(int tab)
 {
     switch (tab) {
     case TilingTab:
-        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("mouseWarping"), QStringLiteral("focusWrapping"),
+        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusFollowsMouse"), QStringLiteral("mouseWarping"), QStringLiteral("focusWrapping"),
                 QStringLiteral("tilingDrag"), QStringLiteral("holdEnabled")};
     case GapsTab:
         return {QStringLiteral("gapsInner"), QStringLiteral("gapsOuter"), QStringLiteral("gapsTop"), QStringLiteral("gapsRight"),
@@ -54,9 +54,9 @@ static QStringList tabKeys(int tab)
                 QStringLiteral("frameIndicatorActive"), QStringLiteral("frameIndicatorInactive"), QStringLiteral("hideEdgeBorders"),
                 QStringLiteral("roundedCorners"), QStringLiteral("frameOnFloating")};
     case KeysTab:
-        return {QStringLiteral("endSession")};
+        return {QStringLiteral("endSession"), QStringLiteral("keysOverride")};
     case PlasmaTab:
-        return {QStringLiteral("keysOverride")};      // off: Plasma's shortcuts keep shared keys
+        return {};
     }
     return {};
 }
@@ -127,7 +127,7 @@ public:
         // kquickmanagedconfigmodule.cpp:17-23, :74-91). Its load, save and signals by hand.
         , m_settings(new KWinI3Settings(nullptr))
         , m_keys(new KeysModel(this))
-        , m_setup(new SetupModel(m_keys, this))
+        , m_setup(new SetupModel(this))
     {
         qmlRegisterAnonymousType<KWinI3Settings>("org.kde.kwini3", 1);
         qmlRegisterAnonymousType<KeysModel>("org.kde.kwini3", 1);

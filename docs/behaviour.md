@@ -369,7 +369,7 @@ A new window still opens on the focused workspace (**C1**): kwin-i3 moves it the
 
 | # | When | Who decides | Focus after | Pointer | i3 | Note |
 |---|---|---|---|---|---|---|
-| B1 | The pointer enters a window (focus follows mouse), or its ring (§9) | KWin | that window | — | ≠ | i3's default is focus follows mouse; stock Plasma is click to focus, and KWin's focus policy is the user's Plasma setting: reason (e). As i3 with `FocusPolicy=FocusFollowsMouse`. The pointer reaching a tiling window's frame under a neighbour's margin raises that window (Z9's part B), and the raise asks its focus too: KWin's own enter at the stored position counts as a pointer that hasn't moved and asks nothing (probe 94). Entering the window KWin keeps active inside a container chosen by focus parent focuses that window, as B3 |
+| B1 | The pointer enters a window (focus follows mouse), or its ring (§9) | KWin | that window | — | = | i3's `focus_follows_mouse` (`handlers.c:95`): kwin-i3's `focusFollowsMouse` (default on, as i3's), won through KWin's live options at load and after every reconfigure (focus follows mouse, no delay, the next focus under the pointer), Plasma's own focus setting left as it is; off, click to focus (`src/kwin.js` `winOptions`). The pointer reaching a tiling window's frame under a neighbour's margin raises that window (Z9's part B), and the raise asks its focus too: KWin's own enter at the stored position counts as a pointer that hasn't moved and asks nothing (probe 94). Entering the window KWin keeps active inside a container chosen by focus parent focuses that window, as B3 |
 | B2 | The pointer moves over the root window or a dock (an empty workspace, a gap, a panel, a tile Show Desktop hides): on another output than the focus's, at a crossing or later (the focus moved there by a key with `mouseWarping none`); on the focus's own output, while focus parent has chosen a container or the workspace, as i3 checks on every such motion | kwin-i3 (`pointerMoved`, from `cursorPosChanged`; one comparison per motion, the hit test only when the check can change the focus) | that output's visible workspace: its fullscreen window, else its last focus, or the empty workspace; over an override-redirect window the model's focus moves and that window keeps the keyboard (D7); nothing with focus follows mouse off, during a tiling drag, or until an output change has settled | stays | = | i3's `check_crossing_screen_boundary` (`handlers.c:91-121`, no test that the output differs; `con_descend_focused` brings a container chosen by focus parent down to its window); a dock counts as root. Over a tiling or floating window, KWin's focus follows mouse activates it a turn later (B1, probe 91). Focus and pointer never come apart across outputs now. Under Show Desktop the hidden tiles count as root (probe 97); the focus pass then leaves the keyboard with the desktop and Show Desktop on (74), and the focus is that workspace's when it ends |
 | B3 | A click on a window | KWin; with a container or the workspace focused (focus parent), on the window KWin keeps active in it, the helper, then kwin-i3 (`windowPressed`) | that window, raised, the container chosen by focus parent included; without the helper, a click on that one window leaves the container focused; a Meta+Shift+left press on any of its windows is G16's, which keeps the container focused | — | = | i3's `route_click` step 3 (`con_activate` on the window's con, any button and modifier). KWin activates a window clicked but not the one it has active, so the helper tells kwin-i3 of that one ("Window Pressed"): frame focus for most presses, the tiling drag for the two it takes first (a title-bar left press, Meta+right; KWin orders filters of one weight last-installed first, 6.7.5 `input.cpp`). A Meta+left drag reports nothing, as i3's step 2 starts it before focusing. Likewise focus follows mouse entering it (B1; `handle_enter_notify` focuses any con but the focused one) |
 | B4 | A click on the root window or a dock | KWin, then kwin-i3 (`desktopActivated`) | the desktop: that output's visible workspace at its last focus (or the empty workspace), the desktop window given up at once; a panel: unchanged (KWin never activates a dock), what it opens is override-redirect (A3); with Show Desktop on, the desktop keeps the keyboard (+, Plasma's edit mode) | — | = | i3's root click (`click.c`). Known limit kept: typing into the desktop itself (an icon rename) loses the keyboard on the next pass. |
@@ -688,7 +688,7 @@ with `$mod` as the wizard's Win choice.
 | K4 | Resize Mode (Meta+R), then Shrink Width / Grow Height / Shrink Height / Grow Width | Meta+R; in the mode J Left, K Down, L Up, ; Right, by key position (evdev code, no layout refit), on press and repeat; Return, Escape or Resize Mode's own key leave (Meta+R by default; the helper asks kglobalaccel for it at each entry, as i3's default config leaves on the key it enters by, `config.keycodes:180`); the four actions themselves unbound (a user who wants them flat binds them) | ≠ | i3's `mode "resize"` (`etc/config.keycodes`), in the helper (`plugin/resizemode.cpp`): its key filter sits ahead of KWin's global shortcuts only while the mode is on; Meta+R exactly, as i3 matches modifiers exactly (`bindings.c`), so Meta+Shift+R doesn't leave; every other key goes on, and kwin-i3's own keys do nothing meanwhile (`KEY … ignored: the resize mode is on`). ≠: **Plasma's shortcuts still run** (volume, screenshot, the launcher), where i3's mode leaves only its own keys bound and every other key reaches the window: reason (e), another component's shortcut stays its own (`philosophy.md`, Plasma does hardware and the rest). The screen locking doesn't leave the mode, as i3. The sign: a banner at the top of the tree's focused window (`SetFocused`), drawn by the effect (`SetMode`), in the frame's active colour, reading "Resize (Esc)", reason (b): i3's bar shows only the mode's name, `resize` (i3bar's binding mode button, `xcb.c:2172`), here with the way out. Tiling resizes by `resizeStep` % (i3's 10 ppt), floating by `floatingStep` px. Without the helper the key does nothing (§13) |
 | K5 | Split H / Split V | Meta+H / Meta+V | = | |
 | K6 | Toggle Split | Meta+E | = | `layout toggle split` |
-| K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: with the key override on, Meta+W runs kwin-i3's (§8, "Shared keys"; the Overview stays on the top-left screen corner and Grid View on Meta+G) |
+| K7 | Layout Stacking, Layout Tabbed | Meta+S, Meta+W | = | `layout stacking`, `layout tabbed` (§2 T25). Meta+W is Plasma's Overview on a stock install: with the key override on (the default), Meta+W runs kwin-i3's (§8, "Shared keys"; the Overview stays on the top-left screen corner and Grid View on Meta+G) |
 | K8 | Focus Parent | Meta+A | = | `focus parent` (§2 T27) |
 | K9 | Floating Toggle | Meta+Shift+Space | = | |
 | K10 | Focus Mode Toggle | Meta+Space | = | |
@@ -699,7 +699,7 @@ with `$mod` as the wizard's Win choice.
 | K15 | Reload Settings | Meta+Shift+C | ≠ | i3's `reload`. KWin's reconfigure, so all of KWin's settings are re-read: ≠ kept, it is the only way a script re-reads its own. Reason (a). |
 | K16 | Restart (i3: Meta+Shift+R) | none | ≠ | i3's in-place restart, for a new binary; here an install reloads kwin-i3. **Kept**: none. Reason (d). |
 | K17 | Exit | Meta+Shift+E | = | Leaving, Plasma's way, as `endSession` says (N22): `logout` (the default) Plasma's log out prompt (`org.kde.LogoutPrompt` `promptLogout`), its confirmation as `i3-nagbar`'s save that it goes ahead after 30 s; `shutdown` its shut down prompt (`promptShutDown`, the same countdown); `ask` its logout screen (`promptAll`, every choice, no countdown); `sleep` PowerDevil's `suspendToRam`, unasked. i3's exit ends the session because i3 is the session; inside Plasma, leaving has several forms, and picking one is still exit. |
-| K18 | Terminal, Launcher | Meta+Return, Meta+D | ≠ | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) is reported as a taken key; a holder that launches the same thing (KRunner's own `_launch`, the default terminal's) is not. i3 starts its terminal with startup notification (`config.keycodes:51`), so its window opens on the workspace it was launched from (`manage.c:336`); here where the focus is when it maps: reason (d), the launch workspace (`plan.md` "Out"; `LATER.md` item 28) |
+| K18 | Terminal, Launcher | Meta+Return, Meta+D | ≠ | i3's `i3-sensible-terminal` and `dmenu_run`: Plasma's default terminal (kdeglobals' `TerminalService`, Konsole when unset), launched by the helper through kglobalaccel's `_launch` for its desktop file so it gets its own systemd scope, not KWin's (probe 92; without the helper the key does nothing, §13); KRunner (`org.kde.krunner.App` `display`). A Plasma default on Meta+D (Show Desktop, where set) loses to it with the key override on (§8). i3 starts its terminal with startup notification (`config.keycodes:51`), so its window opens on the workspace it was launched from (`manage.c:336`); here where the focus is when it maps: reason (d), the launch workspace (`plan.md` "Out"; `LATER.md` item 28) |
 | K19 | Back-and-forth, next/prev, output moves (§4), the no-back-and-forth forms (S5), next and primary outputs (S8, S9), Focus Child (§2 T27a) | none | = | unbound in i3's config too |
 | K20 | Release | Meta+Ctrl+Shift+Q | + | the safety valve (§12) |
 | K21 | Dump State | none | + | `tools/capture`, on a key the user binds (README, Install step 6) |
@@ -741,15 +741,10 @@ beat kwin-i3's (live: Quick Tile Left 141, kwin-i3 Focus Left 504); an app insta
 kwin-i3 that asks for one of its keys loses to it; a holder that isn't active (its app not
 running) doesn't block. `KGlobalAccel.action(key)` names the holder that runs.
 
-At load, kwin-i3 asks kglobalaccel which of its keys another active component holds, and logs
-them (`TAKEN`, §13); a holder that launches what the kwin-i3 action launches (KRunner's own
-`_launch` on Meta+D, the default terminal's on Meta+Return) is logged apart (`TAKEN-SAME`), not
-as shared: both fire the same thing.
-
-**The key override** (`keysOverride`; the Plasma tab's "On a key conflict,
-kwin-i3's key wins"). i3 grabs its own bound keys (`bindings.c:155`), so its binding runs whatever
-else wants the key; here that is behind a setting, off by default, reason (e): another
-component's shortcut stays its own until the user chooses kwin-i3's (`plan.md`). While on, every key one of kwin-i3's actions holds
+**The key override** (`keysOverride`; the Keys tab's "On a key conflict, kwin-i3's key wins", on
+by default). i3 grabs its own bound keys (`bindings.c:155`), so its binding runs whatever else
+wants the key; so does kwin-i3's, the setting there for a user who wants Plasma's shortcut
+instead (`plan.md`, "Keys and Plasma's shortcuts"). While on, every key one of kwin-i3's actions holds
 runs that action, and no other holder's, with **no other shortcut changed**. The helper
 (`plugin/keyoverride.h`) does it: a filter ahead of KWin's global shortcut filter triggers kwin-i3's
 action on the press and lets the press on with its key changed to one no shortcut has, so
@@ -760,10 +755,10 @@ release, so no window sees them. kwin-i3's keys are the ones kglobalaccel holds 
 reconfigure and when the page applies keys. Not while a window inhibits shortcuts (as KWin's own
 filter), nor during Alt+Tab or the lock screen (their filters come first). An action gone (kwin-i3
 unloaded) takes no key. Without the helper there is no override: a shared key runs its first
-holder's. Plasma's "Free Meta+T" row is a separate thing: it takes Meta+T from Edit Tiles, recorded
-in `~/.local/state/kwin-i3/taken-keys.json`, given back by unticking it or by `make uninstall`.
-An earlier kwin-i3 took shared keys from their holders; `make install` gives every such record
-back once (`tools/take-keys.py migrate`) and turns the override on in its place.
+holder's. The tile editor's keys (KWin's Edit Tiles, Meta+T) are held the same way while the
+override is on, with no action run (one kwin-i3 also binds runs kwin-i3's), so the editor never
+changes the tiles kwin-i3 lays out; Plasma's shortcut is left as it is. kwin-i3 takes no key from
+another shortcut.
 
 ---
 
@@ -816,7 +811,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 
 | # | When | Result | i3 | Note |
 |---|---|---|---|---|
-| F1 | A floating window | KWin's own: Meta+left moves (Meta+Shift+left tiles it, G13), Meta+right resizes, the title bar moves, the edges resize, Meta+middle raises or lowers; a click raises | ≠ | i3's `floating_modifier` drag and resize. Differences kept, as Plasma's (KWin's window actions): i3's Meta+Shift+right keeps the proportions and its title-bar right press resizes, where KWin opens the window menu. **Kept**: one floating window is KWin's (`plan.md` "The mouse", reason (e)) |
+| F1 | A floating window | KWin's own: the modifier (Meta by default) and left activates, raises and moves (Meta+Shift+left tiles it, G13), Meta+right resizes, the title bar moves, the edges resize, Meta+middle raises or lowers; a click raises | ≠ | i3's `floating_modifier` drag focuses and moves (`click.c`, step 3): kwin-i3 wins the left drag's action at runtime (KWin's `commandAll1` "Activate, raise and move", `winOptions`); the modifier stays Plasma's setting, as i3's `floating_modifier` is the user's. Differences kept, as Plasma's (KWin's window actions): i3's Meta+Shift+right keeps the proportions and its title-bar right press resizes, where KWin opens the window menu; on KWin 6.7 Meta+right resizes without focusing. **Kept**: one floating window is KWin's (`plan.md` "The mouse", reason (e)) |
 | F1a | A split or a group floated whole (T16) | kwin-i3's, by the helper: Meta+left moves it whole (Meta+Shift+left tiles it whole, G13; with `tilingDrag`'s `modifier` left out, that press is the app's) and Meta+right resizes it whole from the corner nearest the press (an outline while it lasts, F1b); a title-bar press resizes against the neighbour above, else moves it whole; a press on a floated group's bar focuses the tab (G14's rule), then Meta+left (Shift or not) moves the container whole and Meta+right resizes it whole, and a plain press resizes against the neighbour above inside it, else a right press resizes it whole and a left one moves it, with no tiling drag; the bar takes its presses over whatever lies beneath the container, a window stacked above it keeping them; a left or right press on a window's ring resizes against its neighbour on that side inside the container, else (the container's outer ring) resizes the whole from the corner nearest the press; a press raises the whole container; the drag shows i3's cursor, the move's or the diagonal of the corner a resize moves (`floating.c:606`, `:719-722`), and a floated group's bar keeps to its window's width; a client's own move request (a header bar) is refused; Escape or a key puts it back | = | i3's `route_click` (`click.c`, steps 3, 5-7), `floating_drag_window`, `floating_resize_window`; `handlers.c:936` refuses `_NET_WM_MOVERESIZE` on a window whose own con isn't floating. KWin moves and resizes one window, never several (reason (a)), so the helper does it, each motion placing every window, and kwin-i3 reads the rect back at the release. Each window's ring is inside its share of the rect, as i3's border inside its con, so it lies over whatever is beneath the container and is found from the top of the stacking order |
 | F1b | A move or resize of a container floated whole (F1a), with the effect drawing | **an outline only while it lasts**: the container as drawn (its windows and its groups' bars), its edge 2 px in the indicator's colour, nothing inside, follows the pointer; at the release the windows are placed once, where the outline is; Escape or a key leaves them where they were. The outline goes once the pass has laid them out, and by itself 500 ms after the drag's last renewal (no end can leave it). Without the effect, the windows step together as before. A single floating window keeps KWin's live move and resize (F1) | ≠ | i3 moves and resizes a floating container live (`floating_drag_window`, `floating_resize_window`): on X11 the container is one frame. Here each window is its own surface: a resize reconfigures every client at every step, reason (a), rough on real hardware; the move, reason (c), judged live: one way for both, and calmer for a large container. The places come from the helper (`GroupPlaced`), not the frames, which a client may not have committed yet |
 | F2 | Hovering the ring, focus follows mouse | focuses its window (KWin's delay) | = | The ring is its window's, as i3's border |
@@ -824,7 +819,7 @@ against i3 4.24's `click.c` (`route_click`'s steps, numbered there), `tiling_dra
 | F4 | A scroll on the ring, no modifier | focuses the window (activated); swallowed | = | i3's step 3 on a border |
 | F5 | A modified click on the ring (Meta+drag) | passes on, to G1, Z2 | + | |
 | F6 | Floating windows' rings | count for F2-F5 only with `frameOnFloating` | + | |
-| F7 | Mouse bindings (i3's `bindsym button1`, `--whole-window`, `--border`, `--release`) | none | ≠ | KWin's window actions (System Settings) set what Meta+buttons do, and the Meta+left/right ones must stay as kwin-i3 needs them. **Kept**: none; i3's are commands bound to buttons, and kwin-i3 has no command language (§8: a key takes no arguments). Reason (d). |
+| F7 | Mouse bindings (i3's `bindsym button1`, `--whole-window`, `--border`, `--release`) | none | ≠ | KWin's window actions (System Settings) set what Meta+buttons do; the left drag's action is kwin-i3's while it runs (F1). **Kept**: none; i3's are commands bound to buttons, and kwin-i3 has no command language (§8: a key takes no arguments). Reason (d). |
 | F8 | No drag or resize starts while a game holds the pointer or shortcuts are inhibited | the press is the app's | + | |
 | F8b | A window Show Desktop hides (Plasma's edit mode turns it on), or one on another activity | has no ring, frame or gap: a click or hover where it sits reaches what is shown there (KWin's `isShown`, not `isHidden`, which leaves Show Desktop out) | = | i3 routes clicks to mapped windows only |
 | F9 | **Without the helper** | Meta+drag is KWin's own move: the window leaves its tile and floats where dropped | + | |
@@ -855,7 +850,7 @@ Checked against i3 4.24's `con.c` (`con_enable_fullscreen`, `con_get_fullscreen_
 | V9 | A window moved to another desktop by someone else (Overview, a window rule) | kwin-i3 follows: a move to that workspace | = | i3 moves the window on `_NET_WM_DESKTOP` |
 | V10 | A window put on all desktops, or on two (outside kwin-i3's own relocate) | all: sticky floating (§3 R3, X4), an already floating one too; two: leaves the tree until it is on one (R13) | ≠ | i3 floats it and makes it sticky only if `floating_enable` succeeds (`handlers.c:890-895`), so an already floating window isn't made sticky (X4 is this row's tiling half). Reason (a): KWin applies the request itself before kwin-i3 hears of it, so refusing it means undoing it, and KWin's own "On All Desktops" menu entry would snap back. |
 | V11 | A tiling window resizes itself | put back (§6) | = | i3 ignores a tiling window's size requests |
-| V12 | KWin's quick tile by key; Meta+T's tile editor; a drag out of a tile (a screen-edge drag included); a Shift-drag into KWin's tiles | a quick tile by key: pulled back into its tile; the editor's tiles are overwritten on the next pass; a drag: refused with the helper (X5); **without the helper**, KWin untiles the window at the move's first step, so it floats (and a screen-edge drag then quick-tiles it, floating); the Shift-drag puts two windows in one tile until the next pass (`plan.md` "Plasma's window actions") | ≠ | i3 ignores a request that would place or size a tiling window (`handlers.c:722-723`, `:936`), as kwin-i3 does with the helper. The drag without it: reason (a), as X5 |
+| V12 | KWin's quick tile by key; Meta+T's tile editor; a drag out of a tile (a screen-edge drag included); a Shift-drag into KWin's tiles | a quick tile by key: pulled back into its tile; Meta+T held from the editor while the key override is on (§8), else the editor's tiles are overwritten on the next pass; screen-edge tiling and maximizing off while kwin-i3 runs (`winOptions`); a drag: refused with the helper (X5); **without the helper**, KWin untiles the window at the move's first step, so it floats (and a screen-edge drag then quick-tiles it, floating); the Shift-drag puts two windows in one tile until the next pass (`plan.md` "Plasma's window actions") | ≠ | i3 ignores a request that would place or size a tiling window (`handlers.c:722-723`, `:936`), as kwin-i3 does with the helper. The drag without it: reason (a), as X5 |
 | V13 | A modal dialog | floats (§3); KWin moves it with its parent; kwin-i3 waits while either is dragged | + | |
 | V14 | **An output returning to a fullscreen window on a hidden workspace** (known limit, accepted; fuzzer I9, seeds 214 and 28) | KWin asks the window to be fullscreen again and to move back, but a hidden window gets no frame callbacks, never acknowledges, and KWin applies nothing until it does. Meanwhile KWin calls it not resizable and refuses the tile, so kwin-i3 floats it where it stands, out of sight. Meta+Shift+N, or closing it, brings it back. The same holds for a hidden floating window smaller than KWin's 150 px decorated minimum | + | |
 
@@ -943,6 +938,8 @@ again.
 | `resizeStep` | 10 | 1-50 % | resize by key, tiling | next press |
 | `floatingStep` | 10 | 1-200 px | move and resize by key, floating | next press |
 | `focusWrapping` | `yes` | `yes`, `no`, `force`, `workspace` | §2 | next press |
+| `focusFollowsMouse` | true | true, false | §5 B1: the pointer entering a window focuses it at once (KWin's live options); false: click to focus | at once (a reconfigure) |
+| `keysOverride` | true | true, false | §8 "Shared keys": kwin-i3's keys win a key a Plasma shortcut shares, and Meta+T is held from the tile editor (the helper) | at once |
 | `mouseWarping` | `output` | `output`, `none` | §5 A2: the pointer follows the focus to another output, or never | next focus change |
 | `tilingDrag` | `modifier titlebar` | `modifier titlebar`, `modifier`, `titlebar`, `off` | i3's `tiling_drag`: which presses start a tiling drag (§9 G3); read by the helper | the helper at once |
 | `popupDuringFullscreen` | `smart` | `smart`, `ignore`, `leave_fullscreen`, `all` | §5 C5: what a new window may do on a workspace with a fullscreen window | new windows |
@@ -982,9 +979,9 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 | N3 | `default_orientation` | `defaultOrientation` | = | |
 | N4 | `workspace_layout default \| stacking \| tabbed` | `workspaceLayout`; Meta+W or Meta+S on an empty workspace sets it too (§2 T25) | = | |
 | N5 | `focus_wrapping` | `focusWrapping` | = | |
-| N6 | `focus_follows_mouse` | KWin's focus policy (System Settings) | ≠ | reason (e): Plasma's own setting stands in; the default differs (§5 B1) |
+| N6 | `focus_follows_mouse` | `focusFollowsMouse` (Tiling tab), won at runtime over KWin's focus policy | = | §5 B1 |
 | N7 | `mouse_warping output \| none` | `mouseWarping`, `output` (default) or `none` (§5 A2) | = | |
-| N8 | `focus_on_window_activation smart \| urgent \| focus \| none` | KWin's (focus stealing prevention) | ≠ | reasons (e) and (a): §5 C4 |
+| N8 | `focus_on_window_activation smart \| urgent \| focus \| none` | KWin's, with focus stealing prevention won at Low while kwin-i3 runs (a new window takes the focus) | ≠ | reason (a): §5 C4 |
 | N9 | `popup_during_fullscreen` | `popupDuringFullscreen`: `smart`, `ignore`, `leave_fullscreen`, `all` (§5 C5, §10 V6) | ≠ | as i3 but a modal dialog: V6, reason (a) |
 | N10 | `workspace_auto_back_and_forth` | `workspaceAutoBackAndForth` | = | |
 | N11 | `workspace N output X …` | `workspaceOutputs`, a list per number | = | |
@@ -1012,7 +1009,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 - **Tabs**, as Plasma's Window Behavior page, worded and laid out by the style guide (each
   checkbox's name its row's label, the box marked "(recommended)" (the hold, the pointer) or
   "(optional)", its full name its screen reader name): **Plasma** first (below), **Tiling** (the key step, tiling and
-  floating; `mouseWarping` as a checkbox; focus at an edge; `tilingDrag`; the hold), **Gaps** (the
+  floating; `focusFollowsMouse` and `mouseWarping` as checkboxes; focus at an edge; `tilingDrag`; the hold), **Gaps** (the
   gaps; then the outer gap per screen edge, `smartGaps`, and each workspace's own inner and outer
   gap), **Workspaces** (how new workspaces open
   (`workspaceLayout`), their split direction, auto back-and-forth; then each workspace's screens
@@ -1040,39 +1037,34 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   the key out of kwinrc.
 - **Keys tab**: every command from `kcm/ui/commands.json`, current keys from kglobalaccel; a
   key another component also holds is set all the same, with no note (which runs is the key
-  override's, §8 "Shared keys"); Apply asks the helper to read kwin-i3's keys again; a
+  override's, §8 "Shared keys", its checkbox above the list, greyed without the helper); Apply
+  asks the helper to read kwin-i3's keys again; a
   shifted symbol appears with the keys that type it on the current layout; End session's row has
   `endSession` as a dropdown beside its label (Sleep only where logind's `CanSuspend` is "yes", or
   it is already the setting). Not visible while kwin-i3 isn't running.
 - **Plasma tab** (the first-run step, `plan.md` "Install and first run"; `kcm/setup.cpp`):
-  Plasma's own settings that matter
-  to tiling, shown for convenience, every one always: two columns of radio buttons, "Plasma" and
+  the Plasma settings kwin-i3 can't win at runtime, shown for convenience, every one always: two columns of radio buttons, "Plasma" and
   "kwin-i3 (recommended)", choosing one unchoosing the other, the one chosen being where the
   setting is ("Plasma" meaning anything but kwin-i3's value). Under each name a muted line says
   what the Plasma column means for it, as "Plasma: " and the value in Plasma's own words
-  ("Plasma: Focus follows mouse, 300 ms delay"), and its help button why kwin-i3 wants its way and where
-  Plasma keeps the setting. Choosing Plasma gives back what the reader had before kwin-i3
-  changed it, or, where kwin-i3 changed nothing, Plasma's stock value (focus stealing prevention
-  Medium and Meta+drag Move, whose stock values are kwin-i3's own), saving nothing. The rows: Focus follows
-  mouse with no delay and the next focus under the pointer (`FocusPolicy`, `DelayFocusInterval`,
-  `NextFocusPrefersMouse`); per-output desktops; focus stealing prevention at Low; screen-edge tiling and maximizing off; Meta+T freed from KWin's Edit Tiles; the
-  window actions' modifier Meta and Meta+left "Activate, raise and move" (6.8's stock); and,
-  optional, the window animations set to None (Plasma's Animations page: every effect of the
-  open/close, maximize, minimize, full screen and desktop-switching groups off in `[Plugins]`,
-  and unloaded; the global speed untouched); and the key override (§8, "Shared keys"), a setting
-  of kwin-i3's own shown as this tab's last row, its boxes writing `keysOverride` (greyed without
-  the plugins; its line says how many of kwin-i3's keys Plasma's shortcuts share, not which). Every tick is an edit like any setting: **Apply**
-  makes it (each key's old value, or its absence, and the value written saved first in
-  `~/.local/state/kwin-i3/plasma-settings.json`, Meta+T's in `taken-keys.json`; KWin
-  reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3 changed to
-  the Plasma column, the others as they are, the key override off). Unticked where
+  ("Plasma: On"), and its help button why kwin-i3 wants its way and where Plasma keeps the
+  setting. Choosing Plasma gives back what the reader had before kwin-i3 changed it, or, where
+  kwin-i3 changed nothing, Plasma's stock value, saving nothing. Only what kwin-i3 can't win at
+  runtime (`plan.md` reason (e)): per-output desktops; and, optional, the window animations set to
+  None (Plasma's Animations page: every effect of the open/close, maximize, minimize, full screen
+  and desktop-switching groups off in `[Plugins]`, and unloaded; the global speed untouched).
+  What kwin-i3 wins at runtime has no row: focus follows mouse (B1), a new window's focus (C4),
+  screen-edge tiling and maximizing, the left drag's window action (F1), shared keys and Meta+T
+  (§8). Every tick is an edit like any setting: **Apply** makes it (each key's old value, or its
+  absence, and the value written saved first in `~/.local/state/kwin-i3/plasma-settings.json`;
+  KWin reconfigured), **Reset** drops it, **Defaults** puts Plasma's back (each row kwin-i3
+  changed to the Plasma column, the others as they are). Unticked where
   kwin-i3 changed it, Apply writes the old value back only where Plasma still has the one
   kwin-i3 wrote; a value changed since stays, its record dropped. Giving per-output desktops back
   puts every output on one desktop (KWin's, `kwin-notes.md`), and the row says so. `make
-  uninstall` gives all of it back (`tools/plasma-settings.py`, `tools/take-keys.py`). A stock
-  default is read from the installed `kwin.kcfg`, so 6.7's and 6.8's stock window actions are
-  each read right. Showing the tab reads Plasma and kwin-i3's keys again, unless the page
-  holds edits not yet applied.
+  uninstall` gives all of it back (`tools/plasma-settings.py`). A stock default is read from the
+  installed `kwin.kcfg`. Showing the tab reads Plasma's values again, unless the page holds edits
+  not yet applied.
 - **Apply** writes kwinrc and the keys, and reconfigures if a setting changed; a setting at its
   default is removed from kwinrc rather than written. **Reset** drops every edit. **Defaults**
   resets the tab shown, and greys when it is at its defaults: a kwin-i3 tab's settings to
@@ -1117,10 +1109,12 @@ Checked against i3 4.24's `main.c` (start, `tree_restore`, `manage_existing_wind
    renumbering.
 3. **Adopt the tiles** (`adoptTiled`): windows already in KWin's tiles keep their layout
    (`docs/plan.md`, decision 5).
-4. Connect KWin's signals; register the hidden drag actions; turn the tiling drag on.
+4. Win what i3 decides through KWin's live options (`winOptions`: focus follows mouse, a new
+   window's focus, screen-edge tiling and maximizing, the left drag's window action), again
+   after every reconfigure. Connect KWin's signals; register the hidden drag actions; turn the
+   tiling drag on.
 5. **Ask the effect** for its stats (the answer waited for up to 250 ms, then step 7 runs).
-6. Meanwhile, at once: register the keys, ask the helper to fit them, check taken keys, layout
-   keys, the plugins and per-output desktops (logged, §13), place everything. So the keys exist
+6. Meanwhile, at once: register the keys, ask the helper to fit them, check layout keys, the plugins and per-output desktops (logged, §13), place everything. So the keys exist
    before step 7 has run.
 7. **Adopt every other window**, bottom of the stack first (so the focus order follows
    stacking), and focus KWin's active window.
@@ -1133,7 +1127,10 @@ where no frame replaces them.
 
 Unloading the script runs nothing: tiles, paddings, taken borders and Keep Above stay as they
 are, and the next load adopts them (step 3; the floating set from the effect; borders sorted at
-the first answer). The live reload is AGENTS.md's.
+the first answer). KWin's live options stay kwin-i3's until the next reconfigure (the live
+reload's own; any System Settings Apply; a login): turning kwin-i3 off on the KWin Scripts page
+reconfigures nothing (KWin 6.7.5 `kcms/scripts/module.cpp` `save`), so Plasma's focus and
+window-action settings return only then. The live reload is AGENTS.md's.
 
 ### Release (Meta+Ctrl+Shift+Q)
 
@@ -1142,8 +1139,9 @@ that is under way (its drop indicator cleared); a window crossing to another out
 workspace's desktop, not left on all of them; every window out of its tile, Keep Above cleared where kwin-i3 set it, its border given back; every root tile
 kwin-i3 touched, and any other not exactly the full screen (one a previous instance left inset
 by gaps and holding no tiles; a layout of the user's is left, §6 Y4), emptied and reset to the full screen with no padding; the effect told to drop the
-resize banner, every ring's class and the focused window. Logs `RELEASED`. After it
-the script does nothing until reloaded.
+resize banner, every ring's class and the focused window; KWin reconfigured, so Plasma's own
+values return for what kwin-i3 won at runtime. Logs `RELEASED`. After it the script does
+nothing until reloaded.
 
 ### The plugins
 
@@ -1163,9 +1161,6 @@ should fix in their setup is checked at load and logged, where a capture shows i
 it on the settings page's banners (§11, "The settings page"). A script's notification can't reach Plasma (KWin's `callDBus` can't send `Notify`'s
 signature, `docs/kwin-notes.md`), and the banners carry everything one would say.
 
-- **Shared keys**: kwin-i3's keys another active component holds (`TAKEN`; §8, "Shared keys"). The
-  page: while the key override is off, the "Some of Plasma's settings work against kwin-i3"
-  banner, to the Plasma tab and its key override row.
 - **Layout keys**: without the helper, any keyboard layout other than US (`LAYOUTS … not
   fitted`), as kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default
   where the system sets none, counts as US). The page: the plugins' banner.

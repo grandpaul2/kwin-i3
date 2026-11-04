@@ -30,6 +30,9 @@ var Settings = (function () {
         workspaceLayout: { type: "choice", def: "default", choices: ["default", "stacking", "tabbed"] },   // i3's workspace_layout (§11 N4)
         focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
         mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
+        // i3's focus_follows_mouse: the pointer entering a window focuses it, at once (KWin's live
+        // options, src/kwin.js winOptions).
+        focusFollowsMouse: { type: "bool", def: "true" },
         // What Exit does (§8 K17): i3's exit is leaving the computer; Plasma has several ways to leave.
         endSession: { type: "choice", def: "logout", choices: ["logout", "sleep", "shutdown", "ask"] },
         // i3's popup_during_fullscreen (§10 V6): what a new window may do on a workspace with a fullscreen window.
@@ -69,9 +72,10 @@ var Settings = (function () {
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
         holdTimeoutMs: { type: "int", def: "200", min: 10, max: 2000 },
-        // A key kwin-i3 and a Plasma shortcut share runs kwin-i3's command while on (the helper's
-        // key filter, plugin/keyoverride.h); off, Plasma's, as kglobalaccel decides alone.
-        keysOverride: { type: "bool", def: "false" },
+        // A key kwin-i3 and a Plasma shortcut share runs kwin-i3's command while on, as i3 grabs
+        // its keys (the helper's key filter, plugin/keyoverride.h); off, Plasma's, as kglobalaccel
+        // decides alone.
+        keysOverride: { type: "bool", def: "true" },
     };
     var values = {};
 

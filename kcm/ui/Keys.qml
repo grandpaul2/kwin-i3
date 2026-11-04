@@ -1,5 +1,5 @@
 // The Keys tab: kwin-i3's commands, grouped,
-// each with its keys. Changes wait for Apply; a key another shortcut holds says so in its row.
+// each with its keys, and the key override above them. Changes wait for Apply.
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
@@ -33,6 +33,27 @@ KCM.ScrollViewKCM {
             type: Kirigami.MessageType.Error
             visible: kcm.keys.error !== ""
             text: kcm.keys.error
+        }
+        // The key override (keysOverride, the helper's key filter): i3 grabs its keys whatever
+        // else wants them; Plasma's shortcuts are left as they are either way.
+        RowLayout {
+            Layout.margins: Kirigami.Units.largeSpacing
+            spacing: Kirigami.Units.smallSpacing
+            QQC2.Label {
+                text: i18nc("@label", "On a key conflict, kwin-i3's key wins:")
+            }
+            Tick {
+                name: i18nc("@option:check", "On a key conflict, kwin-i3's key wins")
+                recommended: true
+                enabled: kcm.helperLoaded
+                checked: kcm.settings.keysOverride
+                onToggled: kcm.settings.keysOverride = checked
+                KCM.SettingStateBinding { configObject: kcm.settings; settingName: "keysOverride" }
+            }
+            Help {
+                topic: i18nc("@item help topic", "key conflicts")
+                toolTipText: i18n("A key that a kwin-i3 command and a Plasma shortcut share runs kwin-i3's command, as i3 takes its own keys, and Meta+T doesn't open Plasma's tile editor. Turned off, Plasma's shortcut runs. Plasma's shortcuts are not changed either way. Needs kwin-i3's plugins.")
+            }
         }
     }
 
@@ -140,8 +161,9 @@ KCM.ScrollViewKCM {
                             KQC.KeySequenceItem {
                                 id: item
                                 keySequence: slot.modelData.key
-                                // The page checks clashes itself and takes the key on Apply; this
-                                // item's own check would take it at once, beyond Reset.
+                                // A key another shortcut holds is set all the same (the key
+                                // override decides which runs); this item's own check would
+                                // offer to take it from its holder at once, beyond Reset.
                                 checkForConflictsAgainst: KQC.ShortcutType.None
                                 modifierlessAllowed: false
                                 multiKeyShortcutsAllowed: false

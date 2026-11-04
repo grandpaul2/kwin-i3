@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# focus: mouse
 # Real input, part 2: the pointer moved and dragged, focus by mouse, through libei
 # (tools/inject.py).
 source "$(dirname "$0")/lib.sh"
@@ -143,7 +142,7 @@ client --title x
 check "x on the second monitor"             wait_tree 2 "H[x*]"
 point 1920 360
 check "hovering x"                          poll active_is x
-press "Meta+Left"
+press "Meta+J"
 cursor_on_a() { (( $(kjs 'log(Math.round(workspace.cursorPos.x))') < 1280 )); }
 check "focus left warps the pointer to a"   poll cursor_on_a
 steady_a() { local i; for i in 1 2 3; do active_is a || return 1; sleep 0.15; done; }

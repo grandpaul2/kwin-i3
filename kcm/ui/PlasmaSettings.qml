@@ -1,10 +1,10 @@
-// The Plasma tab (docs/plan.md, "Install and first run"): Plasma's own settings
-// that matter to tiling, shown here for convenience, each either Plasma's way or kwin-i3's: two
+// The Plasma tab (docs/plan.md, "Install and first run"): the Plasma settings kwin-i3 can't win
+// at runtime, shown here for convenience, each either Plasma's way or kwin-i3's: two
 // columns of radio buttons, "Plasma" and "kwin-i3 (recommended)", one chosen a row, as Plasma's
 // own pages show a choice between two ways (Task Switcher's filters). The
 // muted line under a name says what the Plasma column means for it, "Plasma: " and the value. A choice is an edit like any
 // on the page: Apply makes it, Reset drops it, Defaults puts Plasma's back (each row kwin-i3
-// changed to the Plasma column, the key override off).
+// changed to the Plasma column).
 // Behind it (kcm/setup.cpp) each change is saved first, so choosing Plasma gives back what the
 // reader had before kwin-i3 changed it, and make uninstall can put everything back.
 import QtQuick
@@ -48,23 +48,16 @@ KCM.SimpleKCM {
     // every row's buttons share the grid as parent, and each row is exclusive by its own model.
     // kwin-i3's side is always one thing, the setting turned on, so its box says "Enable"; the
     // Plasma side is whatever the reader had, so it says nothing.
-    // The key override's row is a setting of kwin-i3's own (keysOverride): its boxes write that
-    // setting, as any on the other tabs, and need the plugins.
     component SideBox: QQC2.RadioButton {
         autoExclusive: false
         property var row
         property bool kwini3                 // true: the kwin-i3 column
-        readonly property bool isOverride: row.id === "keys"
-        readonly property bool chosen: (isOverride ? !!kcm.settings.keysOverride : !!kcm.setup.wanted[row.id]) === kwini3
+        readonly property bool chosen: !!kcm.setup.wanted[row.id] === kwini3
         text: kwini3 ? i18nc("@option:check kwin-i3's way for a Plasma setting", "Enable") : ""
         font: Kirigami.Theme.smallFont
         checked: chosen
-        enabled: !isOverride || kcm.helperLoaded
         onClicked: {
-            if (isOverride)
-                kcm.settings.keysOverride = kwini3;
-            else
-                kcm.setup.setWanted(row.id, kwini3);
+            kcm.setup.setWanted(row.id, kwini3);
             checked = Qt.binding(() => chosen);
         }
         Layout.alignment: Qt.AlignHCenter | Qt.AlignTop

@@ -1,4 +1,4 @@
-.PHONY: build test unit live live-stock mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
+.PHONY: build test unit live mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel is installed (its CMake config); without it,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -11,9 +11,6 @@ unit:
 KCM_IF := $(if $(wildcard /usr/lib*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake /usr/lib/*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake),kcm)
 live: build tools $(PLUGIN_IF) $(KCM_IF)
 	tests/live/run.sh
-# Plasma's stock settings, as a stranger's install has them.
-live-stock: build tools $(PLUGIN_IF) $(KCM_IF)
-	KI3_STOCK=1 tests/live/run.sh
 test: unit live
 mutate:
 	python3 tests/unit/mutate.py

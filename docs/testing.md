@@ -101,7 +101,7 @@ from main) instead of the plain push.
 ## Not during the Stage
 
 In `LATER.md`, "Reliability": fault runs (`make mutate-live`, `make mutate`, faults by hand), the
-fuzz campaign (`make fuzz`), `make live-stock`. When they come back, each is split into runs of 5
+fuzz campaign (`make fuzz`). When they come back, each is split into runs of 5
 minutes or less. `tests/live/mutate.py` keeps the faults already written (86-tiling-drag's 59) for
 then.
 

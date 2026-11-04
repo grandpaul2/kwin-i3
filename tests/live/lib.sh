@@ -69,11 +69,6 @@ load_kwin_i3() {
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting loadScript ss \
         "$root/package/contents/code/main.js" kwin-i3 >/dev/null
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting start
-    # Stock mode: kwin-i3's keys over Plasma's as the README says, by the key override (it needs
-    # the plugins: without them a key Plasma also holds runs Plasma's shortcut).
-    if [[ ${KI3_STOCK:-} == 1 ]]; then
-        kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key keysOverride true
-    fi
 }
 
 _has_window() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(1); });" | grep -q 1; }

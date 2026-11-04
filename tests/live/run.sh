@@ -32,20 +32,14 @@ kcm=$(cd ../../kcm/build/bin 2>/dev/null && [[ -f plasma/kcms/systemsettings/kcm
 skipped=()
 # "# desktops: N" in a scenario: its test KWin starts with N virtual desktops (default 10);
 # "# peroutput: false": with per-output desktops off (default on).
-# KI3_STOCK=1 (make live-stock): Plasma's stock settings, one desktop,
-# per-output on, and those two headers ignored; "# focus: mouse" gives the scenario focus follows
-# mouse, and "# stock: own" runs it as the default mode does.
 launch() {
-    local t=$1 plugin="" desktops perout stock="" focus=""
+    local t=$1 plugin="" desktops perout
     desktops=$(sed -n 's/^# desktops: \([0-9]*\)$/\1/p' "$t") perout=$(sed -n 's/^# peroutput: \([a-z]*\)$/\1/p' "$t")
-    if [[ ${KI3_STOCK:-} == 1 ]] && ! grep -q '^# stock: own$' "$t"; then
-        stock=1 desktops=1 perout=true focus=$(sed -n 's/^# focus: \([a-z]*\)$/\1/p' "$t")
-    fi
     grep -q '^# needs: plugin' "$t" && plugin=$plugins
     local package=""; grep -q '^# needs: kcm' "$t" && package=1
     local xwayland=""; grep -q '^# needs: xwayland' "$t" && xwayland=1
     local t0=$EPOCHREALTIME
-    KI3_KEEP_LOG="$out/$t.ki3.log" KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_STOCK=$stock KI3_FOCUS=$focus KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
+    KI3_KEEP_LOG="$out/$t.ki3.log" KI3_XWAYLAND=$xwayland KI3_PACKAGE=$package KI3_PLUGIN=$plugin KI3_DESKTOPS=${desktops:-10} KI3_PEROUTPUT=${perout:-true} timeout 110 ../../tools/testkwin.sh "./$t" >"$out/$t.log" 2>&1; echo $? >"$out/$t.status"
     echo "$t0 $EPOCHREALTIME" >"$out/$t.time"
 }
 needs_missing() {

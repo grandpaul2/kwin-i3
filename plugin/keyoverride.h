@@ -17,6 +17,8 @@
 // as it loads), on KWin's reconfigure, when the settings page applies keys (RefreshKeys), and
 // when kglobalacceld says one of kwin-i3's actions was rebound elsewhere. A two-key sequence
 // counts by its first key (kwin-i3 binds single keys).
+// The tile editor's keys (KWin's "Edit Tiles", Meta+T) are held the same way with no action run,
+// so the editor never changes the tiles kwin-i3 lays out.
 // An action gone (the script unloaded) is skipped: no key is taken for it. Not while a window
 // inhibits shortcuts, as KWin's own filter; Alt+Tab's filter and the lock screen's come first.
 #pragma once
@@ -67,6 +69,7 @@ private:
 
     bool m_on = false;
     QHash<int, QPointer<QAction>> m_keys;       // a Qt key combination -> kwin-i3's action
+    QSet<int> m_held;                           // the tile editor's keys: held, no action run
     QSet<quint32> m_marked;                     // scan codes on their way to After
     int m_generation = 0;                       // a refresh's answers, stale once another starts
     QTimer m_coalesce;                          // a burst of rebinds, one refresh

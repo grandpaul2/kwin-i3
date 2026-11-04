@@ -1,4 +1,5 @@
-// The Tiling tab: how far a key moves or resizes (resizeStep, floatingStep), the pointer following
+// The Tiling tab: how far a key moves or resizes (resizeStep, floatingStep), focus following the
+// mouse (focusFollowsMouse), the pointer following
 // the focus (mouseWarping), where the focus goes from the last window (focusWrapping), the tiling
 // drag (tilingDrag), and layout changes all at once (holdEnabled).
 import QtQuick
@@ -44,6 +45,23 @@ KCM.SimpleKCM {
             onValueModified: root.settings.floatingStep = value
             Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
             KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
+        }
+        RowLayout {
+            Kirigami.FormData.label: i18nc("@label", "Focus follows the mouse:")
+            Kirigami.FormData.buddyFor: ffmBox
+            spacing: Kirigami.Units.smallSpacing
+            Tick {
+                id: ffmBox
+                name: i18nc("@option:check", "Focus follows the mouse")
+                recommended: true
+                checked: root.settings.focusFollowsMouse
+                onToggled: root.settings.focusFollowsMouse = checked
+                KCM.SettingStateBinding { configObject: root.settings; settingName: "focusFollowsMouse" }
+            }
+            Help {
+                topic: i18nc("@item help topic", "focus follows the mouse")
+                toolTipText: i18n("The window under the pointer takes the focus at once; turned off, a click focuses. While kwin-i3 runs this replaces Plasma's focus setting, which is left as it is. i3: focus_follows_mouse")
+            }
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Pointer follows the focus:")

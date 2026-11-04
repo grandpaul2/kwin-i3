@@ -2,7 +2,6 @@
 # Per-output desktops off (Plasma's default), with two monitors: kwin-i3 logs it at load and at
 # each change, and never sets it; turned on, each monitor gets its own workspace again.
 # peroutput: false
-# stock: own
 source "$(dirname "$0")/lib.sh"
 peroutput() {   # set Plasma's setting as System Settings does, and wait for KWin to have it
     kwriteconfig6 --file kwinrc --group Windows --key PerOutputVirtualDesktops "$1"

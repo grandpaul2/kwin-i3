@@ -103,8 +103,8 @@ against i3 and the code every so often, to catch what slipped.
   in force again when kwin-i3 is released or removed; until then a Plasma page may show a value
   kwin-i3 overrides, and kwin-i3's own page is where it is changed. kwin-i3 writes nothing of
   Plasma's for this, so there is nothing to give back.
-- **What kwin-i3 can't win at runtime, the user changes.** Where it can't (per-output desktops,
-  window animations, the window actions), Plasma's setting stays the user's: kwin-i3 names what it is designed
+- **What kwin-i3 can't win at runtime, the user changes.** Where it can't (per-output desktops;
+  window animations, which are the look), Plasma's setting stays the user's: kwin-i3 names what it is designed
   around and why, and changes one only on the user's yes, in a place that says it is Plasma's
   setting, after saving the old value, and gives it back on one action: i3's `i3-config-wizard`
   asks once and never overwrites a config that exists (`docs/plan.md`, "Install and first run").

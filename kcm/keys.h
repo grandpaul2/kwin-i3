@@ -15,7 +15,7 @@ class KeysModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(bool available READ available NOTIFY availableChanged)
-    // Set by save() when a key couldn't be taken or set; cleared by the next save.
+    // Set by save() when a key couldn't be set; cleared by the next save.
     Q_PROPERTY(QString error MEMBER m_error NOTIFY changed)
     // The current keyboard layout's keys, [unshifted, shifted, typed] each, for naming a shifted
     // symbol by its keys (ui/shifted.js). Read at load.
@@ -38,8 +38,6 @@ public:
     bool isDefaults() const;
 
     Q_INVOKABLE void setKey(int row, int slot, const QKeySequence &key);
-    // Every key kwin-i3's actions hold (read at load), with the action holding it.
-    QList<std::pair<int, QString>> currentKeys() const;
 
 Q_SIGNALS:
     void changed();
@@ -64,20 +62,3 @@ private:
 
 // Whether KWin runs the kwin-i3 script now (the page and this model both ask).
 bool kwinI3Loaded();
-
-// Another action's hold on a key (not kwin-i3's own); empty if none.
-struct KeyHolder {
-    QString component, action, friendly;
-};
-KeyHolder keyHolder(int code);
-bool componentActive(const QString &component);
-// Takes the key from its holder, recorded in taken-keys.json first (only the Plasma Settings
-// page's "Free Meta+T" row takes a key now).
-bool takeKey(const KeyHolder &holder, int code);
-// Gives an action the key back where no shortcut holds it (a row moved to Plasma's side).
-void restoreKeyDefault(const QString &component, const QString &action, int code);
-// The save's records, "component|action".
-QStringList takenIds();
-// Gives back the records `which` accepts, as tools/take-keys.py restore: where the holder still has what
-// kwin-i3 left it. Returns how many couldn't be reached (they stay in the save).
-int giveBackKeys(const std::function<bool(const QString &id)> &which);

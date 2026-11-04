@@ -39,8 +39,8 @@ the settings page's Plasma tab with its banner, its save and `make uninstall`'s
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
-by step, from `git clone` to the Plasma tab, the key override row ticked included; and with the
-plugins not built: what the Plasma tab's banner and its greyed override row then say.
+by step, from `git clone` to the Plasma tab; and with the plugins not built: what the Plasma
+tab's banner and the Keys tab's greyed override then say.
 
 **93. One place for the settings** (2026-11-04; `philosophy.md` "How it presents itself").
 The Configure form (`package/contents/ui/config.ui`, KWin Scripts' cog) goes; the cog opens the
@@ -51,23 +51,3 @@ the helper's settings watch (Apply applies: the page applies by itself, and a ha
 and its `behaviour.md` rows (29, 45), and the `floatingWorkspaces` key, read and rewritten as a rule
 though no beta install had it (no migration, `plan.md`). `config/main.xml` stays: the page's settings class is built
 from it. Next: the spec.
-
-**91. Plasma's settings won at runtime** (2026-11-03; `philosophy.md` "The line between i3 and
-Plasma", `plan.md` reason (e) and "Install and first run", decided; the code still writes them).
-The script makes focus follows mouse (with no delay, next focus under the pointer; a setting of
-its own, i3's `focus_follows_mouse`), a new window's focus (stealing prevention Low) and
-screen-edge tiling and maximizing off through KWin's live options (probe 93), setting them again
-on each reconfigure; Release reconfigures so Plasma's return; popup grace puts back kwin-i3's
-delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and animations.
-`behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Settled by
-the foundations since (designed for the plugins; Meta+T and kwin-i3's keys won at runtime): the
-key override on by default, a setting of kwin-i3's own, off the Plasma tab; Meta+T kept from the
-tile editor by the helper's key filter, so `taken-keys.json`, `tools/take-keys.py`'s take and
-restore and `kcm/keys.cpp`'s record go; the script's load-time taken-key check (`TAKEN`,
-`src/keyname.js`, the helper's `TerminalService`) goes, with the clash scan kept only for the
-override's own row; `tools/testkwin.sh`'s stock-shortcut unbind (133-165) and its stock/own modes
-go, the scenarios that press real keys running with the plugins. To check in the spec: whether
-the window actions and window animations can also be won at runtime (then they leave the Plasma
-tab too); `popupgrace.cpp` puts back `kwinrc`'s delay where it should put back kwin-i3's. No migration
-(`plan.md`, "An upgrade carries no migration"): `make install`'s `take-keys.py migrate` goes.
-Next: the code spec.

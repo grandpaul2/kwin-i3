@@ -1061,6 +1061,17 @@
        </property>
       </widget>
      </item>
+     <item row="39" column="1">
+      <!-- Hidden: the settings page's Tiling tab has it; the form goes (OPEN.md item 93). -->
+      <widget class="QCheckBox" name="kcfg_focusFollowsMouse">
+       <property name="visible">
+        <bool>false</bool>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>

@@ -302,7 +302,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   script writes them again. Under click to focus the focus delay is forced to 0
   (`setDelayFocusInterval`, `options.cpp:221-224`): write the policy before the delay. Under
   FocusUnderMouse or FocusStrictlyUnderMouse the focus stealing level is forced to None
-  (`options.cpp:334-336`): write the policy first.
+  (`options.cpp:334-336`): write the policy first. The window actions likewise (probe, 6.7.5):
+  `commandAll1` written holds and a reconfigure puts kwinrc's back. It is a `MouseCommand` by
+  number (`options.h:456-484`): 12 is "Activate, raise and move", 11 the restricted move;
+  `keyCmdAllModKey` has a WRITE too. Disabling a script on the KWin Scripts page reconfigures
+  nothing (`kcms/scripts/module.cpp` `save` calls `/Scripting start`), so what it wrote stays live
+  until the next reconfigure.
 
 ## Plugins and effects (`plugin/`)
 

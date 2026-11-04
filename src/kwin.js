@@ -3244,9 +3244,28 @@ var KI3 = (function () {
     // screensChanged has reseeded the output seen after a change. kwin-i3's own warp needs no
     // mask: it goes to the output that has the focus, so its crossing finds nothing to change.
     var pointerOutput = null;   // the output the pointer was last seen on, by name
-    function focusFollowsMouse() {
-        var p = String(options.focusPolicy);
-        return p !== "0" && p !== "ClickToFocus";
+    function focusFollowsMouse() { return Settings.get("focusFollowsMouse"); }
+
+    // What i3 decides, won through KWin's live options, kwinrc left as it is (philosophy.md, "The
+    // line between i3 and Plasma"; kwin-notes, "A script can write KWin's live options"): focus
+    // follows mouse with no delay and the next focus under the pointer (i3's
+    // focus_follows_mouse, handlers.c:95), a new window's focus (stealing prevention Low: i3
+    // focuses a new window on a shown workspace), no screen-edge tiling or maximizing (the tree
+    // places), and a modifier left drag that activates and raises as it moves (click.c, step 3).
+    // The modifier stays the user's (i3's floating_modifier is a config option). A reconfigure
+    // puts kwinrc's back and emits configChanged, where these are written again; release's
+    // reconfigure gives Plasma's back for good. The policy first: KWin forces the delay to 0
+    // under click to focus (options.cpp:221-224).
+    function winOptions() {
+        if (released) return;
+        var ffm = focusFollowsMouse();
+        options.focusPolicy = ffm ? 1 : 0;
+        options.nextFocusPrefersMouse = true;
+        options.delayFocusInterval = 0;
+        options.focusStealingPreventionLevel = 1;
+        options.electricBorderTiling = false;
+        options.electricBorderMaximize = false;
+        options.commandAll1 = 12;      // MouseActivateRaiseAndMove (options.h:456-484)
     }
     function seedPointer() {
         var s = pointerOn();
@@ -3774,59 +3793,6 @@ var KI3 = (function () {
         }));
     }
 
-    // A key another action also holds is given to kwin-i3's action too (registerShortcut always
-    // returns true, and shortcutKeys shows it), but a press runs only the first holder's.
-    // KGlobalAccel.action(key) names that one (probed 2026-10-24), but a holder whose component
-    // isn't active (its app not running and not launched by kglobalaccel) doesn't block the key:
-    // kwin-i3's fires (35-shared-keys.sh). kwin-i3's current keys come from kglobalaccel, so a
-    // key the user rebound is the one checked.
-    // The terminal the helper launches (kdeglobals' TerminalService), asked at load for the
-    // taken-key check; "" without the helper.
-    var terminalService = "";
-    function sameLaunch(key, h) {
-        if (String(h[1]) !== "_launch") return false;
-        var k = KeyName.of(key);
-        if (KEYS.Launcher.indexOf(k) >= 0) return String(h[0]).indexOf("krunner") >= 0;
-        if (KEYS.Terminal.indexOf(k) >= 0) return !!terminalService && String(h[0]) === terminalService;
-        return false;
-    }
-    function checkTakenKeys() {
-        callDBus(MODE[0], MODE[1], MODE[2], "TerminalService", guard("terminal", function (t) { terminalService = String(t || ""); }));
-        callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component", "allShortcutInfos",
-                 guard("taken keys", function (infos) {
-            var mine = [], taken = [];
-            (infos || []).forEach(function (i) {
-                if (String(i[0]).indexOf("kwin-i3 ") === 0) (i[6] || []).forEach(function (k) { if (k) mine.push(k); });
-            });
-            var left = mine.length;
-            function done() {
-                taken.sort().forEach(function (t) { log("TAKEN " + t); });
-                log("TAKEN checked " + mine.length + " keys, " + taken.length + " taken");
-            }
-            if (!left) { done(); return; }
-            mine.forEach(function (k) {
-                callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "action", k,
-                         guard("taken keys", function (h) {
-                    function one() { if (--left === 0) done(); }
-                    if (!h || !h[1] || String(h[1]).indexOf("kwin-i3 ") === 0) { one(); return; }
-                    // A holder that launches what the kwin-i3 action launches:
-                    // KRunner's own _launch on the Launcher's key, the default terminal's on the
-                    // Terminal's. Both fire the same thing: not taken.
-                    if (sameLaunch(k, h)) { log("TAKEN-SAME " + KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")"); one(); return; }
-                    callDBus("org.kde.kglobalaccel", "/kglobalaccel", "org.kde.KGlobalAccel", "getComponent", h[0],
-                             guard("taken keys", function (path) {
-                        callDBus("org.kde.kglobalaccel", String(path), "org.kde.kglobalaccel.Component", "isActive",
-                                 guard("taken keys", function (on) {
-                            if (on) taken.push(KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")");
-                            else log("TAKEN-INACTIVE " + KeyName.of(k) + ": " + h[3] + " (" + h[2] + ")");
-                            one();
-                        }));
-                    }));
-                }));
-            });
-        }));
-    }
-
     // Plasma's "Switch desktops independently for each screen" (off by default): with it off a
     // desktop switch changes every monitor, so with two or more, login numbering alone puts
     // both on workspace 2 and windows tile on the wrong one.
@@ -3922,6 +3888,8 @@ var KI3 = (function () {
                 } catch (e) { log("ERROR in release (tiles): " + e); }
             });
         });
+        // Plasma's own values for what winOptions wrote (kwinrc was never changed).
+        try { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); } catch (e) { log("ERROR in release (options): " + e); }
         log("RELEASED");
         log("ACTION Release");
     }
@@ -4292,6 +4260,7 @@ var KI3 = (function () {
         workspace.screenOrderChanged.connect(guard("screen order", function () {
             model.orderOutputs(Workspaces.ordered().map(function (s) { return s.name; }));
         }));
+        winOptions();
         options.configChanged.connect(guard("settings", settingsChanged));
         workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
         deskIds = desktopIds();
@@ -4335,7 +4304,6 @@ var KI3 = (function () {
         // The helper plugin fits the keys that mean a key position to the keyboard layout
         //. No reply asked: without the plugin, nothing happens.
         callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
-        checkTakenKeys();
         checkLayoutKeys();
         checkHelperKeys();
         checkPerOutput();
@@ -4422,8 +4390,10 @@ var KI3 = (function () {
     }
 
     function settingsChanged() {
-        checkFrame();
+        if (released) return;
         var changed = Settings.load();
+        winOptions();
+        checkFrame();
         // Every reconfigure, the helper may be new (it asks for one at load); after the load, or a
         // changed gap would leave Meta+right's and the gap press's reach at the old one.
         tellDrag(true);

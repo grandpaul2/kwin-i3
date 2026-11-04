@@ -114,7 +114,7 @@ Window Rules, Frame and Keys.
 - **A command's label** says what it does from the user's side and fits the label column (about
   40 characters).
 - **A key another shortcut also holds is set like any other**, with no note: which of the two
-  runs is the key override's (the Plasma tab), never asked per key.
+  runs is the key override's (its checkbox atop the Keys tab), never asked per key.
 - A setting that shapes a command (End session) is a dropdown in that command's row.
 
 ## The cog's form (`config.ui`)
