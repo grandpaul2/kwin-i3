@@ -7,8 +7,8 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31, after
-`docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
+Last reconciled: **2026-11-03** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
 main at 63f30ad: script and plugins (settings page at 710995a). `stable` is at
 `v1.3.0` (2026-11-03, 8a42986).
 
@@ -35,8 +35,8 @@ audience and the lines drawn: `docs/philosophy.md`.
 
 **79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
 takes in item 26). Built: `make install` and `make uninstall`; the key override (`behaviour.md` §8, "Shared keys");
-the settings page's Plasma Settings sub-page with its banner, its save and `make uninstall`'s
+the settings page's Plasma tab with its banner, its save and `make uninstall`'s
 give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
 names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
 none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
-by step, from `git clone` to the sub-page.
+by step, from `git clone` to the Plasma tab.
