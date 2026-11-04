@@ -400,6 +400,18 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 
 ## Plasma
 
+- **The desktop style's ComboBox measures every entry on each count change** (qqc2-desktop-style
+  `org/kde/desktop/ComboBox.qml:46-52`, to size its popup): a box with a few hundred entries costs
+  ~35 ms to build, every such box on a page at once. The settings page gives a rule's application
+  box its list only while in use (`kcm/ui/WindowRules.qml`); a shared C++ model doesn't help.
+- **kcmutils' `SettingStateBinding` is a `Loader`** (kcmutils 6.31 `SettingStateBinding.qml:25`):
+  its `parent` is the control it sits in, so `settingName: parent.settingName` works only where
+  that control declares `settingName`; inside a stock ComboBox or SpinBox it names no setting (a
+  "Unable to assign [undefined]" warning, no highlight). Name the row by its id.
+- `kcmshell6` logs to the journal unless `QT_FORCE_STDERR_LOGGING=1`; with
+  `QT_MESSAGE_PATTERN="%{time process} %{message}"` and `console.warn` in the QML it times a page's
+  build, from a worktree's build put first in `QT_PLUGIN_PATH`.
+
 - plasmashell's panel configuration view is a layer-shell surface in scope `dock`; the desktop view
   `desktop`; the edit-mode toolbar is QML inside the desktop view. "Show Panel Configuration" is
   libplasma's `configure` action.

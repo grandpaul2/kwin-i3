@@ -50,4 +50,7 @@ screen-edge tiling and maximizing off through KWin's live options (probe 93), se
 on each reconfigure; Release reconfigures so Plasma's return; popup grace puts back kwin-i3's
 delay. The Plasma tab keeps per-output desktops, the window actions, Meta+T and animations.
 `behaviour.md` (B1, C4, N6, N8, F10, §11, §13) and the README change with the code. Open in it:
-the key override's default (off from the old reason (e); i3 grabs its keys). Next: the code spec.
+the key override's default (off from the old reason (e); i3 grabs its keys); `tools/testkwin.sh`'s
+default mode unbinds Plasma's stock shortcuts as the maintainer's desktop once did (133-165), and
+that desktop now runs them at Plasma's defaults with the override enabled; the key override row's
+count is the clash scan, kept, now read once per load would do. Next: the code spec.
