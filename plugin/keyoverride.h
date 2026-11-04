@@ -12,7 +12,7 @@
 //   filtered), so no window sees them.
 //
 // kwin-i3's keys: its script's actions (each a QAction named "kwin-i3 …", a child of the script,
-// KWin's Script::registerShortcut) with their keys from kglobalaccel, read asynchronously (a
+// KWin's Script::registerShortcut, under the Scripting object registered at /Scripting) with their keys from kglobalaccel, read asynchronously (a
 // blocking call from inside KWin waits on itself) when a layout fit ends (the script asks for one
 // as it loads), on KWin's reconfigure, when the settings page applies keys (RefreshKeys), and
 // when kglobalacceld says one of kwin-i3's actions was rebound elsewhere. A two-key sequence

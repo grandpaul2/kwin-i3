@@ -215,6 +215,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   kglobalacceld, 6.7.5 and 6.8.2 `input.cpp:1080`), so kglobalacceld resets and matches nothing;
   a second filter right after `GlobalShortcut` takes it (`addFilteredKey`) before any window
   sees it. Probe 92: no launcher in either release order, and no window got the key.
+- **KWin 6.8 doesn't parent its `Scripting` object**: 6.7.5 creates it with the workspace as
+  parent (`workspace.cpp:336`), 6.8.2 holds it in a `unique_ptr` (`:343`), so a search of the
+  workspace's children finds no script and no script's actions there. Both register it at
+  `/Scripting` and create each script as its child (`scripting.cpp:682`, `:868` / `:671`, `:816`):
+  `QDBusConnection::sessionBus().objectRegisteredAt("/Scripting")`, a lookup in KWin's own process,
+  finds it on both (the key override's table, P6's Arch run).
 - **Filters of one weight run newest first**: `installInputEventFilter` inserts at the
   `lower_bound` of its weight (6.7.5 `input.cpp:2952`), so a plugin's filter at `TabBox` runs
   before KWin's own TabBox filter.

@@ -74,10 +74,17 @@ void KeyOverride::load()
 void KeyOverride::refresh()
 {
     const int generation = ++m_generation;
+    // The scripts' actions are children of their script, a child of KWin's Scripting object
+    // (scripting.cpp registerShortcut, loadScript), which 6.7 parents to the workspace and 6.8
+    // doesn't (6.8.2 workspace.cpp:343, a unique_ptr): found where both register it on the bus,
+    // a lookup in this process's own connection.
     QList<QAction *> actions;
-    for (QAction *a : workspace()->findChildren<QAction *>()) {
-        if (a->objectName().startsWith(s_prefix)) {
-            actions << a;
+    QObject *scripting = QDBusConnection::sessionBus().objectRegisteredAt(QStringLiteral("/Scripting"));
+    if (scripting && qstrcmp(scripting->metaObject()->className(), "KWin::Scripting") == 0) {
+        for (QAction *a : scripting->findChildren<QAction *>()) {
+            if (a->objectName().startsWith(s_prefix)) {
+                actions << a;
+            }
         }
     }
     if (actions.isEmpty()) {
