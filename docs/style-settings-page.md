@@ -1,24 +1,54 @@
-# Style suggestions: kwin-i3's settings pages
+# Style: kwin-i3's settings page
 
-How the System Settings page (`kcm/ui/`) looks and reads. **These are suggestions, just enough to set a page up**: the maintainer gives each
-page its look on the live page, and that look is final. Where a live page and this file differ,
-the page wins and this file is brought in line. No set of rules makes a page feel right, so a
-change is built from these suggestions, checked on a screenshot, and handed over; it is not
-polished by more rules, reviews or test readers. When this guide says nothing, do what Plasma's
-own pages do (Virtual Desktops, Window Behavior, Display Configuration, Window Rules): open the
-Plasma page and match it. The finished tabs are the best example: Plasma, Tiling, Gaps, Workspaces,
-Window Rules, Frame and Keys.
+How the System Settings page (`kcm/ui/`) looks and reads. **The page is finished, and it is the
+standard**: Tiling, Gaps, Workspaces, Window Rules, Frame and Keys, as they stand, are what this
+file describes. Where the page and this file differ, the page wins and this file is brought in
+line. When this file says nothing, the nearest row of the page says it; failing that, Plasma's own
+pages (Window Behavior, Virtual Desktops, Window Rules): open the Plasma page and match it.
+
+## What the page is for
+
+A reader who would rather write a config file gets every setting i3 has a knob for, and nothing
+about the page feels clunky; a reader new to i3 finds it plain. Both hold together because:
+
+- **Every knob, in plain words.** A setting i3 has gets a control, named for what it does, with
+  i3's directive in its help, so a config-file reader finds their line and nobody else needs it.
+- **Detail lives in the help buttons**, not on the page: the page shows names and values, each
+  explanation one click away beside what it explains.
+- **Calm, centred forms.** Each tab reads top to bottom: its few settings first, then its tables
+  and lists. Every form and heading sits on the page's centre line, the same at full width and
+  at half a screen.
+- **The right value without thought.** Defaults that work, a "(recommended)" where it matters,
+  lists to choose from instead of names to type.
+
+## Adding to the page
+
+What was hard to get right is easy to undo with one careless row, so an addition is placed, not
+appended:
+
+- **Its place first**: the tab and the section where a reader would look for it, beside the
+  settings it works with. A new tab or a new section is the maintainer's call, made before
+  building.
+- **Its shape from the page**: copy the row nearest in kind (a checkbox row, a dropdown with
+  help, a table's column, a rule's field) and its widths. A shape the page doesn't have yet is the
+  maintainer's call, made before building.
+- **Its words from this file**: the glossary, the checkbox and help rules below; help ends with
+  i3's directive.
+- **A removal or a move** gets the same care: what is left must still read as a whole.
+- **Checked as a whole tab** (below, "Checking a change"), and handed to the maintainer, who
+  judges it live; it isn't done until that look is right.
 
 ## Layout
 
-- **A form page is `Kirigami.FormLayout`s** (Tiling, Gaps, Workspaces, Frame): a centred
+- **A form tab is built of `Kirigami.FormLayout`s** (Tiling, Gaps, Workspaces, Frame): a centred
   column with the labels right-aligned in one column, and no group boxes. Sections are headings in
   sentence case ("Tiling", "Frame"). There is never an "Advanced" section. A form centres on the
   line between its labels and its controls, so a wide row (a table's boxes) pulls every label
   left: a table goes in a form of its own below, each form centred alone (Gaps, Workspaces). A
   list of items that a `Repeater` makes in another shape (Window Rules' rules) is a centred
   `ColumnLayout` at most 34 grid units wide instead, below the tab's form, since a FormLayout
-  re-sorts a Repeater's rows.
+  re-sorts a Repeater's rows. Every heading is a section heading (level 3, centred: FormLayout's
+  own, or `SectionHeading.qml` outside a form); column headings over a table's boxes are level 5.
 - **One label and one control a row.** Two values are two rows, each with its own label ("Gap
   between windows:", "Extra gap at edges:"). Never put captions, a second control or an icon that
   comes and goes on the same line. A control's help button sits after it, in a `RowLayout` with
@@ -37,9 +67,6 @@ Window Rules, Frame and Keys.
   (a `QQC2.ToolBar`, right-aligned), in view at any scroll; a new item scrolls into view with its
   first field focused. An empty list says so in a `Kirigami.PlaceholderMessage` with the add
   action in it.
-- **Two columns of checkboxes** (Plasma Settings) have their column titles as level-5 headings
-  over the boxes, and each box is centred on its row's first line (the name and its help button),
-  not on the row's top.
 - **A straight right edge.** A section's dropdowns share the width of its widest choice. Every
   spin box has one compact width. A colour is a bar as wide as its section's dropdowns, Default
   button included. Wide reads better than narrow.
@@ -48,8 +75,8 @@ Window Rules, Frame and Keys.
 - **A way back from a slip.** Every edit waits for Apply. Reset drops every edit; Defaults
   resets the tab shown (`docs/philosophy.md`, "How it presents itself"). A row where a slip is easy and hard to undo by hand (a colour) also gets a Default
   button of its own, greyed at the default.
-- **The page is tabs**, as Plasma's Window Behavior: Plasma first (the first-run step), then
-  Tiling, Gaps, Workspaces, Window Rules, Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
+- **The page is tabs**, as Plasma's Window Behavior: Tiling, Gaps, Workspaces, Window Rules,
+  Frame, Keys, in Window Behavior's tab bar (flat, as wide as the page, drawn
   to Breeze's document-mode recipe, `kcm/ui/main.qml`), each a page of its own file under the banners and the tab bar. A tab
   may open with one line saying what it is for, in its header, with its help button at its end,
   when the line is true of the whole tab; help for one section sits by that section's heading
@@ -74,8 +101,8 @@ Window Rules, Frame and Keys.
   "places itself" or "leave alone": none is true.
 - **No "you", "your", "now" or "please"**, and no "kwin-i3" in a control's own text (a banner may
   name it).
-- **Help is one or two sentences** saying what the setting does, then i3's directive in code
-  ("i3: `focus_wrapping`").
+- **Help says what the setting does**, its first sentence enough on its own, then i3's directive
+  ("i3: focus_wrapping"); a section's help may run longer, as Window Rules'.
 - **The glossary's words** (below), one word per thing. A new word joins the glossary first.
 - **Every string goes through `i18nc`** with KDE's context tag, and a number with a unit through
   `i18ncp`.
@@ -121,10 +148,12 @@ Window Rules, Frame and Keys.
 
 ## Checking a change
 
-Take a screenshot of each page the change touches, in each state it can be in (plugins loaded
-or not, a setting already right). Read it yourself, then hand it over. Scenarios `37` and `76`
-cover changes they drive (`docs/testing.md`). The test KWin has no plugins, so its Frame
-section is all greyed.
+Screenshot the whole of each tab the change touches, before and after, at full width and at half
+a screen, in each state it can be in (plugins loaded or not, a setting already right), and set
+them side by side: the change should look as if it was always there, and nothing else on the
+tab should move. Read them yourself, then hand them over. Scenarios `37` and `76` take them
+(`KI3_SHOTS=<dir>`) and cover the changes they drive (`docs/testing.md`). The test KWin has no
+plugins, so its Frame section is all greyed.
 
 ## The glossary
 

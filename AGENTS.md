@@ -150,8 +150,10 @@ These are the project's rules, not suggestions.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
   window classes or regexes to know; choose from a list over typing an identifier; side text off
-  the rows. The settings page follows `docs/style-settings-page.md`: it lays
-  the groundwork, and a person gives the page its final touches live.
+  the rows. **The settings page is finished, and took long to get right**: anything added to it,
+  moved or removed follows `docs/style-settings-page.md`, "Adding to the page" (its place and
+  shape from the page as it stands, the whole tab screenshotted before and after), and is judged
+  live by the maintainer before it is done.
 
 ## Finding bugs
 
