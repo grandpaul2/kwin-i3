@@ -170,6 +170,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   the active window stays active (i3's focus parent: the container's window pressed) has to come
   from the helper's input filter (`SetFocusParent`, "Window Pressed").
 
+- With no other window left (an empty desktop), KWin activates xwaylandvideobridge's invisible
+  idle window, a Normal window on Fedora's Plasma. It never asked for the keyboard, so it doesn't
+  hold it: an active override-redirect window read as "holds the keyboard" ignored every key there
+  (`Rules.fallbackOnly`). Seen on 6.8.2; the same bridge runs on 6.7.
+
 ## The pointer and focus follows mouse (`pointer_input.cpp`, `input.cpp`; `docs/pointer.md`)
 
 - Hover is `findToplevel`: the topmost window whose **input region** (inside its buffer, not its
@@ -189,6 +194,12 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - `InternalWindow`s count as clients (`isClient()` true): `windowUnderMouse` after a close counts
   them, and FFM focuses them at a stacking change. `Qt::Tool` holds `Qt::Popup`'s bit (KWin closes
   it as a popup). Asking a closed internal window for `hitTest` crashes KWin.
+
+- A window has one `output` (the one holding most of it), but it is drawn wherever its frame
+  reaches while it is on its own output's current desktop (`Window::isOnCurrentDesktop`,
+  `window.cpp:817`; `WindowItem::updateVisibility`), and KWin's pointer hit test
+  (`InputRedirection::findToplevel`, `input.cpp:3450`, 6.7.5) has no output test: a floating
+  window reaching onto another output is under the pointer there.
 
 ## Keys (`xkb.cpp`, kglobalacceld)
 
