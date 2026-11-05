@@ -44,3 +44,15 @@ banners and the Keys tab's greyed override then say. With it, one wording to set
 `tools/install.sh`'s closing lines say the page's banner "names any Plasma setting kwin-i3
 needs", where the README's Install step 4 has the banner for per-screen workspaces only and the
 animations row optional; the two to say the same.
+
+**91. The first training video** (2026-11-05). Built: `tools/video/` (`README.md` there), which
+records a script inside the test KWin with Plasma, real apps and real input, and composes the mp4
+with captions and keys. Scene 1 of the first video is scripted
+(`tools/video/scripts/01-first-steps.txt`: open, focus by key and mouse, close, the split keys and
+their indicator, the launcher). The video is one lesson built up like a language: each new key
+used at once in a sentence, the most important ones again in later scenes. Next: settle whether
+the split indicator, 1 px, reads on video (if not, a 2 px frame for the videos, i3's own border
+width); then the later scenes, scripted with the maintainer: switching workspaces and moving a
+window to one, then by mouse moving a tile, tabbed, stacked, swap, float and unfloat (the tool
+needs a drag step for these, `behaviour.md` G1, G5, G9-G13). Music and narration come after the
+video is scripted.
