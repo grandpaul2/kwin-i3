@@ -3,7 +3,7 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
-## Unreleased
+## v1.4.0 (2026-11-04)
 
 - **Tabbed and stacked bars keep their height whatever the gaps**, flush on their window and level
   with its neighbours; before, a larger inner gap made the bar thinner and put the gap between
