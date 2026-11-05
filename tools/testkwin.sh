@@ -12,6 +12,8 @@
 #   KI3_SCALE=<s>                        each output's scale (default 1; 2 or 1.5 for HiDPI): the
 #                                        pixels grow, each output stays 1280x720 logical, so the
 #                                        scenarios' geometry holds (OPEN.md item 50)
+#   KI3_SIZE=<w>x<h>                     each output's logical size (default 1280x720, which every
+#                                        scenario's geometry assumes; tools/video uses 1920x1080)
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
 #   KI3_PACKAGE=1                        kwin-i3 installed as a package (off), as KWin Scripts sees it
 #   KI3_KEEP_LOG=<file>                  kwin-i3's log copied there at teardown (run.sh: a red
@@ -140,8 +142,11 @@ if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     flock 9
 fi
 xbefore=$(ls /tmp/.X11-unix/)
+size=${KI3_SIZE:-1280x720}
+[[ $size =~ ^[0-9]+x[0-9]+$ ]] || { echo "testkwin: KI3_SIZE must be WxH, not $size" >&2; exit 1; }
+width=${size%x*} height=${size#*x}
 kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count "${KI3_OUTPUTS:-2}" --scale "${KI3_SCALE:-1}" \
-    --width 1280 --height 720 --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
+    --width "$width" --height "$height" --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
 kwin=$!
 up=""
 # Up to 15 s: with every live scenario starting a KWin at once (15 since 2026-10-22), 5 s was
@@ -157,7 +162,7 @@ done
 # it, its backend in-process (the private bus starts no kscreen service), and places the outputs
 # side by side again (they kept their pixel positions: Virtual-1 at x=1920 for 1.5).
 if [[ ${KI3_SCALE:-1} != 1 ]]; then
-    for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=(output.Virtual-$o.scale.$KI3_SCALE output.Virtual-$o.position.$((o * 1280)),0); done
+    for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=(output.Virtual-$o.scale.$KI3_SCALE output.Virtual-$o.position.$((o * width)),0); done
     KSCREEN_BACKEND_INPROCESS=1 kscreen-doctor "${args[@]}" >/dev/null 2>&1 ||
         { echo "testkwin: kscreen-doctor could not set scale $KI3_SCALE" >&2; exit 1; }
 fi
