@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Record a training video from a script (tools/video/README.md).
+#   tools/video/record tools/video/scripts/01-first-steps.txt [OUTDIR]
+# OUTDIR defaults to videos/<script name>/ (gitignored): master.mkv and timeline.tsv, then the
+# composed <script name>.mp4. Everything runs inside tools/testkwin.sh; nothing reaches the screens.
+set -euo pipefail
+here=$(cd "$(dirname "$0")" && pwd)
+root=$(cd "$here/../.." && pwd)
+[[ $# -ge 1 && -f $1 ]] || { echo "usage: tools/video/record SCRIPT [OUTDIR]" >&2; exit 2; }
+script=$(realpath "$1")
+name=$(basename "$script" .txt)
+out=$(realpath -m "${2:-$root/videos/$name}")
+
+for f in tools/bin/screencast tools/bin/ei-send plugin/build/bin/kwin/plugins/kwini3helper.so \
+         plugin/build/bin/kwin/effects/plugins/kwini3hold.so package/contents/code/main.js; do
+    [[ -e $root/$f ]] || { echo "record: $f is missing: make build video plugin" >&2; exit 1; }
+done
+mkdir -p "$out"
+rm -f "$out"/{master.mkv,timeline.tsv,gst.log,screencast.log,plasmashell.log}
+
+# The apps read $HOME, and kglobalaccel's launches (Meta+Return) inherit KWin's environment: the
+# whole test KWin runs with a demo home as its HOME and working directory, so no real folder, user
+# or host name shows.
+home=$(mktemp -d /tmp/demo.XXXXXX)
+trap 'rm -rf "$home"' EXIT
+cp -r "$here/home/." "$home/"
+mkdir -p "$home"/{Desktop,Documents,Downloads,Music,Pictures,Projects,Videos}
+
+# The run's limit: the script's waits, ~3 s a step, a minute for Plasma, and room to spare.
+limit=$(awk '$1 == "wait" { t += $2 } $1 ~ /^(say|key|open|run|type|point)$/ { t += 3 } END { print int(t) + 180 }' "$script")
+
+cd "$home"
+HOME=$home SHELL=/bin/bash KI3_PLUGIN=$root/plugin/build/bin KI3_OUTPUTS=1 KI3_SIZE=1920x1080 \
+    KI3_TIMEOUT=$limit KI3_VIDEO_SCRIPT=$script KI3_VIDEO_OUT=$out \
+    "$root/tools/testkwin.sh" "$here/stage.sh"
+python3 "$here/compose.py" "$out/master.mkv" "$out/timeline.tsv" "$out/$name.mp4"
+echo "record: $out/$name.mp4"

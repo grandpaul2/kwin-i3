@@ -1,4 +1,4 @@
-.PHONY: build test unit live mutate mutate-live tools fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
+.PHONY: build test unit live mutate mutate-live tools video fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel is installed (its CMake config); without it,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -26,6 +26,15 @@ mutate-live:
 tools: tools/bin/ei-send
 tools/bin/ei-send: tools/ei-send.c
 	mkdir -p tools/bin && gcc -O2 -Wall -Wextra -o $@ $< $$(pkg-config --cflags --libs libei-1.0)
+
+# The training videos' recorder (tools/video/README.md): its own target, so the tests need no
+# wayland-scanner.
+video: tools tools/bin/screencast
+tools/bin/screencast: tools/video/screencast.c tools/video/zkde-screencast-unstable-v1.xml
+	mkdir -p tools/bin
+	wayland-scanner client-header tools/video/zkde-screencast-unstable-v1.xml tools/bin/zkde-screencast-unstable-v1-client.h
+	wayland-scanner private-code tools/video/zkde-screencast-unstable-v1.xml tools/bin/zkde-screencast-unstable-v1.c
+	gcc -O2 -Wall -Wextra -Itools/bin -o $@ $< tools/bin/zkde-screencast-unstable-v1.c $$(pkg-config --cflags --libs wayland-client)
 
 # The two plugins (plugin/), against the installed kwin-devel.
 plugin:

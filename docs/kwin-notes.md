@@ -499,6 +499,17 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   `/usr/libexec/kactivitymanagerd` is started first, and is driven with
   `busctl --user call org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell evaluateScript s '...'`
   (panel `hiding`: none, autohide, dodgewindows, windowsgobelow; `shell/scripting/panel.cpp:321`).
+- It can be recorded: KWin refuses `zkde_screencast_unstable_v1` only to sandboxed clients
+  (6.8.2 `wayland_server.cpp`, `restrictedInterfaces`), so a plain client gets a PipeWire node
+  (`tools/video/screencast.c`). The stream sends a frame per repaint, none while nothing changes,
+  so a recording stops at the last change; GStreamer's `-e` file is finished only on SIGINT.
+- With its private config empty, apps draw dark text on a dark palette until a colour scheme or
+  look-and-feel is applied (`plasma-apply-lookandfeel -a org.kde.breezedark.desktop`).
+- A launch through kglobalaccel (Meta+Return's terminal) inherits KWin's own environment, `HOME`
+  and working directory included, not the caller's (`tools/video/record` sets both before
+  `testkwin.sh`).
+- `org.kde.kwin.Scripting.loadScript` is overloaded (`s`, `ss`): dbus-python's introspection picks
+  `s` and aborts on two arguments; pass `signature="ss"`.
 - It renders on the real GPU: antialiased pixels differ by vendor (an arc pixel: NVIDIA 55,48,48,
   AMD 68,33,33).
 - `kscreen-doctor output.X.enable` leaves the returning output primary; set `output.X.priority.2` with it.

@@ -1,0 +1,45 @@
+# First steps, scene 1: open, focus, close, choose where the next window opens, the launcher.
+# Captions hold long enough to read (play.py read_time); a wait adds to that.
+say Let's open a window to get started.
+open Meta+Return as term1 I'll use Meta+Enter to open a terminal.
+say In kwin-i3, a single window fills the screen.
+# H[term1 term2]
+open Meta+Return as term2 Open another, and it splits the screen in half.
+say A blue frame shows which window has focus at the moment.
+key Meta+Left I can shift the focus by tapping Meta+arrows,
+key Meta+Right
+point term1 or by simply moving the mouse between windows.
+point term2
+point term1
+# the pointer to term2 focuses it; H[term1]
+point term2 To close a window, focus that window, then tap Meta+Shift+Q.
+key Meta+Shift+Q
+point park
+# term1 alone: the indicator flips between its bottom (V) and right (H) edge
+say To make the next window open in your desired orientation, tap Meta+V for vertical, or Meta+H for horizontal.
+pace 1.4
+key Meta+V
+key Meta+H
+key Meta+V
+key Meta+H
+key Meta+V
+pace
+say Pay attention to the indicator: it shows where the next window will open.
+# V[term1 term2]
+open Meta+Return as term2
+# V[term1]: the vertical choice stays
+key Meta+Shift+Q After choosing my desired orientation,
+key Meta+D I can also tap Meta+D instead to choose any application on my PC.
+type dolphin
+# V[term1 files]
+open Return as files
+say It then opens in the orientation I chose previously.
+# files wrapped alone in a new split: its right edge lights
+key Meta+H Choose another orientation
+key Meta+D and open another app,
+type kwrite
+# V[term1 H[files editor]]
+open Return as editor
+say and it splits that space again.
+say
+wait 3
