@@ -95,6 +95,9 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
 - `PlacementTracker` re-requests fullscreen, and puts a returning monitor's windows back on it,
   **after** a script's replug reconcile.
 - A Wayland transient is type `Normal` (check `isDialog` / `isModal` / `transientFor`).
+  Every app's Wayland window is: KWin sets a type only from Plasma's shell roles, and Qt uses the
+  xdg-dialog protocol only for a modal window. A dialog with no parent and no modality looks like
+  a main window (`behaviour.md` R7).
   `normalWindow` is type Normal only: an X11 dialog/utility/splash isn't one.
 - `Window::setDesktops` ties a window and its transients both ways (`window.cpp:730-742`), but only
   on a later `setDesktops` on the dialog, not when it opens. Moving a window with a modal dialog

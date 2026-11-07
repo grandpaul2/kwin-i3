@@ -325,6 +325,9 @@ window on all desktops is i3's sticky floating: it floats and follows the worksp
 popups and Plasma's system windows are never in it (i3's dock, root and override-redirect kinds). kwin-i3 assumes one activity: windows on other activities aren't
 handled yet (`LATER.md` item 5).
 
+On Wayland a dialog carries no type, so one that names no parent window, isn't modal and can be
+resized opens tiled (some of KDE's warnings do). Meta+Shift+Space floats it.
+
 Plasma's panels: the common setups work as they are (any edge, floating or not, any visibility,
 a panel on each output); windows tile in the space a panel leaves. If something looks off after
 you change a panel's settings, adjust the panel, or log in again.
