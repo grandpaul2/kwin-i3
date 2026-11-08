@@ -3029,6 +3029,13 @@ var KI3 = (function () {
     function exactRect(g, r) {
         return g.x === r.x && g.y === r.y && g.x + g.width === r.x + r.width && g.y + g.height === r.y + r.height;
     }
+    // A window's frame covers its output, each edge within 1 px: KWin rounds an X11 frame to
+    // whole X pixels (x11window.cpp moveResizeInternal), off by a fraction on a scaled output.
+    function coversOutput(w) {
+        var g = w.frameGeometry, o = w.output.geometry;
+        return Math.abs(g.x - o.x) <= 1 && Math.abs(g.y - o.y) <= 1 &&
+               Math.abs(g.x + g.width - o.x - o.width) <= 1 && Math.abs(g.y + g.height - o.y - o.height) <= 1;
+    }
     // For root tiles only (the hair's tolerance would be wrong for any other tile).
     function sameRect(g, r) {
         // The hair is far below the tolerance for float noise: told apart on its own, per edge (a
@@ -4932,8 +4939,21 @@ var KI3 = (function () {
             // An X11 window that moved itself to another output before its first tile: KWin gave
             // it that output's desktop. i3 ignores a tiling window's own move (handlers.c:448,
             // §10 V11), so it stays; the pass puts its output and desktop back (relocate).
-            if (untiledYet[key] && !Tree.isFloating(con) && w.output !== outputOf(from)) {
-                log("DESKTOP " + shortCaption(w) + " moved itself before its tile: stays on workspace " + from.num);
+            // A fullscreen one, tiling or floating, in a tile or not: i3 ignores every request of
+            // the fullscreen container (handlers.c:347). KWin refuses its ConfigureRequest but
+            // applies _NET_MOVERESIZE_WINDOW, and ignores a tiled window's only when it is
+            // decorated (x11window.cpp:3111). A user's Move to Screen (sendToOutput) lands a
+            // fullscreen window covering the new output; a client's own move lands where it
+            // asked, so a frame not covering its output is the window's own move. One asking
+            // for exactly the other output's rect is followed: nothing here tells the two apart.
+            // A window that opened fullscreen keeps untiledYet (it never had a tile): the frame
+            // decides for it too, or a Move to Screen of it would be refused.
+            // On Wayland the output clause keeps a Move to Screen followed: the frame and output
+            // change only at the client's ack, after the desktop.
+            if (w.output !== outputOf(from) && ((untiledYet[key] && !Tree.isFloating(con) && !w.fullScreen) ||
+                                                (w.fullScreen && !coversOutput(w)))) {
+                log("DESKTOP " + shortCaption(w) + " moved itself " + (w.fullScreen ? "while fullscreen" : "before its tile") +
+                    ": stays on workspace " + from.num);
                 schedule(from);
                 return;
             }

@@ -98,7 +98,13 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   output change: a window landing on another output has its desktop swapped for that output's
   current one (`finishInteractiveOutputChange`, `window.cpp:4593`), and kwin-i3 hears
   `outputChanged`, then `desktopsChanged`. KWin ignores the request from a window in a tile
-  (`requestedQuickTileMode() != None`; a custom tile is `Custom`).
+  (`requestedQuickTileMode() != None`; a custom tile is `Custom`), but only from a window that
+  doesn't want no decoration (`m_wantsNoDecoration`, Motif hints: a borderless game in its tile is
+  moved). A fullscreen window's ConfigureRequest is refused before any of this
+  (`configureRequestEvent`, `events.cpp:451`); its `_NET_MOVERESIZE_WINDOW` is not
+  (`NETMoveResizeWindow` calls `configureRequest` directly). `sendToOutput` (Move to Screen) lands
+  a fullscreen window covering the new output (`ensureSpecialStateGeometry`) before its desktop
+  swap; a client's own move lands where it asked.
 - A Wayland transient is type `Normal` (check `isDialog` / `isModal` / `transientFor`).
   Every app's Wayland window is: KWin sets a type only from Plasma's shell roles, and Qt uses the
   xdg-dialog protocol only for a modal window. A dialog with no parent and no modality looks like
