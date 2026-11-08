@@ -81,6 +81,7 @@ one of `* + ? ^ $ { } ( ) | [ ] \` (`kcm/ui/settings.js` `classFromField`), else
 matched whole; picking a window escapes it. A class with a literal `*` (Minecraft's `Minecraft*
 1.21.11`) typed as shown makes a rule that never matches it, and the row shows the pattern as if it
 were the name. The page's promise is "no window classes or regexes to know"
-(`AGENTS.md`, "Words a user reads"). Next: the maintainer settles the foundation: whether a typed name
-on the page is always a name (escaped), with patterns left to `kwinrc`, or how else a pattern is
-told apart.
+(`AGENTS.md`, "Words a user reads"). The docs decide it (`docs/style-settings-page.md`, "The control that can't be wrong": a name
+from a list or typed, "i3's patterns sit behind a button"). Next: the spec under review (the box
+always a name; a stored pattern shown as text; the button; the help; the two pattern defaults as
+names).
