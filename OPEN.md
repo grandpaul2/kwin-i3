@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-07** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main's script at f155ff7, its plugins at 3feca98 (unchanged since; settings page
+Plasma 6.8.2 and main's script at 52f1204, its plugins at 3feca98 (unchanged since; settings page
 at e376ccc). `stable` is at
 `v1.4.0` (2026-11-04, 3feca98).
 
@@ -61,9 +61,9 @@ video is scripted.
 **96. Client requests KWin applies that i3 ignores** (2026-11-07). An audit of the seam behind
 `behaviour.md` V11's move case (a new X11 window moving itself to another output) found the same
 shape elsewhere: KWin applies a client's request, or a side effect of one, and kwin-i3 follows it
-where i3 refuses. Done: a fullscreen window's own move (V11, bfa3f8b). Confirmed in source, each
-its own diagnosis and spec, in order: (e) a **tiled borderless X11 window** (Motif no-decoration,
-`m_wantsNoDecoration`) moving itself after its first tile: KWin ignores a tiled window's request
+where i3 refuses. A fullscreen window's own move: guarded in bfa3f8b, reverted (30a18a3): a script gets no cause with a desktop change, and its frame test refused a user's Move to Screen and missed a game asking for the other output's rect; open again, no sound signal known. Confirmed in source, each
+its own diagnosis and spec, in order: (e) a window KWin doesn't protect after its first pass moving itself: a **tiled borderless X11 window** (Motif no-decoration,
+`m_wantsNoDecoration`), or one on a hidden workspace (no requested tile, V11's known limit): KWin ignores a tiled window's request
 only when it is decorated (`x11window.cpp:3111`), so it is applied and followed; a user's Move to
 Screen of a tiled window has no frame to tell it by; (b) KWin carrying a window's transients to
 its desktop, and a modal dialog's parent with it (V13, `+` with no reason): followed, where i3
