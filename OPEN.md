@@ -7,9 +7,10 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-04** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+Last reconciled: **2026-11-07** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main at 3feca98: script and plugins (settings page at e376ccc). `stable` is at
+Plasma 6.8.2 and main's script at a24d158, its plugins at 3feca98 (unchanged since; settings page
+at e376ccc). `stable` is at
 `v1.4.0` (2026-11-04, 3feca98).
 
 ## Stage
@@ -73,3 +74,13 @@ maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet trac
 `_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an
 output, a client's `_NET_NUMBER_OF_DESKTOPS` (D6), a Motif no-decoration request (L14). V9 to say
 KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and sticky messages. Next: (a)'s diagnosis.
+
+**97. A typed application name with `*` in it becomes a regular expression** (2026-11-07). The
+Window Rules and Workspaces rows store typed text as i3's regular expression as soon as it holds
+one of `* + ? ^ $ { } ( ) | [ ] \` (`kcm/ui/settings.js` `classFromField`), else as the name
+matched whole; picking a window escapes it. A class with a literal `*` (Minecraft's `Minecraft*
+1.21.11`) typed as shown makes a rule that never matches it, and the row shows the pattern as if it
+were the name. The page's promise is "no window classes or regexes to know"
+(`docs/style-settings-page.md`). Next: the maintainer settles the foundation: whether a typed name
+on the page is always a name (escaped), with patterns left to `kwinrc`, or how else a pattern is
+told apart.
