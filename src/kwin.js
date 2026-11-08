@@ -532,7 +532,10 @@ var KI3 = (function () {
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
         var hidden = w.output && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
-        var g = w.fullScreen || hidden || leaving(w) ? w.frameGeometry : null;
+        // A copy: w.frameGeometry is a live reference, and an X11 window's unmanage moves it at
+        // once, so a held reference read the restored rect and wrote that back.
+        var f = w.frameGeometry;
+        var g = w.fullScreen || hidden || leaving(w) ? { x: f.x, y: f.y, width: f.width, height: f.height } : null;
         tile.unmanage(w);
         if (g) w.frameGeometry = g;
     }

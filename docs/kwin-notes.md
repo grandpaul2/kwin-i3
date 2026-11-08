@@ -258,6 +258,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 
 ## Scripting (`scripting.cpp`)
 
+- **A rect read from a window or tile is a live reference, not a copy** (Qt 6.11's QJSEngine wraps a
+  value-type property lazily, `qv4qobjectwrapper.cpp:299-306`): `var g = w.frameGeometry` read
+  after the window changes gives the new rect. Copy its fields to keep it across a KWin call. An
+  X11 window's frame changes inside the call; a Wayland window's too for a move or an unchanged
+  size, only a size change waiting for the client's ack. `unmanageFrom`'s write-back wrote the
+  restored rect back for X11 windows until it copied (a fullscreen X11 window shrank on a rebuild).
 - `callDBus` converts arguments by `QJSValue::toVariant()` (`scripting.cpp:345`): no unsigned ints,
   no typed arrays, so typed methods (kglobalaccel's `a(ai)`, `Notify`'s `susssasa{sv}i`) are refused.
   It calls back only on a reply: on an error or a dead service it logs and never calls; guard with a timeout.
