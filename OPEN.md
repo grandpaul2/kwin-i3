@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-07** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main's script at a24d158, its plugins at 3feca98 (unchanged since; settings page
+Plasma 6.8.2 and main's script at bfa3f8b, its plugins at 3feca98 (unchanged since; settings page
 at e376ccc). `stable` is at
 `v1.4.0` (2026-11-04, 3feca98).
 
@@ -61,19 +61,19 @@ video is scripted.
 **96. Client requests KWin applies that i3 ignores** (2026-11-07). An audit of the seam behind
 `behaviour.md` V11's move case (a new X11 window moving itself to another output) found the same
 shape elsewhere: KWin applies a client's request, or a side effect of one, and kwin-i3 follows it
-where i3 refuses. Confirmed in source, each its own diagnosis and spec, in order: (a) a
-**fullscreen** X11 window moving itself to another output (also `_NET_MOVERESIZE_WINDOW`): not
-in a tile, so V11's check doesn't cover it; (b) KWin carrying a window's transients to its
-desktop, and a modal dialog's parent with it (V13, `+` with no reason): followed, where i3 moves
-the one container; (c) a client's own minimize (xdg `set_minimized`, `WM_CHANGE_STATE`), which
-i3 rejects (`handlers.c:849-858`), where V7's reason has it as the user's; (d) a client's
+where i3 refuses. Done: a fullscreen window's own move (V11, bfa3f8b). Confirmed in source, each
+its own diagnosis and spec, in order: (e) a **tiled borderless X11 window** (Motif no-decoration,
+`m_wantsNoDecoration`) moving itself after its first tile: KWin ignores a tiled window's request
+only when it is decorated (`x11window.cpp:3111`), so it is applied and followed; a user's Move to
+Screen of a tiled window has no frame to tell it by; (b) KWin carrying a window's transients to
+its desktop, and a modal dialog's parent with it (V13, `+` with no reason): followed, where i3
+moves the one container; (c) a client's own minimize (xdg `set_minimized`, `WM_CHANGE_STATE`),
+which i3 rejects (`handlers.c:849-858`), where V7's reason has it as the user's; (d) a client's
 maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet traced:
-`_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an
-output, a client's `_NET_NUMBER_OF_DESKTOPS` (D6), a Motif no-decoration request (L14). V9 to say
-KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and sticky messages. (a) diagnosed: a
-fullscreen window that opened fullscreen is already kept (a24d158); one that lost its tile to a
-rebuild, or a floating one, is followed when it moves itself by `_NET_MOVERESIZE_WINDOW` (a plain
-ConfigureRequest KWin refuses while fullscreen, as i3). Next: (a)'s spec, under review.
+`_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11; a frame spanning outputs reads as
+the window's own move), Wayland `set_fullscreen` with an output, a client's
+`_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
+sticky messages. Next: (e)'s diagnosis.
 
 **97. A typed application name with `*` in it becomes a regular expression** (2026-11-07). The
 Window Rules and Workspaces rows store typed text as i3's regular expression as soon as it holds
