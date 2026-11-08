@@ -70,7 +70,10 @@ i3 rejects (`handlers.c:849-858`), where V7's reason has it as the user's; (d) a
 maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet traced:
 `_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an
 output, a client's `_NET_NUMBER_OF_DESKTOPS` (D6), a Motif no-decoration request (L14). V9 to say
-KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and sticky messages. Next: (a)'s diagnosis.
+KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and sticky messages. (a) diagnosed: a
+fullscreen window that opened fullscreen is already kept (a24d158); one that lost its tile to a
+rebuild, or a floating one, is followed when it moves itself by `_NET_MOVERESIZE_WINDOW` (a plain
+ConfigureRequest KWin refuses while fullscreen, as i3). Next: (a)'s spec, under review.
 
 **97. A typed application name with `*` in it becomes a regular expression** (2026-11-07). The
 Window Rules and Workspaces rows store typed text as i3's regular expression as soon as it holds
@@ -81,3 +84,11 @@ were the name. The page's promise is "no window classes or regexes to know"
 (`AGENTS.md`, "Words a user reads"). Next: the maintainer settles the foundation: whether a typed name
 on the page is always a name (escaped), with patterns left to `kwinrc`, or how else a pattern is
 told apart.
+
+**98. A fullscreen X11 window shrinks when a newcomer rebuilds its tiles** (2026-11-07). Found in
+item 96's probe: a tiled X11 window made fullscreen, then a window opening on its workspace; the
+rebuild takes its tile and KWin's unmanage gives it its pre-tile size while it stays fullscreen
+(`GEOM 0,0 1280x720 -> 440,196 400x328`), no longer covering its output (V1). `unmanageFrom`
+keeps a fullscreen frame only on kwin-i3's own unmanage. Scenario 32 covers the Wayland case.
+Next: diagnose it (i3's `render_con` at the output's rect; whether KWin's rebuild or kwin-i3's
+pass does the unmanage).
