@@ -2461,6 +2461,10 @@ var KI3 = (function () {
     var timer = null;
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
+    // window id -> true: a tiling window adopted and not yet in its first tile. KWin runs an X11
+    // client's own move request only then (it ignores one from a window in a tile), and a move to
+    // another output swaps its desktop for that output's (`finishInteractiveOutputChange`).
+    var untiledYet = {};
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
     var moved = [];           // the tiles setSizes changed in its latest pass, for setSizesStable's warning
     var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
@@ -2872,6 +2876,7 @@ var KI3 = (function () {
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
+        delete untiledYet[id(w)];
         log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
         tiledBorder(w);                     // before the tile asks for its size
         if (tile.manage(w)) return true;
@@ -3273,7 +3278,7 @@ var KI3 = (function () {
                 want.forEach(function (b) {
                     if (shown && b.tile !== tile && tile.windows.indexOf(b) >= 0) unmanageFrom(tile, b);
                     if (tile.windows.indexOf(b) < 0) manageInto(tile, b);
-                    else { expected[id(b)] = tile; tiledBorder(b); }
+                    else { expected[id(b)] = tile; delete untiledYet[id(b)]; tiledBorder(b); }
                 });
                 shownTabs.push({ w: w, behind: behind });
             }
@@ -3286,7 +3291,7 @@ var KI3 = (function () {
             // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
-            else { expected[id(w)] = tile; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
+            else { expected[id(w)] = tile; delete untiledYet[id(w)]; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
             return;
         }
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
@@ -4683,7 +4688,10 @@ var KI3 = (function () {
             model.setSticky(model.openFloating(key, ws), kind === "sticky");
             setFloatingLook(w, true);
             if (fresh) clampFloating(w);
-        } else model.open(key, ws);          // under a fullscreen window: second in the focus stack
+        } else {
+            model.open(key, ws);             // under a fullscreen window: second in the focus stack
+            untiledYet[key] = true;
+        }
         if (w.fullScreen) model.setFullscreen(key, true);
         if (w.minimized) model.setMinimized(key, true);
         connectWindow(w);
@@ -4764,7 +4772,7 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key];
+        delete untiled[key]; delete untiledYet[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -4921,7 +4929,16 @@ var KI3 = (function () {
             if (deskNum(w.desktops[0]) > NAMES.length) { dropWindow(w); return; }
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
+            // An X11 window that moved itself to another output before its first tile: KWin gave
+            // it that output's desktop. i3 ignores a tiling window's own move (handlers.c:448,
+            // §10 V11), so it stays; the pass puts its output and desktop back (relocate).
+            if (untiledYet[key] && !Tree.isFloating(con) && w.output !== outputOf(from)) {
+                log("DESKTOP " + shortCaption(w) + " moved itself before its tile: stays on workspace " + from.num);
+                schedule(from);
+                return;
+            }
             // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
+            log("DESKTOP " + shortCaption(w) + " moved to workspace " + to.num + " outside kwin-i3: follows");
             var t = expected[key];
             if (t && t.windows.indexOf(w) >= 0) unmanageFrom(t, w);
             model.moveToWorkspace(con, to);

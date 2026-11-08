@@ -7,8 +7,8 @@ part of KWin you are about to touch before you touch it. kwin-i3's *answer* to e
 
 Sources: KWin's source for the installed version (`rpm -q kwin` / `pacman -Q kwin`, then
 `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`; `git clone --depth 1 --branch v6.7.5`
-works too). Plasma 6.8 (KWin's X11 code removed) is not yet lived through: anything here may
-change there (`OPEN.md` item 50). Add a line when you find one; correct a line in place.
+works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Window` is still in
+6.8.2). Add a line when you find one; correct a line in place.
 
 ## Tiles (`src/tiles/tile.cpp`, `customtile.cpp`)
 
@@ -94,6 +94,11 @@ change there (`OPEN.md` item 50). Add a line when you find one; correct a line i
   `resizeable` false. A fullscreen window is on the top layer only while active (`isActiveFullScreen`).
 - `PlacementTracker` re-requests fullscreen, and puts a returning monitor's windows back on it,
   **after** a script's replug reconcile.
+- An X11 client's own move request (`X11Window::configureRequest`) is run as an interactive
+  output change: a window landing on another output has its desktop swapped for that output's
+  current one (`finishInteractiveOutputChange`, `window.cpp:4593`), and kwin-i3 hears
+  `outputChanged`, then `desktopsChanged`. KWin ignores the request from a window in a tile
+  (`requestedQuickTileMode() != None`; a custom tile is `Custom`).
 - A Wayland transient is type `Normal` (check `isDialog` / `isModal` / `transientFor`).
   Every app's Wayland window is: KWin sets a type only from Plasma's shell roles, and Qt uses the
   xdg-dialog protocol only for a modal window. A dialog with no parent and no modality looks like
