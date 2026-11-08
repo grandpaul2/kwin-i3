@@ -84,10 +84,3 @@ were the name. The page's promise is "no window classes or regexes to know"
 (`AGENTS.md`, "Words a user reads"). Next: the maintainer settles the foundation: whether a typed name
 on the page is always a name (escaped), with patterns left to `kwinrc`, or how else a pattern is
 told apart.
-
-**99. A fullscreen X11 window in a tile KWin itself destroys** (2026-11-07). From item 98's
-review (fixed in 4dbf16f: `unmanageFrom` copies the rect): a tile KWin destroys on its own, as on
-a monitor unplug (`Tile::~Tile`, `tile.cpp:52-63`, unmanage then re-pick), would still give a
-fullscreen X11 window its pre-tile size, with nothing in kwin-i3 to put it back (`fitFullscreen`
-runs only for a window in its tile). Inferred from source, not seen. Next: a test-KWin probe
-(an X11 window fullscreen in its tile, its monitor unplugged), with the go.

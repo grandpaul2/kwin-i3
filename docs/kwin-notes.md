@@ -92,6 +92,10 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   the flag (`handleNextWindowGeometry`, then `handleStatesAcknowledged`), both going in and coming
   out: look again a moment later (kwin-i3 waits 150 ms). A pending fullscreen request makes
   `resizeable` false. A fullscreen window is on the top layer only while active (`isActiveFullScreen`).
+- A monitor unplugged under a fullscreen X11 window in its tile: the window passes through its
+  pre-tile size (the tile's unmanage) and KWin puts it fullscreen on the remaining monitor in the
+  same millisecond; on replug it comes back covering its own (probed 2026-11-07). Nothing for
+  kwin-i3 to refit.
 - `PlacementTracker` re-requests fullscreen, and puts a returning monitor's windows back on it,
   **after** a script's replug reconcile.
 - An X11 client's own move request (`X11Window::configureRequest`) is run as an interactive
