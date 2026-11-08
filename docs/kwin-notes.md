@@ -110,6 +110,9 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   a fullscreen window covering the new output (`ensureSpecialStateGeometry`) before its desktop
   swap; a client's own move lands where it asked. No signal tells a script which of the two moved
   a window: `desktopsChanged` carries no cause.
+- `Tile::manage` lists a window but requests the tile (`requestTile`) only when the tile's desktop
+  is current on its output (`tile.cpp:377-425`): a window listed in a hidden workspace's tile has
+  `w.tile` null and no quick-tile mode, so KWin runs its client's move requests.
 - A Wayland transient is type `Normal` (check `isDialog` / `isModal` / `transientFor`).
   Every app's Wayland window is: KWin sets a type only from Plasma's shell roles, and Qt uses the
   xdg-dialog protocol only for a modal window. A dialog with no parent and no modality looks like

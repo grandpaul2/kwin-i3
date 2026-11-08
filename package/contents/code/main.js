@@ -2464,10 +2464,13 @@ var KI3 = (function () {
     var timer = null;
     var released = false;
     var placing = {};       // window id -> true while we move it between desktops/outputs
-    // window id -> true: a tiling window adopted and not yet in its first tile. KWin runs an X11
-    // client's own move request only then (it ignores one from a window in a tile), and a move to
+    // window id -> true: a tiling window adopted and not yet through its workspace's first pass.
+    // An X11 client's own move then is not ignored by KWin (no tile requested yet), and one onto
     // another output swaps its desktop for that output's (`finishInteractiveOutputChange`).
+    // Cleared at the end of the pass (reconcileNow): after it, a desktop change is someone
+    // else's, so a mark kept longer would refuse an Overview move.
     var untiledYet = {};
+    var crossing = {};      // window id -> the desktop it gets on arrival (relocate, arrive)
     var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
     var moved = [];           // the tiles setSizes changed in its latest pass, for setSizesStable's warning
     var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
@@ -2879,7 +2882,6 @@ var KI3 = (function () {
     // tile's desktop. A refused window floats instead of leaving a hole (code review).
     function manageInto(tile, w) {
         expected[id(w)] = tile;
-        delete untiledYet[id(w)];
         log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
         tiledBorder(w);                     // before the tile asks for its size
         if (tile.manage(w)) return true;
@@ -3284,7 +3286,7 @@ var KI3 = (function () {
                 want.forEach(function (b) {
                     if (shown && b.tile !== tile && tile.windows.indexOf(b) >= 0) unmanageFrom(tile, b);
                     if (tile.windows.indexOf(b) < 0) manageInto(tile, b);
-                    else { expected[id(b)] = tile; delete untiledYet[id(b)]; tiledBorder(b); }
+                    else { expected[id(b)] = tile; tiledBorder(b); }
                 });
                 shownTabs.push({ w: w, behind: behind });
             }
@@ -3297,7 +3299,7 @@ var KI3 = (function () {
             // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
-            else { expected[id(w)] = tile; delete untiledYet[id(w)]; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
+            else { expected[id(w)] = tile; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
             return;
         }
         for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
@@ -3563,6 +3565,11 @@ var KI3 = (function () {
             raiseShownTabs();
             settleDragArms(ws);
         }
+        // The workspace's newcomers are through their first pass (untiledYet): a crossing one or
+        // one in a drag keeps its mark until the pass after it settles.
+        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
+            if (c.win !== null && untiledYet[c.win] && !crossing[c.win] && !(wins[c.win] && inDrag(wins[c.win]))) delete untiledYet[c.win];
+        });
         barsOf[ws.num] = groupBars;
         tellMemo(ws);
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
@@ -3938,8 +3945,8 @@ var KI3 = (function () {
     // (outputChanged, or 2 s): given its workspace's desktop at once, it is hidden on the monitor
     // it is still on, and a hidden client may never answer the move (Electron: VS Code left on
     // DP-6 with desktop 3, KWin waiting on it, sendToOutput a no-op from then on; a capture,
-    // 2026-10-26 04:32). window id -> the desktop it gets on arrival.
-    var crossing = {};
+    // 2026-10-26 04:32). window id -> the desktop it gets on arrival: `crossing`, declared at the top
+    // (the end of a pass reads it).
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
         model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
@@ -4935,10 +4942,13 @@ var KI3 = (function () {
             if (deskNum(w.desktops[0]) > NAMES.length) { dropWindow(w); return; }
             var from = Tree.wsOf(con), to = wsForWindow(w);
             if (!to || to === from) return;
-            // An X11 window that moved itself to another output before its first tile: KWin gave
-            // it that output's desktop. i3 ignores a tiling window's own move (handlers.c:448,
-            // §10 V11), so it stays; the pass puts its output and desktop back (relocate).
-            if (untiledYet[key] && !Tree.isFloating(con) && w.output !== outputOf(from)) {
+            // A new tiling window whose desktop changed before its first pass: only the client can
+            // have moved it then (an X11 window centring itself on the other monitor; KWin gave it
+            // that output's current desktop). i3 ignores a tiling window's own move
+            // (handlers.c:448, §10 V11), so it stays; the pass puts its output and desktop back
+            // (relocate). No output test: a window placed on a workspace homed on another output
+            // (assign) can move itself onto that very output and still get the wrong desktop.
+            if (untiledYet[key] && !Tree.isFloating(con)) {
                 log("DESKTOP " + shortCaption(w) + " moved itself before its tile: stays on workspace " + from.num);
                 schedule(from);
                 return;
