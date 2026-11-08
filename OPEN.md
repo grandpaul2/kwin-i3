@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-07** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main's script at 4dbf16f, its plugins at 3feca98 (unchanged since; settings page
+Plasma 6.8.2 and main's script at f155ff7, its plugins at 3feca98 (unchanged since; settings page
 at e376ccc). `stable` is at
 `v1.4.0` (2026-11-04, 3feca98).
 
@@ -75,13 +75,7 @@ the window's own move), Wayland `set_fullscreen` with an output, a client's
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (e)'s diagnosis.
 
-**97. A typed application name with `*` in it becomes a regular expression** (2026-11-07). The
-Window Rules and Workspaces rows store typed text as i3's regular expression as soon as it holds
-one of `* + ? ^ $ { } ( ) | [ ] \` (`kcm/ui/settings.js` `classFromField`), else as the name
-matched whole; picking a window escapes it. A class with a literal `*` (Minecraft's `Minecraft*
-1.21.11`) typed as shown makes a rule that never matches it, and the row shows the pattern as if it
-were the name. The page's promise is "no window classes or regexes to know"
-(`AGENTS.md`, "Words a user reads"). The docs decide it (`docs/style-settings-page.md`, "The control that can't be wrong": a name
-from a list or typed, "i3's patterns sit behind a button"). Next: the spec under review (the box
-always a name; a stored pattern shown as text; the button; the help; the two pattern defaults as
-names).
+**97. A rule's application on the settings page is a name** (2026-11-07). Built and live
+(f155ff7): the box takes a name, typed or picked, matched whole; a pattern shows as text; Add
+Rule as Text writes one; the two pattern defaults are whole-name pairs. Next: the maintainer
+judges the Window Rules tab live (`docs/style-settings-page.md`, "Adding to the page").
