@@ -59,3 +59,17 @@ video is scripted.
 
 **95. A volume slider shown cut off** (2026-11-07). A capture's note says only that: the capture
 is kept (`2026-11-07_130817.396`). Next: diagnose it, `tools/capture-read` first.
+
+**96. Client requests KWin applies that i3 ignores** (2026-11-07). An audit of the seam behind
+`behaviour.md` V11's move case (a new X11 window moving itself to another output) found the same
+shape elsewhere: KWin applies a client's request, or a side effect of one, and kwin-i3 follows it
+where i3 refuses. Confirmed in source, each its own diagnosis and spec, in order: (a) a
+**fullscreen** X11 window moving itself to another output (also `_NET_MOVERESIZE_WINDOW`): not
+in a tile, so V11's check doesn't cover it; (b) KWin carrying a window's transients to its
+desktop, and a modal dialog's parent with it (V13, `+` with no reason): followed, where i3 moves
+the one container; (c) a client's own minimize (xdg `set_minimized`, `WM_CHANGE_STATE`), which
+i3 rejects (`handlers.c:849-858`), where V7's reason has it as the user's; (d) a client's
+maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet traced:
+`_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an
+output, a client's `_NET_NUMBER_OF_DESKTOPS` (D6), a Motif no-decoration request (L14). V9 to say
+KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and sticky messages. Next: (a)'s diagnosis.
