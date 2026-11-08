@@ -108,7 +108,8 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   (`configureRequestEvent`, `events.cpp:451`); its `_NET_MOVERESIZE_WINDOW` is not
   (`NETMoveResizeWindow` calls `configureRequest` directly). `sendToOutput` (Move to Screen) lands
   a fullscreen window covering the new output (`ensureSpecialStateGeometry`) before its desktop
-  swap; a client's own move lands where it asked.
+  swap; a client's own move lands where it asked. No signal tells a script which of the two moved
+  a window: `desktopsChanged` carries no cause.
 - A Wayland transient is type `Normal` (check `isDialog` / `isModal` / `transientFor`).
   Every app's Wayland window is: KWin sets a type only from Plasma's shell roles, and Qt uses the
   xdg-dialog protocol only for a modal window. A dialog with no parent and no modality looks like
