@@ -9,7 +9,7 @@ item goes, its facts kept in their homes, and a capture or a red brings it back 
 
 Last reconciled: **2026-11-07** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main's script at bfa3f8b, its plugins at 3feca98 (unchanged since; settings page
+Plasma 6.8.2 and main's script at 4dbf16f, its plugins at 3feca98 (unchanged since; settings page
 at e376ccc). `stable` is at
 `v1.4.0` (2026-11-04, 3feca98).
 
@@ -85,10 +85,9 @@ were the name. The page's promise is "no window classes or regexes to know"
 on the page is always a name (escaped), with patterns left to `kwinrc`, or how else a pattern is
 told apart.
 
-**98. A fullscreen X11 window shrinks when a newcomer rebuilds its tiles** (2026-11-07). Found in
-item 96's probe: a tiled X11 window made fullscreen, then a window opening on its workspace; the
-rebuild takes its tile and KWin's unmanage gives it its pre-tile size while it stays fullscreen
-(`GEOM 0,0 1280x720 -> 440,196 400x328`), no longer covering its output (V1). `unmanageFrom`
-keeps a fullscreen frame only on kwin-i3's own unmanage. Scenario 32 covers the Wayland case.
-Next: diagnose it (i3's `render_con` at the output's rect; whether KWin's rebuild or kwin-i3's
-pass does the unmanage).
+**99. A fullscreen X11 window in a tile KWin itself destroys** (2026-11-07). From item 98's
+review (fixed in 4dbf16f: `unmanageFrom` copies the rect): a tile KWin destroys on its own, as on
+a monitor unplug (`Tile::~Tile`, `tile.cpp:52-63`, unmanage then re-pick), would still give a
+fullscreen X11 window its pre-tile size, with nothing in kwin-i3 to put it back (`fitFullscreen`
+runs only for a window in its tile). Inferred from source, not seen. Next: a test-KWin probe
+(an X11 window fullscreen in its tile, its monitor unplugged), with the go.
