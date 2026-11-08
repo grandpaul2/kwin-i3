@@ -56,3 +56,6 @@ width); then the later scenes, scripted with the maintainer: switching workspace
 window to one, then by mouse moving a tile, tabbed, stacked, swap, float and unfloat (the tool
 needs a drag step for these, `behaviour.md` G1, G5, G9-G13). Music and narration come after the
 video is scripted.
+
+**95. A volume slider shown cut off** (2026-11-07). A capture's note says only that: the capture
+is kept (`2026-11-07_130817.396`). Next: diagnose it, `tools/capture-read` first.
