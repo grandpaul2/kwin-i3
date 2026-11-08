@@ -465,6 +465,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
   `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (2026-10-30; 1 in 8
   resumes that boot).
+- **Plasma 6.8's OSDs (volume, brightness) can show cut off**, their top part only: plasmashell
+  sizes the OSD's own surface too short (KDE bug 527636, since 6.8.0, often after an output
+  change or a resume; the candidate fix is plasma-workspace MR 7278). A capture taken while it
+  shows has the OSD as an override-redirect `org.kde.plasmashell` window with `client=` equal to
+  `frame=` and a height at its minimum (278x20 on 6.8.2), with nothing in kwin-i3's log for it:
+  this bug, not kwin-i3 (2026-11-07).
 - The logout screen (`org.kde.LogoutPrompt`, the global theme's `logout/Logout.qml`; Breeze in
   plasma-workspace 6.7.5): `promptLogout`, `promptShutDown` and `promptReboot` show that one action
   and Cancel, and **do it unasked after a 30 s countdown**; `promptAll` shows every action (Sleep

@@ -58,9 +58,6 @@ window to one, then by mouse moving a tile, tabbed, stacked, swap, float and unf
 needs a drag step for these, `behaviour.md` G1, G5, G9-G13). Music and narration come after the
 video is scripted.
 
-**95. A volume slider shown cut off** (2026-11-07). A capture's note says only that: the capture
-is kept (`2026-11-07_130817.396`). Next: diagnose it, `tools/capture-read` first.
-
 **96. Client requests KWin applies that i3 ignores** (2026-11-07). An audit of the seam behind
 `behaviour.md` V11's move case (a new X11 window moving itself to another output) found the same
 shape elsewhere: KWin applies a client's request, or a side effect of one, and kwin-i3 follows it
