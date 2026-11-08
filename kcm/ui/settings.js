@@ -57,7 +57,8 @@ function addRule(text, rule) {
 // A row is one rule: { kind: "float" | "tile" | "workspace" | "output", cls, title, role, type,
 // workspace (N) or output (name), src }, when the rule's criteria are among the four the page
 // shows (class, title, window_role, window_type; src/rules.js parseCriteria's grammar); any
-// other rule is { kind: "raw", text } and edited as text. The page writes every row back in
+// other rule, or one whose class is a pattern rather than a whole name, is { kind: "raw", text }
+// and edited as text. The page writes every row back in
 // i3's words (formatRule), so a rule it read it writes the same.
 const RAW = { kind: "raw" };
 function unquote(v) { return v.replace(/\\"/g, '"'); }
@@ -91,6 +92,8 @@ function parseRule(src, assign) {
     // Nothing a row can show (`[class=""]`, every window): kept as its text, else the next save
     // dropped it as an empty row.
     if (!row.cls && !row.title && !row.role && !row.type) return raw;
+    // An application given as a pattern, not a whole name: the box shows names only, so as text.
+    if (row.cls && plainName(row.cls) === null) return raw;
     if (!assign) {
         const f = /^floating\s+(enable|disable)$/.exec(rest);
         if (!f) return raw;
@@ -146,12 +149,12 @@ function plainName(pattern) {
     const m = /^\^((?:[^.*+?^${}()|[\]\\]|\\[.*+?^${}()|[\]\\])*)\$$/.exec(String(pattern || ""));
     return m ? m[1].replace(/\\(.)/g, "$1") : null;
 }
-// What the application field stores for what was typed: a
-// plain name matched whole, or, with any of * + ? ^ $ { } ( ) | [ ] \ in it, i3's regular
-// expression as typed.
+// What the application field stores for what was typed: always a name, matched whole (the
+// style guide: the page takes a name; i3's patterns are written as text, Add Rule as Text).
+// Empty stays empty: a rule matching by title, role or type alone.
 function classFromField(text) {
     const t = String(text || "").trim();
-    return t === "" ? "" : /[*+?^${}()|[\]\\]/.test(t) ? t : wholeClass(t);
+    return t === "" ? "" : wholeClass(t);
 }
 
 // A workspace whose new windows float (the Workspaces tab): the rule

@@ -23,7 +23,11 @@ KCM.SimpleKCM {
     readonly property var settings: kcm.settings
     // Normalised as the page writes rules (formatRule), so the "default" mark doesn't depend on
     // the order of the criteria in the shipped text.
-    readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow")).map((t) => Logic.formatRule(Logic.parseRule(t, false)))
+    // The defaults of releases before the application box took names only, still marked default
+    // in a kwinrc saved with them (they show as text now).
+    readonly property var oldDefaults: ['[class="^(org\\.kde\\.)?kruler$"] floating enable',
+                                        '[class="^(org\\.kde\\.)?plasmashell$" window_type="normal"] floating enable']
+    readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow")).map((t) => Logic.formatRule(Logic.parseRule(t, false))).concat(oldDefaults)
     // The rows, read from the settings whenever they change from outside (Reset, Defaults), and
     // written back as one string each on every edit. `editing` stops the read-back mid-edit.
     property var rows: []
@@ -111,7 +115,7 @@ KCM.SimpleKCM {
         }
     }
     // The rules' help, by the first of their headings: it is the rules' alone, not the settings'.
-    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application, title, role or type, each a regular expression (^…$ for a whole name), and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria shows as text. i3: for_window, assign")
+    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application by name, its title and role, each a regular expression, and its type, and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria, or an application given as a pattern, shows as text; Add Rule as Text writes one in i3's words. i3: for_window, assign")
 
     // A pattern field: empty means "any".
     component PatternField: QQC2.TextField {
@@ -231,7 +235,8 @@ KCM.SimpleKCM {
         Component.onCompleted: if (index === page.focusIndex) Qt.callLater(() => {
             page.focusIndex = -1;
             page.reveal(ruleRow);
-            appBox.contentItem.forceActiveFocus();      // the text field: the box alone takes no typing
+            if (ruleRow.isRaw) rawField.forceActiveFocus();
+            else appBox.contentItem.forceActiveFocus();      // the text field: the box alone takes no typing
         })
         RowLayout {
             Layout.fillWidth: true
@@ -239,6 +244,7 @@ KCM.SimpleKCM {
 
             // A rule the fields can't show: its text.
             QQC2.TextField {
+                id: rawField
                 visible: ruleRow.isRaw
                 Layout.fillWidth: true
                 font.family: "monospace"
@@ -247,9 +253,8 @@ KCM.SimpleKCM {
                 Accessible.name: i18nc("@label:textbox", "Rule %1, as text", ruleRow.index + 1)
                 KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
             }
-            // The application: chosen by name from the installed ones, or typed. A
-            // whole name shows as the application's name if installed, else plain; any
-            // other pattern as typed, in monospace.
+            // The application: chosen by name from the installed ones, or typed, always a name
+            // matched whole. It shows as the application's name if installed, else plain.
             QQC2.ComboBox {
                 id: appBox
                 visible: !ruleRow.isRaw
@@ -266,9 +271,7 @@ KCM.SimpleKCM {
                 onModelChanged: sync()
                 textRole: "name"
                 valueRole: "id"
-                readonly property string shown: ruleRow.app ? ruleRow.app.name
-                    : ruleRow.plain !== null ? ruleRow.plain : (ruleRow.rule.cls || "")
-                font.family: ruleRow.plain === null && ruleRow.rule.cls ? "monospace" : Kirigami.Theme.defaultFont.family
+                readonly property string shown: ruleRow.app ? ruleRow.app.name : (ruleRow.plain || "")
                 function sync() {
                     currentIndex = ruleRow.app ? page.apps.indexOf(ruleRow.app) : -1;
                     editText = shown;
@@ -413,7 +416,7 @@ KCM.SimpleKCM {
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
             color: Kirigami.Theme.disabledTextColor
-            text: i18nc("@info a rule shown as its text", "Shown as text: it matches on more than the application, title, role and type.")
+            text: i18nc("@info a rule shown as its text", "Shown as text: its criteria don't fit the fields above.")
         }
     }
 
@@ -484,6 +487,12 @@ KCM.SimpleKCM {
                 icon.name: "list-add"
                 onClicked: page.add({})
                 Accessible.name: i18nc("@action:button", "Add a rule")
+            }
+            QQC2.Button {
+                text: i18nc("@action:button", "Add Rule as Text")
+                icon.name: "document-edit"
+                onClicked: page.add({ kind: "raw", text: "" })
+                Accessible.name: i18nc("@action:button", "Add a rule written as text, in i3's words")
             }
             QQC2.Button {
                 text: i18nc("@action:button", "Pick a Window…")

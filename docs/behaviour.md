@@ -200,7 +200,7 @@ The i3 kind of each window Plasma shows, and how the code gets there:
 | Spectacle's region overlays (a Normal fullscreen window per output, probe 93) | override-redirect | by class and fullscreen (in the tree they would gather on the focused workspace) |
 | the logout screen (`ksmserver-logout-greeter`) | override-redirect (as i3lock: it holds the keyboard itself) | the built-in class list |
 | `plasmashell`'s shell surfaces (panels, popups) | dock / override-redirect, by type | KWin's type |
-| `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating | the default rule `[class="^(org\.kde\.)?plasmashell$" window_type="normal"]` |
+| `plasmashell`'s ordinary windows (Configure Desktop and Wallpaper, a widget's settings) | floating | the default rules `[class="^org\.kde\.plasmashell$" window_type="normal"]` and `[class="^plasmashell$" window_type="normal"]` |
 | the desktop portal's dialogs (`xdg-desktop-portal-kde`: the screen-share picker, the file chooser, the remote-control prompt) | floating | the default rule `[class="^org\.freedesktop\.impl\.portal\.desktop\.kde$"]`: Qt dialogs, which i3 floats by the X11 dialog type (`manage.c`); on Wayland they have no type, and are transient only when the app names a parent window (Firefox's screen share names none) |
 
 ### How a window gets its kind
@@ -1026,10 +1026,10 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
 - **Window Rules tab**: one box per rule of `forWindow` and `assign`, in the order the
   script runs them, in a framed list with a line between rules, every box the same: its
   application and what it does (floats, tiles, opens on workspace N, opens on output X) on the
-  first line, its title and role (a pattern each) and window type always on the second. The
+  first line, its title and role (a pattern each) and window type always on the second. The application is a name, picked or typed, matched whole; a rule whose application is a pattern shows as text, as one with other criteria. The
   shipped rules, when they run first, are a list of their own ("Defaults") above "Your rules",
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
-  with other criteria is shown as text and edited there. Add Rule and Pick a Window… (KWin's
+  with other criteria is shown as text and edited there. Add Rule, Add Rule as Text (a rule typed in i3's words) and Pick a Window… (KWin's
   window picker: a rule with the clicked window's class, matched whole) sit in the tab's
   footer, always in view; a new rule scrolls into view with its application box focused. Above the rules, new windows over a fullscreen one (`popupDuringFullscreen`), the floating sizes (`floatingMinimumSize`,
   `floatingMaximumSize`) and Plasma's window animations (below).
