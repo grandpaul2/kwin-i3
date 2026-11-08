@@ -68,6 +68,10 @@ then the fix and P1. A check for the bug only under rule 5.
 
 A question about KWin that blocks a design, with the go (rule 5): the smallest scenario that
 answers it, in a worktree on branch `probe-<name>`, numbered 90 and up, run alone. The answer goes into `docs/kwin-notes.md`; the branch is never merged.
+A probe of a live report is set up as the live desktop is: the plugins loaded when it runs them
+(the hold delays a newcomer's first pass, and a bug can live in that delay), and the workspaces
+shown and hidden as they were. It reproduces the report red before a fix is believed: a probe
+that passes on the unfixed code tested something else.
 
 ## P6. A promotion to `stable`
 

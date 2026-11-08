@@ -74,3 +74,20 @@ maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet trac
 the window's own move), Wayland `set_fullscreen` with an output, a client's
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (e)'s diagnosis.
+
+**100. The Window Rules tab after the names change** (2026-11-07, a review of f155ff7). The
+change holds (no rule lost or changed); what the page tells the user doesn't yet: Add Rule as
+Text takes anything (a line with i3's `for_window`/`assign` word is stored and skipped by the
+script, with no sign on the row), and its new row has no example; a pattern typed in the
+application box becomes a literal name with no word saying so; the text row's note is untrue on
+an empty new row and on one typed back into fields; the help's "each a regular expression" reads
+ambiguously. Also: a rule added by Add Rule or Add Rule as Text lands below the view, against
+`behaviour.md`'s "a new rule scrolls into view" (the same before the change). Next: diagnose the
+scroll (`WindowRules.qml` `reveal`, called before the row is laid out); then one spec for the
+words, to the style guide.
+
+**101. An X11 window floated while its workspace is hidden keeps its tile's size** (2026-11-07,
+a review of 4dbf16f; unverified). With the rect copied in `unmanageFrom`, a hidden X11 window
+keeps its tile-sized frame through the unmanage, and `floatAtRecord` skips hidden windows
+(`src/kwin.js`), so it floats at that size, as a Wayland window already did, instead of its own.
+Next: a test-KWin probe, with the go; i3's `floating_enable` uses the window's own geometry.
