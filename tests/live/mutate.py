@@ -91,7 +91,7 @@ muts = [
  (R, "src/kwin.js", "the rules re-float/re-tile on every caption change (a hand float lasts one retitle)", "        if (kind === was) return;\n", ""),
  # A fullscreen window stays in the tree
  (F, "src/kwin.js", "A: a refused fullscreen window floats again", "        if (w.fullScreen) {\n            log(\"FULLSCREEN \"", "        if (false) {\n            log(\"FULLSCREEN \""),
- (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen) return !w.resizeable;", "        return !w.resizeable;"),
+ (F, "src/rules.js", "B: a fullscreen window is 'not resizeable', so float", "        if (!w.fullScreen && !pendingFullscreen(w)) return !w.resizeable;", "        return !w.resizeable;"),
  (F, "src/kwin.js", "C: no hand-back, the newcomer keeps KWin's focus", "        if (!fresh || !w.active || w.transient || w.fullScreen) return null;", "        return null;"),
  (F, "src/kwin.js", "C: a workspace switch focuses what KWin chose under fullscreen", "        model.activate(fs || model.descendFocused(ws));", "        model.activate(model.descendFocused(ws));"),
  # Settings and the reload

@@ -49,14 +49,28 @@ var Rules = (function () {
         return null;
     }
 
-    // KWin calls every fullscreen window not resizeable (XdgToplevelWindow::isResizable), so one
-    // is judged by its own size limits, KWin's own last test (min < max on either axis; no max
-    // is INT_MAX). Read as "fixed size", a caption change while fullscreen floated a tiled
-    // browser. A fullscreen request not yet applied
-    // (resizeable false, fullScreen false) still reads "float": the plan's known limit.
+    function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
+    // KWin's own last test of a window's size limits (min < max on either axis; no max is INT_MAX).
+    function limitsResize(w) {
+        return w.minSize.width < w.maxSize.width || w.minSize.height < w.maxSize.height;
+    }
+    // A Wayland window whose fullscreen request the client hasn't acknowledged yet: KWin calls it
+    // not resizeable from the request (XdgToplevelWindow::isResizable, isRequestedFullScreen)
+    // while w.fullScreen, the applied state, is still false. KWin re-requests a fullscreen at every
+    // output change (PlacementTracker::restore). Not X11: X11 applies fullscreen at once, and
+    // X11Window::isResizable is false with resizable limits for other reasons (a Motif no-resize
+    // window, a forced position) that are no request.
+    function pendingFullscreen(w) {
+        return !isX11(w) && !w.resizeable && !w.fullScreen && limitsResize(w);
+    }
+
+    // KWin calls every fullscreen window not resizeable, and a window with a fullscreen request
+    // pending too, so either is judged by its own size limits, as i3 judges a window by its hints
+    // (manage.c: min == max). Read as "fixed size", a caption change while fullscreen floated a
+    // tiled browser, and a monitor's return floated a fullscreen one.
     function fixedSize(w) {
-        if (!w.fullScreen) return !w.resizeable;
-        return !(w.minSize.width < w.maxSize.width || w.minSize.height < w.maxSize.height);
+        if (!w.fullScreen && !pendingFullscreen(w)) return !w.resizeable;
+        return !limitsResize(w);
     }
 
     // i3's `window_type` criterion values (match.c), from KWin's type flags.
@@ -297,7 +311,8 @@ var Rules = (function () {
     }
 
     return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, fallbackOnly: fallbackOnly, managed: managed, assignFor: assignFor,
-             parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType };
+             parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType,
+             isX11: isX11, pendingFullscreen: pendingFullscreen };
 })();
 
 if (typeof module !== "undefined") module.exports = Rules;

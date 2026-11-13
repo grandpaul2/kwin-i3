@@ -91,7 +91,18 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - Fullscreen: `isFullScreen()` is the *applied* state. On the commit, the frame changes **before**
   the flag (`handleNextWindowGeometry`, then `handleStatesAcknowledged`), both going in and coming
   out: look again a moment later (kwin-i3 waits 150 ms). A pending fullscreen request makes
-  `resizeable` false. A fullscreen window is on the top layer only while active (`isActiveFullScreen`).
+  a Wayland window's `resizeable` false (`isRequestedFullScreen`) while `fullScreen` is still
+  false, and `Tile::manage` then refuses it, before letting go of any tile it was in; `resizeable`
+  has no change signal, and a request cancelled before the ack fires no `fullScreenChanged`.
+  X11 has no pending state, but its `resizeable` is also false for a Motif no-resize window
+  without NET support and for a forced position. A fullscreen window is on the top layer only
+  while active (`isActiveFullScreen`).
+- `PlacementTracker::restore` (6.8.2) saves each window's state per set of outputs and puts it back
+  at every output change (a fullscreen included) when the window's state is unchanged since it was
+  saved or last restored, or when its output went away. Every monitor asleep is a set of its own
+  (KWin's 1920x1080 placeholder output): leaving it re-requests a fullscreen saved for the real
+  monitors, which a probe reproduces with three outputs swapping {0,1} for {2} and back. KWin
+  refuses to disable the last output from a config change, so the placeholder itself can't be.
 - A monitor unplugged under a fullscreen X11 window in its tile: the window passes through its
   pre-tile size (the tile's unmanage) and KWin puts it fullscreen on the remaining monitor in the
   same millisecond; on replug it comes back covering its own (probed 2026-11-07). Nothing for

@@ -66,13 +66,18 @@ test("classify: the kinds kept out come first; on all desktops is sticky (in the
 test("classify: i3's float at manage: transient, modal, fixed size, dialog, utility, toolbar, splash (X11 types too, R2), the capture note; else tiling", () => {
     const { R } = rules();
     assert.strictEqual(kind(R, { resourceClass: "Alacritty" }), "tiling");
-    for (const f of [{ transient: true }, { modal: true }, { resizeable: false }, { dialog: true, normalWindow: false },
+    const fixed = { resizeable: false, minSize: { width: 300, height: 200 }, maxSize: { width: 300, height: 200 } };
+    for (const f of [{ transient: true }, { modal: true }, fixed, { dialog: true, normalWindow: false },
                      { utility: true, normalWindow: false }, { toolbar: true, normalWindow: false }, { splash: true, normalWindow: false },
                      { caption: "kwin-i3 capture note" }])
         assert.strictEqual(kind(R, f), "floating", JSON.stringify(f));
     // KWin calls a fullscreen window not resizeable: it is judged by its own limits (B of spec-fullscreen-tree).
     assert.strictEqual(kind(R, { fullScreen: true, resizeable: false, minSize: { width: 100, height: 100 }, maxSize: { width: 2000, height: 2000 } }), "tiling");
     assert.strictEqual(kind(R, { fullScreen: true, resizeable: false, minSize: { width: 100, height: 100 }, maxSize: { width: 100, height: 100 } }), "floating");
+    // A Wayland window with a fullscreen request pending reads the same (not resizeable, not yet
+    // fullscreen); an X11 window not resizeable with resizable limits has no request: it floats.
+    assert.strictEqual(kind(R, { resizeable: false }), "tiling", "a pending fullscreen request");
+    assert.strictEqual(kind(R, { resizeable: false, toString: () => "X11Window(0x1)" }), "floating", "X11: no pending state");
     assert.strictEqual(kind(R, { skipTaskbar: true }), "tiling", "skipping the taskbar decides nothing (R4)");
 });
 

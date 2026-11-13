@@ -14,6 +14,7 @@ var KI3 = (function () {
     var floatedBars = {};   // workspace number -> its floated groups' bars as last placed ({ con, rect })
     var helperLoaded = null;   // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
+    var pendingFs = {};     // window id -> out of the tiles for a pending fullscreen request (checkPending)
     // The frame: with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
     // effect last said (asked at load and on every reconfigure; the effect asks for a
@@ -337,9 +338,10 @@ var KI3 = (function () {
     // *requested* tile (window.h: READ requestedTile), cleared by the unmanage itself, not on
     // the client's acknowledgement, so it is safe to decide from (probed with a stopped client).
     // A fullscreen window still in its tile stays there: KWin puts it back when fullscreen ends.
+    // So does one whose fullscreen request is pending (pendingFs, below): KWin refuses its tile.
     function visibleLeaf(c) {
         var w = wins[c.win];
-        return w && !w.minimized && !(w.fullScreen && !w.tile);
+        return w && !w.minimized && !((w.fullScreen || pendingOut(c.win, w)) && !w.tile);
     }
 
     // A tabbed or stacked group (i3's render_con_tabbed, render_con_stacked): every child gets the
@@ -516,10 +518,61 @@ var KI3 = (function () {
             log("FULLSCREEN " + w.caption + ": out of the tiles until it ends");
             return false;
         }
-        // Also a window whose fullscreen request is pending, on a hidden desktop: a known limit
-        // (plan, policies: monitor returns).
+        // A fullscreen request pending (Rules.pendingFullscreen; KWin makes one at every output
+        // change): as i3's con, it stays tiling in the tree, out of the tiles until the request
+        // lands or ends. KWin refuses before letting go of any tile the window was in, so off it.
+        if (Rules.pendingFullscreen(w)) {
+            var key = id(w);
+            if (pendingFs[key] === undefined) {
+                pendingFs[key] = 0;
+                log("FULLSCREEN " + w.caption + ": requested, out of the tiles until it lands");
+            }
+            if (w.tile) unmanageFrom(w.tile, w);
+            checkPending();
+            return false;
+        }
         floatWindow(w, "KWin refused to tile it");
         return false;
+    }
+
+    // Windows out of the tiles for a pending fullscreen request: window id -> when it was first
+    // seen pending on a shown workspace (0: not yet; a hidden window never acknowledges, V14). A
+    // request can end with no signal (cancelled before the client's ack: updateFullScreenMode
+    // sees no change) and `resizeable` has none, so the marks are looked at again every 150 ms
+    // while one is on a shown workspace, and at every pass. Still pending after 3 s on a shown
+    // workspace (a client that never answers; a KWin rule forcing the size reads the same):
+    // floated, as a refused window is. A gap of over a minute between looks (a suspend) starts
+    // the 3 s again.
+    var pendingLook = 0, pendingTimer = false;
+    function pendingOut(key, w) { return pendingFs[key] !== undefined && Rules.pendingFullscreen(w); }
+    function checkPending() {
+        var now = Date.now(), again = false, slept = pendingLook && now - pendingLook > 60000;
+        pendingLook = now;
+        Object.keys(pendingFs).forEach(function (key) {
+            var w = wins[key], con = model.byWin[key], ws = con && Tree.wsOf(con);
+            if (!w || !con || floats(con) || !Rules.pendingFullscreen(w)) {
+                delete pendingFs[key];
+                if (w && con) log("FULLSCREEN " + shortCaption(w) + ": the request ended, back in the tiles");
+                schedule(ws);
+                return;
+            }
+            if (outputOf(ws) && workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) {
+                pendingFs[key] = 0;
+                return;
+            }
+            if (!pendingFs[key] || slept) pendingFs[key] = now;
+            if (now - pendingFs[key] >= 3000) {
+                delete pendingFs[key];
+                floatWindow(w, "its fullscreen request never landed");
+                schedule(ws);
+                return;
+            }
+            again = true;
+        });
+        if (again && !pendingTimer) {
+            pendingTimer = true;
+            later(150, function () { pendingTimer = false; checkPending(); });
+        }
     }
     // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
     // a fullscreen window dragged to the other monitor went back, small, to the old one when its
@@ -537,7 +590,7 @@ var KI3 = (function () {
         // A copy: w.frameGeometry is a live reference, and an X11 window's unmanage moves it at
         // once, so a held reference read the restored rect and wrote that back.
         var f = w.frameGeometry;
-        var g = w.fullScreen || hidden || leaving(w) ? { x: f.x, y: f.y, width: f.width, height: f.height } : null;
+        var g = w.fullScreen || pendingFs[id(w)] !== undefined || hidden || leaving(w) ? { x: f.x, y: f.y, width: f.width, height: f.height } : null;
         tile.unmanage(w);
         if (g) w.frameGeometry = g;
     }
@@ -1007,7 +1060,7 @@ var KI3 = (function () {
     // stays: a slow client whose tile changed before it answered gets fresh bounds before it
     // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
     // Never for an X11 window (no bounds there; a 0x0 request would be a real resize).
-    function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
+    function isX11(w) { return Rules.isX11(w); }
     function armRefit() { for (var key in wins) armed[key] = true; }
     function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
     // In a tile of KWin's custom tiling (kwin-i3's), not a quick tile: its root is the root tile.
@@ -1134,6 +1187,7 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
+        if (Object.keys(pendingFs).length) checkPending();
         endFullscreen(ws);
         model.floatingWindows(ws).forEach(function (f) {
             var w = wins[f.win];
@@ -2406,7 +2460,7 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key]; delete untiledYet[key];
+        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -2516,6 +2570,7 @@ var KI3 = (function () {
             if (con) schedule(Tree.wsOf(con));
         }));
         w.fullScreenChanged.connect(guard("fullscreen", function () {
+            delete pendingFs[key];              // the request landed (or ended)
             model.setFullscreen(key, w.fullScreen);
             var con = model.byWin[key];
             // con_enable_fullscreen (con.c:1286-1289): the window takes the focus, unless its
@@ -4060,10 +4115,8 @@ var KI3 = (function () {
                                  // the rect kwin-i3 asks for in that tile: inside its padding (the frame, the gaps)
                                  want: w.tile ? r(windowRect(w.tile)) : null,
                                  fullscreen: !!w.fullScreen, active: w === active,
-                                 // a fullscreen request KWin can't apply yet: resizable by its size
-                                 // limits, but KWin says not (plan, policies: monitor returns)
-                                 pending: !w.resizeable && !w.fullScreen && (w.minSize.width < w.maxSize.width ||
-                                                                            w.minSize.height < w.maxSize.height) });
+                                 // a fullscreen request the client hasn't acknowledged yet
+                                 pending: Rules.pendingFullscreen(w) });
             });
             Object.keys(model.workspaces).forEach(function (n) {
                 var ws = model.workspaces[n];
