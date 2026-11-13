@@ -103,6 +103,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   (KWin's 1920x1080 placeholder output): leaving it re-requests a fullscreen saved for the real
   monitors, which a probe reproduces with three outputs swapping {0,1} for {2} and back. KWin
   refuses to disable the last output from a config change, so the placeholder itself can't be.
+  The placeholder's saved state outlives the session that saved it: a window not fullscreen the
+  last time every monitor slept is sent "not fullscreen" the next time, then "fullscreen" again on
+  waking. A page's own fullscreen (a video's F key in a browser) ends at the first and doesn't
+  come back with the second: the window wakes in the browser's fullscreen of the whole page.
+  Nothing a script can stop (the request has no signal, and the page's state is the client's);
+  monitors that keep their hot-plug line in standby never reach the placeholder.
 - A monitor unplugged under a fullscreen X11 window in its tile: the window passes through its
   pre-tile size (the tile's unmanage) and KWin puts it fullscreen on the remaining monitor in the
   same millisecond; on replug it comes back covering its own (probed 2026-11-07). Nothing for
