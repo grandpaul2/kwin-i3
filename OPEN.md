@@ -91,17 +91,3 @@ a review of 4dbf16f; unverified). With the rect copied in `unmanageFrom`, a hidd
 keeps its tile-sized frame through the unmanage, and `floatAtRecord` skips hidden windows
 (`src/kwin.js`), so it floats at that size, as a Wayland window already did, instead of its own.
 Next: a test-KWin probe, with the go; i3's `floating_enable` uses the window's own geometry.
-
-**103. A float for size on a briefly smaller output is never undone** (2026-11-12, from the pending-fullscreen
-fix's investigation; confirmed from code, not seen live). `floatWhatCannotFit` (X7) floats the tiled
-window with the largest minimum while the minimums don't fit; on KWin's 1920x1080 placeholder
-output (every monitor asleep) that can float windows that fit again when the monitors return, and
-nothing tiles them back. X7's reason (a client can't be drawn below its minimum) covers the float
-while the area is small, not keeping it after. Next: a spec that makes X7's float last only as
-long as its cause.
-
-**104. A window dropped from the tree loses its floating mark** (2026-11-12, from the pending-fullscreen
-fix's investigation; confirmed from code, rare). `dropWindow` clears the Keep Above that marks a window
-kwin-i3 floats, so one floated by hand comes back tiling when it is adopted again (two desktops at
-once, a desktop past 10, a class change that keeps it out). i3 keeps a con's floating state while
-the window is managed. Next: a diagnosis of each drop path against i3, after item 103.

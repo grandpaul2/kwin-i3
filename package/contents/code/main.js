@@ -2409,6 +2409,8 @@ var KI3 = (function () {
     var helperLoaded = null;   // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
     var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
     var pendingFs = {};     // window id -> out of the tiles for a pending fullscreen request (checkPending)
+    var droppedFloating = {};   // window id -> true: left the tree floating, still open (dropWindow)
+    var sizeFloat = {};     // window id -> { place, nc, ws, seq }: floated for its minimum size (floatWhatCannotFit)
     // The frame: with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
     // effect last said (asked at load and on every reconfigure; the effect asks for a
@@ -3972,8 +3974,11 @@ var KI3 = (function () {
     // The plan's rule "a window that can't fit floats" (code review: a window with a 900 px
     // minimum hung 580 px off a 1280 px screen; a row of 12 windows broke KWin's sizing). While
     // the tiled windows' minimum sizes can't fit the screen, float the one with the largest
-    // minimum along the axis that overflows.
+    // minimum along the axis that overflows. Only while they can't: one floated so goes back to
+    // its place when it fits again (fitAgain, §3 X7), as reason (a) covers the float, no more.
+    var sizeSeq = 0;
     function floatWhatCannotFit(ws, area) {
+        fitAgain(ws, area);
         var e = gaps(ws).inset, W = area.width - e.left - e.right, H = area.height - e.top - e.bottom;    // the root's room
         for (var n = 0; n < 32; n++) {
             var p = project(ws);
@@ -3989,9 +3994,49 @@ var KI3 = (function () {
                 if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
             });
             if (!worst) return;
+            var key = id(worst), place = model.placeOf(model.byWin[key]);
             floatWindow(worst, "its minimum size can't fit beside the others");
+            var fc = model.byWin[key];
+            if (fc && Tree.isFloating(fc)) sizeFloat[key] = { place: place, nc: fc.parent, ws: ws, seq: ++sizeSeq };
         }
     }
+    // The windows floated for size, newest first (the smallest minimum), each back in its place
+    // (G5's floatBack) once it fits. The test is a bound that can't put back a window that then
+    // overflows: the workspace's minimum now plus the window's own, on both axes, in the room the
+    // gaps leave with two windows or more (smart gaps' lone window has none, and would read room
+    // that the window's return takes away). A mark ends when the window's kind, container or
+    // workspace is no longer the float's, or the user moved or resized it (noteMoved).
+    function fitAgain(ws, area) {
+        var mine = [];
+        Object.keys(sizeFloat).forEach(function (key) {
+            var s = sizeFloat[key], con = model.byWin[key], w = wins[key];
+            if (!con || !w || !Tree.isFloating(con) || con.parent !== s.nc || con.sticky || Tree.wsOf(con) !== s.ws) {
+                delete sizeFloat[key];
+                return;
+            }
+            if (s.ws === ws && !w.fullScreen && !w.minimized) mine.push(key);
+        });
+        if (!mine.length) return;
+        mine.sort(function (a, b) { return sizeFloat[b].seq - sizeFloat[a].seq; });
+        var many = computeGaps(ws, null), saved = gapCache[ws.num];
+        var W = area.width - many.inset.left - many.inset.right, H = area.height - many.inset.top - many.inset.bottom;
+        gapCache[ws.num] = many;            // minOf's inner gap: the same two-window gaps
+        try {
+            mine.forEach(function (key) {
+                var w = wins[key], con = model.byWin[key], p = project(ws);
+                var need = p ? minOf(p) : { w: 0, h: 0 }, fm = frameMin(w);
+                if (need.w + fm.w + many.inner > W + 0.5 || need.h + fm.h + many.inner > H + 0.5) return;
+                model.floatBack(con, sizeFloat[key].place);
+                delete sizeFloat[key];
+                setFloatingLook(w, false);
+                log("FLOAT " + shortCaption(w) + ": fits again, back in its place");
+            });
+        } finally {
+            if (saved) gapCache[ws.num] = saved; else delete gapCache[ws.num];
+        }
+    }
+    // The user moved or resized a floating window (a drag, a key): it is theirs now.
+    function noteMoved(key) { delete sizeFloat[key]; }
 
     // Put every window of the workspace on its desktop and monitor: after Meta+Shift+N, a move
     // across monitors, or a monitor coming back. Our own moves are flagged so the handlers
@@ -4756,12 +4801,14 @@ var KI3 = (function () {
         }
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
-        // so it stays floating whatever the rules say.
-        if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key])) kind = "floating";
+        // so it stays floating whatever the rules say. So does one that left the tree floating
+        // (droppedFloating): i3's con keeps its kind while its window is managed.
+        if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key] || droppedFloating[key])) kind = "floating";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
         if (w.noBorder && !(tiledBorderless() && kind === "tiling")) w.noBorder = false;
         wins[key] = w;
+        delete droppedFloating[key];
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
         recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh, kind);
@@ -4840,6 +4887,9 @@ var KI3 = (function () {
         if (!wins[key]) return;
         var con = model.byWin[key];
         var ws = con ? Tree.wsOf(con) : null;
+        // Still open and floating (on two desktops, past 10, kept out by a type change): it
+        // comes back floating (adoptWindow), the look given back below being its only mark.
+        if (con && !w.deleted && floats(con)) droppedFloating[key] = true;
         try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
         if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
         var wasFocused = model.focused === con;
@@ -4854,7 +4904,7 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key];
+        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -4881,6 +4931,7 @@ var KI3 = (function () {
         delete floatedTold[key];
         delete closingNext[key]; delete ruleRan[key]; delete connected[key]; delete closeWatched[key];
         dropWindow(w);
+        delete droppedFloating[key];        // after the drop, which may have set it
         if (next && (next.win === null ? next.type === "ws" : model.byWin[next.win] === next) && model.focused !== next) {
             log("CLOSE " + shortCaption(w) + " i3's choice over KWin's: " + conCaption(next));
             model.activate(next);
@@ -5035,6 +5086,7 @@ var KI3 = (function () {
             log("DRAG start " + dragging + " " + w.caption);
         }));
         w.interactiveMoveResizeFinished.connect(guard("dragEnd", function () {
+            noteMoved(key);
             var kind = dragging;
             dragging = false;
             log("DRAG end " + kind + " " + w.caption);
@@ -5289,6 +5341,7 @@ var KI3 = (function () {
             return true;
         }
         w.frameGeometry = r;
+        noteMoved(id(w));
         // i3's get_output_from_rect: the output holding its centre, else the one it overlaps most.
         if (s && s !== outputOf(ws)) joinShownWorkspace(c, w, s);
         return true;
@@ -5306,6 +5359,7 @@ var KI3 = (function () {
         }
         if (!w) return !!c && floatsAlone(c);
         if (!w.resizeable) return true;
+        noteMoved(id(w));
         var px = sign * Settings.get("floatingStep"), g = w.frameGeometry;
         w.frameGeometry = { x: g.x, y: g.y, width: Math.max(1, g.width + (what === "width" ? px : 0)),
                             height: Math.max(1, g.height + (what === "height" ? px : 0)) };
