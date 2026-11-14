@@ -9,8 +9,8 @@ resize, focus on the frame), the resize mode, keys for your keyboard layout, and
 changes. The script runs without them, and the settings page says at its top when they aren't loaded.
 
 **Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
-capture (Install, step 6). Install the `stable` branch: each version there has run on a
-desktop for a day and passed every test on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
+capture (Install, step 6). Install the `stable` branch: each version there has been in daily
+use on `main` first and passed the tests on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
 2026-10-23), in daily use since 2026-10-22.
 The core of i3 is here, tabbed and stacked layouts included; what is left out is deliberate
 (urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
@@ -55,7 +55,8 @@ settings page): **workspace back and forth** (the workspace focused before) and 
 workspace back and forth**; **workspace next / prev** (among those in use, wrapping) and their
 **on output** forms; and for each direction, **focus output**, **move to output** (the window to
 that output's visible workspace; the focus stays) and **move workspace to output** (the whole
-workspace; the output it leaves shows the one it showed before). The setting
+workspace; the output it leaves shows the one it showed before), each also as **next** and
+**primary** output; and **workspace N** and **move to workspace N** with no back and forth. The setting
 `workspaceAutoBackAndForth` makes Meta+N for the workspace you are on go back, as i3's
 `workspace_auto_back_and_forth`. And **move to workspace next / prev** (and on output): the
 focused window to that workspace; the focus stays.
@@ -105,9 +106,8 @@ resize cursor until the drag starts).
 
 ## Requirements
 
-- Plasma 6.7 or later, in a Wayland session. Tested on Fedora 44 / Plasma 6.7.5 (NVIDIA, two
-  outputs) and Arch / Plasma 6.8.2 (AMD, a laptop's one output); built and tested headless on
-  PikaOS / Plasma 6.7.4. One activity.
+- Plasma 6.7 or later, in a Wayland session. Tested on Plasma 6.8 (Fedora, one and two outputs) and
+  6.7; built and tested headless on Arch and PikaOS (Plasma 6.7.4). One activity.
 - `git`, `make`, and the packages to build the plugins and the settings page:
 
 | distribution | packages |
@@ -124,7 +124,7 @@ resize cursor until the drag starts).
 
 About ten minutes in a terminal, with one log-out in the middle. **Never alongside another tiling
 script** (Krohnkite, Polonium, …): two scripts would place the same windows, so turn the other one
-off first (System Settings > Window Management > KWin Scripts); `make install` stops if one is on.
+off first (System Settings > Window Management > KWin Scripts); `make install` stops if Krohnkite, Polonium or Bismuth is on (it checks those three).
 Nothing in Plasma is changed without your say, and `make uninstall` takes it all out again.
 
 1. **Get it**, into `~/kwin-i3` (the steps below assume that path):
@@ -163,7 +163,8 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
 6. **A key for bug reports**: System Settings > Shortcuts > Add New > Command or Script,
    `~/kwin-i3/tools/capture`, on a key you don't use (Meta+Shift+B is free on a stock Plasma). Press it
    right after something goes wrong: it asks for a note and saves what kwin-i3 saw in the seconds
-   before to `~/.local/state/kwin-i3/captures/<time>/`. Send that folder (zipped) with your report.
+   before to `~/.local/state/kwin-i3/captures/<time>/`: its log, a screenshot of every screen, and
+   the open windows' titles. Look it over, then send that folder (zipped) with your report.
 
 **After a Plasma update**: the plugins work only with the KWin version they were built against,
 so after each Plasma update, until you run `cd ~/kwin-i3 && make plugin-install`, tiling windows
@@ -212,7 +213,7 @@ from KWin only when they first appear, with the title bar counted; kwin-i3 asks 
 again once the title bar is gone, so they fill their tile.
 
 To reload the script after a change: `busctl --user call org.kde.KWin /Scripting
-org.kde.kwin.Scripting unloadScript s kwin-i3`, then the `reconfigure` above. It re-tiles every
+org.kde.kwin.Scripting unloadScript s kwin-i3`, then `busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure`. It re-tiles every
 window once.
 
 ### The settings page
@@ -235,7 +236,7 @@ KWin library, so a Plasma update doesn't turn it off.
 
 Plasma's pager draws every desktop as all your outputs side by side, and every desktop, used or
 not; with per-output desktops a workspace lives on one output, so half of each thumbnail is
-empty. kwin-i3's widget, **kwin-i3 Workspaces**, shows every workspace in use (windows on it, or a
+empty. kwin-i3's widget, **kwin-i3 Workspaces**, shows every workspace in use (windows on it, or an
 output showing it, as i3bar does), each at its own output's shape with its windows, the shown
 ones marked (more strongly on the output with focus); a click is Meta+N, a scroll goes to the
 next or previous one. `make widget-install` (QML only: nothing to build, nothing to redo after a
@@ -282,10 +283,12 @@ reaches the plugins directly.
 | `[Script-kwin-i3] focusWrapping` | `yes` | i3's `focus_wrapping`: `yes` (at the edge, to the next output, else wrap), `no` (never wrap, still cross outputs), `force` (always wrap inside the container), `workspace` (wrap, never leave the workspace) |
 | `[Script-kwin-i3] tilingDrag` | `modifier titlebar` | i3's `tiling_drag`: which presses drag a tiling window to a new place in the layout (plugins): `modifier` (Meta+left anywhere in it), `titlebar` (a left press on its title bar), both, or `off` (a tiling window stays put) |
 | `[Script-kwin-i3] popupDuringFullscreen` | `smart` | i3's `popup_during_fullscreen`: with a fullscreen window on the workspace, a new window opens behind it and the fullscreen window keeps the focus, except (`smart`) the fullscreen window's own dialogs; `ignore`, no exception (save a modal dialog of the fullscreen window itself, which KWin activates in its place); `leave_fullscreen`, any dialog ends the fullscreen instead; `all`, any floating window shows over it. A window that opens fullscreen itself always takes over |
+| `[Script-kwin-i3] focusFollowsMouse` | `true` | i3's `focus_follows_mouse`: the pointer entering a window focuses it; `false`, click to focus |
 | `[Script-kwin-i3] mouseWarping` | `output` | i3's `mouse_warping`: `output` (when the focus moves to another output by a key, a workspace switch or an activation, the pointer goes to the focused window's centre, unless it is on that output already), `none` (the pointer never moves by itself) |
 | `[Script-kwin-i3] endSession` | `logout` | what Meta+Shift+E (i3's exit) does: `logout` (Plasma's log out prompt), `sleep` (at once), `shutdown` (Plasma's shut down prompt), `ask` (Plasma's logout screen, every choice). The prompts go ahead after 30 seconds unless cancelled |
 | `[Script-kwin-i3] workspaceOutputs` | empty | i3's `workspace N output A B …`: `1=DP-4 HDMI-A-1, 2=DP-6` (connector names, `kscreen-doctor -o`; a list per workspace, the first connected output wins). At login each output shows the lowest workspace free and not set to another output; an empty workspace with a workspace output opens on its output; an output that appears takes the workspaces set to it and shows its lowest, else a free one. An output that goes away leaves its workspaces on the first output for good: only a workspace output brings one back, as in i3. A reload moves no workspace that exists |
 | `[Script-kwin-i3] workspaceAutoBackAndForth` | false | i3's `workspace_auto_back_and_forth`: Meta+N for the focused workspace shows the one focused before; Meta+Shift+N for it sends the window there |
+| `[Script-kwin-i3] keysOverride` | `true` | a key kwin-i3 shares with a Plasma shortcut runs kwin-i3's command, as i3 grabs its own keys, and Meta+T is held from KWin's tile editor (plugins); `false`, the Plasma shortcut runs |
 | `[Script-kwin-i3] debugLog` | `false` | also send every log line over D-Bus to `tools/logsink.py` as it happens (the test KWin's log; nothing listens on a desktop). Either way the last 2000 lines are kept in memory for `Dump State` and `tools/capture` (`docs/debugging.md`) |
 | `[Script-kwin-i3] holdEnabled` | `true` | the atomic-layout effect's kill switch (plugins) |
 | `[Script-kwin-i3] holdTimeoutMs` | `200` | how long the old layout may be held for a slow window, 10-2000 ms (Sway's too) |

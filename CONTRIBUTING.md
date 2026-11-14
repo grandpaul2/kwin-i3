@@ -8,9 +8,8 @@ This page is the short version.
 
 ## Getting set up
 
-1. Install and build by `README.md` (its package list is Fedora's; on Arch the KWin headers are in
-   `kwin`, and add `vulkan-headers` and `python-xlib`). `make plugin` and `make kcm` build the
-   optional plugins and the settings page.
+1. Install and build by `README.md` (its Requirements list each distribution's packages). `make
+   plugin` and `make kcm` build the two plugins and the settings page.
 2. Read `docs/philosophy.md` (what it is for), `docs/plan.md` (scope and the decisions) and
    `docs/behaviour.md` (what the code does). `docs/README.md` maps the rest.
 3. `make unit`, then one scenario to see the harness work: `make tools`, then
@@ -27,6 +26,9 @@ your KWin loads: do your work in a git worktree, never on a branch there.
 
 - Pick an item from `OPEN.md` (work for now) or propose something new. `LATER.md` is held until
   the current development Stage ends.
+- Before any code, a spec: i3's way first (its source, file:line), the cause for a bug, what
+  changes and what it touches; an outside review of it; then the maintainer's go on it in the PR
+  (`AGENTS.md`, "How work lands", has the two workflows). Docs alone need none.
 - Work on a branch in a worktree (`git worktree add ../kwin-i3-<branch> -b <branch>`, then
   `make tools` there), push it, and open a pull request to `main`
   (`gh pr create --base main --title "OPEN.md 54: ..."`). One item per PR;
