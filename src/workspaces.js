@@ -57,7 +57,7 @@ var Workspaces = (function () {
     // and not set to another output (create_workspace_on_output); with none set, 1 on the
     // primary, 2 on the next, ... Workspaces set to an output are placed there first (`place`,
     // src/kwin.js's, as for every placement). i3ws did this on every load, so reloading it
-    // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
+    // mid-session reshuffled the monitors; kwin-i3 does it only when it starts with
     // no windows (a login).
     // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens(place) {

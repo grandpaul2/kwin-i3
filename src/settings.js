@@ -13,7 +13,7 @@ var Settings = (function () {
     // §3, §11 N12-N15). The defaults float the Plasma tools i3 would float (Spectacle, the
     // password prompt, KRuler, plasmashell's ordinary windows, the desktop portal's dialogs: Qt
     // dialogs on X11, typeless and often parentless on Wayland); the system windows are built in.
-    // Each by whole names (a class with and without org.kde.), as the settings page shows names.
+    // Each by whole names (a class also seen without org.kde. is given both ways), as the settings page shows names.
     var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
         "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
         "[class=\"^org\\.kde\\.kruler$\"] floating enable; " +

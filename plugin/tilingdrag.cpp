@@ -861,7 +861,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     }
     const bool metaShift = mods == (Qt::MetaModifier | Qt::ShiftModifier);
     // i3's floating modifier is pressed when its bits are all there, whatever else is held
-    // (click.c:166, (state & mod) == mod): Meta+Ctrl or Meta+Alt is a Meta press too (§9 G1).
+    // (click.c:171, (state & mod) == mod): Meta+Ctrl or Meta+Alt is a Meta press too (§9 G1).
     // KWin's own window action fires on Meta alone (input.cpp:1299), so any other set goes to the
     // app where the setting leaves the press out, as Meta+Shift does.
     const bool metaMore = (mods & Qt::MetaModifier) && mods != Qt::MetaModifier && !metaShift;
@@ -1038,7 +1038,7 @@ Window *TilingDrag::gapWindow(const QPointF &pos) const
 // window's, or the nearest tiled one for a gap.
 bool TilingDrag::pressResize(PointerButtonEvent *event)
 {
-    // Meta held, whatever else is (click.c:166, as the left button's, §9 Z1).
+    // Meta held, whatever else is (click.c:171, as the left button's, §9 Z1).
     if (!(event->modifiersRelevantForShortcuts & Qt::MetaModifier)) {
         return false;
     }

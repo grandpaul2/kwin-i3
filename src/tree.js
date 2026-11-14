@@ -1,7 +1,6 @@
 // The i3 tree: workspaces, split containers, leaves (windows), focus stacks, and the operations
-// on them. A port of i3's own code (github.com/i3/i3: first read on `next` at be04c853ee,
-// 2026-10-12; compared function by function with the 4.24 release in the code review of
-// 2026-10-30); each function names the i3 function it ports. No KWin calls here, so node can load and test
+// on them. A port of i3's own code (github.com/i3/i3: compared function by function
+// with the 4.24 release); each function names the i3 function it ports. No KWin calls here, so node can load and test
 // this file directly (tests/unit).
 //
 // Shapes (i3's Con, reduced to what kwin-i3 needs):

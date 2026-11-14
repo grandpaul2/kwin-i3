@@ -34,7 +34,7 @@ var Settings = (function () {
     // §3, §11 N12-N15). The defaults float the Plasma tools i3 would float (Spectacle, the
     // password prompt, KRuler, plasmashell's ordinary windows, the desktop portal's dialogs: Qt
     // dialogs on X11, typeless and often parentless on Wayland); the system windows are built in.
-    // Each by whole names (a class with and without org.kde.), as the settings page shows names.
+    // Each by whole names (a class also seen without org.kde. is given both ways), as the settings page shows names.
     var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
         "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
         "[class=\"^org\\.kde\\.kruler$\"] floating enable; " +
@@ -184,9 +184,8 @@ var Settings = (function () {
 })();
 // ---- src/tree.js
 // The i3 tree: workspaces, split containers, leaves (windows), focus stacks, and the operations
-// on them. A port of i3's own code (github.com/i3/i3: first read on `next` at be04c853ee,
-// 2026-10-12; compared function by function with the 4.24 release in the code review of
-// 2026-10-30); each function names the i3 function it ports. No KWin calls here, so node can load and test
+// on them. A port of i3's own code (github.com/i3/i3: compared function by function
+// with the 4.24 release); each function names the i3 function it ports. No KWin calls here, so node can load and test
 // this file directly (tests/unit).
 //
 // Shapes (i3's Con, reduced to what kwin-i3 needs):
@@ -2228,7 +2227,7 @@ var Workspaces = (function () {
     // and not set to another output (create_workspace_on_output); with none set, 1 on the
     // primary, 2 on the next, ... Workspaces set to an output are placed there first (`place`,
     // src/kwin.js's, as for every placement). i3ws did this on every load, so reloading it
-    // mid-session reshuffled the monitors (2026-10-21); kwin-i3 does it only when it starts with
+    // mid-session reshuffled the monitors; kwin-i3 does it only when it starts with
     // no windows (a login).
     // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens(place) {
@@ -2511,7 +2510,7 @@ var KI3 = (function () {
 
     // After an error: reconcile everything again 250 ms later, at most 3 times in a row; then wait
     // for the next real event. Retrying at once used to re-arm a 0 ms timer for ever, spinning
-    // KWin's main thread on a repeating error (code review, 2026-10-22).
+    // KWin's main thread on a repeating error (code review).
     var failures = 0, retryTimer = null;
     function retrySoon() {
         failures++;
@@ -2702,7 +2701,7 @@ var KI3 = (function () {
         });
         if (ok) failures = 0; else retrySoon();
         // Focus last, once windows are where they belong: a pointer warped earlier would land
-        // on the old place (i3ws learned this, 2026-10-21).
+        // on the old place (i3ws learned this).
         if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.byKey, fp.checked); }
         passWs = null;
         try { tellRings(); } catch (e) { log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : "")); }
@@ -2729,7 +2728,7 @@ var KI3 = (function () {
     // refuses to tile a fullscreen window (Tile::manage: not resizable). One dragged to the
     // other monitor arrives without a tile (fuzzer I9); one that had a tile loses it when the
     // tiles are rebuilt for a newcomer, and the refusal then floated it, monitor-sized, over
-    // everything opened after (A capture, 2026-10-23 23:25).
+    // everything opened after (a capture).
     // Both stay in the tree and join the layout when fullscreen ends. w.tile is KWin's
     // *requested* tile (window.h: READ requestedTile), cleared by the unmanage itself, not on
     // the client's acknowledgement, so it is safe to decide from (probed with a stopped client).
@@ -2975,10 +2974,10 @@ var KI3 = (function () {
     // old workspace let go of it (fuzzer I9). A fullscreen window keeps its geometry. So does a
     // hidden one (its desktop not shown on its monitor): a hidden window never acknowledges a new
     // size, and KWin applies no geometry to it until it does, so it froze at that old size, out
-    // of sight, through every later move (fuzzer I2, a monitor unplugged and back: 2026-10-22).
+    // of sight, through every later move (fuzzer I2, a monitor unplugged and back).
     // So does one on its way to another workspace (the model has it there, KWin not yet): it
     // waited there at its size from before it was tiled, and showed as that small box for a
-    // moment when its workspace was next shown (A capture, 2026-10-24). Putting the frame
+    // moment when its workspace was next shown (A capture). Putting the frame
     // back works within the call: KWin sends the configure from a timer, with the size pending then.
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
@@ -3168,7 +3167,7 @@ var KI3 = (function () {
     // inherited by children), which would stop i3 sizes below 384 px on a 2560 px monitor.
     // Splits get no minimum; a window's tile gets the window's minimum size, relative to the area.
     // noMin: minimums cleared, for while setSizes moves edges one by one: a tile minimum blocks
-    // KWin's in-between steps and the sizes never settle (seen 2026-10-22: 280|680|500 asked
+    // KWin's in-between steps and the sizes never settle (seen live: 280|680|500 asked
     // 280|500|500, the last window off the screen).
     function prepareTiles(t, area, noMin) {
         var inner = gaps().inner;
@@ -3185,7 +3184,7 @@ var KI3 = (function () {
     }
 
     // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
-    // in order can leave a stale edge behind (seen 2026-10-22: four columns, the third left at
+    // in order can leave a stale edge behind (seen live: four columns, the third left at
     // 0.567 wide over the fourth). Passes repeat until every tile is where it should be.
     function setSizesStable(root, p, area) {
         snapW = area.width; snapH = area.height;
@@ -3198,7 +3197,7 @@ var KI3 = (function () {
             if (!setSizes(root, p, r)) return;
         }
         // Which tiles were still moving on the last pass, and what KWin kept of what was asked:
-        // the cause, the next time it happens (A capture 2026-10-29; not reproduced in the test KWin).
+        // the cause, the next time it happens (A capture; not reproduced in the test KWin).
         log("WARN sizes did not settle after 4 passes: " + moved.join("; "));
     }
 
@@ -3210,7 +3209,7 @@ var KI3 = (function () {
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
     // decoration, when it has one (Breeze's title bar and borders). KeePassXC, minimum 800, needs an 802 px tile
-    // or KWin leaves it where it was (2026-10-22). The headless tests run Breeze (a 28 px title
+    // or KWin leaves it where it was. The headless tests run Breeze (a 28 px title
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
         // Its border taken: no decoration, even while the client hasn't answered yet (R1-13).
@@ -3244,12 +3243,12 @@ var KI3 = (function () {
 
     // i3's shares, but no child below its minimum: the shortfall comes from children with room
     // to spare, in proportion to that room. Display only: the model keeps i3's shares. (Seen
-    // live, 2026-10-22: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
+    // live: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
     // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
     function fitMinimums(want, mins, total) {
         var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
         // Half a pixel's slack: minimums that fill the space exactly (a split made just wide enough
-        // for them) came to 834 against a total of 833.99999 and gave up (fuzzer, seed 9, 2026-10-30).
+        // for them) came to 834 against a total of 833.99999 and gave up (fuzzer, seed 9).
         if (sumMin > total + 0.5) return want;
         var out = want.slice(), locked = out.map(function () { return false; });
         for (var round = 0; round < out.length; round++) {
@@ -3266,7 +3265,7 @@ var KI3 = (function () {
 
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
-    // 1 px hole the wallpaper showed through (seen live, 2026-10-22).
+    // 1 px hole the wallpaper showed through (seen live).
     function snap(v, n) { return Math.round(v * n) / n; }
 
     // Returns true if anything had to change.
@@ -3364,7 +3363,7 @@ var KI3 = (function () {
             // but never requested it (Tile::manage), and manage() again returns early for a window
             // it already lists. Once shown: off the list, then on (fuzzer I4, a monitor unplug).
             // Listed by KWin itself: a monitor returning takes a window and its modal dialog back
-            // into its own tile on that monitor (fuzzer I1, 2026-10-23). `expected` followed the
+            // into its own tile on that monitor (fuzzer I1). `expected` followed the
             // window to the first monitor's tile meanwhile and was left there: the invariant check
             // read "not in its tile" and tileChanged took the move for someone else's.
             if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
@@ -3400,7 +3399,7 @@ var KI3 = (function () {
     // A fullscreen window KWin keeps in its tile (none rebuilt since) is resized to the tile by
     // KWin whenever the tile's padding or geometry is written (Tile::setPadding and
     // setRelativeGeometry moveResize every window in it, fullscreen or not): a reload's first
-    // pass, a gap or frame-width change. Put back on its monitor (A capture 2026-10-27 03:45).
+    // pass, a gap or frame-width change. Put back on its monitor (a capture).
     function fitFullscreen(w) {
         if (!w.output) return;
         var g = w.frameGeometry, a = workspace.clientArea(KWin.FullScreenArea, w);
@@ -3411,8 +3410,8 @@ var KI3 = (function () {
     }
     // The pass's look reads the frame from before the resize: KWin changes it only when the client
     // answers (XdgSurfaceWindow::moveResizeInternal schedules a configure), so Firefox, resized by
-    // a reload's two paddings, reached its tile's size after the pass and kept it (A capture
-    // 2026-10-28 20:06). So the frame's change is looked at too, as i3 renders a fullscreen con at
+    // a reload's two paddings, reached its tile's size after the pass and kept it (a
+    // capture). So the frame's change is looked at too, as i3 renders a fullscreen con at
     // its output's rect on every pass (render.c:132). A moment later: KWin applies a commit's frame
     // before its fullscreen state (handleNextWindowGeometry, then handleStatesAcknowledged), so a
     // window leaving fullscreen still reads fullScreen when its frame shrinks. Once per frame, as
@@ -3432,7 +3431,7 @@ var KI3 = (function () {
     // that layout (workspace.cpp updateOutputs). A window whose tile changed meanwhile looks
     // fitting to refit, and writing its tile again does nothing: XdgSurfaceWindow::moveResizeInternal
     // sends no configure when the size asked for is the size it has, so the old request still in
-    // flight lands afterwards (fuzzer I10, 2026-10-23). So after a screens change every tiled
+    // flight lands afterwards (fuzzer I10). So after a screens change every tiled
     // window is watched ("armed") until its frame next shows its tile, and refitted whenever the
     // frame changes to something else. Only then: a general watch fought slow clients that answer
     // a resize in steps (53-hold). Not inside a reconcile (the tiles are mid-change; it ends with a
@@ -3451,7 +3450,7 @@ var KI3 = (function () {
     // went, or later with its frame at the bounds, is asked for 0x0 (KWin resends the bounds, now
     // without the title bar; the client keeps its size), then for its tile in a configure of its
     // own. The later look because a first tile inside the bounds fits, and a later, bigger one (a
-    // vertical split's half, then the whole monitor) stayed 26 px short (fuzzer I10, seed 4, fixed 2026-10-26: c386531); only
+    // vertical split's half, then the whole monitor) stayed 26 px short (fuzzer I10, seed 4, fixed in c386531); only
     // at the bounds, so a slow client answering in steps is not asked again. The first look
     // stays: a slow client whose tile changed before it answered gets fresh bounds before it
     // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
@@ -3517,7 +3516,7 @@ var KI3 = (function () {
         lastFit[key] = seen;
         fitToTile(w, t);
     }
-    // A tiled window that resizes itself (Firefox's session restore: a capture 2026-10-25)
+    // A tiled window that resizes itself (Firefox's session restore: a capture)
     // is asked back into its tile, as i3 refuses a tiled window's own resize (handlers.c
     // handle_configure_request). It had reached its tile and left it:
     // the frame before the change fitted. A slow client answering kwin-i3's own resize in steps
@@ -4089,8 +4088,8 @@ var KI3 = (function () {
     // A window crossing to another monitor stays on all desktops until KWin says it arrived
     // (outputChanged, or 2 s): given its workspace's desktop at once, it is hidden on the monitor
     // it is still on, and a hidden client may never answer the move (Electron: VS Code left on
-    // DP-6 with desktop 3, KWin waiting on it, sendToOutput a no-op from then on; a capture,
-    // 2026-10-26 04:32). window id -> the desktop it gets on arrival: `crossing`, declared at the top
+    // DP-6 with desktop 3, KWin waiting on it, sendToOutput a no-op from then on; a
+    // capture). window id -> the desktop it gets on arrival: `crossing`, declared at the top
     // (the end of a pass reads it).
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
@@ -4866,7 +4865,7 @@ var KI3 = (function () {
             Placement.takesFocus(visibleHere, !fws || outputOf(ws) === outputOf(fws), !!fws);
         // popup_during_fullscreen all: a floating newcomer under its workspace's fullscreen window
         // takes the focus wherever that workspace is visible, any output (manage.c:520); i3's
-        // invisible-workspace rule still holds (manage.c:609). Review 2026-10-28.
+        // invisible-workspace rule still holds (manage.c:609). Review.
         var fsHere = model.fullscreenOn(ws);
         if (!takes && visibleHere && kind !== "tiling" && fsHere && fsHere.win !== key &&
             Settings.get("popupDuringFullscreen") === "all") takes = true;
@@ -5035,8 +5034,8 @@ var KI3 = (function () {
             var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
             // The focused window minimized and KWin's own pick not a window of the tree (none, the
             // desktop, a gap strip under the pointer): the focus goes to i3's next here, else the
-            // pass would activate the minimized window and KWin un-minimize it (review
-            // 2026-10-28). With a tree window picked, windowActivated has done this already.
+            // pass would activate the minimized window and KWin un-minimize it (a
+            // review). With a tree window picked, windowActivated has done this already.
             if (con && w.minimized && focusedBefore === con) {
                 var next = model.nextFocused(con);
                 log("MINIMIZED " + conCaption(con) + ": i3's next " + conCaption(next));
@@ -5061,8 +5060,8 @@ var KI3 = (function () {
         }));
         // Maximize (i3 has none) needs no handler of its own: it drops the window out of its
         // tile, the foreign-untile path below re-tiles it, and KWin's Tile::manage clears the
-        // maximize. A separate handler doing the same was found redundant by the fault battery
-        // (2026-10-22): with two paths, removing either changed nothing, so neither was tested.
+        // maximize. A separate handler doing the same was found redundant by the fault battery:
+        // with two paths, removing either changed nothing, so neither was tested.
         w.desktopsChanged.connect(guard("desktops", function () {
             // Two desktops while relocate moves it or its dialog: KWin's moment, not "made sticky".
             // A parent KWin moves along with its modal dialog is still followed (below).
@@ -5191,7 +5190,7 @@ var KI3 = (function () {
         // A border kwin-i3 took, given back by the window menu, or one due (borderDue): on Wayland
         // the title bar comes with the client's answer to the configure (configureDecoration),
         // after the pass that wanted it read frame = client and skipped it (takeBorder). The
-        // frame keeps its tile's size and the client shrinks by the title bar (probe 96, 2026-10-30).
+        // frame keeps its tile's size and the client shrinks by the title bar (probe 96).
         w.clientGeometryChanged.connect(guard("client", function () {
             if ((tookBorder[key] || borderDue[key]) && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
         }));
@@ -5940,7 +5939,7 @@ var KI3 = (function () {
     // Show Desktop, kept for windowUnder: it hides every window kwin-i3 manages and none it keeps
     // out (breaksShowingDesktop, workspace.cpp:1743), yet `hidden` stays false (isHidden leaves it
     // out). A script reads neither the window's flag nor the mode, but hears each window's
-    // hiddenByShowDesktopChanged (probe 97, 2026-10-30): each one asks KWin for the mode, and
+    // hiddenByShowDesktopChanged (probe 97): each one asks KWin for the mode, and
     // only the answer to the last question counts.
     var desktopShowing = false, showingAsked = 0;
     function readShowing() {
@@ -6321,7 +6320,7 @@ var KI3 = (function () {
         "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
         "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
         "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"],
-        // Shift+; arrives as ":": only Meta+: fires, Meta+Shift+; never does (probed 2026-10-24,
+        // Shift+; arrives as ":": only Meta+: fires, Meta+Shift+; never does (probed,
         // KWin 6.7.5; i3ws registered both). The same holds for Shift+digit below.
         "Move Right": ["Meta+Shift+Right", "Meta+:"],
         // i3's resize mode (§8 K4): Meta+R enters, then the helper takes J K L ; and
@@ -6399,7 +6398,7 @@ var KI3 = (function () {
             var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(autoBack(n), c); });
             registerShortcut("kwin-i3 Workspace " + n, "kwin-i3: workspace " + n, "Meta+" + k, go);
             // Meta+Shift+digit arrives as Meta+<symbol> (US layout: Meta+!); the Meta+Shift+digit
-            // action that stood beside this one until 2026-10-24 never fired. The id keeps its
+            // action that stood beside this one before never fired. The id keeps its
             // "(symbol)" so an install keeps the key it already holds.
             registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
                              "kwin-i3: move to workspace " + n, "Meta+" + SHIFTED[i], mv);
@@ -6432,7 +6431,7 @@ var KI3 = (function () {
             if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); return; }
             callDBus("org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts", "getLayoutsList", guard("layout keys", function (list) {
                 // "" is KWin's xkb default, US, where the system sets no layout (Arch's own
-                // default, 2026-10-29: the long name still says English (US)).
+                // default: the long name still says English (US)).
                 var names = (list || []).map(function (l) { return String(l[0]) || "us"; });
                 var other = names.filter(function (n) { return n !== "us"; });
                 log("LAYOUTS " + names.join(",") + (other.length ? ", not fitted (no helper)" : ""));
@@ -6847,7 +6846,7 @@ var KI3 = (function () {
             // before it activates a window elsewhere, so this is a stale choice, not a request.
             // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
             // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
-            // KWin activated a window of the workspace it replaced (fuzzer I8, seed 30, fixed 2026-10-26: 122ffa1).
+            // KWin activated a window of the workspace it replaced (fuzzer I8, seed 30, fixed in 122ffa1).
             // Not taken into the model; the next pass puts the focus back where the model has it.
             if (!switching && !w.onAllDesktops && w.output &&
                 w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {
@@ -6934,11 +6933,11 @@ var KI3 = (function () {
         adoptRestSoon("kwin-i3 loaded");
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
-        // activity event, once (from i3ws, seen in the log 2026-10-21). Connected even when this
+        // activity event, once (from i3ws, seen in its log). Connected even when this
         // load didn't look like a login (a session-restored window can exist already, review);
         // with one activity it never fires mid-session.
         // Armed only at a login: after a reload mid-session (windows open), the next activity
-        // switch renumbered every monitor back to 1, 2 … (audit, 2026-10-25).
+        // switch renumbered every monitor back to 1, 2 … (audit).
         var renumbered = !login;
         workspace.currentActivityChanged.connect(guard("activity", function () {
             if (renumbered) return;
@@ -7058,7 +7057,7 @@ var KI3 = (function () {
         }
         // A new look: the effect told now; the next pass gives or takes each tiled window's
         // border (tiledBorder) and redoes the padding. A loop giving borders back here was found
-        // redundant by the fault battery (2026-10-26).
+        // redundant by the fault battery.
         if (changed.indexOf("tiledLook") >= 0) tellRing();
         scheduleAll();
         wantFocus();
