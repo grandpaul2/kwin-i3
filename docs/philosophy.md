@@ -138,7 +138,7 @@ against i3 and the code every so often, to catch what slipped.
 
 - **Copy i3 by default**, ported from i3's source, not from memory (`AGENTS.md`): "ride i3, hard"
  . i3's word for anything i3 has (`docs/definitions.md`).
-- **Check i3's real behaviour before calling something a gap**: twice on 2026-10-26/27 what looked
+- **Check i3's real behaviour before calling something a gap**: twice what looked
   like a gap was i3 itself (a resize key changes a container's share against its siblings; a
   launcher-started game opened where you were in i3 too).
 - **Diverge only for one of the reasons in `docs/plan.md`, and write it down**: the row in

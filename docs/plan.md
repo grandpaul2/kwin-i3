@@ -379,7 +379,7 @@ table is the home of the rules; this is the why.
   per-output desktops new in 6.7). The live tests run against the installed KWin, so `make test` after
   a `dnf upgrade` says whether it still holds.
 - **Effect repaints**: on NVIDIA, a repaint of a region the effect asks for on its own (a timer,
-  a fade) can stay stale on screen (2026-10-28, the indicator's fade). The look (the ring, the
+  a fade) can stay stale on screen (the indicator's fade did). The look (the ring, the
   indicator, the banner) is drawn only on repaints that happen anyway; no timer-driven animation.
   The hold's own full repaints, at its release and while it holds, are the layout's, by design.
 - **Reconcile churn**: windows jumping or resizing twice. The diff keeps it to what changed; the live
@@ -389,9 +389,8 @@ table is the home of the rules; this is the why.
 - **Input** is tested through libei in the headless KWin (`tools/inject.py`; scenarios 50, 51, 52,
   86); it can't send scroll.
 - **kwinrc churn**: KWin rewrites `[Tiling]` on every tile change. Harmless; kwinrc is not captured.
-- **Cost to KWin: measured small, not a risk** (probe 2026-10-30, test KWin with the plugins, not
+- **Cost to KWin: measured small, not a risk** (a probe in the test KWin with the plugins, not
   kept): loading kwin-i3 adds about 16 MB to KWin (8 MB heap, 4 MB libraries, 4 MB shared buffers),
   flat over windows closed and reopened; idle CPU is KWin's own (the script runs no polling timer);
-  a new window's layout takes 2 ms on the desktop, its drawn layout 6.4 ms (capture,
-  2026-10-30). The gap strips (about 3 per tiling window, never fewer, `plugin/gapstrips.cpp`)
+  a new window's layout takes 2 ms on the desktop, its drawn layout 6.4 ms (a capture). The gap strips (about 3 per tiling window, never fewer, `plugin/gapstrips.cpp`)
   are tens of kB each. Performance work is in KWin, its effects and Plasma, not here.
