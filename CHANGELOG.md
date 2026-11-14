@@ -3,6 +3,25 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
+## v1.5.0 (2026-11-14)
+
+- **A window that moves itself to the other monitor stays on its workspace**, as in i3: a game
+  centring itself there at start, a borderless window later, or one on a workspace not shown.
+  Plasma's Move to Screen on a tiling window is put back the same way; i3's way is kwin-i3's
+  "Move window to … screen" commands (no key by default; bind them on the Keys tab). A floating window still goes where it is moved.
+- **Windows that floated while monitors were asleep come back tiled.** A browser fullscreen
+  before the monitors slept no longer returns floating and kept above, and a window floated
+  because the layout couldn't fit it goes back to its place once it fits. A floating window that
+  leaves kwin-i3's layout for a moment (put on two desktops) comes back floating.
+- **An X11 fullscreen window no longer shrinks to a corner** when a window opens beside it, and an
+  X11 window moving to another monitor no longer crosses as a small box.
+- **A window floated while its workspace isn't shown** (a rule matching its new title) floats at
+  its own size when the workspace is shown, instead of keeping its tile's.
+- **Window Rules**: the application box takes a name, matched whole; a pattern is written as text,
+  and a rule typed as i3 writes it, `for_window [...] floating enable` or `assign [...] → 2`,
+  now runs. A text rule kwin-i3 can't read says "not used"; the empty text row shows an example;
+  a new rule scrolls into view.
+
 ## v1.4.0 (2026-11-04)
 
 - **Tabbed and stacked bars keep their height whatever the gaps**, flush on their window and level
