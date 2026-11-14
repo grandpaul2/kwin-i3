@@ -37,7 +37,7 @@ maximum), by being on all desktops (then also sticky), or by being transient, th
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**; `behaviour.md` and the code call it a kind, `sticky`). A floating window's state only: i3 ignores it on a tiling one | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
+| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**; `behaviour.md` and the code call it a kind, `sticky`, being fixed: `OPEN.md` item 110). A floating window's state only: i3 ignores it on a tiling one | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
 | **transient window** (a dialog) | a window that belongs to another, its **parent** | `transient_for`, or the client leader (X11) | `transient`, `transientFor` |
 | **modal dialog** | a transient window the app marks modal; i3 floats it and does nothing more | `_NET_WM_STATE_MODAL` | `modal`; KWin keeps it and its parent on the same virtual desktop and gives it the parent's focus |
 | **fullscreen window** | a window covering its output, on top, its workspace's focus kept on it | `fullscreen` (output mode; global mode is out of scope) | `fullScreen` |
@@ -111,8 +111,8 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **reconcile** | making one workspace's KWin tiles match the tree |
 | **root tile** | KWin's top tile for one output and one virtual desktop |
 | **the script** | kwin-i3 itself, `package/` (`src/` built into `main.js`) |
-| **the helper** | the `kwini3helper` KWin plugin: frame focus, tiling drag and resize, the resize mode, popup grace, layout keys, the terminal key, the key override |
-| **the effect** | the `kwini3hold` KWin effect: the frame, rounded corners, the split indicator, the hold |
+| **the helper** | the `kwini3helper` KWin plugin: the mouse, the keys and the input filters (what it does: `behaviour.md` §1) |
+| **the effect** | the `kwini3hold` KWin effect: what kwin-i3 draws, and the hold (what it does: `behaviour.md` §1) |
 | **the frame** (ring) | the line the effect draws round a tiling window (`frameWidth`); i3's `pixel` border. "Frame" here never means KWin's `frameGeometry` or i3's X frame window; say those in full |
 | **the hold** | the effect freezing a layout change until every window has its new size |
 | **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:398-415`; here a press there resizes, `behaviour.md` Z3b) |

@@ -133,12 +133,12 @@ These are the project's rules, not suggestions.
   never parked as "looks flaky". But a symptom inside a trade already accepted (the hold's 200 ms
   timeout letting a slow app flash on close) isn't chased: check the docs' decisions first.
 - **Decide from the docs.** Before putting a question to the maintainer, run `docs/philosophy.md`
-  "How a decision is made" steps 1-4 (scope test, reasons, precedent rows, i3's source). If they
+  "How a decision is made" steps 1-4 (its home: the foundations, precedent, i3's source, a hole). If they
   decide it, it's decided; if not, that's a hole in the docs: say why, and frame the question as
   the foundation change it would be. Style and feel are judged live after building, not asked
   before. When a suggestion (anyone's) goes against the norms, push back plainly first.
-- **Follow the docs; a gap is a hole, not a choice.** i3, the foundations, the philosophy, then
-  i3 again settle each step; the maintainer is not asked to design, and comes in only for the
+- **Follow the docs; a gap is a hole, not a choice.** `philosophy.md`'s steps settle each step of
+  a plan, i3's source among them; the maintainer is not asked to design, and comes in only for the
   foundations themselves: a conflict between two, or a hole's repair (`philosophy.md` steps 4-5). So a plan comes as one plan, i3's way, each step citing what settled it,
   never as options, and a way away from i3 is never laid out as a choice. Where the docs
   contradict each other or say nothing, don't be creative and don't ask "what do you want here?":

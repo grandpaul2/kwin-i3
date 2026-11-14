@@ -36,7 +36,7 @@ manager has to rebuild what a desktop environment already gives, at every update
 What follows from the order: i3's behaviour and words win a tie, and nothing a Plasma user
 meets first should need i3 knowledge to undo (a floating window looks like any Plasma window;
 the settings page says what each word means, and shows i3's syntax only for a rule its rows can't
-hold).
+hold, or one written as text by choice, Add Rule as Text).
 
 ## How a decision is made
 

@@ -62,7 +62,10 @@ appended:
 - **A list the reader adds to** (Window Rules) is a framed list: the View colours, a border of
   `Kirigami.ColorUtils.linearInterpolation(background, text, Kirigami.Theme.frameContrast)`,
   rounded by `Kirigami.Units.cornerRadius`, a `Kirigami.Separator` between items. Every item has
-  the same shape: no line that shows only when it is set, no toggle that opens more. Groups (the
+  the same shape: no line that shows only when it is set, no toggle that opens more. The
+  exceptions say a state the reader must know: a rule the fields can't show is its text in place
+  of the fields, and a status label ("not saved: needs a pattern", "not used: can't be read")
+  shows on a rule that won't run, as a note under a text rule says why it is text. Groups (the
   shipped items, the reader's) are a list each under a heading. Adding sits in the page's footer
   (a `QQC2.ToolBar`, right-aligned), in view at any scroll; a new item scrolls into view with its
   first field focused. An empty list says so in a `Kirigami.PlaceholderMessage` with the add

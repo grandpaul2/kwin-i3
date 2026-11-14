@@ -18,7 +18,7 @@ making what is here **configurable and reliable**, on any machine and setup (`OP
 
 **Supported:** Plasma and KWin 6.7 or later, in a Wayland session (per-output desktops and
 `Tile.manage` are 6.7's). Xwayland apps are in, first-class: they are
-common. How the plugins reach a beta user: `OPEN.md` item 51; what kwin-i3 does on an older
+common. How the plugins reach a beta user: `LATER.md` item 51; what kwin-i3 does on an older
 Plasma, and the plugins in a release: `LATER.md`, "Release prep".
 
 **i3 means the 4.24 release** (its tag `4.24`: `https://raw.githubusercontent.com/i3/i3/4.24/src/<file>.c`,
@@ -128,7 +128,8 @@ its model (`handlers.c:675-991`):
 - Show Desktop changes nothing in the tree: the hidden tiles are only not hit (B2, F8b).
 
 Not covered yet, each its own item or row: activities (R15, `LATER.md` "Reliability"), a user's
-Keep Above on a floating window (`LATER.md` item 27), window rules, No Border, shade.
+Keep Above on a floating window (`LATER.md` item 27), and KWin's window rules, No Border and shade
+(`LATER.md` item 105).
 
 ## The mouse
 
@@ -210,10 +211,11 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   (d)).
 
 **The product is the script and its two plugins** (the plugins lock
-in i3's feel completely, but it works fine without them). The script
-alone runs the tree, workspaces, keys and floating, and is tested alone (every scenario not
-marked `# needs: plugin` runs with no plugin and Breeze, `tests/live/run.sh`). The helper adds the
-mouse (tiling drag, resize, frame focus), the resize mode, the layout keys and the terminal key;
+in i3's feel; without them the script still runs, with what §1 of `docs/behaviour.md` lists as
+lost). The script alone runs the tree, workspaces, keys and floating; a scenario that doesn't
+need a plugin runs without one (`# needs: plugin`, `tests/live/run.sh`), which keeps that case
+from breaking, not a test chosen for it. The helper adds the
+mouse (tiling drag, resize, frame focus), the resize mode, the position keys and the terminal key;
 the effect draws the frame and holds layout changes. Without either, the settings page's banner
 says what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Plasma update.
 
@@ -255,7 +257,7 @@ follows it:
 - **An upgrade carries no migration** before a public release: state an earlier version left
   (an old setting, a record, a Plasma value it wrote) is not read, converted or given back. The
   beta's users are few and reachable, and a migration is code kept for one upgrade.
-- **Removal leaves nothing behind**: `make uninstall` gives back every saved change, disables the
+- **Removal deletes what the install wrote**: `make uninstall` gives back every saved change, disables the
   script, and deletes everything the install wrote (the script's link, `~/.local/lib/kwin-i3/`,
   KWin's drop-in, the session's environment file), naming each.
 
@@ -315,8 +317,9 @@ follows it:
    by number; workspace outputs, login numbering, the pointer following focus across outputs
    (`docs/behaviour.md` §4). **≠ i3** (named, unbounded workspaces, an empty one closed when left,
    `workspace.c:526-535`), reason (a): Plasma's pager, Overview and the workspace widget show
-   KWin's desktops, which are numbered, and removing one renumbers every desktop after it; the
-   keys reach 10.
+   KWin's desktops, which are numbered, and removing one renumbers every desktop after it. The cap
+   at 10 is not KWin's (it allows 25) but the keys' reach, i3's default config binding ten: past
+   10 is out of scope, reason (d).
 10. **Outputs come and go as in i3's `randr.c`** (replacing an earlier "every workspace goes
     back": a remembered output that isn't there was the state behind most
     replug bugs, scenarios 42, 45-48, fuzzer I2):
@@ -329,7 +332,7 @@ follows it:
       workspace whose workspace output names it (i3 takes the first in its config; the setting is
       keyed by number, so the lowest stands in); else the first free number (`randr.c` `init_ws_for_output`, 444-520);
     - **no output left**: as i3, which falls back to one output covering the root window
-      (`randr.c:932`); here KWin's placeholder output, until one returns;
+      (`randr.c:930`); here KWin's placeholder output, until one returns;
     - windows KWin moves on its own during a hotplug are ignored: the tree, not KWin's move, says
       where they belong. (Verified: a window KWin moves to another output loses its tile and is
       switched to the virtual desktop that output shows.)
@@ -345,7 +348,7 @@ the settings page (`kcm/`) and the widget (`widget/`); tests in `tests/unit`, `t
 ## Keys
 
 The keys are i3's default config (4.24's `etc/config.keycodes`, `$mod` as Meta), with kwin-i3's
-own two (release, capture); each one, with how it differs, is `docs/behaviour.md` §8.
+own release key (the capture key is the user's own, bound to `tools/capture`); each one, with how it differs, is `docs/behaviour.md` §8.
 
 **Action names are fixed** (they persist in `kglobalshortcutsrc`, and renaming leaves dead
 entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kwin-i3 Split V`.
@@ -390,5 +393,5 @@ table is the home of the rules; this is the why.
   kept): loading kwin-i3 adds about 16 MB to KWin (8 MB heap, 4 MB libraries, 4 MB shared buffers),
   flat over windows closed and reopened; idle CPU is KWin's own (the script runs no polling timer);
   a new window's layout takes 2 ms on the desktop, its drawn layout 6.4 ms (capture,
-  2026-10-30). The gap strips (about 3 per tiled window, never fewer, `plugin/gapstrips.cpp`)
+  2026-10-30). The gap strips (about 3 per tiling window, never fewer, `plugin/gapstrips.cpp`)
   are tens of kB each. Performance work is in KWin, its effects and Plasma, not here.
