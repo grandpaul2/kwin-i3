@@ -1271,6 +1271,8 @@ var KI3 = (function () {
     var untiled = {};
     // Windows floated or clamped while hidden: "record" (floatAtRecord, then the clamp) or "clamp".
     var floatDue = {};
+    // Windows whose output KWin changed this turn (outputChanged), for desktopsChanged.
+    var movedByKWin = {};
     function hiddenWindow(w) {
         return !w.onAllDesktops && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
     }
@@ -2539,7 +2541,7 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key]; delete floatDue[key];
+        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key]; delete floatDue[key]; delete movedByKWin[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -2681,6 +2683,20 @@ var KI3 = (function () {
                 if (!con.sticky) makeSticky(w, con);
                 return;
             }
+            // A tiling window KWin moved to another output, by the client's own request (a
+            // borderless X11 window, or one in a hidden workspace's tile: KWin refuses the request
+            // only from a decorated window in a requested tile, x11window.cpp:3111) or by Move to
+            // Screen, and gave that output's desktop: i3 ignores a tiling window's placement from
+            // outside (handlers.c, plan.md "Plasma's window actions"), so it stays; the pass puts
+            // its output and desktop back (relocate). Before R13: a hidden one ends on two
+            // desktops, its own and the other output's current one. A floating window is KWin's.
+            if (movedByKWin[key] && !floats(con) && !con.sticky && !placing[key] && !dragging && !inDrag(w) && !crossing[key]) {
+                delete movedByKWin[key];
+                var home = Tree.wsOf(con);
+                log("DESKTOP " + shortCaption(w) + " moved to " + (w.output ? w.output.name : "?") + " by KWin or itself: stays on workspace " + home.num);
+                schedule(home);
+                return;
+            }
             if (w.desktops.length !== 1) {
                 // On two desktops, not all (§3 R13): not ours until it is on one again.
                 dropWindow(w);
@@ -2764,7 +2780,14 @@ var KI3 = (function () {
             var con = model.byWin[key];
             if (!con || placing[key] || dragging || inDrag(w)) return;
             var ws = Tree.wsOf(con);
-            if (w.output && w.output !== outputOf(ws)) { log("OUTPUT " + shortCaption(w) + " moved by KWin to " + w.output.name + ": back to its workspace's"); schedule(ws); }
+            if (w.output && w.output !== outputOf(ws)) {
+                log("OUTPUT " + shortCaption(w) + " moved by KWin to " + w.output.name + ": back to its workspace's");
+                // For desktopsChanged, which KWin emits next when it swaps the desktop with the
+                // output (finishInteractiveOutputChange): this turn only.
+                movedByKWin[key] = true;
+                later(0, function () { delete movedByKWin[key]; });
+                schedule(ws);
+            }
         }));
         w.frameGeometryChanged.connect(guard("frame", function (old) {
             // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.

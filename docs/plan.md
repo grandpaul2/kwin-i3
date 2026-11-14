@@ -120,7 +120,7 @@ its model (`handlers.c:675-991`):
 - one i3 translates into the tree is translated as i3 does: fullscreen (V1), a desktop (V9), all
   desktops (V10);
 - one that would place, size or change the kind of a tiling window is refused, as i3 ignores
-  those (`:722-723`, `:936`): maximize and a quick tile by key are put back, Meta+T's editor
+  those (`:722-723`, `:936`): maximize, a quick tile by key and Move to Screen are put back (V11), Meta+T's editor
   overwritten (decision 7; V8, V12), a move KWin starts cancelled by the helper (X5), floating
   only without it; Keep Above and Keep Below are kwin-i3's on its windows (L12);
 - minimize takes the window out of the layout, its place kept (V7, reason (g));

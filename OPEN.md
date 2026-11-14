@@ -59,29 +59,14 @@ needs a drag step for these, `behaviour.md` G1, G5, G9-G13). Music and narration
 video is scripted.
 
 **96. Client requests KWin applies that i3 ignores** (2026-11-07). An audit of the seam behind
-`behaviour.md` V11's move case (a new X11 window moving itself to another output) found the same
-shape elsewhere: KWin applies a client's request, or a side effect of one, and kwin-i3 follows it
-where i3 refuses. A fullscreen window's own move: guarded in bfa3f8b, reverted (30a18a3): a script gets no cause with a desktop change, and its frame test refused a user's Move to Screen and missed a game asking for the other output's rect; open again, no sound signal known. Confirmed in source, each
-its own diagnosis and spec, in order: (e) a window KWin doesn't protect after its first pass moving itself: a **tiled borderless X11 window** (Motif no-decoration,
-`m_wantsNoDecoration`), or one on a hidden workspace (no requested tile, V11's known limit): KWin ignores a tiled window's request
-only when it is decorated (`x11window.cpp:3111`), so it is applied and followed; a user's Move to
-Screen of a tiled window has no frame to tell it by; (b) KWin carrying a window's transients to
-its desktop, and a modal dialog's parent with it (V13, `+` with no reason): followed, where i3
-moves the one container; (c) a client's own minimize (xdg `set_minimized`, `WM_CHANGE_STATE`),
-which i3 rejects (`handlers.c:849-858`), where V7's reason has it as the user's; (d) a client's
-maximize of a floating window, kept (V8 and R14 cover tiling only). Not yet traced:
-`_NET_WM_FULLSCREEN_MONITORS` (V3's reason doesn't hold on X11; a frame spanning outputs reads as
-the window's own move), Wayland `set_fullscreen` with an output, a client's
+`behaviour.md` V11 found the same shape in several places: KWin applies a client's request, or a
+side effect of one, and kwin-i3 follows it where i3 refuses. Open, each its own diagnosis and spec, in order: (b) KWin
+carrying a window's transients to its desktop, and a modal dialog's parent with it (V13, `+`
+with no reason): followed, where i3 moves the one container; (c) a client's own minimize (xdg
+`set_minimized`, `WM_CHANGE_STATE`), which i3 rejects (`handlers.c:849-858`), where V7's reason
+has it as the user's; (d) a client's maximize of a floating window, kept (V8 and R14 cover
+tiling only); a fullscreen *floating* window's own move to another output, followed, where i3
+ignores every request of a fullscreen container. Not yet traced: `_NET_WM_FULLSCREEN_MONITORS`
+(V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an output, a client's
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
-sticky messages. Next: (e)'s diagnosis.
-
-**100. The Window Rules tab after the names change** (2026-11-07, a review of f155ff7). The
-change holds (no rule lost or changed); what the page tells the user doesn't yet: Add Rule as
-Text takes anything (a line with i3's `for_window`/`assign` word is stored and skipped by the
-script, with no sign on the row), and its new row has no example; a pattern typed in the
-application box becomes a literal name with no word saying so; the text row's note is untrue on
-an empty new row and on one typed back into fields; the help's "each a regular expression" reads
-ambiguously. Also: a rule added by Add Rule or Add Rule as Text lands below the view, against
-`behaviour.md`'s "a new rule scrolls into view" (the same before the change). Next: diagnose the
-scroll (`WindowRules.qml` `reveal`, called before the row is laid out); then one spec for the
-words, to the style guide.
+sticky messages. Next: (b)'s diagnosis.
