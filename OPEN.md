@@ -11,7 +11,7 @@ Last reconciled: **2026-11-14** (the `stable` branch started at v1.1.0 on 2026-1
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
 Plasma 6.8.2 and main's script at 9207f9a, its plugins at 3feca98 (unchanged since; settings page
 at 9207f9a). `stable` is at
-`v1.4.0` (2026-11-04, 3feca98).
+`v1.5.0` (2026-11-14, c49b810).
 
 ## Stage
 
