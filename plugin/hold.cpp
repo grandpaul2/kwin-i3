@@ -403,7 +403,7 @@ bool Hold::tiled(EffectWindow *w) const
 }
 
 // isHidden() leaves Show Desktop out (KWin window.cpp:4521): Plasma's edit mode and Peek hide
-// every window that way, and a tile closing then must not be held (audit 2026-10-29).
+// every window that way, and a tile closing then must not be held (an audit).
 bool Hold::shown(EffectWindow *w) const
 {
     return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden()
@@ -715,7 +715,7 @@ bool Hold::holding() const
 // While a framed window is shown or painted, for the paint hooks; the screen-wide repaint only while holding.
 // Per paint and window: cheap checks first (holding, a drop, the mode), then the stacking order
 // until the first shown ring; ringed() builds a window's id string only for a framed window. Kept
-// as is at the review of 2026-10-28: the allocations happen only when every framed window's ring
+// as is: the allocations happen only when every framed window's ring
 // is hidden whole (hideEdgeBorders), a setup too rare for a cache.
 bool Hold::isActive() const
 {
@@ -739,8 +739,8 @@ bool Hold::isActive() const
 // Late in the chain, after Slide (50, slide.h:197): the ring and a held snapshot are drawn with
 // the paint data the effects before this one gave the window (Slide's offset during a desktop
 // switch, Scale's opening, a fade), so they move with it. At the default 0 this effect ran first
-// and drew the ring at the window's own place while Slide drew the window elsewhere (the laptop,
-// 2026-10-29).
+// and drew the ring at the window's own place while Slide drew the window elsewhere (seen
+// live).
 int Hold::requestedEffectChainPosition() const
 {
     return 90;

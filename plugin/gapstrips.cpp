@@ -13,7 +13,7 @@ static const QString s_title = QStringLiteral("kwin-i3 gap");
 
 // Paints itself fully transparent: the gap shows what is beneath; the strip only takes the pointer.
 // Not Qt::Tool: it holds Qt::Popup's bit, and KWin closes a popup as the pointer leaves it
-// (probed 2026-10-28). Bypassing the window manager, it is placed exactly and never focused.
+// (probed). Bypassing the window manager, it is placed exactly and never focused.
 class GapStrip : public QWindow
 {
 public:

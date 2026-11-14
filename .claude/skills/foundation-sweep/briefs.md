@@ -9,7 +9,9 @@ only what its brief says. The C areas get the **short** common part.
 ## Common part (every finder)
 
 > You are reading kwin-i3, i3's window management as a KWin script and two KWin plugins, in
-> `REPO` (read-only: change nothing, run no test, reload nothing). Read
+> `REPO` (read-only: change nothing, run no test, reload nothing). **Write each finding to `OUT`
+> the moment you have it** (the shape is below), not at the end: the session reads that file
+> while you work, and an empty one looks stalled. Read
 > `AGENTS.md`, then `docs/README.md` (one home per fact), `docs/definitions.md` (the words),
 > `docs/philosophy.md` (above all "How a decision is made") and `docs/plan.md` (the scope, the
 > reasons (a)-(g) a difference from i3 may have, the standing decisions).
@@ -77,7 +79,10 @@ only what its brief says. The C areas get the **short** common part.
 >    names; (d) against the Out list; (e) against Plasma's settings. A ≠ whose reason doesn't
 >    hold is a defect (`AGENTS.md`, "Ride i3 hard").
 > 3. Each =: is it? (Read the kwin-i3 side from the row and the function it cites.)
-> 4. In the code's model: shapes and flags as i3's (Con types, where a flag sits), names as
+> 4. A wrong mark or reason found on one row: grep every row citing the same chord, command or
+>    reason, and report them together (one sweep fixed G5's mark and left G13 and G16, the same
+>    chord).
+> 5. In the code's model: shapes and flags as i3's (Con types, where a flag sits), names as
 >    i3's. A difference labelled "on purpose" with no reason in `plan.md` is a finding.
 > Prefer depth on the rows touched since `BASE` and on §2-5 (the tree, kinds, workspaces and
 > outputs, focus); cover the rest at a lighter read.

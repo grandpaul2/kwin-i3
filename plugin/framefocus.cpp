@@ -132,7 +132,7 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 // Focus follows the mouse onto a frame, as into a client: the request KWin's own
 // Window::pointerEnterEvent makes. Not pointerEnterEvent itself: KWin has just stored this
 // pointer position as the focus-mouse position, so its "has the mouse moved" check would refuse
-// (review 2, 2026-10-23). No cancel when the frame is left for another window: KWin has already
+// (a review). No cancel when the frame is left for another window: KWin has already
 // requested that window's focus, and cancelDelayFocus would drop it.
 bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
@@ -144,7 +144,7 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
     // changed), and floating windows keep above. The raise is a stacking change, at which KWin
     // enters the owner at the position this motion has just stored, and pointerEnterEvent takes
     // that for a pointer that hasn't moved: focus follows mouse would never reach the owner, the
-    // pointer counting as in it from then on (probe 94, a capture 2026-10-29). So the request
+    // pointer counting as in it from then on (probe 94, a capture). So the request
     // its enter would have made, as for the ring below.
     Window *hover = input()->pointer()->hover();
     if (overTiledMargin(event->position, hover)) {

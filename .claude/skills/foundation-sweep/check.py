@@ -44,9 +44,15 @@ def check_marks(out):
             out.append(f"behaviour.md:{n} {rid}: marked = but its note carries a ≠")
 
 
+# Where a date is a session stamp, not a fact: the rules and rows, and the code's comments. The
+# README (a version's date), definitions.md (the Stage's start) and CONTRIBUTING may date facts.
+DATELESS = ["docs/behaviour.md", "docs/plan.md", "docs/philosophy.md", "docs/README.md", "AGENTS.md"]
+COMMENTED = ["src/*.js", "plugin/*.cpp", "plugin/*.h"]
+
+
 def check_stamps(out):
     """State, not history: no 'Before,' and no stage or review stamps in the standing docs, and
-    no dates in behaviour.md (elsewhere a date can be a fact: the Stage's start, a dated study)."""
+    no dates in the rules, the rows or the code's comments."""
     pat = re.compile(r"\b[Bb]efore, |Refinement stage|code review of|the spec's|Decided \d|built \d")
     date = re.compile(r"\b20\d\d-\d\d-\d\d\b")
     for f in STANDING:
@@ -55,10 +61,16 @@ def check_stamps(out):
             continue
         for n, line in enumerate(p.read_text().splitlines(), 1):
             found = list(pat.finditer(line))
-            if f == "docs/behaviour.md":
+            if f in DATELESS:
                 found += list(date.finditer(line))
             for m in found:
                 out.append(f"{f}:{n}: '{m.group(0)}' ({line.strip()[:70]}...)")
+    for g in COMMENTED:
+        for p in sorted(ROOT.glob(g)):
+            for n, line in enumerate(p.read_text().splitlines(), 1):
+                c = line.find("//")
+                if c >= 0 and date.search(line[c:]):
+                    out.append(f"{p.relative_to(ROOT)}:{n}: a dated comment ({line.strip()[:70]}...)")
 
 
 def check_tables(out):

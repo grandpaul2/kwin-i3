@@ -6,7 +6,7 @@
 // over Plasma's (keyoverride.h). One plugin for
 // all: each Plasma update needs a rebuild of every version-locked plugin, so there are no more
 // of them than KWin's plugin kinds require.
-// (Named kwini3mouse until 2026-10-24, when it also did mouse chords.)
+// (Named kwini3mouse before it also did mouse chords.)
 #pragma once
 
 #include "framefocus.h"
