@@ -162,6 +162,11 @@ if a user asks for it.
 
 ## i3 parity
 
+**105. Plasma's window actions not yet covered on a window in the tree** (from `plan.md`, "Plasma's
+window actions"). KWin's window rules, No Border and shade on a window kwin-i3 places: none has
+a row saying what kwin-i3 does. Next: for each, i3's handling of the matching request
+(`handlers.c:675-991`) and a row by `plan.md`'s rule. Waits: the Stage; no user has met one.
+
 ## Upstream
 
 **kwriteconfig6 --notify loses its signal** (found 2026-10-29, OPEN.md item 50): it sends KConfig's

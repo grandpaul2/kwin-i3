@@ -70,3 +70,59 @@ ignores every request of a fullscreen container. Not yet traced: `_NET_WM_FULLSC
 (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an output, a client's
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (b)'s diagnosis.
+
+**106. The helper's presses take KWin's window-action modifier** (from the foundation sweep;
+`behaviour.md` N16, being fixed). i3 has one `floating_modifier` for every drag (`click.c:170-171`);
+the helper's tiling drag, Meta+Shift float and tile and Meta+right resize test Meta only
+(`plugin/tilingdrag.cpp` `pointerButton`), while a floating window moves with KWin's modifier (F1)
+and `plan.md` (e) has the modifier the user's. KWin's is `[MouseBindings] CommandAllKey`
+(`options.cpp` `CmdAllModKey`), readable by the helper. Next: a spec.
+
+**107. One flag serves two timers** (from the foundation sweep). `src/kwin.js` declares
+`pendingTimer` twice, for `recordShown` (an outside desktop switch, D2/D3, handled a turn later)
+and for `checkPending` (V14's 150 ms look at a pending fullscreen): while either is armed, the
+other schedules nothing, so after an output change a switch from the Overview, a pager or Alt+Tab
+can wait for the next one. Next: a spec (one flag each).
+
+**108. Close acts on KWin's active window, not the tree's focus** (from the foundation sweep;
+`behaviour.md` A5, K12). For a focused window, and an empty focused workspace, Meta+Shift+Q runs
+KWin's Window Close on KWin's active window, with no re-sync (`KWIN_OWN`); i3's `kill` closes the
+focused con (`commands.c` `cmd_kill`), and on an empty workspace nothing. They differ while a window
+kept out of the tree has the keyboard. Next: a spec.
+
+**109. A critical notification doesn't match `window_type=notification`** (from the foundation
+sweep; `behaviour.md` R2, R9). `Rules.windowType` tests `w.notification` only, where
+`floatsByDefault` counts `w.criticalNotification` too. Next: a spec.
+
+**110. `sticky` is a kind in the code, where i3 has a flag** (from the foundation sweep;
+`definitions.md` notes it; `AGENTS.md` "Ride i3 hard"). `src/rules.js` `classify`/`i3Kind` return
+`sticky` beside `tiling` and `floating`; i3's `sticky` is a flag on a floating con (`data.h`,
+`con->sticky`), and no reason in `plan.md` keeps the difference. Next: a spec for the model's
+shape (the flag on the floating con, the kind floating).
+
+**111. A title-bar press stays armed through another button's release** (from the foundation
+sweep; `behaviour.md` G7). Before the drag distance is passed, the helper swallows another
+button's release and keeps the press (`pointerButton`, `Phase::Pressed`); i3 ends its grab on any
+release (`drag.c:66-68`), before its threshold too. Next: a spec.
+
+**112. A floated container's resize floor is a fixed 75x50** (from the foundation sweep;
+`behaviour.md` F1a). The helper's `groupMotion` stops at 75x50 whatever `floatingMinimumSize` says;
+i3's resize checks every step against `floating_minimum_size` (`floating.c` `floating_check_size`,
+called from the resize callback, `:673`). Next: a spec.
+
+**113. Three rows keep Plasma's way under reason (e) where kwin-i3 can win** (from the foundation
+sweep). `plan.md` (e) gives the user a Plasma setting only where kwin-i3 can't win it at runtime;
+these rows cite it where the helper already takes the press: G2 (the drag distance: Plasma's,
+where i3's is 15 px, `drag.c:46`), Z4 (a right press on a title bar opens the window menu, where
+i3 resizes against the neighbour above, `click.c`), F1 (Meta+right resizes a floating window
+without focusing it, where i3 focuses, `click.c:261-277`). Each is i3's way by the docs, or a
+live verdict, reason (c), if kept. Next: a spec each, judged live.
+
+**114. The settings page's words against its style guide** (from the foundation sweep). The
+plugin banner names three losses where §1 lists more (the terminal key, the key override, the
+position keys, a group's tabs); "Your rules", "No rules of your own", "when you untick it",
+"made from now on" and help naming kwin-i3; strings through `i18n` with no context; the
+Tiling key step's help speaking of the floating step's px, the pointer help narrower than
+`mouseWarping`, the rules help leaving out class; the unfocused indicator colour off the page,
+though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
+live.
