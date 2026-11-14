@@ -80,9 +80,19 @@ function parseCriteria(text) {
     return n ? crit : null;
 }
 const SHOWN = ["class", "title", "window_role", "window_type"];
+// i3's keyword before a rule written as i3's config writes it (`for_window [...] floating
+// enable`, `assign [...] → 2`): it names the setting, and is taken off, since each setting holds
+// its own kind. -> { text, assign } (assign undefined with no keyword).
+function takeKeyword(src) {
+    const t = String(src || "").trim(), m = /^(for_window|assign)\s+([\s\S]*)$/.exec(t);
+    return m ? { text: m[2].trim(), assign: m[1] === "assign" } : { text: t, assign: undefined };
+}
 // A rule the page can't show as a row stays as its text, in the setting it came from (`assign`:
-// an unreadable assign rule would otherwise move into forWindow at the next save and run there).
+// an unreadable assign rule would otherwise move into forWindow at the next save and run there),
+// unless i3's keyword names the other.
 function parseRule(src, assign) {
+    const k = takeKeyword(src);
+    if (k.assign !== undefined) { src = k.text; assign = k.assign; }
     const raw = Object.assign({ text: src, src, fromAssign: !!assign }, RAW);
     const m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(src);
     const crit = m ? parseCriteria(m[1]) : null;
@@ -111,7 +121,7 @@ function parseRules(forWindow, assign) {
     return splitRules(forWindow).map((r) => parseRule(r, false)).concat(splitRules(assign).map((r) => parseRule(r, true)));
 }
 function formatRule(row) {
-    if (row.kind === "raw") return String(row.text || "").trim();
+    if (row.kind === "raw") return splitRules(row.text).map((p) => takeKeyword(p).text).join("\n");
     const crit = [];
     if (row.cls) crit.push("class=" + quote(row.cls));
     if (row.title) crit.push("title=" + quote(row.title));
@@ -130,16 +140,65 @@ function formatRule(row) {
 function formatRules(rows) {
     const fw = [], as = [];
     rows.forEach((row) => {
+        if (row.kind === "raw") { rawPieces(row).forEach((p) => (p.assign ? as : fw).push(p.text)); return; }
         const text = formatRule(row);
         if (!text) return;
-        // A raw row goes back where it came from; one typed fresh on the page (no origin) by its
-        // tail after the criteria, read past quoted values (a "]" inside one is no end).
-        const isAssign = row.kind === "workspace" || row.kind === "output" ||
-            (row.kind === "raw" && (row.fromAssign !== undefined ? row.fromAssign
-                : /^\[(?:[^\]"]|"(?:[^"\\]|\\.)*")*\]\s*(?:(?:→|->)|workspace\s|number\s|output\s|[0-9]+\s*$)/.test(text)));
-        (isAssign ? as : fw).push(text);
+        (row.kind === "workspace" || row.kind === "output" ? as : fw).push(text);
     });
     return { forWindow: fw.join("\n"), assign: as.join("\n") };
+}
+// A text row's rules, each with the setting it goes to: i3's keyword first; else where the row
+// came from; one typed fresh on the page (no origin) by its tail after the criteria, read past
+// quoted values (a "]" inside one is no end). -> [{ text, assign }]
+function rawPieces(row) {
+    return splitRules(row.text).map((p) => {
+        const k = takeKeyword(p);
+        const assign = k.assign !== undefined ? k.assign : row.fromAssign !== undefined ? row.fromAssign
+            : /^\[(?:[^\]"]|"(?:[^"\\]|\\.)*")*\]\s*(?:(?:→|->)|workspace\s|number\s|output\s|[0-9]+\s*$)/.test(k.text);
+        return { text: k.text, assign };
+    }).filter((p) => p.text !== "");
+}
+// Whether the script runs every rule of a text row: its reading (src/rules.js lines,
+// parseCriteria, regex, parseForWindow, parseAssign), mirrored, as the page can't load the
+// script's file. An empty row is not saved, and counts as runnable (nothing to warn of).
+const CRITERIA = ["class", "instance", "title", "window_role", "window_type", "workspace", "floating", "tiling", "all"];
+const WINDOW_TYPES = ["normal", "dialog", "utility", "toolbar", "splash", "notification", "menu", "dropdown_menu", "popup_menu", "tooltip"];
+function readableRegex(src) {
+    try { new RegExp(src, "u"); return true; } catch (e) { /* PCRE-only syntax: loosely, as the script */ }
+    let flags = "", body = src;
+    if (/^\(\?i\)/.test(body)) { flags = "i"; body = body.slice(4); }
+    try { new RegExp(body, flags); return true; } catch (e) { return false; }
+}
+function runnablePiece(p) {
+    const m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(p.text);
+    if (!m) return false;
+    let rest = m[1].trim(), n = 0;
+    while (rest.length) {
+        const c = /^(\w+)(?:\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"\]]+)))?\s*/.exec(rest);
+        if (!c || CRITERIA.indexOf(c[1]) < 0) return false;
+        rest = rest.slice(c[0].length);
+        const v = c[2] !== undefined ? unquote(c[2]) : c[3];
+        if (c[1] === "floating" || c[1] === "tiling" || c[1] === "all") { if (v !== undefined) return false; }
+        else if (v === undefined) return false;
+        else if (c[1] === "window_type") { if (WINDOW_TYPES.indexOf(v.toLowerCase()) < 0) return false; }
+        else if (!readableRegex(v)) return false;
+        n++;
+    }
+    if (!n) return false;
+    const t = m[2].trim();
+    if (!p.assign) return /^floating\s+(enable|disable)$/.test(t);
+    const a = /^(?:(?:→|->)\s*)?(?:workspace\s+)?(?:number\s+)?([0-9]+)$/.exec(t);
+    if (a) return +a[1] >= 1 && +a[1] <= 10;
+    return /^(?:(?:→|->)\s*)?output\s+(\S+)$/.test(t);
+}
+// Whether a text row's text, as it stands, is one rule the fields can show (typed back into their
+// shape: it shows as fields at the next reading).
+function fitsFields(row) {
+    const pieces = rawPieces(row);
+    return pieces.length === 1 && parseRule(pieces[0].text, pieces[0].assign).kind !== "raw";
+}
+function runnable(row) {
+    return row.kind !== "raw" || rawPieces(row).every(runnablePiece);
 }
 // The criteria the page escapes for a picked or typed name, matched whole.
 function escapeRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }

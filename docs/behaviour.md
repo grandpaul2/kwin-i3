@@ -1035,7 +1035,9 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   first line, its title and role (a pattern each) and window type always on the second. The application is a name, picked or typed, matched whole; a rule whose application is a pattern shows as text, as one with other criteria. The
   shipped rules, when they run first, are a list of their own ("Defaults") above "Your rules",
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
-  with other criteria is shown as text and edited there. Add Rule, Add Rule as Text (a rule typed in i3's words) and Pick a Window… (KWin's
+  with other criteria is shown as text and edited there; a text rule the script can't read or run
+  says "not used", and i3's `for_window` or `assign` before one is taken as the setting it names.
+  Add Rule, Add Rule as Text (a rule typed in i3's words, an example shown in its empty field) and Pick a Window… (KWin's
   window picker: a rule with the clicked window's class, matched whole) sit in the tab's
   footer, always in view; a new rule scrolls into view with its application box focused. Above the rules, new windows over a fullscreen one (`popupDuringFullscreen`), the floating sizes (`floatingMinimumSize`,
   `floatingMaximumSize`) and Plasma's window animations (below).

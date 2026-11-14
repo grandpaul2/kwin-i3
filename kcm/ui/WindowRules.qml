@@ -115,7 +115,7 @@ KCM.SimpleKCM {
         }
     }
     // The rules' help, by the first of their headings: it is the rules' alone, not the settings'.
-    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application by name, its title and role, each a regular expression, and its type, and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria, or an application given as a pattern, shows as text; Add Rule as Text writes one in i3's words. i3: for_window, assign")
+    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application by name, the name matched whole, its title and role by regular expressions, and its type, and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria, or an application given as a pattern, shows as text; Add Rule as Text writes one in i3's words. i3: for_window, assign")
 
     // A pattern field: empty means "any".
     component PatternField: QQC2.TextField {
@@ -232,12 +232,13 @@ KCM.SimpleKCM {
         readonly property var plain: Logic.plainName(rule.cls)
         readonly property var app: plain !== null ? page.appOf(plain) : null
         spacing: Kirigami.Units.smallSpacing
-        Component.onCompleted: if (index === page.focusIndex) Qt.callLater(() => {
-            page.focusIndex = -1;
-            page.reveal(ruleRow);
-            if (ruleRow.isRaw) rawField.forceActiveFocus();
+        // Revealed once the page has laid it out (revealNew): at its creation the row has no
+        // height yet and the page's content height is the old one.
+        Component.onCompleted: if (index === page.focusIndex) { page.focusIndex = -1; page.revealing = ruleRow; }
+        function takeFocus() {
+            if (isRaw) rawField.forceActiveFocus();
             else appBox.contentItem.forceActiveFocus();      // the text field: the box alone takes no typing
-        })
+        }
         RowLayout {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
@@ -249,9 +250,16 @@ KCM.SimpleKCM {
                 Layout.fillWidth: true
                 font.family: "monospace"
                 text: ruleRow.rule.text || ""
+                placeholderText: '[class="^firefox$" title="Library"] floating enable'
                 onEditingFinished: if (ruleRow.isRaw && ruleRow.rule.text !== text) page.set(ruleRow.index, "text", text)
                 Accessible.name: i18nc("@label:textbox", "Rule %1, as text", ruleRow.index + 1)
                 KCM.SettingStateBinding { configObject: page.settings; settingName: "forWindow" }
+            }
+            // A text rule the script can't read or run: said, not skipped silently.
+            QQC2.Label {
+                visible: ruleRow.isRaw && !Logic.runnable(ruleRow.rule)
+                text: i18nc("@info:status a rule written as text that can't be read", "not used: can't be read")
+                color: Kirigami.Theme.neutralTextColor
             }
             // The application: chosen by name from the installed ones, or typed, always a name
             // matched whole. It shows as the application's name if installed, else plain.
@@ -411,7 +419,7 @@ KCM.SimpleKCM {
             }
         }
         QQC2.Label {
-            visible: ruleRow.isRaw
+            visible: ruleRow.isRaw && ruleRow.rule.src !== undefined && Logic.formatRule(ruleRow.rule) !== "" && !Logic.fitsFields(ruleRow.rule)
             Layout.fillWidth: true
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -420,6 +428,19 @@ KCM.SimpleKCM {
         }
     }
 
+    // A rule just added, revealed and focused once the page's content has grown to hold it.
+    property Item revealing: null
+    function revealNew() {
+        const r = revealing;
+        if (!r) return;
+        revealing = null;
+        reveal(r);
+        r.takeFocus();
+    }
+    Connections {
+        target: page.flickable
+        function onContentHeightChanged() { if (page.revealing) Qt.callLater(page.revealNew); }
+    }
     // Scrolls the page so an item shows.
     function reveal(item) {
         const f = page.flickable;
