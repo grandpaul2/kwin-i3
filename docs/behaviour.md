@@ -248,8 +248,10 @@ then `src/kwin.js` `adoptWindow`. **=** as in i3 · **≠** differs · **+** no 
   its frame and its output's geometry.
 - **Floating a tiling window** (`floatAtRecord`) gives it the recorded size, clamped to the output's
   area. On a different output its centre is mapped by fraction onto the new one (i3's
-  `floating_fix_coordinates`); a rect that doesn't fit is centred. On a hidden workspace, KWin's
-  own restore applies instead.
+  `floating_fix_coordinates`); a rect that doesn't fit is centred. A window floated (or clamped to the floating
+  sizes) while its workspace is hidden gets its rect when the workspace is next shown, not before:
+  KWin sends a hidden window its configure but the size stays pending until the client commits,
+  and some clients never do while hidden (`kwin-notes.md`); i3 gives it at once (`floating_enable`).
 - **An app that last closed tiling** opens at its tiling size and floats at that size, as in i3
  .
 

@@ -85,9 +85,3 @@ ambiguously. Also: a rule added by Add Rule or Add Rule as Text lands below the 
 `behaviour.md`'s "a new rule scrolls into view" (the same before the change). Next: diagnose the
 scroll (`WindowRules.qml` `reveal`, called before the row is laid out); then one spec for the
 words, to the style guide.
-
-**101. An X11 window floated while its workspace is hidden keeps its tile's size** (2026-11-07,
-a review of 4dbf16f; unverified). With the rect copied in `unmanageFrom`, a hidden X11 window
-keeps its tile-sized frame through the unmanage, and `floatAtRecord` skips hidden windows
-(`src/kwin.js`), so it floats at that size, as a Wayland window already did, instead of its own.
-Next: a test-KWin probe, with the go; i3's `floating_enable` uses the window's own geometry.

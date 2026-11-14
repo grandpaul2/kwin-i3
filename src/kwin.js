@@ -1189,6 +1189,7 @@ var KI3 = (function () {
         touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
+        if (workspace.currentDesktopForScreen(screen) === deskOf(ws.num)) applyFloatDue(ws);
         if (Object.keys(pendingFs).length) checkPending();
         endFullscreen(ws);
         model.floatingWindows(ws).forEach(function (f) {
@@ -1268,6 +1269,28 @@ var KI3 = (function () {
     // window untiled, with the output it was on. With no record (tiled already at a load),
     // fullscreen or hidden: KWin's restore.
     var untiled = {};
+    // Windows floated or clamped while hidden: "record" (floatAtRecord, then the clamp) or "clamp".
+    var floatDue = {};
+    function hiddenWindow(w) {
+        return !w.onAllDesktops && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
+    }
+    // In a shown workspace's pass: each due window still floating alone gets what it was due. One
+    // minimized, crossing or in a drag keeps its mark for a later pass (minimizedChanged and the
+    // arrival schedule one); one tiled again, sticky or fullscreen loses it.
+    function applyFloatDue(ws) {
+        model.floatingWindows(ws).forEach(function (f) {
+            var key = f.win, kind = floatDue[key], w = wins[key];
+            if (!kind) return;
+            if (!w || !floatsAlone(f) || f.sticky || w.fullScreen) { delete floatDue[key]; return; }
+            if (w.minimized || crossing[key] || inDrag(w) || !w.output || hiddenWindow(w)) return;
+            delete floatDue[key];
+            if (kind === "record") floatAtRecord(w);
+            clampFloating(w);
+        });
+    }
+    function hasFloatDue(ws) {
+        return model.floatingWindows(ws).some(function (f) { return !!floatDue[f.win]; });
+    }
     function recordUntiled(w) {
         if (w.tile || w.fullScreen || !w.output) return;
         var f = w.frameGeometry, o = w.output.geometry;
@@ -1275,10 +1298,15 @@ var KI3 = (function () {
                            out: { x: o.x, y: o.y, width: o.width, height: o.height } };
     }
     // After untile, in the same call (KWin sends the configure from a timer, unmanageFrom).
+    // A hidden window takes no new size (kwin-notes: its configure stays pending until the client
+    // commits, and some never do): it is marked due and given its record when its workspace is
+    // next shown (applyFloatDue), as i3's floating_enable gives it at once.
     function floatAtRecord(w) {
-        var r = untiled[id(w)], con = model.byWin[id(w)], ws = con && Tree.wsOf(con);
-        if (!r || !ws || w.fullScreen || !w.output) return;
-        if (w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) return;
+        var key = id(w), r = untiled[key], con = model.byWin[key], ws = con && Tree.wsOf(con);
+        delete floatDue[key];
+        if (!ws || w.fullScreen || !w.output) return;
+        if (hiddenWindow(w)) { floatDue[key] = "record"; return; }
+        if (!r) return;
         var o = w.output.geometry, a = areaOf(w.output, ws);
         var g = { x: r.x, y: r.y, width: Math.min(r.width, a.width), height: Math.min(r.height, a.height) };
         if (r.out.x !== o.x || r.out.y !== o.y || r.out.width !== o.width || r.out.height !== o.height) {
@@ -1556,6 +1584,7 @@ var KI3 = (function () {
     // floor (a decorated window is about 150 px wide at least) applies after.
     function clampFloating(w) {
         if (w.fullScreen || w.deleted || !w.output) return;
+        if (hiddenWindow(w)) { if (!floatDue[id(w)]) floatDue[id(w)] = "clamp"; return; }
         var g = w.frameGeometry, size = checkSize(g.width, g.height);
         if (size.width === g.width && size.height === g.height) return;
         w.frameGeometry = { x: g.x, y: g.y, width: size.width, height: size.height };
@@ -2510,7 +2539,7 @@ var KI3 = (function () {
             callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
         delete told[key]; delete ringTold[key]; delete dragTold[key];
         delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key];
+        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key]; delete floatDue[key];
         schedule(ws);
     }
     function shortCaption(w) { return String(w.caption).slice(0, 60); }
@@ -4452,6 +4481,8 @@ var KI3 = (function () {
             // emitting); the focus order waits for syncShown.
             var o = output && !rebuilding ? model.output(output.name) : null, n = current ? deskNum(current) : 0;
             if (o) model.setShows(o, n >= 1 && n <= NAMES.length ? model.workspaces[n] || null : null);
+            // A window floated while this workspace was hidden is given its size now (floatDue).
+            if (n >= 1 && n <= NAMES.length && model.workspaces[n] && hasFloatDue(model.workspaces[n])) schedule(model.workspaces[n]);
             recordShown(previous, current, output);
         }));
         workspace.screensChanged.connect(guard("screens", screensChanged));
