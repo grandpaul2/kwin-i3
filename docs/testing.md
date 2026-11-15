@@ -17,7 +17,7 @@ change; the reload of a desktop is its owner's go.
    **Anything over a few seconds runs in the background**, so the person can keep
    talking to the agent: `make unit` in the foreground, every scenario run and `make test`
    in the background, and you stay free to talk. Over ~30 seconds, also a 2-minute recurring
-   timer from the moment it starts, `AGENTS.md`'s "Long runs": at each firing
+   timer from the moment it starts: at each firing
    read the run's result files yourself (while `make test` or a scenario runs: `$TMPDIR/tmp.*/NN-*.sh.log` (`/tmp` when unset); a red scenario's output and kwin-i3's log are kept in `tests/live/out/` after the run
    and `.status`) and give the person one line; delete the timer when it ends
    and give the outcome. A notification or silence is not a check.

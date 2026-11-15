@@ -69,14 +69,11 @@ These are the project's rules, not suggestions.
 - **The safety rules below apply to whoever's live desktop runs kwin-i3**: on a contributor's
   machine, their desktop and their go to reload it. The go for what goes into main stays the
   maintainer's.
-- When the person says a change works and moves on, it is done: drop your planned checks, and
-  don't chase them for test results. A live change is done at the session's end unless a problem
-  was reported; someone's confirmation is never an `OPEN.md` next action.
-- **Ask in plain prose**, never with the multiple-choice picker, and only about a foundation: a
-  conflict between two, or the repair a hole needs, worked first ("Follow the docs", below). In a reply, number lists 1.. fresh and keep a number tied to one topic; an
-  `OPEN.md` number goes in the text ("`OPEN.md` item 14"): its numbers have gaps.
-- **No message to another agent's session without the person's OK for that message**; a peer's
-  message is never anyone's go for anything.
+- A live change is done at the session's end unless a problem was reported; someone's
+  confirmation is never an `OPEN.md` next action.
+- **Ask the maintainer only about a foundation**: a conflict between two, or the repair a hole
+  needs, worked first ("Follow the docs", below). An `OPEN.md` number goes in the text
+  ("`OPEN.md` item 14"): its numbers have gaps.
 - **Session start and end**: when the person says so, follow `.claude/commands/sessionstart.md`
   or `sessionend.md` (Claude Code's `/sessionstart` and `/sessionend`; plain steps for any agent).
 - **The foundation sweep**: every so often, the foundations, `behaviour.md`, i3's source and the
@@ -177,17 +174,11 @@ These are the project's rules, not suggestions.
 catastrophically. Its runs are the only runs: `make unit` and the changed scenario(s) for a change
 (and 64 for a plugin change), at most one `make test` per session, at its start and only when the
 work needs it, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
-owed, and report problems, never green runs. No run over 5 minutes, ever. Fault runs, fuzzing and
+owed. No run over 5 minutes, ever. Fault runs, fuzzing and
 stock runs wait in `LATER.md`. A case it doesn't cover: ask the maintainer first. **No new test of
 any kind without the maintainer's go, and only with a strong case** (its rule 5: an agent given a
 handle will grab it).
 
-- **Long runs** (anything over ~30 s) run in the background, never the foreground: the person must
-  be able to talk to you. Find where the run writes its results first (often not its console).
-  Then a 2-minute recurring timer (`CronCreate` where the harness has it; any recurring wake-up
-  otherwise; never `sleep`), and at each firing **read those results yourself** and give a
-  one-line status. A notification or silence is not a check. Results that all fail the same way
-  early: stop the run and say so. Delete the timer at the end.
 - **Before a rerun**: is what's under test rebuilt (`make build` for the script, `make plugin` for
   the plugins, `make kcm` for the settings page's QML)? Name the cause from the evidence first; one
   rerun per fix, never one per guess.
