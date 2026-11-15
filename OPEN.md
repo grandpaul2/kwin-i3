@@ -135,5 +135,6 @@ material, no line on an agent's own conduct, nothing that would embarrass it); (
 zero; (6) the grader at zero open findings; (7) the last merge, its message saying what changed
 and why; (8) a dry run of the fresh single-commit history the repo gets at a release (`main` and
 `stable` on that one commit, the release tagged there, the old history kept in a private repo, the
-release notes telling users to clone again), built and audited locally, not pushed. Done through (6):
-every area graded, each finding fixed or kept with its reason. Open: (7) and (8). Next: (7).
+release notes telling users to clone again), built and audited locally, not pushed. Done through (7):
+every area graded, each finding fixed or kept with its reason, the audit and the sweep's check at
+zero. Open: (8). Next: (8), the dry run, built in a scratch directory outside the checkout.
