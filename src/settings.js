@@ -16,48 +16,92 @@ var Settings = (function () {
     // dialogs on X11, typeless and often parentless on Wayland); the system windows are built in.
     // Each rule names a whole class (one also seen without org.kde. is given both ways), as the
     // settings page shows names.
-    var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
-        "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
-        "[class=\"^org\\.kde\\.kruler$\"] floating enable; " +
-        "[class=\"^kruler$\"] floating enable; " +
-        "[class=\"^org\\.kde\\.plasmashell$\" window_type=\"normal\"] floating enable; " +
-        "[class=\"^plasmashell$\" window_type=\"normal\"] floating enable; " +
-        "[class=\"^org\\.freedesktop\\.impl\\.portal\\.desktop\\.kde$\"] floating enable";
+    var DEFAULT_RULES =
+        '[class="^org\\.kde\\.spectacle$"] floating enable; ' +
+        '[class="^org\\.kde\\.polkit-kde-authentication-agent-1$"] floating enable; ' +
+        '[class="^org\\.kde\\.kruler$"] floating enable; ' +
+        '[class="^kruler$"] floating enable; ' +
+        '[class="^org\\.kde\\.plasmashell$" window_type="normal"] floating enable; ' +
+        '[class="^plasmashell$" window_type="normal"] floating enable; ' +
+        '[class="^org\\.freedesktop\\.impl\\.portal\\.desktop\\.kde$"] floating enable';
     var TABLE = {
-        forWindow: { type: "text", def: DEFAULT_RULES },                        // for_window [criteria] floating enable|disable
-        assign: { type: "text", def: "" },                                      // assign [criteria] → N | output X
-        floatingMinimumSize: { type: "size", def: "75x50" },                    // i3's floating_minimum_size
-        floatingMaximumSize: { type: "size", def: "0x0" },                      // floating_maximum_size: 0x0 all outputs together, -1x-1 none
+        forWindow: { type: "text", def: DEFAULT_RULES }, // for_window [criteria] floating enable|disable
+        assign: { type: "text", def: "" }, // assign [criteria] → N | output X
+        floatingMinimumSize: { type: "size", def: "75x50" }, // i3's floating_minimum_size
+        floatingMaximumSize: { type: "size", def: "0x0" }, // floating_maximum_size: 0x0 all outputs together, -1x-1 none
         debugLog: { type: "bool", def: "false" },
-        resizeStep: { type: "int", def: "10", min: 1, max: 50 },                // %, i3's "10 ppt"
-        floatingStep: { type: "int", def: "10", min: 1, max: 200 },             // px a floating window moves or resizes, i3's "10 px"
-        defaultOrientation: { type: "choice", def: "auto", choices: ["auto", "horizontal", "vertical"] },
-        workspaceLayout: { type: "choice", def: "default", choices: ["default", "stacking", "tabbed"] },   // i3's workspace_layout (§11 N4)
-        focusWrapping: { type: "choice", def: "yes", choices: ["yes", "no", "force", "workspace"] },
-        mouseWarping: { type: "choice", def: "output", choices: ["output", "none"] },   // i3's mouse_warping (§5 A2)
+        resizeStep: { type: "int", def: "10", min: 1, max: 50 }, // %, i3's "10 ppt"
+        floatingStep: { type: "int", def: "10", min: 1, max: 200 }, // px a floating window moves or resizes, i3's "10 px"
+        defaultOrientation: {
+            type: "choice",
+            def: "auto",
+            choices: ["auto", "horizontal", "vertical"],
+        },
+        workspaceLayout: {
+            type: "choice",
+            def: "default",
+            choices: ["default", "stacking", "tabbed"],
+        }, // i3's workspace_layout (§11 N4)
+        focusWrapping: {
+            type: "choice",
+            def: "yes",
+            choices: ["yes", "no", "force", "workspace"],
+        },
+        mouseWarping: {
+            type: "choice",
+            def: "output",
+            choices: ["output", "none"],
+        }, // i3's mouse_warping (§5 A2)
         // i3's focus_follows_mouse: the pointer entering a window focuses it, at once (KWin's live
         // options, src/kwin.js winOptions).
         focusFollowsMouse: { type: "bool", def: "true" },
         // What Exit does (§8 K17): i3's exit is leaving the computer; Plasma has several ways to leave.
-        endSession: { type: "choice", def: "logout", choices: ["logout", "sleep", "shutdown", "ask"] },
+        endSession: {
+            type: "choice",
+            def: "logout",
+            choices: ["logout", "sleep", "shutdown", "ask"],
+        },
         // i3's popup_during_fullscreen (§10 V6): what a new window may do on a workspace with a fullscreen window.
-        popupDuringFullscreen: { type: "choice", def: "smart", choices: ["smart", "ignore", "leave_fullscreen", "all"] },
+        popupDuringFullscreen: {
+            type: "choice",
+            def: "smart",
+            choices: ["smart", "ignore", "leave_fullscreen", "all"],
+        },
         // i3's tiling_drag (§9 G3): which presses start the tiling drag; read by the helper from kwinrc.
-        tilingDrag: { type: "choice", def: "modifier titlebar", choices: ["off", "modifier", "titlebar", "modifier titlebar"] },
-        workspaceOutputs: { type: "outputs", def: "" },                         // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
-        workspaceAutoBackAndForth: { type: "bool", def: "false" },              // i3's workspace_auto_back_and_forth
-        gapsInner: { type: "int", def: "2", min: 0, max: 100 },                 // px between windows, even (an odd one counts as the even below)
-        gapsOuter: { type: "int", def: "0", min: -100, max: 200 },              // px more at the screen edge; negative takes from it (down to half the inner gap)
+        tilingDrag: {
+            type: "choice",
+            def: "modifier titlebar",
+            choices: ["off", "modifier", "titlebar", "modifier titlebar"],
+        },
+        workspaceOutputs: { type: "outputs", def: "" }, // "1=DP-4 HDMI-A-1, 2=DP-6": a list per number
+        workspaceAutoBackAndForth: { type: "bool", def: "false" }, // i3's workspace_auto_back_and_forth
+        gapsInner: { type: "int", def: "2", min: 0, max: 100 }, // px between windows, even (an odd one counts as the even below)
+        gapsOuter: { type: "int", def: "0", min: -100, max: 200 }, // px more at the screen edge; negative takes from it (down to half the inner gap)
         // i3's gaps top|right|bottom|left (§11 N2): that side's outer gap, -1 for gapsOuter.
         gapsTop: { type: "int", def: "-1", min: -1, max: 200 },
         gapsRight: { type: "int", def: "-1", min: -1, max: 200 },
         gapsBottom: { type: "int", def: "-1", min: -1, max: 200 },
         gapsLeft: { type: "int", def: "-1", min: -1, max: 200 },
-        workspaceGaps: { type: "wsgaps", def: "" },                             // i3's "workspace N gaps inner|outer|… M", in place of the global ones
-        smartGaps: { type: "choice", def: "off", choices: ["off", "on", "inverse_outer"] },   // i3's smart_gaps
+        workspaceGaps: { type: "wsgaps", def: "" }, // i3's "workspace N gaps inner|outer|… M", in place of the global ones
+        smartGaps: {
+            type: "choice",
+            def: "off",
+            choices: ["off", "on", "inverse_outer"],
+        }, // i3's smart_gaps
         // i3's hide_edge_borders (§7 L6): smart and smart_no_gaps drop a lone window's ring; the
         // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
-        hideEdgeBorders: { type: "choice", def: "none", choices: ["none", "vertical", "horizontal", "both", "smart", "smart_no_gaps"] },
+        hideEdgeBorders: {
+            type: "choice",
+            def: "none",
+            choices: [
+                "none",
+                "vertical",
+                "horizontal",
+                "both",
+                "smart",
+                "smart_no_gaps",
+            ],
+        },
         // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the
         // page has them. i3's colour classes (§7 L3): focused and unfocused (focused_inactive left
         // out); the indicator is the side where the next window opens on a window alone in its
@@ -71,7 +115,11 @@ var Settings = (function () {
         frameOnFloating: { type: "bool", def: "false" },
         // How tiled windows look: i3's frame, their own title bars, or
         // neither. Without kwini3hold every one is "titlebars".
-        tiledLook: { type: "choice", def: "frame", choices: ["frame", "titlebars", "bare"] },
+        tiledLook: {
+            type: "choice",
+            def: "frame",
+            choices: ["frame", "titlebars", "bare"],
+        },
         // Tiled windows' corners, rounded by kwini3hold.
         roundedCorners: { type: "bool", def: "true" },
         holdEnabled: { type: "bool", def: "true" },
@@ -92,13 +140,24 @@ var Settings = (function () {
             var n = parseInt(text, 10);
             return n >= t.min && n <= t.max ? n : null;
         }
-        if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
+        if (type === "choice")
+            return t.choices.indexOf(text) >= 0 ? text : null;
         // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces are taken and
         // the value given back without them.
         // Below -1 is no size (Rules.parseSize): refused here, so it logs its WARN.
-        if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz && +sz[1] >= -1 && +sz[2] >= -1 ? sz[1] + "x" + sz[2] : null; }
-        if (type === "text") return text;                                              // the rules, parsed by Rules
-        if (type === "colour") return text === "" ? "" : /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : null;   // "": the effect's own fallback (an indicator: its class's colour)
+        if (type === "size") {
+            var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text);
+            return sz && +sz[1] >= -1 && +sz[2] >= -1
+                ? sz[1] + "x" + sz[2]
+                : null;
+        }
+        if (type === "text") return text; // the rules, parsed by Rules
+        if (type === "colour")
+            return text === ""
+                ? ""
+                : /^#[0-9a-fA-F]{6}$/.test(text)
+                  ? text.toLowerCase()
+                  : null; // "": the effect's own fallback (an indicator: its class's colour)
         // i3's "workspace N gaps inner|outer|horizontal|vertical|top|right|bottom|left M" (gaps.c:
         // in place of the global ones, as gaps_for_workspace), one per line or separated by ";" or ",",
         // "workspace" optional: "3 gaps inner 10, 5 gaps outer 0" -> { 3: { inner: 10 }, 5: { top: 0,
@@ -110,11 +169,29 @@ var Settings = (function () {
             text.split(/[\n;,]/).forEach(function (e) {
                 e = e.trim();
                 if (!e) return;
-                var m = /^(?:workspace\s+)?([0-9]+)\s+gaps\s+(inner|outer|horizontal|vertical|top|right|bottom|left)\s+(-?[0-9]+)$/.exec(e);
-                if (!m || +m[1] < 1 || +m[1] > 10) { log("WARN setting workspaceGaps: ignoring \"" + e + "\" (want N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, N 1-10)"); return; }
-                var g = ws[+m[1]] || (ws[+m[1]] = {}), v = +m[3];
-                var sides = { inner: ["inner"], outer: ["top", "right", "bottom", "left"], horizontal: ["left", "right"], vertical: ["top", "bottom"] }[m[2]] || [m[2]];
-                sides.forEach(function (s) { g[s] = v; });
+                var m =
+                    /^(?:workspace\s+)?([0-9]+)\s+gaps\s+(inner|outer|horizontal|vertical|top|right|bottom|left)\s+(-?[0-9]+)$/.exec(
+                        e
+                    );
+                if (!m || +m[1] < 1 || +m[1] > 10) {
+                    log(
+                        'WARN setting workspaceGaps: ignoring "' +
+                            e +
+                            '" (want N gaps inner|outer|horizontal|vertical|top|right|bottom|left M, N 1-10)'
+                    );
+                    return;
+                }
+                var g = ws[+m[1]] || (ws[+m[1]] = {}),
+                    v = +m[3];
+                var sides = {
+                    inner: ["inner"],
+                    outer: ["top", "right", "bottom", "left"],
+                    horizontal: ["left", "right"],
+                    vertical: ["top", "bottom"],
+                }[m[2]] || [m[2]];
+                sides.forEach(function (s) {
+                    g[s] = v;
+                });
             });
             return ws;
         }
@@ -128,8 +205,14 @@ var Settings = (function () {
                 e = e.trim();
                 if (!e) return;
                 var m = /^([0-9]+)\s*=\s*(\S+(?:\s+\S+)*)$/.exec(e);
-                if (m && +m[1] >= 1 && +m[1] <= 10) out[+m[1]] = m[2].split(/\s+/);
-                else log("WARN setting workspaceOutputs: ignoring \"" + e + "\" (want N=OUTPUT [OUTPUT …], N 1-10)");
+                if (m && +m[1] >= 1 && +m[1] <= 10)
+                    out[+m[1]] = m[2].split(/\s+/);
+                else
+                    log(
+                        'WARN setting workspaceOutputs: ignoring "' +
+                            e +
+                            '" (want N=OUTPUT [OUTPUT …], N 1-10)'
+                    );
             });
             return out;
         }
@@ -147,10 +230,17 @@ var Settings = (function () {
             var t = TABLE[key];
             var v = parse(t, String(readConfig(key, t.def)).trim());
             if (v === null) {
-                log("WARN setting " + key + ": not a valid " + t.type + ", using the default");
+                log(
+                    "WARN setting " +
+                        key +
+                        ": not a valid " +
+                        t.type +
+                        ", using the default"
+                );
                 v = parse(t, t.def);
             }
-            if (JSON.stringify(v) !== JSON.stringify(values[key])) changed.push(key);
+            if (JSON.stringify(v) !== JSON.stringify(values[key]))
+                changed.push(key);
             values[key] = v;
         });
         DEBUG_LOG = values.debugLog;
@@ -159,7 +249,9 @@ var Settings = (function () {
 
     load();
     return {
-        get: function (key) { return values[key]; },
+        get: function (key) {
+            return values[key];
+        },
         load: load,
         table: TABLE,
     };

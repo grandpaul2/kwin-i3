@@ -45,37 +45,71 @@
 var Tree = (function () {
     "use strict";
 
-    var LEFT = "left", RIGHT = "right", UP = "up", DOWN = "down";
+    var LEFT = "left",
+        RIGHT = "right",
+        UP = "up",
+        DOWN = "down";
 
-    function orientationOf(dir) { return dir === LEFT || dir === RIGHT ? "h" : "v"; }
-    function isBefore(dir) { return dir === LEFT || dir === UP; }
+    function orientationOf(dir) {
+        return dir === LEFT || dir === RIGHT ? "h" : "v";
+    }
+    function isBefore(dir) {
+        return dir === LEFT || dir === UP;
+    }
 
     function remove(list, item) {
         var i = list.indexOf(item);
         if (i >= 0) list.splice(i, 1);
         return i;
     }
-    function insertAfter(list, ref, item) { list.splice(list.indexOf(ref) + 1, 0, item); }
-    function insertBefore(list, ref, item) { list.splice(list.indexOf(ref), 0, item); }
+    function insertAfter(list, ref, item) {
+        list.splice(list.indexOf(ref) + 1, 0, item);
+    }
+    function insertBefore(list, ref, item) {
+        list.splice(list.indexOf(ref), 0, item);
+    }
 
     function newCon(layout, win) {
-        return { type: "con", win: win === undefined ? null : win, layout: layout || "h", lastSplit: "h",
-                 nodes: [], focus: [], parent: null, percent: 0, fullscreen: false, minimized: false,
-                 floating: false, sticky: false };
+        return {
+            type: "con",
+            win: win === undefined ? null : win,
+            layout: layout || "h",
+            lastSplit: "h",
+            nodes: [],
+            focus: [],
+            parent: null,
+            percent: 0,
+            fullscreen: false,
+            minimized: false,
+            floating: false,
+            sticky: false,
+        };
     }
     // floating_enable's nc: a CT_FLOATING_CON, splith, not yet holding anything.
     function newFloatingCon() {
-        return { type: "floating", win: null, layout: "h", lastSplit: "h", nodes: [], focus: [], parent: null,
-                 percent: 0, fullscreen: false, minimized: false, floating: false, sticky: false };
+        return {
+            type: "floating",
+            win: null,
+            layout: "h",
+            lastSplit: "h",
+            nodes: [],
+            focus: [],
+            parent: null,
+            percent: 0,
+            fullscreen: false,
+            minimized: false,
+            floating: false,
+            sticky: false,
+        };
     }
 
     function Model(env) {
         this.env = env || {};
-        this.workspaces = {};   // num -> ws
-        this.byWin = {};        // window id -> leaf or floating node
-        this.focused = null;    // i3's global `focused`
+        this.workspaces = {}; // num -> ws
+        this.byWin = {}; // window id -> leaf or floating node
+        this.focused = null; // i3's global `focused`
         this.previousWs = null; // i3's previous_workspace_name, as a number (back_and_forth)
-        this.focusedWsNum = null;   // the workspace focus was last set on (for previousWs)
+        this.focusedWsNum = null; // the workspace focus was last set on (for previousWs)
         this.root = { type: "root", nodes: [], focus: [], parent: null };
     }
 
@@ -88,8 +122,20 @@ var Tree = (function () {
     M.ws = function (num, layout) {
         var ws = this.workspaces[num];
         if (!ws) {
-            ws = { type: "ws", num: num, layout: layout || "h", wsLayout: "default", lastSplit: "h",
-                   nodes: [], floating: [], focus: [], parent: null, percent: 0, win: null, fullscreen: false };
+            ws = {
+                type: "ws",
+                num: num,
+                layout: layout || "h",
+                wsLayout: "default",
+                lastSplit: "h",
+                nodes: [],
+                floating: [],
+                focus: [],
+                parent: null,
+                percent: 0,
+                win: null,
+                fullscreen: false,
+            };
             this.workspaces[num] = ws;
         }
         return ws;
@@ -98,8 +144,22 @@ var Tree = (function () {
     // ---- outputs (randr.c, output.c, con.c) ------------------------------------------------
 
     function newOutput(name, rect) {
-        var o = { type: "output", name: name, rect: rect, nodes: [], focus: [], shows: null, parent: null };
-        var c = { type: "content", layout: "h", nodes: [], focus: [], parent: o };   // output_init_con
+        var o = {
+            type: "output",
+            name: name,
+            rect: rect,
+            nodes: [],
+            focus: [],
+            shows: null,
+            parent: null,
+        };
+        var c = {
+            type: "content",
+            layout: "h",
+            nodes: [],
+            focus: [],
+            parent: o,
+        }; // output_init_con
         o.nodes.push(c);
         o.focus.push(c);
         return o;
@@ -111,45 +171,72 @@ var Tree = (function () {
         var root = this.root;
         list.forEach(function (l) {
             var o = null;
-            root.nodes.forEach(function (x) { if (x.name === l.name) o = x; });
+            root.nodes.forEach(function (x) {
+                if (x.name === l.name) o = x;
+            });
             if (!o) {
                 o = newOutput(l.name, l.rect);
                 o.parent = root;
                 root.nodes.push(o);
                 root.focus.push(o);
             }
-            o.rect = { x: l.rect.x, y: l.rect.y, width: l.rect.width, height: l.rect.height };
+            o.rect = {
+                x: l.rect.x,
+                y: l.rect.y,
+                width: l.rect.width,
+                height: l.rect.height,
+            };
         });
-        this.orderOutputs(list.map(function (l) { return l.name; }));
+        this.orderOutputs(
+            list.map(function (l) {
+                return l.name;
+            })
+        );
     };
     // The root's order by these names (KWin's screenOrder); outputs not named keep their place
     // after them. Adds and updates nothing.
     M.orderOutputs = function (names) {
         var root = this.root;
-        var named = [], rest = [];
-        names.forEach(function (n) { root.nodes.forEach(function (o) { if (o.name === n && named.indexOf(o) < 0) named.push(o); }); });
-        root.nodes.forEach(function (o) { if (named.indexOf(o) < 0) rest.push(o); });
+        var named = [],
+            rest = [];
+        names.forEach(function (n) {
+            root.nodes.forEach(function (o) {
+                if (o.name === n && named.indexOf(o) < 0) named.push(o);
+            });
+        });
+        root.nodes.forEach(function (o) {
+            if (named.indexOf(o) < 0) rest.push(o);
+        });
         root.nodes = named.concat(rest);
     };
     // An output gone: its workspaces must have been placed elsewhere or unplaced first.
     M.removeOutput = function (name) {
         var o = this.output(name);
         if (!o) return;
-        if (o.nodes[0].nodes.length) throw new Error("removeOutput: " + name + " still holds workspaces");
+        if (o.nodes[0].nodes.length)
+            throw new Error(
+                "removeOutput: " + name + " still holds workspaces"
+            );
         remove(this.root.nodes, o);
         remove(this.root.focus, o);
         o.parent = null;
     };
     M.output = function (name) {
-        for (var i = 0; i < this.root.nodes.length; i++) if (this.root.nodes[i].name === name) return this.root.nodes[i];
+        for (var i = 0; i < this.root.nodes.length; i++)
+            if (this.root.nodes[i].name === name) return this.root.nodes[i];
         return null;
     };
-    M.outputs = function () { return this.root.nodes.slice(); };
-    M.content = function (output) { return output.nodes[0]; };          // output_get_content
+    M.outputs = function () {
+        return this.root.nodes.slice();
+    };
+    M.content = function (output) {
+        return output.nodes[0];
+    }; // output_get_content
     // con_get_output for a workspace; an unplaced one is on the output that shows it, if any.
     M.outputOf = function (ws) {
         if (ws.parent) return ws.parent.parent;
-        for (var i = 0; i < this.root.nodes.length; i++) if (this.root.nodes[i].shows === ws) return this.root.nodes[i];
+        for (var i = 0; i < this.root.nodes.length; i++)
+            if (this.root.nodes[i].shows === ws) return this.root.nodes[i];
         return null;
     };
     // con_detach, then _con_attach's workspace case (con.c:109-134, 216-221): among the content's
@@ -172,8 +259,12 @@ var Tree = (function () {
         ws.parent = null;
     };
     // The workspace KWin shows on an output (null: a desktop that is no workspace, or not made).
-    M.setShows = function (output, ws) { output.shows = ws || null; };
-    M.visibleOn = function (output) { return output.shows; };
+    M.setShows = function (output, ws) {
+        output.shows = ws || null;
+    };
+    M.visibleOn = function (output) {
+        return output.shows;
+    };
     // workspace_show's focus step: the workspace heads its content's focus stack.
     M.show = function (ws) {
         if (!ws.parent) return;
@@ -185,7 +276,9 @@ var Tree = (function () {
     // axis, the closest (far: the farthest); ties by the root's order.
     var OPPOSITE = { left: "right", right: "left", up: "down", down: "up" };
     M.outputNext = function (output, dir, far) {
-        var a = output.rect, best = null, all = this.root.nodes;
+        var a = output.rect,
+            best = null,
+            all = this.root.nodes;
         for (var i = 0; i < all.length; i++) {
             if (all[i] === output) continue;
             var o = all[i].rect;
@@ -196,10 +289,27 @@ var Tree = (function () {
                 if (dir === DOWN ? !(o.y > a.y) : !(o.y < a.y)) continue;
                 if (o.x + o.width <= a.x || a.x + a.width <= o.x) continue;
             }
-            if (!best) { best = all[i]; continue; }
+            if (!best) {
+                best = all[i];
+                continue;
+            }
             var b = best.rect;
-            var nearer = dir === RIGHT ? o.x < b.x : dir === LEFT ? o.x > b.x : dir === DOWN ? o.y < b.y : o.y > b.y;
-            var farther = dir === RIGHT ? o.x > b.x : dir === LEFT ? o.x < b.x : dir === DOWN ? o.y > b.y : o.y < b.y;
+            var nearer =
+                dir === RIGHT
+                    ? o.x < b.x
+                    : dir === LEFT
+                      ? o.x > b.x
+                      : dir === DOWN
+                        ? o.y < b.y
+                        : o.y > b.y;
+            var farther =
+                dir === RIGHT
+                    ? o.x > b.x
+                    : dir === LEFT
+                      ? o.x < b.x
+                      : dir === DOWN
+                        ? o.y > b.y
+                        : o.y < b.y;
             if (far ? farther : nearer) best = all[i];
         }
         return best;
@@ -207,41 +317,88 @@ var Tree = (function () {
     // get_output_next_wrap (randr.c:221-247): none that way, the farthest the other way; none at
     // all, the output itself.
     M.outputNextWrap = function (output, dir) {
-        return this.outputNext(output, dir, false) || this.outputNext(output, OPPOSITE[dir], true) || output;
+        return (
+            this.outputNext(output, dir, false) ||
+            this.outputNext(output, OPPOSITE[dir], true) ||
+            output
+        );
     };
     // The visible workspace on the output next to ws's (get_tree_next_workspace,
     // move_to_output_directed), or null.
     M.neighbourWs = function (ws, dir) {
-        var o = this.outputOf(ws), t = o ? this.outputNext(o, dir, false) : null;
+        var o = this.outputOf(ws),
+            t = o ? this.outputNext(o, dir, false) : null;
         return t ? this.visibleOn(t) : null;
     };
     // One line per output, for the dump and the tests: "DP-1 0,0 1920x1080 shows=1 focus=[1 3] ws=[1 3]".
     M.describeOutputs = function () {
-        function nums(list) { return "[" + list.map(function (w) { return w.num; }).join(" ") + "]"; }
+        function nums(list) {
+            return (
+                "[" +
+                list
+                    .map(function (w) {
+                        return w.num;
+                    })
+                    .join(" ") +
+                "]"
+            );
+        }
         return this.root.nodes.map(function (o) {
-            var r = o.rect, c = o.nodes[0];
-            return o.name + " " + r.x + "," + r.y + " " + r.width + "x" + r.height + " shows=" +
-                (o.shows ? o.shows.num : "-") + " focus=" + nums(c.focus) + " ws=" + nums(c.nodes);
+            var r = o.rect,
+                c = o.nodes[0];
+            return (
+                o.name +
+                " " +
+                r.x +
+                "," +
+                r.y +
+                " " +
+                r.width +
+                "x" +
+                r.height +
+                " shows=" +
+                (o.shows ? o.shows.num : "-") +
+                " focus=" +
+                nums(c.focus) +
+                " ws=" +
+                nums(c.nodes)
+            );
         });
     };
 
-    function wsOf(con) {                                      // con_get_workspace
+    function wsOf(con) {
+        // con_get_workspace
         while (con && con.type !== "ws") con = con.parent;
         return con;
     }
-    function isLeaf(con) { return con.nodes.length === 0; }  // con_is_leaf
-    function isSplit(con) { return con.type === "con" && con.win === null; }
-    function isTabbing(layout) { return layout === "tabbed" || layout === "stacked"; }
+    function isLeaf(con) {
+        return con.nodes.length === 0;
+    } // con_is_leaf
+    function isSplit(con) {
+        return con.type === "con" && con.win === null;
+    }
+    function isTabbing(layout) {
+        return layout === "tabbed" || layout === "stacked";
+    }
     // con_orientation: tabbed containers behave as horizontal ones, stacked as vertical.
-    function orient(con) { return con.layout === "stacked" ? "v" : con.layout === "tabbed" ? "h" : con.layout; }
+    function orient(con) {
+        return con.layout === "stacked"
+            ? "v"
+            : con.layout === "tabbed"
+              ? "h"
+              : con.layout;
+    }
     // A split of i3's two split layouts (splith, splitv), not a tabbed or stacked container.
-    function isPlainSplit(con) { return isSplit(con) && !isTabbing(con.layout); }
+    function isPlainSplit(con) {
+        return isSplit(con) && !isTabbing(con.layout);
+    }
 
     // con_is_hidden: inside a tabbed or stacked container, behind the tab it shows.
     function isHidden(con) {
         for (var cur = con; cur && cur.type !== "ws"; cur = cur.parent) {
             var p = cur.parent;
-            if (p && isTabbing(p.layout) && firstTiling(p.focus) !== cur) return true;
+            if (p && isTabbing(p.layout) && firstTiling(p.focus) !== cur)
+                return true;
         }
         return false;
     }
@@ -250,36 +407,51 @@ var Tree = (function () {
     function numVisibleChildren(con) {
         var n = 0;
         con.nodes.forEach(function (c) {
-            if (c.win !== null) { if (!c.minimized && !isHidden(c)) n++; }
-            else n += numVisibleChildren(c);
+            if (c.win !== null) {
+                if (!c.minimized && !isHidden(c)) n++;
+            } else n += numVisibleChildren(c);
         });
         return n;
     }
-    function isFloatingCon(con) { return con.type === "floating"; }   // CT_FLOATING_CON
+    function isFloatingCon(con) {
+        return con.type === "floating";
+    } // CT_FLOATING_CON
     // con_is_floating. A workspace's `floating` is its floating_head, a list: never true here.
-    function isFloating(con) { return con.floating === true; }
-    function insideFloating(con) {                                     // con_inside_floating
+    function isFloating(con) {
+        return con.floating === true;
+    }
+    function insideFloating(con) {
+        // con_inside_floating
         for (var c = con; c && c.type !== "ws"; c = c.parent) {
             if (isFloatingCon(c)) return c;
             if (isFloating(c)) return c.parent;
         }
         return null;
     }
-    function isSticky(con) {                                           // con_is_sticky
+    function isSticky(con) {
+        // con_is_sticky
         return !!con.sticky || con.nodes.some(isSticky);
     }
-    function hasParent(con, parent) {                        // con_has_parent
+    function hasParent(con, parent) {
+        // con_has_parent
         for (var c = con.parent; c; c = c.parent) if (c === parent) return true;
         return false;
     }
 
     // Breadth first, nodes_head then floating_head: a floating window, inside its floating
     // container, is met at depth 2, after the top-level tiled ones and before the tiled ones deeper.
-    function fullscreenOn(ws) {                              // con_get_fullscreen_con(ws, CF_OUTPUT)
+    function fullscreenOn(ws) {
+        // con_get_fullscreen_con(ws, CF_OUTPUT)
         var level = ws.nodes.concat(ws.floating);
         while (level.length) {
-            for (var i = 0; i < level.length; i++) if (level[i].fullscreen) return level[i];
-            level = [].concat.apply([], level.map(function (c) { return c.nodes; }));
+            for (var i = 0; i < level.length; i++)
+                if (level[i].fullscreen) return level[i];
+            level = [].concat.apply(
+                [],
+                level.map(function (c) {
+                    return c.nodes;
+                })
+            );
         }
         return null;
     }
@@ -290,20 +462,25 @@ var Tree = (function () {
     function reachable(con) {
         if (con.type === "ws") return true;
         if (con.win !== null) return !con.minimized;
-        for (var i = 0; i < con.nodes.length; i++) if (reachable(con.nodes[i])) return true;
+        for (var i = 0; i < con.nodes.length; i++)
+            if (reachable(con.nodes[i])) return true;
         return false;
     }
     // The nearest reachable con in `list` from index i, stepping by d (-1 or 1); null for none.
     function stepReachable(list, i, d) {
-        for (var j = i + d; j >= 0 && j < list.length; j += d) if (reachable(list[j])) return list[j];
+        for (var j = i + d; j >= 0 && j < list.length; j += d)
+            if (reachable(list[j])) return list[j];
         return null;
     }
     // How many of p's children are reachable, counting `con` (the one moving) whatever it is.
     function liveChildren(p, con) {
-        return p.nodes.filter(function (c) { return c === con || reachable(c); }).length;
+        return p.nodes.filter(function (c) {
+            return c === con || reachable(c);
+        }).length;
     }
     function firstReachable(list) {
-        for (var i = 0; i < list.length; i++) if (reachable(list[i])) return list[i];
+        for (var i = 0; i < list.length; i++)
+            if (reachable(list[i])) return list[i];
         return null;
     }
 
@@ -315,18 +492,26 @@ var Tree = (function () {
         if (isFloatingCon(parent)) return null;
         while (parent && orient(parent) !== o) {
             parent = parent.parent;
-            if (parent && (isFloatingCon(parent) || parent.type === "output" ||
-                           (parent.parent && parent.parent.type === "output"))) return null;
+            if (
+                parent &&
+                (isFloatingCon(parent) ||
+                    parent.type === "output" ||
+                    (parent.parent && parent.parent.type === "output"))
+            )
+                return null;
         }
         return parent || null;
     }
 
     function firstTiling(focus) {
-        for (var i = 0; i < focus.length; i++) if (!isFloatingCon(focus[i]) && reachable(focus[i])) return focus[i];
+        for (var i = 0; i < focus.length; i++)
+            if (!isFloatingCon(focus[i]) && reachable(focus[i]))
+                return focus[i];
         return null;
     }
 
-    M.descendFocused = function (con) {                      // con_descend_focused
+    M.descendFocused = function (con) {
+        // con_descend_focused
         var next = con;
         while (next !== this.focused && next.focus.length) {
             var child = firstReachable(next.focus);
@@ -336,8 +521,10 @@ var Tree = (function () {
         return next;
     };
 
-    M.descendTilingFocused = function (con) {                // con_descend_tiling_focused
-        var next = con, before;
+    M.descendTilingFocused = function (con) {
+        // con_descend_tiling_focused
+        var next = con,
+            before;
         if (next === this.focused) return next;
         do {
             before = next;
@@ -350,13 +537,16 @@ var Tree = (function () {
     // con_descend_direction: the leaf of a subtree met first when entering it moving `dir`;
     // across the grain, the most recently focused child.
     function descendDirection(con, dir) {
-        var most = null, nodes = con.nodes.filter(reachable);
+        var most = null,
+            nodes = con.nodes.filter(reachable);
         if (isLeaf(con)) return con;
         if (dir === LEFT || dir === RIGHT) {
-            if (orient(con) === "h") most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];
+            if (orient(con) === "h")
+                most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];
             else most = firstTiling(con.focus);
         } else {
-            if (orient(con) === "v") most = dir === UP ? nodes[nodes.length - 1] : nodes[0];
+            if (orient(con) === "v")
+                most = dir === UP ? nodes[nodes.length - 1] : nodes[0];
             else most = firstTiling(con.focus);
         }
         if (!most) return con;
@@ -367,36 +557,51 @@ var Tree = (function () {
     // i3's focus never reaches the scratchpad's; none left: the parent.
     M.nextFocused = function (con) {
         if (isFloating(con)) con = con.parent;
-        var next = null, focus = con.parent.focus;
-        for (var i = 0; i < focus.length && !next; i++) if (focus[i] !== con && reachable(focus[i])) next = focus[i];
+        var next = null,
+            focus = con.parent.focus;
+        for (var i = 0; i < focus.length && !next; i++)
+            if (focus[i] !== con && reachable(focus[i])) next = focus[i];
         // A split left with only minimized windows stays (they keep their place), where i3's
         // scratchpad leaves an empty split that closes: the focus goes on up as from that split.
-        if (!next && con.parent.type !== "ws" && con.parent.nodes.length > 1) return this.nextFocused(con.parent);
+        if (!next && con.parent.type !== "ws" && con.parent.nodes.length > 1)
+            return this.nextFocused(con.parent);
         if (!next) next = con.parent;
         while (next.focus.length) {
-            var child = firstReachable(next.focus.filter(function (c) { return c !== con; }));
+            var child = firstReachable(
+                next.focus.filter(function (c) {
+                    return c !== con;
+                })
+            );
             if (!child) break;
             next = child;
         }
-        if (isFloatingCon(con) && next !== con.parent) next = this.descendFocused(next);
+        if (isFloatingCon(con) && next !== con.parent)
+            next = this.descendFocused(next);
         return next;
     };
 
     // con_fix_percent: children without a share get the average share, then all are normalised.
     function fixPercent(con) {
         if (!con) return;
-        var n = con.nodes.length, total = 0, withPercent = 0, i, c;
+        var n = con.nodes.length,
+            total = 0,
+            withPercent = 0,
+            i,
+            c;
         if (!n) return;
         for (i = 0; i < n; i++) {
             c = con.nodes[i];
-            if (c.percent > 0) { total += c.percent; withPercent++; }
+            if (c.percent > 0) {
+                total += c.percent;
+                withPercent++;
+            }
         }
         if (withPercent !== n) {
             for (i = 0; i < n; i++) {
                 c = con.nodes[i];
                 if (c.percent <= 0) {
-                    if (withPercent === 0) total += (c.percent = 1.0);
-                    else total += (c.percent = total / withPercent);
+                    if (withPercent === 0) total += c.percent = 1.0;
+                    else total += c.percent = total / withPercent;
                 }
             }
         }
@@ -417,7 +622,11 @@ var Tree = (function () {
             parent.floating.push(con);
         } else {
             var current = ignoreFocus ? null : firstTiling(parent.focus);
-            if (con.win !== null && parent.type === "ws" && parent.wsLayout !== "default") {
+            if (
+                con.win !== null &&
+                parent.type === "ws" &&
+                parent.wsLayout !== "default"
+            ) {
                 parent = workspaceAttachTo(parent);
                 con.parent = parent;
                 current = null;
@@ -438,8 +647,12 @@ var Tree = (function () {
         return c;
     }
 
-    function detach(con) {                                   // con_detach (keeps con.parent)
-        remove(isFloatingCon(con) ? con.parent.floating : con.parent.nodes, con);
+    function detach(con) {
+        // con_detach (keeps con.parent)
+        remove(
+            isFloatingCon(con) ? con.parent.floating : con.parent.nodes,
+            con
+        );
         remove(con.parent.focus, con);
     }
 
@@ -459,22 +672,32 @@ var Tree = (function () {
     // of its workspace's floating list, which is its stacking order (floating_raise_con,
     // floating.c:478).
     M.activate = function (con) {
-        var to = wsOf(con), from = this.focusedWsNum;
+        var to = wsOf(con),
+            from = this.focusedWsNum;
         focusUp(con);
         var fl = insideFloating(con);
-        if (fl && fl.parent && fl.parent.floating[fl.parent.floating.length - 1] !== fl) {
+        if (
+            fl &&
+            fl.parent &&
+            fl.parent.floating[fl.parent.floating.length - 1] !== fl
+        ) {
             remove(fl.parent.floating, fl);
             fl.parent.floating.push(fl);
         }
         this.focused = con;
         if (!to) return;
-        if (from && from !== to.num) this.previousWs = from;   // kept if it closes, as i3 keeps the name
+        if (from && from !== to.num) this.previousWs = from; // kept if it closes, as i3 keeps the name
         this.focusedWsNum = to.num;
     };
 
-    function getFocusOrder(con) { return con.focus.slice(); }
-    function setFocusOrder(con, order) {                     // set_focus_order
-        con.focus = order.filter(function (c) { return c.parent === con; });
+    function getFocusOrder(con) {
+        return con.focus.slice();
+    }
+    function setFocusOrder(con, order) {
+        // set_focus_order
+        con.focus = order.filter(function (c) {
+            return c.parent === con;
+        });
     }
 
     // Move every tiling child of `from` into a new split `c` (keeping their focus order), which
@@ -497,10 +720,14 @@ var Tree = (function () {
     // tree_open_con, for a window KWin has put on workspace `ws`: it goes after the focus of that
     // workspace. Focus does not change here; KWin's activation tells us later (focusWin).
     M.open = function (win, ws) {
-        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf
-        var f = this.focused && wsOf(this.focused) === ws ? this.focused : this.descendFocused(ws);
+        if (this.byWin[win]) return this.byWin[win]; // added twice: no ghost leaf
+        var f =
+            this.focused && wsOf(this.focused) === ws
+                ? this.focused
+                : this.descendFocused(ws);
         var con = f === ws ? ws : f.parent;
-        if (isFloatingCon(con)) {                          // tree_open_con: the tiling focus's spot
+        if (isFloatingCon(con)) {
+            // tree_open_con: the tiling focus's spot
             con = this.descendTilingFocused(ws);
             if (con !== ws) con = con.parent;
         }
@@ -561,23 +788,34 @@ var Tree = (function () {
     // In i3's order (output.c:90-117): the output's workspaces by their focus stack, and on each
     // its floating containers by its own focus stack.
     M.pushSticky = function (ws, others, oldFocus) {
-        var self = this, moved = [], order = ws.parent ? ws.parent.focus : [];
-        function rank(w) { var i = order.indexOf(w); return i < 0 ? order.length : i; }
-        others.slice().sort(function (a, b) { return rank(a) - rank(b); }).forEach(function (from) {
-            if (from === ws) return;
-            from.focus.slice().forEach(function (fc) {
-                if (!isFloatingCon(fc) || !isSticky(fc)) return;
-                var wasFocus = !!oldFocus && fc === oldFocus.parent;
-                self.moveToWorkspace(fc, ws, !wasFocus);
-                moved = moved.concat(windowsIn(fc));
-                if (wasFocus) {
-                    var current = self.focused ? wsOf(self.focused) : null;
-                    var into = self.descendFocused(fc);
-                    if (focusPermits(self, into)) self.activate(into);
-                    if (current) self.activate(self.descendFocused(current));
-                }
+        var self = this,
+            moved = [],
+            order = ws.parent ? ws.parent.focus : [];
+        function rank(w) {
+            var i = order.indexOf(w);
+            return i < 0 ? order.length : i;
+        }
+        others
+            .slice()
+            .sort(function (a, b) {
+                return rank(a) - rank(b);
+            })
+            .forEach(function (from) {
+                if (from === ws) return;
+                from.focus.slice().forEach(function (fc) {
+                    if (!isFloatingCon(fc) || !isSticky(fc)) return;
+                    var wasFocus = !!oldFocus && fc === oldFocus.parent;
+                    self.moveToWorkspace(fc, ws, !wasFocus);
+                    moved = moved.concat(windowsIn(fc));
+                    if (wasFocus) {
+                        var current = self.focused ? wsOf(self.focused) : null;
+                        var into = self.descendFocused(fc);
+                        if (focusPermits(self, into)) self.activate(into);
+                        if (current)
+                            self.activate(self.descendFocused(current));
+                    }
+                });
             });
-        });
         return moved;
     };
 
@@ -589,12 +827,16 @@ var Tree = (function () {
 
     // tree_close_internal, without the X11 part. `keepParent` is i3's dont_kill_parent.
     M.closeCon = function (con, keepParent) {
-        var parent = con.parent, self = this;
-        con.nodes.slice().forEach(function (child) { self.closeCon(child, true); });
+        var parent = con.parent,
+            self = this;
+        con.nodes.slice().forEach(function (child) {
+            self.closeCon(child, true);
+        });
         var next = con === this.focused ? this.nextFocused(con) : null;
         detach(con);
         if (!isFloatingCon(con)) fixPercent(parent);
-        if (con.win !== null && this.byWin[con.win] === con) delete this.byWin[con.win];
+        if (con.win !== null && this.byWin[con.win] === con)
+            delete this.byWin[con.win];
         if (next) this.activate(next);
         if (!keepParent) this.onRemoveChild(parent);
     };
@@ -608,7 +850,8 @@ var Tree = (function () {
     // upwards. Workspaces stay.
     M.onRemoveChild = function (con) {
         if (!con || (con.type !== "con" && !isFloatingCon(con))) return;
-        if (con.nodes.length === 0 && con.win === null) this.closeCon(con, false);
+        if (con.nodes.length === 0 && con.win === null)
+            this.closeCon(con, false);
     };
 
     // ---- split and layout ------------------------------------------------------------------
@@ -622,12 +865,15 @@ var Tree = (function () {
                 con.layout = o;
                 return;
             }
-            con = wrapChildren(con, newCon(con.layout), true);       // workspace_encapsulate
+            con = wrapChildren(con, newCon(con.layout), true); // workspace_encapsulate
         }
         var parent = con.parent;
         // A container that is its parent's only child just changes the parent's orientation; a
         // tabbed or stacked parent gets a new split inside it instead.
-        if (parent.nodes.length === 1 && !isTabbing(parent.layout)) { parent.layout = o; return; }
+        if (parent.nodes.length === 1 && !isTabbing(parent.layout)) {
+            parent.layout = o;
+            return;
+        }
         var c = newCon(o);
         parent.nodes[parent.nodes.indexOf(con)] = c;
         parent.focus[parent.focus.indexOf(con)] = c;
@@ -640,7 +886,8 @@ var Tree = (function () {
     // ws_force_orientation: wrap the workspace's contents in a split with its old layout, and
     // give the workspace the new one.
     function forceOrientation(ws, o) {
-        var old = ws.layout, c = newCon(old);
+        var old = ws.layout,
+            c = newCon(old);
         c.lastSplit = ws.lastSplit;
         ws.layout = o;
         wrapChildren(ws, c, false);
@@ -653,7 +900,8 @@ var Tree = (function () {
     M.setLayout = function (con, layout) {
         if (!con || isFloating(con)) return;
         if (con.type !== "ws") con = con.parent;
-        if (con.layout === "h" || con.layout === "v") con.lastSplit = con.layout;
+        if (con.layout === "h" || con.layout === "v")
+            con.lastSplit = con.layout;
         if (con.type === "ws") {
             if (con.nodes.length === 0) {
                 con.wsLayout = isTabbing(layout) ? layout : "default";
@@ -667,8 +915,13 @@ var Tree = (function () {
             return;
         }
         // i3 #3001: don't stack up redundant one-child containers.
-        if (con.parent.type !== "ws" && con.nodes.length === 1 && con.parent.nodes.length === 1) {
-            var parent = con.parent, only = con.nodes[0];
+        if (
+            con.parent.type !== "ws" &&
+            con.nodes.length === 1 &&
+            con.parent.nodes.length === 1
+        ) {
+            var parent = con.parent,
+                only = con.nodes[0];
             detach(only);
             attach(only, parent, true);
             parent.lastSplit = con.lastSplit;
@@ -683,7 +936,11 @@ var Tree = (function () {
     M.toggleSplit = function (con) {
         if (!con || isFloating(con)) return;
         var parent = con.type === "ws" ? con : con.parent;
-        var layout = isTabbing(parent.layout) ? (parent.lastSplit || "h") : parent.layout === "h" ? "v" : "h";
+        var layout = isTabbing(parent.layout)
+            ? parent.lastSplit || "h"
+            : parent.layout === "h"
+              ? "v"
+              : "h";
         this.setLayout(con, layout);
     };
 
@@ -720,7 +977,11 @@ var Tree = (function () {
         var parent = con.parent;
         if (isPlainSplit(con) && parent && con.nodes.length === 1) {
             var child = con.nodes[0];
-            if (isPlainSplit(child) && con.layout !== child.layout && child.layout === orient(parent)) {
+            if (
+                isPlainSplit(child) &&
+                con.layout !== child.layout &&
+                child.layout === orient(parent)
+            ) {
                 var focusNext = child.focus[0] || null;
                 while (child.nodes.length) {
                     var cur = child.nodes[0];
@@ -738,10 +999,15 @@ var Tree = (function () {
                 return;
             }
         }
-        con.nodes.slice().forEach(function (c) { flattenCon(model, c); });
+        con.nodes.slice().forEach(function (c) {
+            flattenCon(model, c);
+        });
         // tree.c:740-746: then the floating containers, so a redundant pair inside a split
         // floated whole goes too (a floating container's layout is h, as i3's, floating.c:292).
-        if (con.type === "ws") con.floating.slice().forEach(function (c) { flattenCon(model, c); });
+        if (con.type === "ws")
+            con.floating.slice().forEach(function (c) {
+                flattenCon(model, c);
+            });
     }
 
     M.flatten = function () {
@@ -755,9 +1021,10 @@ var Tree = (function () {
     // an output: kwin.js claims one for it).
     function lowestCommonAncestor(a, b) {
         for (var pa = a; pa; pa = pa.parent)
-            for (var pb = b; pb; pb = pb.parent)
-                if (pa === pb) return pa;
-        throw new Error("lowestCommonAncestor: no common ancestor (a workspace with no output)");
+            for (var pb = b; pb; pb = pb.parent) if (pa === pb) return pa;
+        throw new Error(
+            "lowestCommonAncestor: no common ancestor (a workspace with no output)"
+        );
     }
     function childContaining(ancestor, con) {
         var child = con;
@@ -772,7 +1039,8 @@ var Tree = (function () {
 
     // insert_con_into: detach con and insert it before/after target, keeping the focus order.
     M.insertConInto = function (con, target, position) {
-        var parent = target.parent, oldParent = con.parent;
+        var parent = target.parent,
+            oldParent = con.parent;
         // On another workspace (a tiling drop onto another output) the meeting point is a
         // content or the root, whose focus order decides focus_before, as in i3.
         var lca = lowestCommonAncestor(con, parent);
@@ -787,7 +1055,8 @@ var Tree = (function () {
             var current = null;
             for (var i = 0; i < lca.focus.length; i++) {
                 current = lca.focus[i];
-                if (current === conAncestor || current === targetAncestor) break;
+                if (current === conAncestor || current === targetAncestor)
+                    break;
             }
             focusBefore = current === conAncestor;
         }
@@ -861,7 +1130,10 @@ var Tree = (function () {
         var position, target;
         if (!con || con.type === "ws" || isFloating(con)) return;
         // Minimized windows are out of the layout (§10 V7): never swapped with, never company.
-        if (con.fullscreen || (con.parent.type === "ws" && liveChildren(con.parent, con) === 1)) {
+        if (
+            con.fullscreen ||
+            (con.parent.type === "ws" && liveChildren(con.parent, con) === 1)
+        ) {
             this.moveToOutputDirected(con, dir);
             return;
         }
@@ -880,17 +1152,21 @@ var Tree = (function () {
                 same = parentWithOrientation(con, o);
             }
             if (same === con.parent) {
-                var siblings = con.parent.nodes, idx = siblings.indexOf(con);
+                var siblings = con.parent.nodes,
+                    idx = siblings.indexOf(con);
                 var swap = stepReachable(siblings, idx, isBefore(dir) ? -1 : 1);
                 if (swap) {
                     if (!isLeaf(swap)) {
                         target = descendDirection(swap, dir);
-                        position = (orient(target.parent) !== o || isBefore(dir)) ? "after" : "before";
+                        position =
+                            orient(target.parent) !== o || isBefore(dir)
+                                ? "after"
+                                : "before";
                         this.insertConInto(con, target, position);
                         this.flatten();
                         return;
                     }
-                    siblings[siblings.indexOf(swap)] = con;     // swap with a leaf: no flatten
+                    siblings[siblings.indexOf(swap)] = con; // swap with a leaf: no flatten
                     siblings[idx] = swap;
                     return;
                 }
@@ -906,13 +1182,24 @@ var Tree = (function () {
         while (above.parent !== same) above = above.parent;
         if (!focusPermits(this, above.parent)) return;
         var aIdx = above.parent.nodes.indexOf(above);
-        var next = stepReachable(above.parent.nodes, aIdx, isBefore(dir) ? -1 : 1);
+        var next = stepReachable(
+            above.parent.nodes,
+            aIdx,
+            isBefore(dir) ? -1 : 1
+        );
         if (next && !isLeaf(next)) {
             target = descendDirection(next, dir);
-            position = (orient(target.parent) !== o || isBefore(dir)) ? "after" : "before";
+            position =
+                orient(target.parent) !== o || isBefore(dir)
+                    ? "after"
+                    : "before";
             this.insertConInto(con, target, position);
-        } else if (!next && con.parent.parent && con.parent.parent.type === "ws" &&
-                   liveChildren(con.parent, con) === 1) {
+        } else if (
+            !next &&
+            con.parent.parent &&
+            con.parent.parent.type === "ws" &&
+            liveChildren(con.parent, con) === 1
+        ) {
             // i3: "the lone child of a non-default layout container at the edge of the
             // workspace". Its test is layout != L_DEFAULT, which every split passes.
             this.moveToOutputDirected(con, dir);
@@ -931,22 +1218,33 @@ var Tree = (function () {
         if (!con || con.type === "ws") return;
         var source = wsOf(con);
         if (ws === source) return;
-        if (!ignoreFocus && !focusPermits(this, ws)) return;   // _con_move_to_con, con.c:1319
-        if (isFloating(con)) con = con.parent;                 // con.c:1325: the floating container
+        if (!ignoreFocus && !focusPermits(this, ws)) return; // _con_move_to_con, con.c:1319
+        if (isFloating(con)) con = con.parent; // con.c:1325: the floating container
         // One fullscreen window per workspace (setFullscreen): the one moving wins.
-        var fsWin = con.fullscreen || (isFloatingCon(con) && con.nodes.some(function (c) { return c.fullscreen; }));
+        var fsWin =
+            con.fullscreen ||
+            (isFloatingCon(con) &&
+                con.nodes.some(function (c) {
+                    return c.fullscreen;
+                }));
         var target = this.descendFocused(ws);
-        var focusNext = null, old = this.focused, oldWs = old ? wsOf(old) : null;
+        var focusNext = null,
+            old = this.focused,
+            oldWs = old ? wsOf(old) : null;
         var oldHead = ws.parent ? ws.parent.focus[0] || null : null;
         if (!ignoreFocus && this.focused && wsOf(this.focused) === source) {
             focusNext = this.descendFocused(source);
-            if (focusNext === con || hasParent(focusNext, con)) focusNext = this.nextFocused(con);
+            if (focusNext === con || hasParent(focusNext, con))
+                focusNext = this.nextFocused(con);
         }
         if (target.type !== "ws") target = target.parent;
-        if (isFloatingCon(target)) target = target.parent;      // con.c:1381
-        if (isFloatingCon(con)) target = ws;                    // con.c:1387
+        if (isFloatingCon(target)) target = target.parent; // con.c:1381
+        if (isFloatingCon(con)) target = ws; // con.c:1387
         var fs = fullscreenOn(ws);
-        if (fsWin && fs) { fs.fullscreen = false; fs = null; }
+        if (fsWin && fs) {
+            fs.fullscreen = false;
+            fs = null;
+        }
         var parent = con.parent;
         detach(con);
         attach(con, target, false);
@@ -977,7 +1275,9 @@ var Tree = (function () {
     // Rects come from the caller (kwin.js has the tiles):
     // rectOf(con) gives { x, y, width, height } for a leaf, a split or a workspace.
 
-    var SIBLING = "sibling", CENTER = "center", PARENT = "parent";
+    var SIBLING = "sibling",
+        CENTER = "center",
+        PARENT = "parent";
 
     // con_fullscreen_permits_focusing (con.c:2327-2364): judged from the global focus's
     // fullscreen ancestor, which the change must not leave in a bad shape; a focus on another
@@ -986,21 +1286,26 @@ var Tree = (function () {
         var fs = model.focused;
         while (fs && fs.type !== "ws" && !fs.fullscreen) fs = fs.parent;
         if (!fs || fs.type === "ws" || con === fs) return true;
-        if (wsOf(con) !== wsOf(fs)) return true;               // per-output fullscreen
+        if (wsOf(con) !== wsOf(fs)) return true; // per-output fullscreen
         return hasParent(con, fs);
     }
 
     // con_on_side_of_parent: con's edge facing `dir` is its parent's edge too.
     function onSideOfParent(con, dir) {
         var reverse = { left: RIGHT, right: LEFT, up: DOWN, down: UP }[dir];
-        return orient(con.parent) !== orientationOf(dir) || isTabbing(con.parent.layout) ||
-            descendDirection(con.parent, reverse) === con;
+        return (
+            orient(con.parent) !== orientationOf(dir) ||
+            isTabbing(con.parent.layout) ||
+            descendDirection(con.parent, reverse) === con
+        );
     }
 
-    function adjustRect(r, dir, t) {                          // adjust_rect
+    function adjustRect(r, dir, t) {
+        // adjust_rect
         if (dir === LEFT) return { x: r.x, y: r.y, width: t, height: r.height };
         if (dir === UP) return { x: r.x, y: r.y, width: r.width, height: t };
-        if (dir === RIGHT) return { x: r.x + r.width - t, y: r.y, width: t, height: r.height };
+        if (dir === RIGHT)
+            return { x: r.x + r.width - t, y: r.y, width: t, height: r.height };
         return { x: r.x, y: r.y + r.height - t, width: r.width, height: t };
     }
 
@@ -1011,20 +1316,36 @@ var Tree = (function () {
     M.dropPlan = function (con, target, x, y, rectOf, parentMax) {
         if (!target) return null;
         var rect = rectOf(target);
-        if (target.type === "ws") return { target: target, type: CENTER, dir: null, rect: rect };
-        var siblingSize = Math.max(2, Math.floor(0.3 * Math.min(rect.width, rect.height)));
+        if (target.type === "ws")
+            return { target: target, type: CENTER, dir: null, rect: rect };
+        var siblingSize = Math.max(
+            2,
+            Math.floor(0.3 * Math.min(rect.width, rect.height))
+        );
         var parentSize = Math.min(parentMax, siblingSize - 1);
-        var dl = x - rect.x, dt = y - rect.y, dr = rect.x + rect.width - x, db = rect.y + rect.height - y;
+        var dl = x - rect.x,
+            dt = y - rect.y,
+            dr = rect.x + rect.width - x,
+            db = rect.y + rect.height - y;
         var dmin = Math.min(dl, dr, dt, db);
-        var dir = dl === dmin ? LEFT : dt === dmin ? UP : dr === dmin ? RIGHT : DOWN;
-        var type = dmin < parentSize && onSideOfParent(target, dir) ? PARENT : dmin < siblingSize ? SIBLING : CENTER;
+        var dir =
+            dl === dmin ? LEFT : dt === dmin ? UP : dr === dmin ? RIGHT : DOWN;
+        var type =
+            dmin < parentSize && onSideOfParent(target, dir)
+                ? PARENT
+                : dmin < siblingSize
+                  ? SIBLING
+                  : CENTER;
         // Not i3: the centre is at most 1.25 times as tall as it is wide and as wide as it is
         // tall, in the middle of the window, so on a narrow or a flat window it isn't a column or
         // a strip; what it gives up on either side is the beside drop that way, its indicator
         // reaching the centre (§9 G9).
-        var cwFull = rect.width - 2 * siblingSize, chFull = rect.height - 2 * siblingSize;
-        var ch = Math.min(chFull, cwFull * 1.25), cy = rect.y + (rect.height - ch) / 2;
-        var cw = Math.min(cwFull, chFull * 1.25), cx = rect.x + (rect.width - cw) / 2;
+        var cwFull = rect.width - 2 * siblingSize,
+            chFull = rect.height - 2 * siblingSize;
+        var ch = Math.min(chFull, cwFull * 1.25),
+            cy = rect.y + (rect.height - ch) / 2;
+        var cw = Math.min(cwFull, chFull * 1.25),
+            cx = rect.x + (rect.width - cw) / 2;
         var overflow = 0;
         if (type === CENTER && (y < cy || y >= cy + ch)) {
             type = SIBLING;
@@ -1037,7 +1358,11 @@ var Tree = (function () {
         }
         if (type !== PARENT && target === con) return null;
         if (type === PARENT) {
-            while (target.parent.type !== "ws" && onSideOfParent(target.parent, dir)) target = target.parent;
+            while (
+                target.parent.type !== "ws" &&
+                onSideOfParent(target.parent, dir)
+            )
+                target = target.parent;
             rect = adjustRect(rectOf(target.parent), dir, parentSize);
         } else if (type === CENTER) {
             rect = { x: cx, y: cy, width: cw, height: ch };
@@ -1045,15 +1370,39 @@ var Tree = (function () {
             // the two a tabbed group, the middle a stacked one, the bottom swaps them (G11). Onto
             // a window in a group, the centre joins it, as i3's con_move_to_target.
             if (isTabbing(target.parent.layout)) {
-                return { target: target, type: type, dir: null, rect: rect, band: "join" };
+                return {
+                    target: target,
+                    type: type,
+                    dir: null,
+                    rect: rect,
+                    band: "join",
+                };
             }
-            var third = rect.height / 3, bands = [], names = ["tabbed", "stacked", "swap"], band = null;
+            var third = rect.height / 3,
+                bands = [],
+                names = ["tabbed", "stacked", "swap"],
+                band = null;
             for (var i = 0; i < 3; i++) {
-                var b = { band: names[i], rect: { x: rect.x, y: rect.y + i * third, width: rect.width, height: third } };
+                var b = {
+                    band: names[i],
+                    rect: {
+                        x: rect.x,
+                        y: rect.y + i * third,
+                        width: rect.width,
+                        height: third,
+                    },
+                };
                 bands.push(b);
                 if (!band && (y < b.rect.y + third || i === 2)) band = b.band;
             }
-            return { target: target, type: type, dir: null, rect: rect, band: band, bands: bands };
+            return {
+                target: target,
+                type: type,
+                dir: null,
+                rect: rect,
+                band: band,
+                bands: bands,
+            };
         } else {
             rect = adjustRect(rect, dir, overflow || siblingSize);
         }
@@ -1065,16 +1414,28 @@ var Tree = (function () {
     // for what kwin-i3 keeps of them: the global focus stays where it was, con heads its new
     // parents' focus stacks (the drop's caller refocuses con if it had the focus).
     M.moveToTarget = function (con, target) {
-        if (insideFloating(target)) { this.moveToWorkspace(con, wsOf(target)); return true; }
-        if (target.type === "ws" && isLeaf(target)) { this.moveToWorkspace(con, target); return true; }
+        if (insideFloating(target)) {
+            this.moveToWorkspace(con, wsOf(target));
+            return true;
+        }
+        if (target.type === "ws" && isLeaf(target)) {
+            this.moveToWorkspace(con, target);
+            return true;
+        }
         if (isSplit(target) && !isLeaf(target)) target = target.focus[0];
         if (con === target || hasParent(target, con)) return false;
         if (!focusPermits(this, wsOf(target))) return false;
-        var orig = target, targetWs = wsOf(target);
+        var orig = target,
+            targetWs = wsOf(target);
         if (target.type !== "ws") target = target.parent;
         var fs = fullscreenOn(targetWs);
-        if (con.fullscreen && fs) { fs.fullscreen = false; fs = null; }
-        var parent = con.parent, old = this.focused, oldWs = old ? wsOf(old) : null;
+        if (con.fullscreen && fs) {
+            fs.fullscreen = false;
+            fs = null;
+        }
+        var parent = con.parent,
+            old = this.focused,
+            oldWs = old ? wsOf(old) : null;
         var oldHead = targetWs.parent ? targetWs.parent.focus[0] || null : null;
         detach(con);
         con.parent = target;
@@ -1094,10 +1455,19 @@ var Tree = (function () {
     // of a container, that container takes the layout (as a sibling drop changes its parent's
     // orientation) rather than wrapping them in another. False if con can't go there.
     M.group = function (con, target, layout) {
-        if (!isTabbing(layout) || target.type !== "con" || target.win === null) return false;
-        if (con === target || hasParent(target, con) || !focusPermits(this, wsOf(target))) return false;
+        if (!isTabbing(layout) || target.type !== "con" || target.win === null)
+            return false;
+        if (
+            con === target ||
+            hasParent(target, con) ||
+            !focusPermits(this, wsOf(target))
+        )
+            return false;
         var p = target.parent;
-        if (p.type !== "ws" && (p.nodes.length === 1 || (p.nodes.length === 2 && con.parent === p))) {
+        if (
+            p.type !== "ws" &&
+            (p.nodes.length === 1 || (p.nodes.length === 2 && con.parent === p))
+        ) {
             if (p.layout === "h" || p.layout === "v") p.lastSplit = p.layout;
             p.layout = layout;
         } else {
@@ -1114,43 +1484,72 @@ var Tree = (function () {
 
     // con_swap, for two tiled leaves: each takes the other's place, share and fullscreen.
     M.swap = function (first, second) {
-        if (first.type !== "con" || second.type !== "con" || first === second) return false;
+        if (first.type !== "con" || second.type !== "con" || first === second)
+            return false;
         if (hasParent(first, second) || hasParent(second, first)) return false;
-        var ws1 = wsOf(first), ws2 = wsOf(second), f = this.focused, restore = null;
+        var ws1 = wsOf(first),
+            ws2 = wsOf(second),
+            f = this.focused,
+            restore = null;
         if (ws1 === ws2 && f && ws1 === wsOf(f)) restore = f;
         else if (f && (first === f || hasParent(f, first))) restore = second;
         else if (f && (second === f || hasParent(f, second))) restore = first;
-        var p1 = first.parent, p2 = second.parent;
-        var n1 = p1.nodes.indexOf(first), n2 = p2.nodes.indexOf(second);
-        var f1 = p1.focus.indexOf(first), f2 = p2.focus.indexOf(second);
-        p1.nodes[n1] = second; p2.nodes[n2] = first;
-        p1.focus[f1] = second; p2.focus[f2] = first;
-        first.parent = p2; second.parent = p1;
-        var pc = first.percent; first.percent = second.percent; second.percent = pc;
+        var p1 = first.parent,
+            p2 = second.parent;
+        var n1 = p1.nodes.indexOf(first),
+            n2 = p2.nodes.indexOf(second);
+        var f1 = p1.focus.indexOf(first),
+            f2 = p2.focus.indexOf(second);
+        p1.nodes[n1] = second;
+        p2.nodes[n2] = first;
+        p1.focus[f1] = second;
+        p2.focus[f2] = first;
+        first.parent = p2;
+        second.parent = p1;
+        var pc = first.percent;
+        first.percent = second.percent;
+        second.percent = pc;
         if (restore) this.activate(restore);
-        var fs1 = first.fullscreen; first.fullscreen = second.fullscreen; second.fullscreen = fs1;
-        fixPercent(p1); fixPercent(p2);
+        var fs1 = first.fullscreen;
+        first.fullscreen = second.fullscreen;
+        second.fullscreen = fs1;
+        fixPercent(p1);
+        fixPercent(p2);
         return true;
     };
 
     // tiling_drag, after the release: apply a dropPlan. `swap`: the swap modifier was held at the
     // press. Returns true if the tree changed.
     M.drop = function (con, plan, swap) {
-        if (!plan || !plan.target || (plan.target === con && plan.type !== PARENT)) return false;
-        var target = plan.target, dir = plan.dir, o = dir ? orientationOf(dir) : null;
+        if (
+            !plan ||
+            !plan.target ||
+            (plan.target === con && plan.type !== PARENT)
+        )
+            return false;
+        var target = plan.target,
+            dir = plan.dir,
+            o = dir ? orientationOf(dir) : null;
         var position = dir && isBefore(dir) ? "before" : "after";
-        var setFocus = con === this.focused, setFs = con.fullscreen;
-        con.fullscreen = false;                                // con_disable_fullscreen
+        var setFocus = con === this.focused,
+            setFs = con.fullscreen;
+        con.fullscreen = false; // con_disable_fullscreen
         if (plan.type === CENTER) {
             // As i3: a failed swap ends the drop with con's fullscreen already off; a move's
             // result isn't checked. `swap` is the bottom band's swap; the other bands group, and
             // a centre onto a group's window joins it.
-            if (plan.band === "tabbed" || plan.band === "stacked") { if (!this.group(con, target, plan.band)) return setFs; }
-            else if (swap && plan.band !== "join") { if (!this.swap(con, target)) return setFs; }
-            else this.moveToTarget(con, target);
+            if (plan.band === "tabbed" || plan.band === "stacked") {
+                if (!this.group(con, target, plan.band)) return setFs;
+            } else if (swap && plan.band !== "join") {
+                if (!this.swap(con, target)) return setFs;
+            } else this.moveToTarget(con, target);
         } else if (plan.type === SIBLING) {
             if (orient(target.parent) !== o) {
-                if (con.parent === target.parent && target.parent.nodes.length === 2) target.parent.layout = o;
+                if (
+                    con.parent === target.parent &&
+                    target.parent.nodes.length === 2
+                )
+                    target.parent.layout = o;
                 else this.split(target, o);
             }
             this.insertConInto(con, target, position);
@@ -1164,14 +1563,17 @@ var Tree = (function () {
             if (con !== target) this.insertConInto(con, target, position);
             var old = this.focused;
             this.move(con, dir);
-            var exists = old && (old.type === "ws" || this.byWin[old.win] === old);   // con_exists
+            var exists =
+                old && (old.type === "ws" || this.byWin[old.win] === old); // con_exists
             if (this.focused !== old && exists) this.activate(old);
         }
         if (setFocus || setFs) {
             var fs = fullscreenOn(wsOf(con));
             if (fs && setFocus && setFs) fs.fullscreen = false;
             else if (fs) setFs = setFocus = false;
-            else if (!setFocus) setFocus = setFs && this.focused && wsOf(this.focused) === wsOf(con);
+            else if (!setFocus)
+                setFocus =
+                    setFs && this.focused && wsOf(this.focused) === wsOf(con);
         }
         if (setFs) con.fullscreen = true;
         if (setFocus) this.activate(con);
@@ -1185,8 +1587,11 @@ var Tree = (function () {
     // branch's place in the workspace focus stack. Returns con.
     M.floatingEnable = function (con) {
         if (!con || con.type !== "con" || isFloating(con)) return null;
-        var ws = wsOf(con), parent = con.parent, wasFocused = this.focused === con;
-        var placeholder = null, before = true;
+        var ws = wsOf(con),
+            parent = con.parent,
+            wasFocused = this.focused === con;
+        var placeholder = null,
+            before = true;
         if (!wasFocused) {
             var ancestor = con;
             while (ancestor.parent.type !== "ws") {
@@ -1223,7 +1628,9 @@ var Tree = (function () {
     // its focus stacks for the next con_focus to fix). Returns con.
     M.floatingDisable = function (con) {
         if (!con || !isFloating(con)) return null;
-        var nc = con.parent, ws = wsOf(con), wasFocused = this.focused === con;
+        var nc = con.parent,
+            ws = wsOf(con),
+            wasFocused = this.focused === con;
         var tilingFocused = this.descendTilingFocused(ws);
         if (tilingFocused.type === "ws") {
             detach(con);
@@ -1248,7 +1655,11 @@ var Tree = (function () {
     // tree changed.
     M.dropFloatingRefused = function (con, plan) {
         if (!con || !isFloating(con) || !plan || !plan.target) return true;
-        return plan.type === CENTER && plan.target.type !== "ws" && !focusPermits(this, wsOf(plan.target));
+        return (
+            plan.type === CENTER &&
+            plan.target.type !== "ws" &&
+            !focusPermits(this, wsOf(plan.target))
+        );
     };
     M.dropFloating = function (con, plan) {
         if (this.dropFloatingRefused(con, plan)) return false;
@@ -1261,10 +1672,17 @@ var Tree = (function () {
     // cancelled): the sibling after it, else the one before, and every sibling's share; null
     // when it is alone.
     M.placeOf = function (con) {
-        var p = con.parent, sib = p ? p.nodes : [], i = sib.indexOf(con);
+        var p = con.parent,
+            sib = p ? p.nodes : [],
+            i = sib.indexOf(con);
         if (i < 0 || sib.length < 2) return null;
-        var at = i + 1 < sib.length ? { target: sib[i + 1], position: "before" } : { target: sib[i - 1], position: "after" };
-        at.shares = sib.map(function (k) { return { con: k, percent: k.percent }; });
+        var at =
+            i + 1 < sib.length
+                ? { target: sib[i + 1], position: "before" }
+                : { target: sib[i - 1], position: "after" };
+        at.shares = sib.map(function (k) {
+            return { con: k, percent: k.percent };
+        });
         return at;
     };
     // floating_disable, then back at `place` if its sibling is still tiled where it was (a parent
@@ -1273,19 +1691,34 @@ var Tree = (function () {
     M.floatBack = function (con, place) {
         if (!con || !isFloating(con)) return null;
         var t = place && place.target;
-        var standing = !!t && !!t.parent && t.parent.nodes.indexOf(t) >= 0 && !!wsOf(t) && !insideFloating(t) && wsOf(t) === wsOf(con);
+        var standing =
+            !!t &&
+            !!t.parent &&
+            t.parent.nodes.indexOf(t) >= 0 &&
+            !!wsOf(t) &&
+            !insideFloating(t) &&
+            wsOf(t) === wsOf(con);
         this.floatingDisable(con);
         if (!standing) return con;
         this.insertConInto(con, t, place.position);
-        var p = con.parent, same = place.shares.length === p.nodes.length &&
-            place.shares.every(function (s) { return s.con.parent === p; });
-        if (same) place.shares.forEach(function (s) { s.con.percent = s.percent; });
+        var p = con.parent,
+            same =
+                place.shares.length === p.nodes.length &&
+                place.shares.every(function (s) {
+                    return s.con.parent === p;
+                });
+        if (same)
+            place.shares.forEach(function (s) {
+                s.con.percent = s.percent;
+            });
         return con;
     };
 
     M.toggleFloating = function (con) {
         if (!con) return null;
-        return isFloating(con) ? this.floatingDisable(con) : this.floatingEnable(con);
+        return isFloating(con)
+            ? this.floatingDisable(con)
+            : this.floatingEnable(con);
     };
 
     // cmd_focus_window_mode("mode_toggle")
@@ -1293,7 +1726,9 @@ var Tree = (function () {
         if (!this.focused) return null;
         // From the workspace itself (focus parent up to it), i3 goes to the floating windows:
         // con_inside_floating(workspace) is false (commands.c:1404).
-        var ws = wsOf(this.focused), toFloating = this.focused.type === "ws" || !insideFloating(this.focused);
+        var ws = wsOf(this.focused),
+            toFloating =
+                this.focused.type === "ws" || !insideFloating(this.focused);
         for (var i = 0; i < ws.focus.length; i++) {
             var c = ws.focus[i];
             if (toFloating !== isFloatingCon(c) || !reachable(c)) continue;
@@ -1328,18 +1763,27 @@ var Tree = (function () {
         // resize_find_tiling_participants(..., both_sides = true)
         while (current.type !== "ws") {
             // stacked and tabbed containers are skipped (resize_find_tiling_participants)
-            if (orient(current.parent) === o && !isTabbing(current.parent.layout) &&
-                liveChildren(current.parent, current) > 1) break;
+            if (
+                orient(current.parent) === o &&
+                !isTabbing(current.parent.layout) &&
+                liveChildren(current.parent, current) > 1
+            )
+                break;
             current = current.parent;
         }
         if (current.type === "ws") return false;
         var parent = current.parent;
-        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / parent.nodes.length; });
+        parent.nodes.forEach(function (c) {
+            if (c.percent === 0) c.percent = 1 / parent.nodes.length;
+        });
         // The shares among what is shown: a minimized window's is out of the layout (§10 V7).
-        var live = parent.nodes.filter(function (c) { return c === current || reachable(c); });
+        var live = parent.nodes.filter(function (c) {
+            return c === current || reachable(c);
+        });
         var next = current.percent + ppt;
         var subtract = ppt / (live.length - 1);
-        var px = sizeOf ? sizeOf(parent) : 0, floor = px > 0 ? 1 / px : MIN_SHARE;
+        var px = sizeOf ? sizeOf(parent) : 0,
+            floor = px > 0 ? 1 / px : MIN_SHARE;
         if (ppt < 0 && next < floor) return false;
         if (subtract >= 0) {
             for (var i = 0; i < live.length; i++) {
@@ -1348,7 +1792,9 @@ var Tree = (function () {
             }
         }
         current.percent = next;
-        live.forEach(function (c) { if (c !== current) c.percent -= subtract; });
+        live.forEach(function (c) {
+            if (c !== current) c.percent -= subtract;
+        });
         return true;
     };
 
@@ -1358,15 +1804,23 @@ var Tree = (function () {
     // workspace), stacked and tabbed containers skipped.
     M.resizeParticipants = function (con, dir) {
         if (!con || con.type === "ws" || con.type === "floating") return null;
-        var o = orientationOf(dir), backwards = isBefore(dir), first = con, second = null;
+        var o = orientationOf(dir),
+            backwards = isBefore(dir),
+            first = con,
+            second = null;
         while (first.type !== "ws" && first.type !== "floating" && !second) {
-            if (orient(first.parent) !== o || isTabbing(first.parent.layout)) { first = first.parent; continue; }
+            if (orient(first.parent) !== o || isTabbing(first.parent.layout)) {
+                first = first.parent;
+                continue;
+            }
             var i = first.parent.nodes.indexOf(first);
             second = first.parent.nodes[backwards ? i - 1 : i + 1] || null;
             if (!second) first = first.parent;
         }
         if (!second) return null;
-        return backwards ? { first: second, second: first } : { first: first, second: second };
+        return backwards
+            ? { first: second, second: first }
+            : { first: first, second: second };
     };
 
     // resize_neighboring_cons(first, second, px, 0): px of the parent's `size` (con_rect_size_in_
@@ -1376,8 +1830,13 @@ var Tree = (function () {
     M.resizeNeighbouring = function (first, second, px, size) {
         var parent = first.parent;
         if (!(size > 0) || !parent || second.parent !== parent) return false;
-        parent.nodes.forEach(function (c) { if (c.percent === 0) c.percent = 1 / parent.nodes.length; });
-        var pct = px / size, a = first.percent + pct, b = second.percent - pct, floor = 1 / size;
+        parent.nodes.forEach(function (c) {
+            if (c.percent === 0) c.percent = 1 / parent.nodes.length;
+        });
+        var pct = px / size,
+            a = first.percent + pct,
+            b = second.percent - pct,
+            floor = 1 / size;
         if (a < floor || b < floor) return false;
         first.percent = a;
         second.percent = b;
@@ -1398,17 +1857,29 @@ var Tree = (function () {
         wrapping = wrapping || "yes";
         var con = this.focused;
         if (!con) return null;
-        var previous = isBefore(dir), o = orientationOf(dir), firstWrap = null, next = null;
+        var previous = isBefore(dir),
+            o = orientationOf(dir),
+            firstWrap = null,
+            next = null;
         var fromWs = con.type === "ws";
         while (con.type !== "ws") {
-            if (con.fullscreen) { con = wsOf(con); break; }
+            if (con.fullscreen) {
+                con = wsOf(con);
+                break;
+            }
             var parent = con.parent;
             // At a floating container: left and right go round the floating containers, up and
             // down do nothing (get_tree_next, tree.c:531).
             if (isFloatingCon(con)) {
                 if (o !== "h") return null;
-                var self = con, fl = parent.floating.filter(function (c) { return c === self || reachable(c); }), k = fl.indexOf(con);
-                var nfc = (previous ? fl[k - 1] : fl[k + 1]) || (previous ? fl[fl.length - 1] : fl[0]);
+                var self = con,
+                    fl = parent.floating.filter(function (c) {
+                        return c === self || reachable(c);
+                    }),
+                    k = fl.indexOf(con);
+                var nfc =
+                    (previous ? fl[k - 1] : fl[k + 1]) ||
+                    (previous ? fl[fl.length - 1] : fl[0]);
                 if (nfc === con) return null;
                 // _tree_next: raised keeping the relative stack order, the list rotated until it
                 // is last (tree.c:615-625), so the cycle goes on round the same order.
@@ -1419,19 +1890,27 @@ var Tree = (function () {
                 return into;
             }
             // Minimized windows are not there to be focused: the siblings that are.
-            var siblings = parent.nodes.filter(function (c) { return c === con || reachable(c); });
+            var siblings = parent.nodes.filter(function (c) {
+                return c === con || reachable(c);
+            });
             if (siblings.length > 1 && orient(parent) === o) {
                 var idx = siblings.indexOf(con);
                 var cand = previous ? siblings[idx - 1] : siblings[idx + 1];
-                if (cand && focusPermits(this, cand)) { next = cand; break; }
-                var wrap = previous ? siblings[siblings.length - 1] : siblings[0];
+                if (cand && focusPermits(this, cand)) {
+                    next = cand;
+                    break;
+                }
+                var wrap = previous
+                    ? siblings[siblings.length - 1]
+                    : siblings[0];
                 if (wrapping === "force") {
                     // never leaves the parent; a next one blocked by fullscreen blocks the wrap too
                     if (cand || !focusPermits(this, wrap)) return null;
                     next = wrap;
                     break;
                 }
-                if (wrapping !== "no" && !firstWrap && focusPermits(this, wrap)) firstWrap = wrap;
+                if (wrapping !== "no" && !firstWrap && focusPermits(this, wrap))
+                    firstWrap = wrap;
             }
             con = parent;
         }
@@ -1476,13 +1955,16 @@ var Tree = (function () {
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
     // browser, then a video); two flags would block all directional focus. Tiled
     // or floating alike (con_enable_fullscreen): a floating fullscreen window blocks focus too.
-    M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen window, or null
+    M.fullscreenOn = function (ws) {
+        return fullscreenOn(ws);
+    }; // the workspace's fullscreen window, or null
     M.setFullscreen = function (win, on) {
         var con = this.byWin[win];
         if (!con || con.type !== "con") return;
         con.fullscreen = false;
         var other;
-        while (on && (other = fullscreenOn(wsOf(con)))) other.fullscreen = false;
+        while (on && (other = fullscreenOn(wsOf(con))))
+            other.fullscreen = false;
         con.fullscreen = !!on;
     };
 
@@ -1492,8 +1974,16 @@ var Tree = (function () {
     // a workspace's floating containers stay after its tiled ones.
     function adoptOrder(c, s) {
         if (!s.focus) return;
-        var tiled = s.focus.map(function (i) { return c.nodes[i]; }).filter(function (k) { return k; });
-        c.nodes.forEach(function (k) { if (tiled.indexOf(k) < 0) tiled.push(k); });
+        var tiled = s.focus
+            .map(function (i) {
+                return c.nodes[i];
+            })
+            .filter(function (k) {
+                return k;
+            });
+        c.nodes.forEach(function (k) {
+            if (tiled.indexOf(k) < 0) tiled.push(k);
+        });
         c.focus = tiled.concat(c.focus.filter(isFloatingCon));
     }
     function adoptBuild(model, s, parent) {
@@ -1501,7 +1991,10 @@ var Tree = (function () {
         attach(c, parent, true);
         c.percent = s.percent || 0;
         if (s.lastSplit) c.lastSplit = s.lastSplit;
-        if (s.kids) s.kids.forEach(function (k) { adoptBuild(model, k, c); });
+        if (s.kids)
+            s.kids.forEach(function (k) {
+                adoptBuild(model, k, c);
+            });
         else model.byWin[s.win] = c;
         fixPercent(c);
         adoptOrder(c, s);
@@ -1512,31 +2005,52 @@ var Tree = (function () {
     // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
     // until focusWin() calls refine them.
     M.adopt = function (ws, spec) {
-        var self = this, wsLayout = ws.wsLayout;
+        var self = this,
+            wsLayout = ws.wsLayout;
         // A group at a workspace's top (a tile-read of a workspace that is one group; a tree saved
         // in that shape before) goes into a container under it, as con_set_layout makes one for a
         // workspace with windows (con.c:2024-2032): the workspace itself is never tabbed or
         // stacked with windows directly in it, so focus parent can reach the group and a window
         // can open beside it. Unless its workspace_layout is that layout, where i3's
         // workspace_attach_to keeps it so.
-        if (spec.kids && isTabbing(spec.layout) && spec.wsLayout !== spec.layout) {
+        if (
+            spec.kids &&
+            isTabbing(spec.layout) &&
+            spec.wsLayout !== spec.layout
+        ) {
             var inner = {};
             for (var k in spec) if (k !== "wsLayout") inner[k] = spec[k];
             inner.percent = 1;
-            var split = isTabbing(ws.layout) ? (ws.lastSplit || "h") : ws.layout;
-            spec = { layout: split, lastSplit: split, kids: [inner], focus: [0], wsLayout: spec.wsLayout };
+            var split = isTabbing(ws.layout) ? ws.lastSplit || "h" : ws.layout;
+            spec = {
+                layout: split,
+                lastSplit: split,
+                kids: [inner],
+                focus: [0],
+                wsLayout: spec.wsLayout,
+            };
         }
         // What KWin set on the windows already (fullscreen, minimized) outlives the rebuild.
         var kept = {};
-        this.leaves(ws).forEach(function (l) { kept[l.win] = { fullscreen: l.fullscreen, minimized: l.minimized }; });
-        ws.nodes.slice().forEach(function (c) { self.closeCon(c, true); });
-        ws.wsLayout = "default";        // the spec is the shape; workspace_layout wraps no window here
-        function build(s, parent) { return adoptBuild(self, s, parent); }
-        function order(c, s) { adoptOrder(c, s); }
+        this.leaves(ws).forEach(function (l) {
+            kept[l.win] = { fullscreen: l.fullscreen, minimized: l.minimized };
+        });
+        ws.nodes.slice().forEach(function (c) {
+            self.closeCon(c, true);
+        });
+        ws.wsLayout = "default"; // the spec is the shape; workspace_layout wraps no window here
+        function build(s, parent) {
+            return adoptBuild(self, s, parent);
+        }
+        function order(c, s) {
+            adoptOrder(c, s);
+        }
         if (spec.kids) {
             ws.layout = spec.layout;
             if (spec.lastSplit) ws.lastSplit = spec.lastSplit;
-            spec.kids.forEach(function (k) { build(k, ws); });
+            spec.kids.forEach(function (k) {
+                build(k, ws);
+            });
             order(ws, spec);
         } else if (spec.win !== undefined) {
             build(spec, ws);
@@ -1556,13 +2070,20 @@ var Tree = (function () {
     M.adoptFloated = function (ws, spec) {
         if (!spec.kids || !spec.kids.length) return null;
         var self = this;
-        if (specWindows(spec).some(function (k) { return self.byWin[k]; })) return null;
+        if (
+            specWindows(spec).some(function (k) {
+                return self.byWin[k];
+            })
+        )
+            return null;
         var nc = newFloatingCon();
         attach(nc, ws, false);
         var c = newCon(spec.layout);
         if (spec.lastSplit) c.lastSplit = spec.lastSplit;
         holdIn(nc, c);
-        spec.kids.forEach(function (k) { adoptBuild(self, k, c); });
+        spec.kids.forEach(function (k) {
+            adoptBuild(self, k, c);
+        });
         fixPercent(c);
         adoptOrder(c, spec);
         return nc;
@@ -1573,10 +2094,21 @@ var Tree = (function () {
     // so a reload restores i3's tree, as i3's restart does, where KWin's tiles hold less.
     M.snapshot = function (ws) {
         function snap(c) {
-            if (c.type !== "ws" && c.win !== null) return { win: c.win, percent: c.percent };
-            var s = { layout: c.layout, percent: c.percent, lastSplit: c.lastSplit,
-                      kids: c.nodes.map(snap),
-                      focus: c.focus.filter(function (k) { return !isFloatingCon(k); }).map(function (k) { return c.nodes.indexOf(k); }) };
+            if (c.type !== "ws" && c.win !== null)
+                return { win: c.win, percent: c.percent };
+            var s = {
+                layout: c.layout,
+                percent: c.percent,
+                lastSplit: c.lastSplit,
+                kids: c.nodes.map(snap),
+                focus: c.focus
+                    .filter(function (k) {
+                        return !isFloatingCon(k);
+                    })
+                    .map(function (k) {
+                        return c.nodes.indexOf(k);
+                    }),
+            };
             if (c.type === "ws") s.wsLayout = c.wsLayout;
             return s;
         }
@@ -1593,7 +2125,10 @@ var Tree = (function () {
     M.leaves = function (ws) {
         var out = [];
         (function walk(c) {
-            c.nodes.forEach(function (k) { if (k.win !== null) out.push(k); else walk(k); });
+            c.nodes.forEach(function (k) {
+                if (k.win !== null) out.push(k);
+                else walk(k);
+            });
         })(ws);
         return out;
     };
@@ -1605,15 +2140,23 @@ var Tree = (function () {
     // "H[a V[b c*]] ~f": layout letter (T tabbed, S stacked) and children in order, * on the global focus, ! on a
     // fullscreen leaf, then the floating windows. For tests and the debug log.
     M.describe = function (num) {
-        var self = this, ws = this.workspaces[num];
+        var self = this,
+            ws = this.workspaces[num];
         if (!ws) return "";
         function d(c) {
-            var mark = (c === self.focused ? "*" : "") + (c.fullscreen ? "!" : "") + (c.minimized ? "_" : "");
+            var mark =
+                (c === self.focused ? "*" : "") +
+                (c.fullscreen ? "!" : "") +
+                (c.minimized ? "_" : "");
             if (c.type !== "ws" && c.win !== null) return String(c.win) + mark;
-            return LETTER[c.layout] + "[" + c.nodes.map(d).join(" ") + "]" + mark;
+            return (
+                LETTER[c.layout] + "[" + c.nodes.map(d).join(" ") + "]" + mark
+            );
         }
         var s = d(ws);
-        ws.floating.forEach(function (f) { s += " ~" + f.nodes.map(d).join(" "); });
+        ws.floating.forEach(function (f) {
+            s += " ~" + f.nodes.map(d).join(" ");
+        });
         return s;
     };
 
@@ -1636,9 +2179,11 @@ var Tree = (function () {
     // higher (dir 1) or lower (dir -1) number than cur; past the end, the lowest (highest). null
     // if that is cur itself (one workspace).
     function nextWorkspace(nums, cur, dir) {
-        var best = null, wrap = null;
+        var best = null,
+            wrap = null;
         nums.forEach(function (n) {
-            if (dir * (n - cur) > 0 && (best === null || dir * (n - best) < 0)) best = n;
+            if (dir * (n - cur) > 0 && (best === null || dir * (n - best) < 0))
+                best = n;
             if (wrap === null || dir * (n - wrap) < 0) wrap = n;
         });
         var t = best !== null ? best : wrap;
@@ -1656,9 +2201,16 @@ var Tree = (function () {
         isSticky: isSticky,
         orient: orient,
         nextWorkspace: nextWorkspace,
-        LEFT: LEFT, RIGHT: RIGHT, UP: UP, DOWN: DOWN,
-        SIBLING: SIBLING, CENTER: CENTER, PARENT: PARENT,
-        create: function (env) { return new Model(env); }
+        LEFT: LEFT,
+        RIGHT: RIGHT,
+        UP: UP,
+        DOWN: DOWN,
+        SIBLING: SIBLING,
+        CENTER: CENTER,
+        PARENT: PARENT,
+        create: function (env) {
+            return new Model(env);
+        },
     };
 })();
 

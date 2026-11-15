@@ -7,14 +7,23 @@
 //   occupied: { num: true } (workspaces with windows), focused: num or null }.
 
 var Outputs = (function () {
-    function connected(st, name) { return st.outputs.indexOf(name) >= 0; }
+    function connected(st, name) {
+        return st.outputs.indexOf(name) >= 0;
+    }
     // i3's get_assigned_output: the first connected output of the workspace's list, or null.
     function firstAssigned(num, st) {
         var list = st.assigned[num] || [];
-        for (var i = 0; i < list.length; i++) if (connected(st, list[i])) return list[i];
+        for (var i = 0; i < list.length; i++)
+            if (connected(st, list[i])) return list[i];
         return null;
     }
-    function nums(obj) { return Object.keys(obj).map(Number).sort(function (a, b) { return a - b; }); }
+    function nums(obj) {
+        return Object.keys(obj)
+            .map(Number)
+            .sort(function (a, b) {
+                return a - b;
+            });
+    }
 
     // B. An output lost (move_content): where each workspace that lived on it goes, for good.
     // With windows, or the focused one: the first output (i3's move_content, randr.c: every
@@ -26,7 +35,10 @@ var Outputs = (function () {
         var out = {};
         nums(st.homes).forEach(function (n) {
             if (st.homes[n] !== lost) return;
-            if (!st.occupied[n] && st.focused !== n) { out[n] = null; return; }
+            if (!st.occupied[n] && st.focused !== n) {
+                out[n] = null;
+                return;
+            }
             out[n] = st.outputs[0] || null;
         });
         return out;
@@ -37,7 +49,9 @@ var Outputs = (function () {
     // already, lowest first. i3 loops over its existing workspaces only (randr.c:462-486); an
     // assigned one not made yet is made when it is shown (C3) or first used.
     function movingTo(X, st) {
-        return nums(st.homes).filter(function (n) { return firstAssigned(n, st) === X && st.homes[n] !== X; });
+        return nums(st.homes).filter(function (n) {
+            return firstAssigned(n, st) === X && st.homes[n] !== X;
+        });
     }
 
     // C2. What a source output shows once the workspace it showed has moved away (i3's focus
@@ -45,8 +59,11 @@ var Outputs = (function () {
     // (`recent`: the output's focus stack as numbers, most recent first), else its lowest with
     // windows, else null (the caller finds an unused one).
     function sourceShows(source, recent, st) {
-        function fits(n) { return st.homes[n] === source && !!st.occupied[n]; }
-        for (var i = 0; i < recent.length; i++) if (fits(recent[i])) return recent[i];
+        function fits(n) {
+            return st.homes[n] === source && !!st.occupied[n];
+        }
+        for (var i = 0; i < recent.length; i++)
+            if (fits(recent[i])) return recent[i];
         var lowest = nums(st.homes).filter(fits);
         return lowest.length ? lowest[0] : null;
     }
@@ -55,14 +72,23 @@ var Outputs = (function () {
     // workspace, else its first assigned one (the lowest number whose first connected output is
     // X), else null (the caller finds the lowest free one, M1's rule).
     function newShows(X, st) {
-        var own = nums(st.homes).filter(function (n) { return st.homes[n] === X; });
+        var own = nums(st.homes).filter(function (n) {
+            return st.homes[n] === X;
+        });
         if (own.length) return own[0];
-        var assigned = nums(st.assigned).filter(function (n) { return firstAssigned(n, st) === X; });
+        var assigned = nums(st.assigned).filter(function (n) {
+            return firstAssigned(n, st) === X;
+        });
         return assigned.length ? assigned[0] : null;
     }
 
-    return { firstAssigned: firstAssigned, homesAfterLoss: homesAfterLoss, movingTo: movingTo,
-             sourceShows: sourceShows, newShows: newShows };
+    return {
+        firstAssigned: firstAssigned,
+        homesAfterLoss: homesAfterLoss,
+        movingTo: movingTo,
+        sourceShows: sourceShows,
+        newShows: newShows,
+    };
 })();
 
 if (typeof module !== "undefined") module.exports = Outputs;

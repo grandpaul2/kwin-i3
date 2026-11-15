@@ -68,7 +68,10 @@ export default [
         },
         rules: {
             "no-redeclare": ["error", { builtinGlobals: false }],
-            "no-unused-vars": ["error", { vars: "local", caughtErrors: "none" }],
+            "no-unused-vars": [
+                "error",
+                { vars: "local", caughtErrors: "none" },
+            ],
         },
     },
     {

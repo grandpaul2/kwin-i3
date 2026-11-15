@@ -4,15 +4,28 @@
 // fails quietly. The last LOG_KEEP lines are kept in memory either way, for "Dump State"
 // (tools/capture, docs/debugging.md).
 var DEBUG_LOG = false;
-var LOG_KEEP = 2000;   // hours of ordinary use, GEOM and TILE lines included; a few hundred kB
+var LOG_KEEP = 2000; // hours of ordinary use, GEOM and TILE lines included; a few hundred kB
 var logRing = [];
 
 function log(line) {
     // To the millisecond: a flash or a race sits inside one second.
-    var now = new Date(), ms = String(now.getMilliseconds());
-    logRing.push(now.toTimeString().slice(0, 8) + "." + "00".slice(ms.length - 1) + ms + " " +
-                 String(line).slice(0, 500));   // captions can be URLs
+    var now = new Date(),
+        ms = String(now.getMilliseconds());
+    logRing.push(
+        now.toTimeString().slice(0, 8) +
+            "." +
+            "00".slice(ms.length - 1) +
+            ms +
+            " " +
+            String(line).slice(0, 500)
+    ); // captions can be URLs
     if (logRing.length > LOG_KEEP) logRing.shift();
     if (!DEBUG_LOG) return;
-    callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", String(line));
+    callDBus(
+        "net.local.kwini3.log",
+        "/",
+        "net.local.kwini3.log",
+        "Log",
+        String(line)
+    );
 }

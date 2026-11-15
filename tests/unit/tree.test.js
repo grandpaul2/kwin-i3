@@ -9,23 +9,39 @@ const { LEFT, RIGHT, UP, DOWN } = Tree;
 // its right; else both live on one output A, which shows 1.
 function model(twoOutputs) {
     const m = Tree.create();
-    const outs = [{ name: "A", rect: { x: 0, y: 0, width: 1280, height: 720 } }];
-    if (twoOutputs) outs.push({ name: "B", rect: { x: 1280, y: 0, width: 1280, height: 720 } });
+    const outs = [
+        { name: "A", rect: { x: 0, y: 0, width: 1280, height: 720 } },
+    ];
+    if (twoOutputs)
+        outs.push({
+            name: "B",
+            rect: { x: 1280, y: 0, width: 1280, height: 720 },
+        });
     m.setOutputs(outs);
-    const a = m.output("A"), b = twoOutputs ? m.output("B") : a;
-    m.placeWorkspace(m.ws(1), a); m.placeWorkspace(m.ws(2), b);
-    m.setShows(a, m.ws(1)); m.show(m.ws(1));
-    if (twoOutputs) { m.setShows(b, m.ws(2)); m.show(m.ws(2)); }
+    const a = m.output("A"),
+        b = twoOutputs ? m.output("B") : a;
+    m.placeWorkspace(m.ws(1), a);
+    m.placeWorkspace(m.ws(2), b);
+    m.setShows(a, m.ws(1));
+    m.show(m.ws(1));
+    if (twoOutputs) {
+        m.setShows(b, m.ws(2));
+        m.show(m.ws(2));
+    }
     return m;
 }
 
 // Open windows on a workspace, each focused as it opens (as KWin activates new windows).
 function open(m, ws, ...wins) {
-    for (const w of wins) { m.open(w, m.ws(ws)); m.focusWin(w); }
+    for (const w of wins) {
+        m.open(w, m.ws(ws));
+        m.focusWin(w);
+    }
 }
 const d = (m, n = 1) => m.describe(n);
 const leaf = (m, w) => m.byWin[w];
-const pct = (m, ...wins) => wins.map((w) => Math.round(leaf(m, w).percent * 1000) / 1000);
+const pct = (m, ...wins) =>
+    wins.map((w) => Math.round(leaf(m, w).percent * 1000) / 1000);
 
 // ---- open (tree_open_con, _con_attach, con_fix_percent) -------------------------------------
 
@@ -35,7 +51,11 @@ test("open: first window goes in the workspace; the next after the focus", () =>
     assert.strictEqual(d(m), "H[a b*]");
     m.focusWin("a");
     open(m, 1, "c");
-    assert.strictEqual(d(m), "H[a c* b]", "after the focused window, not at the end");
+    assert.strictEqual(
+        d(m),
+        "H[a c* b]",
+        "after the focused window, not at the end"
+    );
 });
 
 test("open: inside the focused window's container", () => {
@@ -78,8 +98,11 @@ test("split: wraps the window in a new container of that orientation", () => {
     open(m, 1, "a", "b");
     m.split(leaf(m, "b"), "v");
     assert.strictEqual(d(m), "H[a V[b*]]");
-    assert.strictEqual(Math.round(leaf(m, "b").parent.percent * 1000) / 1000, 0.5,
-        "the wrapper takes the window's share");
+    assert.strictEqual(
+        Math.round(leaf(m, "b").parent.percent * 1000) / 1000,
+        0.5,
+        "the wrapper takes the window's share"
+    );
 });
 
 test("split: inside a one-child container just changes that container", () => {
@@ -115,13 +138,19 @@ test("close: focus goes to the previous focus in the same container", () => {
     m.focusWin("a");
     m.focusWin("c");
     m.close("c");
-    assert.strictEqual(d(m), "H[a* b]", "a was focused before c, so a, not the neighbour b");
+    assert.strictEqual(
+        d(m),
+        "H[a* b]",
+        "a was focused before c, so a, not the neighbour b"
+    );
 });
 
 test("close: shares are redistributed proportionally", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
-    leaf(m, "a").percent = 0.5; leaf(m, "b").percent = 0.25; leaf(m, "c").percent = 0.25;
+    leaf(m, "a").percent = 0.5;
+    leaf(m, "b").percent = 0.25;
+    leaf(m, "c").percent = 0.25;
     m.close("c");
     assert.deepStrictEqual(pct(m, "a", "b"), [0.667, 0.333]);
 });
@@ -182,9 +211,9 @@ test("move: up and down inside a vertical container", () => {
 test("move: out of a one-child container, and the empty container goes", () => {
     const m = model();
     open(m, 1, "a", "b");
-    m.move(leaf(m, "b"), UP);            // V[b H[a]]
+    m.move(leaf(m, "b"), UP); // V[b H[a]]
     m.focusWin("a");
-    m.move(leaf(m, "a"), UP);            // "Moving into container above": before H[a]
+    m.move(leaf(m, "a"), UP); // "Moving into container above": before H[a]
     assert.strictEqual(d(m), "V[b a*]");
 });
 
@@ -194,7 +223,11 @@ test("move: at the workspace edge, to the neighbouring output's workspace", () =
     open(m, 1, "a", "b");
     m.move(leaf(m, "b"), RIGHT);
     assert.strictEqual(d(m, 1), "H[a]");
-    assert.strictEqual(d(m, 2), "H[b* x]", "entering from the left, it goes first");
+    assert.strictEqual(
+        d(m, 2),
+        "H[b* x]",
+        "entering from the left, it goes first"
+    );
 });
 
 test("move: at the workspace edge with no output there, nothing happens", () => {
@@ -225,10 +258,11 @@ test("move: a fullscreen window goes to the next output (CF_OUTPUT)", () => {
 test("flatten: a one-child split holding a split of its parent's orientation is removed", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
-    const b = leaf(m, "b"), c = leaf(m, "c");
-    m.split(b, "h");                     // H[a H[b] c]
-    m.split(b.parent, "v");              // H[a V[H[b]] c]
-    m.insertConInto(c, b, "after");      // H[a V[H[b c]]]
+    const b = leaf(m, "b"),
+        c = leaf(m, "c");
+    m.split(b, "h"); // H[a H[b] c]
+    m.split(b.parent, "v"); // H[a V[H[b]] c]
+    m.insertConInto(c, b, "after"); // H[a V[H[b c]]]
     assert.strictEqual(d(m), "H[a V[H[b c*]]]");
     m.flatten();
     assert.strictEqual(d(m), "H[a b c*]");
@@ -275,7 +309,11 @@ test("move to workspace: after the target's focus; focus stays on the source", (
     m.moveToWorkspace(leaf(m, "b"), m.ws(2));
     assert.strictEqual(d(m, 1), "H[a*]");
     assert.strictEqual(d(m, 2), "H[x b y]");
-    assert.deepStrictEqual(m.focusOrder(m.ws(2)), ["b", "x", "y"], "b is ws 2's focus now");
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(2)),
+        ["b", "x", "y"],
+        "b is ws 2's focus now"
+    );
 });
 
 test("move to workspace: to an empty workspace", () => {
@@ -294,12 +332,16 @@ test("focus: tree-based, into a branch by its focus stack", () => {
     m.split(leaf(m, "b"), "v");
     open(m, 1, "c");
     m.focusWin("c");
-    m.focusWin("b");                     // V's focus: b, c
+    m.focusWin("b"); // V's focus: b, c
     m.focusWin("a");
     assert.strictEqual(m.focusDir(RIGHT).win, "b");
     m.focusWin("c");
-    m.focusWin("a");                     // V's focus: c, b
-    assert.strictEqual(m.focusDir(RIGHT).win, "c", "the branch's last focus decides");
+    m.focusWin("a"); // V's focus: c, b
+    assert.strictEqual(
+        m.focusDir(RIGHT).win,
+        "c",
+        "the branch's last focus decides"
+    );
 });
 
 test("focus: up and down inside a vertical branch", () => {
@@ -371,7 +413,7 @@ function floatedSplit() {
     const m = model();
     open(m, 1, "a", "b");
     m.split(leaf(m, "b"), "v");
-    open(m, 1, "c");                              // H[a V[b c*]]
+    open(m, 1, "c"); // H[a V[b c*]]
     const v = m.focusParent();
     m.toggleFloating(v);
     m.focusWin("c");
@@ -385,11 +427,27 @@ test("float a split whole: one floating container holding it, the focus on the s
     open(m, 1, "c");
     const v = m.focusParent();
     assert.strictEqual(m.toggleFloating(v), v);
-    assert.strictEqual(d(m), "H[a] ~V[b c]*", "floating_enable: the split, its children inside");
+    assert.strictEqual(
+        d(m),
+        "H[a] ~V[b c]*",
+        "floating_enable: the split, its children inside"
+    );
     assert.strictEqual(m.ws(1).floating.length, 1);
-    assert.strictEqual(Tree.isFloating(v), true, "the flag on the container's child (floating.c:357)");
-    assert.strictEqual(Tree.isFloating(leaf(m, "b")), false, "not on the windows inside");
-    assert.strictEqual(Tree.insideFloating(leaf(m, "b")), v.parent, "con_inside_floating from a window inside");
+    assert.strictEqual(
+        Tree.isFloating(v),
+        true,
+        "the flag on the container's child (floating.c:357)"
+    );
+    assert.strictEqual(
+        Tree.isFloating(leaf(m, "b")),
+        false,
+        "not on the windows inside"
+    );
+    assert.strictEqual(
+        Tree.insideFloating(leaf(m, "b")),
+        v.parent,
+        "con_inside_floating from a window inside"
+    );
 });
 
 test("float a split whole, and back: after the tiling focus (floating_disable)", () => {
@@ -399,14 +457,22 @@ test("float a split whole, and back: after the tiling focus (floating_disable)",
     assert.strictEqual(m.focusParent(), v);
     m.toggleFloating(v);
     assert.strictEqual(d(m), "H[a V[b c]*]");
-    assert.strictEqual(m.ws(1).floating.length, 0, "its floating container closed");
+    assert.strictEqual(
+        m.ws(1).floating.length,
+        0,
+        "its floating container closed"
+    );
 });
 
 test("floating toggle on a window inside a floated split floats that window alone", () => {
     const { m } = floatedSplit();
     m.focusWin("b");
     m.toggleFloating(leaf(m, "b"));
-    assert.strictEqual(d(m), "H[a] ~V[c] ~b*", "the split stays a split around c (con_on_remove_child closes only empty ones)");
+    assert.strictEqual(
+        d(m),
+        "H[a] ~V[c] ~b*",
+        "the split stays a split around c (con_on_remove_child closes only empty ones)"
+    );
 });
 
 test("a floated split's last window closing closes its floating container", () => {
@@ -421,8 +487,16 @@ test("a floated split's last window closing closes its floating container", () =
 test("focus parent goes past the floating container; focus child steps through it (level_up, level_down)", () => {
     const { m, v } = floatedSplit();
     assert.strictEqual(m.focusParent(), v);
-    assert.strictEqual(m.focusParent(), m.ws(1), "tree.c:392: to the workspace, not the floating container");
-    assert.strictEqual(m.focusChild(), v, "tree.c:418: the floating container's child");
+    assert.strictEqual(
+        m.focusParent(),
+        m.ws(1),
+        "tree.c:392: to the workspace, not the floating container"
+    );
+    assert.strictEqual(
+        m.focusChild(),
+        v,
+        "tree.c:418: the floating container's child"
+    );
     assert.strictEqual(m.focusChild().win, "c");
 });
 
@@ -431,18 +505,34 @@ test("move inside a floated split; at its edge, out onto the workspace (move.c:2
     m.move(leaf(m, "c"), UP);
     assert.strictEqual(d(m), "H[a] ~V[c* b]");
     m.move(leaf(m, "c"), UP);
-    assert.strictEqual(d(m), "H[a c*] ~V[b]", "attach_to_workspace: up puts it last");
+    assert.strictEqual(
+        d(m),
+        "H[a c*] ~V[b]",
+        "attach_to_workspace: up puts it last"
+    );
     const n = floatedSplit().m;
     n.move(leaf(n, "c"), RIGHT);
-    assert.strictEqual(d(n), "H[c* a] ~V[b]", "no horizontal parent inside: out, right puts it first");
+    assert.strictEqual(
+        d(n),
+        "H[c* a] ~V[b]",
+        "no horizontal parent inside: out, right puts it first"
+    );
 });
 
 test("inside a floated split: no tiling resize of the container, a border between its windows resizes", () => {
     const { m } = floatedSplit();
-    assert.strictEqual(m.resize(leaf(m, "c"), "height", 0.1), false, "cmd_resize_floating's, not the tree's");
+    assert.strictEqual(
+        m.resize(leaf(m, "c"), "height", 0.1),
+        false,
+        "cmd_resize_floating's, not the tree's"
+    );
     const p = m.resizeParticipants(leaf(m, "b"), DOWN);
     assert.deepStrictEqual([p.first.win, p.second.win], ["b", "c"]);
-    assert.strictEqual(m.resizeParticipants(leaf(m, "b"), RIGHT), null, "nothing beyond the floating container");
+    assert.strictEqual(
+        m.resizeParticipants(leaf(m, "b"), RIGHT),
+        null,
+        "nothing beyond the floating container"
+    );
 });
 
 test("focus inside a floated split, then round the floating containers (get_tree_next)", () => {
@@ -450,8 +540,16 @@ test("focus inside a floated split, then round the floating containers (get_tree
     m.openFloating("f", m.ws(1));
     m.focusWin("b");
     assert.strictEqual(m.focusDir(DOWN).win, "c", "within the split");
-    assert.strictEqual(m.focusDir(RIGHT).win, "f", "at the floating container: the next one");
-    assert.strictEqual(m.focusDir(LEFT).win, "c", "and back into the split, at its focus");
+    assert.strictEqual(
+        m.focusDir(RIGHT).win,
+        "f",
+        "at the floating container: the next one"
+    );
+    assert.strictEqual(
+        m.focusDir(LEFT).win,
+        "c",
+        "and back into the split, at its focus"
+    );
 });
 
 test("send a window inside a floated split to another workspace: it tiles there (con_move_to_workspace)", () => {
@@ -468,32 +566,48 @@ test("send a window inside a floated split to another workspace: it tiles there 
 test("toggle split: no redundant one-child containers pile up (i3 #3001)", () => {
     const m = model();
     open(m, 1, "a", "b");
-    m.split(leaf(m, "b"), "v");          // H[a V[b]]
-    m.split(leaf(m, "b").parent, "h");   // H[a H[V[b]]]
+    m.split(leaf(m, "b"), "v"); // H[a V[b]]
+    m.split(leaf(m, "b").parent, "h"); // H[a H[V[b]]]
     assert.strictEqual(d(m), "H[a H[V[b*]]]");
     m.toggleSplit(leaf(m, "b"));
-    assert.strictEqual(d(m), "H[a H[b*]]", "V is closed and its parent takes the layout");
+    assert.strictEqual(
+        d(m),
+        "H[a H[b*]]",
+        "V is closed and its parent takes the layout"
+    );
 });
 
 test("move: the lone child of a split at the workspace edge goes to the next output", () => {
     const m = model(true);
     open(m, 1, "x");
     open(m, 2, "a", "b");
-    m.split(leaf(m, "a"), "v");          // ws 2: H[V[a] b]
+    m.split(leaf(m, "a"), "v"); // ws 2: H[V[a] b]
     m.focusWin("a");
     m.move(leaf(m, "a"), LEFT);
     assert.strictEqual(d(m, 2), "H[b]");
-    assert.strictEqual(d(m, 1), "H[x a*]", "entering from the right, it goes last");
+    assert.strictEqual(
+        d(m, 1),
+        "H[x a*]",
+        "entering from the right, it goes last"
+    );
 });
 
 test("focus: from a window that isn't fullscreen, on past another that is (con_fullscreen_permits_focusing walks up from the focus)", () => {
     const m = model(false);
     open(m, 1, "a", "b", "c");
     m.setFullscreen("c", true);
-    m.focusWin("a");                       // an activation can put it there; the focus's ancestor is the workspace
-    assert.strictEqual(m.focusDir(RIGHT).win, "b", "i3 lets it move (con.c:2327-2364)");
+    m.focusWin("a"); // an activation can put it there; the focus's ancestor is the workspace
+    assert.strictEqual(
+        m.focusDir(RIGHT).win,
+        "b",
+        "i3 lets it move (con.c:2327-2364)"
+    );
     m.focusWin("c");
-    assert.strictEqual(m.focusDir(LEFT), null, "from the fullscreen c itself: blocked, as i3");
+    assert.strictEqual(
+        m.focusDir(LEFT),
+        null,
+        "from the fullscreen c itself: blocked, as i3"
+    );
 });
 
 // ---- i3's own testsuite (testcases/t/, branch next), translated ------------------------------
@@ -519,17 +633,29 @@ test("i3 t/124-move.t §3: into a split container, up inside it, out and back", 
     const m = model();
     open(m, 1, "first", "second");
     m.split(leaf(m, "second"), "v");
-    m.activate(leaf(m, "second").parent);          // focus parent
+    m.activate(leaf(m, "second").parent); // focus parent
     open(m, 1, "third");
     assert.strictEqual(m.ws(1).nodes.length, 3);
     m.move(leaf(m, "third"), LEFT);
-    assert.strictEqual(d(m), "H[first V[second third*]]", "second on top, third below");
+    assert.strictEqual(
+        d(m),
+        "H[first V[second third*]]",
+        "second on top, third below"
+    );
     m.move(leaf(m, "third"), UP);
     assert.strictEqual(d(m), "H[first V[third* second]]");
     m.move(leaf(m, "third"), LEFT);
-    assert.strictEqual(m.ws(1).nodes.length, 3, "three containers after moving left");
+    assert.strictEqual(
+        m.ws(1).nodes.length,
+        3,
+        "three containers after moving left"
+    );
     m.move(leaf(m, "third"), RIGHT);
-    assert.strictEqual(m.ws(1).nodes.length, 2, "two containers after moving right");
+    assert.strictEqual(
+        m.ws(1).nodes.length,
+        2,
+        "two containers after moving right"
+    );
 });
 
 test("i3 t/124-move.t §4: emptying a v-split by moving closes it", () => {
@@ -543,7 +669,11 @@ test("i3 t/124-move.t §4: emptying a v-split by moving closes it", () => {
     m.move(leaf(m, "d"), RIGHT);
     m.focusDir(LEFT);
     m.move(m.focused, RIGHT);
-    assert.strictEqual(m.ws(1).nodes.length, 1, "only one node on this workspace");
+    assert.strictEqual(
+        m.ws(1).nodes.length,
+        1,
+        "only one node on this workspace"
+    );
 });
 
 test("i3 t/145-flattening.t: move up then right leaves all three on workspace level", () => {
@@ -552,7 +682,11 @@ test("i3 t/145-flattening.t: move up then right leaves all three on workspace le
     m.move(leaf(m, "right"), UP);
     m.move(leaf(m, "right"), RIGHT);
     assert.strictEqual(m.ws(1).layout, "h", "workspace layout is splith");
-    assert.strictEqual(m.ws(1).nodes.length, 3, "all three windows on workspace level");
+    assert.strictEqual(
+        m.ws(1).nodes.length,
+        3,
+        "all three windows on workspace level"
+    );
 });
 
 test("i3 t/129-focus-after-close.t §2: closing goes to the focus stack, not the neighbour", () => {
@@ -565,7 +699,11 @@ test("i3 t/129-focus-after-close.t §2: closing goes to the focus stack, not the
     open(m, 1, "middle", "right");
     m.focusDir(DOWN);
     m.close("bottom");
-    assert.strictEqual(m.focused.win, "right", "top right container focused (in focus stack)");
+    assert.strictEqual(
+        m.focused.win,
+        "right",
+        "top right container focused (in focus stack)"
+    );
 });
 
 test("i3 t/129-focus-after-close.t §3: closing an unfocused window leaves focus alone", () => {
@@ -582,11 +720,25 @@ test("adopt: rebuilds the tree, shares and all, and leaves floating windows alon
     const m = model();
     open(m, 1, "old");
     m.openFloating("f", m.ws(1));
-    m.adopt(m.ws(1), { layout: "h", kids: [
-        { win: "a", percent: 0.25 },
-        { layout: "v", percent: 0.75, kids: [{ win: "b", percent: 0.5 }, { win: "c", percent: 0.5 }] },
-    ] });
-    assert.strictEqual(d(m), "H[a V[b c]] ~f*", "old had the focus; con_next_focused gives it to f");
+    m.adopt(m.ws(1), {
+        layout: "h",
+        kids: [
+            { win: "a", percent: 0.25 },
+            {
+                layout: "v",
+                percent: 0.75,
+                kids: [
+                    { win: "b", percent: 0.5 },
+                    { win: "c", percent: 0.5 },
+                ],
+            },
+        ],
+    });
+    assert.strictEqual(
+        d(m),
+        "H[a V[b c]] ~f*",
+        "old had the focus; con_next_focused gives it to f"
+    );
     assert.deepStrictEqual(pct(m, "a", "b"), [0.25, 0.5]);
     assert.strictEqual(m.byWin.old, undefined, "the old tree is gone");
     open(m, 1, "d");
@@ -596,20 +748,46 @@ test("adopt: rebuilds the tree, shares and all, and leaves floating windows alon
 test("adopt: a group at a workspace's top comes back inside a container (con_set_layout, con.c:2024)", () => {
     for (const layout of ["tabbed", "stacked"]) {
         const m = model();
-        m.adopt(m.ws(1), { layout, kids: [{ win: "a", percent: 0 }, { win: "b", percent: 0 }] });
+        m.adopt(m.ws(1), {
+            layout,
+            kids: [
+                { win: "a", percent: 0 },
+                { win: "b", percent: 0 },
+            ],
+        });
         m.focusWin("b");
         const L = layout === "tabbed" ? "T" : "S";
-        assert.strictEqual(d(m), `H[${L}[a b*]]`, `a lone ${layout} group, read off the tiles`);
-        assert.strictEqual(m.focusParent().layout, layout, "focus parent reaches the group");
+        assert.strictEqual(
+            d(m),
+            `H[${L}[a b*]]`,
+            `a lone ${layout} group, read off the tiles`
+        );
+        assert.strictEqual(
+            m.focusParent().layout,
+            layout,
+            "focus parent reaches the group"
+        );
         m.open("c", m.ws(1));
-        assert.strictEqual(d(m), `H[${L}[a b]* c]`, "and a window opens beside it");
+        assert.strictEqual(
+            d(m),
+            `H[${L}[a b]* c]`,
+            "and a window opens beside it"
+        );
     }
 });
 
 test("adopt: a tree saved with a group as the workspace's own layout is repaired", () => {
     const m = model();
-    m.adopt(m.ws(1), { layout: "tabbed", wsLayout: "default", lastSplit: "h", focus: [1, 0],
-                       kids: [{ win: "a", percent: 0.5 }, { win: "b", percent: 0.5 }] });
+    m.adopt(m.ws(1), {
+        layout: "tabbed",
+        wsLayout: "default",
+        lastSplit: "h",
+        focus: [1, 0],
+        kids: [
+            { win: "a", percent: 0.5 },
+            { win: "b", percent: 0.5 },
+        ],
+    });
     assert.strictEqual(d(m), "H[T[a b]]");
 });
 
@@ -617,7 +795,8 @@ test("adopt: a workspace_layout tabbed workspace round-trips as it is (workspace
     const m = model();
     m.setLayout(m.ws(1), "tabbed");
     open(m, 1, "a", "b");
-    const before = d(m), snap = m.snapshot(m.ws(1));
+    const before = d(m),
+        snap = m.snapshot(m.ws(1));
     const n = model();
     n.adopt(n.ws(1), JSON.parse(JSON.stringify(snap)));
     n.focusWin("b");
@@ -656,7 +835,10 @@ test("resize: inside a vertical split, width resizes the split", () => {
     m.split(leaf(m, "b"), "v");
     open(m, 1, "c");
     m.resize(leaf(m, "c"), "width", -0.1);
-    assert.strictEqual(Math.round(leaf(m, "c").parent.percent * 1000) / 1000, 0.4);
+    assert.strictEqual(
+        Math.round(leaf(m, "c").parent.percent * 1000) / 1000,
+        0.4
+    );
     assert.deepStrictEqual(pct(m, "a"), [0.6]);
     m.resize(leaf(m, "c"), "height", 0.1);
     assert.deepStrictEqual(pct(m, "b", "c"), [0.4, 0.6]);
@@ -667,8 +849,16 @@ test("resize: nothing to resize against, or someone would vanish: refused", () =
     open(m, 1, "a");
     assert.strictEqual(m.resize(leaf(m, "a"), "width", 0.1), false);
     open(m, 1, "b");
-    assert.strictEqual(m.resize(leaf(m, "b"), "height", 0.1), false, "no vertical split");
-    assert.strictEqual(m.resize(leaf(m, "b"), "width", 0.5), false, "a would vanish");
+    assert.strictEqual(
+        m.resize(leaf(m, "b"), "height", 0.1),
+        false,
+        "no vertical split"
+    );
+    assert.strictEqual(
+        m.resize(leaf(m, "b"), "width", 0.5),
+        false,
+        "a would vanish"
+    );
     assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
 });
 
@@ -680,39 +870,77 @@ test("resizeParticipants: the sibling on that side, in front first", () => {
     let p = m.resizeParticipants(leaf(m, "b"), RIGHT);
     assert.deepStrictEqual([p.first, p.second], [leaf(m, "b"), leaf(m, "c")]);
     p = m.resizeParticipants(leaf(m, "b"), LEFT);
-    assert.deepStrictEqual([p.first, p.second], [leaf(m, "a"), leaf(m, "b")], "click.c swaps D_LEFT");
+    assert.deepStrictEqual(
+        [p.first, p.second],
+        [leaf(m, "a"), leaf(m, "b")],
+        "click.c swaps D_LEFT"
+    );
 });
 
 test("resizeParticipants: up the tree to an ancestor with a sibling, else none", () => {
     const m = model();
     open(m, 1, "a", "b");
     m.split(leaf(m, "b"), "v");
-    open(m, 1, "c");                       // H[a V[b c]]
+    open(m, 1, "c"); // H[a V[b c]]
     let p = m.resizeParticipants(leaf(m, "c"), LEFT);
-    assert.deepStrictEqual([p.first, p.second], [leaf(m, "a"), leaf(m, "c").parent], "the split, not c");
+    assert.deepStrictEqual(
+        [p.first, p.second],
+        [leaf(m, "a"), leaf(m, "c").parent],
+        "the split, not c"
+    );
     p = m.resizeParticipants(leaf(m, "b"), DOWN);
     assert.deepStrictEqual([p.first, p.second], [leaf(m, "b"), leaf(m, "c")]);
-    assert.strictEqual(m.resizeParticipants(leaf(m, "c"), DOWN), null, "last in the column, and the row has no vertical split above");
-    assert.strictEqual(m.resizeParticipants(leaf(m, "a"), LEFT), null, "nothing to the left of the workspace's first");
-    assert.strictEqual(m.resizeParticipants(leaf(m, "a"), UP), null, "no vertical split at all");
+    assert.strictEqual(
+        m.resizeParticipants(leaf(m, "c"), DOWN),
+        null,
+        "last in the column, and the row has no vertical split above"
+    );
+    assert.strictEqual(
+        m.resizeParticipants(leaf(m, "a"), LEFT),
+        null,
+        "nothing to the left of the workspace's first"
+    );
+    assert.strictEqual(
+        m.resizeParticipants(leaf(m, "a"), UP),
+        null,
+        "no vertical split at all"
+    );
     assert.strictEqual(m.resizeParticipants(m.ws(1), LEFT), null);
 });
 
 test("resizeNeighbouring: pixels become a share of the parent, the second gives it up", () => {
     const m = model();
     open(m, 1, "a", "b", "c");
-    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 120, 1200), true);
+    assert.strictEqual(
+        m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 120, 1200),
+        true
+    );
     assert.deepStrictEqual(pct(m, "a", "b", "c"), [0.433, 0.233, 0.333]);
-    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -240, 1200), true);
+    assert.strictEqual(
+        m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -240, 1200),
+        true
+    );
     assert.deepStrictEqual(pct(m, "a", "b", "c"), [0.233, 0.433, 0.333]);
 });
 
 test("resizeNeighbouring: refused, nothing changed, when either would vanish", () => {
     const m = model();
     open(m, 1, "a", "b");
-    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 600, 1200), false, "b to zero");
-    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -700, 1200), false, "a below zero");
-    assert.strictEqual(m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 10, 0), false, "no size");
+    assert.strictEqual(
+        m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 600, 1200),
+        false,
+        "b to zero"
+    );
+    assert.strictEqual(
+        m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), -700, 1200),
+        false,
+        "a below zero"
+    );
+    assert.strictEqual(
+        m.resizeNeighbouring(leaf(m, "a"), leaf(m, "b"), 10, 0),
+        false,
+        "no size"
+    );
     assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
 });
 
@@ -751,14 +979,34 @@ test("a window opened under a fullscreen one is second in the focus stack (manag
     const m = model();
     open(m, 1, "a", "b");
     m.setFullscreen("b", true);
-    m.open("c", m.ws(1));                  // KWin's activation is handed back: no focusWin
-    assert.strictEqual(d(m), "H[a b*! c]", "beside the focused b, b keeps the focus");
-    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "c", "a"], "c right after the fullscreen b");
-    assert.strictEqual(m.nextFocused(leaf(m, "b")), leaf(m, "c"), "closing b gives c the focus");
+    m.open("c", m.ws(1)); // KWin's activation is handed back: no focusWin
+    assert.strictEqual(
+        d(m),
+        "H[a b*! c]",
+        "beside the focused b, b keeps the focus"
+    );
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(1)),
+        ["b", "c", "a"],
+        "c right after the fullscreen b"
+    );
+    assert.strictEqual(
+        m.nextFocused(leaf(m, "b")),
+        leaf(m, "c"),
+        "closing b gives c the focus"
+    );
     m.open("e", m.ws(1));
-    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["b", "e", "c", "a"], "the latest newcomer is second");
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(1)),
+        ["b", "e", "c", "a"],
+        "the latest newcomer is second"
+    );
     m.setFullscreen("b", false);
-    assert.strictEqual(d(m), "H[a b* e c]", "leaving fullscreen moves no focus (con.c)");
+    assert.strictEqual(
+        d(m),
+        "H[a b* e c]",
+        "leaving fullscreen moves no focus (con.c)"
+    );
 });
 
 test("floating toggle keeps fullscreen, both ways (floating_enable/disable leave fullscreen_mode)", () => {
@@ -766,9 +1014,17 @@ test("floating toggle keeps fullscreen, both ways (floating_enable/disable leave
     open(m, 1, "a", "b");
     m.setFullscreen("b", true);
     m.toggleFloating(leaf(m, "b"));
-    assert.strictEqual(leaf(m, "b").fullscreen, true, "floated, still fullscreen as KWin's window is");
+    assert.strictEqual(
+        leaf(m, "b").fullscreen,
+        true,
+        "floated, still fullscreen as KWin's window is"
+    );
     m.setFullscreen("b", false);
-    assert.strictEqual(leaf(m, "b").fullscreen, false, "a floating window's fullscreen follows KWin's");
+    assert.strictEqual(
+        leaf(m, "b").fullscreen,
+        false,
+        "a floating window's fullscreen follows KWin's"
+    );
     m.setFullscreen("b", true);
     m.toggleFloating(leaf(m, "b"));
     assert.strictEqual(d(m), "H[a b*!]", "tiled again, still fullscreen");
@@ -783,17 +1039,41 @@ test("a floating fullscreen window is the workspace's, as a tiled one (con_get_f
     m.focusWin("f");
     m.setFullscreen("f", true);
     assert.strictEqual(m.fullscreenOn(m.ws(1)), leaf(m, "f"));
-    assert.strictEqual(m.focusDir(LEFT), null, "get_tree_next: fullscreen before floating, no output to the left");
-    assert.strictEqual(m.focusDir(RIGHT).win, "x", "straight to the neighbouring output, not the next floating g");
+    assert.strictEqual(
+        m.focusDir(LEFT),
+        null,
+        "get_tree_next: fullscreen before floating, no output to the left"
+    );
+    assert.strictEqual(
+        m.focusDir(RIGHT).win,
+        "x",
+        "straight to the neighbouring output, not the next floating g"
+    );
     m.focusWin("f");
-    m.open("c", m.ws(1));                  // KWin's activation is handed back: no focusWin
-    assert.deepStrictEqual(m.focusOrder(m.ws(1)).slice(0, 2), ["~f", "c"], "manage.c: the newcomer second, f keeps the focus");
-    m.focusWin("c");                       // the mouse can; from c, not fullscreen, the keys go on
-    assert.strictEqual(m.focusDir(LEFT).win, "b", "con_fullscreen_permits_focusing: the focus's ancestor is the workspace");
+    m.open("c", m.ws(1)); // KWin's activation is handed back: no focusWin
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(1)).slice(0, 2),
+        ["~f", "c"],
+        "manage.c: the newcomer second, f keeps the focus"
+    );
+    m.focusWin("c"); // the mouse can; from c, not fullscreen, the keys go on
+    assert.strictEqual(
+        m.focusDir(LEFT).win,
+        "b",
+        "con_fullscreen_permits_focusing: the focus's ancestor is the workspace"
+    );
     m.setFullscreen("a", true);
-    assert.strictEqual(leaf(m, "f").fullscreen, false, "con_enable_fullscreen: one per workspace, floating included");
+    assert.strictEqual(
+        leaf(m, "f").fullscreen,
+        false,
+        "con_enable_fullscreen: one per workspace, floating included"
+    );
     m.setFullscreen("f", true);
-    assert.strictEqual(leaf(m, "a").fullscreen, false, "and a floating one clears a tiled one");
+    assert.strictEqual(
+        leaf(m, "a").fullscreen,
+        false,
+        "and a floating one clears a tiled one"
+    );
     assert.strictEqual(m.fullscreenOn(m.ws(1)), leaf(m, "f"));
 });
 
@@ -811,18 +1091,39 @@ test("no fullscreen window: a new window goes to the tail of the focus stack as 
 // every other mode goes on up and finds a.
 function nested(twoOutputs) {
     const m = model(twoOutputs);
-    m.adopt(m.ws(1), { layout: "v", kids: [{ win: "a" }, { layout: "h", kids: [{ win: "b" }, { layout: "v", kids: [{ win: "c" }, { win: "d" }] }] }] });
+    m.adopt(m.ws(1), {
+        layout: "v",
+        kids: [
+            { win: "a" },
+            {
+                layout: "h",
+                kids: [
+                    { win: "b" },
+                    { layout: "v", kids: [{ win: "c" }, { win: "d" }] },
+                ],
+            },
+        ],
+    });
     m.focusWin("c");
     return m;
 }
 
 test("focus_wrapping: a real neighbour further up wins over a wrap, except under force", () => {
-    for (const mode of ["yes", "no", "workspace"]) assert.strictEqual(nested().focusDir(UP, mode).win, "a", mode);
-    assert.strictEqual(nested().focusDir(UP, "force").win, "d", "force wraps in the innermost container");
+    for (const mode of ["yes", "no", "workspace"])
+        assert.strictEqual(nested().focusDir(UP, mode).win, "a", mode);
+    assert.strictEqual(
+        nested().focusDir(UP, "force").win,
+        "d",
+        "force wraps in the innermost container"
+    );
 });
 
 test("focus_wrapping: at the workspace edge with no output there", () => {
-    const at = (mode) => { const m = model(false); open(m, 1, "a", "b", "c"); return m.focusDir(RIGHT, mode); };
+    const at = (mode) => {
+        const m = model(false);
+        open(m, 1, "a", "b", "c");
+        return m.focusDir(RIGHT, mode);
+    };
     assert.strictEqual(at("yes").win, "a");
     assert.strictEqual(at("workspace").win, "a");
     assert.strictEqual(at("force").win, "a");
@@ -830,31 +1131,59 @@ test("focus_wrapping: at the workspace edge with no output there", () => {
 });
 
 test("focus_wrapping: at the workspace edge with an output there", () => {
-    const at = (mode) => { const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b"); return m.focusDir(RIGHT, mode); };
+    const at = (mode) => {
+        const m = model(true);
+        open(m, 2, "x");
+        open(m, 1, "a", "b");
+        return m.focusDir(RIGHT, mode);
+    };
     assert.strictEqual(at("yes").win, "x");
-    assert.strictEqual(at("no").win, "x", "no still crosses to the next output");
-    assert.strictEqual(at("workspace").win, "a", "workspace wraps instead of leaving");
-    assert.strictEqual(at("force").win, "a", "force never leaves the container");
+    assert.strictEqual(
+        at("no").win,
+        "x",
+        "no still crosses to the next output"
+    );
+    assert.strictEqual(
+        at("workspace").win,
+        "a",
+        "workspace wraps instead of leaving"
+    );
+    assert.strictEqual(
+        at("force").win,
+        "a",
+        "force never leaves the container"
+    );
 });
 
 test("focus_wrapping: no default given is yes", () => {
-    const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b");
+    const m = model(true);
+    open(m, 2, "x");
+    open(m, 1, "a", "b");
     assert.strictEqual(m.focusDir(RIGHT).win, "x");
 });
 
 test("focus_wrapping: from a fullscreen window, workspace mode stays, the others cross", () => {
     const at = (mode) => {
-        const m = model(true); open(m, 2, "x"); open(m, 1, "a", "b");
-        m.setFullscreen("a", true); m.focusWin("a");
+        const m = model(true);
+        open(m, 2, "x");
+        open(m, 1, "a", "b");
+        m.setFullscreen("a", true);
+        m.focusWin("a");
         return m.focusDir(RIGHT, mode);
     };
-    for (const mode of ["yes", "no", "force"]) assert.strictEqual(at(mode).win, "x", mode);
-    assert.strictEqual(at("workspace"), null, "the fullscreen window's workspace is the limit");
+    for (const mode of ["yes", "no", "force"])
+        assert.strictEqual(at(mode).win, "x", mode);
+    assert.strictEqual(
+        at("workspace"),
+        null,
+        "the fullscreen window's workspace is the limit"
+    );
 });
 
 test("focus_wrapping: an empty workspace focused goes to the next output in every mode", () => {
     for (const mode of ["yes", "no", "force", "workspace"]) {
-        const m = model(true); open(m, 2, "x");
+        const m = model(true);
+        open(m, 2, "x");
         m.activate(m.ws(1));
         assert.strictEqual(m.focusDir(RIGHT, mode).win, "x", mode);
     }
@@ -862,56 +1191,100 @@ test("focus_wrapping: an empty workspace focused goes to the next output in ever
 
 test("focus_wrapping: floating focus is the same in every mode (left/right through the floats)", () => {
     for (const mode of ["yes", "no", "force", "workspace"]) {
-        const m = model(); open(m, 1, "a");
-        m.openFloating("f", m.ws(1)); m.openFloating("g", m.ws(1)); m.focusWin("g");
-        assert.strictEqual(m.focusDir(RIGHT, mode).win, "f", mode + ": wraps to the first float");
+        const m = model();
+        open(m, 1, "a");
+        m.openFloating("f", m.ws(1));
+        m.openFloating("g", m.ws(1));
+        m.focusWin("g");
+        assert.strictEqual(
+            m.focusDir(RIGHT, mode).win,
+            "f",
+            mode + ": wraps to the first float"
+        );
         assert.strictEqual(m.focusDir(UP, mode), null, mode);
     }
 });
 
 test("focus_wrapping: force, from a window that isn't fullscreen: the next is permitted (con_fullscreen_permits_focusing from the focus)", () => {
-    const m = model(); open(m, 1, "a", "b", "c");
-    m.setFullscreen("a", true); m.focusWin("b");        // the mouse can focus b
-    assert.strictEqual(m.focusDir(RIGHT, "force").win, "c", "the focus's ancestor is the workspace: c is permitted");
+    const m = model();
+    open(m, 1, "a", "b", "c");
+    m.setFullscreen("a", true);
+    m.focusWin("b"); // the mouse can focus b
+    assert.strictEqual(
+        m.focusDir(RIGHT, "force").win,
+        "c",
+        "the focus's ancestor is the workspace: c is permitted"
+    );
 });
 
 // ---- back_and_forth and workspace next/prev (workspace.c) ----
 
 test("previous workspace: set when the focused workspace changes (workspace_show), not within one", () => {
-    const m = model(true); open(m, 1, "a", "b");
-    assert.strictEqual(m.previousWs, null, "focus within workspace 1 sets nothing");
+    const m = model(true);
+    open(m, 1, "a", "b");
+    assert.strictEqual(
+        m.previousWs,
+        null,
+        "focus within workspace 1 sets nothing"
+    );
     open(m, 2, "x");
     assert.strictEqual(m.previousWs, 1, "focus moved to 2: the previous is 1");
     m.focusWin("a");
     assert.strictEqual(m.previousWs, 2, "and back: the previous is 2");
     m.focusWin("b");
     assert.strictEqual(m.previousWs, 2, "within 1 again: unchanged");
-    m.focusDir(RIGHT, "yes");                       // across the monitor edge, to x on 2
+    m.focusDir(RIGHT, "yes"); // across the monitor edge, to x on 2
     assert.strictEqual(m.focused.win, "x");
-    assert.strictEqual(m.previousWs, 1, "focus crossing the monitor counts too");
+    assert.strictEqual(
+        m.previousWs,
+        1,
+        "focus crossing the monitor counts too"
+    );
 });
 
 test("previous workspace: an empty workspace focused counts, and is kept once left", () => {
-    const m = model(); open(m, 1, "a");
+    const m = model();
+    open(m, 1, "a");
     m.activate(m.ws(3));
     assert.strictEqual(m.previousWs, 1);
     m.focusWin("a");
-    assert.strictEqual(m.previousWs, 3, "3 kept although empty (i3 keeps the name)");
+    assert.strictEqual(
+        m.previousWs,
+        3,
+        "3 kept although empty (i3 keeps the name)"
+    );
 });
 
 test("previous workspace: moving a window away keeps the focus, so nothing changes", () => {
-    const m = model(); open(m, 1, "a", "b");
+    const m = model();
+    open(m, 1, "a", "b");
     m.moveToWorkspace(m.byWin.b, m.ws(2));
-    assert.strictEqual(m.previousWs, null, "focus stayed on workspace 1 (_con_move_to_con step 7)");
+    assert.strictEqual(
+        m.previousWs,
+        null,
+        "focus stayed on workspace 1 (_con_move_to_con step 7)"
+    );
 });
 
 test("workspace_next / _prev: next higher existing number, wrapping; null with one workspace", () => {
     const next = Tree.nextWorkspace;
     assert.strictEqual(next([1, 2, 5], 2, 1), 5, "gaps skipped");
-    assert.strictEqual(next([1, 2, 5], 5, 1), 1, "past the highest: the lowest");
-    assert.strictEqual(next([1, 2, 5], 1, -1), 5, "prev past the lowest: the highest");
+    assert.strictEqual(
+        next([1, 2, 5], 5, 1),
+        1,
+        "past the highest: the lowest"
+    );
+    assert.strictEqual(
+        next([1, 2, 5], 1, -1),
+        5,
+        "prev past the lowest: the highest"
+    );
     assert.strictEqual(next([1, 2, 5], 5, -1), 2);
-    assert.strictEqual(next([5, 1, 2], 1, 1), 2, "order of the list doesn't matter");
+    assert.strictEqual(
+        next([5, 1, 2], 1, 1),
+        2,
+        "order of the list doesn't matter"
+    );
     assert.strictEqual(next([3], 3, 1), null, "one workspace: nothing");
     assert.strictEqual(next([3], 3, -1), null);
 });
@@ -926,38 +1299,78 @@ function rects(m, num = 1) {
         let pos = c.layout === "h" ? r.x : r.y;
         for (const k of c.nodes) {
             const size = (c.layout === "h" ? r.width : r.height) * k.percent;
-            lay(k, c.layout === "h" ? { x: pos, y: r.y, width: size, height: r.height }
-                                    : { x: r.x, y: pos, width: r.width, height: size });
+            lay(
+                k,
+                c.layout === "h"
+                    ? { x: pos, y: r.y, width: size, height: r.height }
+                    : { x: r.x, y: pos, width: r.width, height: size }
+            );
             pos += size;
         }
     })(m.ws(num), { x: 0, y: 0, width: 1200, height: 600 });
     return (c) => out.get(c);
 }
-const plan = (m, con, target, x, y) => m.dropPlan(leaf(m, con), typeof target === "string" ? leaf(m, target) : target, x, y, rects(m), 25);
+const plan = (m, con, target, x, y) =>
+    m.dropPlan(
+        leaf(m, con),
+        typeof target === "string" ? leaf(m, target) : target,
+        x,
+        y,
+        rects(m),
+        25
+    );
 
 test("drag zones: centre, sibling (30 % of the smaller side), parent (deco + 5 px, on the parent's edge)", () => {
     const m = model();
-    open(m, 1, "a", "b");                                     // b: 600..1200 x 0..600
+    open(m, 1, "a", "b"); // b: 600..1200 x 0..600
     let p = plan(m, "a", "b", 900, 300);
     assert.strictEqual(p.type, Tree.CENTER);
-    assert.deepStrictEqual(p.rect, { x: 780, y: 180, width: 240, height: 240 }, "inset by the sibling size, 180");
+    assert.deepStrictEqual(
+        p.rect,
+        { x: 780, y: 180, width: 240, height: 240 },
+        "inset by the sibling size, 180"
+    );
     p = plan(m, "a", "b", 610, 300);
-    assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, LEFT], "b's left edge is no edge of the workspace");
+    assert.deepStrictEqual(
+        [p.type, p.dir],
+        [Tree.SIBLING, LEFT],
+        "b's left edge is no edge of the workspace"
+    );
     assert.deepStrictEqual(p.rect, { x: 600, y: 0, width: 180, height: 600 });
     p = plan(m, "a", "b", 700, 300);
-    assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, LEFT], "within 180 px");
+    assert.deepStrictEqual(
+        [p.type, p.dir],
+        [Tree.SIBLING, LEFT],
+        "within 180 px"
+    );
     p = plan(m, "a", "b", 1190, 300);
-    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, RIGHT], "the workspace's right edge");
-    assert.deepStrictEqual(p.rect, { x: 1175, y: 0, width: 25, height: 600 }, "the parent's edge, 25 px");
+    assert.deepStrictEqual(
+        [p.type, p.dir],
+        [Tree.PARENT, RIGHT],
+        "the workspace's right edge"
+    );
+    assert.deepStrictEqual(
+        p.rect,
+        { x: 1175, y: 0, width: 25, height: 600 },
+        "the parent's edge, 25 px"
+    );
     p = plan(m, "a", "b", 900, 5);
-    assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, UP], "across the split: always the parent's side");
+    assert.deepStrictEqual(
+        [p.type, p.dir],
+        [Tree.PARENT, UP],
+        "across the split: always the parent's side"
+    );
 });
 
 test("drag zones: onto itself only as a parent drop", () => {
     const m = model();
     open(m, 1, "a", "b");
     assert.strictEqual(plan(m, "a", "a", 300, 300), null);
-    assert.strictEqual(plan(m, "a", "a", 590, 300), null, "a sibling of itself");
+    assert.strictEqual(
+        plan(m, "a", "a", 590, 300),
+        null,
+        "a sibling of itself"
+    );
     assert.strictEqual(plan(m, "a", "a", 5, 300).type, Tree.PARENT);
 });
 
@@ -965,11 +1378,19 @@ test("drag zones: a parent drop climbs while the parent is on that side too", ()
     const m = model();
     open(m, 1, "a", "b");
     m.split(leaf(m, "b"), "v");
-    open(m, 1, "c");                                          // H[a V[b c*]]
+    open(m, 1, "c"); // H[a V[b c*]]
     const p = plan(m, "a", "c", 1195, 450);
     assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, RIGHT]);
-    assert.strictEqual(p.target, leaf(m, "c"), "V's own side test descends to a leaf, never V: no climb");
-    assert.deepStrictEqual(p.rect, { x: 1175, y: 0, width: 25, height: 600 }, "on V's rect");
+    assert.strictEqual(
+        p.target,
+        leaf(m, "c"),
+        "V's own side test descends to a leaf, never V: no climb"
+    );
+    assert.deepStrictEqual(
+        p.rect,
+        { x: 1175, y: 0, width: 25, height: 600 },
+        "on V's rect"
+    );
 });
 
 test("drop centre, bottom band without swap: after the target, focus where it was (con_move_to_target)", () => {
@@ -987,12 +1408,16 @@ test("drop centre, bottom band with swap: the two change places (con_swap)", () 
     const before = pct(m, "a", "c");
     assert.ok(m.drop(leaf(m, "a"), plan(m, "a", "c", 1050, 370), true));
     assert.strictEqual(d(m), "H[c* b a]");
-    assert.deepStrictEqual(pct(m, "c", "a"), before, "shares swapped with the places");
+    assert.deepStrictEqual(
+        pct(m, "c", "a"),
+        before,
+        "shares swapped with the places"
+    );
 });
 
 test("drop as sibling: across a three-child split, the target is split", () => {
     const m = model();
-    open(m, 1, "a", "b", "c");                                // b: 400..800
+    open(m, 1, "a", "b", "c"); // b: 400..800
     const p = plan(m, "a", "b", 600, 500);
     assert.deepStrictEqual([p.type, p.dir], [Tree.SIBLING, DOWN]);
     m.drop(leaf(m, "a"), p, false);
@@ -1012,7 +1437,11 @@ test("drop to parent across the split: the workspace turns, as tree_move does", 
     const p = plan(m, "a", "b", 900, 590);
     assert.deepStrictEqual([p.type, p.dir], [Tree.PARENT, DOWN]);
     m.drop(leaf(m, "a"), p, false);
-    assert.strictEqual(d(m), "V[H[b*] a]", "i3 keeps the one-child split a move leaves");
+    assert.strictEqual(
+        d(m),
+        "V[H[b*] a]",
+        "i3 keeps the one-child split a move leaves"
+    );
 });
 
 test("drop to parent: inserted beside the target, then moved out one level (tree_move)", () => {
@@ -1020,7 +1449,7 @@ test("drop to parent: inserted beside the target, then moved out one level (tree
     open(m, 1, "a", "b");
     m.split(leaf(m, "b"), "v");
     open(m, 1, "c");
-    m.focusWin("a");                                          // H[a* V[b c]]
+    m.focusWin("a"); // H[a* V[b c]]
     m.drop(leaf(m, "a"), plan(m, "a", "c", 1195, 450), false);
     assert.strictEqual(d(m), "H[V[b c] a*]");
 });
@@ -1028,7 +1457,13 @@ test("drop to parent: inserted beside the target, then moved out one level (tree
 test("drop onto an empty workspace: moved there, and focused if it was (tiling_drag set_focus)", () => {
     const m = model(true);
     open(m, 1, "a", "b");
-    assert.ok(m.drop(leaf(m, "b"), m.dropPlan(leaf(m, "b"), m.ws(2), 1500, 300, rects(m, 2), 25), false));
+    assert.ok(
+        m.drop(
+            leaf(m, "b"),
+            m.dropPlan(leaf(m, "b"), m.ws(2), 1500, 300, rects(m, 2), 25),
+            false
+        )
+    );
     assert.strictEqual(d(m, 2), "H[b*]");
     assert.strictEqual(d(m, 1), "H[a]");
 });
@@ -1038,7 +1473,11 @@ test("drop of an unfocused window: the focus stays", () => {
     open(m, 1, "a", "b", "c");
     m.drop(leaf(m, "a"), plan(m, "a", "b", 600, 370), false);
     assert.strictEqual(d(m), "H[b a c*]");
-    assert.deepStrictEqual(m.focusOrder(m.ws(1)), ["c", "a", "b"], "a heads the stack below the focus");
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(1)),
+        ["c", "a", "b"],
+        "a heads the stack below the focus"
+    );
 });
 
 test("drop of the focused fullscreen window: still fullscreen and focused after", () => {
@@ -1067,23 +1506,48 @@ test("minimize: the focus kwin-i3 chooses never lands on a minimized window: nex
     m.focusWin("b");
     m.setMinimized("b", true);
     assert.strictEqual(d(m), "H[a b*_ c]", "marked _, still in the tree");
-    assert.strictEqual(m.nextFocused(leaf(m, "b")), leaf(m, "c"), "minimizing the focused b: c, the one used before it (opened last)");
+    assert.strictEqual(
+        m.nextFocused(leaf(m, "b")),
+        leaf(m, "c"),
+        "minimizing the focused b: c, the one used before it (opened last)"
+    );
     m.focusWin("a");
-    assert.strictEqual(m.focusDir(RIGHT), leaf(m, "c"), "Focus Right skips the minimized b");
+    assert.strictEqual(
+        m.focusDir(RIGHT),
+        leaf(m, "c"),
+        "Focus Right skips the minimized b"
+    );
     assert.strictEqual(m.focusDir(LEFT), leaf(m, "a"), "and back");
     m.setMinimized("c", true);
-    assert.strictEqual(m.descendFocused(m.ws(1)), leaf(m, "a"), "the workspace's focus: a, the one not minimized");
-    assert.strictEqual(m.focusDir(RIGHT), null, "nothing else to focus on 1 (no second output here)");
+    assert.strictEqual(
+        m.descendFocused(m.ws(1)),
+        leaf(m, "a"),
+        "the workspace's focus: a, the one not minimized"
+    );
+    assert.strictEqual(
+        m.focusDir(RIGHT),
+        null,
+        "nothing else to focus on 1 (no second output here)"
+    );
     m.setMinimized("a", true);
-    assert.strictEqual(m.descendFocused(m.ws(1)), m.ws(1), "all minimized: the workspace itself");
+    assert.strictEqual(
+        m.descendFocused(m.ws(1)),
+        m.ws(1),
+        "all minimized: the workspace itself"
+    );
     assert.strictEqual(m.nextFocused(leaf(m, "a")), m.ws(1));
     m.setMinimized("a", false);
     m.setMinimized("b", false);
     assert.strictEqual(d(m), "H[a* b c_]");
-    m.openFloating("f", m.ws(1)); m.focusWin("f");
+    m.openFloating("f", m.ws(1));
+    m.focusWin("f");
     m.setMinimized("f", true);
     assert.strictEqual(m.focusModeToggle(), leaf(m, "a"), "to tiling: a");
-    assert.strictEqual(m.focusModeToggle(), null, "to floating: f is minimized, nothing");
+    assert.strictEqual(
+        m.focusModeToggle(),
+        null,
+        "to floating: f is minimized, nothing"
+    );
 });
 
 // ---- sticky floating (i3's output_push_sticky_windows) --
@@ -1107,7 +1571,11 @@ test("sticky: the push moves a sticky floating con to the workspace its output s
     m.pushSticky(m.ws(1), [m.ws(2)], null);
     assert.strictEqual(d(m, 1), "H[a] ~s", "on 1, b keeps the focus");
     assert.strictEqual(d(m, 2), "H[b*]");
-    assert.strictEqual(m.ws(1).focus[0], m.byWin.a, "and a stays workspace 1's focus (ignore_focus)");
+    assert.strictEqual(
+        m.ws(1).focus[0],
+        m.byWin.a,
+        "and a stays workspace 1's focus (ignore_focus)"
+    );
     // A floating con that is not sticky, and a tiling one, are never pushed.
     m.openFloating("f", m.ws(1));
     assert.deepStrictEqual(m.pushSticky(m.ws(2), [m.ws(1)], null), [m.byWin.s]);
@@ -1131,39 +1599,63 @@ function threeOutputs() {
 }
 
 test("get_output_next: by origin, overlapping on the other axis; none that way is null", () => {
-    const m = threeOutputs(), [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
+    const m = threeOutputs(),
+        [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
     assert.strictEqual(m.outputNext(A, RIGHT), B);
     assert.strictEqual(m.outputNext(A, DOWN), C);
     assert.strictEqual(m.outputNext(B, LEFT), A);
-    assert.strictEqual(m.outputNext(B, DOWN), null, "C is diagonal to B: never");
+    assert.strictEqual(
+        m.outputNext(B, DOWN),
+        null,
+        "C is diagonal to B: never"
+    );
     assert.strictEqual(m.outputNext(A, LEFT), null);
 });
 
 test("get_output_next_wrap: the farthest the other way; none at all, the output itself", () => {
-    const m = threeOutputs(), [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
+    const m = threeOutputs(),
+        [A, B, C] = ["A", "B", "C"].map((n) => m.output(n));
     assert.strictEqual(m.outputNextWrap(A, LEFT), B, "wraps to the far right");
     assert.strictEqual(m.outputNextWrap(A, UP), C, "wraps to the bottom");
-    assert.strictEqual(m.outputNextWrap(B, DOWN), B, "nothing either way: itself");
+    assert.strictEqual(
+        m.outputNextWrap(B, DOWN),
+        B,
+        "nothing either way: itself"
+    );
 });
 
 test("_con_attach: a content's workspaces by number, its focus stack in arrival order", () => {
-    const m = threeOutputs(), A = m.output("A");
+    const m = threeOutputs(),
+        A = m.output("A");
     for (const n of [3, 1, 2]) m.placeWorkspace(m.ws(n), A);
-    assert.deepStrictEqual(m.describeOutputs()[0], "A 0,0 1280x720 shows=- focus=[3 1 2] ws=[1 2 3]");
+    assert.deepStrictEqual(
+        m.describeOutputs()[0],
+        "A 0,0 1280x720 shows=- focus=[3 1 2] ws=[1 2 3]"
+    );
     m.placeWorkspace(m.ws(2), m.output("B"));
-    assert.deepStrictEqual(m.describeOutputs().slice(0, 2),
-        ["A 0,0 1280x720 shows=- focus=[3 1] ws=[1 3]", "B 1280,0 1280x720 shows=- focus=[2] ws=[2]"]);
+    assert.deepStrictEqual(m.describeOutputs().slice(0, 2), [
+        "A 0,0 1280x720 shows=- focus=[3 1] ws=[1 3]",
+        "B 1280,0 1280x720 shows=- focus=[2] ws=[2]",
+    ]);
 });
 
 test("insert_con_into across outputs meets at the root: the focused output's con goes first", () => {
     const m = model(true);
     open(m, 2, "c");
     open(m, 1, "a", "b");
-    m.focusWin("c");                                    // B is the focused output
+    m.focusWin("c"); // B is the focused output
     m.insertConInto(leaf(m, "c"), leaf(m, "a"), "after");
     assert.strictEqual(d(m, 1), "H[a c* b]");
-    assert.deepStrictEqual(m.focusOrder(m.ws(1))[0], "c", "c heads its new parent's focus stack");
-    assert.strictEqual(m.root.focus[0].name, "A", "the target output moved ahead (moves_focus && focus_before)");
+    assert.deepStrictEqual(
+        m.focusOrder(m.ws(1))[0],
+        "c",
+        "c heads its new parent's focus stack"
+    );
+    assert.strictEqual(
+        m.root.focus[0].name,
+        "A",
+        "the target output moved ahead (moves_focus && focus_before)"
+    );
 });
 
 test("_con_move_to_con steps 6-7: a hidden target on another output stays behind its shown workspace", () => {
@@ -1172,8 +1664,15 @@ test("_con_move_to_con steps 6-7: a hidden target on another output stays behind
     open(m, 2, "x");
     open(m, 1, "a", "b");
     m.moveToWorkspace(leaf(m, "b"), m.ws(3));
-    assert.strictEqual(m.describeOutputs()[1], "B 1280,0 1280x720 shows=2 focus=[2 3] ws=[2 3]");
-    assert.strictEqual(m.root.focus[0].name, "A", "the outputs' order as before");
+    assert.strictEqual(
+        m.describeOutputs()[1],
+        "B 1280,0 1280x720 shows=2 focus=[2 3] ws=[2 3]"
+    );
+    assert.strictEqual(
+        m.root.focus[0].name,
+        "A",
+        "the outputs' order as before"
+    );
     assert.strictEqual(m.focused.win, "a");
 });
 
@@ -1183,6 +1682,10 @@ test("con_parent_with_orientation stops at the content: a vertical workspace's w
     open(m, 2, "x");
     open(m, 1, "a", "b");
     m.move(leaf(m, "a"), LEFT);
-    assert.strictEqual(d(m, 1), "H[a V[b*]]", "ws_force_orientation, never into the next workspace");
+    assert.strictEqual(
+        d(m, 1),
+        "H[a V[b*]]",
+        "ws_force_orientation, never into the next workspace"
+    );
     assert.strictEqual(d(m, 2), "H[x]");
 });

@@ -18,18 +18,26 @@ function overlap(a, b) {
     return w > 0 && h > 0 ? w * h : 0;
 }
 
-function clamp(v) { return Math.max(0, Math.min(1, v)); }
+function clamp(v) {
+    return Math.max(0, Math.min(1, v));
+}
 
 // The monitor a workspace lives on: the one showing it; else the one most of its windows' area is
 // on (with per-monitor desktops a workspace's windows are on its monitor); else the first.
 function monitorOf(id, screens, shown, wins) {
     for (var i = 0; i < screens.length; i++)
         if (shown[screens[i].name] === id) return screens[i];
-    var best = null, bestArea = 0;
+    var best = null,
+        bestArea = 0;
     screens.forEach(function (s) {
         var area = 0;
-        wins.forEach(function (w) { area += overlap(w, s); });
-        if (area > bestArea) { best = s; bestArea = area; }
+        wins.forEach(function (w) {
+            area += overlap(w, s);
+        });
+        if (area > bestArea) {
+            best = s;
+            bestArea = area;
+        }
     });
     return best || screens[0] || null;
 }
@@ -39,24 +47,50 @@ function monitorOf(id, screens, shown, wins) {
 function workspaces(d) {
     var out = [];
     var shownIds = {};
-    Object.keys(d.shown).forEach(function (s) { shownIds[d.shown[s]] = s; });
-    var activeWin = d.windows.filter(function (w) { return w.active && !w.onAll; })[0] || null;
+    Object.keys(d.shown).forEach(function (s) {
+        shownIds[d.shown[s]] = s;
+    });
+    var activeWin =
+        d.windows.filter(function (w) {
+            return w.active && !w.onAll;
+        })[0] || null;
     d.desktops.forEach(function (id, i) {
-        var wins = d.windows.filter(function (w) { return !w.onAll && w.desktops.indexOf(id) >= 0; });
+        var wins = d.windows.filter(function (w) {
+            return !w.onAll && w.desktops.indexOf(id) >= 0;
+        });
         var isShown = shownIds[id] !== undefined;
         if (!wins.length && !isShown) return;
         var mon = monitorOf(id, d.screens, d.shown, wins);
         if (!mon) return;
-        var focused = isShown && (activeWin ? activeWin.desktops.indexOf(id) >= 0 : false);
+        var focused =
+            isShown &&
+            (activeWin ? activeWin.desktops.indexOf(id) >= 0 : false);
         out.push({
-            num: i + 1, id: id, name: (d.names && d.names[i]) || String(i + 1),
-            screen: mon.name, width: mon.width, height: mon.height,
-            windows: wins.map(function (w) {
-                var x0 = clamp((w.x - mon.x) / mon.width), y0 = clamp((w.y - mon.y) / mon.height);
-                var x1 = clamp((w.x + w.width - mon.x) / mon.width), y1 = clamp((w.y + w.height - mon.y) / mon.height);
-                return { x: x0, y: y0, width: x1 - x0, height: y1 - y0, active: !!w.active };
-            }).filter(function (r) { return r.width > 0 && r.height > 0; }),
-            shown: isShown, focused: focused,
+            num: i + 1,
+            id: id,
+            name: (d.names && d.names[i]) || String(i + 1),
+            screen: mon.name,
+            width: mon.width,
+            height: mon.height,
+            windows: wins
+                .map(function (w) {
+                    var x0 = clamp((w.x - mon.x) / mon.width),
+                        y0 = clamp((w.y - mon.y) / mon.height);
+                    var x1 = clamp((w.x + w.width - mon.x) / mon.width),
+                        y1 = clamp((w.y + w.height - mon.y) / mon.height);
+                    return {
+                        x: x0,
+                        y: y0,
+                        width: x1 - x0,
+                        height: y1 - y0,
+                        active: !!w.active,
+                    };
+                })
+                .filter(function (r) {
+                    return r.width > 0 && r.height > 0;
+                }),
+            shown: isShown,
+            focused: focused,
         });
     });
     // With no active window, the focused monitor's workspace is unknown: none is marked focused.
@@ -71,9 +105,16 @@ function workspaces(d) {
 function step(list, dir, from) {
     if (!list.length) return null;
     var at = -1;
-    if (from) for (var k = 0; k < list.length; k++) if (list[k].num === from) at = k;
-    if (at < 0) for (var i = 0; i < list.length; i++) if (list[i].focused) at = i;
-    if (at < 0) for (var j = 0; j < list.length; j++) if (list[j].shown) { at = j; break; }
+    if (from)
+        for (var k = 0; k < list.length; k++) if (list[k].num === from) at = k;
+    if (at < 0)
+        for (var i = 0; i < list.length; i++) if (list[i].focused) at = i;
+    if (at < 0)
+        for (var j = 0; j < list.length; j++)
+            if (list[j].shown) {
+                at = j;
+                break;
+            }
     if (at < 0) return list[0].num;
     return list[(at + (dir > 0 ? 1 : list.length - 1)) % list.length].num;
 }
@@ -95,7 +136,17 @@ function label(num, name, defaultName) {
 // sits close to the one and far from the other. None outside a panel.
 function lead(panel, vertical, margins) {
     if (!panel) return 0;
-    return vertical ? margins.top + margins.bottom : margins.left + margins.right;
+    return vertical
+        ? margins.top + margins.bottom
+        : margins.left + margins.right;
 }
 
-if (typeof module !== "undefined") module.exports = { workspaces: workspaces, step: step, monitorOf: monitorOf, named: named, label: label, lead: lead };
+if (typeof module !== "undefined")
+    module.exports = {
+        workspaces: workspaces,
+        step: step,
+        monitorOf: monitorOf,
+        named: named,
+        label: label,
+        lead: lead,
+    };

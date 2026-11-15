@@ -42,13 +42,17 @@ var Placement = (function () {
     // desktop where there is one on that output, else what it shows now.
     function shownBefore(outputs, pending) {
         var out = {};
-        for (var i = 0; i < outputs.length; i++) out[outputs[i].name] = outputs[i].shows;
+        for (var i = 0; i < outputs.length; i++)
+            out[outputs[i].name] = outputs[i].shows;
         // The earliest pending switch per output: two in one turn, the first's previous is what
         // it showed before them (not the last one's).
         var taken = {};
         for (var j = 0; j < pending.length; j++) {
             var o = pending[j].output;
-            if (o in out && !taken[o]) { out[o] = pending[j].previous; taken[o] = true; }
+            if (o in out && !taken[o]) {
+                out[o] = pending[j].previous;
+                taken[o] = true;
+            }
         }
         return out;
     }
@@ -60,7 +64,12 @@ var Placement = (function () {
         return visible && onFocusedOutput;
     }
 
-    return { target: target, claim: claim, shownBefore: shownBefore, takesFocus: takesFocus };
+    return {
+        target: target,
+        claim: claim,
+        shownBefore: shownBefore,
+        takesFocus: takesFocus,
+    };
 })();
 
 if (typeof module !== "undefined") module.exports = Placement;

@@ -9,10 +9,16 @@
 // kept out of it.
 
 var Rules = (function () {
-    var S = function (key) { return Settings.get(key); };
+    var S = function (key) {
+        return Settings.get(key);
+    };
 
-    function has(arr, v) { return arr.indexOf(String(v)) >= 0; }
-    function managed(kind) { return kind === "tiling" || kind === "floating" || kind === "sticky"; }
+    function has(arr, v) {
+        return arr.indexOf(String(v)) >= 0;
+    }
+    function managed(kind) {
+        return kind === "tiling" || kind === "floating" || kind === "sticky";
+    }
 
     // ---- the kinds kept out of the tree ---------------------------------------------------------
 
@@ -22,14 +28,27 @@ var Rules = (function () {
     // overlays (one Normal fullscreen window per output, probed) are override-redirect too:
     // in the tree they would gather on the focused workspace. An override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu's grab
     // in i3, except one KWin activates only as its fallback (fallbackOnly).
-    var OVERRIDE_CLASSES = ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml",
-                            "kwin_wayland", "ksmserver-logout-greeter"];
+    var OVERRIDE_CLASSES = [
+        "krunner",
+        "kded5",
+        "kded6",
+        "xwaylandvideobridge",
+        "ksplashqml",
+        "kwin_wayland",
+        "ksmserver-logout-greeter",
+    ];
     // KWin's fallback only: the video bridge's idle window never asks for the keyboard, yet KWin
     // activates it when nothing else is left (an empty desktop). It holds nothing: i3's bindings
     // yield only to a client's keyboard grab (bindings.c:177, passive grabs on the root), and
     // i3 never focuses an override-redirect window (manage.c:141-143).
     var FALLBACK_ONLY = ["xwaylandvideobridge"];
-    function fallbackOnly(w) { return !!w && (has(FALLBACK_ONLY, w.resourceClass) || has(FALLBACK_ONLY, w.resourceName)); }
+    function fallbackOnly(w) {
+        return (
+            !!w &&
+            (has(FALLBACK_ONLY, w.resourceClass) ||
+                has(FALLBACK_ONLY, w.resourceName))
+        );
+    }
     var SPECTACLE = ["spectacle", "org.kde.spectacle"];
     var PLASMASHELL = /^(org\.kde\.)?plasmashell$/;
     function i3Kind(w) {
@@ -37,21 +56,48 @@ var Rules = (function () {
         if (w.desktopWindow) return "root";
         // kwini3helper's strips over the gaps are kwin-i3's own, as i3's frames: no client.
         if (String(w.caption) === "kwin-i3 gap") return "override-redirect";
-        if (w.popupWindow || w.menu || w.dropdownMenu || w.popupMenu || w.tooltip ||
-            w.onScreenDisplay || w.comboBox || w.dndIcon || w.appletPopup) return "override-redirect";
+        if (
+            w.popupWindow ||
+            w.menu ||
+            w.dropdownMenu ||
+            w.popupMenu ||
+            w.tooltip ||
+            w.onScreenDisplay ||
+            w.comboBox ||
+            w.dndIcon ||
+            w.appletPopup
+        )
+            return "override-redirect";
         // Plasma's notifications are Plasma's (philosophy.md), by class as the default rule names
         // plasmashell; another app's notification-type window (an X11 toast) floats, as i3's
         // manage.c:466. KWin shows a script no X11-only property to tell them apart by.
-        if ((w.notification || w.criticalNotification) && PLASMASHELL.test(String(w.resourceClass))) return "override-redirect";
-        if (has(OVERRIDE_CLASSES, w.resourceClass) || has(OVERRIDE_CLASSES, w.resourceName)) return "override-redirect";
-        if (w.fullScreen && (has(SPECTACLE, w.resourceClass) || has(SPECTACLE, w.resourceName))) return "override-redirect";
+        if (
+            (w.notification || w.criticalNotification) &&
+            PLASMASHELL.test(String(w.resourceClass))
+        )
+            return "override-redirect";
+        if (
+            has(OVERRIDE_CLASSES, w.resourceClass) ||
+            has(OVERRIDE_CLASSES, w.resourceName)
+        )
+            return "override-redirect";
+        if (
+            w.fullScreen &&
+            (has(SPECTACLE, w.resourceClass) || has(SPECTACLE, w.resourceName))
+        )
+            return "override-redirect";
         return null;
     }
 
-    function isX11(w) { return String(w).indexOf("X11Window") >= 0; }
+    function isX11(w) {
+        return String(w).indexOf("X11Window") >= 0;
+    }
     // KWin's own last test of a window's size limits (min < max on either axis; no max is INT_MAX).
     function limitsResize(w) {
-        return w.minSize.width < w.maxSize.width || w.minSize.height < w.maxSize.height;
+        return (
+            w.minSize.width < w.maxSize.width ||
+            w.minSize.height < w.maxSize.height
+        );
     }
     // A Wayland window whose fullscreen request the client hasn't acknowledged yet: KWin calls it
     // not resizeable from the request (XdgToplevelWindow::isResizable, isRequestedFullScreen)
@@ -86,74 +132,189 @@ var Rules = (function () {
     // types too: R2), a transient, a modal, a fixed size; and tools/capture's note (R8).
     function floatsByDefault(w) {
         if (w.transient || w.modal || fixedSize(w)) return true;
-        if (w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification) return true;
+        if (
+            w.dialog ||
+            w.utility ||
+            w.toolbar ||
+            w.splash ||
+            w.notification ||
+            w.criticalNotification
+        )
+            return true;
         return String(w.caption) === "kwin-i3 capture note";
     }
 
     // ---- the rules ------------------------------------------------------------------------------
 
-    var CRITERIA = ["class", "instance", "title", "window_role", "window_type", "workspace", "floating", "tiling", "all"];
+    var CRITERIA = [
+        "class",
+        "instance",
+        "title",
+        "window_role",
+        "window_type",
+        "workspace",
+        "floating",
+        "tiling",
+        "all",
+    ];
 
     // i3's window_type values (match.c); kwin-i3's windows only ever have the first six, the
     // rest are kept out of the tree, as Plasma's notifications are (philosophy.md).
-    var WINDOW_TYPES = ["normal", "dialog", "utility", "toolbar", "splash", "notification", "menu", "dropdown_menu", "popup_menu", "tooltip"];
+    var WINDOW_TYPES = [
+        "normal",
+        "dialog",
+        "utility",
+        "toolbar",
+        "splash",
+        "notification",
+        "menu",
+        "dropdown_menu",
+        "popup_menu",
+        "tooltip",
+    ];
 
     // i3 compiles a criterion with PCRE2 (regex.c). JavaScript's own syntax, strict (the u flag),
     // reads most of it; what it refuses and i3 configs commonly hold, a leading (?i) and escaped
     // punctuation (\-, \ , \_), is read as PCRE would: the case-insensitive flag, loose escapes.
     // Possessive quantifiers and atomic groups stay unreadable: WARN, the rule skipped.
     function regex(src, where) {
-        try { return new RegExp(src, "u"); } catch (e) { /* PCRE-only syntax: try loosely below */ }
-        var flags = "", body = src;
-        if (/^\(\?i\)/.test(body)) { flags = "i"; body = body.slice(4); }
-        try { return new RegExp(body, flags); }
-        catch (e) { log("WARN setting " + where + ": \"" + src + "\" isn't a regular expression kwin-i3 can read (" + e.message + ")"); return null; }
+        try {
+            return new RegExp(src, "u");
+        } catch (e) {
+            /* PCRE-only syntax: try loosely below */
+        }
+        var flags = "",
+            body = src;
+        if (/^\(\?i\)/.test(body)) {
+            flags = "i";
+            body = body.slice(4);
+        }
+        try {
+            return new RegExp(body, flags);
+        } catch (e) {
+            log(
+                "WARN setting " +
+                    where +
+                    ': "' +
+                    src +
+                    "\" isn't a regular expression kwin-i3 can read (" +
+                    e.message +
+                    ")"
+            );
+            return null;
+        }
     }
 
     // `[class="^x$" title="y"]` -> { class: RegExp, title: RegExp } (`floating`, `tiling`, `all`
     // take no value); null with a logged WARN for anything else. Values are quoted, `\"` inside,
     // or bare as i3's `word` (commands.spec): up to a space, a quote or the `]`.
     function parseCriteria(text, where) {
-        var crit = {}, rest = text.trim(), n = 0;
+        var crit = {},
+            rest = text.trim(),
+            n = 0;
         while (rest.length) {
-            var m = /^(\w+)(?:\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"\]]+)))?\s*/.exec(rest);
-            if (!m || !has(CRITERIA, m[1])) { log("WARN setting " + where + ": can't read the criteria \"" + text + "\""); return null; }
+            var m =
+                /^(\w+)(?:\s*=\s*(?:"((?:[^"\\]|\\.)*)"|([^\s"\]]+)))?\s*/.exec(
+                    rest
+                );
+            if (!m || !has(CRITERIA, m[1])) {
+                log(
+                    "WARN setting " +
+                        where +
+                        ": can't read the criteria \"" +
+                        text +
+                        '"'
+                );
+                return null;
+            }
             rest = rest.slice(m[0].length);
-            var key = m[1], value = m[2] !== undefined ? m[2].replace(/\\"/g, "\"") : m[3];
+            var key = m[1],
+                value = m[2] !== undefined ? m[2].replace(/\\"/g, '"') : m[3];
             if (key === "floating" || key === "tiling" || key === "all") {
-                if (value !== undefined) { log("WARN setting " + where + ": " + key + " takes no value (\"" + text + "\")"); return null; }
+                if (value !== undefined) {
+                    log(
+                        "WARN setting " +
+                            where +
+                            ": " +
+                            key +
+                            ' takes no value ("' +
+                            text +
+                            '")'
+                    );
+                    return null;
+                }
                 crit[key] = true;
             } else if (value === undefined) {
-                log("WARN setting " + where + ": " + key + " needs a value (\"" + text + "\")");
+                log(
+                    "WARN setting " +
+                        where +
+                        ": " +
+                        key +
+                        ' needs a value ("' +
+                        text +
+                        '")'
+                );
                 return null;
             } else if (key === "window_type") {
                 // A keyword in i3, matched case-insensitively against the window's one type
                 // (match.c, strcasecmp), not a regular expression.
                 var type = value.toLowerCase();
-                if (!has(WINDOW_TYPES, type)) { log("WARN setting " + where + ": window_type \"" + value + "\" isn't one of i3's (" + WINDOW_TYPES.join(", ") + ")"); return null; }
-                crit[key] = { test: function (v) { return v === type; } };
+                if (!has(WINDOW_TYPES, type)) {
+                    log(
+                        "WARN setting " +
+                            where +
+                            ': window_type "' +
+                            value +
+                            "\" isn't one of i3's (" +
+                            WINDOW_TYPES.join(", ") +
+                            ")"
+                    );
+                    return null;
+                }
+                crit[key] = {
+                    test: function (v) {
+                        return v === type;
+                    },
+                };
             } else {
                 crit[key] = regex(value, where);
                 if (!crit[key]) return null;
             }
             n++;
         }
-        if (!n) { log("WARN setting " + where + ": empty criteria"); return null; }
+        if (!n) {
+            log("WARN setting " + where + ": empty criteria");
+            return null;
+        }
         return crit;
     }
 
     // Rules are separated by line breaks or `;` outside quotes (kwinrc keeps line breaks; the
     // default in main.xml is one line). -> the pieces, trimmed, empty ones dropped.
     function split(text) {
-        var out = [], cur = "", quoted = false;
+        var out = [],
+            cur = "",
+            quoted = false;
         for (var i = 0; i < text.length; i++) {
             var c = text.charAt(i);
-            if (c === "\\" && quoted && i + 1 < text.length) { cur += c + text.charAt(++i); continue; }
-            if (c === "\"") quoted = !quoted;
+            if (c === "\\" && quoted && i + 1 < text.length) {
+                cur += c + text.charAt(++i);
+                continue;
+            }
+            if (c === '"') quoted = !quoted;
             // A line break ends a rule whatever the quotes: one stray " (a typo) can't join
             // the lines below into it and lose their ;-separated rules too.
-            if (c === "\n" || c === "\r") { out.push(cur); cur = ""; quoted = false; continue; }
-            if (c === ";" && !quoted) { out.push(cur); cur = ""; continue; }
+            if (c === "\n" || c === "\r") {
+                out.push(cur);
+                cur = "";
+                quoted = false;
+                continue;
+            }
+            if (c === ";" && !quoted) {
+                out.push(cur);
+                cur = "";
+                continue;
+            }
             cur += c;
         }
         out.push(cur);
@@ -166,7 +327,16 @@ var Rules = (function () {
             var src = line.trim();
             if (!src) return;
             var m = /^\[((?:[^\]"]|"(?:[^"\\]|\\.)*")*)\]\s*(.*)$/.exec(src);
-            if (!m) { log("WARN setting " + where + ": a rule starts with [criteria]: \"" + src + "\""); return; }
+            if (!m) {
+                log(
+                    "WARN setting " +
+                        where +
+                        ': a rule starts with [criteria]: "' +
+                        src +
+                        '"'
+                );
+                return;
+            }
             var crit = parseCriteria(m[1], where);
             if (crit) out.push({ crit: crit, rest: m[2].trim(), src: src });
         });
@@ -178,7 +348,14 @@ var Rules = (function () {
         var out = [];
         lines(text, "forWindow").forEach(function (r) {
             var m = /^floating\s+(enable|disable)$/.exec(r.rest);
-            if (!m) { log("WARN setting forWindow: only \"floating enable\" and \"floating disable\" are rules here: \"" + r.src + "\""); return; }
+            if (!m) {
+                log(
+                    'WARN setting forWindow: only "floating enable" and "floating disable" are rules here: "' +
+                        r.src +
+                        '"'
+                );
+                return;
+            }
             out.push({ crit: r.crit, floating: m[1] === "enable", src: r.src });
         });
         return out;
@@ -189,15 +366,34 @@ var Rules = (function () {
     function parseAssign(text) {
         var out = [];
         lines(text, "assign").forEach(function (r) {
-            var m = /^(?:(?:→|->)\s*)?(?:workspace\s+)?(?:number\s+)?([0-9]+)$/.exec(r.rest);
+            var m =
+                /^(?:(?:→|->)\s*)?(?:workspace\s+)?(?:number\s+)?([0-9]+)$/.exec(
+                    r.rest
+                );
             if (m) {
-                if (+m[1] < 1 || +m[1] > 10) { log("WARN setting assign: workspace " + m[1] + " isn't one of 1-10: \"" + r.src + "\""); return; }
+                if (+m[1] < 1 || +m[1] > 10) {
+                    log(
+                        "WARN setting assign: workspace " +
+                            m[1] +
+                            " isn't one of 1-10: \"" +
+                            r.src +
+                            '"'
+                    );
+                    return;
+                }
                 out.push({ crit: r.crit, workspace: +m[1], src: r.src });
                 return;
             }
             m = /^(?:(?:→|->)\s*)?output\s+(\S+)$/.exec(r.rest);
-            if (m) { out.push({ crit: r.crit, output: m[1], src: r.src }); return; }
-            log("WARN setting assign: want \"→ N\", \"workspace N\" or \"output X\": \"" + r.src + "\"");
+            if (m) {
+                out.push({ crit: r.crit, output: m[1], src: r.src });
+                return;
+            }
+            log(
+                'WARN setting assign: want "→ N", "workspace N" or "output X": "' +
+                    r.src +
+                    '"'
+            );
         });
         return out;
     }
@@ -219,24 +415,52 @@ var Rules = (function () {
     // window, focusedWs: the focused workspace's number }. i3's `__focused__` value matches the
     // focused window's class, instance, title or role, or the focused workspace (match.c:101-103,
     // :180-181); as a pattern it would match only that text.
-    var FOCUSED_FIELD = { class: "resourceClass", instance: "resourceName", title: "caption", window_role: "windowRole" };
+    var FOCUSED_FIELD = {
+        class: "resourceClass",
+        instance: "resourceName",
+        title: "caption",
+        window_role: "windowRole",
+    };
     function matches(crit, w, ctx) {
         for (var key in crit) {
-            var re = crit[key], v;
+            var re = crit[key],
+                v;
             if (key === "all") continue;
-            if (key === "floating") { if (ctx.kind !== "floating") return false; continue; }
-            if (key === "tiling") { if (ctx.kind !== "tiling") return false; continue; }
+            if (key === "floating") {
+                if (ctx.kind !== "floating") return false;
+                continue;
+            }
+            if (key === "tiling") {
+                if (ctx.kind !== "tiling") return false;
+                continue;
+            }
             if (key === "class") v = w.resourceClass;
             else if (key === "instance") v = w.resourceName;
             else if (key === "title") v = w.caption;
             else if (key === "window_role") v = w.windowRole;
             else if (key === "window_type") v = windowType(w);
-            else if (key === "workspace") { if (ctx.ws === null || ctx.ws === undefined) return false; v = ctx.ws; }
+            else if (key === "workspace") {
+                if (ctx.ws === null || ctx.ws === undefined) return false;
+                v = ctx.ws;
+            }
             var text = String(v === undefined || v === null ? "" : v);
             if (re.source === "__focused__") {
-                if (key === "workspace" && ctx.focusedWs !== null && ctx.focusedWs !== undefined && text === String(ctx.focusedWs)) continue;
+                if (
+                    key === "workspace" &&
+                    ctx.focusedWs !== null &&
+                    ctx.focusedWs !== undefined &&
+                    text === String(ctx.focusedWs)
+                )
+                    continue;
                 var f = FOCUSED_FIELD[key];
-                if (f && ctx.focused && ctx.focused[f] !== undefined && ctx.focused[f] !== null && text === String(ctx.focused[f])) continue;
+                if (
+                    f &&
+                    ctx.focused &&
+                    ctx.focused[f] !== undefined &&
+                    ctx.focused[f] !== null &&
+                    text === String(ctx.focused[f])
+                )
+                    continue;
             }
             if (!re.test(text)) return false;
         }
@@ -250,7 +474,18 @@ var Rules = (function () {
         if (w.deleted) return "override-redirect";
         var kept = i3Kind(w);
         if (kept) return kept;
-        if (!w.normalWindow && !(w.dialog || w.utility || w.toolbar || w.splash || w.notification || w.criticalNotification)) return "override-redirect";
+        if (
+            !w.normalWindow &&
+            !(
+                w.dialog ||
+                w.utility ||
+                w.toolbar ||
+                w.splash ||
+                w.notification ||
+                w.criticalNotification
+            )
+        )
+            return "override-redirect";
         return null;
     }
     // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
@@ -269,15 +504,32 @@ var Rules = (function () {
         // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
         // kwin.js relocate): else a caption change would float a tiled window for good.
         var sticky = w.onAllDesktops && !ctx.crossing;
-        var kind = sticky ? (ctx.current === "tiling" ? "tiling" : "sticky")
-                          : ctx.current === "sticky" ? "floating" : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
-        var ran = ctx.ran || {}, rules = current().forWindow;
+        var kind = sticky
+            ? ctx.current === "tiling"
+                ? "tiling"
+                : "sticky"
+            : ctx.current === "sticky"
+              ? "floating"
+              : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
+        var ran = ctx.ran || {},
+            rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
             if (ran[i]) continue;
-            if (!matches(rules[i].crit, w, { ws: ctx.ws, kind: kind === "sticky" ? "floating" : kind,
-                                             focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
+            if (
+                !matches(rules[i].crit, w, {
+                    ws: ctx.ws,
+                    kind: kind === "sticky" ? "floating" : kind,
+                    focused: ctx.focused,
+                    focusedWs: ctx.focusedWs,
+                })
+            )
+                continue;
             ran[i] = true;
-            kind = rules[i].floating ? (sticky ? "sticky" : "floating") : "tiling";
+            kind = rules[i].floating
+                ? sticky
+                    ? "sticky"
+                    : "floating"
+                : "tiling";
         }
         return kind;
     }
@@ -289,12 +541,22 @@ var Rules = (function () {
     // matching output one on top of it (manage.c:289, :354). -> null, or
     // { workspace, output } with one or both set.
     function assignFor(w, ctx) {
-        var rules = current().assign, out = null;
+        var rules = current().assign,
+            out = null;
         ctx = ctx || {};
         for (var i = 0; i < rules.length; i++) {
-            if (!matches(rules[i].crit, w, { ws: null, kind: null, focused: ctx.focused, focusedWs: ctx.focusedWs })) continue;
+            if (
+                !matches(rules[i].crit, w, {
+                    ws: null,
+                    kind: null,
+                    focused: ctx.focused,
+                    focusedWs: ctx.focusedWs,
+                })
+            )
+                continue;
             out = out || {};
-            if (rules[i].workspace && !out.workspace) out.workspace = rules[i].workspace;
+            if (rules[i].workspace && !out.workspace)
+                out.workspace = rules[i].workspace;
             if (rules[i].output && !out.output) out.output = rules[i].output;
         }
         return out;
@@ -307,9 +569,20 @@ var Rules = (function () {
         return m && +m[1] >= -1 && +m[2] >= -1 ? { w: +m[1], h: +m[2] } : null;
     }
 
-    return { classify: classify, keptOut: keptOut, i3Kind: i3Kind, fallbackOnly: fallbackOnly, managed: managed, assignFor: assignFor,
-             parseForWindow: parseForWindow, parseAssign: parseAssign, parseSize: parseSize, windowType: windowType,
-             isX11: isX11, pendingFullscreen: pendingFullscreen };
+    return {
+        classify: classify,
+        keptOut: keptOut,
+        i3Kind: i3Kind,
+        fallbackOnly: fallbackOnly,
+        managed: managed,
+        assignFor: assignFor,
+        parseForWindow: parseForWindow,
+        parseAssign: parseAssign,
+        parseSize: parseSize,
+        windowType: windowType,
+        isX11: isX11,
+        pendingFullscreen: pendingFullscreen,
+    };
 })();
 
 if (typeof module !== "undefined") module.exports = Rules;

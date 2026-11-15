@@ -4,7 +4,7 @@
 // show a different one.
 
 var Workspaces = (function () {
-    var MAX = 10;           // kwin-i3's keys: Meta+1..0
+    var MAX = 10; // kwin-i3's keys: Meta+1..0
 
     // i3 creates a workspace when it is first used: KWin's desktops up to num, appended so none
     // moves, never removed (KWin saves the count). A stock
@@ -12,21 +12,28 @@ var Workspaces = (function () {
     function ensure(num) {
         var from = workspace.desktops.length + 1;
         if (num > MAX || from > num) return;
-        while (workspace.desktops.length < num) workspace.createDesktop(workspace.desktops.length, "");
+        while (workspace.desktops.length < num)
+            workspace.createDesktop(workspace.desktops.length, "");
         log("DESKTOPS created " + from + ".." + workspace.desktops.length);
     }
 
-    function deskOf(num) { return workspace.desktops[num - 1]; }
-    function deskNum(desktop) { return workspace.desktops.indexOf(desktop) + 1; }
+    function deskOf(num) {
+        return workspace.desktops[num - 1];
+    }
+    function deskNum(desktop) {
+        return workspace.desktops.indexOf(desktop) + 1;
+    }
     function screenNamed(name) {
         for (var i = 0; i < workspace.screens.length; i++)
             if (workspace.screens[i].name === name) return workspace.screens[i];
         return null;
     }
-    function showing(num) {                 // the screen showing workspace num, or null
+    function showing(num) {
+        // the screen showing workspace num, or null
         var d = deskOf(num);
         for (var i = 0; i < workspace.screens.length; i++)
-            if (workspace.currentDesktopForScreen(workspace.screens[i]) === d) return workspace.screens[i];
+            if (workspace.currentDesktopForScreen(workspace.screens[i]) === d)
+                return workspace.screens[i];
         return null;
     }
 
@@ -34,13 +41,19 @@ var Workspaces = (function () {
     // the workspace's list, by name, or null (none listed, or none connected). Applied where a
     // home is first claimed and when an output appears, so a changed setting moves no workspace
     // that exists (i3 assigns at creation).
-    function assignedList(num) { return Settings.get("workspaceOutputs")[num] || []; }
+    function assignedList(num) {
+        return Settings.get("workspaceOutputs")[num] || [];
+    }
     function assigned(num) {
         var list = assignedList(num);
-        for (var i = 0; i < list.length; i++) if (screenNamed(list[i])) return list[i];
+        for (var i = 0; i < list.length; i++)
+            if (screenNamed(list[i])) return list[i];
         return null;
     }
-    function assignedScreen(num) { var a = assigned(num); return a ? screenNamed(a) : null; }
+    function assignedScreen(num) {
+        var a = assigned(num);
+        return a ? screenNamed(a) : null;
+    }
 
     // KWin's outputs, the primary first (System Settings > Display's order): `screenOrder`, the
     // order KWin's own "Switch to Screen N" counts in (useractions.cpp). `screens` is the backend's
@@ -60,15 +73,24 @@ var Workspaces = (function () {
     // login): on a reload mid-session it would reshuffle the monitors.
     // Workspaces a screen needs are created (ensure), so each monitor has its own.
     function numberScreens(place) {
-        var s = ordered(), n = workspace.desktops.length, taken = {};
+        var s = ordered(),
+            n = workspace.desktops.length,
+            taken = {};
         var a = Settings.get("workspaceOutputs");
-        Object.keys(a).forEach(function (k) { if (+k <= n && assigned(+k)) place(+k, screenNamed(assigned(+k))); });
+        Object.keys(a).forEach(function (k) {
+            if (+k <= n && assigned(+k)) place(+k, screenNamed(assigned(+k)));
+        });
         for (var i = 0; i < s.length; i++) {
-            var pick = 0, num;
+            var pick = 0,
+                num;
             for (num = 1; num <= MAX && !pick; num++)
                 if (!taken[num] && assigned(num) === s[i].name) pick = num;
             for (num = 1; num <= MAX && !pick; num++)
-                if (!taken[num] && !(assigned(num) && assigned(num) !== s[i].name)) pick = num;
+                if (
+                    !taken[num] &&
+                    !(assigned(num) && assigned(num) !== s[i].name)
+                )
+                    pick = num;
             if (!pick) continue;
             ensure(pick);
             taken[pick] = true;
@@ -78,8 +100,15 @@ var Workspaces = (function () {
     }
 
     return {
-        deskOf: deskOf, deskNum: deskNum, ensure: ensure, showing: showing, screenNamed: screenNamed,
-        numberScreens: numberScreens, ordered: ordered,
-        assigned: assigned, assignedList: assignedList, assignedScreen: assignedScreen,
+        deskOf: deskOf,
+        deskNum: deskNum,
+        ensure: ensure,
+        showing: showing,
+        screenNamed: screenNamed,
+        numberScreens: numberScreens,
+        ordered: ordered,
+        assigned: assigned,
+        assignedList: assignedList,
+        assignedScreen: assignedScreen,
     };
 })();

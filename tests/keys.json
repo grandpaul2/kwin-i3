@@ -1,83 +1,29 @@
 {
- "Split H": [
-  "Meta+H"
- ],
- "Split V": [
-  "Meta+V"
- ],
- "Toggle Split": [
-  "Meta+E"
- ],
- "Layout Stacking": [
-  "Meta+S"
- ],
- "Layout Tabbed": [
-  "Meta+W"
- ],
- "Focus Parent": [
-  "Meta+A"
- ],
- "Floating Toggle": [
-  "Meta+Shift+Space"
- ],
- "Focus Mode Toggle": [
-  "Meta+Space"
- ],
- "Fullscreen": [
-  "Meta+F"
- ],
- "Close": [
-  "Meta+Shift+Q"
- ],
- "Focus Left": [
-  "Meta+Left",
-  "Meta+J"
- ],
- "Focus Down": [
-  "Meta+Down",
-  "Meta+K"
- ],
- "Focus Up": [
-  "Meta+Up",
-  "Meta+L"
- ],
- "Focus Right": [
-  "Meta+Right",
-  "Meta+;"
- ],
- "Move Left": [
-  "Meta+Shift+Left",
-  "Meta+Shift+J"
- ],
- "Move Down": [
-  "Meta+Shift+Down",
-  "Meta+Shift+K"
- ],
- "Move Up": [
-  "Meta+Shift+Up",
-  "Meta+Shift+L"
- ],
- "Move Right": [
-  "Meta+Shift+Right",
-  "Meta+:"
- ],
- "Resize Mode": [
-  "Meta+R"
- ],
- "Shrink Width": [],
- "Grow Height": [],
- "Shrink Height": [],
- "Grow Width": [],
- "Reload Settings": [
-  "Meta+Shift+C"
- ],
- "Exit": [
-  "Meta+Shift+E"
- ],
- "Terminal": [
-  "Meta+Return"
- ],
- "Launcher": [
-  "Meta+D"
- ]
+    "Split H": ["Meta+H"],
+    "Split V": ["Meta+V"],
+    "Toggle Split": ["Meta+E"],
+    "Layout Stacking": ["Meta+S"],
+    "Layout Tabbed": ["Meta+W"],
+    "Focus Parent": ["Meta+A"],
+    "Floating Toggle": ["Meta+Shift+Space"],
+    "Focus Mode Toggle": ["Meta+Space"],
+    "Fullscreen": ["Meta+F"],
+    "Close": ["Meta+Shift+Q"],
+    "Focus Left": ["Meta+Left", "Meta+J"],
+    "Focus Down": ["Meta+Down", "Meta+K"],
+    "Focus Up": ["Meta+Up", "Meta+L"],
+    "Focus Right": ["Meta+Right", "Meta+;"],
+    "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"],
+    "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
+    "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"],
+    "Move Right": ["Meta+Shift+Right", "Meta+:"],
+    "Resize Mode": ["Meta+R"],
+    "Shrink Width": [],
+    "Grow Height": [],
+    "Shrink Height": [],
+    "Grow Width": [],
+    "Reload Settings": ["Meta+Shift+C"],
+    "Exit": ["Meta+Shift+E"],
+    "Terminal": ["Meta+Return"],
+    "Launcher": ["Meta+D"]
 }

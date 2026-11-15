@@ -11,13 +11,13 @@ orig = Path(src).read_text()
 muts = [
     (
         "attach ignores focus",
-        "var current = ignoreFocus ? null : firstTiling(parent.focus);",
-        "var current = null;",
+        "            var current = ignoreFocus ? null : firstTiling(parent.focus);\n",
+        "            var current = null;\n",
     ),
     (
         "no swap with leaf",
-        "siblings[siblings.indexOf(swap)] = con;     // swap with a leaf: no flatten",
-        "return; //",
+        "                    siblings[siblings.indexOf(swap)] = con; // swap with a leaf: no flatten\n",
+        "                    return; //\n",
     ),
     (
         "no force orientation",
@@ -26,8 +26,8 @@ muts = [
     ),
     (
         "descendDirection ignores focus",
-        "            else most = firstTiling(con.focus);\n        } else {",
-        "            else most = con.nodes[0];\n        } else {",
+        "                most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];\n            else most = firstTiling(con.focus);\n",
+        "                most = dir === RIGHT ? nodes[0] : nodes[nodes.length - 1];\n            else most = con.nodes[0];\n",
     ),
     (
         "insert position flipped",
@@ -36,8 +36,8 @@ muts = [
     ),
     (
         "flatten disabled",
-        "M.flatten = function () {\n",
-        "M.flatten = function () { return;\n",
+        "    M.flatten = function () {\n",
+        "    M.flatten = function () {\n        return;\n",
     ),
     (
         "nextFocused by position",
@@ -46,12 +46,12 @@ muts = [
     ),
     (
         "no normalise",
-        "            for (i = 0; i < n; i++) con.nodes[i].percent /= total;",
+        "            for (i = 0; i < n; i++) con.nodes[i].percent /= total;\n",
         "",
     ),
     (
         "empty splits stay",
-        "        if (con.nodes.length === 0 && con.win === null) this.closeCon(con, false);",
+        "        if (con.nodes.length === 0 && con.win === null)\n            this.closeCon(con, false);\n",
         "",
     ),
     (
@@ -66,8 +66,8 @@ muts = [
     ),
     (
         "#3001 special case off",
-        'if (con.parent.type !== "ws" && con.nodes.length === 1 && con.parent.nodes.length === 1) {',
-        "if (false) {",
+        '        if (\n            con.parent.type !== "ws" &&\n            con.nodes.length === 1 &&\n            con.parent.nodes.length === 1\n        ) {\n',
+        "        if (false) {\n",
     ),
     (
         "moved window not ws focus",
@@ -76,13 +76,13 @@ muts = [
     ),
     (
         "attachToWorkspace side flipped",
-        "if (dir === RIGHT || dir === DOWN) ws.nodes.unshift(con);",
-        "if (dir === LEFT || dir === UP) ws.nodes.unshift(con);",
+        "        if (dir === RIGHT || dir === DOWN) ws.nodes.unshift(con);\n",
+        "        if (dir === LEFT || dir === UP) ws.nodes.unshift(con);\n",
     ),
     (
         "lone child at edge stays",
-        "            this.moveToOutputDirected(con, dir);\n            return;\n        } else {",
-        "            return;\n        } else {",
+        '            // workspace". Its test is layout != L_DEFAULT, which every split passes.\n            this.moveToOutputDirected(con, dir);\n',
+        '            // workspace". Its test is layout != L_DEFAULT, which every split passes.\n',
     ),
     ("fullscreen permits all", "        if (!fs) return true;", "        return true;"),
     (
@@ -92,7 +92,7 @@ muts = [
     ),
     (
         "open not idempotent",
-        "        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf",
+        "        if (this.byWin[win]) return this.byWin[win]; // added twice: no ghost leaf\n",
         "",
     ),
     (
@@ -102,14 +102,17 @@ muts = [
     ),
     (
         "a newcomer under fullscreen goes last, not second",
-        "        if (fullscreenOn(ws) && con.focus[0] !== leaf) {",
-        "        if (false) {",
+        "        if (fullscreenOn(ws) && con.focus[0] !== leaf) {\n",
+        "        if (false) {\n",
     ),
 ]
 survivors = []
 for name, a, b in muts:
-    if a not in orig:
-        print(f"!! pattern missing (src changed?): {name}")
+    if orig.count(a) != 1:
+        # Exactly once, or the fault would land somewhere else.
+        print(
+            f"!! pattern found {orig.count(a)} times, not once (src changed?): {name}"
+        )
         survivors.append(name)
         continue
     Path(src).write_text(orig.replace(a, b, 1))

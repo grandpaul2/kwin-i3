@@ -1,9 +1,9 @@
 {
-  "private": true,
-  "description": "kwin-i3's JavaScript formatter and linter, pinned (tools/lint.sh). Not read by the install or by KWin.",
-  "devDependencies": {
-    "@eslint/js": "10.0.1",
-    "eslint": "10.14.0",
-    "prettier": "3.9.10"
-  }
+    "private": true,
+    "description": "kwin-i3's JavaScript formatter and linter, pinned (tools/lint.sh). Not read by the install or by KWin.",
+    "devDependencies": {
+        "@eslint/js": "10.0.1",
+        "eslint": "10.14.0",
+        "prettier": "3.9.10"
+    }
 }

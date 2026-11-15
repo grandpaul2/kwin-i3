@@ -6,72 +6,89 @@
 
 var KI3 = (function () {
     var model = null;
-    var wins = {};          // window id -> KWin window, for every window we manage
-    var expected = {};      // window id -> tile we last put it in (or null): our own tileChanged
-    var floatedTold = {};   // window id -> true: told to the effect and the helper as floated (SetFloated)
-    var floatedLaid = {};   // window id -> the frame layFloated last gave it (its target, not yet its frame)
-    var spanTold = {};      // bar key -> true: told to the effect as spanning its window (SetBarSpan)
-    var floatedBars = {};   // workspace number -> its floated groups' bars as last placed ({ con, rect })
-    var helperLoaded = null;   // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
-    var keptAbove = {};     // window id -> true where we set keepAbove (undone on release)
-    var pendingFs = {};     // window id -> out of the tiles for a pending fullscreen request (checkPending)
-    var droppedFloating = {};   // window id -> true: left the tree floating, still open (dropWindow)
-    var sizeFloat = {};     // window id -> { place, nc, ws, seq }: floated for its minimum size (floatWhatCannotFit)
+    var wins = {}; // window id -> KWin window, for every window we manage
+    var expected = {}; // window id -> tile we last put it in (or null): our own tileChanged
+    var floatedTold = {}; // window id -> true: told to the effect and the helper as floated (SetFloated)
+    var floatedLaid = {}; // window id -> the frame layFloated last gave it (its target, not yet its frame)
+    var spanTold = {}; // bar key -> true: told to the effect as spanning its window (SetBarSpan)
+    var floatedBars = {}; // workspace number -> its floated groups' bars as last placed ({ con, rect })
+    var helperLoaded = null; // the helper among KWin's loaded plugins (checkHelperKeys); null: not asked yet
+    var keptAbove = {}; // window id -> true where we set keepAbove (undone on release)
+    var pendingFs = {}; // window id -> out of the tiles for a pending fullscreen request (checkPending)
+    var droppedFloating = {}; // window id -> true: left the tree floating, still open (dropWindow)
+    var sizeFloat = {}; // window id -> { place, nc, ws, seq }: floated for its minimum size (floatWhatCannotFit)
     // The frame: with kwini3hold loaded, tiled windows have no
     // decoration and the effect draws i3's frame in the tiles' padding. frameOn is what the
     // effect last said (asked at load and on every reconfigure; the effect asks for a
     // reconfigure when it loads or goes). tookBorder: the windows whose border kwin-i3 took;
     // borderDue: those it would take but whose title bar isn't there yet (takeBorder).
-    var frameOn = false, tookBorder = {}, borderDue = {};
-    var borderGone = {};                             // window id -> its GTK 4 bounds (refitOnFrameChange)
-    var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
-    var GRID = 1048576;                              // tile edges are multiples of 1/GRID (grid)
-    var gapCache = {}, passWs = null;                // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
+    var frameOn = false,
+        tookBorder = {},
+        borderDue = {};
+    var borderGone = {}; // window id -> its GTK 4 bounds (refitOnFrameChange)
+    var HAIR = 1e-6; // the root's inset at no gaps (rootRect)
+    var GRID = 1048576; // tile edges are multiples of 1/GRID (grid)
+    var gapCache = {},
+        passWs = null; // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
     // The floating mark: with the effect, it keeps the set of
     // floating windows (told[key]: what it was last told), which outlives a reload of this
     // script; at load the answer says which windows were floating (atLoadFloating).
-    var told = {}, atLoadFloating = {};
-    var dragTold = {};                  // the drag helper's floating list (tellDragFloating)
-    var focusParentTold = null;         // the helper's focus-parent window (tellFocusParent); null: not told yet
-    var selectionTold = null;           // the helper's selection (tellSelection); null: not told yet
-    var effectSeen = false;         // the effect answered Stats (SetFocused goes to it)
-    var deskIds = [], rebuilding = false;   // the desktops' ids, and a rebuild under way (desktopListChanged)
-    var rebuildAgain = false, rebuiltFor = "";
+    var told = {},
+        atLoadFloating = {};
+    var dragTold = {}; // the drag helper's floating list (tellDragFloating)
+    var focusParentTold = null; // the helper's focus-parent window (tellFocusParent); null: not told yet
+    var selectionTold = null; // the helper's selection (tellSelection); null: not told yet
+    var effectSeen = false; // the effect answered Stats (SetFocused goes to it)
+    var deskIds = [],
+        rebuilding = false; // the desktops' ids, and a rebuild under way (desktopListChanged)
+    var rebuildAgain = false,
+        rebuiltFor = "";
     // Homes given to workspace numbers kwin-i3 has made no model workspace for yet (login
     // numbering's assigned ones, an unused one picked for an output), or naming an output the
     // model doesn't have yet: num -> output name. wsModel and screensChanged place them.
     var pendingHome = {};
-    var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];    // the workspace keys, Meta+1..0
+    var NAMES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]; // the workspace keys, Meta+1..0
     // >0 while kwin-i3 itself changes what a monitor shows (showOn, an activation that may switch
     // a desktop): currentDesktopChanged tells those from switches made outside it (the Overview,
     // Plasma), which kwin-i3's focus follows (shownOutside).
     var switching = 0;
     function showOn(desk, s) {
         switching++;
-        try { workspace.setCurrentDesktopForScreen(desk, s); } finally { switching--; }
+        try {
+            workspace.setCurrentDesktopForScreen(desk, s);
+        } finally {
+            switching--;
+        }
     }
     // Desktop switches made outside kwin-i3, recorded as they come and handled a turn later
     // KWin emits windowAdded in the same call as the
     // activation that switched an output to the new window's desktop (workspace.cpp
     // addWaylandWindow), so adoptWindow runs first and claims that switch (Placement.claim); what
     // is left is i3's `workspace N` on that output (shownOutside).
-    var pendingShown = [], pendingTimer = false;    // [{ output: name, previous: num or 0, current: num }]
+    var pendingShown = [],
+        pendingTimer = false; // [{ output: name, previous: num or 0, current: num }]
     // The helper's tiling drag (startDrag below).
     var DRAG = ["org.kde.KWin", "/kwini3drag", "net.local.kwini3drag"];
-    var drag = null;        // { con, timer, busy, plan, rect }: a drag being followed
+    var drag = null; // { con, timer, busy, plan, rect }: a drag being followed
     // i3's resize mode: the helper owns the state and tells kwin-i3
     // through the hidden action Mode Changed, then Mode(); asked once at load, so a reload of this
     // script can't lose step. While it is on, every key of kwin-i3's does nothing but the four
     // resize actions the mode itself runs (i3: only the mode's bindings are active).
     var MODE = ["org.kde.KWin", "/kwini3mode", "net.local.kwini3mode"];
     var mode = "";
-    var MODE_ACTIONS = { "Shrink Width": true, "Grow Width": true, "Shrink Height": true, "Grow Height": true, "Resize Mode": true };
+    var MODE_ACTIONS = {
+        "Shrink Width": true,
+        "Grow Width": true,
+        "Shrink Height": true,
+        "Grow Height": true,
+        "Resize Mode": true,
+    };
 
     // Newcomers the effect hides until kwin-i3 has moved them (holdNew): window id -> "waiting"
     // until the pass that moves it is scheduled, then true (showHeld shows only those).
     var holdNamed = {};
-    var connected = {};     // window id -> true once its signals are connected (once only)
-    var closeWatched = {};  // window id -> true once its `closed` is watched (watchClose)
+    var connected = {}; // window id -> true once its signals are connected (once only)
+    var closeWatched = {}; // window id -> true once its `closed` is watched (watchClose)
     // A window outside the tree that is closing (its `closed` signal, before windowRemoved): KWin's
     // activation in between is its own next choice, not the user's (windowActivated).
     var closingOutside = null;
@@ -83,21 +100,22 @@ var KI3 = (function () {
     // activation then is the opening's, popup_during_fullscreen's (§5 C5), not a request that
     // ends a fullscreen (V6b). The fullscreen window C5 handed the focus back to, or true.
     var opening = {};
-    var ruleRan = {};       // window id -> { rule index: true }: the forWindow rules already run on it (Rules.classify, X2)
-    var dirty = {};         // ws num -> true, waiting for the coalesced reconcile
+    var ruleRan = {}; // window id -> { rule index: true }: the forWindow rules already run on it (Rules.classify, X2)
+    var dirty = {}; // ws num -> true, waiting for the coalesced reconcile
     var timer = null;
     var released = false;
-    var placing = {};       // window id -> true while we move it between desktops/outputs
+    var placing = {}; // window id -> true while we move it between desktops/outputs
     // window id -> true: a tiling window adopted and not yet through its workspace's first pass.
     // An X11 client's own move then is not ignored by KWin (no tile requested yet), and one onto
     // another output swaps its desktop for that output's (`finishInteractiveOutputChange`).
     // Cleared at the end of the pass (reconcileNow): after it, a desktop change is someone
     // else's, so a mark kept longer would refuse an Overview move.
     var untiledYet = {};
-    var crossing = {};      // window id -> the desktop it gets on arrival (relocate, arrive)
-    var snapW = 1, snapH = 1; // screen size in px, for snapping tile edges (setSizes)
-    var moved = [];           // the tiles setSizes changed in its latest pass, for setSizesStable's warning
-    var touchedRoots = {};  // "screen/desktop id" -> true once reconciled (put back on release)
+    var crossing = {}; // window id -> the desktop it gets on arrival (relocate, arrive)
+    var snapW = 1,
+        snapH = 1; // screen size in px, for snapping tile edges (setSizes)
+    var moved = []; // the tiles setSizes changed in its latest pass, for setSizesStable's warning
+    var touchedRoots = {}; // "screen/desktop id" -> true once reconciled (put back on release)
     // Apply model focus after the next reconcile; from: the monitor a key action moved focus
     // from, so the pointer follows to the new one (i3 warps only from commands: x_set_warp_to in
     // _tree_next and workspace_show). Any other pass (a window closed, settings, monitors) moves
@@ -105,40 +123,64 @@ var KI3 = (function () {
     // although focus never moved (tests/live/72-pointer-stays.sh).
     var focusPending = null; // { byKey: a key asked (wantFocus), checked: KWin said Show Desktop is off (applyFocus) }
 
-    function id(w) { return String(w.internalId); }
+    function id(w) {
+        return String(w.internalId);
+    }
 
     function guard(name, fn) {
         return function () {
             if (released) return;
-            try { return fn.apply(null, arguments); }
-            catch (e) { log("ERROR in " + name + ": " + e + (e.stack ? " " + e.stack : "")); retrySoon(); }
+            try {
+                return fn.apply(null, arguments);
+            } catch (e) {
+                log(
+                    "ERROR in " +
+                        name +
+                        ": " +
+                        e +
+                        (e.stack ? " " + e.stack : "")
+                );
+                retrySoon();
+            }
         };
     }
 
     // After an error: reconcile everything again 250 ms later, at most 3 times in a row; then wait
     // for the next real event. Retrying at once would re-arm a 0 ms timer for ever, spinning
     // KWin's main thread on a repeating error.
-    var failures = 0, retryTimer = null;
+    var failures = 0,
+        retryTimer = null;
     function retrySoon() {
         failures++;
         if (failures > 3) {
-            if (failures === 4) log("WARN giving up after 3 errors in a row; next try on the next event");
+            if (failures === 4)
+                log(
+                    "WARN giving up after 3 errors in a row; next try on the next event"
+                );
             return;
         }
         if (!retryTimer) {
             retryTimer = new QTimer();
             retryTimer.singleShot = true;
             retryTimer.interval = 250;
-            retryTimer.timeout.connect(function () { if (!released) scheduleAll(); });
+            retryTimer.timeout.connect(function () {
+                if (!released) scheduleAll();
+            });
         }
         retryTimer.start();
     }
 
     // ---- workspaces ------------------------------------------------------------------------
 
-    function deskNum(desktop) { return Workspaces.deskNum(desktop); }
-    function deskOf(num) { return Workspaces.deskOf(num); }
-    function screenNamed(name) { return Workspaces.screenNamed(name); }
+    function deskNum(desktop) {
+        return Workspaces.deskNum(desktop);
+    }
+    function deskOf(num) {
+        return Workspaces.deskOf(num);
+    }
+    function screenNamed(name) {
+        return Workspaces.screenNamed(name);
+    }
 
     // Where a workspace lives is the model's (i3's output level, src/tree.js): a workspace is
     // placed on an output node, or has none. `pendingHome` holds the rest (above).
@@ -146,55 +188,81 @@ var KI3 = (function () {
         var m = model.workspaces[num];
         return m && m.parent ? m.parent.parent.name : pendingHome[num] || null;
     }
-    function hasHome(num) { return !!homeName(num); }
+    function hasHome(num) {
+        return !!homeName(num);
+    }
     // { num: output name } for every workspace with a home.
     function homes() {
-        var out = {}, seen = {};
-        Object.keys(model.workspaces).concat(Object.keys(pendingHome)).forEach(function (n) {
-            if (seen[n]) return;
-            seen[n] = true;
-            var h = homeName(+n);
-            if (h) out[n] = h;
-        });
+        var out = {},
+            seen = {};
+        Object.keys(model.workspaces)
+            .concat(Object.keys(pendingHome))
+            .forEach(function (n) {
+                if (seen[n]) return;
+                seen[n] = true;
+                var h = homeName(+n);
+                if (h) out[n] = h;
+            });
         return out;
     }
     // Workspace num lives on `screen` from now on.
     function setHome(num, screen) {
         if (!screen) return;
-        var m = model.workspaces[num], o = model.output(screen.name);
-        if (m && o) { model.placeWorkspace(m, o); delete pendingHome[num]; return; }
+        var m = model.workspaces[num],
+            o = model.output(screen.name);
+        if (m && o) {
+            model.placeWorkspace(m, o);
+            delete pendingHome[num];
+            return;
+        }
         if (m) model.unplaceWorkspace(m);
         pendingHome[num] = screen.name;
     }
     function setHomeName(num, name) {
-        if (name) { setHome(num, screenNamed(name)); return; }
+        if (name) {
+            setHome(num, screenNamed(name));
+            return;
+        }
         var m = model.workspaces[num];
         if (m) model.unplaceWorkspace(m);
         delete pendingHome[num];
     }
     // A workspace's first home: its assigned output if connected, else the screen it is used on.
-    function claimHome(num, screen) { setHome(num, Workspaces.assignedScreen(num) || screen); }
+    function claimHome(num, screen) {
+        setHome(num, Workspaces.assignedScreen(num) || screen);
+    }
     // Where workspace num is now: its home if that monitor is here; else the screen showing it
     // (its home from now, if it had none); else the first screen.
     function outputOfNum(num) {
-        var h = homeName(num), s = h ? screenNamed(h) : null;
+        var h = homeName(num),
+            s = h ? screenNamed(h) : null;
         if (s) return s;
         s = Workspaces.showing(num);
         if (!h && s) setHome(num, s);
         return s || Workspaces.ordered()[0];
     }
-    function outputOf(ws) { return outputOfNum(ws.num); }
+    function outputOf(ws) {
+        return outputOfNum(ws.num);
+    }
     // Pending homes whose output the model has now, for workspaces it has made.
     function settlePending() {
         Object.keys(pendingHome).forEach(function (n) {
-            var m = model.workspaces[n], o = model.output(pendingHome[n]);
-            if (m && o) { model.placeWorkspace(m, o); delete pendingHome[n]; }
+            var m = model.workspaces[n],
+                o = model.output(pendingHome[n]);
+            if (m && o) {
+                model.placeWorkspace(m, o);
+                delete pendingHome[n];
+            }
         });
     }
     // KWin's outputs into the model: new ones added, rects, order (screensChanged and load only:
     // screensChanged tells the new ones from the model's).
     function syncOutputs() {
-        model.setOutputs(Workspaces.ordered().map(function (s) { return { name: s.name, rect: s.geometry }; }));
+        model.setOutputs(
+            Workspaces.ordered().map(function (s) {
+                return { name: s.name, rect: s.geometry };
+            })
+        );
         settlePending();
     }
     // The output in a direction from s (i3's get_output_next; with wrap, get_output_next_wrap,
@@ -202,13 +270,19 @@ var KI3 = (function () {
     function screenToward(s, dir, wrap) {
         var o = s ? model.output(s.name) : null;
         if (!o) return null;
-        var t = wrap ? model.outputNextWrap(o, dir) : model.outputNext(o, dir, false);
+        var t = wrap
+            ? model.outputNextWrap(o, dir)
+            : model.outputNext(o, dir, false);
         return t ? screenNamed(t.name) : null;
     }
     // An output's workspaces, most recently focused first (i3's content focus stack), as numbers.
     function focusOrderOn(name) {
         var o = model.output(name);
-        return o ? model.content(o).focus.map(function (w) { return w.num; }) : [];
+        return o
+            ? model.content(o).focus.map(function (w) {
+                  return w.num;
+              })
+            : [];
     }
 
     // The model's workspace num, created with i3's default_orientation: "auto" is horizontal
@@ -219,18 +293,41 @@ var KI3 = (function () {
     // A workspace made with a pending home is placed there; every output showing its desktop
     // gets it as what it shows.
     function wsModel(num) {
-        var o = Settings.get("defaultOrientation"), g = outputOfNum(num).geometry;
+        var o = Settings.get("defaultOrientation"),
+            g = outputOfNum(num).geometry;
         var fresh = !model.workspaces[num];
-        var ws = model.ws(num, o === "horizontal" ? "h" : o === "vertical" ? "v" : g.height > g.width ? "v" : "h");
+        var ws = model.ws(
+            num,
+            o === "horizontal"
+                ? "h"
+                : o === "vertical"
+                  ? "v"
+                  : g.height > g.width
+                    ? "v"
+                    : "h"
+        );
         if (fresh) {
             var l = Settings.get("workspaceLayout");
-            ws.wsLayout = l === "stacking" ? "stacked" : l === "tabbed" ? "tabbed" : "default";
+            ws.wsLayout =
+                l === "stacking"
+                    ? "stacked"
+                    : l === "tabbed"
+                      ? "tabbed"
+                      : "default";
             var p = pendingHome[num] ? model.output(pendingHome[num]) : null;
-            if (p) { model.placeWorkspace(ws, p); delete pendingHome[num]; }
-            if (num <= NAMES.length) workspace.screens.forEach(function (s) {
-                var so = model.output(s.name);
-                if (so && workspace.currentDesktopForScreen(s) === deskOf(num)) model.setShows(so, ws);
-            });
+            if (p) {
+                model.placeWorkspace(ws, p);
+                delete pendingHome[num];
+            }
+            if (num <= NAMES.length)
+                workspace.screens.forEach(function (s) {
+                    var so = model.output(s.name);
+                    if (
+                        so &&
+                        workspace.currentDesktopForScreen(s) === deskOf(num)
+                    )
+                        model.setShows(so, ws);
+                });
         }
         return ws;
     }
@@ -260,24 +357,38 @@ var KI3 = (function () {
         return wsModel(shownOn(s));
     }
     // Where the focus goes on a workspace shown anew: its fullscreen window, or its focus.
-    function focusOf(ws) { return model.fullscreenOn(ws) || model.descendFocused(ws); }
+    function focusOf(ws) {
+        return model.fullscreenOn(ws) || model.descendFocused(ws);
+    }
 
     function invoke(action) {
-        callDBus("org.kde.kglobalaccel", "/component/kwin", "org.kde.kglobalaccel.Component",
-                 "invokeShortcut", action);
+        callDBus(
+            "org.kde.kglobalaccel",
+            "/component/kwin",
+            "org.kde.kglobalaccel.Component",
+            "invokeShortcut",
+            action
+        );
     }
 
     // ---- scheduling ------------------------------------------------------------------------
 
     // A one-off timer, kept in `timers` until it fires: a QTimer held only by a local could be
     // collected first.
-    var timers = {}, timerSeq = 0;
+    var timers = {},
+        timerSeq = 0;
     function later(ms, fn) {
-        var n = ++timerSeq, tm = new QTimer();
+        var n = ++timerSeq,
+            tm = new QTimer();
         timers[n] = tm;
         tm.singleShot = true;
         tm.interval = ms;
-        tm.timeout.connect(guard("later", function () { delete timers[n]; fn(); }));
+        tm.timeout.connect(
+            guard("later", function () {
+                delete timers[n];
+                fn();
+            })
+        );
         tm.start();
     }
     function kick() {
@@ -294,26 +405,58 @@ var KI3 = (function () {
         dirty[ws.num] = true;
         kick();
     }
-    function scheduleAll() { for (var n in model.workspaces) schedule(model.workspaces[n]); }
+    function scheduleAll() {
+        for (var n in model.workspaces) schedule(model.workspaces[n]);
+    }
 
     function flush() {
-        if (rebuilding) return;         // the model is being rebuilt (desktopListChanged)
+        if (rebuilding) return; // the model is being rebuilt (desktopListChanged)
         opening = {};
-        var nums = Object.keys(dirty), ok = true;
+        var nums = Object.keys(dirty),
+            ok = true;
         dirty = {};
         // Each workspace on its own: one that fails can't stop the others.
         nums.forEach(function (n) {
-            try { reconcile(model.workspaces[n]); }
-            catch (e) { ok = false; log("ERROR in reconcile " + n + ": " + e + (e.stack ? " " + e.stack : "")); }
+            try {
+                reconcile(model.workspaces[n]);
+            } catch (e) {
+                ok = false;
+                log(
+                    "ERROR in reconcile " +
+                        n +
+                        ": " +
+                        e +
+                        (e.stack ? " " + e.stack : "")
+                );
+            }
         });
-        if (ok) failures = 0; else retrySoon();
+        if (ok) failures = 0;
+        else retrySoon();
         // Focus last, once windows are where they belong: a pointer warped earlier would land
         // on the old place.
-        if (focusPending) { var fp = focusPending; focusPending = null; applyFocus(fp.byKey, fp.checked); }
+        if (focusPending) {
+            var fp = focusPending;
+            focusPending = null;
+            applyFocus(fp.byKey, fp.checked);
+        }
         passWs = null;
-        try { tellRings(); } catch (e) { log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : "")); }
-        try { tellBars(); } catch (e) { log("ERROR in tellBars: " + e + (e.stack ? " " + e.stack : "")); }
-        try { tellDragState(); } catch (e) { log("ERROR in tellDragState: " + e + (e.stack ? " " + e.stack : "")); }
+        try {
+            tellRings();
+        } catch (e) {
+            log("ERROR in tellRings: " + e + (e.stack ? " " + e.stack : ""));
+        }
+        try {
+            tellBars();
+        } catch (e) {
+            log("ERROR in tellBars: " + e + (e.stack ? " " + e.stack : ""));
+        }
+        try {
+            tellDragState();
+        } catch (e) {
+            log(
+                "ERROR in tellDragState: " + e + (e.stack ? " " + e.stack : "")
+            );
+        }
         showHeld();
         syncShown();
     }
@@ -343,7 +486,11 @@ var KI3 = (function () {
     // So does one whose fullscreen request is pending (pendingFs, below): KWin refuses its tile.
     function visibleLeaf(c) {
         var w = wins[c.win];
-        return w && !w.minimized && !((w.fullScreen || pendingOut(c.win, w)) && !w.tile);
+        return (
+            w &&
+            !w.minimized &&
+            !((w.fullScreen || pendingOut(c.win, w)) && !w.tile)
+        );
     }
 
     // A tabbed or stacked group (i3's render_con_tabbed, render_con_stacked): every child gets the
@@ -359,9 +506,18 @@ var KI3 = (function () {
     // one, any in a horizontal one, up to a group showing more than one child (a group of one
     // has no bar: its child alone).
     function underBar(c) {
-        for (var k = c, p = c.parent; p && p.type !== "ws" && p.type !== "floating"; k = p, p = p.parent) {
-            var shown = p.nodes.filter(function (n) { return project(n); });
-            if (p.layout === "tabbed" || p.layout === "stacked") { if (shown.length > 1) return true; continue; }
+        for (
+            var k = c, p = c.parent;
+            p && p.type !== "ws" && p.type !== "floating";
+            k = p, p = p.parent
+        ) {
+            var shown = p.nodes.filter(function (n) {
+                return project(n);
+            });
+            if (p.layout === "tabbed" || p.layout === "stacked") {
+                if (shown.length > 1) return true;
+                continue;
+            }
             if (Tree.orient(p) === "v" && shown[0] !== k) return false;
         }
         return false;
@@ -371,22 +527,37 @@ var KI3 = (function () {
     // group of one's child; a group showing more than one has its own bar there.
     function ringOnTop(c, right) {
         while (c.win === null) {
-            var shown = c.nodes.filter(function (n) { return project(n); });
+            var shown = c.nodes.filter(function (n) {
+                return project(n);
+            });
             if (!shown.length) return false;
-            if ((c.layout === "tabbed" || c.layout === "stacked") && shown.length > 1) return false;
+            if (
+                (c.layout === "tabbed" || c.layout === "stacked") &&
+                shown.length > 1
+            )
+                return false;
             if (c.layout === "tabbed" || c.layout === "stacked") {
                 var f = null;
-                for (var i = 0; i < c.focus.length && !f; i++) if (shown.indexOf(c.focus[i]) >= 0) f = c.focus[i];
+                for (var i = 0; i < c.focus.length && !f; i++)
+                    if (shown.indexOf(c.focus[i]) >= 0) f = c.focus[i];
                 c = f || shown[0];
-            } else c = Tree.orient(c) === "h" && right ? shown[shown.length - 1] : shown[0];
+            } else
+                c =
+                    Tree.orient(c) === "h" && right
+                        ? shown[shown.length - 1]
+                        : shown[0];
         }
         return true;
     }
     function projectGroup(con, holes) {
-        var projected = [], byNode = [];
+        var projected = [],
+            byNode = [];
         con.nodes.forEach(function (child) {
             var p = project(child, holes);
-            if (p) { projected.push(child); byNode.push(p); }
+            if (p) {
+                projected.push(child);
+                byNode.push(p);
+            }
         });
         if (!projected.length) return null;
         var shown = null;
@@ -394,10 +565,15 @@ var KI3 = (function () {
             if (projected.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
         var sp = byNode[projected.indexOf(shown)];
         if (projected.length === 1) return sp;
-        var hidden = [], anchor = leafOf(sp, shownWindow(shown).win) || leafOf(sp, null), order = [];
-        if (!anchor) return holes ? projectGroup(con, false) : null;   // the shown tab is a hole: no window to hold the others
+        var hidden = [],
+            anchor = leafOf(sp, shownWindow(shown).win) || leafOf(sp, null),
+            order = [];
+        if (!anchor) return holes ? projectGroup(con, false) : null; // the shown tab is a hole: no window to hold the others
         projected.forEach(function (child, k) {
-            if (child === shown) { order.push(anchor.win); return; }
+            if (child === shown) {
+                order.push(anchor.win);
+                return;
+            }
             var ws = windowsOf(byNode[k]);
             hidden = hidden.concat(ws);
             order = order.concat(ws);
@@ -406,7 +582,11 @@ var KI3 = (function () {
         // The tile lists them in the tabs' order, so a reload reads the order back (specOf).
         anchor.order = anchor.order ? anchor.order.concat(hidden) : order;
         var members = sp.dir === "v" ? sp.kids : [{ p: sp, share: 1 }];
-        var bar = { bar: con, rows: con.layout === "stacked" ? projected.length : 1, members: members.length };
+        var bar = {
+            bar: con,
+            rows: con.layout === "stacked" ? projected.length : 1,
+            members: members.length,
+        };
         return { dir: "v", kids: [{ p: bar, share: 0 }].concat(members) };
     }
     // The window a container shows: down its focus stacks to a window, past the tree's focus (the
@@ -415,7 +595,8 @@ var KI3 = (function () {
     function shownWindow(c) {
         while (c.nodes.length) {
             var next = null;
-            for (var i = 0; i < c.focus.length && !next; i++) if (project(c.focus[i])) next = c.focus[i];
+            for (var i = 0; i < c.focus.length && !next; i++)
+                if (project(c.focus[i])) next = c.focus[i];
             if (!next) break;
             c = next;
         }
@@ -425,13 +606,22 @@ var KI3 = (function () {
     function windowsOf(p) {
         if (p.bar || p.hole !== undefined) return [];
         if (p.win !== undefined) return [p.win].concat(p.extra || []);
-        return [].concat.apply([], p.kids.map(function (k) { return windowsOf(k.p); }));
+        return [].concat.apply(
+            [],
+            p.kids.map(function (k) {
+                return windowsOf(k.p);
+            })
+        );
     }
     // The window leaf of a projection holding `win` (null: the first one).
     function leafOf(p, win) {
         if (p.bar || p.hole !== undefined) return null;
-        if (p.win !== undefined) return win === null || p.win === win ? p : null;
-        for (var i = 0; i < p.kids.length; i++) { var l = leafOf(p.kids[i].p, win); if (l) return l; }
+        if (p.win !== undefined)
+            return win === null || p.win === win ? p : null;
+        for (var i = 0; i < p.kids.length; i++) {
+            var l = leafOf(p.kids[i].p, win);
+            if (l) return l;
+        }
         return null;
     }
 
@@ -448,7 +638,8 @@ var KI3 = (function () {
             var w = wins[con.win];
             return holes && w && !w.minimized ? { hole: con.win } : null;
         }
-        if (con.layout === "tabbed" || con.layout === "stacked") return projectGroup(con, holes);
+        if (con.layout === "tabbed" || con.layout === "stacked")
+            return projectGroup(con, holes);
         var kids = [];
         var total = 0;
         con.nodes.forEach(function (child) {
@@ -459,12 +650,20 @@ var KI3 = (function () {
         });
         if (!kids.length) return null;
         if (kids.length === 1) return kids[0].p;
-        if (kids.every(function (k) { return k.p.hole !== undefined; })) return kids[0].p;
+        if (
+            kids.every(function (k) {
+                return k.p.hole !== undefined;
+            })
+        )
+            return kids[0].p;
         var out = { dir: con.layout, kids: [] };
         kids.forEach(function (k) {
             var share = total > 0 ? k.share / total : 1 / kids.length;
-            if (k.p.dir === con.layout) {      // a bar's kids too: its px still come from its members
-                k.p.kids.forEach(function (g) { out.kids.push({ p: g.p, share: share * g.share }); });
+            if (k.p.dir === con.layout) {
+                // a bar's kids too: its px still come from its members
+                k.p.kids.forEach(function (g) {
+                    out.kids.push({ p: g.p, share: share * g.share });
+                });
             } else {
                 out.kids.push({ p: k.p, share: share });
             }
@@ -480,35 +679,64 @@ var KI3 = (function () {
     // "H[a V[b c]]" over window ids, without sizes: equal shapes need only a resize.
     function shapeOfProjection(p) {
         if (!p) return "";
-        if (p.bar || p.hole !== undefined) return "b";     // an empty leaf tile, as shapeOfTile reads it
-        if (p.win !== undefined) return "w:" + [p.win].concat(p.extra || []).map(String).sort().join("+");
-        return p.dir + "[" + p.kids.map(function (k) { return shapeOfProjection(k.p); }).join(" ") + "]";
+        if (p.bar || p.hole !== undefined) return "b"; // an empty leaf tile, as shapeOfTile reads it
+        if (p.win !== undefined)
+            return (
+                "w:" +
+                [p.win]
+                    .concat(p.extra || [])
+                    .map(String)
+                    .sort()
+                    .join("+")
+            );
+        return (
+            p.dir +
+            "[" +
+            p.kids
+                .map(function (k) {
+                    return shapeOfProjection(k.p);
+                })
+                .join(" ") +
+            "]"
+        );
     }
     function shapeOfTile(t) {
-        if (!t.tiles.length) return t.windows.length ? "w:" + t.windows.map(id).map(String).sort().join("+") : t.parent ? "b" : "";
-        return (t.layoutDirection === 2 ? "v" : "h") + "[" +
-            t.tiles.map(shapeOfTile).join(" ") + "]";
+        if (!t.tiles.length)
+            return t.windows.length
+                ? "w:" + t.windows.map(id).map(String).sort().join("+")
+                : t.parent
+                  ? "b"
+                  : "";
+        return (
+            (t.layoutDirection === 2 ? "v" : "h") +
+            "[" +
+            t.tiles.map(shapeOfTile).join(" ") +
+            "]"
+        );
     }
 
     // ---- reconcile: make one workspace's tiles match the model -------------------------------
 
-    var refused = false;    // set when KWin refused a manage() during this reconcile
+    var refused = false; // set when KWin refused a manage() during this reconcile
     // This reconcile's group tiles (placeWindows): bars (empty on purpose), leaves holding the
     // tabs behind the shown one, and each shown tab with the windows it must be above.
-    var barTiles = [], multiTiles = [], shownTabs = [], groupBars = [];
-    var barsOf = {};        // workspace number -> its groups' bars as last placed ({ con, tile })
-    var barTold = {};       // bar key (the window's id, "id#1" for its next) -> the bar the effect was told to draw with it (SetBar)
-    var barGroups = {};     // the same ids -> the group the bar is of, for the helper's tab events
-    var barsHelperTold = null;   // the helper's SetBars spec last sent (null: never)
-    var floatPlace = {};    // window id -> where it was tiled, while a move that floated it lasts (§9 G5)
-    var tabDrag = null;     // { key, con } of a tab just clicked (a window or a container): a drag from that press takes it whole
+    var barTiles = [],
+        multiTiles = [],
+        shownTabs = [],
+        groupBars = [];
+    var barsOf = {}; // workspace number -> its groups' bars as last placed ({ con, tile })
+    var barTold = {}; // bar key (the window's id, "id#1" for its next) -> the bar the effect was told to draw with it (SetBar)
+    var barGroups = {}; // the same ids -> the group the bar is of, for the helper's tab events
+    var barsHelperTold = null; // the helper's SetBars spec last sent (null: never)
+    var floatPlace = {}; // window id -> where it was tiled, while a move that floated it lasts (§9 G5)
+    var tabDrag = null; // { key, con } of a tab just clicked (a window or a container): a drag from that press takes it whole
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
     // tile's desktop. A refused window floats instead of leaving a hole.
     function manageInto(tile, w) {
         expected[id(w)] = tile;
         log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
-        tiledBorder(w);                     // before the tile asks for its size
+        tiledBorder(w); // before the tile asks for its size
         if (tile.manage(w)) return true;
         giveBorder(w);
         expected[id(w)] = null;
@@ -527,7 +755,11 @@ var KI3 = (function () {
             var key = id(w);
             if (pendingFs[key] === undefined) {
                 pendingFs[key] = 0;
-                log("FULLSCREEN " + w.caption + ": requested, out of the tiles until it lands");
+                log(
+                    "FULLSCREEN " +
+                        w.caption +
+                        ": requested, out of the tiles until it lands"
+                );
             }
             if (w.tile) unmanageFrom(w.tile, w);
             checkPending();
@@ -545,20 +777,36 @@ var KI3 = (function () {
     // workspace (a client that never answers; a KWin rule forcing the size reads the same):
     // floated, as a refused window is. A gap of over a minute between looks (a suspend) starts
     // the 3 s again.
-    var pendingLook = 0, pendingTimer = false;
-    function pendingOut(key, w) { return pendingFs[key] !== undefined && Rules.pendingFullscreen(w); }
+    var pendingLook = 0,
+        pendingTimer = false;
+    function pendingOut(key, w) {
+        return pendingFs[key] !== undefined && Rules.pendingFullscreen(w);
+    }
     function checkPending() {
-        var now = Date.now(), again = false, slept = pendingLook && now - pendingLook > 60000;
+        var now = Date.now(),
+            again = false,
+            slept = pendingLook && now - pendingLook > 60000;
         pendingLook = now;
         Object.keys(pendingFs).forEach(function (key) {
-            var w = wins[key], con = model.byWin[key], ws = con && Tree.wsOf(con);
+            var w = wins[key],
+                con = model.byWin[key],
+                ws = con && Tree.wsOf(con);
             if (!w || !con || floats(con) || !Rules.pendingFullscreen(w)) {
                 delete pendingFs[key];
-                if (w && con) log("FULLSCREEN " + shortCaption(w) + ": the request ended, back in the tiles");
+                if (w && con)
+                    log(
+                        "FULLSCREEN " +
+                            shortCaption(w) +
+                            ": the request ended, back in the tiles"
+                    );
                 schedule(ws);
                 return;
             }
-            if (outputOf(ws) && workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) {
+            if (
+                outputOf(ws) &&
+                workspace.currentDesktopForScreen(outputOf(ws)) !==
+                    deskOf(ws.num)
+            ) {
                 pendingFs[key] = 0;
                 return;
             }
@@ -573,7 +821,10 @@ var KI3 = (function () {
         });
         if (again && !pendingTimer) {
             pendingTimer = true;
-            later(150, function () { pendingTimer = false; checkPending(); });
+            later(150, function () {
+                pendingTimer = false;
+                checkPending();
+            });
         }
     }
     // KWin's unmanage gives a window back its size from before it was tiled, fullscreen or not:
@@ -588,16 +839,25 @@ var KI3 = (function () {
     // back works within the call: KWin sends the configure from a timer, with the size pending then.
     function unmanageFrom(tile, w) {
         expected[id(w)] = null;
-        var hidden = w.output && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
+        var hidden =
+            w.output &&
+            w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
         // A copy: w.frameGeometry is a live reference, and an X11 window's unmanage moves it at
         // once, so a held reference read the restored rect and wrote that back.
         var f = w.frameGeometry;
-        var g = w.fullScreen || pendingFs[id(w)] !== undefined || hidden || leaving(w) ? { x: f.x, y: f.y, width: f.width, height: f.height } : null;
+        var g =
+            w.fullScreen ||
+            pendingFs[id(w)] !== undefined ||
+            hidden ||
+            leaving(w)
+                ? { x: f.x, y: f.y, width: f.width, height: f.height }
+                : null;
         tile.unmanage(w);
         if (g) w.frameGeometry = g;
     }
     function leaving(w) {
-        var con = model.byWin[id(w)], ws = con && Tree.wsOf(con);
+        var con = model.byWin[id(w)],
+            ws = con && Tree.wsOf(con);
         return !!ws && w.desktops.indexOf(deskOf(ws.num)) < 0;
     }
 
@@ -609,14 +869,23 @@ var KI3 = (function () {
         var t = w.tile;
         if (!t) {
             t = expected[id(w)];
-            try { if (t && t.windows.indexOf(w) < 0) t = null; } catch (e) { t = null; }   // a removed tile
+            try {
+                if (t && t.windows.indexOf(w) < 0) t = null;
+            } catch (e) {
+                t = null;
+            } // a removed tile
         }
-        if (t) unmanageFrom(t, w); else expected[id(w)] = null;
+        if (t) unmanageFrom(t, w);
+        else expected[id(w)] = null;
     }
 
     function tiledWindowsOf(t, out) {
-        t.windows.forEach(function (w) { out.push(w); });
-        t.tiles.forEach(function (c) { tiledWindowsOf(c, out); });
+        t.windows.forEach(function (w) {
+            out.push(w);
+        });
+        t.tiles.forEach(function (c) {
+            tiledWindowsOf(c, out);
+        });
         return out;
     }
 
@@ -648,56 +917,112 @@ var KI3 = (function () {
         if (ws && gapCache[ws.num]) return gapCache[ws.num];
         return computeGaps(ws, ws ? project(ws) : undefined);
     }
-    var gapFloorLogged = {};   // each held case once (a pass computes every workspace in turn)
+    var gapFloorLogged = {}; // each held case once (a pass computes every workspace in turn)
     function computeGaps(ws, p) {
-        var i = Settings.get("gapsInner"), o = Settings.get("gapsOuter"), fw = Settings.get("frameWidth");
-        var side = { top: Settings.get("gapsTop"), right: Settings.get("gapsRight"), bottom: Settings.get("gapsBottom"), left: Settings.get("gapsLeft") };
-        var own = ws && Settings.get("workspaceGaps")[ws.num] || {};
+        var i = Settings.get("gapsInner"),
+            o = Settings.get("gapsOuter"),
+            fw = Settings.get("frameWidth");
+        var side = {
+            top: Settings.get("gapsTop"),
+            right: Settings.get("gapsRight"),
+            bottom: Settings.get("gapsBottom"),
+            left: Settings.get("gapsLeft"),
+        };
+        var own = (ws && Settings.get("workspaceGaps")[ws.num]) || {};
         if (own.inner !== undefined) i = own.inner;
         i = Math.max(0, i);
         i -= i % 2;
-        var inset = {}, held = [];
+        var inset = {},
+            held = [];
         Object.keys(side).forEach(function (s) {
             var v = own[s] !== undefined ? own[s] : side[s] < 0 ? o : side[s];
             if (v < -i / 2) held.push(s + " " + v);
             inset[s] = Math.max(-i / 2, v);
         });
-        var floorKey = held.length ? (ws ? ws.num : "") + ": " + held.join(", ") : "";
+        var floorKey = held.length
+            ? (ws ? ws.num : "") + ": " + held.join(", ")
+            : "";
         if (floorKey && !gapFloorLogged[floorKey]) {
             gapFloorLogged[floorKey] = true;
-            log("WARN gaps: an edge goes no thinner than half the inner gap (KWin's tile padding), held at -" + i / 2 + ": " + (ws ? "workspace " + floorKey : floorKey.slice(2)));
+            log(
+                "WARN gaps: an edge goes no thinner than half the inner gap (KWin's tile padding), held at -" +
+                    i / 2 +
+                    ": " +
+                    (ws ? "workspace " + floorKey : floorKey.slice(2))
+            );
         }
         // i3's one visible child: smart_gaps also counts a workspace whose one child is a tabbed
         // or stacked container (gaps.c:22-26); hide_edge_borders smart only the visible windows
         // (con.c:1827-1828), so a lone group of one shown window counts as one for both.
         var visible = ws && p ? Tree.numVisibleChildren(ws) : 2;
-        var one = visible <= 1 || !!(ws && p && ws.nodes.length === 1 && (ws.nodes[0].layout === "tabbed" || ws.nodes[0].layout === "stacked"));
-        var smart = Settings.get("smartGaps"), hide = Settings.get("hideEdgeBorders");
-        if (ws && (smart === "on" && one || smart === "inverse_outer" && !one)) inset = { top: 0, right: 0, bottom: 0, left: 0 };
+        var one =
+            visible <= 1 ||
+            !!(
+                ws &&
+                p &&
+                ws.nodes.length === 1 &&
+                (ws.nodes[0].layout === "tabbed" ||
+                    ws.nodes[0].layout === "stacked")
+            );
+        var smart = Settings.get("smartGaps"),
+            hide = Settings.get("hideEdgeBorders");
+        if (
+            ws &&
+            ((smart === "on" && one) || (smart === "inverse_outer" && !one))
+        )
+            inset = { top: 0, right: 0, bottom: 0, left: 0 };
         if (ws && smart === "on" && one) i = 0;
-        var outerGap = inset.top > 0 || inset.right > 0 || inset.bottom > 0 || inset.left > 0;
-        var ring = tiledRing() && !(ws && visible <= 1 && (hide === "smart" || hide === "smart_no_gaps" && !outerGap));
-        Object.keys(inset).forEach(function (s) { inset[s] += i / 2; });
+        var outerGap =
+            inset.top > 0 ||
+            inset.right > 0 ||
+            inset.bottom > 0 ||
+            inset.left > 0;
+        var ring =
+            tiledRing() &&
+            !(
+                ws &&
+                visible <= 1 &&
+                (hide === "smart" || (hide === "smart_no_gaps" && !outerGap))
+            );
+        Object.keys(inset).forEach(function (s) {
+            inset[s] += i / 2;
+        });
         // The frame's room: twice its width, so KWin's half padding leaves it on each side. With
         // title bars, the decoration's outline instead: Breeze (Plasma's default) draws 1 px
         // outside the frame geometry, which ate a pixel of every gap on each side. As i3, whose borders are inside the window's rect, the wallpaper
         // between two windows is then the gap itself in either look. KWin tells a script no
         // theme's outline, so 1 px; and only with a gap to keep (with none, i3's borders touch).
         var room = ring ? fw : !tiledBorderless() && i > 0 ? 1 : 0;
-        return { inner: i + 2 * room, gap: i, inset: inset, ring: ring, one: one };
+        return {
+            inner: i + 2 * room,
+            gap: i,
+            inset: inset,
+            ring: ring,
+            one: one,
+        };
     }
-    function areaOf(screen, ws) { return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num)); }
+    function areaOf(screen, ws) {
+        return workspace.clientArea(KWin.MaximizeArea, screen, deskOf(ws.num));
+    }
     function rootRect(area, ws) {
-        var g = gaps(ws), e = g.inset;
+        var g = gaps(ws),
+            e = g.inset;
         // KWin gives a tile side exactly at the screen's edge the full padding, two frames
         // (Tile::windowGeometry): a hair's inset (0.003 px on 2560) on a side with no gap makes
         // every side half. Only where there is padding to halve. Its edges on the grid (grid()),
         // a hair at least one step of it.
         var hair = g.inner ? HAIR * Math.max(area.width, area.height) : 0;
-        var l = e.left || hair, t = e.top || hair, r = e.right || hair, b = e.bottom || hair;
-        function lo(v, n) { return v ? Math.max(1 / GRID, grid(v / n)) : 0; }
-        var x = lo(l, area.width), y = lo(t, area.height);
-        var x1 = 1 - lo(r, area.width), y1 = 1 - lo(b, area.height);
+        var l = e.left || hair,
+            t = e.top || hair,
+            r = e.right || hair,
+            b = e.bottom || hair;
+        function lo(v, n) {
+            return v ? Math.max(1 / GRID, grid(v / n)) : 0;
+        }
+        var x = lo(l, area.width),
+            y = lo(t, area.height);
+        var x1 = 1 - lo(r, area.width),
+            y1 = 1 - lo(b, area.height);
         return { x: x, y: y, width: x1 - x, height: y1 - y };
     }
     // Every tile edge kwin-i3 writes is a multiple of 2^-20. KWin keeps a tile's four edges
@@ -709,17 +1034,33 @@ var KI3 = (function () {
     // the workspace shifted by a pixel at a split or a layout change. On the grid every sum and
     // difference of edges is exact, so an edge read back is the edge written. A step is 0.002 px
     // on a 2560 px screen, far inside KWin's rounding to whole pixels (absoluteGeometry).
-    function grid(v) { return Math.round(v * GRID) / GRID; }
+    function grid(v) {
+        return Math.round(v * GRID) / GRID;
+    }
     function exactRect(g, r) {
-        return g.x === r.x && g.y === r.y && g.x + g.width === r.x + r.width && g.y + g.height === r.y + r.height;
+        return (
+            g.x === r.x &&
+            g.y === r.y &&
+            g.x + g.width === r.x + r.width &&
+            g.y + g.height === r.y + r.height
+        );
     }
     // For root tiles only (the hair's tolerance would be wrong for any other tile).
     function sameRect(g, r) {
         // The hair is far below the tolerance for float noise: told apart on its own, per edge (a
         // side may be the only one with no gap, so each edge is judged alone).
-        function hairish(v) { return (v > 0 && v < 1e-4) || (v > 1 - 1e-4 && v < 1); }
-        function near(a, b) { return Math.abs(a - b) <= (hairish(a) || hairish(b) ? 1e-9 : 1e-4); }
-        return near(g.x, r.x) && near(g.y, r.y) && near(g.x + g.width, r.x + r.width) && near(g.y + g.height, r.y + r.height);
+        function hairish(v) {
+            return (v > 0 && v < 1e-4) || (v > 1 - 1e-4 && v < 1);
+        }
+        function near(a, b) {
+            return Math.abs(a - b) <= (hairish(a) || hairish(b) ? 1e-9 : 1e-4);
+        }
+        return (
+            near(g.x, r.x) &&
+            near(g.y, r.y) &&
+            near(g.x + g.width, r.x + r.width) &&
+            near(g.y + g.height, r.y + r.height)
+        );
     }
     // Every layout's children on its outer edges and spanning its cross axis. With gaps no edge
     // is at the screen's border, so KWin lets a window's outer side be dragged
@@ -729,13 +1070,28 @@ var KI3 = (function () {
     // pins it again, so a pinned side is not intact.
     function edgesIntact(t) {
         if (!t.tiles.length) return true;
-        var g = t.relativeGeometry, h = t.layoutDirection !== 2, n = t.tiles.length;
-        var f = t.tiles[0].relativeGeometry, l = t.tiles[n - 1].relativeGeometry;
-        var eq = function (a, b) { return a === b; };
-        if (h ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width) : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)) return false;
+        var g = t.relativeGeometry,
+            h = t.layoutDirection !== 2,
+            n = t.tiles.length;
+        var f = t.tiles[0].relativeGeometry,
+            l = t.tiles[n - 1].relativeGeometry;
+        var eq = function (a, b) {
+            return a === b;
+        };
+        if (
+            h
+                ? !eq(f.x, g.x) || !eq(l.x + l.width, g.x + g.width)
+                : !eq(f.y, g.y) || !eq(l.y + l.height, g.y + g.height)
+        )
+            return false;
         return t.tiles.every(function (c) {
             var r = c.relativeGeometry;
-            return (h ? eq(r.y, g.y) && eq(r.y + r.height, g.y + g.height) : eq(r.x, g.x) && eq(r.x + r.width, g.x + g.width)) && edgesIntact(c);
+            return (
+                (h
+                    ? eq(r.y, g.y) && eq(r.y + r.height, g.y + g.height)
+                    : eq(r.x, g.x) && eq(r.x + r.width, g.x + g.width)) &&
+                edgesIntact(c)
+            );
         });
     }
 
@@ -744,29 +1100,54 @@ var KI3 = (function () {
     // edge only where the root is too. KWin pins a tile's side to the border when a rebuild's
     // float noise "changes" it (CustomTile::setRelativeGeometry compares exactly), so under a
     // root inset by the hair a pinned side got P, a 1 px line with no frame (fuzzer I11).
-    function rootOf(t) { while (t.parent) t = t.parent; return t; }
+    function rootOf(t) {
+        while (t.parent) t = t.parent;
+        return t;
+    }
     // A side pinned to the border under an inset root is measured from the root's edge, so the
     // window stands where it would unpinned, its gap kept (edgesIntact).
     function windowRect(t) {
-        var a = t.absoluteGeometry, r = t.relativeGeometry, p = t.padding;
+        var a = t.absoluteGeometry,
+            r = t.relativeGeometry,
+            p = t.padding;
         if (!p) return a;
-        var root = rootOf(t), g = root.relativeGeometry, ra = root.absoluteGeometry;
-        var x0 = r.x <= 0 && g.x > 0 ? ra.x : a.x, y0 = r.y <= 0 && g.y > 0 ? ra.y : a.y;
-        var x1 = r.x + r.width >= 1 && g.x + g.width < 1 ? ra.x + ra.width : a.x + a.width;
-        var y1 = r.y + r.height >= 1 && g.y + g.height < 1 ? ra.y + ra.height : a.y + a.height;
-        var l = r.x > 0 || g.x > 0 ? p / 2 : p, tp = r.y > 0 || g.y > 0 ? p / 2 : p;
+        var root = rootOf(t),
+            g = root.relativeGeometry,
+            ra = root.absoluteGeometry;
+        var x0 = r.x <= 0 && g.x > 0 ? ra.x : a.x,
+            y0 = r.y <= 0 && g.y > 0 ? ra.y : a.y;
+        var x1 =
+            r.x + r.width >= 1 && g.x + g.width < 1
+                ? ra.x + ra.width
+                : a.x + a.width;
+        var y1 =
+            r.y + r.height >= 1 && g.y + g.height < 1
+                ? ra.y + ra.height
+                : a.y + a.height;
+        var l = r.x > 0 || g.x > 0 ? p / 2 : p,
+            tp = r.y > 0 || g.y > 0 ? p / 2 : p;
         var rt = r.x + r.width < 1 || g.x + g.width < 1 ? p / 2 : p;
         var b = r.y + r.height < 1 || g.y + g.height < 1 ? p / 2 : p;
-        return { x: x0 + l, y: y0 + tp, width: x1 - x0 - l - rt, height: y1 - y0 - tp - b };
+        return {
+            x: x0 + l,
+            y: y0 + tp,
+            width: x1 - x0 - l - rt,
+            height: y1 - y0 - tp - b,
+        };
     }
     // A side KWin pinned to the border under an inset root: KWin puts the window P/2 short there
     // at every change of the tile, so it is put back even inside fits()'s 1 px: in the pass, and
     // when the frame changes (refitOnFrameChange), as KWin's request lands after the pass and
     // asking in the pass for the size the client has sends nothing (moveResizeInternal).
     function pinned(t) {
-        var r = t.relativeGeometry, g = rootOf(t).relativeGeometry;
-        return (r.x <= 0 && g.x > 0) || (r.y <= 0 && g.y > 0) ||
-               (r.x + r.width >= 1 && g.x + g.width < 1) || (r.y + r.height >= 1 && g.y + g.height < 1);
+        var r = t.relativeGeometry,
+            g = rootOf(t).relativeGeometry;
+        return (
+            (r.x <= 0 && g.x > 0) ||
+            (r.y <= 0 && g.y > 0) ||
+            (r.x + r.width >= 1 && g.x + g.width < 1) ||
+            (r.y + r.height >= 1 && g.y + g.height < 1)
+        );
     }
 
     // Padding = the inner gap, and minimum sizes that are the windows' own (plus the gap). KWin
@@ -782,23 +1163,33 @@ var KI3 = (function () {
         var min = { width: 0, height: 0 };
         if (!noMin && !t.tiles.length && t.windows.length === 1) {
             var fm = frameMin(t.windows[0]);
-            min = { width: (fm.w + inner) / area.width, height: (fm.h + inner) / area.height };
+            min = {
+                width: (fm.w + inner) / area.width,
+                height: (fm.h + inner) / area.height,
+            };
         }
         var cur = t.minimumSize;
-        if (Math.abs(cur.width - min.width) > 1e-6 || Math.abs(cur.height - min.height) > 1e-6)
+        if (
+            Math.abs(cur.width - min.width) > 1e-6 ||
+            Math.abs(cur.height - min.height) > 1e-6
+        )
             t.minimumSize = min;
-        t.tiles.forEach(function (c) { prepareTiles(c, area, noMin); });
+        t.tiles.forEach(function (c) {
+            prepareTiles(c, area, noMin);
+        });
     }
 
     // Setting one tile's relativeGeometry moves its neighbours' shared edges, so a single pass
     // in order can leave a stale edge behind (seen live: four columns, the third left at
     // 0.567 wide over the fourth). Passes repeat until every tile is where it should be.
     function setSizesStable(root, p, area) {
-        snapW = area.width; snapH = area.height;
+        snapW = area.width;
+        snapH = area.height;
         // From KWin's own root rect (the gaps' inset), so the border edges written below are
         // exactly KWin's: CustomTile::setRelativeGeometry forces a changed edge with no tile
         // beyond it to the screen's border (0 or 1), and it compares exactly.
-        var g = root.relativeGeometry, r = { x: g.x, y: g.y, width: g.width, height: g.height };
+        var g = root.relativeGeometry,
+            r = { x: g.x, y: g.y, width: g.width, height: g.height };
         for (var pass = 0; pass < 4; pass++) {
             moved = [];
             if (!setSizes(root, p, r)) return;
@@ -809,10 +1200,21 @@ var KI3 = (function () {
     }
 
     function tileNames(t) {
-        if (!t.tiles.length) return t.windows.map(shortCaption).join("+") || "empty";
-        return (t.layoutDirection === 2 ? "V[" : "H[") + t.tiles.map(tileNames).join(" ") + "]";
+        if (!t.tiles.length)
+            return t.windows.map(shortCaption).join("+") || "empty";
+        return (
+            (t.layoutDirection === 2 ? "V[" : "H[") +
+            t.tiles.map(tileNames).join(" ") +
+            "]"
+        );
     }
-    function relLog(r) { return [r.x, r.y, r.width, r.height].map(function (v) { return v.toFixed(5); }).join(","); }
+    function relLog(r) {
+        return [r.x, r.y, r.width, r.height]
+            .map(function (v) {
+                return v.toFixed(5);
+            })
+            .join(",");
+    }
 
     // A window's minimum as a frame: apps report it for their content, and the frame adds the
     // decoration, when it has one (Breeze's title bar and borders). KeePassXC, minimum 800, needs an 802 px tile
@@ -820,9 +1222,13 @@ var KI3 = (function () {
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
         // Its border taken: no decoration, even while the client hasn't answered yet.
-        if (tookBorder[id(w)]) return { w: w.minSize.width, h: w.minSize.height };
-        var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
-        var bw = c ? Math.max(0, f.width - c.width) : 0, bh = c ? Math.max(0, f.height - c.height) : 0;
+        if (tookBorder[id(w)])
+            return { w: w.minSize.width, h: w.minSize.height };
+        var m = w.minSize,
+            f = w.frameGeometry,
+            c = w.clientGeometry;
+        var bw = c ? Math.max(0, f.width - c.width) : 0,
+            bh = c ? Math.max(0, f.height - c.height) : 0;
         return { w: m.width + bw, h: m.height + bh };
     }
 
@@ -832,18 +1238,26 @@ var KI3 = (function () {
         if (p.bar) return { w: 0, h: p.rows * BAR_ROW };
         if (p.hole !== undefined) return { w: 0, h: 0 };
         if (p.win !== undefined) {
-            var i = gaps().inner, m = { w: 0, h: 0 };
-            [p.win].concat(p.extra || []).forEach(function (k) {      // the tabs behind fit too
+            var i = gaps().inner,
+                m = { w: 0, h: 0 };
+            [p.win].concat(p.extra || []).forEach(function (k) {
+                // the tabs behind fit too
                 var fm = frameMin(wins[k]);
-                m.w = Math.max(m.w, fm.w + i); m.h = Math.max(m.h, fm.h + i);
+                m.w = Math.max(m.w, fm.w + i);
+                m.h = Math.max(m.h, fm.h + i);
             });
             return m;
         }
         var r = { w: 0, h: 0 };
         p.kids.forEach(function (k) {
             var m = minOf(k.p);
-            if (p.dir === "h") { r.w += m.w; r.h = Math.max(r.h, m.h); }
-            else { r.h += m.h; r.w = Math.max(r.w, m.w); }
+            if (p.dir === "h") {
+                r.w += m.w;
+                r.h = Math.max(r.h, m.h);
+            } else {
+                r.h += m.h;
+                r.w = Math.max(r.w, m.w);
+            }
         });
         return r;
     }
@@ -853,19 +1267,34 @@ var KI3 = (function () {
     // live: KeePassXC, minimum 800 px, got a 640 px quarter and hung 162 px onto
     // the other monitor. Minimums that can't fit at all are floatWhatCannotFit's job.)
     function fitMinimums(want, mins, total) {
-        var sumMin = mins.reduce(function (a, b) { return a + b; }, 0);
+        var sumMin = mins.reduce(function (a, b) {
+            return a + b;
+        }, 0);
         // Half a pixel's slack: minimums that fill the space exactly (a split made just wide enough
         // for them) came to 834 against a total of 833.99999 and gave up (the fuzzer).
         if (sumMin > total + 0.5) return want;
-        var out = want.slice(), locked = out.map(function () { return false; });
+        var out = want.slice(),
+            locked = out.map(function () {
+                return false;
+            });
         for (var round = 0; round < out.length; round++) {
             var deficit = 0;
-            out.forEach(function (v, i) { if (!locked[i] && v < mins[i]) { deficit += mins[i] - v; out[i] = mins[i]; locked[i] = true; } });
+            out.forEach(function (v, i) {
+                if (!locked[i] && v < mins[i]) {
+                    deficit += mins[i] - v;
+                    out[i] = mins[i];
+                    locked[i] = true;
+                }
+            });
             if (deficit <= 0) break;
             var slack = 0;
-            out.forEach(function (v, i) { if (!locked[i]) slack += v - mins[i]; });
+            out.forEach(function (v, i) {
+                if (!locked[i]) slack += v - mins[i];
+            });
             if (slack <= 0) break;
-            out.forEach(function (v, i) { if (!locked[i]) out[i] = v - deficit * (v - mins[i]) / slack; });
+            out.forEach(function (v, i) {
+                if (!locked[i]) out[i] = v - (deficit * (v - mins[i])) / slack;
+            });
         }
         return out;
     }
@@ -873,18 +1302,28 @@ var KI3 = (function () {
     // Every tile edge on a whole pixel of the screen, so neighbours share an exact edge: KWin
     // rounds a window's position and width separately, and thirds of 2560 px (853.33) left a
     // 1 px hole the wallpaper showed through (seen live).
-    function snap(v, n) { return Math.round(v * n) / n; }
+    function snap(v, n) {
+        return Math.round(v * n) / n;
+    }
 
     // Returns true if anything had to change.
     function setSizes(tile, p, rect) {
         if (p.win !== undefined || p.bar || p.hole !== undefined) return false;
-        var changed = false, h = p.dir === "h", n = h ? snapW : snapH;
-        var start = h ? rect.x : rect.y, size = h ? rect.width : rect.height, pos = start;
-        var want = p.kids.map(function (k) { return k.share * size * n; });
+        var changed = false,
+            h = p.dir === "h",
+            n = h ? snapW : snapH;
+        var start = h ? rect.x : rect.y,
+            size = h ? rect.width : rect.height,
+            pos = start;
+        var want = p.kids.map(function (k) {
+            return k.share * size * n;
+        });
         // A bar takes its rows' px out of its group's members, whatever the shares merged into.
         p.kids.forEach(function (k, i) {
             if (!k.p.bar) return;
-            var bar = k.p.rows * BAR_ROW, total = 0, j;
+            var bar = k.p.rows * BAR_ROW,
+                total = 0,
+                j;
             for (j = i + 1; j <= i + k.p.members; j++) total += want[j];
             var scale = total > bar ? (total - bar) / total : 0;
             for (j = i + 1; j <= i + k.p.members; j++) want[j] *= scale;
@@ -892,31 +1331,51 @@ var KI3 = (function () {
         });
         var px = fitMinimums(
             want,
-            p.kids.map(function (k) { var m = minOf(k.p); return h ? m.w : m.h; }),
-            size * n);
+            p.kids.map(function (k) {
+                var m = minOf(k.p);
+                return h ? m.w : m.h;
+            }),
+            size * n
+        );
         for (var i = 0; i < p.kids.length; i++) {
-            var k = p.kids[i], child = tile.tiles[i];
+            var k = p.kids[i],
+                child = tile.tiles[i];
             // The outer edges exactly as the parent has them (see setSizesStable), the inner
             // ones on whole pixels.
             var a = i === 0 ? start : grid(snap(pos, n));
             pos += px[i] / n;
             var b = i === p.kids.length - 1 ? start + size : grid(snap(pos, n));
-            var r = h ? { x: a, y: rect.y, width: b - a, height: rect.height }
-                      : { x: rect.x, y: a, width: rect.width, height: b - a };
+            var r = h
+                ? { x: a, y: rect.y, width: b - a, height: rect.height }
+                : { x: rect.x, y: a, width: rect.width, height: b - a };
             // By edges, exactly: on the grid a tile in place reads back as written, and one off it
             // (a drag's edge, a split's halves) is put on it.
             var off = !exactRect(child.relativeGeometry, r);
             if (off) {
                 child.relativeGeometry = r;
                 changed = true;
-                moved.push(tileNames(child) + " asked " + relLog(r) + " kept " + relLog(child.relativeGeometry));
+                moved.push(
+                    tileNames(child) +
+                        " asked " +
+                        relLog(r) +
+                        " kept " +
+                        relLog(child.relativeGeometry)
+                );
             }
             // The children from the edges KWin keeps, not the ones asked: one within the tolerance
             // isn't written, and KWin's own split can leave it an ulp off the parent's (0.5 +
             // 0.49921875 on an inset root). A child asked the parent's edge then changes it by
             // that ulp, and KWin pins it to the border: the tiles never match, rebuilt every pass.
             var kept = child.relativeGeometry;
-            if (setSizes(child, k.p, { x: kept.x, y: kept.y, width: kept.width, height: kept.height })) changed = true;
+            if (
+                setSizes(child, k.p, {
+                    x: kept.x,
+                    y: kept.y,
+                    width: kept.width,
+                    height: kept.height,
+                })
+            )
+                changed = true;
         }
         return changed;
     }
@@ -925,44 +1384,81 @@ var KI3 = (function () {
     function build(tile, p) {
         if (p.win !== undefined || p.bar || p.hole !== undefined) return;
         var dir = p.dir === "v" ? 2 : 1;
-        if (tile.parent) tile.split(dir);          // a leaf becomes a layout with two children
-        else { tile.layoutDirection = dir; tile.split(dir); }
+        if (tile.parent)
+            tile.split(dir); // a leaf becomes a layout with two children
+        else {
+            tile.layoutDirection = dir;
+            tile.split(dir);
+        }
         for (var n = 0; tile.tiles.length < p.kids.length; n++) {
-            if (n > 64) throw new Error("build: KWin would not split a tile");   // never spin
+            if (n > 64) throw new Error("build: KWin would not split a tile"); // never spin
             tile.tiles[tile.tiles.length - 1].split(dir);
         }
-        for (var i = 0; i < p.kids.length; i++) build(tile.tiles[i], p.kids[i].p);
+        for (var i = 0; i < p.kids.length; i++)
+            build(tile.tiles[i], p.kids[i].p);
     }
 
     // shown: the workspace's desktop is current on its monitor.
     function placeWindows(tile, p, shown) {
-        if (p.bar) {                                   // a group's bar: an empty tile
-            tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
+        if (p.bar) {
+            // a group's bar: an empty tile
+            tile.windows.slice().forEach(function (o) {
+                unmanageFrom(tile, o);
+            });
             barTiles.push(tile);
             groupBars.push({ con: p.bar, tile: tile });
             return;
         }
-        if (p.hole !== undefined) {                    // a fullscreen window's place: an empty tile
-            tile.windows.slice().forEach(function (o) { unmanageFrom(tile, o); });
+        if (p.hole !== undefined) {
+            // a fullscreen window's place: an empty tile
+            tile.windows.slice().forEach(function (o) {
+                unmanageFrom(tile, o);
+            });
             barTiles.push(tile);
             return;
         }
         if (p.win !== undefined) {
-            var w = wins[p.win], behind = (p.extra || []).map(function (k) { return wins[k]; });
-            tile.windows.slice().forEach(function (o) { if (o !== w && behind.indexOf(o) < 0) unmanageFrom(tile, o); });
+            var w = wins[p.win],
+                behind = (p.extra || []).map(function (k) {
+                    return wins[k];
+                });
+            tile.windows.slice().forEach(function (o) {
+                if (o !== w && behind.indexOf(o) < 0) unmanageFrom(tile, o);
+            });
             if (behind.length) {
                 multiTiles.push(tile);
                 // Listed out of the tabs' order (a tab moved, one joined): listed again in order.
-                var want = (p.order || [p.win].concat(p.extra)).map(function (k) { return wins[k]; });
-                var listed = tile.windows.filter(function (o) { return want.indexOf(o) >= 0; });
-                if (listed.length === want.length && listed.some(function (o, i) { return o !== want[i]; }))
-                    listed.forEach(function (o) { unmanageFrom(tile, o); });
+                var want = (p.order || [p.win].concat(p.extra)).map(
+                    function (k) {
+                        return wins[k];
+                    }
+                );
+                var listed = tile.windows.filter(function (o) {
+                    return want.indexOf(o) >= 0;
+                });
+                if (
+                    listed.length === want.length &&
+                    listed.some(function (o, i) {
+                        return o !== want[i];
+                    })
+                )
+                    listed.forEach(function (o) {
+                        unmanageFrom(tile, o);
+                    });
                 // Listed in the tabs' order, the shown one too; which one shows is the stacking's
                 // (raiseShownTabs), not the list's.
                 want.forEach(function (b) {
-                    if (shown && b.tile !== tile && tile.windows.indexOf(b) >= 0) unmanageFrom(tile, b);
+                    if (
+                        shown &&
+                        b.tile !== tile &&
+                        tile.windows.indexOf(b) >= 0
+                    )
+                        unmanageFrom(tile, b);
                     if (tile.windows.indexOf(b) < 0) manageInto(tile, b);
-                    else { expected[id(b)] = tile; tiledBorder(b); }
+                    else {
+                        expected[id(b)] = tile;
+                        tiledBorder(b);
+                    }
                 });
                 shownTabs.push({ w: w, behind: behind });
             }
@@ -973,12 +1469,17 @@ var KI3 = (function () {
             // into its own tile on that monitor (fuzzer I1). `expected` followed the
             // window to the first monitor's tile meanwhile and was left there: the invariant check
             // read "not in its tile" and tileChanged took the move for someone else's.
-            if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0) unmanageFrom(tile, w);
+            if (shown && w.tile !== tile && tile.windows.indexOf(w) >= 0)
+                unmanageFrom(tile, w);
             if (tile.windows.indexOf(w) < 0) manageInto(tile, w);
-            else { expected[id(w)] = tile; tiledBorder(w); }   // KWin put it there itself (see above): that is the tile it is in
+            else {
+                expected[id(w)] = tile;
+                tiledBorder(w);
+            } // KWin put it there itself (see above): that is the tile it is in
             return;
         }
-        for (var i = 0; i < p.kids.length; i++) placeWindows(tile.tiles[i], p.kids[i].p, shown);
+        for (var i = 0; i < p.kids.length; i++)
+            placeWindows(tile.tiles[i], p.kids[i].p, shown);
     }
 
     // A tiled window fills its tile. KWin only moves a window when its tile changes, so a resize
@@ -986,22 +1487,40 @@ var KI3 = (function () {
     // tile for good (fuzzer I10). Not while a drag is still going. By tile, not by w.tile: KWin
     // can list a window in a tile whose w.tile is null (a monitor going away; the fuzzer again).
     function refit(t) {
-        t.windows.forEach(function (w) { fitToTile(w, t); });
+        t.windows.forEach(function (w) {
+            fitToTile(w, t);
+        });
         t.tiles.forEach(refit);
     }
     function fits(w, t) {
-        var g = w.frameGeometry, a = windowRect(t);
-        return Math.abs(g.x - a.x) <= 1 && Math.abs(g.y - a.y) <= 1 &&
-               Math.abs(g.width - a.width) <= 1 && Math.abs(g.height - a.height) <= 1;
+        var g = w.frameGeometry,
+            a = windowRect(t);
+        return (
+            Math.abs(g.x - a.x) <= 1 &&
+            Math.abs(g.y - a.y) <= 1 &&
+            Math.abs(g.width - a.width) <= 1 &&
+            Math.abs(g.height - a.height) <= 1
+        );
     }
     function fitToTile(w, t) {
         if (w.tile !== t || w.move || w.resize || !wins[id(w)]) return;
-        if (w.fullScreen) { fitFullscreen(w); return; }
-        if (!fits(w, t) || (pinned(t) && !exactly(w.frameGeometry, windowRect(t)))) w.frameGeometry = windowRect(t);
+        if (w.fullScreen) {
+            fitFullscreen(w);
+            return;
+        }
+        if (
+            !fits(w, t) ||
+            (pinned(t) && !exactly(w.frameGeometry, windowRect(t)))
+        )
+            w.frameGeometry = windowRect(t);
     }
     function exactly(g, a) {
-        return Math.abs(g.x - a.x) < 0.5 && Math.abs(g.y - a.y) < 0.5 &&
-               Math.abs(g.width - a.width) < 0.5 && Math.abs(g.height - a.height) < 0.5;
+        return (
+            Math.abs(g.x - a.x) < 0.5 &&
+            Math.abs(g.y - a.y) < 0.5 &&
+            Math.abs(g.width - a.width) < 0.5 &&
+            Math.abs(g.height - a.height) < 0.5
+        );
     }
     // A fullscreen window KWin keeps in its tile (none rebuilt since) is resized to the tile by
     // KWin whenever the tile's padding or geometry is written (Tile::setPadding and
@@ -1009,9 +1528,17 @@ var KI3 = (function () {
     // pass, a gap or frame-width change. Put back on its monitor (a capture).
     function fitFullscreen(w) {
         if (!w.output) return;
-        var g = w.frameGeometry, a = workspace.clientArea(KWin.FullScreenArea, w);
-        if (g.x !== a.x || g.y !== a.y || g.width !== a.width || g.height !== a.height) {
-            log("REFIT " + shortCaption(w) + ": fullscreen, back on its monitor");
+        var g = w.frameGeometry,
+            a = workspace.clientArea(KWin.FullScreenArea, w);
+        if (
+            g.x !== a.x ||
+            g.y !== a.y ||
+            g.width !== a.width ||
+            g.height !== a.height
+        ) {
+            log(
+                "REFIT " + shortCaption(w) + ": fullscreen, back on its monitor"
+            );
             w.frameGeometry = a;
         }
     }
@@ -1025,10 +1552,20 @@ var KI3 = (function () {
     // lastFit: a client that answers the monitor with another size is not asked without end.
     var fsFit = {};
     function refitFullscreenLater(w) {
-        var key = id(w), t = expected[key], f = w.frameGeometry;
-        if (!t || w.tile !== t || !w.output || fsFit[key] === rectKey(f)) return;
+        var key = id(w),
+            t = expected[key],
+            f = w.frameGeometry;
+        if (!t || w.tile !== t || !w.output || fsFit[key] === rectKey(f))
+            return;
         later(0, function () {
-            if (!wins[key] || !w.fullScreen || w.tile !== expected[key] || w.move || w.resize) return;
+            if (
+                !wins[key] ||
+                !w.fullScreen ||
+                w.tile !== expected[key] ||
+                w.move ||
+                w.resize
+            )
+                return;
             fsFit[key] = rectKey(w.frameGeometry);
             fitFullscreen(w);
         });
@@ -1049,7 +1586,10 @@ var KI3 = (function () {
     // armed[key] is "pending" until the drag's reconcile, then that tile's rect, and dropped by a
     // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
     // slow client's answer to the old one only doubled the request (53-hold, a closing window).
-    var reconciling = false, armed = {}, lastFit = {}, pinFit = {};
+    var reconciling = false,
+        armed = {},
+        lastFit = {},
+        pinFit = {};
     // Plain GTK 4: KWin tells a client its largest size only in a
     // configure with no size (sendRoleConfigure), in practice its first, with the title bar,
     // and GTK 4 keeps within it. borderGone holds those bounds, worked out when the border goes
@@ -1062,9 +1602,15 @@ var KI3 = (function () {
     // stays: a slow client whose tile changed before it answered gets fresh bounds before it
     // draws the new tile, rather than drawing it twice, asked and clamped (53-hold).
     // Never for an X11 window (no bounds there; a 0x0 request would be a real resize).
-    function isX11(w) { return Rules.isX11(w); }
-    function armRefit() { for (var key in wins) armed[key] = true; }
-    function rectKey(r) { return [r.x, r.y, r.width, r.height].join(","); }
+    function isX11(w) {
+        return Rules.isX11(w);
+    }
+    function armRefit() {
+        for (var key in wins) armed[key] = true;
+    }
+    function rectKey(r) {
+        return [r.x, r.y, r.width, r.height].join(",");
+    }
     // In a tile of KWin's custom tiling (kwin-i3's), not a quick tile: its root is the root tile.
     function inCustomTile(w) {
         var t = w.tile;
@@ -1073,52 +1619,122 @@ var KI3 = (function () {
         var d = w.desktops && w.desktops[0];
         return !!d && t === workspace.rootTile(w.output, d);
     }
-    function rectLog(r) { return Math.round(r.x) + "," + Math.round(r.y) + " " + Math.round(r.width) + "x" + Math.round(r.height); }
+    function rectLog(r) {
+        return (
+            Math.round(r.x) +
+            "," +
+            Math.round(r.y) +
+            " " +
+            Math.round(r.width) +
+            "x" +
+            Math.round(r.height)
+        );
+    }
     function settleDragArms(ws) {
         model.leaves(ws).forEach(function (leaf) {
-            var a = armed[leaf.win], t = expected[leaf.win];
+            var a = armed[leaf.win],
+                t = expected[leaf.win];
             if (typeof a !== "string") return;
             var r = t ? rectKey(windowRect(t)) : "";
             if (a === "pending") armed[leaf.win] = r;
             else if (a !== r) delete armed[leaf.win];
         });
     }
-    function atBounds(have, want, bound) { return have < want - 1 && Math.abs(have - bound) <= 1; }
+    function atBounds(have, want, bound) {
+        return have < want - 1 && Math.abs(have - bound) <= 1;
+    }
     function refitOnFrameChange(w, old, dragging) {
-        var key = id(w), t = expected[key];
+        var key = id(w),
+            t = expected[key];
         if (w.fullScreen && !dragging) refitFullscreenLater(w);
         var b = borderGone[key];
         if (b && !reconciling && t && w.tile === t) {
-            var first = b.first, g = w.frameGeometry, r = windowRect(t);
+            var first = b.first,
+                g = w.frameGeometry,
+                r = windowRect(t);
             b.first = false;
-            if (!fits(w, t) && (first || atBounds(g.width, r.width, b.width) || atBounds(g.height, r.height, b.height))) {
+            if (
+                !fits(w, t) &&
+                (first ||
+                    atBounds(g.width, r.width, b.width) ||
+                    atBounds(g.height, r.height, b.height))
+            ) {
                 delete borderGone[key];
-                log("BOUNDS " + w.caption + ": short of its tile after the border went; bounds asked again");
+                log(
+                    "BOUNDS " +
+                        w.caption +
+                        ": short of its tile after the border went; bounds asked again"
+                );
                 w.frameGeometry = { x: g.x, y: g.y, width: 0, height: 0 };
-                later(5, function () { if (wins[key] && w.tile === t) w.frameGeometry = windowRect(t); });
+                later(5, function () {
+                    if (wins[key] && w.tile === t)
+                        w.frameGeometry = windowRect(t);
+                });
                 return;
             }
         }
         // A pinned tile's window put P/2 short by KWin's request landing after the pass (pinned()).
         // Once per frame and rect, as lastFit: a client that keeps the short size isn't asked forever.
-        if (t && w.tile === t && !reconciling && !dragging && !w.fullScreen && !w.move && !w.resize && pinned(t)) {
-            var pf = w.frameGeometry, pr = windowRect(t), seenPin = rectKey(pf) + "|" + rectKey(pr);
+        if (
+            t &&
+            w.tile === t &&
+            !reconciling &&
+            !dragging &&
+            !w.fullScreen &&
+            !w.move &&
+            !w.resize &&
+            pinned(t)
+        ) {
+            var pf = w.frameGeometry,
+                pr = windowRect(t),
+                seenPin = rectKey(pf) + "|" + rectKey(pr);
             if (!exactly(pf, pr) && pinFit[key] !== seenPin) {
                 pinFit[key] = seenPin;
-                log("REFIT " + shortCaption(w) + ": a side KWin pinned to the border");
+                log(
+                    "REFIT " +
+                        shortCaption(w) +
+                        ": a side KWin pinned to the border"
+                );
                 w.frameGeometry = pr;
                 return;
             }
         }
-        if (!armed[key]) { if (!dragging) refitSelfResize(w, old); return; }
+        if (!armed[key]) {
+            if (!dragging) refitSelfResize(w, old);
+            return;
+        }
         if (reconciling || !t || w.tile !== t) return;
         if (armed[key] === "pending") return;
-        if (typeof armed[key] === "string" && armed[key] !== rectKey(windowRect(t))) { delete armed[key]; return; }
-        if (fits(w, t)) { delete armed[key]; delete lastFit[key]; return; }
-        var f = w.frameGeometry, o = w.output.geometry;
-        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) return;
+        if (
+            typeof armed[key] === "string" &&
+            armed[key] !== rectKey(windowRect(t))
+        ) {
+            delete armed[key];
+            return;
+        }
+        if (fits(w, t)) {
+            delete armed[key];
+            delete lastFit[key];
+            return;
+        }
+        var f = w.frameGeometry,
+            o = w.output.geometry;
+        if (
+            Math.abs(f.width - o.width) <= 1 &&
+            Math.abs(f.height - o.height) <= 1
+        )
+            return;
         var a = windowRect(t);
-        var seen = [f.x, f.y, f.width, f.height, a.x, a.y, a.width, a.height].join(",");
+        var seen = [
+            f.x,
+            f.y,
+            f.width,
+            f.height,
+            a.x,
+            a.y,
+            a.width,
+            a.height,
+        ].join(",");
         if (lastFit[key] === seen) return;
         lastFit[key] = seen;
         fitToTile(w, t);
@@ -1131,34 +1747,77 @@ var KI3 = (function () {
     // second per window, so a client that flips back each time isn't asked without end; a second
     // resize inside that second is asked back when it ends, not dropped (session restore
     // comes in bursts).
-    var selfFitAt = {}, selfFitLater = {};
-    function refitSelfResize(w, old) {   // not during a drag (the caller knows)
-        var key = id(w), t = expected[key];
-        if (!old || reconciling || placing[key] || !t || w.tile !== t || !w.output) return;
+    var selfFitAt = {},
+        selfFitLater = {};
+    function refitSelfResize(w, old) {
+        // not during a drag (the caller knows)
+        var key = id(w),
+            t = expected[key];
+        if (
+            !old ||
+            reconciling ||
+            placing[key] ||
+            !t ||
+            w.tile !== t ||
+            !w.output
+        )
+            return;
         if (w.fullScreen || w.maximizeMode !== 0 || fits(w, t)) return;
-        var a = windowRect(t), f = w.frameGeometry, o = w.output.geometry;
-        if (Math.abs(old.x - a.x) > 1 || Math.abs(old.y - a.y) > 1 ||
-            Math.abs(old.width - a.width) > 1 || Math.abs(old.height - a.height) > 1) return;
+        var a = windowRect(t),
+            f = w.frameGeometry,
+            o = w.output.geometry;
+        if (
+            Math.abs(old.x - a.x) > 1 ||
+            Math.abs(old.y - a.y) > 1 ||
+            Math.abs(old.width - a.width) > 1 ||
+            Math.abs(old.height - a.height) > 1
+        )
+            return;
         var wait = selfFitAt[key] ? 1000 - (Date.now() - selfFitAt[key]) : 0;
         // A frame that fills the monitor is looked at again a moment later: a window going
         // fullscreen gets that frame before its flag (refitted at once, the fullscreen scenarios
         // fail), and a window's own oversize is clamped to the monitor's size,
         // so skipping it left those off their tiles (fuzzer, I2). The later look skips fullscreen.
-        if (Math.abs(f.width - o.width) <= 1 && Math.abs(f.height - o.height) <= 1) wait = Math.max(wait, 150);
-        if (wait <= 0) { selfRefit(w, t); return; }
+        if (
+            Math.abs(f.width - o.width) <= 1 &&
+            Math.abs(f.height - o.height) <= 1
+        )
+            wait = Math.max(wait, 150);
+        if (wait <= 0) {
+            selfRefit(w, t);
+            return;
+        }
         if (selfFitLater[key]) return;
         selfFitLater[key] = true;
         later(wait, function () {
             delete selfFitLater[key];
             // Still the same window in the same tile, still out of it, nothing else in hand.
-            if (!wins[key] || expected[key] !== t || w.tile !== t || reconciling || placing[key]) return;
-            if (w.fullScreen || w.maximizeMode !== 0 || w.move || w.resize || fits(w, t)) return;
+            if (
+                !wins[key] ||
+                expected[key] !== t ||
+                w.tile !== t ||
+                reconciling ||
+                placing[key]
+            )
+                return;
+            if (
+                w.fullScreen ||
+                w.maximizeMode !== 0 ||
+                w.move ||
+                w.resize ||
+                fits(w, t)
+            )
+                return;
             selfRefit(w, t);
         });
     }
     function selfRefit(w, t) {
         selfFitAt[id(w)] = Date.now();
-        log("REFIT " + shortCaption(w) + ": resized itself, asked back into its tile");
+        log(
+            "REFIT " +
+                shortCaption(w) +
+                ": resized itself, asked back into its tile"
+        );
         fitToTile(w, t);
     }
 
@@ -1171,25 +1830,35 @@ var KI3 = (function () {
         shownTabs.forEach(function (t) {
             var at = order.indexOf(t.w);
             if (at < 0) return;
-            if (t.behind.some(function (b) { return order.indexOf(b) > at; })) workspace.raiseWindow(t.w);
+            if (
+                t.behind.some(function (b) {
+                    return order.indexOf(b) > at;
+                })
+            )
+                workspace.raiseWindow(t.w);
         });
     }
 
-    var selftestBroken = false;   // debug only: every reconcile throws (tests the backoff)
+    var selftestBroken = false; // debug only: every reconcile throws (tests the backoff)
     function reconcile(ws) {
         if (!ws || released) return;
         reconciling = true;
-        try { reconcileNow(ws); } finally { reconciling = false; }
+        try {
+            reconcileNow(ws);
+        } finally {
+            reconciling = false;
+        }
     }
     function reconcileNow(ws) {
         if (selftestBroken) throw new Error("selftest reconcile");
         var screen = outputOf(ws);
         var root = workspace.rootTile(screen, deskOf(ws.num));
         if (!root) return;
-        touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true;    // by desktop: numbers can change
+        touchedRoots[screen.name + "/" + deskOf(ws.num).id] = true; // by desktop: numbers can change
         var area = areaOf(screen, ws);
         relocate(ws, screen);
-        if (workspace.currentDesktopForScreen(screen) === deskOf(ws.num)) applyFloatDue(ws);
+        if (workspace.currentDesktopForScreen(screen) === deskOf(ws.num))
+            applyFloatDue(ws);
         if (Object.keys(pendingFs).length) checkPending();
         endFullscreen(ws);
         model.floatingWindows(ws).forEach(function (f) {
@@ -1200,23 +1869,30 @@ var KI3 = (function () {
         // workspace) is a tiling window again.
         model.leaves(ws).forEach(function (l) {
             var w = wins[l.win];
-            if (w && (keptAbove[l.win] || floatedTold[l.win])) setFloatingLook(w, false);
+            if (w && (keptAbove[l.win] || floatedTold[l.win]))
+                setFloatingLook(w, false);
         });
         placeFloated(ws);
         passWs = ws;
-        delete gapCache[ws.num];            // the settings or the tree may have changed
+        delete gapCache[ws.num]; // the settings or the tree may have changed
         floatWhatCannotFit(ws, area);
         var p = projectTiles(ws);
-        gapCache[ws.num] = computeGaps(ws, p);   // a float above may have left one window
+        gapCache[ws.num] = computeGaps(ws, p); // a float above may have left one window
         refused = false;
-        barTiles = []; multiTiles = []; shownTabs = []; groupBars = [];
+        barTiles = [];
+        multiTiles = [];
+        shownTabs = [];
+        groupBars = [];
         // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
         // its edges (probed). Then padding, then minimums.
-        var inset = rootRect(area, ws), reinset = !exactRect(root.relativeGeometry, inset) || !edgesIntact(root);
+        var inset = rootRect(area, ws),
+            reinset =
+                !exactRect(root.relativeGeometry, inset) || !edgesIntact(root);
         prepareTiles(root, area);
-        var want = shapeOfProjection(p), have = shapeOfTile(root);
+        var want = shapeOfProjection(p),
+            have = shapeOfTile(root);
         if (want !== have || reinset) {
             // Different shape or different windows: rebuild this root. Unmanage first, so removing
             // tiles can't push windows around (KWin moves a removed tile's windows elsewhere).
@@ -1224,7 +1900,9 @@ var KI3 = (function () {
             // has no w.tile, and left listed it rode into a child tile when the root split, never
             // managed again (fuzzer I1).
             (function off(t) {
-                t.windows.slice().forEach(function (w) { unmanageFrom(t, w); });
+                t.windows.slice().forEach(function (w) {
+                    unmanageFrom(t, w);
+                });
                 t.tiles.forEach(off);
             })(root);
             clearRoot(root);
@@ -1235,27 +1913,40 @@ var KI3 = (function () {
             }
         }
         if (p) {
-            placeWindows(root, p, workspace.currentDesktopForScreen(screen) === deskOf(ws.num));
-            prepareTiles(root, area, true);     // sizes first, with no tile minimums in the way
+            placeWindows(
+                root,
+                p,
+                workspace.currentDesktopForScreen(screen) === deskOf(ws.num)
+            );
+            prepareTiles(root, area, true); // sizes first, with no tile minimums in the way
             setSizesStable(root, p, area);
-            prepareTiles(root, area);           // then each leaf gets its window's minimum
+            prepareTiles(root, area); // then each leaf gets its window's minimum
             refit(root);
             raiseShownTabs();
             settleDragArms(ws);
         }
         // The workspace's newcomers are through their first pass (untiledYet): a crossing one or
         // one in a drag keeps its mark until the pass after it settles.
-        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
-            if (c.win !== null && untiledYet[c.win] && !crossing[c.win] && !(wins[c.win] && inDrag(wins[c.win]))) delete untiledYet[c.win];
-        });
+        model
+            .leaves(ws)
+            .concat(model.floatingWindows(ws))
+            .forEach(function (c) {
+                if (
+                    c.win !== null &&
+                    untiledYet[c.win] &&
+                    !crossing[c.win] &&
+                    !(wins[c.win] && inDrag(wins[c.win]))
+                )
+                    delete untiledYet[c.win];
+            });
         barsOf[ws.num] = groupBars;
         tellMemo(ws);
         log("TREE " + ws.num + " " + named(model.describe(ws.num)));
-        if (refused) schedule(ws);          // the projection changed under us: one more pass
+        if (refused)
+            schedule(ws); // the projection changed under us: one more pass
         else checkInvariants(ws, root, p, area);
         passWs = null;
     }
-
 
     function clearRoot(root) {
         for (var n = 0; root.tiles.length; n++) {
@@ -1274,50 +1965,101 @@ var KI3 = (function () {
     // Windows whose output KWin changed this turn (outputChanged), for desktopsChanged.
     var movedByKWin = {};
     function hiddenWindow(w) {
-        return !w.onAllDesktops && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0;
+        return (
+            !w.onAllDesktops &&
+            w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0
+        );
     }
     // In a shown workspace's pass: each due window still floating alone gets what it was due. One
     // minimized, crossing or in a drag keeps its mark for a later pass (minimizedChanged and the
     // arrival schedule one); one tiled again, sticky or fullscreen loses it.
     function applyFloatDue(ws) {
         model.floatingWindows(ws).forEach(function (f) {
-            var key = f.win, kind = floatDue[key], w = wins[key];
+            var key = f.win,
+                kind = floatDue[key],
+                w = wins[key];
             if (!kind) return;
-            if (!w || !floatsAlone(f) || f.sticky || w.fullScreen) { delete floatDue[key]; return; }
-            if (w.minimized || crossing[key] || inDrag(w) || !w.output || hiddenWindow(w)) return;
+            if (!w || !floatsAlone(f) || f.sticky || w.fullScreen) {
+                delete floatDue[key];
+                return;
+            }
+            if (
+                w.minimized ||
+                crossing[key] ||
+                inDrag(w) ||
+                !w.output ||
+                hiddenWindow(w)
+            )
+                return;
             delete floatDue[key];
             if (kind === "record") floatAtRecord(w);
             clampFloating(w);
         });
     }
     function hasFloatDue(ws) {
-        return model.floatingWindows(ws).some(function (f) { return !!floatDue[f.win]; });
+        return model.floatingWindows(ws).some(function (f) {
+            return !!floatDue[f.win];
+        });
     }
     function recordUntiled(w) {
         if (w.tile || w.fullScreen || !w.output) return;
-        var f = w.frameGeometry, o = w.output.geometry;
-        untiled[id(w)] = { x: f.x, y: f.y, width: f.width, height: f.height,
-                           out: { x: o.x, y: o.y, width: o.width, height: o.height } };
+        var f = w.frameGeometry,
+            o = w.output.geometry;
+        untiled[id(w)] = {
+            x: f.x,
+            y: f.y,
+            width: f.width,
+            height: f.height,
+            out: { x: o.x, y: o.y, width: o.width, height: o.height },
+        };
     }
     // After untile, in the same call (KWin sends the configure from a timer, unmanageFrom).
     // A hidden window takes no new size (kwin-notes: its configure stays pending until the client
     // commits, and some never do): it is marked due and given its record when its workspace is
     // next shown (applyFloatDue), as i3's floating_enable gives it at once.
     function floatAtRecord(w) {
-        var key = id(w), r = untiled[key], con = model.byWin[key], ws = con && Tree.wsOf(con);
+        var key = id(w),
+            r = untiled[key],
+            con = model.byWin[key],
+            ws = con && Tree.wsOf(con);
         delete floatDue[key];
         if (!ws || w.fullScreen || !w.output) return;
-        if (hiddenWindow(w)) { floatDue[key] = "record"; return; }
+        if (hiddenWindow(w)) {
+            floatDue[key] = "record";
+            return;
+        }
         if (!r) return;
-        var o = w.output.geometry, a = areaOf(w.output, ws);
-        var g = { x: r.x, y: r.y, width: Math.min(r.width, a.width), height: Math.min(r.height, a.height) };
-        if (r.out.x !== o.x || r.out.y !== o.y || r.out.width !== o.width || r.out.height !== o.height) {
+        var o = w.output.geometry,
+            a = areaOf(w.output, ws);
+        var g = {
+            x: r.x,
+            y: r.y,
+            width: Math.min(r.width, a.width),
+            height: Math.min(r.height, a.height),
+        };
+        if (
+            r.out.x !== o.x ||
+            r.out.y !== o.y ||
+            r.out.width !== o.width ||
+            r.out.height !== o.height
+        ) {
             // Another output: the centre's fraction of the old one, on this one (i3's
             // floating_fix_coordinates).
-            g.x = o.x + (r.x - r.out.x + r.width / 2) * o.width / r.out.width - g.width / 2;
-            g.y = o.y + (r.y - r.out.y + r.height / 2) * o.height / r.out.height - g.height / 2;
+            g.x =
+                o.x +
+                ((r.x - r.out.x + r.width / 2) * o.width) / r.out.width -
+                g.width / 2;
+            g.y =
+                o.y +
+                ((r.y - r.out.y + r.height / 2) * o.height) / r.out.height -
+                g.height / 2;
         }
-        if (g.x < a.x || g.y < a.y || g.x + g.width > a.x + a.width || g.y + g.height > a.y + a.height) {
+        if (
+            g.x < a.x ||
+            g.y < a.y ||
+            g.x + g.width > a.x + a.width ||
+            g.y + g.height > a.y + a.height
+        ) {
             g.x = a.x + (a.width - g.width) / 2;
             g.y = a.y + (a.height - g.height) / 2;
         }
@@ -1325,7 +2067,9 @@ var KI3 = (function () {
     }
 
     // A window in a floating container (i3's con_inside_floating): KWin's floating window, in no tile.
-    function floats(con) { return !!Tree.insideFloating(con); }
+    function floats(con) {
+        return !!Tree.insideFloating(con);
+    }
 
     // ---- a split or a group floated whole (plan.md "The mouse"; behaviour.md L10a) ---------
     // i3's floating container holding a split or a group: its windows are KWin floating windows,
@@ -1336,11 +2080,21 @@ var KI3 = (function () {
     // floating window alone (plan.md "The mouse"), though i3's split stays around it.
     function floatedOf(con) {
         var fc = con && Tree.insideFloating(con);
-        return fc && fc.nodes.length && fc.nodes[0].win === null && model.leaves(fc).length > 1 ? fc : null;
+        return fc &&
+            fc.nodes.length &&
+            fc.nodes[0].win === null &&
+            model.leaves(fc).length > 1
+            ? fc
+            : null;
     }
     // One floating window, alone in its floating container: KWin's (plan.md "The mouse").
-    function floatsAlone(con) { return floats(con) && !floatedOf(con); }
-    function outGeometry(s) { var o = s.geometry; return { x: o.x, y: o.y, width: o.width, height: o.height }; }
+    function floatsAlone(con) {
+        return floats(con) && !floatedOf(con);
+    }
+    function outGeometry(s) {
+        var o = s.geometry;
+        return { x: o.x, y: o.y, width: o.width, height: o.height };
+    }
     // floating_enable's rect for a split (floating.c:331-342): "a sensible one by combining the
     // geometry of all children", widths summed and the tallest height. A window's is its own
     // size (i3's con->geometry: the frame it arrived with; one tiled already at a load has none
@@ -1352,18 +2106,34 @@ var KI3 = (function () {
     // untile, so KWin's restore is there to read.
     function ownSize(k) {
         if (k.win !== null) {
-            var w = wins[k.win], g = untiled[k.win] || (w && !w.tile && w.frameGeometry);
-            return g ? { width: g.width, height: g.height } : { width: 0, height: 0 };
+            var w = wins[k.win],
+                g = untiled[k.win] || (w && !w.tile && w.frameGeometry);
+            return g
+                ? { width: g.width, height: g.height }
+                : { width: 0, height: 0 };
         }
         var r = { width: 0, height: 0 };
-        k.nodes.forEach(function (c) { var o = ownSize(c); r.width += o.width; r.height = Math.max(r.height, o.height); });
+        k.nodes.forEach(function (c) {
+            var o = ownSize(c);
+            r.width += o.width;
+            r.height = Math.max(r.height, o.height);
+        });
         return r;
     }
     function floatedRect(split, ws) {
-        var own = ownSize(split), width = own.width, height = own.height;
-        var size = checkSize(width, height), s = outputOf(ws), a = areaOf(s, ws);
-        return { x: Math.round(a.x + (a.width - size.width) / 2), y: Math.round(a.y + (a.height - size.height) / 2),
-                 width: size.width, height: size.height, out: outGeometry(s) };
+        var own = ownSize(split),
+            width = own.width,
+            height = own.height;
+        var size = checkSize(width, height),
+            s = outputOf(ws),
+            a = areaOf(s, ws);
+        return {
+            x: Math.round(a.x + (a.width - size.width) / 2),
+            y: Math.round(a.y + (a.height - size.height) / 2),
+            width: size.width,
+            height: size.height,
+            out: outGeometry(s),
+        };
     }
     // Back into the tiles (i3's floating_disable), as the Floating Toggle and the Meta+Shift drag
     // both do (§9 G13): a sticky window off all desktops first, onto its workspace's (§3 X4:
@@ -1371,24 +2141,48 @@ var KI3 = (function () {
     // tree's part, and the floating look goes from every window it tiled.
     function tileFloating(c, tile) {
         var leaves = c.win !== null ? [c] : model.leaves(c);
-        leaves.forEach(function (l) { var w = wins[l.win]; if (l.sticky && w) unstick(w, l); });
+        leaves.forEach(function (l) {
+            var w = wins[l.win];
+            if (l.sticky && w) unstick(w, l);
+        });
         var n = tile();
-        if (n) leaves.forEach(function (l) { if (wins[l.win]) setFloatingLook(wins[l.win], false); });
+        if (n)
+            leaves.forEach(function (l) {
+                if (wins[l.win]) setFloatingLook(wins[l.win], false);
+            });
         return n;
     }
     // Floating Toggle on a split or a group (focus parent): floating_enable or floating_disable,
     // the windows untiled or given back to the tiles.
     function toggleFloated(c) {
-        var ws = Tree.wsOf(c), leaves = model.leaves(c);
+        var ws = Tree.wsOf(c),
+            leaves = model.leaves(c);
         if (Tree.isFloating(c)) {
-            tileFloating(c, function () { return model.toggleFloating(c); });
-            log("FLOAT " + named(model.describe(ws.num)) + ": a container tiled again");
+            tileFloating(c, function () {
+                return model.toggleFloating(c);
+            });
+            log(
+                "FLOAT " +
+                    named(model.describe(ws.num)) +
+                    ": a container tiled again"
+            );
         } else {
-            leaves.forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
+            leaves.forEach(function (l) {
+                if (wins[l.win]) untile(wins[l.win]);
+            });
             var r = floatedRect(c, ws);
             model.toggleFloating(c);
             c.parent.rect = r;
-            log("FLOAT a container whole, " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
+            log(
+                "FLOAT a container whole, " +
+                    r.width +
+                    "x" +
+                    r.height +
+                    " at " +
+                    r.x +
+                    "," +
+                    r.y
+            );
         }
         schedule(ws);
         wantFocus();
@@ -1396,13 +2190,34 @@ var KI3 = (function () {
     // floating_fix_coordinates, for a container now on another output's workspace: its centre at
     // the same fraction of the new output; and back inside the area, centred, if off it.
     function fixFloated(fc, ws) {
-        var s = outputOf(ws), o = s.geometry, r = fc.rect, a = areaOf(s, ws);
-        if (r.out.x !== o.x || r.out.y !== o.y || r.out.width !== o.width || r.out.height !== o.height) {
-            r.x = Math.round(o.x + (r.x - r.out.x + r.width / 2) * o.width / r.out.width - r.width / 2);
-            r.y = Math.round(o.y + (r.y - r.out.y + r.height / 2) * o.height / r.out.height - r.height / 2);
+        var s = outputOf(ws),
+            o = s.geometry,
+            r = fc.rect,
+            a = areaOf(s, ws);
+        if (
+            r.out.x !== o.x ||
+            r.out.y !== o.y ||
+            r.out.width !== o.width ||
+            r.out.height !== o.height
+        ) {
+            r.x = Math.round(
+                o.x +
+                    ((r.x - r.out.x + r.width / 2) * o.width) / r.out.width -
+                    r.width / 2
+            );
+            r.y = Math.round(
+                o.y +
+                    ((r.y - r.out.y + r.height / 2) * o.height) / r.out.height -
+                    r.height / 2
+            );
             r.out = outGeometry(s);
         }
-        if (r.x + r.width <= a.x || r.y + r.height <= a.y || r.x >= a.x + a.width || r.y >= a.y + a.height) {
+        if (
+            r.x + r.width <= a.x ||
+            r.y + r.height <= a.y ||
+            r.x >= a.x + a.width ||
+            r.y >= a.y + a.height
+        ) {
             r.x = Math.round(a.x + (a.width - r.width) / 2);
             r.y = Math.round(a.y + (a.height - r.height) / 2);
         }
@@ -1421,10 +2236,15 @@ var KI3 = (function () {
     function layFloated(c, r, bars, laid) {
         if (c.win !== null) {
             var w = wins[c.win];
-            if (!w || w.fullScreen || w.minimized) return;     // a fullscreen one: KWin's frame, its share kept
+            if (!w || w.fullScreen || w.minimized) return; // a fullscreen one: KWin's frame, its share kept
             // The ring inside the window's share, as i3's border is inside its con's rect.
             var f = tiledRing() ? Settings.get("frameWidth") : 0;
-            var wr = { x: r.x + f, y: r.y + f, width: Math.max(1, r.width - 2 * f), height: Math.max(1, r.height - 2 * f) };
+            var wr = {
+                x: r.x + f,
+                y: r.y + f,
+                width: Math.max(1, r.width - 2 * f),
+                height: Math.max(1, r.height - 2 * f),
+            };
             if (!exactRect(w.frameGeometry, wr)) w.frameGeometry = wr;
             floatedLaid[c.win] = wr;
             laid.push(wr);
@@ -1433,21 +2253,52 @@ var KI3 = (function () {
         var kids = c.nodes.filter(shows);
         if (!kids.length) return;
         if (c.layout === "tabbed" || c.layout === "stacked") {
-            var bar = kids.length > 1 ? BAR_ROW * (c.layout === "stacked" ? kids.length : 1) : 0;
-            if (bar) bars.push({ con: c, rect: { x: r.x, y: r.y, width: r.width, height: bar } });
-            var inner = { x: r.x, y: r.y + bar, width: r.width, height: Math.max(1, r.height - bar) };
-            kids.forEach(function (k) { layFloated(k, inner, bars, laid); });
+            var bar =
+                kids.length > 1
+                    ? BAR_ROW * (c.layout === "stacked" ? kids.length : 1)
+                    : 0;
+            if (bar)
+                bars.push({
+                    con: c,
+                    rect: { x: r.x, y: r.y, width: r.width, height: bar },
+                });
+            var inner = {
+                x: r.x,
+                y: r.y + bar,
+                width: r.width,
+                height: Math.max(1, r.height - bar),
+            };
+            kids.forEach(function (k) {
+                layFloated(k, inner, bars, laid);
+            });
             return;
         }
-        var horiz = Tree.orient(c) === "h", total = 0;
-        function share(k) { return k.percent > 0 ? k.percent : 1 / kids.length; }
-        kids.forEach(function (k) { total += share(k); });
-        var start = horiz ? r.x : r.y, size = horiz ? r.width : r.height, at = start, acc = 0;
+        var horiz = Tree.orient(c) === "h",
+            total = 0;
+        function share(k) {
+            return k.percent > 0 ? k.percent : 1 / kids.length;
+        }
+        kids.forEach(function (k) {
+            total += share(k);
+        });
+        var start = horiz ? r.x : r.y,
+            size = horiz ? r.width : r.height,
+            at = start,
+            acc = 0;
         kids.forEach(function (k, i) {
             acc += share(k) / total;
-            var end = i === kids.length - 1 ? start + size : Math.round(start + size * acc);
-            layFloated(k, horiz ? { x: at, y: r.y, width: end - at, height: r.height }
-                                : { x: r.x, y: at, width: r.width, height: end - at }, bars, laid);
+            var end =
+                i === kids.length - 1
+                    ? start + size
+                    : Math.round(start + size * acc);
+            layFloated(
+                k,
+                horiz
+                    ? { x: at, y: r.y, width: end - at, height: r.height }
+                    : { x: r.x, y: at, width: r.width, height: end - at },
+                bars,
+                laid
+            );
             at = end;
         });
     }
@@ -1455,10 +2306,19 @@ var KI3 = (function () {
         var bars = [];
         ws.floating.forEach(function (fc) {
             // Down to one window, KWin's: the rect follows it, for a window opened into it later.
-            var only = fc.rect && fc.nodes[0] && fc.nodes[0].win === null ? model.leaves(fc) : [];
+            var only =
+                fc.rect && fc.nodes[0] && fc.nodes[0].win === null
+                    ? model.leaves(fc)
+                    : [];
             if (only.length === 1 && wins[only[0].win]) {
                 var g = wins[only[0].win].frameGeometry;
-                fc.rect = { x: g.x, y: g.y, width: g.width, height: g.height, out: outGeometry(outputOf(ws)) };
+                fc.rect = {
+                    x: g.x,
+                    y: g.y,
+                    width: g.width,
+                    height: g.height,
+                    out: outGeometry(outputOf(ws)),
+                };
             }
             if (!fc.rect || !floatedOf(fc)) return;
             fixFloated(fc, ws);
@@ -1470,10 +2330,15 @@ var KI3 = (function () {
     }
     function union(rects) {
         if (!rects.length) return null;
-        var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+        var x1 = Infinity,
+            y1 = Infinity,
+            x2 = -Infinity,
+            y2 = -Infinity;
         rects.forEach(function (r) {
-            x1 = Math.min(x1, r.x); y1 = Math.min(y1, r.y);
-            x2 = Math.max(x2, r.x + r.width); y2 = Math.max(y2, r.y + r.height);
+            x1 = Math.min(x1, r.x);
+            y1 = Math.min(y1, r.y);
+            x2 = Math.max(x2, r.x + r.width);
+            y2 = Math.max(y2, r.y + r.height);
         });
         return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
     }
@@ -1485,43 +2350,112 @@ var KI3 = (function () {
     // top: the helper's resize keeps that window's top on the container's (another window of a
     // split tab would carry the bar with its own top).
     function topLeftLeaf(c) {
-        var best = null, at = null;
-        model.leaves({ nodes: [c], win: null, type: "con" }).forEach(function (l) {
-            var r = floatedLaid[l.win], w = wins[l.win];
-            if (!r || !w || w.minimized || w.fullScreen) return;
-            if (!at || r.y < at.y || (r.y === at.y && r.x < at.x)) { best = l; at = r; }
-        });
+        var best = null,
+            at = null;
+        model
+            .leaves({ nodes: [c], win: null, type: "con" })
+            .forEach(function (l) {
+                var r = floatedLaid[l.win],
+                    w = wins[l.win];
+                if (!r || !w || w.minimized || w.fullScreen) return;
+                if (!at || r.y < at.y || (r.y === at.y && r.x < at.x)) {
+                    best = l;
+                    at = r;
+                }
+            });
         return best || shownWindow(c);
     }
     // With the effect drawing, the drag was an outline and the helper placed the windows once at
     // the release (§9 F1b): their places are asked from it, since a client may not have committed
     // a resize yet; the outline is cleared once the pass has laid them out.
     function floatedMoved() {
-        if (!frameOn) { floatedMovedTo(null); return; }
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "GroupPlaced", guard("floated moved", function (s) {
-            var f = String(s || "").split(" ");
-            floatedMovedTo(f.length >= 5 ? { x: Number(f[0]), y: Number(f[1]), width: Number(f[2]), height: Number(f[3]), key: f[4] } : null);
-            later(150, function () { callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetOutline", 0, 0, 0, 0); });
-        }));
+        if (!frameOn) {
+            floatedMovedTo(null);
+            return;
+        }
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "GroupPlaced",
+            guard("floated moved", function (s) {
+                var f = String(s || "").split(" ");
+                floatedMovedTo(
+                    f.length >= 5
+                        ? {
+                              x: Number(f[0]),
+                              y: Number(f[1]),
+                              width: Number(f[2]),
+                              height: Number(f[3]),
+                              key: f[4],
+                          }
+                        : null
+                );
+                later(150, function () {
+                    callDBus(
+                        "org.kde.KWin",
+                        "/kwini3hold",
+                        "net.local.kwini3hold",
+                        "SetOutline",
+                        0,
+                        0,
+                        0,
+                        0
+                    );
+                });
+            })
+        );
     }
     function floatedMovedTo(placed) {
         shownWorkspaces().forEach(function (v) {
             v.ws.floating.slice().forEach(function (fc) {
                 if (!fc.rect || !fc.laid || !floatedOf(fc)) return;
-                var mine = placed && "c" + model.leaves(fc)[0].win === placed.key;
-                var now = mine ? placed : union(model.leaves(fc).map(function (l) { return wins[l.win]; })
-                    .filter(function (w) { return w && !w.fullScreen && !w.minimized; })
-                    .map(function (w) { return w.frameGeometry; }));
-                var was = fc.laid, r = fc.rect;
+                var mine =
+                    placed && "c" + model.leaves(fc)[0].win === placed.key;
+                var now = mine
+                    ? placed
+                    : union(
+                          model
+                              .leaves(fc)
+                              .map(function (l) {
+                                  return wins[l.win];
+                              })
+                              .filter(function (w) {
+                                  return w && !w.fullScreen && !w.minimized;
+                              })
+                              .map(function (w) {
+                                  return w.frameGeometry;
+                              })
+                      );
+                var was = fc.laid,
+                    r = fc.rect;
                 if (!now || exactRect(now, was)) return;
                 // The bar's strip and the rings are fixed pixels between the rect and its windows:
                 // kept, only the windows' part following them.
-                r.x = Math.round(now.x - (was.x - r.x)); r.y = Math.round(now.y - (was.y - r.y));
-                r.width = Math.max(1, Math.round(now.width + (r.width - was.width)));
-                r.height = Math.max(1, Math.round(now.height + (r.height - was.height)));
-                var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r);
+                r.x = Math.round(now.x - (was.x - r.x));
+                r.y = Math.round(now.y - (was.y - r.y));
+                r.width = Math.max(
+                    1,
+                    Math.round(now.width + (r.width - was.width))
+                );
+                r.height = Math.max(
+                    1,
+                    Math.round(now.height + (r.height - was.height))
+                );
+                var s =
+                    screenAt(r.x + r.width / 2, r.y + r.height / 2) ||
+                    screenOverlapping(r);
                 if (s) r.out = outGeometry(s);
-                log("FLOAT a container moved by the mouse: " + r.width + "x" + r.height + " at " + r.x + "," + r.y);
+                log(
+                    "FLOAT a container moved by the mouse: " +
+                        r.width +
+                        "x" +
+                        r.height +
+                        " at " +
+                        r.x +
+                        "," +
+                        r.y
+                );
                 var to = s && s !== outputOf(v.ws) ? shownWs(s) : null;
                 if (to) {
                     model.moveToWorkspace(fc.nodes[0], to);
@@ -1535,13 +2469,17 @@ var KI3 = (function () {
     // con_raise for a floating container (x_raise_con): its windows above everything else, a
     // group's hidden ones under its shown one, `top` (the focus) last.
     function raiseFloated(fc, top) {
-        var leaves = model.leaves(fc), hidden = [], shown = [];
+        var leaves = model.leaves(fc),
+            hidden = [],
+            shown = [];
         leaves.forEach(function (l) {
             var w = wins[l.win];
             if (!w || w === top || w.minimized) return;
             (Tree.isHidden(l) ? hidden : shown).push(w);
         });
-        hidden.concat(shown, top ? [top] : []).forEach(function (w) { workspace.raiseWindow(w); });
+        hidden.concat(shown, top ? [top] : []).forEach(function (w) {
+            workspace.raiseWindow(w);
+        });
     }
     // The look of a window in a floated container: kept above as a floating window (L12), the
     // tiling look (L10a), marked for the effect's ring and the helper's presses (SetFloated).
@@ -1550,22 +2488,43 @@ var KI3 = (function () {
         tiledBorder(w);
         tellFloating(w, false);
         tellDragFloating(id(w), false);
-        var con = model.byWin[id(w)], fc = floatedOf(con);
+        var con = model.byWin[id(w)],
+            fc = floatedOf(con);
         // The helper's group is the container, by its first window, then each side with a
         // neighbour inside it: a press on that side's ring, or "top" on the title bar, resizes
         // against it before it would resize or move the container (route_click, steps 6 and 7).
         var sides = ["top", "left", "right", "bottom"].filter(function (side) {
-            return !!model.resizeParticipants(con, { top: Tree.UP, left: Tree.LEFT, right: Tree.RIGHT, bottom: Tree.DOWN }[side]);
+            return !!model.resizeParticipants(
+                con,
+                {
+                    top: Tree.UP,
+                    left: Tree.LEFT,
+                    right: Tree.RIGHT,
+                    bottom: Tree.DOWN,
+                }[side]
+            );
         });
-        tellFloated(id(w), ["c" + model.leaves(fc)[0].win].concat(sides).join(" "));
+        tellFloated(
+            id(w),
+            ["c" + model.leaves(fc)[0].win].concat(sides).join(" ")
+        );
     }
     // group: the helper's "group [top]", or "" (or false) for none.
     function tellFloated(key, group) {
         group = group || "";
         if ((floatedTold[key] || "") === group) return;
         var was = !!floatedTold[key];
-        if (group) floatedTold[key] = group; else delete floatedTold[key];
-        if (was !== !!group) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloated", key, !!group);
+        if (group) floatedTold[key] = group;
+        else delete floatedTold[key];
+        if (was !== !!group)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetFloated",
+                key,
+                !!group
+            );
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloated", key, group);
     }
 
@@ -1586,26 +2545,63 @@ var KI3 = (function () {
     // floor (a decorated window is about 150 px wide at least) applies after.
     function clampFloating(w) {
         if (w.fullScreen || w.deleted || !w.output) return;
-        if (hiddenWindow(w)) { if (!floatDue[id(w)]) floatDue[id(w)] = "clamp"; return; }
-        var g = w.frameGeometry, size = checkSize(g.width, g.height);
+        if (hiddenWindow(w)) {
+            if (!floatDue[id(w)]) floatDue[id(w)] = "clamp";
+            return;
+        }
+        var g = w.frameGeometry,
+            size = checkSize(g.width, g.height);
         if (size.width === g.width && size.height === g.height) return;
-        w.frameGeometry = { x: g.x, y: g.y, width: size.width, height: size.height };
-        log("FLOAT " + shortCaption(w) + ": sized to " + size.width + "x" + size.height + " (floating size limits)");
+        w.frameGeometry = {
+            x: g.x,
+            y: g.y,
+            width: size.width,
+            height: size.height,
+        };
+        log(
+            "FLOAT " +
+                shortCaption(w) +
+                ": sized to " +
+                size.width +
+                "x" +
+                size.height +
+                " (floating size limits)"
+        );
     }
     // floating_check_size's limits on a width and a height.
     function checkSize(width, height) {
-        var min = Rules.parseSize(Settings.get("floatingMinimumSize")) || { w: 75, h: 50 };
-        var max = Rules.parseSize(Settings.get("floatingMaximumSize")) || { w: 0, h: 0 };
+        var min = Rules.parseSize(Settings.get("floatingMinimumSize")) || {
+            w: 75,
+            h: 50,
+        };
+        var max = Rules.parseSize(Settings.get("floatingMaximumSize")) || {
+            w: 0,
+            h: 0,
+        };
         var all = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
         workspace.screens.forEach(function (s) {
             var g = s.geometry;
-            all.x1 = Math.min(all.x1, g.x); all.y1 = Math.min(all.y1, g.y);
-            all.x2 = Math.max(all.x2, g.x + g.width); all.y2 = Math.max(all.y2, g.y + g.height);
+            all.x1 = Math.min(all.x1, g.x);
+            all.y1 = Math.min(all.y1, g.y);
+            all.x2 = Math.max(all.x2, g.x + g.width);
+            all.y2 = Math.max(all.y2, g.y + g.height);
         });
-        function lo(v, def) { return v === -1 ? 1 : v === 0 ? def : v; }
-        function hi(v, def) { return v === -1 ? Infinity : v === 0 ? def : v; }
-        return { width: Math.min(Math.max(width, lo(min.w, 75)), hi(max.w, all.x2 - all.x1)),
-                 height: Math.min(Math.max(height, lo(min.h, 50)), hi(max.h, all.y2 - all.y1)) };
+        function lo(v, def) {
+            return v === -1 ? 1 : v === 0 ? def : v;
+        }
+        function hi(v, def) {
+            return v === -1 ? Infinity : v === 0 ? def : v;
+        }
+        return {
+            width: Math.min(
+                Math.max(width, lo(min.w, 75)),
+                hi(max.w, all.x2 - all.x1)
+            ),
+            height: Math.min(
+                Math.max(height, lo(min.h, 50)),
+                hi(max.h, all.y2 - all.y1)
+            ),
+        };
     }
 
     // The plan's rule "a window that can't fit floats" (a window with a 900 px
@@ -1616,25 +2612,39 @@ var KI3 = (function () {
     var sizeSeq = 0;
     function floatWhatCannotFit(ws, area) {
         fitAgain(ws, area);
-        var e = gaps(ws).inset, W = area.width - e.left - e.right, H = area.height - e.top - e.bottom;    // the root's room
+        var e = gaps(ws).inset,
+            W = area.width - e.left - e.right,
+            H = area.height - e.top - e.bottom; // the root's room
         for (var n = 0; n < 32; n++) {
             var p = project(ws);
             if (!p) return;
             var need = minOf(p);
             var axis = need.w > W ? "w" : need.h > H ? "h" : null;
             if (!axis) return;
-            var worst = null, worstMin = -1;
+            var worst = null,
+                worstMin = -1;
             model.leaves(ws).forEach(function (leaf) {
                 var w = wins[leaf.win];
-                if (!w || !visibleLeaf(leaf)) return;     // not one out of the tiles
-                var fm = frameMin(w), m = axis === "w" ? fm.w : fm.h;
-                if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
+                if (!w || !visibleLeaf(leaf)) return; // not one out of the tiles
+                var fm = frameMin(w),
+                    m = axis === "w" ? fm.w : fm.h;
+                if (m >= worstMin) {
+                    worstMin = m;
+                    worst = w;
+                } // ties: the later one in the tree
             });
             if (!worst) return;
-            var key = id(worst), place = model.placeOf(model.byWin[key]);
+            var key = id(worst),
+                place = model.placeOf(model.byWin[key]);
             floatWindow(worst, "its minimum size can't fit beside the others");
             var fc = model.byWin[key];
-            if (fc && Tree.isFloating(fc)) sizeFloat[key] = { place: place, nc: fc.parent, ws: ws, seq: ++sizeSeq };
+            if (fc && Tree.isFloating(fc))
+                sizeFloat[key] = {
+                    place: place,
+                    nc: fc.parent,
+                    ws: ws,
+                    seq: ++sizeSeq,
+                };
         }
     }
     // The windows floated for size, newest first (the smallest minimum), each back in its place
@@ -1646,34 +2656,61 @@ var KI3 = (function () {
     function fitAgain(ws, area) {
         var mine = [];
         Object.keys(sizeFloat).forEach(function (key) {
-            var s = sizeFloat[key], con = model.byWin[key], w = wins[key];
-            if (!con || !w || !Tree.isFloating(con) || con.parent !== s.nc || con.sticky || Tree.wsOf(con) !== s.ws) {
+            var s = sizeFloat[key],
+                con = model.byWin[key],
+                w = wins[key];
+            if (
+                !con ||
+                !w ||
+                !Tree.isFloating(con) ||
+                con.parent !== s.nc ||
+                con.sticky ||
+                Tree.wsOf(con) !== s.ws
+            ) {
                 delete sizeFloat[key];
                 return;
             }
             if (s.ws === ws && !w.fullScreen && !w.minimized) mine.push(key);
         });
         if (!mine.length) return;
-        mine.sort(function (a, b) { return sizeFloat[b].seq - sizeFloat[a].seq; });
-        var many = computeGaps(ws, null), saved = gapCache[ws.num];
-        var W = area.width - many.inset.left - many.inset.right, H = area.height - many.inset.top - many.inset.bottom;
-        gapCache[ws.num] = many;            // minOf's inner gap: the same two-window gaps
+        mine.sort(function (a, b) {
+            return sizeFloat[b].seq - sizeFloat[a].seq;
+        });
+        var many = computeGaps(ws, null),
+            saved = gapCache[ws.num];
+        var W = area.width - many.inset.left - many.inset.right,
+            H = area.height - many.inset.top - many.inset.bottom;
+        gapCache[ws.num] = many; // minOf's inner gap: the same two-window gaps
         try {
             mine.forEach(function (key) {
-                var w = wins[key], con = model.byWin[key], p = project(ws);
-                var need = p ? minOf(p) : { w: 0, h: 0 }, fm = frameMin(w);
-                if (need.w + fm.w + many.inner > W + 0.5 || need.h + fm.h + many.inner > H + 0.5) return;
+                var w = wins[key],
+                    con = model.byWin[key],
+                    p = project(ws);
+                var need = p ? minOf(p) : { w: 0, h: 0 },
+                    fm = frameMin(w);
+                if (
+                    need.w + fm.w + many.inner > W + 0.5 ||
+                    need.h + fm.h + many.inner > H + 0.5
+                )
+                    return;
                 model.floatBack(con, sizeFloat[key].place);
                 delete sizeFloat[key];
                 setFloatingLook(w, false);
-                log("FLOAT " + shortCaption(w) + ": fits again, back in its place");
+                log(
+                    "FLOAT " +
+                        shortCaption(w) +
+                        ": fits again, back in its place"
+                );
             });
         } finally {
-            if (saved) gapCache[ws.num] = saved; else delete gapCache[ws.num];
+            if (saved) gapCache[ws.num] = saved;
+            else delete gapCache[ws.num];
         }
     }
     // The user moved or resized a floating window (a drag, a key): it is theirs now.
-    function noteMoved(key) { delete sizeFloat[key]; }
+    function noteMoved(key) {
+        delete sizeFloat[key];
+    }
 
     // Put every window of the workspace on its desktop and monitor: after Meta+Shift+N, a move
     // across monitors, or a monitor coming back. Our own moves are flagged so the handlers
@@ -1700,66 +2737,121 @@ var KI3 = (function () {
     // (the end of a pass reads it).
     function relocate(ws, screen) {
         var desk = deskOf(ws.num);
-        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
-            var w = wins[c.win];
-            if (!w) return;
-            if (inDrag(w)) return;
-            var key = id(w);
-            // A sticky window stays on all desktops: KWin draws it on whatever its
-            // output shows, which is where the model has it (pushSticky); only its output is set.
-            if (c.sticky) {
-                if (w.output === screen || !w.onAllDesktops) return;
+        model
+            .leaves(ws)
+            .concat(model.floatingWindows(ws))
+            .forEach(function (c) {
+                var w = wins[c.win];
+                if (!w) return;
+                if (inDrag(w)) return;
+                var key = id(w);
+                // A sticky window stays on all desktops: KWin draws it on whatever its
+                // output shows, which is where the model has it (pushSticky); only its output is set.
+                if (c.sticky) {
+                    if (w.output === screen || !w.onAllDesktops) return;
+                    placing[key] = true;
+                    relocating++;
+                    try {
+                        workspace.sendClientToScreen(w, screen);
+                    } finally {
+                        delete placing[key];
+                        relocating--;
+                    }
+                    return;
+                }
+                if (
+                    w.output === screen &&
+                    w.desktops.length === 1 &&
+                    w.desktops[0] === desk
+                )
+                    return;
+                if (crossing[key]) {
+                    crossing[key] = desk;
+                    return;
+                } // still crossing: arrives below
+                untile(w);
                 placing[key] = true;
                 relocating++;
-                try { workspace.sendClientToScreen(w, screen); } finally { delete placing[key]; relocating--; }
-                return;
-            }
-            if (w.output === screen && w.desktops.length === 1 && w.desktops[0] === desk) return;
-            if (crossing[key]) { crossing[key] = desk; return; }    // still crossing: arrives below
-            untile(w);
-            placing[key] = true;
-            relocating++;
-            try {
-                if (w.output !== screen) {
-                    crossing[key] = desk;
-                    w.onAllDesktops = true;
-                    workspace.sendClientToScreen(w, screen);
-                    if (w.output === screen) arrive(w);
-                    else later(2000, function () { if (crossing[key]) { log("CROSSING " + shortCaption(w) + ": no arrival in 2 s"); arrive(w); } });
-                } else {
-                    w.desktops = [desk];  // after the screen: KWin gives a moved window that screen's desktop
+                try {
+                    if (w.output !== screen) {
+                        crossing[key] = desk;
+                        w.onAllDesktops = true;
+                        workspace.sendClientToScreen(w, screen);
+                        if (w.output === screen) arrive(w);
+                        else
+                            later(2000, function () {
+                                if (crossing[key]) {
+                                    log(
+                                        "CROSSING " +
+                                            shortCaption(w) +
+                                            ": no arrival in 2 s"
+                                    );
+                                    arrive(w);
+                                }
+                            });
+                    } else {
+                        w.desktops = [desk]; // after the screen: KWin gives a moved window that screen's desktop
+                    }
+                } finally {
+                    delete placing[key];
+                    relocating--;
                 }
-            } finally { delete placing[key]; relocating--; }
-        });
+            });
     }
     // Its workspace's desktop now that it is on that monitor, then a pass to fit it.
     function arrive(w) {
-        var key = id(w), desk = crossing[key];
+        var key = id(w),
+            desk = crossing[key];
         if (!desk) return;
         delete crossing[key];
         if (w.deleted) return;
         placing[key] = true;
         relocating++;
-        try { w.desktops = [desk]; } finally { delete placing[key]; relocating--; }
+        try {
+            w.desktops = [desk];
+        } finally {
+            delete placing[key];
+            relocating--;
+        }
         var con = model.byWin[key];
         if (con) schedule(Tree.wsOf(con));
     }
 
     // Logged, never thrown: the live tests fail on any "INVARIANT" line.
     function checkInvariants(ws, root, p, area) {
-        var problems = [], inner = gaps(ws).inner;
-        if (!sameRect(root.relativeGeometry, rootRect(area, ws))) problems.push("root not inset for the gaps");
+        var problems = [],
+            inner = gaps(ws).inner;
+        if (!sameRect(root.relativeGeometry, rootRect(area, ws)))
+            problems.push("root not inset for the gaps");
         (function walk(t) {
-            if (t.padding !== inner) problems.push("padding " + t.padding + ", gaps " + inner);
-            if (!t.tiles.length && t.windows.length > 1 && multiTiles.indexOf(t) < 0) problems.push("tile holds " + t.windows.length + " windows");
-            if (!t.tiles.length && t.windows.length === 0 && p && barTiles.indexOf(t) < 0) problems.push("empty leaf tile");
+            if (t.padding !== inner)
+                problems.push("padding " + t.padding + ", gaps " + inner);
+            if (
+                !t.tiles.length &&
+                t.windows.length > 1 &&
+                multiTiles.indexOf(t) < 0
+            )
+                problems.push("tile holds " + t.windows.length + " windows");
+            if (
+                !t.tiles.length &&
+                t.windows.length === 0 &&
+                p &&
+                barTiles.indexOf(t) < 0
+            )
+                problems.push("empty leaf tile");
             if (t.tiles.length) {
-                var h = t.layoutDirection !== 2, pos = h ? t.relativeGeometry.x : t.relativeGeometry.y;
+                var h = t.layoutDirection !== 2,
+                    pos = h ? t.relativeGeometry.x : t.relativeGeometry.y;
                 t.tiles.forEach(function (c) {
-                    var g = c.relativeGeometry, start = h ? g.x : g.y;
+                    var g = c.relativeGeometry,
+                        start = h ? g.x : g.y;
                     // A first side KWin pinned to the border under an inset root is intact (edgesIntact).
                     var pinnedStart = c === t.tiles[0] && start <= 0 && pos > 0;
-                    if (Math.abs(start - pos) > 1e-3 && !pinnedStart) problems.push("tiles overlap or leave a gap at " + start.toFixed(3));
+                    if (Math.abs(start - pos) > 1e-3 && !pinnedStart)
+                        problems.push(
+                            "tiles overlap or leave a gap at " +
+                                start.toFixed(3)
+                        );
                     pos = start + (h ? g.width : g.height);
                 });
             }
@@ -1769,15 +2861,19 @@ var KI3 = (function () {
             var w = wins[leaf.win];
             if (!visibleLeaf(leaf)) return;
             var t = expected[leaf.win];
-            if (!t || t.windows.indexOf(w) < 0) problems.push("window " + w.caption + " not in its tile");
+            if (!t || t.windows.indexOf(w) < 0)
+                problems.push("window " + w.caption + " not in its tile");
         });
-        if (problems.length) log("INVARIANT ws " + ws.num + ": " + problems.join("; "));
+        if (problems.length)
+            log("INVARIANT ws " + ws.num + ": " + problems.join("; "));
     }
 
     // The model's description with window ids replaced by captions, for the log and the tests.
     function named(text) {
         return text.replace(/\{[0-9a-f-]+\}/g, function (key) {
-            return wins[key] ? String(wins[key].caption).replace(/\s+/g, "_") : key;
+            return wins[key]
+                ? String(wins[key].caption).replace(/\s+/g, "_")
+                : key;
         });
     }
 
@@ -1788,38 +2884,74 @@ var KI3 = (function () {
     var memoTold = {};
     function tellMemo(ws) {
         if (!effectSeen) return;
-        var floated = ws.floating.filter(function (fc) { return fc.rect && floatedOf(fc); }).map(function (fc) {
-            return { spec: model.snapshot(fc.nodes[0]), rect: fc.rect };
-        });
-        var snap = ws.nodes.length || floated.length ? model.snapshot(ws) : null;
+        var floated = ws.floating
+            .filter(function (fc) {
+                return fc.rect && floatedOf(fc);
+            })
+            .map(function (fc) {
+                return { spec: model.snapshot(fc.nodes[0]), rect: fc.rect };
+            });
+        var snap =
+            ws.nodes.length || floated.length ? model.snapshot(ws) : null;
         if (snap && floated.length) snap.floated = floated;
-        var key = deskOf(ws.num).id, json = snap ? JSON.stringify(snap) : "";
+        var key = deskOf(ws.num).id,
+            json = snap ? JSON.stringify(snap) : "";
         if (memoTold[key] === json) return;
         memoTold[key] = json;
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetMemo", key, json);
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "SetMemo",
+            key,
+            json
+        );
     }
     // At load, with the effect's answer: each workspace whose tiled windows are exactly its
     // memo's is rebuilt from the memo, i3's tree whole. Returns the workspaces done, by number.
     function adoptMemos(m) {
-        var done = {}, present = {};
+        var done = {},
+            present = {};
         if (!m || !m.memo) return done;
-        workspace.windowList().forEach(function (w) { if (!w.deleted && w.desktops.length === 1) present[id(w)] = w.desktops[0]; });
+        workspace.windowList().forEach(function (w) {
+            if (!w.deleted && w.desktops.length === 1)
+                present[id(w)] = w.desktops[0];
+        });
         Object.keys(model.workspaces).forEach(function (n) {
-            var ws = model.workspaces[n], json = m.memo[deskOf(ws.num).id];
+            var ws = model.workspaces[n],
+                json = m.memo[deskOf(ws.num).id];
             if (!json) return;
             var memo;
-            try { memo = JSON.parse(json); } catch (e) { return; }
+            try {
+                memo = JSON.parse(json);
+            } catch (e) {
+                return;
+            }
             // Its floated containers whose windows are all still there, ahead of the floating
             // windows' own adoption (adoptRest), which then finds them in place.
             (memo.floated || []).forEach(function (f) {
                 // Each still there, and still on this workspace's desktop (as specOf reads tiles).
-                var all = model.specWindows(f.spec).every(function (k) { return present[k] === deskOf(ws.num); });
+                var all = model.specWindows(f.spec).every(function (k) {
+                    return present[k] === deskOf(ws.num);
+                });
                 if (!all || !f.rect || !f.rect.out) return;
                 var fc = model.adoptFloated(ws, f.spec);
                 if (fc) fc.rect = f.rect;
             });
-            var want = model.specWindows(memo).slice().sort(), have = model.leaves(ws).map(function (c) { return String(c.win); }).sort();
-            if (want.length !== have.length || want.some(function (k, i) { return k !== have[i]; })) return;
+            var want = model.specWindows(memo).slice().sort(),
+                have = model
+                    .leaves(ws)
+                    .map(function (c) {
+                        return String(c.win);
+                    })
+                    .sort();
+            if (
+                want.length !== have.length ||
+                want.some(function (k, i) {
+                    return k !== have[i];
+                })
+            )
+                return;
             model.adopt(ws, memo);
             done[n] = true;
             memoTold[deskOf(ws.num).id] = json;
@@ -1835,43 +2967,86 @@ var KI3 = (function () {
         // Each model node's extent is the union of its visible windows' frames; shares follow.
         // Clipped to the root's rect: with gaps a dragged outer side can pin a tile to the
         // screen's border (edgesIntact), and an outer edge is never a share.
-        var area = areaOf(outputOf(ws), ws), e = gaps(ws).inset;
-        var lo = { x: area.x + e.left, y: area.y + e.top }, hi = { x: area.x + area.width - e.right, y: area.y + area.height - e.bottom };
+        var area = areaOf(outputOf(ws), ws),
+            e = gaps(ws).inset;
+        var lo = { x: area.x + e.left, y: area.y + e.top },
+            hi = {
+                x: area.x + area.width - e.right,
+                y: area.y + area.height - e.bottom,
+            };
         function extent(c) {
             if (c.win !== null && c.type !== "ws") {
                 var w = wins[c.win];
-                if (!w || !visibleLeaf(c)) return null;   // a fullscreen window out of the tiles has no extent
-                var g = w.tile ? w.tile.absoluteGeometry : w.frameGeometry;   // tiles: no size-step slack
-                return { x: Math.max(g.x, lo.x), y: Math.max(g.y, lo.y),
-                         x2: Math.min(g.x + g.width, hi.x), y2: Math.min(g.y + g.height, hi.y) };
+                if (!w || !visibleLeaf(c)) return null; // a fullscreen window out of the tiles has no extent
+                var g = w.tile ? w.tile.absoluteGeometry : w.frameGeometry; // tiles: no size-step slack
+                return {
+                    x: Math.max(g.x, lo.x),
+                    y: Math.max(g.y, lo.y),
+                    x2: Math.min(g.x + g.width, hi.x),
+                    y2: Math.min(g.y + g.height, hi.y),
+                };
             }
             var e = null;
             if (c.layout === "tabbed" || c.layout === "stacked") {
                 // A group's extent is its shown child's plus the bar above it; the children
                 // behind share the shown one's tile, so their own shares are left alone.
-                var shown = null, n = 0;
-                c.nodes.forEach(function (k) { k._extent = null; if (project(k)) n++; });
-                for (var i = 0; i < c.focus.length && !shown; i++) if (project(c.focus[i])) shown = c.focus[i];
+                var shown = null,
+                    n = 0;
+                c.nodes.forEach(function (k) {
+                    k._extent = null;
+                    if (project(k)) n++;
+                });
+                for (var i = 0; i < c.focus.length && !shown; i++)
+                    if (project(c.focus[i])) shown = c.focus[i];
                 if (!shown) return null;
                 e = extent(shown);
                 shown._extent = e;
-                if (e && n > 1) e = { x: e.x, y: Math.max(lo.y, e.y - (c.layout === "stacked" ? n : 1) * BAR_ROW), x2: e.x2, y2: e.y2 };
+                if (e && n > 1)
+                    e = {
+                        x: e.x,
+                        y: Math.max(
+                            lo.y,
+                            e.y - (c.layout === "stacked" ? n : 1) * BAR_ROW
+                        ),
+                        x2: e.x2,
+                        y2: e.y2,
+                    };
                 return e;
             }
             c.nodes.forEach(function (k) {
                 var r = extent(k);
                 k._extent = r;
                 if (!r) return;
-                e = e ? { x: Math.min(e.x, r.x), y: Math.min(e.y, r.y),
-                          x2: Math.max(e.x2, r.x2), y2: Math.max(e.y2, r.y2) } : r;
+                e = e
+                    ? {
+                          x: Math.min(e.x, r.x),
+                          y: Math.min(e.y, r.y),
+                          x2: Math.max(e.x2, r.x2),
+                          y2: Math.max(e.y2, r.y2),
+                      }
+                    : r;
             });
-            var vis = c.nodes.filter(function (k) { return k._extent; });
+            var vis = c.nodes.filter(function (k) {
+                return k._extent;
+            });
             if (vis.length > 1) {
-                var size = function (r) { return c.layout === "h" ? r.x2 - r.x : r.y2 - r.y; };
-                var sum = vis.reduce(function (a, k) { return a + size(k._extent); }, 0);
-                var hidden = c.nodes.filter(function (k) { return !k._extent; })
-                    .reduce(function (a, k) { return a + k.percent; }, 0);
-                if (sum > 0) vis.forEach(function (k) { k.percent = (1 - hidden) * size(k._extent) / sum; });
+                var size = function (r) {
+                    return c.layout === "h" ? r.x2 - r.x : r.y2 - r.y;
+                };
+                var sum = vis.reduce(function (a, k) {
+                    return a + size(k._extent);
+                }, 0);
+                var hidden = c.nodes
+                    .filter(function (k) {
+                        return !k._extent;
+                    })
+                    .reduce(function (a, k) {
+                        return a + k.percent;
+                    }, 0);
+                if (sum > 0)
+                    vis.forEach(function (k) {
+                        k.percent = ((1 - hidden) * size(k._extent)) / sum;
+                    });
             }
             return e;
         }
@@ -1885,8 +3060,15 @@ var KI3 = (function () {
     // the window stays kept above (and in the floating colours) for good.
     function setFloatingLook(w, on) {
         var key = id(w);
-        if (on) { var con = model.byWin[key]; lookFloating(w, con ? Tree.wsOf(con) : null); return; }
-        if (keptAbove[key]) { w.keepAbove = false; delete keptAbove[key]; }
+        if (on) {
+            var con = model.byWin[key];
+            lookFloating(w, con ? Tree.wsOf(con) : null);
+            return;
+        }
+        if (keptAbove[key]) {
+            w.keepAbove = false;
+            delete keptAbove[key];
+        }
         tellFloating(w, false);
         tellDragFloating(key, false);
         tellFloated(key, false);
@@ -1902,9 +3084,10 @@ var KI3 = (function () {
         var key = id(w);
         keepAboveOn(w, ws);
         tellFloated(key, false);
-        if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen) takeBorder(w);
+        if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen)
+            takeBorder(w);
         else giveBorder(w);
-        delete borderGone[key];         // the GTK 4 bounds are a tiled window's matter
+        delete borderGone[key]; // the GTK 4 bounds are a tiled window's matter
         tellFloating(w, true);
         tellDragFloating(key, true);
     }
@@ -1912,7 +3095,14 @@ var KI3 = (function () {
         var key = id(w);
         if (!frameOn || !effectSeen || told[key] === on) return;
         told[key] = on;
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFloating", key, on);
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "SetFloating",
+            key,
+            on
+        );
     }
 
     // ---- the ring's colour class, indicator and hidden sides (§7 L3, L4, L6) ------
@@ -1940,11 +3130,21 @@ var KI3 = (function () {
     function tellFocused() {
         if (!effectSeen) return;
         var c = model.focused;
-        if (c && c.type === "con" && c.win === null) c = model.descendFocused(c);     // focus parent
-        var key = c && c.win !== undefined && c.win !== null && wins[c.win] ? String(c.win) : "";
+        if (c && c.type === "con" && c.win === null)
+            c = model.descendFocused(c); // focus parent
+        var key =
+            c && c.win !== undefined && c.win !== null && wins[c.win]
+                ? String(c.win)
+                : "";
         if (focusTold === key) return;
         focusTold = key;
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", key);
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "SetFocused",
+            key
+        );
     }
     // While the focus is a container or a workspace (focus parent), the helper is told the window
     // KWin keeps active in it: a press on that window, or focus follows mouse entering it, comes
@@ -1952,7 +3152,14 @@ var KI3 = (function () {
     // The focused container's windows, when the focus is a tiled container (i3's focus parent):
     // Meta+Shift+left on one floats the container whole (§9 G16). "" for a window or a workspace.
     function tellSelection() {
-        var ids = selection() ? model.leaves(model.focused).map(function (l) { return l.win; }).join(" ") : "";
+        var ids = selection()
+            ? model
+                  .leaves(model.focused)
+                  .map(function (l) {
+                      return l.win;
+                  })
+                  .join(" ")
+            : "";
         if (selectionTold === ids) return;
         selectionTold = ids;
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetSelection", ids);
@@ -1960,7 +3167,14 @@ var KI3 = (function () {
     // A container of one window is that window's (G5), as a floating one alone is KWin's.
     function selection() {
         var f = model.focused;
-        return f && f.type === "con" && f.win === null && !floats(f) && Tree.wsOf(f) && model.leaves(f).length > 1 ? f : null;
+        return f &&
+            f.type === "con" &&
+            f.win === null &&
+            !floats(f) &&
+            Tree.wsOf(f) &&
+            model.leaves(f).length > 1
+            ? f
+            : null;
     }
     // The selection as it is drawn: its windows' frames and the bars of the groups inside it,
     // each a tile of its own above its windows (projectGroup).
@@ -1970,27 +3184,60 @@ var KI3 = (function () {
     // inset, flush on the child (gaps.c:62-71, render.c:474-477): the padding KWin puts round
     // the bar tile is no gap of i3's.
     function tiledBarRect(b, ws) {
-        var g = windowRect(b.tile), d = gaps(ws), f = (d.inner - d.gap) / 2;
-        var kids = b.con.nodes.filter(function (k) { return project(k); }).length;
-        return { x: g.x - f, y: g.y - f, width: g.width + 2 * f,
-                 height: BAR_ROW * (b.con.layout === "stacked" ? kids : 1) };
+        var g = windowRect(b.tile),
+            d = gaps(ws),
+            f = (d.inner - d.gap) / 2;
+        var kids = b.con.nodes.filter(function (k) {
+            return project(k);
+        }).length;
+        return {
+            x: g.x - f,
+            y: g.y - f,
+            width: g.width + 2 * f,
+            height: BAR_ROW * (b.con.layout === "stacked" ? kids : 1),
+        };
     }
     function selectionRect(sel) {
-        var r = conRect(sel), ws = Tree.wsOf(sel);
+        var r = conRect(sel),
+            ws = Tree.wsOf(sel);
         (barsOf[ws.num] || []).forEach(function (b) {
-            if (b.rect || !b.tile || (b.con !== sel && !Tree.hasParent(b.con, sel))) return;
+            if (
+                b.rect ||
+                !b.tile ||
+                (b.con !== sel && !Tree.hasParent(b.con, sel))
+            )
+                return;
             var g = tiledBarRect(b, ws);
             if (!g || g.width <= 0 || g.height <= 0) return;
-            var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
-            r = { x: Math.min(r.x, g.x), y: Math.min(r.y, g.y), width: 0, height: 0 };
-            r.width = x1 - r.x; r.height = y1 - r.y;
+            var x1 = Math.max(r.x + r.width, g.x + g.width),
+                y1 = Math.max(r.y + r.height, g.y + g.height);
+            r = {
+                x: Math.min(r.x, g.x),
+                y: Math.min(r.y, g.y),
+                width: 0,
+                height: 0,
+            };
+            r.width = x1 - r.x;
+            r.height = y1 - r.y;
         });
         return r;
     }
     function tellFocusParent() {
-        var f = model.focused, a = workspace.activeWindow, key = "";
-        if (f && (f.type === "ws" || (f.type === "con" && f.win === null)) && a && !a.deleted && model.byWin[id(a)])
-            for (var p = model.byWin[id(a)].parent; p; p = p.parent) if (p === f) { key = id(a); break; }
+        var f = model.focused,
+            a = workspace.activeWindow,
+            key = "";
+        if (
+            f &&
+            (f.type === "ws" || (f.type === "con" && f.win === null)) &&
+            a &&
+            !a.deleted &&
+            model.byWin[id(a)]
+        )
+            for (var p = model.byWin[id(a)].parent; p; p = p.parent)
+                if (p === f) {
+                    key = id(a);
+                    break;
+                }
         if (focusParentTold === key) return;
         focusParentTold = key;
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFocusParent", key);
@@ -1999,9 +3246,13 @@ var KI3 = (function () {
     // follows mouse, entered (handlers.c handle_enter_notify), the container chosen with focus
     // parent included (§5 B1, B3).
     function windowPressed() {
-        var a = workspace.activeWindow, c = a && !a.deleted ? model.byWin[id(a)] : null, f = model.focused;
+        var a = workspace.activeWindow,
+            c = a && !a.deleted ? model.byWin[id(a)] : null,
+            f = model.focused;
         if (!c || !f || c === f) return;
-        log("PRESSED " + shortCaption(a) + ": the focus leaves " + conCaption(f));
+        log(
+            "PRESSED " + shortCaption(a) + ": the focus leaves " + conCaption(f)
+        );
         model.focusWin(id(a));
         schedule(Tree.wsOf(c));
     }
@@ -2015,29 +3266,67 @@ var KI3 = (function () {
         var hide = Settings.get("hideEdgeBorders");
         // i3 draws every window in the focused container as focused (x.c: con_inside_focused).
         function cls(c) {
-            for (var p = c; p; p = p.parent) if (p === model.focused) return "focused";
+            for (var p = c; p; p = p.parent)
+                if (p === model.focused) return "focused";
             return "unfocused";
         }
         function send(key, c, ind, hidden) {
             var v = c + "|" + ind + "|" + hidden;
             if (ringTold[key] === v) return;
             ringTold[key] = v;
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, c, ind, hidden);
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetRing",
+                key,
+                c,
+                ind,
+                hidden
+            );
         }
         workspace.screens.forEach(function (s) {
-            var ws = model.workspaces[deskNum(workspace.currentDesktopForScreen(s))];
+            var ws =
+                model.workspaces[deskNum(workspace.currentDesktopForScreen(s))];
             if (!ws || outputOf(ws).name !== s.name) return;
-            var g = gaps(ws), root = workspace.rootTile(s, deskOf(ws.num));
+            var g = gaps(ws),
+                root = workspace.rootTile(s, deskOf(ws.num));
             model.leaves(ws).forEach(function (c) {
                 var w = wins[c.win];
                 if (!w) return;
-                var pl = c.parent.layout, ind = c.parent.nodes.length === 1 && (pl === "h" || pl === "v") ? (pl === "h" ? "right" : "bottom") : "", sides = [];
+                var pl = c.parent.layout,
+                    ind =
+                        c.parent.nodes.length === 1 &&
+                        (pl === "h" || pl === "v")
+                            ? pl === "h"
+                                ? "right"
+                                : "bottom"
+                            : "",
+                    sides = [];
                 if (!g.ring) sides = ["top", "right", "bottom", "left"];
-                else if ((hide === "vertical" || hide === "horizontal" || hide === "both") && w.tile && root && g.gap === 0) {
-                    var r = w.tile.relativeGeometry, rr = root.relativeGeometry;
-                    var eq = function (a, b) { return Math.abs(a - b) < 1e-7; };
-                    if (hide !== "horizontal") { if (eq(r.x, rr.x)) sides.push("left"); if (eq(r.x + r.width, rr.x + rr.width)) sides.push("right"); }
-                    if (hide !== "vertical") { if (eq(r.y, rr.y)) sides.push("top"); if (eq(r.y + r.height, rr.y + rr.height)) sides.push("bottom"); }
+                else if (
+                    (hide === "vertical" ||
+                        hide === "horizontal" ||
+                        hide === "both") &&
+                    w.tile &&
+                    root &&
+                    g.gap === 0
+                ) {
+                    var r = w.tile.relativeGeometry,
+                        rr = root.relativeGeometry;
+                    var eq = function (a, b) {
+                        return Math.abs(a - b) < 1e-7;
+                    };
+                    if (hide !== "horizontal") {
+                        if (eq(r.x, rr.x)) sides.push("left");
+                        if (eq(r.x + r.width, rr.x + rr.width))
+                            sides.push("right");
+                    }
+                    if (hide !== "vertical") {
+                        if (eq(r.y, rr.y)) sides.push("top");
+                        if (eq(r.y + r.height, rr.y + rr.height))
+                            sides.push("bottom");
+                    }
                 }
                 send(c.win, cls(c), ind, sides.join(" "));
             });
@@ -2046,13 +3335,27 @@ var KI3 = (function () {
                 // i3's x.c:589-591: alone in a split, the floating container itself not counting
                 // (L4, L10a); a window floating alone (L10, L11) has none, nor one left alone in a
                 // floated split, which is KWin's.
-                var pl = c.parent.layout, ind = floatedOf(c) && c.parent.type !== "floating" && c.parent.nodes.length === 1
-                    && (pl === "h" || pl === "v") ? (pl === "h" ? "right" : "bottom") : "";
+                var pl = c.parent.layout,
+                    ind =
+                        floatedOf(c) &&
+                        c.parent.type !== "floating" &&
+                        c.parent.nodes.length === 1 &&
+                        (pl === "h" || pl === "v")
+                            ? pl === "h"
+                                ? "right"
+                                : "bottom"
+                            : "";
                 send(c.win, cls(c), ind, "");
             });
         });
         if (flash && flash.win !== null && wins[flash.win])
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ShowIndicator", flash.win);
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "ShowIndicator",
+                flash.win
+            );
     }
     // The bars of the shown workspaces' groups, for the effect to draw (SetBar): painted with the
     // window the group shows (its focused one), at the bar tile's place. A tab's title is its
@@ -2064,80 +3367,173 @@ var KI3 = (function () {
     // changed.
     var LETTERS = { h: "H", v: "V", tabbed: "T", stacked: "S" };
     function barTitle(c) {
-        if (c.win !== null) return wins[c.win] ? String(wins[c.win].caption) : "";
+        if (c.win !== null)
+            return wins[c.win] ? String(wins[c.win].caption) : "";
         return treeTitle(c);
     }
     function treeTitle(c) {
         if (c.win !== null) {
             var w = wins[c.win];
-            return w ? String(w.resourceName || w.resourceClass || "noinstance") : "nowin";
+            return w
+                ? String(w.resourceName || w.resourceClass || "noinstance")
+                : "nowin";
         }
         return LETTERS[c.layout] + "[" + c.nodes.map(treeTitle).join(" ") + "]";
     }
     function tellBars() {
         if (!effectSeen) return;
-        var want = {}, helper = [], perWindow = {}, span = {};
+        var want = {},
+            helper = [],
+            perWindow = {},
+            span = {};
         barGroups = {};
         shownWorkspaces().forEach(function (v) {
-            (barsOf[v.ws.num] || []).concat(floatedBars[v.ws.num] || []).forEach(function (b) {
-                var con = b.con;
-                if (Tree.wsOf(con) !== v.ws) return;                // gone since its pass
-                var kids = con.nodes.filter(function (k) { return project(k); }), shown = null;
-                for (var i = 0; i < con.focus.length && !shown; i++) if (kids.indexOf(con.focus[i]) >= 0) shown = con.focus[i];
-                if (kids.length < 2 || !shown) return;
-                var leaf = b.rect ? topLeftLeaf(shown) : shownWindow(shown), w = leaf && leaf.win !== null ? wins[leaf.win] : null;
-                // A tiled group's bar is its bar tile, drawn with the shown window's tile; a
-                // floated group's is the strip layFloated left above it, drawn with the window.
-                var t = w && !b.rect && expected[leaf.win];
-                if (!w || (!b.rect && (!t || t.windows.indexOf(w) < 0))) return;
-                // A floated window's target, as a tiled one's tile: its frame may not have landed.
-                var a = b.rect ? floatedLaid[leaf.win] || w.frameGeometry : windowRect(t), r = b.rect || tiledBarRect(b, v.ws), inside = false;
-                for (var p = model.focused; p; p = p.parent) if (p === con) inside = true;
-                // With rounded corners (the ring drawn: not the title-bar look), the topmost bar's
-                // top corners rounded, and the notches between a rounded ring right under it and
-                // its bottom corners filled in the bar's colour (hold.h SetBar).
-                var rounded = Settings.get("roundedCorners") && (b.rect || tiledRing()), extra = "";
-                if (rounded && !underBar(con)) extra += " round";
-                if (rounded && ringOnTop(shown, false)) extra += " fill-left";
-                if (rounded && ringOnTop(shown, true)) extra += " fill-right";
-                // Groups nested in one another show the same window, each with its own bar (i3
-                // draws every tabbed container's decorations): the first by the window's id, the
-                // next "id#1", "id#2" (plugin/hold.h SetBar).
-                var key = id(w), n = perWindow[key] || 0;
-                perWindow[key] = n + 1;
-                if (n > 0) key += "#" + n;
-                barGroups[key] = con;
-                // A floated group's bar follows its window's width on every frame, as i3 draws the
-                // decorations again at each step of a floating resize (the helper's, with no pass).
-                // As a ratio of the window's width (in 1/100000), which the helper's scaling keeps.
-                span[key] = b.rect ? Math.round(r.width / a.width * 100000) : null;
-                // A floated group's bar: 2 with a neighbour above inside its container, which a
-                // plain press resizes against (route_click step 6, from the tab pressed, past its
-                // group: resize_find_tiling_participants), else 1 (plugin/tilingdrag.h SetBars).
-                var floated = b.rect ? (model.resizeParticipants(shown, Tree.UP) ? 2 : 1) : 0;
-                helper.push([key, Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height),
-                             con.layout === "stacked" ? 1 : 0, kids.length, floated].join(" "));
-                want[key] = [Math.round(r.x - a.x), Math.round(r.y - a.y), Math.round(r.width), Math.round(r.height),
-                               con.layout === "stacked", kids.indexOf(shown), (inside ? "focused" : "unfocused") + extra,
-                               kids.map(barTitle).join("\u001f")];
-            });
+            (barsOf[v.ws.num] || [])
+                .concat(floatedBars[v.ws.num] || [])
+                .forEach(function (b) {
+                    var con = b.con;
+                    if (Tree.wsOf(con) !== v.ws) return; // gone since its pass
+                    var kids = con.nodes.filter(function (k) {
+                            return project(k);
+                        }),
+                        shown = null;
+                    for (var i = 0; i < con.focus.length && !shown; i++)
+                        if (kids.indexOf(con.focus[i]) >= 0)
+                            shown = con.focus[i];
+                    if (kids.length < 2 || !shown) return;
+                    var leaf = b.rect ? topLeftLeaf(shown) : shownWindow(shown),
+                        w = leaf && leaf.win !== null ? wins[leaf.win] : null;
+                    // A tiled group's bar is its bar tile, drawn with the shown window's tile; a
+                    // floated group's is the strip layFloated left above it, drawn with the window.
+                    var t = w && !b.rect && expected[leaf.win];
+                    if (!w || (!b.rect && (!t || t.windows.indexOf(w) < 0)))
+                        return;
+                    // A floated window's target, as a tiled one's tile: its frame may not have landed.
+                    var a = b.rect
+                            ? floatedLaid[leaf.win] || w.frameGeometry
+                            : windowRect(t),
+                        r = b.rect || tiledBarRect(b, v.ws),
+                        inside = false;
+                    for (var p = model.focused; p; p = p.parent)
+                        if (p === con) inside = true;
+                    // With rounded corners (the ring drawn: not the title-bar look), the topmost bar's
+                    // top corners rounded, and the notches between a rounded ring right under it and
+                    // its bottom corners filled in the bar's colour (hold.h SetBar).
+                    var rounded =
+                            Settings.get("roundedCorners") &&
+                            (b.rect || tiledRing()),
+                        extra = "";
+                    if (rounded && !underBar(con)) extra += " round";
+                    if (rounded && ringOnTop(shown, false))
+                        extra += " fill-left";
+                    if (rounded && ringOnTop(shown, true))
+                        extra += " fill-right";
+                    // Groups nested in one another show the same window, each with its own bar (i3
+                    // draws every tabbed container's decorations): the first by the window's id, the
+                    // next "id#1", "id#2" (plugin/hold.h SetBar).
+                    var key = id(w),
+                        n = perWindow[key] || 0;
+                    perWindow[key] = n + 1;
+                    if (n > 0) key += "#" + n;
+                    barGroups[key] = con;
+                    // A floated group's bar follows its window's width on every frame, as i3 draws the
+                    // decorations again at each step of a floating resize (the helper's, with no pass).
+                    // As a ratio of the window's width (in 1/100000), which the helper's scaling keeps.
+                    span[key] = b.rect
+                        ? Math.round((r.width / a.width) * 100000)
+                        : null;
+                    // A floated group's bar: 2 with a neighbour above inside its container, which a
+                    // plain press resizes against (route_click step 6, from the tab pressed, past its
+                    // group: resize_find_tiling_participants), else 1 (plugin/tilingdrag.h SetBars).
+                    var floated = b.rect
+                        ? model.resizeParticipants(shown, Tree.UP)
+                            ? 2
+                            : 1
+                        : 0;
+                    helper.push(
+                        [
+                            key,
+                            Math.round(r.x),
+                            Math.round(r.y),
+                            Math.round(r.width),
+                            Math.round(r.height),
+                            con.layout === "stacked" ? 1 : 0,
+                            kids.length,
+                            floated,
+                        ].join(" ")
+                    );
+                    want[key] = [
+                        Math.round(r.x - a.x),
+                        Math.round(r.y - a.y),
+                        Math.round(r.width),
+                        Math.round(r.height),
+                        con.layout === "stacked",
+                        kids.indexOf(shown),
+                        (inside ? "focused" : "unfocused") + extra,
+                        kids.map(barTitle).join("\u001f"),
+                    ];
+                });
         });
         Object.keys(barTold).forEach(function (key) {
             if (want[key]) return;
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, 0, 0, 0, 0, false, 0, "", "");
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetBar",
+                key,
+                0,
+                0,
+                0,
+                0,
+                false,
+                0,
+                "",
+                ""
+            );
             delete barTold[key];
         });
-        Object.keys(want).concat(Object.keys(spanTold)).forEach(function (key) {
-            var on = span[key] !== undefined && span[key] !== null;
-            if (on === !!spanTold[key] && (!on || spanTold[key] === span[key])) return;
-            if (on) spanTold[key] = span[key]; else delete spanTold[key];
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBarSpan", key, on, on ? span[key] : 0);
-        });
+        Object.keys(want)
+            .concat(Object.keys(spanTold))
+            .forEach(function (key) {
+                var on = span[key] !== undefined && span[key] !== null;
+                if (
+                    on === !!spanTold[key] &&
+                    (!on || spanTold[key] === span[key])
+                )
+                    return;
+                if (on) spanTold[key] = span[key];
+                else delete spanTold[key];
+                callDBus(
+                    "org.kde.KWin",
+                    "/kwini3hold",
+                    "net.local.kwini3hold",
+                    "SetBarSpan",
+                    key,
+                    on,
+                    on ? span[key] : 0
+                );
+            });
         Object.keys(want).forEach(function (key) {
-            var b = want[key], spec = JSON.stringify(b);
+            var b = want[key],
+                spec = JSON.stringify(b);
             if (barTold[key] === spec) return;
             barTold[key] = spec;
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", key, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetBar",
+                key,
+                b[0],
+                b[1],
+                b[2],
+                b[3],
+                b[4],
+                b[5],
+                b[6],
+                b[7]
+            );
         });
         tellBarsToHelper(helper.join("\n"));
     }
@@ -2155,52 +3551,94 @@ var KI3 = (function () {
     // (and isn't the tab itself) the tab itself, and a press on the tab focused that way the
     // window again: so a group of windows can be selected by a second click.
     function tabEvent() {
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "TabEvent", guard("tab event", function (s) {
-            var f = String(s).split(" "), con = barGroups[f[1]];
-            if (!con || f.length !== 3 || Tree.wsOf(con) === null) return;
-            var kids = con.nodes.filter(function (k) { return project(k); });
-            var current = null;
-            for (var i = 0; i < con.focus.length && !current; i++) if (kids.indexOf(con.focus[i]) >= 0) current = con.focus[i];
-            var to;
-            if (f[0] === "scroll") {
-                var at = kids.indexOf(current) + Number(f[2]);
-                to = model.descendFocused(kids[at] || current);
-            } else {
-                var tab = kids[Number(f[2])];
-                if (!tab) return;
-                var focused = model.focused, inside = false;
-                for (var p = focused ? focused.parent : null; p; p = p.parent) if (p === tab) inside = true;
-                // i3 descends through focus_head to the end, past the focus itself (click.c:268).
-                var leaf = shownWindow(tab);
-                to = focused === tab || !inside ? leaf : tab;
-                // A drag from this press drags the tab, not the window shown before it: a tab
-                // that is a container whole, as i3 drags the con whose decoration was pressed.
-                tabDrag = { key: f[1].split("#")[0], con: tab };     // the window's id (State's)
-            }
-            if (!to) return;
-            model.activate(to);
-            schedule(Tree.wsOf(to));
-            wantFocus(true);
-            log("TAB " + f[0] + " " + f[2] + ": " + conCaption(to));
-        }));
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "TabEvent",
+            guard("tab event", function (s) {
+                var f = String(s).split(" "),
+                    con = barGroups[f[1]];
+                if (!con || f.length !== 3 || Tree.wsOf(con) === null) return;
+                var kids = con.nodes.filter(function (k) {
+                    return project(k);
+                });
+                var current = null;
+                for (var i = 0; i < con.focus.length && !current; i++)
+                    if (kids.indexOf(con.focus[i]) >= 0) current = con.focus[i];
+                var to;
+                if (f[0] === "scroll") {
+                    var at = kids.indexOf(current) + Number(f[2]);
+                    to = model.descendFocused(kids[at] || current);
+                } else {
+                    var tab = kids[Number(f[2])];
+                    if (!tab) return;
+                    var focused = model.focused,
+                        inside = false;
+                    for (
+                        var p = focused ? focused.parent : null;
+                        p;
+                        p = p.parent
+                    )
+                        if (p === tab) inside = true;
+                    // i3 descends through focus_head to the end, past the focus itself (click.c:268).
+                    var leaf = shownWindow(tab);
+                    to = focused === tab || !inside ? leaf : tab;
+                    // A drag from this press drags the tab, not the window shown before it: a tab
+                    // that is a container whole, as i3 drags the con whose decoration was pressed.
+                    tabDrag = { key: f[1].split("#")[0], con: tab }; // the window's id (State's)
+                }
+                if (!to) return;
+                model.activate(to);
+                schedule(Tree.wsOf(to));
+                wantFocus(true);
+                log("TAB " + f[0] + " " + f[2] + ": " + conCaption(to));
+            })
+        );
     }
 
     function forgetRings() {
         Object.keys(ringTold).forEach(function (key) {
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetRing",
+                key,
+                "",
+                "",
+                ""
+            );
         });
         ringTold = {};
-        if (effectSeen) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "ClearBars");
+        if (effectSeen)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "ClearBars"
+            );
         barTold = {};
-        if (effectSeen) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetFocused", "");
+        if (effectSeen)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetFocused",
+                ""
+            );
         focusTold = null;
     }
 
     // How tiled windows look, with the effect there: without their
     // border in "frame" and "bare", and the ring and its room in the tiles in "frame" only.
     // Without the effect, title bars whatever tiledLook says.
-    function tiledBorderless() { return frameOn && Settings.get("tiledLook") !== "titlebars"; }
-    function tiledRing() { return frameOn && Settings.get("tiledLook") === "frame"; }
+    function tiledBorderless() {
+        return frameOn && Settings.get("tiledLook") !== "titlebars";
+    }
+    function tiledRing() {
+        return frameOn && Settings.get("tiledLook") === "frame";
+    }
     function tiledBorder(w) {
         if (tiledBorderless() || (frameOn && inBarGroup(w))) takeBorder(w);
         else giveBorder(w);
@@ -2211,18 +3649,40 @@ var KI3 = (function () {
     function inBarGroup(w) {
         var c = model.byWin[id(w)];
         if (!c || c.type !== "con" || floatsAlone(c)) return false;
-        for (var p = c.parent; p && p.type !== "ws" && p.type !== "floating"; p = p.parent) {
-            if ((p.layout === "tabbed" || p.layout === "stacked") &&
-                p.nodes.filter(function (k) { return project(k); }).length > 1) return true;
+        for (
+            var p = c.parent;
+            p && p.type !== "ws" && p.type !== "floating";
+            p = p.parent
+        ) {
+            if (
+                (p.layout === "tabbed" || p.layout === "stacked") &&
+                p.nodes.filter(function (k) {
+                    return project(k);
+                }).length > 1
+            )
+                return true;
         }
         var ws = Tree.wsOf(c);
-        return !floats(c) && !!ws && (ws.layout === "tabbed" || ws.layout === "stacked") &&
-               ws.nodes.filter(function (k) { return project(k); }).length > 1;
+        return (
+            !floats(c) &&
+            !!ws &&
+            (ws.layout === "tabbed" || ws.layout === "stacked") &&
+            ws.nodes.filter(function (k) {
+                return project(k);
+            }).length > 1
+        );
     }
     // The effect draws the ring as the script says, so the ring and the tiles' room for it change
     // in the same pass.
     function tellRing() {
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetTiledRing", tiledRing());
+        if (frameOn)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetTiledRing",
+                tiledRing()
+            );
     }
 
     // A tiled window's border, while the effect draws the frame. Read
@@ -2240,21 +3700,35 @@ var KI3 = (function () {
             // A title bar just given back (floated, then tiled again before the app answered) isn't
             // there yet either: noted, and the pass that takes it comes when it lands (probed:
             // a 0.5 s client kept its title bar for good).
-            if (!serverDecorated(w)) { borderDue[key] = true; return; }
+            if (!serverDecorated(w)) {
+                borderDue[key] = true;
+                return;
+            }
             // The bounds KWin sent with the border (refitOnFrameChange): the placement area less
             // the border, as sendRoleConfigure has it.
-            var f = w.frameGeometry, c = w.clientGeometry, area = workspace.clientArea(KWin.PlacementArea, w);
-            var bounds = { width: area.width - (f.width - c.width), height: area.height - (f.height - c.height), first: true };
+            var f = w.frameGeometry,
+                c = w.clientGeometry,
+                area = workspace.clientArea(KWin.PlacementArea, w);
+            var bounds = {
+                width: area.width - (f.width - c.width),
+                height: area.height - (f.height - c.height),
+                first: true,
+            };
             w.noBorder = true;
             delete borderDue[key];
-            if (!w.noBorder) return;            // a rule forces the border
+            if (!w.noBorder) return; // a rule forces the border
             if (!isX11(w)) borderGone[key] = bounds;
         }
         tookBorder[key] = true;
     }
     function serverDecorated(w) {
-        var f = w.frameGeometry, c = w.clientGeometry;
-        return !!c && (Math.abs(f.width - c.width) > 0.5 || Math.abs(f.height - c.height) > 0.5);
+        var f = w.frameGeometry,
+            c = w.clientGeometry;
+        return (
+            !!c &&
+            (Math.abs(f.width - c.width) > 0.5 ||
+                Math.abs(f.height - c.height) > 0.5)
+        );
     }
     function giveBorder(w) {
         var key = id(w);
@@ -2269,8 +3743,12 @@ var KI3 = (function () {
     // workspace, before a newcomer takes the focus, as i3's `focused` at manage.
     function focusCtx(ctx) {
         ctx = ctx || {};
-        var f = model.focused, fw = focusedWs();
-        ctx.focused = f && f.win !== null && f.win !== undefined ? wins[f.win] || null : null;
+        var f = model.focused,
+            fw = focusedWs();
+        ctx.focused =
+            f && f.win !== null && f.win !== undefined
+                ? wins[f.win] || null
+                : null;
         ctx.focusedWs = fw ? fw.num : null;
         return ctx;
     }
@@ -2287,37 +3765,66 @@ var KI3 = (function () {
     // desktops, which would take the parent along (probed: KWin ties the two in setDesktops).
     // -> { ws, why } or null (not on one desktop, as wsForWindow).
     function placeNew(w) {
-        if (!w.output || (w.desktops.length !== 1 && !w.onAllDesktops)) return null;
+        if (!w.output || (w.desktops.length !== 1 && !w.onAllDesktops))
+            return null;
         // On all desktops (sticky): as a window on the desktop its output shows;
         // the push then keeps it on whatever that output shows.
-        var desk = w.onAllDesktops ? deskNum(workspace.currentDesktopForScreen(w.output)) : deskNum(w.desktops[0]);
+        var desk = w.onAllDesktops
+            ? deskNum(workspace.currentDesktopForScreen(w.output))
+            : deskNum(w.desktops[0]);
         if (desk < 1) return null;
-        var parent = w.modal && w.transientFor && !w.transientFor.deleted ? model.byWin[id(w.transientFor)] : null;
+        var parent =
+            w.modal && w.transientFor && !w.transientFor.deleted
+                ? model.byWin[id(w.transientFor)]
+                : null;
         var fws = focusedWs();
         var outputs = workspace.screens.map(function (s) {
-            return { name: s.name, shows: deskNum(workspace.currentDesktopForScreen(s)) };
+            return {
+                name: s.name,
+                shows: deskNum(workspace.currentDesktopForScreen(s)),
+            };
         });
         // i3's `assign` first (§11 N12; manage.c:289-317): to workspace N, shown or not, or to an
         // output's visible workspace; an output that isn't connected leaves the rule aside.
-        var t = null, assigned = Rules.assignFor(w, focusCtx());
+        var t = null,
+            assigned = Rules.assignFor(w, focusCtx());
         if (assigned && assigned.workspace) {
             Workspaces.ensure(assigned.workspace);
             if (deskOf(assigned.workspace)) {
-                if (!hasHome(assigned.workspace)) claimHome(assigned.workspace, fws ? outputOf(fws) : w.output);
+                if (!hasHome(assigned.workspace))
+                    claimHome(
+                        assigned.workspace,
+                        fws ? outputOf(fws) : w.output
+                    );
                 t = { ws: assigned.workspace, why: "assign" };
             }
         }
         // An output assignment on top, as i3's con_move_to_output_name after the workspace one:
         // that output's visible workspace, if the output is here. A direction counts from the
         // window's own output, the workspace rule's if one matched (get_output_for_con).
-        var from = t ? outputOfNum(t.ws) : fws ? outputOf(fws) : workspace.activeScreen;
-        var assignedOut = assigned && assigned.output ? outputNamed(assigned.output, from) : null;
+        var from = t
+            ? outputOfNum(t.ws)
+            : fws
+              ? outputOf(fws)
+              : workspace.activeScreen;
+        var assignedOut =
+            assigned && assigned.output
+                ? outputNamed(assigned.output, from)
+                : null;
         if (assignedOut) {
             var shown = deskNum(workspace.currentDesktopForScreen(assignedOut));
             if (shown >= 1) t = { ws: shown, why: "assign" };
         }
-        if (!t) t = Placement.target({ desk: desk, modal: !!w.modal, parentWs: parent ? Tree.wsOf(parent).num : null },
-                                     Placement.shownBefore(outputs, pendingShown), fws ? fws.num : null);
+        if (!t)
+            t = Placement.target(
+                {
+                    desk: desk,
+                    modal: !!w.modal,
+                    parentWs: parent ? Tree.wsOf(parent).num : null,
+                },
+                Placement.shownBefore(outputs, pendingShown),
+                fws ? fws.num : null
+            );
         // On, or asking for, a virtual desktop past 10: not kwin-i3's (decision 9), so the focused
         // workspace, as any new window (C1).
         if (t.ws > NAMES.length) {
@@ -2327,7 +3834,13 @@ var KI3 = (function () {
         var e = Placement.claim(pendingShown, w.output.name, desk);
         if (e && t.why !== "asked" && e.previous >= 1 && deskOf(e.previous)) {
             showOn(deskOf(e.previous), w.output);
-            log("SHOWN " + w.output.name + " " + e.previous + " again: a new window's switch, undone");
+            log(
+                "SHOWN " +
+                    w.output.name +
+                    " " +
+                    e.previous +
+                    " again: a new window's switch, undone"
+            );
         }
         if (!hasHome(t.ws)) claimHome(t.ws, w.output);
         var ws = wsModel(t.ws);
@@ -2335,7 +3848,12 @@ var KI3 = (function () {
             var key = id(w);
             placing[key] = true;
             relocating++;
-            try { w.desktops = [deskOf(t.ws)]; } finally { delete placing[key]; relocating--; }
+            try {
+                w.desktops = [deskOf(t.ws)];
+            } finally {
+                delete placing[key];
+                relocating--;
+            }
         }
         return { ws: ws, why: t.why };
     }
@@ -2351,7 +3869,12 @@ var KI3 = (function () {
     // hidden workspace: activating a window there switches its monitor's desktop (activation.cpp,
     // SwitchToOtherDesktop). Another app's dialog opens behind too (§5 C5).
     function transientOf(w, main) {
-        for (var t = w.transientFor, n = 0; t && n < 16; t = t.transientFor, n++) if (t === main) return true;
+        for (
+            var t = w.transientFor, n = 0;
+            t && n < 16;
+            t = t.transientFor, n++
+        )
+            if (t === main) return true;
         return false;
     }
     // KWin activates a new window's modal dialog in its place (activation.cpp, findModal): the
@@ -2376,10 +3899,17 @@ var KI3 = (function () {
         if (how === "smart" && transientOf(w, wins[fs.win])) return null;
         if (how === "all" && kind !== "tiling") return null;
         if (how === "leave_fullscreen" && w.transient) {
-            log("FULLSCREEN " + wins[fs.win].caption + ": ends for " + w.caption + " (leave_fullscreen)");
-            wins[fs.win].fullScreen = false;    // fullScreenChanged then clears the tree's flag
+            log(
+                "FULLSCREEN " +
+                    wins[fs.win].caption +
+                    ": ends for " +
+                    w.caption +
+                    " (leave_fullscreen)"
+            );
+            wins[fs.win].fullScreen = false; // fullScreenChanged then clears the tree's flag
         }
-        if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num)) return null;
+        if (workspace.currentDesktopForScreen(outputOf(ws)) !== deskOf(ws.num))
+            return null;
         return wins[fs.win];
     }
 
@@ -2403,12 +3933,19 @@ var KI3 = (function () {
     // longer does (a second one went fullscreen, con_enable_fullscreen, con.c:1269-1276; an
     // activation unblocked it; a move brought another in, T10, T24) leaves KWin's fullscreen too.
     function endFullscreen(ws) {
-        model.leaves(ws).concat(model.floatingWindows(ws)).forEach(function (c) {
-            var w = wins[c.win];
-            if (!w || !w.fullScreen || c.fullscreen) return;
-            log("FULLSCREEN " + shortCaption(w) + ": ends, the tree's fullscreen is another's");
-            w.fullScreen = false;
-        });
+        model
+            .leaves(ws)
+            .concat(model.floatingWindows(ws))
+            .forEach(function (c) {
+                var w = wins[c.win];
+                if (!w || !w.fullScreen || c.fullscreen) return;
+                log(
+                    "FULLSCREEN " +
+                        shortCaption(w) +
+                        ": ends, the tree's fullscreen is another's"
+                );
+                w.fullScreen = false;
+            });
     }
 
     function adoptWindow(w, fresh) {
@@ -2417,32 +3954,69 @@ var KI3 = (function () {
         // Kept out of the tree by its kind (dock, root, override-redirect; §3): a Normal
         // one is watched, since a later change of class, transience or desktops can bring it in
         // (reclassify).
-        if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
+        if (Rules.keptOut(w)) {
+            if (w.normalWindow && !w.deleted) connectWindow(w);
+            return;
+        }
         // The workspace first (placeNew, `assign` included), then the kind: a `workspace`
         // criterion sees the workspace the window opens on, as i3's run_assignments runs after
         // the window is placed.
-        var fws = focusedWs(), placed = fresh ? placeNew(w) : null;
+        var fws = focusedWs(),
+            placed = fresh ? placeNew(w) : null;
         var ws = placed ? placed.ws : fresh ? null : wsForWindow(w);
-        if (!ws) { connectWindow(w); return; }
+        if (!ws) {
+            connectWindow(w);
+            return;
+        }
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, focusCtx({ ws: ws.num, current: null, ran: ruleRan[key], crossing: !!crossing[key] }));
+        var kind = Rules.classify(
+            w,
+            focusCtx({
+                ws: ws.num,
+                current: null,
+                ran: ruleRan[key],
+                crossing: !!crossing[key],
+            })
+        );
         // A window on all desktops that a rule tiles (`floating disable`, as i3's for_window over
         // its sticky float): off all desktops onto its workspace first, KWin's tiles being one
         // desktop's (§3 R3, X4).
-        if (kind === "tiling" && w.onAllDesktops && !crossing[key] && deskOf(ws.num)) {
+        if (
+            kind === "tiling" &&
+            w.onAllDesktops &&
+            !crossing[key] &&
+            deskOf(ws.num)
+        ) {
             placing[key] = true;
             relocating++;
-            try { w.desktops = [deskOf(ws.num)]; } finally { delete placing[key]; relocating--; }
-            log("STICKY " + shortCaption(w) + " tiled by a rule: on workspace " + ws.num);
+            try {
+                w.desktops = [deskOf(ws.num)];
+            } finally {
+                delete placing[key];
+                relocating--;
+            }
+            log(
+                "STICKY " +
+                    shortCaption(w) +
+                    " tiled by a rule: on workspace " +
+                    ws.num
+            );
         }
         // Not just appeared (a load, a window taken back after a desktop change), in no tile and
         // kept above: a window kwin-i3 had floating, the flag being the one durable mark of it,
         // so it stays floating whatever the rules say. So does one that left the tree floating
         // (droppedFloating): i3's con keeps its kind while its window is managed.
-        if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key] || droppedFloating[key])) kind = "floating";
+        if (
+            kind === "tiling" &&
+            !fresh &&
+            !w.tile &&
+            (w.keepAbove || atLoadFloating[key] || droppedFloating[key])
+        )
+            kind = "floating";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
         // after the effect went. Given back; a rule forcing it wins anyway.
-        if (w.noBorder && !(tiledBorderless() && kind === "tiling")) w.noBorder = false;
+        if (w.noBorder && !(tiledBorderless() && kind === "tiling"))
+            w.noBorder = false;
         wins[key] = w;
         delete droppedFloating[key];
         if (!w.fullScreen && w.maximizeMode !== 0) w.setMaximize(false, false);
@@ -2454,7 +4028,7 @@ var KI3 = (function () {
             setFloatingLook(w, true);
             if (fresh) clampFloating(w);
         } else {
-            model.open(key, ws);             // under a fullscreen window: second in the focus stack
+            model.open(key, ws); // under a fullscreen window: second in the focus stack
             untiledYet[key] = true;
         }
         if (w.fullScreen) model.setFullscreen(key, true);
@@ -2466,31 +4040,67 @@ var KI3 = (function () {
         // whose modal dialog KWin activated in its place (activatedNow) takes its place in the
         // focus order right behind the dialog, as i3 focuses a window at its opening before its
         // dialog: without it, a close beside them went to an older window (step A).
-        var visibleHere = workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num);
-        var takes = !placed || placed.why === "asked" ||
-            Placement.takesFocus(visibleHere, !fws || outputOf(ws) === outputOf(fws), !!fws);
+        var visibleHere =
+            workspace.currentDesktopForScreen(outputOf(ws)) === deskOf(ws.num);
+        var takes =
+            !placed ||
+            placed.why === "asked" ||
+            Placement.takesFocus(
+                visibleHere,
+                !fws || outputOf(ws) === outputOf(fws),
+                !!fws
+            );
         // popup_during_fullscreen all: a floating newcomer under its workspace's fullscreen window
         // takes the focus wherever that workspace is visible, any output (manage.c:520); i3's
         // invisible-workspace rule still holds (manage.c:609).
         var fsHere = model.fullscreenOn(ws);
-        if (!takes && visibleHere && kind !== "tiling" && fsHere && fsHere.win !== key &&
-            Settings.get("popupDuringFullscreen") === "all") takes = true;
-        var active = workspace.activeWindow, viaModal = !w.active && activatedNow(w) && active ? active : null;
+        if (
+            !takes &&
+            visibleHere &&
+            kind !== "tiling" &&
+            fsHere &&
+            fsHere.win !== key &&
+            Settings.get("popupDuringFullscreen") === "all"
+        )
+            takes = true;
+        var active = workspace.activeWindow,
+            viaModal = !w.active && activatedNow(w) && active ? active : null;
         if (activatedNow(w) && !fs) {
             if (takes) {
                 model.focusWin(key);
-                if (viaModal && model.byWin[id(viaModal)]) model.focusWin(id(viaModal));
+                if (viaModal && model.byWin[id(viaModal)])
+                    model.focusWin(id(viaModal));
             } else wantFocus();
         }
-        log("ADD " + w.caption + " " + kind + " ws " + ws.num + (placed ? " (" + placed.why + (takes ? "" : ", no focus") + ")" : ""));
+        log(
+            "ADD " +
+                w.caption +
+                " " +
+                kind +
+                " ws " +
+                ws.num +
+                (placed
+                    ? " (" + placed.why + (takes ? "" : ", no focus") + ")"
+                    : "")
+        );
         if (fs) {
-            workspace.activeWindow = fs;   // windowActivated then tells the model, as for any activation
-            log("FULLSCREEN " + fs.caption + ": keeps the focus over " + w.caption);
+            workspace.activeWindow = fs; // windowActivated then tells the model, as for any activation
+            log(
+                "FULLSCREEN " +
+                    fs.caption +
+                    ": keeps the focus over " +
+                    w.caption
+            );
         }
         // A newcomer on its way to another output or desktop stays hidden until it is placed:
         // the pass that moves it waits for the effect to have it.
-        var moving = placed && (w.output !== outputOf(ws) || w.desktops[0] !== deskOf(ws.num));
-        if (moving && frameOn) holdNew(w, 200, function () { schedule(ws); });
+        var moving =
+            placed &&
+            (w.output !== outputOf(ws) || w.desktops[0] !== deskOf(ws.num));
+        if (moving && frameOn)
+            holdNew(w, 200, function () {
+                schedule(ws);
+            });
         else schedule(ws);
     }
 
@@ -2501,19 +4111,41 @@ var KI3 = (function () {
     // reply). After the pass, HoldNew(id, 0) shows one no tile placed (a floating
     // window); a tiled one joined the hold and shows at its release (flush).
     function holdNew(w, ms, then) {
-        var key = id(w), done = false;
-        var go = function () { if (!done) { done = true; holdNamed[key] = true; then(); } };
+        var key = id(w),
+            done = false;
+        var go = function () {
+            if (!done) {
+                done = true;
+                holdNamed[key] = true;
+                then();
+            }
+        };
         holdNamed[key] = "waiting";
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "HoldNew", key, ms, guard("held", go));
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "HoldNew",
+            key,
+            ms,
+            guard("held", go)
+        );
         later(50, go);
     }
     function showHeld() {
         Object.keys(holdNamed).forEach(function (key) {
             // Not moved yet: a pass for something else (a focus, another workspace) ran first.
             if (holdNamed[key] === "waiting") return;
-            if (crossing[key]) return;      // not there yet: the pass after its arrival
+            if (crossing[key]) return; // not there yet: the pass after its arrival
             delete holdNamed[key];
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "HoldNew", key, 0);
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "HoldNew",
+                key,
+                0
+            );
         });
     }
 
@@ -2526,27 +4158,71 @@ var KI3 = (function () {
         // Still open and floating (on two desktops, past 10, kept out by a type change): it
         // comes back floating (adoptWindow), the look given back below being its only mark.
         if (con && !w.deleted && floats(con)) droppedFloating[key] = true;
-        try { if (!w.deleted) untile(w); } catch (e) { /* gone */ }
-        if (!w.deleted) { setFloatingLook(w, false); giveBorder(w); }
+        try {
+            if (!w.deleted) untile(w);
+        } catch (e) {
+            /* gone */
+        }
+        if (!w.deleted) {
+            setFloatingLook(w, false);
+            giveBorder(w);
+        }
         var wasFocused = model.focused === con;
         model.close(key);
         // The tree's focus after a close, for a capture to set beside the ACTIVE lines: "chose",
         // the tree picked it; "kept", KWin had activated another window first (forgetWindow then
         // puts i3's choice back).
-        if (con) log("CLOSE " + shortCaption(w) + (wasFocused ? " chose " : " kept ") + conCaption(model.focused));
+        if (con)
+            log(
+                "CLOSE " +
+                    shortCaption(w) +
+                    (wasFocused ? " chose " : " kept ") +
+                    conCaption(model.focused)
+            );
         // A window that leaves the tree still open (two desktops, a desktop past 10, a rule) loses
         // its ring with it, as forgetRings tells the effect.
         if (ringTold[key] !== undefined && !w.deleted)
-            callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetRing", key, "", "", "");
-        delete told[key]; delete ringTold[key]; delete dragTold[key];
-        delete wins[key]; delete expected[key]; delete armed[key]; delete selfFitAt[key]; delete selfFitLater[key]; delete lastFit[key]; delete pinFit[key]; delete fsFit[key]; delete keptAbove[key]; delete tookBorder[key]; delete borderDue[key]; delete borderGone[key]; delete placing[key];
-        delete untiled[key]; delete untiledYet[key]; delete pendingFs[key]; delete sizeFloat[key]; delete floatDue[key]; delete movedByKWin[key];
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetRing",
+                key,
+                "",
+                "",
+                ""
+            );
+        delete told[key];
+        delete ringTold[key];
+        delete dragTold[key];
+        delete wins[key];
+        delete expected[key];
+        delete armed[key];
+        delete selfFitAt[key];
+        delete selfFitLater[key];
+        delete lastFit[key];
+        delete pinFit[key];
+        delete fsFit[key];
+        delete keptAbove[key];
+        delete tookBorder[key];
+        delete borderDue[key];
+        delete borderGone[key];
+        delete placing[key];
+        delete untiled[key];
+        delete untiledYet[key];
+        delete pendingFs[key];
+        delete sizeFloat[key];
+        delete floatDue[key];
+        delete movedByKWin[key];
         schedule(ws);
     }
-    function shortCaption(w) { return String(w.caption).slice(0, 60); }
+    function shortCaption(w) {
+        return String(w.caption).slice(0, 60);
+    }
     function conCaption(c) {
         if (!c) return "none";
-        if (c.win === null) return c.type === "ws" ? "workspace " + c.num : "a split";
+        if (c.win === null)
+            return c.type === "ws" ? "workspace " + c.num : "a split";
         return wins[c.win] ? shortCaption(wins[c.win]) : "?";
     }
 
@@ -2557,19 +4233,34 @@ var KI3 = (function () {
     // (con_next_focused, con.c:1663): with focus following the mouse the two differ as soon as
     // the pointer has crossed another window (tests/live/79-close-focus.sh).
     // Recorded for every focused window with a parent (i3's con_next_focused for all of them).
-    var closingNext = {};   // window id -> con
+    var closingNext = {}; // window id -> con
 
     // Closed: drop it, and focus goes where the model says (a window made sticky or ignored is
     // still on screen and probably in use, so dropWindow alone doesn't move focus): i3's choice
     // if one was recorded and is still there, over KWin's.
     function forgetWindow(w) {
-        var key = id(w), next = closingNext[key];
+        var key = id(w),
+            next = closingNext[key];
         delete floatedTold[key];
-        delete closingNext[key]; delete ruleRan[key]; delete connected[key]; delete closeWatched[key];
+        delete closingNext[key];
+        delete ruleRan[key];
+        delete connected[key];
+        delete closeWatched[key];
         dropWindow(w);
-        delete droppedFloating[key];        // after the drop, which may have set it
-        if (next && (next.win === null ? next.type === "ws" : model.byWin[next.win] === next) && model.focused !== next) {
-            log("CLOSE " + shortCaption(w) + " i3's choice over KWin's: " + conCaption(next));
+        delete droppedFloating[key]; // after the drop, which may have set it
+        if (
+            next &&
+            (next.win === null
+                ? next.type === "ws"
+                : model.byWin[next.win] === next) &&
+            model.focused !== next
+        ) {
+            log(
+                "CLOSE " +
+                    shortCaption(w) +
+                    " i3's choice over KWin's: " +
+                    conCaption(next)
+            );
             model.activate(next);
         }
         wantFocus();
@@ -2581,21 +4272,44 @@ var KI3 = (function () {
     // (else a window floated with Meta+Shift+Space would tile again at its next caption change, which
     // for a browser is seconds).
     function reclassify(w) {
-        var key = id(w), con = model.byWin[key];
-        if (!con) { adoptWindow(w); return; }
-        if (Rules.keptOut(w)) { dropWindow(w); return; }
+        var key = id(w),
+            con = model.byWin[key];
+        if (!con) {
+            adoptWindow(w);
+            return;
+        }
+        if (Rules.keptOut(w)) {
+            dropWindow(w);
+            return;
+        }
         // In a floated container the window carries no floating flag of its own, and a rule's
         // `floating disable` finds nothing to undo (floating_disable on a con not floating).
         if (floatedOf(con)) return;
         var floating = floats(con);
         if (!ruleRan[key]) ruleRan[key] = {};
-        var kind = Rules.classify(w, focusCtx({ ws: Tree.wsOf(con).num, current: con.sticky ? "sticky" : floating ? "floating" : "tiling", ran: ruleRan[key], crossing: !!crossing[key] }));
-        var wantFloating = kind !== "tiling";      // "sticky" floats too
+        var kind = Rules.classify(
+            w,
+            focusCtx({
+                ws: Tree.wsOf(con).num,
+                current: con.sticky
+                    ? "sticky"
+                    : floating
+                      ? "floating"
+                      : "tiling",
+                ran: ruleRan[key],
+                crossing: !!crossing[key],
+            })
+        );
+        var wantFloating = kind !== "tiling"; // "sticky" floats too
         if (wantFloating === floating) return;
-        if (!wantFloating && con.sticky) unstick(w, con);     // a rule tiles it: off all desktops first (X4)
+        if (!wantFloating && con.sticky) unstick(w, con); // a rule tiles it: off all desktops first (X4)
         model.toggleFloating(con);
         setFloatingLook(w, wantFloating);
-        if (wantFloating) { untile(w); floatAtRecord(w); clampFloating(w); }
+        if (wantFloating) {
+            untile(w);
+            floatAtRecord(w);
+            clampFloating(w);
+        }
         schedule(Tree.wsOf(model.byWin[key]));
     }
 
@@ -2606,24 +4320,46 @@ var KI3 = (function () {
         var dragging = false;
         // Before KWin activates its choice (closingNext, above): i3's next focus for every close
         // of the focused window, a top-level or floating one too (§5 C7).
-        w.closed.connect(guard("closed", function () {
-            var con = model.byWin[key];
-            closingTree = w;
-            if (con && model.focused === con && con.parent) closingNext[key] = model.nextFocused(con);
-            // i3 4.24's drain_drag_events: a window unmapping on the focused workspace ends a drag at
-            // once (DRAG_ABORT, drag.c:77-87), and it is no revert: the drop or the resize happens
-            // where the pointer last was, unless the dragged window or its target is the one
-            // going (tiling_drag.c:325 con_exists, resize.c:274) (§9 G7, Z7).
-            if (drag && con && focusedWs() === Tree.wsOf(con)) {
-                callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel");
-                endDragAtClose(con, shortCaption(w));
-            }
-        }));
-        w.readyForPaintingChanged.connect(guard("ready", function () { reclassify(w); }));
-        w.captionChanged.connect(guard("caption", function () { reclassify(w); if (Object.keys(barTold).length) kick(); }));
-        w.transientChanged.connect(guard("transient", function () { reclassify(w); }));
-        w.hiddenByShowDesktopChanged.connect(guard("show desktop", readShowing));
-        w.windowClassChanged.connect(guard("class", function () { reclassify(w); }));
+        w.closed.connect(
+            guard("closed", function () {
+                var con = model.byWin[key];
+                closingTree = w;
+                if (con && model.focused === con && con.parent)
+                    closingNext[key] = model.nextFocused(con);
+                // i3 4.24's drain_drag_events: a window unmapping on the focused workspace ends a drag at
+                // once (DRAG_ABORT, drag.c:77-87), and it is no revert: the drop or the resize happens
+                // where the pointer last was, unless the dragged window or its target is the one
+                // going (tiling_drag.c:325 con_exists, resize.c:274) (§9 G7, Z7).
+                if (drag && con && focusedWs() === Tree.wsOf(con)) {
+                    callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel");
+                    endDragAtClose(con, shortCaption(w));
+                }
+            })
+        );
+        w.readyForPaintingChanged.connect(
+            guard("ready", function () {
+                reclassify(w);
+            })
+        );
+        w.captionChanged.connect(
+            guard("caption", function () {
+                reclassify(w);
+                if (Object.keys(barTold).length) kick();
+            })
+        );
+        w.transientChanged.connect(
+            guard("transient", function () {
+                reclassify(w);
+            })
+        );
+        w.hiddenByShowDesktopChanged.connect(
+            guard("show desktop", readShowing)
+        );
+        w.windowClassChanged.connect(
+            guard("class", function () {
+                reclassify(w);
+            })
+        );
         // The window menu's No Border and Keep Above (useractions.cpp, setNoBorder, setKeepAbove):
         // both flags are kwin-i3's on its windows, as i3 owns the border and ignores a request
         // to keep a window above (handlers.c:683-707 acts on fullscreen, attention, sticky
@@ -2635,188 +4371,297 @@ var KI3 = (function () {
         }
         w.decorationPolicyChanged.connect(guard("noborder", reassert));
         w.keepAboveChanged.connect(guard("above", reassert));
-        w.minimizedChanged.connect(guard("minimized", function () {
-            var focusedBefore = model.focused;
-            var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
-            // The focused window minimized and KWin's own pick not a window of the tree (none, the
-            // desktop, a gap strip under the pointer): the focus goes to i3's next here, else the
-            // pass would activate the minimized window and KWin un-minimize it.
-            // With a tree window picked, windowActivated has done this already.
-            if (con && w.minimized && focusedBefore === con) {
-                var next = model.nextFocused(con);
-                log("MINIMIZED " + conCaption(con) + ": i3's next " + conCaption(next));
-                model.activate(next);
-                wantFocus();
-            }
-            if (con) schedule(Tree.wsOf(con));
-        }));
-        w.fullScreenChanged.connect(guard("fullscreen", function () {
-            delete pendingFs[key];              // the request landed (or ended)
-            model.setFullscreen(key, w.fullScreen);
-            var con = model.byWin[key];
-            // con_enable_fullscreen (con.c:1286-1289): the window takes the focus, unless its
-            // workspace isn't the focused one (§10 V1). KWin activates it only when it asks.
-            if (con && w.fullScreen && !con.minimized && model.focused !== con &&
-                Tree.wsOf(con) === focusedWs()) {
-                log("FULLSCREEN " + shortCaption(w) + ": takes the focus");
-                model.activate(con);
-                wantFocus();
-            }
-            if (con) schedule(Tree.wsOf(con));
-        }));
+        w.minimizedChanged.connect(
+            guard("minimized", function () {
+                var focusedBefore = model.focused;
+                var con = model.setMinimized(key, w.minimized); // i3's scratchpad rule (§5 C9)
+                // The focused window minimized and KWin's own pick not a window of the tree (none, the
+                // desktop, a gap strip under the pointer): the focus goes to i3's next here, else the
+                // pass would activate the minimized window and KWin un-minimize it.
+                // With a tree window picked, windowActivated has done this already.
+                if (con && w.minimized && focusedBefore === con) {
+                    var next = model.nextFocused(con);
+                    log(
+                        "MINIMIZED " +
+                            conCaption(con) +
+                            ": i3's next " +
+                            conCaption(next)
+                    );
+                    model.activate(next);
+                    wantFocus();
+                }
+                if (con) schedule(Tree.wsOf(con));
+            })
+        );
+        w.fullScreenChanged.connect(
+            guard("fullscreen", function () {
+                delete pendingFs[key]; // the request landed (or ended)
+                model.setFullscreen(key, w.fullScreen);
+                var con = model.byWin[key];
+                // con_enable_fullscreen (con.c:1286-1289): the window takes the focus, unless its
+                // workspace isn't the focused one (§10 V1). KWin activates it only when it asks.
+                if (
+                    con &&
+                    w.fullScreen &&
+                    !con.minimized &&
+                    model.focused !== con &&
+                    Tree.wsOf(con) === focusedWs()
+                ) {
+                    log("FULLSCREEN " + shortCaption(w) + ": takes the focus");
+                    model.activate(con);
+                    wantFocus();
+                }
+                if (con) schedule(Tree.wsOf(con));
+            })
+        );
         // Maximize (i3 has none) needs no handler of its own: it drops the window out of its
         // tile, the foreign-untile path below re-tiles it, and KWin's Tile::manage clears the
         // maximize. No separate handler does the same: with two paths, removing either changes
         // nothing, so neither is tested.
-        w.desktopsChanged.connect(guard("desktops", function () {
-            // Two desktops while relocate moves it or its dialog: KWin's moment, not "made sticky".
-            // A parent KWin moves along with its modal dialog is still followed (below).
-            if (relocating && w.desktops.length !== 1) return;
-            var con = model.byWin[key];
-            if (!con && placing[key]) return;       // placeNew giving a dialog its parent's desktop
-            if (!con) { if (w.desktops.length === 1 || w.onAllDesktops) adoptWindow(w); return; }
-            if (w.onAllDesktops) {
-                // Put on all desktops (the window menu, a client, a rule; §3 X4, §10 V10):
-                // i3's sticky floating: floated if tiling, marked, pushed to what its
-                // output shows.
-                if (!con.sticky) makeSticky(w, con);
-                return;
-            }
-            // A tiling window KWin moved to another output, by the client's own request (a
-            // borderless X11 window, or one in a hidden workspace's tile: KWin refuses the request
-            // only from a decorated window in a requested tile, x11window.cpp:3111) or by Move to
-            // Screen, and gave that output's desktop: i3 ignores a tiling window's placement from
-            // outside (handlers.c, plan.md "Plasma's window actions"), so it stays; the pass puts
-            // its output and desktop back (relocate). Before R13: a hidden one ends on two
-            // desktops, its own and the other output's current one. A floating window is KWin's.
-            if (movedByKWin[key] && !floats(con) && !con.sticky && !placing[key] && !dragging && !inDrag(w) && !crossing[key]) {
-                delete movedByKWin[key];
-                var home = Tree.wsOf(con);
-                log("DESKTOP " + shortCaption(w) + " moved to " + (w.output ? w.output.name : "?") + " by KWin or itself: stays on workspace " + home.num);
-                schedule(home);
-                return;
-            }
-            if (w.desktops.length !== 1) {
-                // On two desktops, not all (§3 R13): not ours until it is on one again.
-                dropWindow(w);
-                return;
-            }
-            if (con.sticky) {
-                // Taken off all desktops onto one (X4): no longer sticky; it stays floating on
-                // that desktop's workspace (i3's _NET_WM_DESKTOP index: moved there, below).
-                model.setSticky(con, false);
-                log("STICKY " + shortCaption(w) + " off: on workspace " + deskNum(w.desktops[0]));
-            }
-            if (placing[key] || dragging) return;   // ours, or settled when the drag ends
-            // Moved to a virtual desktop past 10 (the Overview): not a workspace (decision 9), so it
-            // leaves the tree, as one on two desktops does (R13).
-            if (deskNum(w.desktops[0]) > NAMES.length) { dropWindow(w); return; }
-            var from = Tree.wsOf(con), to = wsForWindow(w);
-            if (!to || to === from) return;
-            // A new tiling window whose desktop changed before its first pass: only the client can
-            // have moved it then (an X11 window centring itself on the other monitor; KWin gave it
-            // that output's current desktop). i3 ignores a tiling window's own move
-            // (handlers.c:448, §10 V11), so it stays; the pass puts its output and desktop back
-            // (relocate). No output test: a window placed on a workspace homed on another output
-            // (assign) can move itself onto that very output and still get the wrong desktop.
-            if (untiledYet[key] && !Tree.isFloating(con)) {
-                log("DESKTOP " + shortCaption(w) + " moved itself before its tile: stays on workspace " + from.num);
+        w.desktopsChanged.connect(
+            guard("desktops", function () {
+                // Two desktops while relocate moves it or its dialog: KWin's moment, not "made sticky".
+                // A parent KWin moves along with its modal dialog is still followed (below).
+                if (relocating && w.desktops.length !== 1) return;
+                var con = model.byWin[key];
+                if (!con && placing[key]) return; // placeNew giving a dialog its parent's desktop
+                if (!con) {
+                    if (w.desktops.length === 1 || w.onAllDesktops)
+                        adoptWindow(w);
+                    return;
+                }
+                if (w.onAllDesktops) {
+                    // Put on all desktops (the window menu, a client, a rule; §3 X4, §10 V10):
+                    // i3's sticky floating: floated if tiling, marked, pushed to what its
+                    // output shows.
+                    if (!con.sticky) makeSticky(w, con);
+                    return;
+                }
+                // A tiling window KWin moved to another output, by the client's own request (a
+                // borderless X11 window, or one in a hidden workspace's tile: KWin refuses the request
+                // only from a decorated window in a requested tile, x11window.cpp:3111) or by Move to
+                // Screen, and gave that output's desktop: i3 ignores a tiling window's placement from
+                // outside (handlers.c, plan.md "Plasma's window actions"), so it stays; the pass puts
+                // its output and desktop back (relocate). Before R13: a hidden one ends on two
+                // desktops, its own and the other output's current one. A floating window is KWin's.
+                if (
+                    movedByKWin[key] &&
+                    !floats(con) &&
+                    !con.sticky &&
+                    !placing[key] &&
+                    !dragging &&
+                    !inDrag(w) &&
+                    !crossing[key]
+                ) {
+                    delete movedByKWin[key];
+                    var home = Tree.wsOf(con);
+                    log(
+                        "DESKTOP " +
+                            shortCaption(w) +
+                            " moved to " +
+                            (w.output ? w.output.name : "?") +
+                            " by KWin or itself: stays on workspace " +
+                            home.num
+                    );
+                    schedule(home);
+                    return;
+                }
+                if (w.desktops.length !== 1) {
+                    // On two desktops, not all (§3 R13): not ours until it is on one again.
+                    dropWindow(w);
+                    return;
+                }
+                if (con.sticky) {
+                    // Taken off all desktops onto one (X4): no longer sticky; it stays floating on
+                    // that desktop's workspace (i3's _NET_WM_DESKTOP index: moved there, below).
+                    model.setSticky(con, false);
+                    log(
+                        "STICKY " +
+                            shortCaption(w) +
+                            " off: on workspace " +
+                            deskNum(w.desktops[0])
+                    );
+                }
+                if (placing[key] || dragging) return; // ours, or settled when the drag ends
+                // Moved to a virtual desktop past 10 (the Overview): not a workspace (decision 9), so it
+                // leaves the tree, as one on two desktops does (R13).
+                if (deskNum(w.desktops[0]) > NAMES.length) {
+                    dropWindow(w);
+                    return;
+                }
+                var from = Tree.wsOf(con),
+                    to = wsForWindow(w);
+                if (!to || to === from) return;
+                // A new tiling window whose desktop changed before its first pass: only the client can
+                // have moved it then (an X11 window centring itself on the other monitor; KWin gave it
+                // that output's current desktop). i3 ignores a tiling window's own move
+                // (handlers.c:448, §10 V11), so it stays; the pass puts its output and desktop back
+                // (relocate). No output test: a window placed on a workspace homed on another output
+                // (assign) can move itself onto that very output and still get the wrong desktop.
+                if (untiledYet[key] && !Tree.isFloating(con)) {
+                    log(
+                        "DESKTOP " +
+                            shortCaption(w) +
+                            " moved itself before its tile: stays on workspace " +
+                            from.num
+                    );
+                    schedule(from);
+                    return;
+                }
+                // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
+                log(
+                    "DESKTOP " +
+                        shortCaption(w) +
+                        " moved to workspace " +
+                        to.num +
+                        " outside kwin-i3: follows"
+                );
+                var t = expected[key];
+                if (t && t.windows.indexOf(w) >= 0) unmanageFrom(t, w);
+                model.moveToWorkspace(con, to);
                 schedule(from);
-                return;
-            }
-            // Someone else (the Overview, KWin) moved it: follow, as a move to that workspace.
-            log("DESKTOP " + shortCaption(w) + " moved to workspace " + to.num + " outside kwin-i3: follows");
-            var t = expected[key];
-            if (t && t.windows.indexOf(w) >= 0) unmanageFrom(t, w);
-            model.moveToWorkspace(con, to);
-            schedule(from); schedule(to);
-        }));
-        w.interactiveMoveResizeStarted.connect(guard("dragStart", function () {
-            dragging = w.move ? "move" : "resize";
-            log("DRAG start " + dragging + " " + w.caption);
-        }));
-        w.interactiveMoveResizeFinished.connect(guard("dragEnd", function () {
-            noteMoved(key);
-            var kind = dragging;
-            dragging = false;
-            log("DRAG end " + kind + " " + w.caption);
-            var con = model.byWin[key], place = floatPlace[key];
-            delete floatPlace[key];
-            if (!con) return;
-            var ws = Tree.wsOf(con);
-            // A move that floated it, cancelled (Escape): KWin put it back in a custom tile, one
-            // of kwin-i3's, at the centre it started from (6.7.5 window.cpp:1085-1089), so the
-            // tree puts it back in its place too, as every drag's cancel reverts (§9 G5, G6). A
-            // release at a screen edge is KWin's quick tile instead, no custom tile: it stays
-            // floating (V12).
-            if (kind === "move" && place !== undefined && inCustomTile(w) && Tree.isFloating(con)) {
-                model.floatBack(con, place);
-                setFloatingLook(w, false);
-                log("FLOAT " + shortCaption(w) + ": the move was cancelled, back in its place");
+                schedule(to);
+            })
+        );
+        w.interactiveMoveResizeStarted.connect(
+            guard("dragStart", function () {
+                dragging = w.move ? "move" : "resize";
+                log("DRAG start " + dragging + " " + w.caption);
+            })
+        );
+        w.interactiveMoveResizeFinished.connect(
+            guard("dragEnd", function () {
+                noteMoved(key);
+                var kind = dragging;
+                dragging = false;
+                log("DRAG end " + kind + " " + w.caption);
+                var con = model.byWin[key],
+                    place = floatPlace[key];
+                delete floatPlace[key];
+                if (!con) return;
+                var ws = Tree.wsOf(con);
+                // A move that floated it, cancelled (Escape): KWin put it back in a custom tile, one
+                // of kwin-i3's, at the centre it started from (6.7.5 window.cpp:1085-1089), so the
+                // tree puts it back in its place too, as every drag's cancel reverts (§9 G5, G6). A
+                // release at a screen edge is KWin's quick tile instead, no custom tile: it stays
+                // floating (V12).
+                if (
+                    kind === "move" &&
+                    place !== undefined &&
+                    inCustomTile(w) &&
+                    Tree.isFloating(con)
+                ) {
+                    model.floatBack(con, place);
+                    setFloatingLook(w, false);
+                    log(
+                        "FLOAT " +
+                            shortCaption(w) +
+                            ": the move was cancelled, back in its place"
+                    );
+                    schedule(ws);
+                    return;
+                }
+                if (kind === "resize" && !floats(con)) {
+                    readBack(ws);
+                    // The window was put back in its tile at each step, so it can fit now while the
+                    // client's answer to the last step is still in flight, and lands after this
+                    // reconcile's refit: watched until a frame shows its tile (51-input, section 1).
+                    if (armed[key] !== true) armed[key] = "pending";
+                    delete lastFit[key];
+                }
+                // Dropped on another monitor: as a dragged window does in i3.
+                if (kind === "move" && w.output !== outputOf(ws))
+                    joinShownWorkspace(con, w, w.output);
                 schedule(ws);
-                return;
-            }
-            if (kind === "resize" && !floats(con)) {
-                readBack(ws);
-                // The window was put back in its tile at each step, so it can fit now while the
-                // client's answer to the last step is still in flight, and lands after this
-                // reconcile's refit: watched until a frame shows its tile (51-input, section 1).
-                if (armed[key] !== true) armed[key] = "pending";
-                delete lastFit[key];
-            }
-            // Dropped on another monitor: as a dragged window does in i3.
-            if (kind === "move" && w.output !== outputOf(ws)) joinShownWorkspace(con, w, w.output);
-            schedule(ws);
-        }));
+            })
+        );
         // outputChanged ends relocate's crossing (arrive). Otherwise: a window KWin moved to another
         // output than its workspace's, on its own (its restore of a returning monitor's windows,
         // PlacementTracker, lands after kwin-i3 has reconciled the replug), is put back by the next
         // pass: the model, not KWin's move, says where it belongs (plan.md decision 10;
         // 40-monitors). Not during a drag (its end settles the workspace), nor kwin-i3's own
         // moves (placing). A move that also changes the desktop is desktopsChanged's above.
-        w.outputChanged.connect(guard("output", function () {
-            if (crossing[key]) { arrive(w); return; }
-            var con = model.byWin[key];
-            if (!con || placing[key] || dragging || inDrag(w)) return;
-            var ws = Tree.wsOf(con);
-            if (w.output && w.output !== outputOf(ws)) {
-                log("OUTPUT " + shortCaption(w) + " moved by KWin to " + w.output.name + ": back to its workspace's");
-                // For desktopsChanged, which KWin emits next when it swaps the desktop with the
-                // output (finishInteractiveOutputChange): this turn only.
-                movedByKWin[key] = true;
-                later(0, function () { delete movedByKWin[key]; });
-                schedule(ws);
-            }
-        }));
-        w.frameGeometryChanged.connect(guard("frame", function (old) {
-            // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
-            if (!dragging && old) log("GEOM " + shortCaption(w) + " " + rectLog(old) + " -> " + rectLog(w.frameGeometry));
-            refitOnFrameChange(w, old, dragging);
-        }));
+        w.outputChanged.connect(
+            guard("output", function () {
+                if (crossing[key]) {
+                    arrive(w);
+                    return;
+                }
+                var con = model.byWin[key];
+                if (!con || placing[key] || dragging || inDrag(w)) return;
+                var ws = Tree.wsOf(con);
+                if (w.output && w.output !== outputOf(ws)) {
+                    log(
+                        "OUTPUT " +
+                            shortCaption(w) +
+                            " moved by KWin to " +
+                            w.output.name +
+                            ": back to its workspace's"
+                    );
+                    // For desktopsChanged, which KWin emits next when it swaps the desktop with the
+                    // output (finishInteractiveOutputChange): this turn only.
+                    movedByKWin[key] = true;
+                    later(0, function () {
+                        delete movedByKWin[key];
+                    });
+                    schedule(ws);
+                }
+            })
+        );
+        w.frameGeometryChanged.connect(
+            guard("frame", function (old) {
+                // What KWin did, beside what kwin-i3 asked (TILE): not each step of a drag.
+                if (!dragging && old)
+                    log(
+                        "GEOM " +
+                            shortCaption(w) +
+                            " " +
+                            rectLog(old) +
+                            " -> " +
+                            rectLog(w.frameGeometry)
+                    );
+                refitOnFrameChange(w, old, dragging);
+            })
+        );
         // A border kwin-i3 took, given back by the window menu, or one due (borderDue): on Wayland
         // the title bar comes with the client's answer to the configure (configureDecoration),
         // after the pass that wanted it read frame = client and skipped it (takeBorder). The
         // frame keeps its tile's size and the client shrinks by the title bar (probed).
-        w.clientGeometryChanged.connect(guard("client", function () {
-            if ((tookBorder[key] || borderDue[key]) && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
-        }));
-        w.tileChanged.connect(guard("tileChanged", function (tile) {
-            if (key in expected) {
-                // Ours, possibly arriving late: nothing to do.
-                if (expected[key] === tile || (!tile && expected[key] === null)) return;
-            }
-            var con = model.byWin[key];
-            if (!con || floats(con) || w.fullScreen || w.minimized) return;
-            if (!tile && dragging === "move") {
-                // Dragged out of its tile: it floats where it is dropped (plan, policies). Its place
-                // is kept for the move's length: a cancelled move goes back there (§9 G5).
-                floatPlace[key] = model.placeOf(con);
-                model.floatingEnable(con);
-                setFloatingLook(w, true);
-                expected[key] = null;
-            }
-            schedule(Tree.wsOf(model.byWin[key]));
-        }));
+        w.clientGeometryChanged.connect(
+            guard("client", function () {
+                if (
+                    (tookBorder[key] || borderDue[key]) &&
+                    !w.noBorder &&
+                    !reconciling &&
+                    model.byWin[key] &&
+                    serverDecorated(w)
+                )
+                    schedule(Tree.wsOf(model.byWin[key]));
+            })
+        );
+        w.tileChanged.connect(
+            guard("tileChanged", function (tile) {
+                if (key in expected) {
+                    // Ours, possibly arriving late: nothing to do.
+                    if (
+                        expected[key] === tile ||
+                        (!tile && expected[key] === null)
+                    )
+                        return;
+                }
+                var con = model.byWin[key];
+                if (!con || floats(con) || w.fullScreen || w.minimized) return;
+                if (!tile && dragging === "move") {
+                    // Dragged out of its tile: it floats where it is dropped (plan, policies). Its place
+                    // is kept for the move's length: a cancelled move goes back there (§9 G5).
+                    floatPlace[key] = model.placeOf(con);
+                    model.floatingEnable(con);
+                    setFloatingLook(w, true);
+                    expected[key] = null;
+                }
+                schedule(Tree.wsOf(model.byWin[key]));
+            })
+        );
     }
 
     // ---- focus -----------------------------------------------------------------------------
@@ -2828,16 +4673,27 @@ var KI3 = (function () {
     // and the focus commands, never from a close (the start menu closing sent the pointer across;
     // 72-pointer-stays). checked: this pass has KWin's answer that Show Desktop
     // is off (below).
-    var focusedOutput = null;   // the output the focus was last applied or taken on, by name (not focusOutput, the action below)
-    function pointerOn() { var p = workspace.cursorPos; return screenAt(p.x, p.y); }
+    var focusedOutput = null; // the output the focus was last applied or taken on, by name (not focusOutput, the action below)
+    function pointerOn() {
+        var p = workspace.cursorPos;
+        return screenAt(p.x, p.y);
+    }
     // The pointer inside a window's frame: an activation there is the pointer's (KWin's focus
     // follows mouse on a window reaching onto another output), which i3 never warps (it warps
     // only for a command: tree.c:617, workspace.c:559).
     function pointerInside(w) {
-        var p = workspace.cursorPos, g = w.frameGeometry;
-        return p.x >= g.x && p.x < g.x + g.width && p.y >= g.y && p.y < g.y + g.height;
+        var p = workspace.cursorPos,
+            g = w.frameGeometry;
+        return (
+            p.x >= g.x &&
+            p.x < g.x + g.width &&
+            p.y >= g.y &&
+            p.y < g.y + g.height
+        );
     }
-    function warps() { return Settings.get("mouseWarping") !== "none"; }
+    function warps() {
+        return Settings.get("mouseWarping") !== "none";
+    }
     function applyFocus(byKey, checked) {
         var f = model.focused;
         if (!f) return;
@@ -2848,7 +4704,16 @@ var KI3 = (function () {
         // and the video bridge (Rules.fallbackOnly) hold the focus only when nothing else does,
         // so they don't count.
         var a = workspace.activeWindow;
-        if (!byKey && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock && !Rules.fallbackOnly(a)) return;
+        if (
+            !byKey &&
+            a &&
+            !a.deleted &&
+            !wins[id(a)] &&
+            !a.desktopWindow &&
+            !a.dock &&
+            !Rules.fallbackOnly(a)
+        )
+            return;
         // Except with Show Desktop on: then the desktop holds the focus on purpose (Plasma's edit
         // mode turns it on as the panel's menu closes, and the menu closing is this pass), and
         // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
@@ -2858,16 +4723,31 @@ var KI3 = (function () {
         // window is left to focus on a monitor is also the desktop: that pass still brings the
         // focus back (73-override-redirect). The answer rides on focusPending, so it is the pass it
         // brought that has it, however long a rebuild holds that pass.
-        if (!byKey && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
-            callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
-                     "showingDesktop", guard("showing desktop", function (showing) {
-                if (showing) return;
-                wantFocus();
-                focusPending.checked = true;
-            }));
+        if (
+            !byKey &&
+            a &&
+            !a.deleted &&
+            (a.desktopWindow || a.dock) &&
+            !checked
+        ) {
+            callDBus(
+                "org.kde.KWin",
+                "/KWin",
+                "org.freedesktop.DBus.Properties",
+                "Get",
+                "org.kde.KWin",
+                "showingDesktop",
+                guard("showing desktop", function (showing) {
+                    if (showing) return;
+                    wantFocus();
+                    focusPending.checked = true;
+                })
+            );
             return;
         }
-        var ws = f.type === "ws" ? f : Tree.wsOf(f), s = outputOf(ws), desk = deskOf(ws.num);
+        var ws = f.type === "ws" ? f : Tree.wsOf(f),
+            s = outputOf(ws),
+            desk = deskOf(ws.num);
         var crossed = focusedOutput !== null && focusedOutput !== s.name;
         focusedOutput = s.name;
         var warp = byKey && crossed && warps() && pointerOn() !== s;
@@ -2889,14 +4769,22 @@ var KI3 = (function () {
             // KWin's Switch to Screen focuses a window there, or the desktop (activation.cpp
             // switchToOutput); an open popup is spared by the passive pass's first check above, so this
             // needs no guard of its own (a fault here alone changed nothing, 73-override-redirect).
-            if (workspace.activeScreen !== s) invoke("Switch to Screen " + Workspaces.ordered().indexOf(s));
+            if (workspace.activeScreen !== s)
+                invoke("Switch to Screen " + Workspaces.ordered().indexOf(s));
             if (warp) invoke("MoveMouseToCenter");
             // An empty workspace has the focus, as in i3: no window keeps the keyboard. KWin left
             // it with the window just moved away, hidden on another workspace (fuzzer, I8); the
             // desktop window doesn't keep it either (i3's root click, §5 B4: the Show Desktop
             // check above has already let this pass through).
             var ac = a && !a.deleted ? model.byWin[id(a)] : null;
-            if (f.type === "ws" && ((ac && Tree.wsOf(ac) !== ws) || (a && !a.deleted && (a.desktopWindow || Rules.fallbackOnly(a))))) workspace.activeWindow = null;
+            if (
+                f.type === "ws" &&
+                ((ac && Tree.wsOf(ac) !== ws) ||
+                    (a &&
+                        !a.deleted &&
+                        (a.desktopWindow || Rules.fallbackOnly(a))))
+            )
+                workspace.activeWindow = null;
             return;
         }
         var w = wins[f.win];
@@ -2908,10 +4796,16 @@ var KI3 = (function () {
             // monitor was switched to the returned monitor's workspace and both showed it
             // (fuzzer I2). The window is on its way to s; nothing else changes what a
             // monitor shows.
-            var o = w.output, before = o !== s ? workspace.currentDesktopForScreen(o) : null;
+            var o = w.output,
+                before = o !== s ? workspace.currentDesktopForScreen(o) : null;
             switching++;
-            try { workspace.activeWindow = w; } finally { switching--; }
-            if (before && workspace.currentDesktopForScreen(o) !== before) showOn(before, o);
+            try {
+                workspace.activeWindow = w;
+            } finally {
+                switching--;
+            }
+            if (before && workspace.currentDesktopForScreen(o) !== before)
+                showOn(before, o);
         }
         var fc = floatedOf(model.byWin[f.win]);
         if (fc) raiseFloated(fc, w);
@@ -2919,11 +4813,18 @@ var KI3 = (function () {
     }
 
     function focusedCon() {
-        var w = workspace.activeWindow, f = model.focused;
+        var w = workspace.activeWindow,
+            f = model.focused;
         if (w && model.byWin[id(w)]) {
             // A container chosen with focus parent stays focused while KWin's active window is in
             // it, the workspace too (i3's focus parent reaches it, and a key then acts on it).
-            for (var p = model.byWin[id(w)].parent; f && (f.type === "ws" || (f.type === "con" && f.win === null)) && p; p = p.parent)
+            for (
+                var p = model.byWin[id(w)].parent;
+                f &&
+                (f.type === "ws" || (f.type === "con" && f.win === null)) &&
+                p;
+                p = p.parent
+            )
                 if (p === f) return f;
             model.focusWin(id(w));
             return model.byWin[id(w)];
@@ -2933,8 +4834,15 @@ var KI3 = (function () {
 
     // ---- actions (keys) --------------------------------------------------------------------
 
-    var DIRS = { left: Tree.LEFT, right: Tree.RIGHT, up: Tree.UP, down: Tree.DOWN };
-    function step() { return Settings.get("resizeStep") / 100; }
+    var DIRS = {
+        left: Tree.LEFT,
+        right: Tree.RIGHT,
+        up: Tree.UP,
+        down: Tree.DOWN,
+    };
+    function step() {
+        return Settings.get("resizeStep") / 100;
+    }
 
     // A floating window moves and resizes by floatingStep px, as i3's 10 px (cmd_move_direction,
     // cmd_resize_floating). The window, or null: a tiled con, whose
@@ -2945,15 +4853,25 @@ var KI3 = (function () {
         return w && !w.fullScreen && w.maximizeMode === 0 ? w : null;
     }
     function screenAt(x, y) {
-        return workspace.screens.filter(function (s) { return inRect(s.geometry, x, y); })[0] || null;
+        return (
+            workspace.screens.filter(function (s) {
+                return inRect(s.geometry, x, y);
+            })[0] || null
+        );
     }
-    function screenOverlapping(r) {         // output_containing_rect's largest overlap
-        var best = null, most = 0;
+    function screenOverlapping(r) {
+        // output_containing_rect's largest overlap
+        var best = null,
+            most = 0;
         workspace.screens.forEach(function (s) {
             var g = s.geometry;
             var w = Math.min(r.x + r.width, g.x + g.width) - Math.max(r.x, g.x);
-            var h = Math.min(r.y + r.height, g.y + g.height) - Math.max(r.y, g.y);
-            if (w > 0 && h > 0 && w * h > most) { most = w * h; best = s; }
+            var h =
+                Math.min(r.y + r.height, g.y + g.height) - Math.max(r.y, g.y);
+            if (w > 0 && h > 0 && w * h > most) {
+                most = w * h;
+                best = s;
+            }
         });
         return best;
     }
@@ -2972,22 +4890,37 @@ var KI3 = (function () {
     // con_is_floating); on a window inside it, the tree's move (tree_move, which leaves it at its
     // edge).
     function nudgeFloating(c, d) {
-        var w = floatingWin(c), fc = c && c.win === null && Tree.isFloating(c) ? c.parent : null;
+        var w = floatingWin(c),
+            fc = c && c.win === null && Tree.isFloating(c) ? c.parent : null;
         if (fc && fc.rect) w = null;
         else if (!w) return !!c && floatsAlone(c);
-        var px = Settings.get("floatingStep"), g = w ? w.frameGeometry : fc.rect;
-        var r = { x: g.x + (d === "left" ? -px : d === "right" ? px : 0),
-                  y: g.y + (d === "up" ? -px : d === "down" ? px : 0), width: g.width, height: g.height };
+        var px = Settings.get("floatingStep"),
+            g = w ? w.frameGeometry : fc.rect;
+        var r = {
+            x: g.x + (d === "left" ? -px : d === "right" ? px : 0),
+            y: g.y + (d === "up" ? -px : d === "down" ? px : 0),
+            width: g.width,
+            height: g.height,
+        };
         // Refused only when no part would be on a monitor (i3's floating_reposition).
         var on = workspace.screens.some(function (s) {
             var o = s.geometry;
-            return r.x < o.x + o.width && r.x + r.width > o.x && r.y < o.y + o.height && r.y + r.height > o.y;
+            return (
+                r.x < o.x + o.width &&
+                r.x + r.width > o.x &&
+                r.y < o.y + o.height &&
+                r.y + r.height > o.y
+            );
         });
         if (!on) return true;
-        var s = screenAt(r.x + r.width / 2, r.y + r.height / 2) || screenOverlapping(r), ws = Tree.wsOf(c);
+        var s =
+                screenAt(r.x + r.width / 2, r.y + r.height / 2) ||
+                screenOverlapping(r),
+            ws = Tree.wsOf(c);
         if (fc) {
-            fc.rect.x = r.x; fc.rect.y = r.y;
-            var to = s && s !== outputOf(ws) ? shownWs(s) : null;   // floating_maybe_reassign_ws
+            fc.rect.x = r.x;
+            fc.rect.y = r.y;
+            var to = s && s !== outputOf(ws) ? shownWs(s) : null; // floating_maybe_reassign_ws
             if (to) {
                 fc.rect.out = outGeometry(s);
                 model.moveToWorkspace(c, to);
@@ -3005,22 +4938,31 @@ var KI3 = (function () {
     }
     // Inside a floated split or group, the whole container (cmd_resize: con_inside_floating).
     function growFloating(c, what, sign) {
-        var w = floatingWin(c), fc = floatedOf(c);
+        var w = floatingWin(c),
+            fc = floatedOf(c);
         if (!w && fc && fc.rect) {
             var d = sign * Settings.get("floatingStep");
-            var size = checkSize(Math.max(1, fc.rect.width + (what === "width" ? d : 0)),
-                                 Math.max(1, fc.rect.height + (what === "height" ? d : 0)));
-            fc.rect.width = size.width; fc.rect.height = size.height;
+            var size = checkSize(
+                Math.max(1, fc.rect.width + (what === "width" ? d : 0)),
+                Math.max(1, fc.rect.height + (what === "height" ? d : 0))
+            );
+            fc.rect.width = size.width;
+            fc.rect.height = size.height;
             schedule(Tree.wsOf(c));
             return true;
         }
         if (!w) return !!c && floatsAlone(c);
         if (!w.resizeable) return true;
         noteMoved(id(w));
-        var px = sign * Settings.get("floatingStep"), g = w.frameGeometry;
-        w.frameGeometry = { x: g.x, y: g.y, width: Math.max(1, g.width + (what === "width" ? px : 0)),
-                            height: Math.max(1, g.height + (what === "height" ? px : 0)) };
-        clampFloating(w);       // i3's cmd_resize_floating: floating_check_size
+        var px = sign * Settings.get("floatingStep"),
+            g = w.frameGeometry;
+        w.frameGeometry = {
+            x: g.x,
+            y: g.y,
+            width: Math.max(1, g.width + (what === "width" ? px : 0)),
+            height: Math.max(1, g.height + (what === "height" ? px : 0)),
+        };
+        clampFloating(w); // i3's cmd_resize_floating: floating_check_size
         return true;
     }
 
@@ -3037,56 +4979,107 @@ var KI3 = (function () {
         dragTold[key] = on;
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloating", key, on);
     }
-    var dropTargetsTold = null, floatDropTargetsTold = null, ringToHelperTold = null;     // tellDragState
-    var outlineShownTold = null;        // the helper's SetOutlineShown (tellDragState)
+    var dropTargetsTold = null,
+        floatDropTargetsTold = null,
+        ringToHelperTold = null; // tellDragState
+    var outlineShownTold = null; // the helper's SetOutlineShown (tellDragState)
     function tellDrag(on) {
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOn", on);
         dragTold = {};
-        dropTargetsTold = null; floatDropTargetsTold = null; ringToHelperTold = null; outlineShownTold = null;   // again with the next pass (tellDragState)
-        focusParentTold = on ? null : "";           // again with the next pass (tellFocusParent)
-        selectionTold = on ? null : "";             // again with the next pass (tellSelection)
-        barsHelperTold = on ? null : "";            // the bars again with the next pass (tellBars)
+        dropTargetsTold = null;
+        floatDropTargetsTold = null;
+        ringToHelperTold = null;
+        outlineShownTold = null; // again with the next pass (tellDragState)
+        focusParentTold = on ? null : ""; // again with the next pass (tellFocusParent)
+        selectionTold = on ? null : ""; // again with the next pass (tellSelection)
+        barsHelperTold = on ? null : ""; // the bars again with the next pass (tellBars)
         if (!on) callDBus(DRAG[0], DRAG[1], DRAG[2], "SetBars", "");
-        if (on) for (var k in model.byWin) if (floatsAlone(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
-        if (on) { var was = floatedTold; floatedTold = {}; for (var f in was) if (wins[f]) tellFloated(f, was[f]); }
+        if (on)
+            for (var k in model.byWin)
+                if (floatsAlone(model.byWin[k]) && wins[k])
+                    tellDragFloating(k, true);
+        if (on) {
+            var was = floatedTold;
+            floatedTold = {};
+            for (var f in was) if (wins[f]) tellFloated(f, was[f]);
+        }
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
         // windows, the frame's room included).
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "SetResizeGap",
+            on ? Math.ceil(gaps().inner / 2) + 1 : 0
+        );
     }
     // i3's move cursor, from kwini3hold (SetDragCursor): renewed by every poll, so it ends by itself
     // if kwin-i3 goes away mid-drag. shape: 0 the move cursor, 1 left-right, 2 up-down (a resize).
     function dragCursor(on, shape) {
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDragCursor", on, shape || 0);
+        if (frameOn)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetDragCursor",
+                on,
+                shape || 0
+            );
     }
 
     // The visible workspaces, with their monitors: a model workspace for each, an empty one too.
     function shownWorkspaces() {
-        return workspace.screens.map(function (s) {
-            var ws = shownWs(s);
-            return ws ? { ws: ws, screen: s } : null;
-        }).filter(function (v) { return v; });
+        return workspace.screens
+            .map(function (s) {
+                var ws = shownWs(s);
+                return ws ? { ws: ws, screen: s } : null;
+            })
+            .filter(function (v) {
+                return v;
+            });
     }
     // is_tiling_drop_target: a tiled window shown, not under another's fullscreen.
     function dropTargetsOf(ws) {
         var fs = model.fullscreenOn(ws);
-        return model.leaves(ws).filter(function (c) { return visibleLeaf(c) && !Tree.isHidden(c) && (!fs || fs === c); });
+        return model.leaves(ws).filter(function (c) {
+            return visibleLeaf(c) && !Tree.isHidden(c) && (!fs || fs === c);
+        });
     }
     // The tab a Meta press on a bar names ("key:index", State's last field), else null.
     function tabAt(spec) {
         if (!spec || spec === "-") return null;
-        var i = spec.lastIndexOf(":"), con = barGroups[spec.slice(0, i)];
+        var i = spec.lastIndexOf(":"),
+            con = barGroups[spec.slice(0, i)];
         if (!con || !Tree.wsOf(con)) return null;
-        return con.nodes.filter(function (k) { return project(k); })[Number(spec.slice(i + 1))] || null;
+        return (
+            con.nodes.filter(function (k) {
+                return project(k);
+            })[Number(spec.slice(i + 1))] || null
+        );
     }
     // What the helper decides a press by, told after each pass when it changes: whether there is
     // anywhere to drop a tiling window, and a floating one (a Meta+Shift press goes to the app
     // without, §9 G4, G13), and whether tiling windows have the ring (frame focus, §1).
     function tellDragState() {
-        var d = hasDropTargets(), fd = hasDropTargets(true), r = tiledRing();
-        if (d !== dropTargetsTold) { dropTargetsTold = d; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetDropTargets", d); }
-        if (frameOn !== outlineShownTold) { outlineShownTold = frameOn; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOutlineShown", frameOn); }
-        if (fd !== floatDropTargetsTold) { floatDropTargetsTold = fd; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloatDropTargets", fd); }
-        if (r !== ringToHelperTold) { ringToHelperTold = r; callDBus(DRAG[0], DRAG[1], DRAG[2], "SetTiledRing", r); }
+        var d = hasDropTargets(),
+            fd = hasDropTargets(true),
+            r = tiledRing();
+        if (d !== dropTargetsTold) {
+            dropTargetsTold = d;
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "SetDropTargets", d);
+        }
+        if (frameOn !== outlineShownTold) {
+            outlineShownTold = frameOn;
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "SetOutlineShown", frameOn);
+        }
+        if (fd !== floatDropTargetsTold) {
+            floatDropTargetsTold = fd;
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "SetFloatDropTargets", fd);
+        }
+        if (r !== ringToHelperTold) {
+            ringToHelperTold = r;
+            callDBus(DRAG[0], DRAG[1], DRAG[2], "SetTiledRing", r);
+        }
     }
     // has_drop_targets; a floating window or container (§9 G13) is none of them, so one is enough.
     function hasDropTargets(floating) {
@@ -3097,7 +5090,9 @@ var KI3 = (function () {
         });
         return n > (floating ? 0 : 1);
     }
-    function inRect(r, x, y) { return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height; }
+    function inRect(r, x, y) {
+        return x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height;
+    }
     // con_rect_size_in_orientation: a split's px along its own orientation, for the resize floor.
     function splitSize(split) {
         var r = conRect(split);
@@ -3111,22 +5106,33 @@ var KI3 = (function () {
         model.leaves(con).forEach(function (c) {
             if (!visibleLeaf(c)) return;
             var g = wins[c.win].frameGeometry;
-            if (!r) { r = { x: g.x, y: g.y, width: g.width, height: g.height }; return; }
-            var x1 = Math.max(r.x + r.width, g.x + g.width), y1 = Math.max(r.y + r.height, g.y + g.height);
-            r.x = Math.min(r.x, g.x); r.y = Math.min(r.y, g.y);
-            r.width = x1 - r.x; r.height = y1 - r.y;
+            if (!r) {
+                r = { x: g.x, y: g.y, width: g.width, height: g.height };
+                return;
+            }
+            var x1 = Math.max(r.x + r.width, g.x + g.width),
+                y1 = Math.max(r.y + r.height, g.y + g.height);
+            r.x = Math.min(r.x, g.x);
+            r.y = Math.min(r.y, g.y);
+            r.width = x1 - r.x;
+            r.height = y1 - r.y;
         });
         return r || { x: 0, y: 0, width: 0, height: 0 };
     }
-    function findDropTarget(x, y) {         // find_drop_target
+    function findDropTarget(x, y) {
+        // find_drop_target
         var shown = shownWorkspaces();
         for (var i = 0; i < shown.length; i++) {
-            var hit = dropTargetsOf(shown[i].ws).filter(function (c) { return inRect(conRect(c), x, y); })[0];
+            var hit = dropTargetsOf(shown[i].ws).filter(function (c) {
+                return inRect(conRect(c), x, y);
+            })[0];
             if (hit) return hit;
         }
         // Over no window (a gap): the shown workspace's focused tiled window, or the workspace.
         var s = screenAt(x, y);
-        var on = shown.filter(function (v) { return v.screen === s; })[0];
+        var on = shown.filter(function (v) {
+            return v.screen === s;
+        })[0];
         return on ? model.descendTilingFocused(on.ws) : null;
     }
     // The parent zone's depth. Not i3's render_deco_height() + 5 px (about 25): a strip that thin
@@ -3136,50 +5142,118 @@ var KI3 = (function () {
     // The centre's band under the pointer (tabbed, stacked, swap), for the indicator.
     function bandRect(plan) {
         if (!plan.bands) return null;
-        for (var i = 0; i < plan.bands.length; i++) if (plan.bands[i].band === plan.band) return plan.bands[i].rect;
+        for (var i = 0; i < plan.bands.length; i++)
+            if (plan.bands[i].band === plan.band) return plan.bands[i].rect;
         return null;
     }
     // The indicator, and over a window's centre its three bands' icons (plan.bands: tabbed,
     // stacked, swap), the one under the pointer highlighted.
     function indicate(rect, plan) {
-        var r = rect ? [Math.round(rect.x), Math.round(rect.y), Math.round(rect.width), Math.round(rect.height)] : [0, 0, 0, 0];
+        var r = rect
+            ? [
+                  Math.round(rect.x),
+                  Math.round(rect.y),
+                  Math.round(rect.width),
+                  Math.round(rect.height),
+              ]
+            : [0, 0, 0, 0];
         var b = [0, 0, 0, 0, -1];
         if (plan && plan.bands) {
             var c = plan.rect;
-            b = [Math.round(c.x), Math.round(c.y), Math.round(c.width), Math.round(c.height),
-                 plan.bands.map(function (x) { return x.band; }).indexOf(plan.band)];
+            b = [
+                Math.round(c.x),
+                Math.round(c.y),
+                Math.round(c.width),
+                Math.round(c.height),
+                plan.bands
+                    .map(function (x) {
+                        return x.band;
+                    })
+                    .indexOf(plan.band),
+            ];
         }
         var key = r.join(",") + "|" + b.join(",");
         if (!drag || key === drag.rect) return;
         drag.rect = key;
         if (!frameOn) return;
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropIndicator", r[0], r[1], r[2], r[3]);
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropBands", b[0], b[1], b[2], b[3], b[4]);
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "SetDropIndicator",
+            r[0],
+            r[1],
+            r[2],
+            r[3]
+        );
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "SetDropBands",
+            b[0],
+            b[1],
+            b[2],
+            b[3],
+            b[4]
+        );
     }
     // Still in the tree: a window by its id, a container by its place in its parent.
     function inTree(c) {
         if (c.win !== null) return model.byWin[c.win] === c;
-        return !!c.parent && (c.parent.nodes.indexOf(c) >= 0) && !!Tree.wsOf(c);
+        return !!c.parent && c.parent.nodes.indexOf(c) >= 0 && !!Tree.wsOf(c);
     }
     function dragState(s) {
         if (!drag) return;
         drag.busy = false;
-        if (drag.resize) { resizeState(s); return; }
-        var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]);
+        if (drag.resize) {
+            resizeState(s);
+            return;
+        }
+        var f = String(s).split(" "),
+            phase = f[0],
+            x = Number(f[2]),
+            y = Number(f[3]);
         if (phase === "drag" || phase === "drop") {
             var con = drag.con;
             // A tab's drag is reported by the window the helper took the press with (drag.via).
-            if ((model.byWin[f[1]] !== con && f[1] !== drag.via) || !inTree(con) || con.type !== drag.type) { endDrag("its window is gone"); return; }
+            if (
+                (model.byWin[f[1]] !== con && f[1] !== drag.via) ||
+                !inTree(con) ||
+                con.type !== drag.type
+            ) {
+                endDrag("its window is gone");
+                return;
+            }
             var zw = wins[shownWindow(con).win];
-            if (!zw) { endDrag("its window is gone"); return; }
+            if (!zw) {
+                endDrag("its window is gone");
+                return;
+            }
             if (drag.outline) {
                 drag.at = outlineAt(drag.outline, x, y);
-                if (phase === "drag") { outline(drag.at); return; }
+                if (phase === "drag") {
+                    outline(drag.at);
+                    return;
+                }
                 floatAtOutline(" at " + x + "," + y);
                 return;
             }
-            drag.plan = model.dropPlan(con, findDropTarget(x, y), x, y, conRect, PARENT_ZONE);
-            if (phase === "drag") { indicate(drag.plan && (bandRect(drag.plan) || drag.plan.rect), drag.plan); return; }
+            drag.plan = model.dropPlan(
+                con,
+                findDropTarget(x, y),
+                x,
+                y,
+                conRect,
+                PARENT_ZONE
+            );
+            if (phase === "drag") {
+                indicate(
+                    drag.plan && (bandRect(drag.plan) || drag.plan.rect),
+                    drag.plan
+                );
+                return;
+            }
             dropOn(drag.plan, " at " + x + "," + y);
             return;
         }
@@ -3188,50 +5262,115 @@ var KI3 = (function () {
     // G16's outline on the effect, sent on every poll so it is renewed while the drag lasts (the
     // effect clears it 500 ms after the last).
     function outline(r) {
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetOutline",
-                              r ? r.x : 0, r ? r.y : 0, r ? r.width : 0, r ? r.height : 0);
+        if (frameOn)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetOutline",
+                r ? r.x : 0,
+                r ? r.y : 0,
+                r ? r.width : 0,
+                r ? r.height : 0
+            );
     }
     // G16's outline: the container's rect moved with the pointer, unbounded, as a floated
     // container's move (F1a) and i3's floating_drag_window: kept inside the output, a container
     // nearly as large as it couldn't move at all.
     function outlineAt(o, x, y) {
         var r = o.rect;
-        return { x: Math.round(r.x + x - o.sx), y: Math.round(r.y + y - o.sy), width: r.width, height: r.height };
+        return {
+            x: Math.round(r.x + x - o.sx),
+            y: Math.round(r.y + y - o.sy),
+            width: r.width,
+            height: r.height,
+        };
     }
     // G16's release: the selected container floats whole at the outline (as the Floating Toggle,
     // T16, but where it was dropped, at the size it had), the focus staying on it. Moved less than
     // Qt's start-drag distance (10 px) is a click: nothing.
     function floatAtOutline(where) {
-        var c = drag.con, o = drag.outline, at = drag.at;
-        if (!at || Math.abs(at.x - o.rect.x) + Math.abs(at.y - o.rect.y) < 10) { endDrag("no float" + where); return; }
-        if (!inTree(c) || !model.leaves(c).length) { endDrag("ended, its container is gone" + where); return; }
+        var c = drag.con,
+            o = drag.outline,
+            at = drag.at;
+        if (!at || Math.abs(at.x - o.rect.x) + Math.abs(at.y - o.rect.y) < 10) {
+            endDrag("no float" + where);
+            return;
+        }
+        if (!inTree(c) || !model.leaves(c).length) {
+            endDrag("ended, its container is gone" + where);
+            return;
+        }
         var ws = Tree.wsOf(c);
-        model.leaves(c).forEach(function (l) { if (wins[l.win]) untile(wins[l.win]); });
+        model.leaves(c).forEach(function (l) {
+            if (wins[l.win]) untile(wins[l.win]);
+        });
         model.toggleFloating(c);
         // Dropped over another output: there, on its shown workspace, as a floated container moved
         // there by the mouse (floatedMovedTo).
-        var on = screenAt(at.x + at.width / 2, at.y + at.height / 2) || screenOverlapping(at) || o.screen;
-        c.parent.rect = { x: at.x, y: at.y, width: at.width, height: at.height, out: outGeometry(on) };
-        endDrag("floated whole, " + at.width + "x" + at.height + " at " + at.x + "," + at.y + where);
+        var on =
+            screenAt(at.x + at.width / 2, at.y + at.height / 2) ||
+            screenOverlapping(at) ||
+            o.screen;
+        c.parent.rect = {
+            x: at.x,
+            y: at.y,
+            width: at.width,
+            height: at.height,
+            out: outGeometry(on),
+        };
+        endDrag(
+            "floated whole, " +
+                at.width +
+                "x" +
+                at.height +
+                " at " +
+                at.x +
+                "," +
+                at.y +
+                where
+        );
         var to = on !== outputOf(ws) ? shownWs(on) : null;
-        if (to) { model.moveToWorkspace(c, to); schedule(to); }
+        if (to) {
+            model.moveToWorkspace(c, to);
+            schedule(to);
+        }
         schedule(ws);
         wantFocus();
     }
     // The drop, by plan (the drag's last, or the release's).
     function dropOn(plan, where) {
-        var con = drag.con, from = Tree.wsOf(con), to = plan && Tree.wsOf(plan.target);
+        var con = drag.con,
+            from = Tree.wsOf(con),
+            to = plan && Tree.wsOf(plan.target);
         // A centre drop onto a window: its top band makes the two a tabbed group, its middle a
         // stacked one, its bottom swaps them (§9 G11); onto a window in a group it joins the group
         // (i3's con_move_to_target). Onto an empty workspace it is a move. A floating window or
         // container (§9 G13) is tiled and dropped in one step, its bottom band putting it after
         // the target: a swap would send the target to wherever the tiles' focus is.
-        var swap = !drag.floating && !!plan && plan.type === Tree.CENTER && plan.target.type !== "ws";
+        var swap =
+            !drag.floating &&
+            !!plan &&
+            plan.type === Tree.CENTER &&
+            plan.target.type !== "ws";
         var dropped = drag.floating
-            ? !!plan && !model.dropFloatingRefused(con, plan) && !!tileFloating(con, function () { return model.dropFloating(con, plan) ? con : null; })
+            ? !!plan &&
+              !model.dropFloatingRefused(con, plan) &&
+              !!tileFloating(con, function () {
+                  return model.dropFloating(con, plan) ? con : null;
+              })
             : model.drop(con, plan, swap);
-        endDrag(dropped ? "dropped " + plan.type + (plan.type !== Tree.CENTER ? " " + plan.dir : "") + (plan.band ? " " + plan.band : "") + (swap ? " (swap)" : "") + (drag.floating ? " (tiled)" : "") +
-                          where : "no drop" + where);
+        endDrag(
+            dropped
+                ? "dropped " +
+                      plan.type +
+                      (plan.type !== Tree.CENTER ? " " + plan.dir : "") +
+                      (plan.band ? " " + plan.band : "") +
+                      (swap ? " (swap)" : "") +
+                      (drag.floating ? " (tiled)" : "") +
+                      where
+                : "no drop" + where
+        );
         if (dropped) {
             schedule(from);
             if (to && to !== from) schedule(to);
@@ -3244,28 +5383,68 @@ var KI3 = (function () {
     function endDragAtClose(closing, caption) {
         var why = " (" + caption + " closed on the focused workspace)";
         if (drag.resize) {
-            var rz = drag.resize, part = rz.part;
+            var rz = drag.resize,
+                part = rz.part;
             var now = model.resizeParticipants(drag.con, rz.dir);
-            if (drag.lastPos === undefined || closing === part.first || closing === part.second || closing === drag.con ||
-                !now || now.first !== part.first || now.second !== part.second) { endDrag("ended, no resize" + why); return; }
-            var px = Math.round(drag.lastPos - rz.start), ws = Tree.wsOf(part.first);
-            var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
-            endDrag((done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px" : "no resize") + why);
+            if (
+                drag.lastPos === undefined ||
+                closing === part.first ||
+                closing === part.second ||
+                closing === drag.con ||
+                !now ||
+                now.first !== part.first ||
+                now.second !== part.second
+            ) {
+                endDrag("ended, no resize" + why);
+                return;
+            }
+            var px = Math.round(drag.lastPos - rz.start),
+                ws = Tree.wsOf(part.first);
+            var done =
+                px !== 0 &&
+                model.resizeNeighbouring(part.first, part.second, px, rz.size);
+            endDrag(
+                (done
+                    ? "resized " +
+                      (rz.o === "h" ? "width" : "height") +
+                      " " +
+                      px +
+                      " px"
+                    : "no resize") + why
+            );
             if (done) schedule(ws);
             return;
         }
         if (drag.outline) {
             // A window of the container closing: the release's float now, of what is left.
-            var left = model.leaves(drag.con).filter(function (l) { return l !== closing; });
-            if (!left.length || !drag.at) { endDrag("ended, no float" + why); return; }
+            var left = model.leaves(drag.con).filter(function (l) {
+                return l !== closing;
+            });
+            if (!left.length || !drag.at) {
+                endDrag("ended, no float" + why);
+                return;
+            }
             floatAtOutline(why);
             return;
         }
         var plan = drag.plan;
         // i3 drops unless the dragged container itself is gone (tiling_drag.c:325): a container
         // goes with its last window.
-        var inside = closing === drag.con || (Tree.hasParent(closing, drag.con) && model.leaves(drag.con).every(function (l) { return l === closing; }));
-        if (inside || !plan || plan.target === closing || drag.con.type !== drag.type) { endDrag("ended, no drop" + why); return; }
+        var inside =
+            closing === drag.con ||
+            (Tree.hasParent(closing, drag.con) &&
+                model.leaves(drag.con).every(function (l) {
+                    return l === closing;
+                }));
+        if (
+            inside ||
+            !plan ||
+            plan.target === closing ||
+            drag.con.type !== drag.type
+        ) {
+            endDrag("ended, no drop" + why);
+            return;
+        }
         dropOn(plan, why);
     }
     function endDrag(why) {
@@ -3283,13 +5462,20 @@ var KI3 = (function () {
         // on a reply) would leave the drag on for good, every later drag and the pointer's
         // crossings refused: after a second without one, it ends.
         if (drag.busy) {
-            if (Date.now() - drag.busySince > 1000) endDrag("the helper stopped answering");
+            if (Date.now() - drag.busySince > 1000)
+                endDrag("the helper stopped answering");
             return;
         }
         drag.busy = true;
         drag.busySince = Date.now();
         dragCursor(true, drag.shape);
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag state", dragState));
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "State",
+            guard("drag state", dragState)
+        );
     }
     // The hidden action: a drag began. A tiled window of kwin-i3's (a tiling drag never starts
     // from anything floating in i3, click.c:251), or a floating window or a container floated
@@ -3297,61 +5483,137 @@ var KI3 = (function () {
     // nothing else floating); the floating container's child is what is dragged. Only with
     // somewhere else to drop it (has_drop_targets); otherwise the press was a click.
     function startDrag() {
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("drag start", function (s) {
-            var f = String(s).split(" "), con = model.byWin[f[1]];
-            if (f[0] !== "drag" || drag) return;
-            if (f[6] === "float") {
-                // Meta+Shift+left on a window of the selection (§9 G16): the selected container,
-                // floated whole at the release. The selection must still hold the pressed window
-                // (the helper's list is told after each pass): otherwise nothing.
-                var sel = selection();
-                if (!con || !sel || !Tree.hasParent(con, sel)) { log("DRAG not started: the selection changed"); return; }
-                var r = selectionRect(sel), sx = Number(f[7]), sy = Number(f[8]);
-                beginDrag(sel, f[1], false, s, { rect: { x: r.x, y: r.y, width: r.width, height: r.height }, sx: sx, sy: sy,
-                                                 screen: screenAt(sx, sy), ws: Tree.wsOf(sel) });
-                return;
-            }
-            if (con && floats(con)) {
-                // Only Meta+Shift's press tiles a floating window (the helper says so: "tile"); any
-                // other drag report for one (a Meta press as KWin's untile lands) starts nothing.
-                if (f[6] !== "tile") { log("DRAG not started: floating, and not Meta+Shift"); return; }
-                tabDrag = null;                 // a floated group's tab click before: not this drag
-                var child = Tree.insideFloating(con).nodes[0];
-                if (!child || !wins[shownWindow(child).win] || !hasDropTargets(true)) {
-                    log("DRAG not started: " + (child ? "nowhere to drop" : "not a window of kwin-i3's"));
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "State",
+            guard("drag start", function (s) {
+                var f = String(s).split(" "),
+                    con = model.byWin[f[1]];
+                if (f[0] !== "drag" || drag) return;
+                if (f[6] === "float") {
+                    // Meta+Shift+left on a window of the selection (§9 G16): the selected container,
+                    // floated whole at the release. The selection must still hold the pressed window
+                    // (the helper's list is told after each pass): otherwise nothing.
+                    var sel = selection();
+                    if (!con || !sel || !Tree.hasParent(con, sel)) {
+                        log("DRAG not started: the selection changed");
+                        return;
+                    }
+                    var r = selectionRect(sel),
+                        sx = Number(f[7]),
+                        sy = Number(f[8]);
+                    beginDrag(sel, f[1], false, s, {
+                        rect: {
+                            x: r.x,
+                            y: r.y,
+                            width: r.width,
+                            height: r.height,
+                        },
+                        sx: sx,
+                        sy: sy,
+                        screen: screenAt(sx, sy),
+                        ws: Tree.wsOf(sel),
+                    });
                     return;
                 }
-                beginDrag(child, child === con ? null : f[1], true, s);
-                return;
-            }
-            // A drag from a tab: the press was taken with the window shown then; the tab's own,
-            // from the helper's "key:index" for a Meta press (nothing focused, so the bars are as
-            // they were), else from the tab click that came first.
-            var via = null, tab = tabAt(f[5]);
-            if (tab) { con = tab; via = f[1]; }
-            else if (tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con)) { con = tabDrag.con; via = f[1]; }
-            tabDrag = null;
-            var ours = !!con && con.type === "con" && !floats(con);
-            if (!ours || !wins[shownWindow(con).win] || !hasDropTargets()) {
-                log("DRAG not started: " + (ours ? "nowhere to drop" : "not a window of kwin-i3's"));
-                return;
-            }
-            beginDrag(con, via, false, s);
-        }));
+                if (con && floats(con)) {
+                    // Only Meta+Shift's press tiles a floating window (the helper says so: "tile"); any
+                    // other drag report for one (a Meta press as KWin's untile lands) starts nothing.
+                    if (f[6] !== "tile") {
+                        log("DRAG not started: floating, and not Meta+Shift");
+                        return;
+                    }
+                    tabDrag = null; // a floated group's tab click before: not this drag
+                    var child = Tree.insideFloating(con).nodes[0];
+                    if (
+                        !child ||
+                        !wins[shownWindow(child).win] ||
+                        !hasDropTargets(true)
+                    ) {
+                        log(
+                            "DRAG not started: " +
+                                (child
+                                    ? "nowhere to drop"
+                                    : "not a window of kwin-i3's")
+                        );
+                        return;
+                    }
+                    beginDrag(child, child === con ? null : f[1], true, s);
+                    return;
+                }
+                // A drag from a tab: the press was taken with the window shown then; the tab's own,
+                // from the helper's "key:index" for a Meta press (nothing focused, so the bars are as
+                // they were), else from the tab click that came first.
+                var via = null,
+                    tab = tabAt(f[5]);
+                if (tab) {
+                    con = tab;
+                    via = f[1];
+                } else if (
+                    tabDrag &&
+                    tabDrag.key === f[1] &&
+                    inTree(tabDrag.con)
+                ) {
+                    con = tabDrag.con;
+                    via = f[1];
+                }
+                tabDrag = null;
+                var ours = !!con && con.type === "con" && !floats(con);
+                if (!ours || !wins[shownWindow(con).win] || !hasDropTargets()) {
+                    log(
+                        "DRAG not started: " +
+                            (ours
+                                ? "nowhere to drop"
+                                : "not a window of kwin-i3's")
+                    );
+                    return;
+                }
+                beginDrag(con, via, false, s);
+            })
+        );
     }
     // `via`: the window the helper reports, when it isn't con's own (a tab, a floated container).
     // `outline`: G16's float of the selection, { rect (the container's at the press), sx sy (the
     // press), screen, ws }; the drag shows where it will float, and drops on nothing.
     function beginDrag(con, via, floating, s, outline) {
         var timer = new QTimer();
-        timer.interval = 16;            // a frame, about: the helper keeps only the last position
+        timer.interval = 16; // a frame, about: the helper keeps only the last position
         timer.timeout.connect(guard("drag poll", pollDrag));
-        drag = { con: con, type: con.type, timer: timer, busy: false, plan: null, rect: "", shape: 0, resize: null, via: via, floating: floating,
-                 outline: outline || null, at: null };
-        log("DRAG " + conCaption(con) + (floating ? " (floating: to tile)" : outline ? " (selected: to float)" : ""));
+        drag = {
+            con: con,
+            type: con.type,
+            timer: timer,
+            busy: false,
+            plan: null,
+            rect: "",
+            shape: 0,
+            resize: null,
+            via: via,
+            floating: floating,
+            outline: outline || null,
+            at: null,
+        };
+        log(
+            "DRAG " +
+                conCaption(con) +
+                (floating
+                    ? " (floating: to tile)"
+                    : outline
+                      ? " (selected: to float)"
+                      : "")
+        );
         // The centre's third band: Swap, or Beside for a floating drag, whose bottom band puts it
         // after the target. Told at every drag, so a reloaded effect has it too.
-        if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetDropSwap", !floating);
+        if (frameOn)
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3hold",
+                "net.local.kwini3hold",
+                "SetDropSwap",
+                !floating
+            );
         dragCursor(true);
         dragState(s);
         if (drag) timer.start();
@@ -3365,22 +5627,39 @@ var KI3 = (function () {
     // The tiles' smallest extent along o: windows' minimums (frameMin, with the inner gap) added
     // up along a split and the largest across it, as minOf does for a projection.
     function minExtent(c, o) {
-        if (c.win !== null) { var fm = frameMin(wins[c.win]); return (o === "h" ? fm.w : fm.h) + gaps(Tree.wsOf(c)).inner; }
-        var vals = c.nodes.filter(function (k) { return conRect(k).width > 0; }).map(function (k) { return minExtent(k, o); });
-        return vals.reduce(function (a, b) { return c.layout === o ? a + b : Math.max(a, b); }, 0);
+        if (c.win !== null) {
+            var fm = frameMin(wins[c.win]);
+            return (o === "h" ? fm.w : fm.h) + gaps(Tree.wsOf(c)).inner;
+        }
+        var vals = c.nodes
+            .filter(function (k) {
+                return conRect(k).width > 0;
+            })
+            .map(function (k) {
+                return minExtent(k, o);
+            });
+        return vals.reduce(function (a, b) {
+            return c.layout === o ? a + b : Math.max(a, b);
+        }, 0);
     }
     // floating_mod_on_tiled_client: the nearest of the four edges to the press, no thirds, no
     // limit, and nothing if that edge has nothing to resize against (§9 Z1); a tie does nothing.
     // The distance is absolute: a press in the gap is outside the frame.
     function resizeEdge(con, x, y) {
-        var r = conRect(con), d = {};
-        d[Tree.RIGHT] = r.x + r.width - x; d[Tree.LEFT] = x - r.x;
-        d[Tree.DOWN] = r.y + r.height - y; d[Tree.UP] = y - r.y;
-        var best = null, tie = false;
+        var r = conRect(con),
+            d = {};
+        d[Tree.RIGHT] = r.x + r.width - x;
+        d[Tree.LEFT] = x - r.x;
+        d[Tree.DOWN] = r.y + r.height - y;
+        d[Tree.UP] = y - r.y;
+        var best = null,
+            tie = false;
         [Tree.RIGHT, Tree.LEFT, Tree.DOWN, Tree.UP].forEach(function (dir) {
             var dist = Math.abs(d[dir]);
-            if (!best || dist < best.dist) { best = { dir: dir, dist: dist }; tie = false; }
-            else if (dist === best.dist) tie = true;
+            if (!best || dist < best.dist) {
+                best = { dir: dir, dist: dist };
+                tie = false;
+            } else if (dist === best.dist) tie = true;
         });
         if (!best || tie) return null;
         // i3's: the nearest edge, and nothing if it has nothing to resize against (§9 Z1).
@@ -3389,7 +5668,12 @@ var KI3 = (function () {
     }
     // A ring press (§9 Z3, i3's tiling_resize on a border): the side pressed, from the helper.
     function resizeSide(con, side) {
-        var dir = { top: Tree.UP, bottom: Tree.DOWN, left: Tree.LEFT, right: Tree.RIGHT }[side];
+        var dir = {
+            top: Tree.UP,
+            bottom: Tree.DOWN,
+            left: Tree.LEFT,
+            right: Tree.RIGHT,
+        }[side];
         if (!dir) return null;
         var part = model.resizeParticipants(con, dir);
         return part ? { dir: dir, part: part, dist: 0 } : null;
@@ -3403,43 +5687,106 @@ var KI3 = (function () {
         if (model.fullscreenOn(ws)) return null;
         var e = side ? resizeSide(con, side) : resizeEdge(con, x, y);
         if (!e) return null;
-        var o = e.dir === Tree.LEFT || e.dir === Tree.RIGHT ? "h" : "v", part = e.part;
-        var ff = model.descendFocused(part.first), fs = model.descendFocused(part.second);
-        if (ff.win === null || fs.win === null || !wins[ff.win] || !wins[fs.win]) return null;
-        var a = conRect(ff), b = conRect(fs), f = conRect(part.first), sr = conRect(part.second), inner = gaps(ws).inner;
-        var start = o === "h" ? b.x - Math.floor((b.x - (a.x + a.width)) / 2) : b.y - Math.floor((b.y - (a.y + a.height)) / 2);
+        var o = e.dir === Tree.LEFT || e.dir === Tree.RIGHT ? "h" : "v",
+            part = e.part;
+        var ff = model.descendFocused(part.first),
+            fs = model.descendFocused(part.second);
+        if (
+            ff.win === null ||
+            fs.win === null ||
+            !wins[ff.win] ||
+            !wins[fs.win]
+        )
+            return null;
+        var a = conRect(ff),
+            b = conRect(fs),
+            f = conRect(part.first),
+            sr = conRect(part.second),
+            inner = gaps(ws).inner;
+        var start =
+            o === "h"
+                ? b.x - Math.floor((b.x - (a.x + a.width)) / 2)
+                : b.y - Math.floor((b.y - (a.y + a.height)) / 2);
         // Kept inside the two participants' tiles less each one's minimum, so a release can't ask
         // for what KWin's tiles refuse (i3 keeps the bar 25 px inside the output).
         var lo = (o === "h" ? f.x : f.y) - inner / 2 + minExtent(part.first, o);
-        var hi = (o === "h" ? sr.x + sr.width : sr.y + sr.height) + inner / 2 - minExtent(part.second, o);
+        var hi =
+            (o === "h" ? sr.x + sr.width : sr.y + sr.height) +
+            inner / 2 -
+            minExtent(part.second, o);
         if (lo > hi) lo = hi = start;
         // parent size = the two tiles' extent / their shares (con_rect_size_in_orientation(parent))
         var n = part.first.parent.nodes.length;
-        var shares = (part.first.percent || 1 / n) + (part.second.percent || 1 / n);
+        var shares =
+            (part.first.percent || 1 / n) + (part.second.percent || 1 / n);
         var ext = o === "h" ? f.width + sr.width : f.height + sr.height;
-        return { o: o, dir: e.dir, part: part, start: Math.round(start), lo: lo, hi: hi, second: sr, size: (ext + 2 * inner) / shares };
+        return {
+            o: o,
+            dir: e.dir,
+            part: part,
+            start: Math.round(start),
+            lo: lo,
+            hi: hi,
+            second: sr,
+            size: (ext + 2 * inner) / shares,
+        };
     }
-    function resizePos(rz, x, y) { return Math.min(Math.max(rz.o === "h" ? x : y, rz.lo), rz.hi); }
+    function resizePos(rz, x, y) {
+        return Math.min(Math.max(rz.o === "h" ? x : y, rz.lo), rz.hi);
+    }
     // i3's helprect: along the second participant, 2 px wide.
     function resizeBar(rz, pos) {
         var r = rz.second;
-        return rz.o === "h" ? { x: pos - 1, y: r.y, width: 2, height: r.height } : { x: r.x, y: pos - 1, width: r.width, height: 2 };
+        return rz.o === "h"
+            ? { x: pos - 1, y: r.y, width: 2, height: r.height }
+            : { x: r.x, y: pos - 1, width: r.width, height: 2 };
     }
     function resizeState(s) {
-        var f = String(s).split(" "), phase = f[0], x = Number(f[2]), y = Number(f[3]), rz = drag.resize;
+        var f = String(s).split(" "),
+            phase = f[0],
+            x = Number(f[2]),
+            y = Number(f[3]),
+            rz = drag.resize;
         if (phase === "resize" || phase === "drop") {
-            if (model.byWin[f[1]] !== drag.con && f[1] !== drag.via) { endDrag("its window is gone"); return; }
+            if (model.byWin[f[1]] !== drag.con && f[1] !== drag.via) {
+                endDrag("its window is gone");
+                return;
+            }
             var pos = resizePos(rz, x, y);
             drag.lastPos = pos;
-            if (phase === "resize") { indicate(resizeBar(rz, pos)); return; }
-            var px = Math.round(pos - rz.start), part = rz.part, ws = Tree.wsOf(part.first);
+            if (phase === "resize") {
+                indicate(resizeBar(rz, pos));
+                return;
+            }
+            var px = Math.round(pos - rz.start),
+                part = rz.part,
+                ws = Tree.wsOf(part.first);
             // The tree changed under the drag (a participant closed, a window opened between):
             // the two found at the press are no longer the boundary's.
             var now = model.resizeParticipants(drag.con, rz.dir);
-            if (!now || now.first !== part.first || now.second !== part.second) { endDrag("the layout changed, no resize"); return; }
-            var done = px !== 0 && model.resizeNeighbouring(part.first, part.second, px, rz.size);
-            endDrag(px === 0 ? "no change" : done ? "resized " + (rz.o === "h" ? "width" : "height") + " " + px + " px of " + Math.round(rz.size) :
-                                                    "refused " + px + " px");
+            if (
+                !now ||
+                now.first !== part.first ||
+                now.second !== part.second
+            ) {
+                endDrag("the layout changed, no resize");
+                return;
+            }
+            var done =
+                px !== 0 &&
+                model.resizeNeighbouring(part.first, part.second, px, rz.size);
+            endDrag(
+                px === 0
+                    ? "no change"
+                    : done
+                      ? "resized " +
+                        (rz.o === "h" ? "width" : "height") +
+                        " " +
+                        px +
+                        " px of " +
+                        Math.round(rz.size)
+                      : "refused " + px + " px"
+            );
             if (done) schedule(ws);
             return;
         }
@@ -3448,29 +5795,80 @@ var KI3 = (function () {
     // The hidden action: a Meta+right press. Nothing to resize against (or fullscreen): the press
     // was nothing, and the helper's resize is cancelled.
     function startResize() {
-        callDBus(DRAG[0], DRAG[1], DRAG[2], "State", guard("resize start", function (s) {
-            var f = String(s).split(" "), con = model.byWin[f[1]];
-            if (f[0] !== "resize" || drag) return;
-            // f[4]: the ring's side pressed (Z3), a tab's "top" (G14), or "-" for Meta+right's
-            // nearest edge (Z1). A tab's press was taken with the window shown then: the tab's own
-            // container resizes, as i3's tiling_resize of the con whose decoration was pressed.
-            var x = Number(f[2]), y = Number(f[3]), side = f[4] && f[4] !== "-" ? f[4] : null;
-            var tab = side === "top" && tabDrag && tabDrag.key === f[1] && inTree(tabDrag.con) ? tabDrag.con : null;
-            tabDrag = null;
-            if (tab) con = tab;
-            var rz = con && con.type === "con" && !floatsAlone(con) && (tab || wins[con.win]) ? resizePlan(con, x, y, side) : null;
-            if (!rz) { log("RESIZE not started: nothing to resize against" + (side ? " on the " + side : "")); callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel"); return; }
-            var timer = new QTimer();
-            timer.interval = 16;
-            timer.timeout.connect(guard("resize poll", pollDrag));
-            drag = { con: con, timer: timer, busy: false, plan: null, rect: "", shape: rz.o === "h" ? 1 : 2, resize: rz, via: tab ? f[1] : null };
-            log("RESIZE " + conCaption(con) + " " + (rz.o === "h" ? "width" : "height") + " at " + rz.start);
-            // i3 warps the pointer onto the bar: along the boundary's axis only.
-            callDBus(DRAG[0], DRAG[1], DRAG[2], "Warp", Math.round(rz.o === "h" ? rz.start : x), Math.round(rz.o === "h" ? y : rz.start));
-            dragCursor(true, drag.shape);
-            indicate(resizeBar(rz, rz.start));
-            timer.start();
-        }));
+        callDBus(
+            DRAG[0],
+            DRAG[1],
+            DRAG[2],
+            "State",
+            guard("resize start", function (s) {
+                var f = String(s).split(" "),
+                    con = model.byWin[f[1]];
+                if (f[0] !== "resize" || drag) return;
+                // f[4]: the ring's side pressed (Z3), a tab's "top" (G14), or "-" for Meta+right's
+                // nearest edge (Z1). A tab's press was taken with the window shown then: the tab's own
+                // container resizes, as i3's tiling_resize of the con whose decoration was pressed.
+                var x = Number(f[2]),
+                    y = Number(f[3]),
+                    side = f[4] && f[4] !== "-" ? f[4] : null;
+                var tab =
+                    side === "top" &&
+                    tabDrag &&
+                    tabDrag.key === f[1] &&
+                    inTree(tabDrag.con)
+                        ? tabDrag.con
+                        : null;
+                tabDrag = null;
+                if (tab) con = tab;
+                var rz =
+                    con &&
+                    con.type === "con" &&
+                    !floatsAlone(con) &&
+                    (tab || wins[con.win])
+                        ? resizePlan(con, x, y, side)
+                        : null;
+                if (!rz) {
+                    log(
+                        "RESIZE not started: nothing to resize against" +
+                            (side ? " on the " + side : "")
+                    );
+                    callDBus(DRAG[0], DRAG[1], DRAG[2], "Cancel");
+                    return;
+                }
+                var timer = new QTimer();
+                timer.interval = 16;
+                timer.timeout.connect(guard("resize poll", pollDrag));
+                drag = {
+                    con: con,
+                    timer: timer,
+                    busy: false,
+                    plan: null,
+                    rect: "",
+                    shape: rz.o === "h" ? 1 : 2,
+                    resize: rz,
+                    via: tab ? f[1] : null,
+                };
+                log(
+                    "RESIZE " +
+                        conCaption(con) +
+                        " " +
+                        (rz.o === "h" ? "width" : "height") +
+                        " at " +
+                        rz.start
+                );
+                // i3 warps the pointer onto the bar: along the boundary's axis only.
+                callDBus(
+                    DRAG[0],
+                    DRAG[1],
+                    DRAG[2],
+                    "Warp",
+                    Math.round(rz.o === "h" ? rz.start : x),
+                    Math.round(rz.o === "h" ? y : rz.start)
+                );
+                dragCursor(true, drag.shape);
+                indicate(resizeBar(rz, rz.start));
+                timer.start();
+            })
+        );
     }
 
     // ---- the pointer --------------------------------------
@@ -3487,8 +5885,10 @@ var KI3 = (function () {
     // Nothing while a tiling drag or resize runs (the helper holds the pointer), and until
     // screensChanged has reseeded the output seen after a change. kwin-i3's own warp needs no
     // mask: it goes to the output that has the focus, so its crossing finds nothing to change.
-    var pointerOutput = null;   // the output the pointer was last seen on, by name
-    function focusFollowsMouse() { return Settings.get("focusFollowsMouse"); }
+    var pointerOutput = null; // the output the pointer was last seen on, by name
+    function focusFollowsMouse() {
+        return Settings.get("focusFollowsMouse");
+    }
 
     // What i3 decides, won through KWin's live options, kwinrc left as it is (philosophy.md, "The
     // line between i3 and Plasma"; kwin-notes, "A script can write KWin's live options"): focus
@@ -3509,14 +5909,15 @@ var KI3 = (function () {
         options.focusStealingPreventionLevel = 1;
         options.electricBorderTiling = false;
         options.electricBorderMaximize = false;
-        options.commandAll1 = 12;      // MouseActivateRaiseAndMove (options.h:456-484)
+        options.commandAll1 = 12; // MouseActivateRaiseAndMove (options.h:456-484)
     }
     function seedPointer() {
         var s = pointerOn();
         pointerOutput = s ? s.name : null;
     }
     function pointerMoved() {
-        var p = workspace.cursorPos, s = screenAt(p.x, p.y);
+        var p = workspace.cursorPos,
+            s = screenAt(p.x, p.y);
         if (!s) return;
         var was = pointerOutput;
         pointerOutput = s.name;
@@ -3527,19 +5928,31 @@ var KI3 = (function () {
         // (con_descend_focused). On the focused output that changes the focus only while it is a
         // container or the workspace itself (focus parent): only then the hit test, else one
         // comparison per motion.
-        var fws = focusedWs(), fout = fws ? outputOf(fws) : null;
+        var fws = focusedWs(),
+            fout = fws ? outputOf(fws) : null;
         if (fout && fout.name === s.name) {
             var f = model.focused;
-            if (!f || (f.type === "con" && f.win !== null) || focusOf(fws) === f) return;
+            if (
+                !f ||
+                (f.type === "con" && f.win !== null) ||
+                focusOf(fws) === f
+            )
+                return;
         }
         var under = windowUnder(p.x, p.y);
-        if (under && wins[id(under)]) return;           // KWin's focus follows mouse takes it (B1)
+        if (under && wins[id(under)]) return; // KWin's focus follows mouse takes it (B1)
         var ws = shownWs(s);
         if (!ws) return;
         var target = focusOf(ws);
         if (model.focused === target) return;
         model.activate(target);
-        log("POINTER onto " + s.name + (under ? " over " + shortCaption(under) : "") + ": the focus follows to workspace " + ws.num);
+        log(
+            "POINTER onto " +
+                s.name +
+                (under ? " over " + shortCaption(under) : "") +
+                ": the focus follows to workspace " +
+                ws.num
+        );
         wantFocus();
     }
     // Show Desktop, kept for windowUnder: it hides every window kwin-i3 manages and none it keeps
@@ -3547,13 +5960,21 @@ var KI3 = (function () {
     // out). A script reads neither the window's flag nor the mode, but hears each window's
     // hiddenByShowDesktopChanged (probed): each one asks KWin for the mode, and
     // only the answer to the last question counts.
-    var desktopShowing = false, showingAsked = 0;
+    var desktopShowing = false,
+        showingAsked = 0;
     function readShowing() {
         var n = ++showingAsked;
-        callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
-                 "showingDesktop", guard("showing desktop", function (showing) {
-            if (n === showingAsked) desktopShowing = !!showing;
-        }));
+        callDBus(
+            "org.kde.KWin",
+            "/KWin",
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            "org.kde.KWin",
+            "showingDesktop",
+            guard("showing desktop", function (showing) {
+                if (n === showingAsked) desktopShowing = !!showing;
+            })
+        );
     }
     // The topmost window shown under a point; null for the bare root. Shown wherever its frame
     // reaches while it is on its own output's visible desktop, as KWin draws it
@@ -3567,9 +5988,16 @@ var KI3 = (function () {
             var w = order[i];
             if (w.deleted || w.minimized || w.hidden || !w.output) continue;
             if (desktopShowing && wins[id(w)]) continue;
-            if (!w.onAllDesktops && w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) continue;
+            if (
+                !w.onAllDesktops &&
+                w.desktops.indexOf(
+                    workspace.currentDesktopForScreen(w.output)
+                ) < 0
+            )
+                continue;
             var g = w.frameGeometry;
-            if (x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height) return w;
+            if (x >= g.x && x < g.x + g.width && y >= g.y && y < g.y + g.height)
+                return w;
         }
         return null;
     }
@@ -3582,26 +6010,44 @@ var KI3 = (function () {
         var ws = s ? shownWs(s) : null;
         if (!ws) return;
         model.activate(focusOf(ws));
-        log("ACTIVE " + shortCaption(w) + " (the desktop): the focus goes to workspace " + ws.num);
+        log(
+            "ACTIVE " +
+                shortCaption(w) +
+                " (the desktop): the focus goes to workspace " +
+                ws.num
+        );
         wantFocus();
     }
     // i3's start (main.c): the focus on the output under the pointer, at its workspace's focus
     // (§12 P2, §5 E1).
     function focusUnderPointer() {
-        var s = pointerOn() || workspace.activeScreen, ws = shownWs(s);
+        var s = pointerOn() || workspace.activeScreen,
+            ws = shownWs(s);
         if (!ws) return;
         model.activate(focusOf(ws));
-        focusedOutput = s.name;     // else a first key crossing outputs found it null: no warp
+        focusedOutput = s.name; // else a first key crossing outputs found it null: no warp
     }
     // While an override-redirect window has the keyboard (KRunner, a menu, a panel popup), no
     // key of kwin-i3's fires, as i3's bindings don't while dmenu holds it; Escape first (§5
     // A3-A5; panel popups included). Not the video bridge KWin falls back to on an empty desktop
     // (Rules.fallbackOnly): it holds nothing. The safety valve and the dump are not keys.
-    function fallbackActive() { var a = workspace.activeWindow; return !!a && !a.deleted && Rules.fallbackOnly(a); }
+    function fallbackActive() {
+        var a = workspace.activeWindow;
+        return !!a && !a.deleted && Rules.fallbackOnly(a);
+    }
     function keyboardHeld(name) {
         var a = workspace.activeWindow;
-        if (!a || a.deleted || wins[id(a)] || Rules.i3Kind(a) !== "override-redirect" || Rules.fallbackOnly(a)) return false;
-        log("KEY " + name + " ignored: " + shortCaption(a) + " has the keyboard");
+        if (
+            !a ||
+            a.deleted ||
+            wins[id(a)] ||
+            Rules.i3Kind(a) !== "override-redirect" ||
+            Rules.fallbackOnly(a)
+        )
+            return false;
+        log(
+            "KEY " + name + " ignored: " + shortCaption(a) + " has the keyboard"
+        );
         return true;
     }
 
@@ -3615,7 +6061,8 @@ var KI3 = (function () {
         return guard(name, function () {
             if (keyboardHeld(name) || inMode(name)) return;
             var con = focusedCon();
-            var before = con ? Tree.wsOf(con) : null, focusBefore = model.focused;
+            var before = con ? Tree.wsOf(con) : null,
+                focusBefore = model.focused;
             fn(con);
             var f = model.focused;
             schedule(before);
@@ -3626,27 +6073,51 @@ var KI3 = (function () {
             // takes no focus from an open window kwin-i3 doesn't manage (Yakuake, KRunner, a
             // dialog): only keys that move the focus do, as in i3.
             var a = workspace.activeWindow;
-            var keep = model.focused === focusBefore && a && !a.deleted && !wins[id(a)] && !a.desktopWindow && !a.dock;
+            var keep =
+                model.focused === focusBefore &&
+                a &&
+                !a.deleted &&
+                !wins[id(a)] &&
+                !a.desktopWindow &&
+                !a.dock;
             if (!keep) wantFocus(true);
             log("ACTION " + name);
         });
     }
 
     var actions = {
-        "Split H": function (c) { model.split(c, "h"); indicatorFor = c; },
-        "Split V": function (c) { model.split(c, "v"); indicatorFor = c; },
-        "Toggle Split": function (c) { model.toggleSplit(c); indicatorFor = c; },
+        "Split H": function (c) {
+            model.split(c, "h");
+            indicatorFor = c;
+        },
+        "Split V": function (c) {
+            model.split(c, "v");
+            indicatorFor = c;
+        },
+        "Toggle Split": function (c) {
+            model.toggleSplit(c);
+            indicatorFor = c;
+        },
         // i3's layout stacking / layout tabbed: the focused window's container (con_set_layout).
-        "Layout Stacking": function (c) { if (c) model.setLayout(c, "stacked"); },
-        "Layout Tabbed": function (c) { if (c) model.setLayout(c, "tabbed"); },
-        "Focus Parent": function () { model.focusParent(); },
+        "Layout Stacking": function (c) {
+            if (c) model.setLayout(c, "stacked");
+        },
+        "Layout Tabbed": function (c) {
+            if (c) model.setLayout(c, "tabbed");
+        },
+        "Focus Parent": function () {
+            model.focusParent();
+        },
         "Floating Toggle": function (c) {
             if (!c || c.type === "ws") return;
             // A split or a group (focus parent): floated whole, or tiled again. Floating one needs
             // the helper, which moves it whole (plan.md "The mouse"); without it, nothing, as the
             // resize mode's key (§8 K4).
             if (c.win === null) {
-                if (!Tree.isFloating(c) && helperLoaded === false) { log("FLOAT a container: not without the helper"); return; }
+                if (!Tree.isFloating(c) && helperLoaded === false) {
+                    log("FLOAT a container: not without the helper");
+                    return;
+                }
                 toggleFloated(c);
                 return;
             }
@@ -3657,59 +6128,129 @@ var KI3 = (function () {
             var n = model.toggleFloating(c);
             if (n && w) {
                 setFloatingLook(w, floats(n));
-                if (floats(n)) { untile(w); floatAtRecord(w); clampFloating(w); }
+                if (floats(n)) {
+                    untile(w);
+                    floatAtRecord(w);
+                    clampFloating(w);
+                }
             }
         },
-        "Focus Mode Toggle": function () { model.focusModeToggle(); },
+        "Focus Mode Toggle": function () {
+            model.focusModeToggle();
+        },
         // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
         // not; a stock Plasma binds neither key.
         // Not on the window KWin falls back to (Rules.fallbackOnly): i3's kill and fullscreen on
         // an empty workspace do nothing.
-        "Fullscreen": function () { if (!fallbackActive()) invoke("Window Fullscreen"); },
+        Fullscreen: function () {
+            if (!fallbackActive()) invoke("Window Fullscreen");
+        },
         // i3's kill on a container (focus parent) closes every window in it, on a workspace
         // every window there, floating ones too (con_close); else KWin's own, on any window.
-        "Close": function () {
+        Close: function () {
             var f = model.focused;
-            if (f && f.win === null && (f.type === "con" || f.nodes.length || (f.floating && f.floating.length))) {
-                var all = model.leaves(f).concat(f.type === "ws" ? model.floatingWindows(f) : []);
-                all.forEach(function (c) { if (wins[c.win]) wins[c.win].closeWindow(); });
+            if (
+                f &&
+                f.win === null &&
+                (f.type === "con" ||
+                    f.nodes.length ||
+                    (f.floating && f.floating.length))
+            ) {
+                var all = model
+                    .leaves(f)
+                    .concat(f.type === "ws" ? model.floatingWindows(f) : []);
+                all.forEach(function (c) {
+                    if (wins[c.win]) wins[c.win].closeWindow();
+                });
                 return;
             }
             if (!fallbackActive()) invoke("Window Close");
         },
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the settings
         // page's banner says the plugins aren't loaded.
-        "Resize Mode": function () { callDBus(MODE[0], MODE[1], MODE[2], "SetMode", mode ? "" : "resize"); },
+        "Resize Mode": function () {
+            callDBus(
+                MODE[0],
+                MODE[1],
+                MODE[2],
+                "SetMode",
+                mode ? "" : "resize"
+            );
+        },
         // i3's exit, Plasma's way to leave as endSession says (K17): its logout screen's prompts
         // (log out and shut down ask, then go ahead after 30 s; docs/kwin-notes.md, "Plasma"), or
         // PowerDevil's suspend, which asks nothing.
-        "Exit": function () {
+        Exit: function () {
             var how = Settings.get("endSession");
             if (how === "sleep") {
-                callDBus("org.kde.Solid.PowerManagement", "/org/kde/Solid/PowerManagement/Actions/SuspendSession",
-                    "org.kde.Solid.PowerManagement.Actions.SuspendSession", "suspendToRam");
+                callDBus(
+                    "org.kde.Solid.PowerManagement",
+                    "/org/kde/Solid/PowerManagement/Actions/SuspendSession",
+                    "org.kde.Solid.PowerManagement.Actions.SuspendSession",
+                    "suspendToRam"
+                );
                 return;
             }
-            var prompt = { logout: "promptLogout", shutdown: "promptShutDown", ask: "promptAll" }[how];
-            callDBus("org.kde.LogoutPrompt", "/LogoutPrompt", "org.kde.LogoutPrompt", prompt);
+            var prompt = {
+                logout: "promptLogout",
+                shutdown: "promptShutDown",
+                ask: "promptAll",
+            }[how];
+            callDBus(
+                "org.kde.LogoutPrompt",
+                "/LogoutPrompt",
+                "org.kde.LogoutPrompt",
+                prompt
+            );
         },
-        "Terminal": function () { callDBus(MODE[0], MODE[1], MODE[2], "LaunchTerminal"); },
-        "Launcher": function () { callDBus("org.kde.krunner", "/App", "org.kde.krunner.App", "display"); },
+        Terminal: function () {
+            callDBus(MODE[0], MODE[1], MODE[2], "LaunchTerminal");
+        },
+        Launcher: function () {
+            callDBus(
+                "org.kde.krunner",
+                "/App",
+                "org.kde.krunner.App",
+                "display"
+            );
+        },
         // i3's resize mode, as direct keys (a script can't have mode-only keys): resizeStep ppt,
         // or floatingStep px on a floating window.
-        "Shrink Width": function (c) { if (!growFloating(c, "width", -1)) model.resize(c, "width", -step(), splitSize); },
-        "Grow Width": function (c) { if (!growFloating(c, "width", 1)) model.resize(c, "width", step(), splitSize); },
-        "Shrink Height": function (c) { if (!growFloating(c, "height", -1)) model.resize(c, "height", -step(), splitSize); },
-        "Grow Height": function (c) { if (!growFloating(c, "height", 1)) model.resize(c, "height", step(), splitSize); },
+        "Shrink Width": function (c) {
+            if (!growFloating(c, "width", -1))
+                model.resize(c, "width", -step(), splitSize);
+        },
+        "Grow Width": function (c) {
+            if (!growFloating(c, "width", 1))
+                model.resize(c, "width", step(), splitSize);
+        },
+        "Shrink Height": function (c) {
+            if (!growFloating(c, "height", -1))
+                model.resize(c, "height", -step(), splitSize);
+        },
+        "Grow Height": function (c) {
+            if (!growFloating(c, "height", 1))
+                model.resize(c, "height", step(), splitSize);
+        },
         // i3's reload: KWin reconfigures (reparses kwinrc), and settingsChanged below takes the
         // new values (a hand edit of kwinrc is taken so).
-        "Reload Settings": function () { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); },
+        "Reload Settings": function () {
+            callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
+        },
     };
     Object.keys(DIRS).forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
         // syncShown first: the output a key crosses to has its shown workspace made and placed.
-        actions["Focus " + cap] = function () { syncShown(); model.focusDir(DIRS[d], Settings.get("focusWrapping")); };
-        actions["Move " + cap] = function (c) { if (!nudgeFloating(c, d)) { syncShown(); model.move(c, DIRS[d]); } };
+        actions["Focus " + cap] = function () {
+            syncShown();
+            model.focusDir(DIRS[d], Settings.get("focusWrapping"));
+        };
+        actions["Move " + cap] = function (c) {
+            if (!nudgeFloating(c, d)) {
+                syncShown();
+                model.move(c, DIRS[d]);
+            }
+        };
     });
 
     // Meta+N: show workspace N where it lives and focus it; an empty, hidden one opens on the
@@ -3721,10 +6262,15 @@ var KI3 = (function () {
         // KWin's own activation at the switch has reached the model.
         var old = model.focused;
         if (!Workspaces.showing(n)) {
-            var m = model.workspaces[n], fws = focusedWs();
-            var occupied = m && (m.nodes.length || m.floating.length) && hasHome(n);
+            var m = model.workspaces[n],
+                fws = focusedWs();
+            var occupied =
+                m && (m.nodes.length || m.floating.length) && hasHome(n);
             // An empty one opens on its assigned monitor if that is here, else the focused one.
-            var s = occupied ? outputOfNum(n) : Workspaces.assignedScreen(n) || (fws ? outputOf(fws) : workspace.activeScreen);
+            var s = occupied
+                ? outputOfNum(n)
+                : Workspaces.assignedScreen(n) ||
+                  (fws ? outputOf(fws) : workspace.activeScreen);
             // An occupied workspace keeps its home even while that monitor is away, or it would
             // never go back (reproduced with Meta+2 during an unplug).
             if (!occupied) claimHome(n, s);
@@ -3747,16 +6293,29 @@ var KI3 = (function () {
     // wherever its output is). `old`, the focus before the switch: a sticky window that had it
     // keeps it (workspace_show calls with old_focus); null otherwise (a move, an output change).
     function pushSticky(s, old) {
-        var ws = shownWs(s), others = [];
-        if (!ws) return;            // a desktop past 10 is no workspace (plan.md decision 9)
+        var ws = shownWs(s),
+            others = [];
+        if (!ws) return; // a desktop past 10 is no workspace (plan.md decision 9)
         Object.keys(model.workspaces).forEach(function (n) {
             var m = model.workspaces[n];
-            if (m !== ws && m.floating.some(Tree.isSticky) && outputOf(m) === s) others.push(m);
+            if (m !== ws && m.floating.some(Tree.isSticky) && outputOf(m) === s)
+                others.push(m);
         });
         if (!others.length) return;
         var moved = model.pushSticky(ws, others, old);
         if (!moved.length) return;
-        log("STICKY " + moved.map(function (c) { return wins[c.win] ? shortCaption(wins[c.win]) : "?"; }).join(", ") + " pushed to workspace " + ws.num + " on " + s.name);
+        log(
+            "STICKY " +
+                moved
+                    .map(function (c) {
+                        return wins[c.win] ? shortCaption(wins[c.win]) : "?";
+                    })
+                    .join(", ") +
+                " pushed to workspace " +
+                ws.num +
+                " on " +
+                s.name
+        );
         others.forEach(schedule);
         schedule(ws);
         wantFocus();
@@ -3767,21 +6326,34 @@ var KI3 = (function () {
         if (!floats(con)) {
             con = model.toggleFloating(con);
             setFloatingLook(w, true);
-            untile(w); floatAtRecord(w); clampFloating(w);
+            untile(w);
+            floatAtRecord(w);
+            clampFloating(w);
         }
         model.setSticky(con, true);
-        log("STICKY " + shortCaption(w) + " on: floating, on every workspace of " + (w.output ? w.output.name : "its output"));
+        log(
+            "STICKY " +
+                shortCaption(w) +
+                " on: floating, on every workspace of " +
+                (w.output ? w.output.name : "its output")
+        );
         schedule(Tree.wsOf(con));
         if (w.output) pushSticky(w.output, null);
     }
     // Off all desktops, onto its workspace's desktop, by kwin-i3 (Sticky Toggle, Floating Toggle):
     // the model's flag goes here, and desktopsChanged sees kwin-i3's own move (placing).
     function unstick(w, con) {
-        var key = id(w), ws = Tree.wsOf(con);
+        var key = id(w),
+            ws = Tree.wsOf(con);
         model.setSticky(con, false);
         placing[key] = true;
         relocating++;
-        try { w.desktops = [deskOf(ws.num)]; } finally { delete placing[key]; relocating--; }
+        try {
+            w.desktops = [deskOf(ws.num)];
+        } finally {
+            delete placing[key];
+            relocating--;
+        }
         log("STICKY " + shortCaption(w) + " off: on workspace " + ws.num);
     }
 
@@ -3793,7 +6365,8 @@ var KI3 = (function () {
         if (!deskOf(n)) return;
         if (!Workspaces.showing(n)) {
             var m = model.workspaces[n];
-            var occupied = m && (m.nodes.length || m.floating.length) && hasHome(n);
+            var occupied =
+                m && (m.nodes.length || m.floating.length) && hasHome(n);
             if (!occupied) claimHome(n, outputOf(Tree.wsOf(con)));
         }
         model.moveToWorkspace(con, wsModel(n));
@@ -3808,25 +6381,40 @@ var KI3 = (function () {
     // The focused workspace's number: the focused con's, else what the active monitor shows.
     function focusedWsNum() {
         var f = model.focused ? Tree.wsOf(model.focused) : null;
-        return f ? f.num : deskNum(workspace.currentDesktopForScreen(workspace.activeScreen));
+        return f
+            ? f.num
+            : deskNum(
+                  workspace.currentDesktopForScreen(workspace.activeScreen)
+              );
     }
     // i3's previous_workspace_name, if that desktop still exists.
     function previousWs() {
         var p = model.previousWs;
-        return p && p <= Math.min(workspace.desktops.length, NAMES.length) ? p : null;
+        return p && p <= Math.min(workspace.desktops.length, NAMES.length)
+            ? p
+            : null;
     }
     // Meta+N and Meta+Shift+N with workspaceAutoBackAndForth (i3's maybe_back_and_forth): N is
     // the focused workspace, so go (send the window) back instead.
     function autoBack(n) {
-        if (!Settings.get("workspaceAutoBackAndForth") || n !== focusedWsNum()) return n;
+        if (!Settings.get("workspaceAutoBackAndForth") || n !== focusedWsNum())
+            return n;
         return previousWs() || n;
     }
     // A workspace exists (i3: it has windows or is shown) and, for on-output, lives there.
     function existingWorkspaces(screen) {
         var out = [];
-        for (var n = 1; n <= Math.min(workspace.desktops.length, NAMES.length); n++) {
+        for (
+            var n = 1;
+            n <= Math.min(workspace.desktops.length, NAMES.length);
+            n++
+        ) {
             var m = model.workspaces[n];
-            if (!((m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n))) continue;
+            if (!(
+                (m && (m.nodes.length || m.floating.length)) ||
+                Workspaces.showing(n)
+            ))
+                continue;
             if (screen && outputOfNum(n) !== screen) continue;
             out.push(n);
         }
@@ -3836,36 +6424,51 @@ var KI3 = (function () {
     // goes there and focus stays behind, as for Meta+Shift+N.
     function stepWorkspace(dir, onOutput, con) {
         var cur = focusedWsNum();
-        var t = Tree.nextWorkspace(existingWorkspaces(onOutput ? outputOfNum(cur) : null), cur, dir);
+        var t = Tree.nextWorkspace(
+            existingWorkspaces(onOutput ? outputOfNum(cur) : null),
+            cur,
+            dir
+        );
         if (!t) return;
-        if (con) moveToWorkspace(t, con); else gotoWorkspace(t);
+        if (con) moveToWorkspace(t, con);
+        else gotoWorkspace(t);
     }
     // i3's get_output_from_string (output.c) for an `assign … output X`: current, a direction from
     // the current output (wrapping), primary (the first output), nonprimary, or a name, case-insensitive
     // (randr.c get_output_by_name: the exact name only).
     function outputNamed(name, current) {
-        var n = String(name).toLowerCase(), all = Workspaces.ordered();
+        var n = String(name).toLowerCase(),
+            all = Workspaces.ordered();
         if (n === "current") return current;
-        if (n === "left" || n === "right" || n === "up" || n === "down") return screenToward(current, n, true);
+        if (n === "left" || n === "right" || n === "up" || n === "down")
+            return screenToward(current, n, true);
         if (n === "primary") return all[0] || null;
         if (n === "nonprimary") return all.length > 1 ? all[1] : null;
-        for (var i = 0; i < all.length; i++) if (String(all[i].name).toLowerCase() === n) return all[i];
+        for (var i = 0; i < all.length; i++)
+            if (String(all[i].name).toLowerCase() === n) return all[i];
         return null;
     }
     // The output a direction names from `from` (i3's get_output_next_wrap, as the commands'
     // get_output_from_string), or "next" (the outputs' order, wrapping) or "primary" (the first in
     // it, Workspaces.ordered); null for none, or the same output.
     function screenBy(spec, from) {
-        var all = Workspaces.ordered(), i = all.indexOf(from), t = null;
-        if (spec === "next") t = all.length > 1 ? all[(i + 1) % all.length] : null;
+        var all = Workspaces.ordered(),
+            i = all.indexOf(from),
+            t = null;
+        if (spec === "next")
+            t = all.length > 1 ? all[(i + 1) % all.length] : null;
         else if (spec === "primary") t = all[0];
         else t = screenToward(from, spec, true);
         return t && t !== from ? t : null;
     }
     // The screen next to the focused workspace's, in a direction (or next, primary).
-    function screenFrom(spec) { return screenBy(spec, outputOfNum(focusedWsNum())); }
+    function screenFrom(spec) {
+        return screenBy(spec, outputOfNum(focusedWsNum()));
+    }
     // The model workspace an output shows, or null for a desktop past 10.
-    function visibleWsOn(t) { return shownWs(t); }
+    function visibleWsOn(t) {
+        return shownWs(t);
+    }
     // i3's cmd_focus_output: show the target's visible workspace, focusing its focused window.
     function focusOutput(dir) {
         var t = screenFrom(dir);
@@ -3881,29 +6484,45 @@ var KI3 = (function () {
     // there, focused; the monitor it left, if it showed it, shows the one it showed most recently
     // that still lives there, else an unused one. Reconcile's relocate carries the windows.
     function moveWorkspaceToOutput(spec) {
-        var n = focusedWsNum(), src = outputOfNum(n), t = screenBy(spec, src);
+        var n = focusedWsNum(),
+            src = outputOfNum(n),
+            t = screenBy(spec, src);
         if (!t) return;
-        var old = model.focused;    // i3's old_focus, before the switches (workspace.c)
+        var old = model.focused; // i3's old_focus, before the switches (workspace.c)
         var wasShown = Workspaces.showing(n) === src;
         // i3's focus stack holds only workspaces with windows (an empty hidden one is closed):
         // the most recently shown of those, else the lowest, else an unused one.
         function candidate(k) {
             var m = model.workspaces[k];
-            return k !== n && deskOf(k) && m && (m.nodes.length || m.floating.length) &&
-                   outputOfNum(k) === src && !Workspaces.showing(k);
+            return (
+                k !== n &&
+                deskOf(k) &&
+                m &&
+                (m.nodes.length || m.floating.length) &&
+                outputOfNum(k) === src &&
+                !Workspaces.showing(k)
+            );
         }
         var back = null;
         if (wasShown) {
             back = focusOrderOn(src.name).filter(candidate)[0] || null;
-            for (var k = 1; !back && k <= Math.min(workspace.desktops.length, NAMES.length); k++)
+            for (
+                var k = 1;
+                !back && k <= Math.min(workspace.desktops.length, NAMES.length);
+                k++
+            )
                 if (candidate(k)) back = k;
             if (!back) back = unusedWorkspace(src, true);
-            if (!back) { log("WSMOVE refused: no workspace left for " + src.name); return; }
+            if (!back) {
+                log("WSMOVE refused: no workspace left for " + src.name);
+                return;
+            }
         }
         setHome(n, t);
         if (back) showOn(deskOf(back), src);
         showOn(deskOf(n), t);
-        var ws = wsModel(n), fs = model.fullscreenOn(ws);
+        var ws = wsModel(n),
+            fs = model.fullscreenOn(ws);
         model.activate(fs || model.descendFocused(ws));
         // Both are i3's workspace_show, which pushes sticky windows (workspace.c:566): each
         // output's sticky windows go to what it shows now.
@@ -3911,20 +6530,35 @@ var KI3 = (function () {
         pushSticky(t, old);
         // i3 shows the source's next workspace, then this one: the previous is the former.
         if (back) model.previousWs = back;
-        log("WSMOVE " + n + " to " + t.name + (back ? ", " + src.name + " shows " + back : ""));
+        log(
+            "WSMOVE " +
+                n +
+                " to " +
+                t.name +
+                (back ? ", " + src.name + " shows " + back : "")
+        );
     }
 
     var SHIFTED = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"];
 
     var KEYS = {
-        "Split H": ["Meta+H"], "Split V": ["Meta+V"], "Toggle Split": ["Meta+E"],
+        "Split H": ["Meta+H"],
+        "Split V": ["Meta+V"],
+        "Toggle Split": ["Meta+E"],
         // Meta+W is Plasma's Overview on a stock install: the key override runs kwin-i3's, as any other.
-        "Layout Stacking": ["Meta+S"], "Layout Tabbed": ["Meta+W"], "Focus Parent": ["Meta+A"],
-        "Floating Toggle": ["Meta+Shift+Space"], "Focus Mode Toggle": ["Meta+Space"],
-        "Fullscreen": ["Meta+F"], "Close": ["Meta+Shift+Q"],
-        "Focus Left": ["Meta+Left", "Meta+J"], "Focus Down": ["Meta+Down", "Meta+K"],
-        "Focus Up": ["Meta+Up", "Meta+L"], "Focus Right": ["Meta+Right", "Meta+;"],
-        "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"], "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
+        "Layout Stacking": ["Meta+S"],
+        "Layout Tabbed": ["Meta+W"],
+        "Focus Parent": ["Meta+A"],
+        "Floating Toggle": ["Meta+Shift+Space"],
+        "Focus Mode Toggle": ["Meta+Space"],
+        Fullscreen: ["Meta+F"],
+        Close: ["Meta+Shift+Q"],
+        "Focus Left": ["Meta+Left", "Meta+J"],
+        "Focus Down": ["Meta+Down", "Meta+K"],
+        "Focus Up": ["Meta+Up", "Meta+L"],
+        "Focus Right": ["Meta+Right", "Meta+;"],
+        "Move Left": ["Meta+Shift+Left", "Meta+Shift+J"],
+        "Move Down": ["Meta+Shift+Down", "Meta+Shift+K"],
         "Move Up": ["Meta+Shift+Up", "Meta+Shift+L"],
         // Shift+; arrives as ":": only Meta+: fires, Meta+Shift+; never does (probed,
         // KWin 6.7.5). The same holds for Shift+digit below.
@@ -3932,95 +6566,196 @@ var KI3 = (function () {
         // i3's resize mode (§8 K4): Meta+R enters, then the helper takes J K L ; and
         // the arrows and runs these four, unbound (a user who wants them flat binds them).
         "Resize Mode": ["Meta+R"],
-        "Shrink Width": [], "Grow Height": [], "Shrink Height": [], "Grow Width": [],
+        "Shrink Width": [],
+        "Grow Height": [],
+        "Shrink Height": [],
+        "Grow Width": [],
         "Reload Settings": ["Meta+Shift+C"],
         // i3's exit, terminal and launcher (K17, K18): Plasma's way to leave (endSession), the
         // default terminal, KRunner.
-        "Exit": ["Meta+Shift+E"], "Terminal": ["Meta+Return"], "Launcher": ["Meta+D"],
+        Exit: ["Meta+Shift+E"],
+        Terminal: ["Meta+Return"],
+        Launcher: ["Meta+D"],
     };
 
     var UNBOUND = {
         // i3's `focus child`, commented out in i3's shipped config (Meta+D there).
-        "Focus Child": function () { model.focusChild(); },
+        "Focus Child": function () {
+            model.focusChild();
+        },
         // i3's `sticky toggle`: KWin's "on all desktops" flag;
         // desktopsChanged does the rest (makeSticky, or off it onto its workspace's desktop).
         "Sticky Toggle": function (c) {
             var w = c && wins[c.win];
             if (!w) return;
-            if (w.onAllDesktops) unstick(w, c); else w.onAllDesktops = true;
+            if (w.onAllDesktops) unstick(w, c);
+            else w.onAllDesktops = true;
         },
-        "Workspace Back and Forth": function () { var p = previousWs(); if (p) gotoWorkspace(p); },
-        "Move to Workspace Back and Forth": function (c) { var p = previousWs(); if (p) moveToWorkspace(p, c); },
-        "Workspace Next": function () { stepWorkspace(1, false); },
-        "Workspace Prev": function () { stepWorkspace(-1, false); },
-        "Workspace Next on Output": function () { stepWorkspace(1, true); },
-        "Workspace Prev on Output": function () { stepWorkspace(-1, true); },
-        "Move to Workspace Next": function (c) { if (c) stepWorkspace(1, false, c); },
-        "Move to Workspace Prev": function (c) { if (c) stepWorkspace(-1, false, c); },
-        "Move to Workspace Next on Output": function (c) { if (c) stepWorkspace(1, true, c); },
-        "Move to Workspace Prev on Output": function (c) { if (c) stepWorkspace(-1, true, c); },
+        "Workspace Back and Forth": function () {
+            var p = previousWs();
+            if (p) gotoWorkspace(p);
+        },
+        "Move to Workspace Back and Forth": function (c) {
+            var p = previousWs();
+            if (p) moveToWorkspace(p, c);
+        },
+        "Workspace Next": function () {
+            stepWorkspace(1, false);
+        },
+        "Workspace Prev": function () {
+            stepWorkspace(-1, false);
+        },
+        "Workspace Next on Output": function () {
+            stepWorkspace(1, true);
+        },
+        "Workspace Prev on Output": function () {
+            stepWorkspace(-1, true);
+        },
+        "Move to Workspace Next": function (c) {
+            if (c) stepWorkspace(1, false, c);
+        },
+        "Move to Workspace Prev": function (c) {
+            if (c) stepWorkspace(-1, false, c);
+        },
+        "Move to Workspace Next on Output": function (c) {
+            if (c) stepWorkspace(1, true, c);
+        },
+        "Move to Workspace Prev on Output": function (c) {
+            if (c) stepWorkspace(-1, true, c);
+        },
     };
     ["left", "right", "up", "down", "next", "primary"].forEach(function (d) {
         var cap = d.charAt(0).toUpperCase() + d.slice(1);
-        UNBOUND["Focus Output " + cap] = function () { focusOutput(d); };
-        UNBOUND["Move to Output " + cap] = function (c) { moveToOutput(d, c); };
-        UNBOUND["Move Workspace to Output " + cap] = function () { moveWorkspaceToOutput(d); };
+        UNBOUND["Focus Output " + cap] = function () {
+            focusOutput(d);
+        };
+        UNBOUND["Move to Output " + cap] = function (c) {
+            moveToOutput(d, c);
+        };
+        UNBOUND["Move Workspace to Output " + cap] = function () {
+            moveWorkspaceToOutput(d);
+        };
     });
     // i3's --no-auto-back-and-forth (§4 S5): Meta+N's and Meta+Shift+N's work without the
     // setting's back-and-forth, unbound as in i3's config.
     NAMES.forEach(function (k, i) {
         var n = i + 1;
-        UNBOUND["Workspace " + n + " (no back-and-forth)"] = function () { gotoWorkspace(n); };
-        UNBOUND["Move to Workspace " + n + " (no back-and-forth)"] = function (c) { moveToWorkspace(n, c); };
+        UNBOUND["Workspace " + n + " (no back-and-forth)"] = function () {
+            gotoWorkspace(n);
+        };
+        UNBOUND["Move to Workspace " + n + " (no back-and-forth)"] = function (
+            c
+        ) {
+            moveToWorkspace(n, c);
+        };
     });
 
     // KWin's own actions run on KWin's active window, so not through act(): its focus request
     // would activate kwin-i3's focused window before KWin's queued action ran, and a window
     // kwin-i3 doesn't manage would lose the key to it (closed the wrong one; 33-own-keys.sh).
     // The mode, exit, terminal and launcher act on no window either.
-    var KWIN_OWN = { "Fullscreen": true, "Close": true, "Resize Mode": true, "Exit": true, "Terminal": true, "Launcher": true };
+    var KWIN_OWN = {
+        Fullscreen: true,
+        Close: true,
+        "Resize Mode": true,
+        Exit: true,
+        Terminal: true,
+        Launcher: true,
+    };
     function askMode() {
-        callDBus(MODE[0], MODE[1], MODE[2], "Mode", guard("mode", function (m) {
-            m = String(m || "");
-            if (m === mode) return;
-            mode = m;
-            log("MODE " + (mode || "off"));
-        }));
+        callDBus(
+            MODE[0],
+            MODE[1],
+            MODE[2],
+            "Mode",
+            guard("mode", function (m) {
+                m = String(m || "");
+                if (m === mode) return;
+                mode = m;
+                log("MODE " + (mode || "off"));
+            })
+        );
     }
 
     function registerKeys() {
         Object.keys(KEYS).forEach(function (name) {
-            var fn = KWIN_OWN[name] ? guard(name, function () { if (keyboardHeld(name) || inMode(name)) return; actions[name](); log("ACTION " + name); })
-                                    : act(name, actions[name]);
+            var fn = KWIN_OWN[name]
+                ? guard(name, function () {
+                      if (keyboardHeld(name) || inMode(name)) return;
+                      actions[name]();
+                      log("ACTION " + name);
+                  })
+                : act(name, actions[name]);
             // No default key (the mode's four): registered all the same, for the mode and the Keys page.
             (KEYS[name].length ? KEYS[name] : [""]).forEach(function (key, i) {
-                var action = "kwin-i3 " + name + (i ? " (" + key.split("+").pop() + ")" : "");
-                registerShortcut(action, "kwin-i3: " + name.toLowerCase() + (i ? " (" + key + ")" : ""), key, fn);
+                var action =
+                    "kwin-i3 " +
+                    name +
+                    (i ? " (" + key.split("+").pop() + ")" : "");
+                registerShortcut(
+                    action,
+                    "kwin-i3: " +
+                        name.toLowerCase() +
+                        (i ? " (" + key + ")" : ""),
+                    key,
+                    fn
+                );
             });
         });
         NAMES.forEach(function (k, i) {
             var n = i + 1;
-            var go = act("Workspace " + n, function () { gotoWorkspace(autoBack(n)); });
-            var mv = act("Move to Workspace " + n, function (c) { moveToWorkspace(autoBack(n), c); });
-            registerShortcut("kwin-i3 Workspace " + n, "kwin-i3: workspace " + n, "Meta+" + k, go);
+            var go = act("Workspace " + n, function () {
+                gotoWorkspace(autoBack(n));
+            });
+            var mv = act("Move to Workspace " + n, function (c) {
+                moveToWorkspace(autoBack(n), c);
+            });
+            registerShortcut(
+                "kwin-i3 Workspace " + n,
+                "kwin-i3: workspace " + n,
+                "Meta+" + k,
+                go
+            );
             // Meta+Shift+digit arrives as Meta+<symbol> (US layout: Meta+!), so a
             // Meta+Shift+digit action never fires. The id keeps its
             // "(symbol)" so an install keeps the key it already holds.
-            registerShortcut("kwin-i3 Move to Workspace " + n + " (symbol)",
-                             "kwin-i3: move to workspace " + n, "Meta+" + SHIFTED[i], mv);
+            registerShortcut(
+                "kwin-i3 Move to Workspace " + n + " (symbol)",
+                "kwin-i3: move to workspace " + n,
+                "Meta+" + SHIFTED[i],
+                mv
+            );
         });
         // No default key, as in i3: bound by the user in
         // System Settings > Shortcuts.
         Object.keys(UNBOUND).forEach(function (name) {
-            registerShortcut("kwin-i3 " + name, "kwin-i3: " + name.toLowerCase(), "", act(name, UNBOUND[name]));
+            registerShortcut(
+                "kwin-i3 " + name,
+                "kwin-i3: " + name.toLowerCase(),
+                "",
+                act(name, UNBOUND[name])
+            );
         });
         // Only with debug logging (the live tests): an action that throws, to prove the guard
         // logs it and kwin-i3 carries on. No key; never registered in normal use.
         if (DEBUG_LOG) {
-            registerShortcut("kwin-i3 Selftest Throw", "kwin-i3: self-test (throws)", "",
-                             act("Selftest Throw", function () { throw new Error("selftest"); }));
-            registerShortcut("kwin-i3 Selftest Break Reconcile", "kwin-i3: self-test (reconcile throws)", "",
-                             function () { selftestBroken = !selftestBroken; scheduleAll(); });
+            registerShortcut(
+                "kwin-i3 Selftest Throw",
+                "kwin-i3: self-test (throws)",
+                "",
+                act("Selftest Throw", function () {
+                    throw new Error("selftest");
+                })
+            );
+            registerShortcut(
+                "kwin-i3 Selftest Break Reconcile",
+                "kwin-i3: self-test (reconcile throws)",
+                "",
+                function () {
+                    selftestBroken = !selftestBroken;
+                    scheduleAll();
+                }
+            );
         }
     }
 
@@ -4032,17 +6767,41 @@ var KI3 = (function () {
 
     // Without the helper plugin the keys stay US symbols: a layout that isn't US is logged.
     function checkLayoutKeys() {
-        callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
-                 guard("layout keys", function (loaded) {
-            if (String(loaded).indexOf("kwini3helper") >= 0) { log("LAYOUTS fitted by the helper"); return; }
-            callDBus("org.kde.keyboard", "/Layouts", "org.kde.KeyboardLayouts", "getLayoutsList", guard("layout keys", function (list) {
-                // "" is KWin's xkb default, US, where the system sets no layout (Arch's own
-                // default: the long name still says English (US)).
-                var names = (list || []).map(function (l) { return String(l[0]) || "us"; });
-                var other = names.filter(function (n) { return n !== "us"; });
-                log("LAYOUTS " + names.join(",") + (other.length ? ", not fitted (no helper)" : ""));
-            }));
-        }));
+        callDBus(
+            "org.kde.KWin",
+            "/Plugins",
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            "org.kde.KWin.Plugins",
+            "LoadedPlugins",
+            guard("layout keys", function (loaded) {
+                if (String(loaded).indexOf("kwini3helper") >= 0) {
+                    log("LAYOUTS fitted by the helper");
+                    return;
+                }
+                callDBus(
+                    "org.kde.keyboard",
+                    "/Layouts",
+                    "org.kde.KeyboardLayouts",
+                    "getLayoutsList",
+                    guard("layout keys", function (list) {
+                        // "" is KWin's xkb default, US, where the system sets no layout (Arch's own
+                        // default: the long name still says English (US)).
+                        var names = (list || []).map(function (l) {
+                            return String(l[0]) || "us";
+                        });
+                        var other = names.filter(function (n) {
+                            return n !== "us";
+                        });
+                        log(
+                            "LAYOUTS " +
+                                names.join(",") +
+                                (other.length ? ", not fitted (no helper)" : "")
+                        );
+                    })
+                );
+            })
+        );
     }
 
     // Plasma's "Switch desktops independently for each screen" (off by default): with it off a
@@ -4056,19 +6815,42 @@ var KI3 = (function () {
     // from its loaded effects (each loaded under a hashed name: kwini3helper-<hash>,
     // kwini3hold-<hash>).
     function checkHelperKeys() {
-        callDBus("org.kde.KWin", "/Plugins", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin.Plugins", "LoadedPlugins",
-                 guard("helper keys", function (loaded) {
-            helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
-            if (!helperLoaded) log("HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing");
-        }));
-        callDBus("org.kde.KWin", "/Effects", "org.freedesktop.DBus.Properties", "Get", "org.kde.kwin.Effects", "loadedEffects",
-                 guard("effect loaded", function (loaded) {
-            if (String(loaded).indexOf("kwini3hold") < 0) log("EFFECT not loaded: no frame, no hold");
-        }));
+        callDBus(
+            "org.kde.KWin",
+            "/Plugins",
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            "org.kde.KWin.Plugins",
+            "LoadedPlugins",
+            guard("helper keys", function (loaded) {
+                helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
+                if (!helperLoaded)
+                    log(
+                        "HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing"
+                    );
+            })
+        );
+        callDBus(
+            "org.kde.KWin",
+            "/Effects",
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            "org.kde.kwin.Effects",
+            "loadedEffects",
+            guard("effect loaded", function (loaded) {
+                if (String(loaded).indexOf("kwini3hold") < 0)
+                    log("EFFECT not loaded: no frame, no hold");
+            })
+        );
     }
     function checkPerOutput() {
         var n = workspace.screens.length;
-        log("PEROUTPUT " + (n >= 2 && !options.perOutputVirtualDesktops ? "off, " + n + " screens" : "ok"));
+        log(
+            "PEROUTPUT " +
+                (n >= 2 && !options.perOutputVirtualDesktops
+                    ? "off, " + n + " screens"
+                    : "ok")
+        );
     }
 
     // The setting turned on: each monitor showing a workspace that lives on another one (left
@@ -4087,11 +6869,13 @@ var KI3 = (function () {
     // then showed (KWin gives every monitor that showed it the same next desktop).
     function showHomes() {
         workspace.screens.forEach(function (s) {
-            var hs = homes(), h = hs[deskNum(workspace.currentDesktopForScreen(s))];
+            var hs = homes(),
+                h = hs[deskNum(workspace.currentDesktopForScreen(s))];
             if (!h || h === s.name) return;
             var pick = null;
             for (var n = 1; n <= NAMES.length && !pick; n++)
-                if (deskOf(n) && hs[n] === s.name && !Workspaces.showing(n)) pick = n;
+                if (deskOf(n) && hs[n] === s.name && !Workspaces.showing(n))
+                    pick = n;
             if (!pick) pick = unusedWorkspace(s);
             if (pick) showOn(deskOf(pick), s);
         });
@@ -4103,27 +6887,51 @@ var KI3 = (function () {
     function release() {
         if (released) return;
         released = true;
-        try { tellDrag(false); } catch (e) { log("ERROR in release (drag): " + e); }
+        try {
+            tellDrag(false);
+        } catch (e) {
+            log("ERROR in release (drag): " + e);
+        }
         // The drop indicator has no timeout of its own in the effect.
-        try { if (drag) endDrag("released"); } catch (e) { log("ERROR in release (drag end): " + e); }
+        try {
+            if (drag) endDrag("released");
+        } catch (e) {
+            log("ERROR in release (drag end): " + e);
+        }
         // A window crossing to another output is on all desktops until it arrives (relocate).
-        try { Object.keys(crossing).forEach(function (key) { if (wins[key]) arrive(wins[key]); }); }
-        catch (e) { log("ERROR in release (crossing): " + e); }
-        try { if (mode) callDBus(MODE[0], MODE[1], MODE[2], "SetMode", ""); } catch (e) { log("ERROR in release (mode): " + e); }
-        try { forgetRings(); } catch (e) { log("ERROR in release (rings): " + e); }
+        try {
+            Object.keys(crossing).forEach(function (key) {
+                if (wins[key]) arrive(wins[key]);
+            });
+        } catch (e) {
+            log("ERROR in release (crossing): " + e);
+        }
+        try {
+            if (mode) callDBus(MODE[0], MODE[1], MODE[2], "SetMode", "");
+        } catch (e) {
+            log("ERROR in release (mode): " + e);
+        }
+        try {
+            forgetRings();
+        } catch (e) {
+            log("ERROR in release (rings): " + e);
+        }
         Object.keys(wins).forEach(function (key) {
             var w = wins[key];
             try {
                 untile(w);
                 if (keptAbove[key]) w.keepAbove = false;
                 giveBorder(w);
-                tellFloated(key, "");       // the effect's mark for a container floated whole
-            } catch (e) { log("ERROR in release (window): " + e); }
+                tellFloated(key, ""); // the effect's mark for a container floated whole
+            } catch (e) {
+                log("ERROR in release (window): " + e);
+            }
         });
         workspace.screens.forEach(function (s) {
             workspace.desktops.forEach(function (d, i) {
                 try {
-                    var root = workspace.rootTile(s, d), rk = s.name + "/" + d.id;
+                    var root = workspace.rootTile(s, d),
+                        rk = s.name + "/" + d.id;
                     if (!root) return;
                     // Roots kwin-i3 touched, and any a predecessor left inset by gaps (a reload):
                     // KWin's whole area and no padding again. A root it didn't touch that holds
@@ -4131,19 +6939,43 @@ var KI3 = (function () {
                     // (reason (e); §6 Y4). kwin-i3 empties a workspace's root when its last
                     // window goes, so a leftover of its own holds none.
                     var full = { x: 0, y: 0, width: 1, height: 1 };
-                    if (!(rk in touchedRoots) && (sameRect(root.relativeGeometry, full) || root.tiles.length)) return;
+                    if (
+                        !(rk in touchedRoots) &&
+                        (sameRect(root.relativeGeometry, full) ||
+                            root.tiles.length)
+                    )
+                        return;
                     var stray = tiledWindowsOf(root, []);
-                    stray.forEach(function (w) { root.unmanage(w); });
-                    for (var n = 0; root.tiles.length && n < 256; n++) root.tiles[root.tiles.length - 1].remove();
+                    stray.forEach(function (w) {
+                        root.unmanage(w);
+                    });
+                    for (var n = 0; root.tiles.length && n < 256; n++)
+                        root.tiles[root.tiles.length - 1].remove();
                     root.relativeGeometry = full;
                     root.padding = 0;
-                } catch (e) { log("ERROR in release (tiles): " + e); }
+                } catch (e) {
+                    log("ERROR in release (tiles): " + e);
+                }
             });
         });
         // The helper's key override holds no key now (kwin-i3's actions do nothing after this).
-        try { callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "SetReleased", true); } catch (e) { log("ERROR in release (keys): " + e); }
+        try {
+            callDBus(
+                "org.kde.KWin",
+                "/kwini3helper",
+                "net.local.kwini3helper",
+                "SetReleased",
+                true
+            );
+        } catch (e) {
+            log("ERROR in release (keys): " + e);
+        }
         // Plasma's own values for what winOptions wrote (kwinrc was never changed).
-        try { callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure"); } catch (e) { log("ERROR in release (options): " + e); }
+        try {
+            callDBus("org.kde.KWin", "/KWin", "org.kde.KWin", "reconfigure");
+        } catch (e) {
+            log("ERROR in release (options): " + e);
+        }
         log("RELEASED");
         log("ACTION Release");
     }
@@ -4156,85 +6988,178 @@ var KI3 = (function () {
         // Collected, then sent in a few large calls: hundreds of small ones would each be a D-Bus
         // round on KWin's main thread.
         var lines = [];
-        function out(s) { lines.push(String(s)); }
+        function out(s) {
+            lines.push(String(s));
+        }
         function part(name, fn) {
             out("== " + name);
-            try { fn(); } catch (e) { out("ERROR in dump " + name + ": " + e); }
+            try {
+                fn();
+            } catch (e) {
+                out("ERROR in dump " + name + ": " + e);
+            }
         }
-        function rect(g) { return Math.round(g.x) + "," + Math.round(g.y) + " " + Math.round(g.width) + "x" + Math.round(g.height); }
+        function rect(g) {
+            return (
+                Math.round(g.x) +
+                "," +
+                Math.round(g.y) +
+                " " +
+                Math.round(g.width) +
+                "x" +
+                Math.round(g.height)
+            );
+        }
         out("DUMP BEGIN released=" + released + " debugLog=" + DEBUG_LOG);
         part("outputs", function () {
             workspace.screens.forEach(function (s) {
-                out(s.name + " " + rect(s.geometry) + " shows " + deskNum(workspace.currentDesktopForScreen(s)) +
-                    (s === workspace.activeScreen ? " active" : ""));
+                out(
+                    s.name +
+                        " " +
+                        rect(s.geometry) +
+                        " shows " +
+                        deskNum(workspace.currentDesktopForScreen(s)) +
+                        (s === workspace.activeScreen ? " active" : "")
+                );
             });
             var c = workspace.cursorPos;
             out("cursor " + Math.round(c.x) + "," + Math.round(c.y));
             out("homes " + JSON.stringify(homes()));
-            model.describeOutputs().forEach(function (l) { out("model " + l); });
+            model.describeOutputs().forEach(function (l) {
+                out("model " + l);
+            });
         });
         part("tree", function () {
             Object.keys(model.workspaces).forEach(function (n) {
                 var ws = model.workspaces[n];
                 out("TREE " + n + " " + named(model.describe(n)));
                 (function walk(c, depth) {
-                    out(new Array(depth + 1).join("  ") + (c.win !== null ? named(String(c.win)) : c.type + " " + c.layout) +
-                        " percent=" + (+c.percent).toFixed(4) + " focus=" + named(model.focusOrder(c).join(",")));
-                    c.nodes.forEach(function (k) { walk(k, depth + 1); });
+                    out(
+                        new Array(depth + 1).join("  ") +
+                            (c.win !== null
+                                ? named(String(c.win))
+                                : c.type + " " + c.layout) +
+                            " percent=" +
+                            (+c.percent).toFixed(4) +
+                            " focus=" +
+                            named(model.focusOrder(c).join(","))
+                    );
+                    c.nodes.forEach(function (k) {
+                        walk(k, depth + 1);
+                    });
                 })(ws, 1);
-                model.floatingWindows(ws).forEach(function (f) { out("  ~" + named(String(f.win))); });
+                model.floatingWindows(ws).forEach(function (f) {
+                    out("  ~" + named(String(f.win)));
+                });
             });
         });
         part("windows", function () {
             var active = workspace.activeWindow;
             workspace.windowList().forEach(function (w) {
                 var m = w.minSize;
-                out([JSON.stringify(String(w.caption)), "class=" + w.resourceClass, "id=" + id(w),
-                     !wins[id(w)] ? "not-in-tree" : model.byWin[id(w)] && floats(model.byWin[id(w)]) ? "floating" : "tiled",
-                     "rule=" + Rules.classify(w),
-                     "frame=" + rect(w.frameGeometry), "client=" + rect(w.clientGeometry),
-                     "min=" + Math.round(m.width) + "x" + Math.round(m.height),
-                     "output=" + (w.output ? w.output.name : "-"),
-                     "desktops=" + w.desktops.map(deskNum).join("+"),
-                     "tile=" + (w.tile ? rect(w.tile.absoluteGeometry) : "-"),
-                     "expected=" + (expected[id(w)] ? "set" : "-"),
-                     w.minimized ? "minimized" : "", w.fullScreen ? "fullscreen" : "",
-                     w.transient ? "transient" : "", w.keepAbove ? "above" : "",
-                     w === active ? "ACTIVE" : ""].filter(Boolean).join(" "));
+                out(
+                    [
+                        JSON.stringify(String(w.caption)),
+                        "class=" + w.resourceClass,
+                        "id=" + id(w),
+                        !wins[id(w)]
+                            ? "not-in-tree"
+                            : model.byWin[id(w)] && floats(model.byWin[id(w)])
+                              ? "floating"
+                              : "tiled",
+                        "rule=" + Rules.classify(w),
+                        "frame=" + rect(w.frameGeometry),
+                        "client=" + rect(w.clientGeometry),
+                        "min=" +
+                            Math.round(m.width) +
+                            "x" +
+                            Math.round(m.height),
+                        "output=" + (w.output ? w.output.name : "-"),
+                        "desktops=" + w.desktops.map(deskNum).join("+"),
+                        "tile=" +
+                            (w.tile ? rect(w.tile.absoluteGeometry) : "-"),
+                        "expected=" + (expected[id(w)] ? "set" : "-"),
+                        w.minimized ? "minimized" : "",
+                        w.fullScreen ? "fullscreen" : "",
+                        w.transient ? "transient" : "",
+                        w.keepAbove ? "above" : "",
+                        w === active ? "ACTIVE" : "",
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                );
             });
         });
         // The same facts as one JSON line, for tests/fuzz (one snapshot, ids rather than captions).
         part("json", function () {
-            function r(g) { return [Math.round(g.x), Math.round(g.y), Math.round(g.width), Math.round(g.height)]; }
-            var active = workspace.activeWindow, j = { outputs: [], windows: [], ws: {} };
+            function r(g) {
+                return [
+                    Math.round(g.x),
+                    Math.round(g.y),
+                    Math.round(g.width),
+                    Math.round(g.height),
+                ];
+            }
+            var active = workspace.activeWindow,
+                j = { outputs: [], windows: [], ws: {} };
             workspace.screens.forEach(function (s) {
-                j.outputs.push({ name: s.name, geom: r(s.geometry), shows: deskNum(workspace.currentDesktopForScreen(s)),
-                                 active: s === workspace.activeScreen });
+                j.outputs.push({
+                    name: s.name,
+                    geom: r(s.geometry),
+                    shows: deskNum(workspace.currentDesktopForScreen(s)),
+                    active: s === workspace.activeScreen,
+                });
             });
             workspace.windowList().forEach(function (w) {
-                j.windows.push({ id: id(w), caption: String(w.caption), rule: Rules.classify(w), managed: !!wins[id(w)],
-                                 frame: r(w.frameGeometry), client: r(w.clientGeometry),
-                                 min: [Math.round(w.minSize.width), Math.round(w.minSize.height)],
-                                 output: w.output ? w.output.name : null, desktops: w.desktops.map(deskNum),
-                                 tile: w.tile ? r(w.tile.absoluteGeometry) : null, minimized: !!w.minimized,
-                                 // the rect kwin-i3 asks for in that tile: inside its padding (the frame, the gaps)
-                                 want: w.tile ? r(windowRect(w.tile)) : null,
-                                 fullscreen: !!w.fullScreen, active: w === active,
-                                 // a fullscreen request the client hasn't acknowledged yet
-                                 pending: Rules.pendingFullscreen(w) });
+                j.windows.push({
+                    id: id(w),
+                    caption: String(w.caption),
+                    rule: Rules.classify(w),
+                    managed: !!wins[id(w)],
+                    frame: r(w.frameGeometry),
+                    client: r(w.clientGeometry),
+                    min: [
+                        Math.round(w.minSize.width),
+                        Math.round(w.minSize.height),
+                    ],
+                    output: w.output ? w.output.name : null,
+                    desktops: w.desktops.map(deskNum),
+                    tile: w.tile ? r(w.tile.absoluteGeometry) : null,
+                    minimized: !!w.minimized,
+                    // the rect kwin-i3 asks for in that tile: inside its padding (the frame, the gaps)
+                    want: w.tile ? r(windowRect(w.tile)) : null,
+                    fullscreen: !!w.fullScreen,
+                    active: w === active,
+                    // a fullscreen request the client hasn't acknowledged yet
+                    pending: Rules.pendingFullscreen(w),
+                });
             });
             Object.keys(model.workspaces).forEach(function (n) {
                 var ws = model.workspaces[n];
-                j.ws[n] = { tiled: model.leaves(ws).map(function (l) { return String(l.win); }),
-                            floating: model.floatingWindows(ws).map(function (f) { return String(f.win); }),
-                            tree: named(model.describe(n)) };
+                j.ws[n] = {
+                    tiled: model.leaves(ws).map(function (l) {
+                        return String(l.win);
+                    }),
+                    floating: model.floatingWindows(ws).map(function (f) {
+                        return String(f.win);
+                    }),
+                    tree: named(model.describe(n)),
+                };
             });
             out("JSON " + JSON.stringify(j));
         });
-        part("log", function () { logRing.forEach(out); });
+        part("log", function () {
+            logRing.forEach(out);
+        });
         out("DUMP END");
         for (var i = 0; i < lines.length; i += 200)
-            callDBus("net.local.kwini3.dump", "/", "net.local.kwini3.dump", "Log", lines.slice(i, i + 200).join("\n"));
+            callDBus(
+                "net.local.kwini3.dump",
+                "/",
+                "net.local.kwini3.dump",
+                "Log",
+                lines.slice(i, i + 200).join("\n")
+            );
     }
 
     // ---- start -----------------------------------------------------------------------------
@@ -4245,7 +7170,11 @@ var KI3 = (function () {
             // Only windows that really are on this desktop: KWin can leave a window in a tile
             // after its desktop changed; those go through adoptWindow instead.
             var mine = tile.windows.filter(function (w) {
-                return Rules.classify(w) === "tiling" && w.desktops.length === 1 && w.desktops[0] === desk;
+                return (
+                    Rules.classify(w) === "tiling" &&
+                    w.desktops.length === 1 &&
+                    w.desktops[0] === desk
+                );
             });
             if (!mine.length) return null;
             if (mine.length === 1) return { win: id(mine[0]), percent: total };
@@ -4253,34 +7182,72 @@ var KI3 = (function () {
             // tile just before: a bar of one row per window is stacked, else tabbed. The tabs in
             // the order KWin lists them, kwin-i3's tab order; the one on top is shown. A
             // group whose shown tab was a split comes back as a group of that tab's windows.
-            var sib = tile.parent ? tile.parent.tiles : [], at = sib.indexOf(tile), bar = at > 0 ? sib[at - 1] : null;
-            var rows = bar && !bar.tiles.length && !bar.windows.length ? Math.round(bar.absoluteGeometry.height / BAR_ROW) : 1;
-            return { layout: rows > 1 && rows === mine.length ? "stacked" : "tabbed", percent: total,
-                     kids: mine.map(function (w) { return { win: id(w), percent: 0 }; }) };
+            var sib = tile.parent ? tile.parent.tiles : [],
+                at = sib.indexOf(tile),
+                bar = at > 0 ? sib[at - 1] : null;
+            var rows =
+                bar && !bar.tiles.length && !bar.windows.length
+                    ? Math.round(bar.absoluteGeometry.height / BAR_ROW)
+                    : 1;
+            return {
+                layout: rows > 1 && rows === mine.length ? "stacked" : "tabbed",
+                percent: total,
+                kids: mine.map(function (w) {
+                    return { win: id(w), percent: 0 };
+                }),
+            };
         }
         var dir = tile.layoutDirection === 2 ? "v" : "h";
         var kids = [];
         tile.tiles.forEach(function (c) {
-            var g = c.relativeGeometry, pg = tile.relativeGeometry;
-            var share = dir === "h" ? g.width / (pg.width || 1) : g.height / (pg.height || 1);
+            var g = c.relativeGeometry,
+                pg = tile.relativeGeometry;
+            var share =
+                dir === "h"
+                    ? g.width / (pg.width || 1)
+                    : g.height / (pg.height || 1);
             var s = specOf(c, share, desk);
             if (s) kids.push(s);
         });
         if (!kids.length) return null;
         // A group with its bar is a vertical pair of tiles: alone in it, it is that group.
-        if (kids.length === 1 && (kids[0].layout === "tabbed" || kids[0].layout === "stacked")) { kids[0].percent = total; return kids[0]; }
+        if (
+            kids.length === 1 &&
+            (kids[0].layout === "tabbed" || kids[0].layout === "stacked")
+        ) {
+            kids[0].percent = total;
+            return kids[0];
+        }
         return { layout: dir, percent: total, kids: kids };
     }
 
     function start() {
         model = Tree.create();
         // The safety valve first, so it exists whatever happens below.
-        registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
-                         "Meta+Ctrl+Shift+Q", release);
+        registerShortcut(
+            "kwin-i3 Release",
+            "kwin-i3: release every window (safety valve)",
+            "Meta+Ctrl+Shift+Q",
+            release
+        );
         // No key: tools/capture (on Meta+Shift+B) invokes it, after starting its sink.
-        registerShortcut("kwin-i3 Dump State", "kwin-i3: dump state for a bug report", "", dump);
-        try { startRest(); }
-        catch (e) { log("ERROR in start: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
+        registerShortcut(
+            "kwin-i3 Dump State",
+            "kwin-i3: dump state for a bug report",
+            "",
+            dump
+        );
+        try {
+            startRest();
+        } catch (e) {
+            log(
+                "ERROR in start: " +
+                    e +
+                    (e.stack ? " " + e.stack : "") +
+                    "; releasing"
+            );
+            release();
+        }
     }
 
     // Windows already in KWin's tiles keep their layout (plan decision 5): at load, and when the
@@ -4293,11 +7260,19 @@ var KI3 = (function () {
                 if (!spec) return;
                 setHome(deskNum(d), s);
                 var ws = wsModel(deskNum(d));
-                model.adopt(ws, spec.kids ? spec : { win: spec.win, percent: 1 });
+                model.adopt(
+                    ws,
+                    spec.kids ? spec : { win: spec.win, percent: 1 }
+                );
                 model.leaves(ws).forEach(function (leaf) {
                     var w = null;
-                    workspace.windowList().forEach(function (x) { if (id(x) === leaf.win) w = x; });
-                    if (!w) { model.close(leaf.win); return; }
+                    workspace.windowList().forEach(function (x) {
+                        if (id(x) === leaf.win) w = x;
+                    });
+                    if (!w) {
+                        model.close(leaf.win);
+                        return;
+                    }
                     wins[leaf.win] = w;
                     expected[leaf.win] = w.tile;
                     if (w.fullScreen) model.setFullscreen(leaf.win, true);
@@ -4309,7 +7284,13 @@ var KI3 = (function () {
                 // the first tab. adoptRest sets the global focus after.
                 workspace.stackingOrder.forEach(function (w) {
                     var c = model.byWin[id(w)];
-                    if (c && c.type === "con" && !floats(c) && Tree.wsOf(c) === ws) model.focusWin(id(w));
+                    if (
+                        c &&
+                        c.type === "con" &&
+                        !floats(c) &&
+                        Tree.wsOf(c) === ws
+                    )
+                        model.focusWin(id(w));
                 });
             });
         });
@@ -4327,13 +7308,22 @@ var KI3 = (function () {
         var key = id(w);
         if (closeWatched[key]) return;
         closeWatched[key] = true;
-        w.closed.connect(guard("closed outside", function () { if (!wins[id(w)]) closingOutside = w; }));
+        w.closed.connect(
+            guard("closed outside", function () {
+                if (!wins[id(w)]) closingOutside = w;
+            })
+        );
     }
     function adoptRest(m, done) {
         atLoadFloating = {};
-        if (m && m.floating) m.floating.forEach(function (k) { atLoadFloating[k] = true; });
+        if (m && m.floating)
+            m.floating.forEach(function (k) {
+                atLoadFloating[k] = true;
+            });
         var all = workspace.stackingOrder.slice();
-        workspace.windowList().forEach(function (w) { if (all.indexOf(w) < 0) all.push(w); });
+        workspace.windowList().forEach(function (w) {
+            if (all.indexOf(w) < 0) all.push(w);
+        });
         var memo = adoptMemos(m);
         all.forEach(function (w) {
             watchClose(w);
@@ -4341,19 +7331,28 @@ var KI3 = (function () {
             else {
                 // A workspace from its memo keeps the memo's focus order; the global focus is
                 // KWin's active window, below.
-                var c = model.byWin[id(w)], ws = c ? Tree.wsOf(c) : null;
+                var c = model.byWin[id(w)],
+                    ws = c ? Tree.wsOf(c) : null;
                 if (!ws || !memo[ws.num]) model.focusWin(id(w));
             }
         });
         atLoadFloating = {};
-        if (workspace.activeWindow && wins[id(workspace.activeWindow)]) model.focusWin(id(workspace.activeWindow));
-        log("ADOPTED " + (m ? "with the effect's floating set" : "without the effect"));
+        if (workspace.activeWindow && wins[id(workspace.activeWindow)])
+            model.focusWin(id(workspace.activeWindow));
+        log(
+            "ADOPTED " +
+                (m ? "with the effect's floating set" : "without the effect")
+        );
         var wasRebuild = rebuilding;
         rebuilding = false;
         if (wasRebuild) {
             // A desktop change while this rebuild waited: again.
-            if (rebuildAgain || desktopIds().join() !== rebuiltFor) { rebuildAgain = false; startRebuild(); return; }
-            if (options.perOutputVirtualDesktops) showHomes();     // the homes as the new desktops have them
+            if (rebuildAgain || desktopIds().join() !== rebuiltFor) {
+                rebuildAgain = false;
+                startRebuild();
+                return;
+            }
+            if (options.perOutputVirtualDesktops) showHomes(); // the homes as the new desktops have them
         }
         scheduleAll();
         wantFocus();
@@ -4361,8 +7360,17 @@ var KI3 = (function () {
     }
     function adoptRestSoon(done) {
         checkFrame(function (m) {
-            try { adoptRest(m, done); }
-            catch (e) { log("ERROR in adopting the rest: " + e + (e.stack ? " " + e.stack : "") + "; releasing"); release(); }
+            try {
+                adoptRest(m, done);
+            } catch (e) {
+                log(
+                    "ERROR in adopting the rest: " +
+                        e +
+                        (e.stack ? " " + e.stack : "") +
+                        "; releasing"
+                );
+                release();
+            }
         });
     }
 
@@ -4371,13 +7379,25 @@ var KI3 = (function () {
     // the model is rebuilt from KWin's state as at a load: nothing is reconciled meanwhile
     // (`rebuilding`: a pass now would move windows to their old numbers), and the rebuild waits
     // a turn, for KWin to finish moving the removed desktop's windows (slotDesktopRemoved).
-    function desktopIds() { return workspace.desktops.map(function (d) { return d.id; }); }
+    function desktopIds() {
+        return workspace.desktops.map(function (d) {
+            return d.id;
+        });
+    }
     function desktopListChanged() {
-        var now = desktopIds(), before = deskIds;
+        var now = desktopIds(),
+            before = deskIds;
         deskIds = now;
-        var appended = now.length >= before.length && before.every(function (d, i) { return now[i] === d; });
+        var appended =
+            now.length >= before.length &&
+            before.every(function (d, i) {
+                return now[i] === d;
+            });
         if (appended) return;
-        if (rebuilding) { rebuildAgain = true; return; }
+        if (rebuilding) {
+            rebuildAgain = true;
+            return;
+        }
         log("DESKTOPS removed or moved: the model rebuilt from KWin's state");
         startRebuild();
     }
@@ -4389,151 +7409,309 @@ var KI3 = (function () {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
                 model = Tree.create();
-                wins = {}; expected = {}; armed = {}; lastFit = {}; pinFit = {}; fsFit = {}; selfFitAt = {}; selfFitLater = {}; ruleRan = {}; dirty = {}; placing = {};
+                wins = {};
+                expected = {};
+                armed = {};
+                lastFit = {};
+                pinFit = {};
+                fsFit = {};
+                selfFitAt = {};
+                selfFitLater = {};
+                ruleRan = {};
+                dirty = {};
+                placing = {};
                 // borderGone stays, as tookBorder: the windows and their taken borders outlive the
                 // model, and the GTK 4 bounds are learnt only when the border goes (the
                 // fuzzer: a desktop removed, then a taller tile stayed 26 px short).
-                pendingHome = {};   // numbers by the old positions
+                pendingHome = {}; // numbers by the old positions
                 syncOutputs();
                 adoptTiled();
                 syncShown();
                 adoptRestSoon("DESKTOPS adopted again");
             } catch (e) {
-                log("ERROR in rebuilding after a desktop change: " + e + (e.stack ? " " + e.stack : "") + "; releasing");
+                log(
+                    "ERROR in rebuilding after a desktop change: " +
+                        e +
+                        (e.stack ? " " + e.stack : "") +
+                        "; releasing"
+                );
                 release();
             }
         });
     }
 
     function startRest() {
-        syncOutputs();      // the outputs into the model before anything is placed on them
+        syncOutputs(); // the outputs into the model before anything is placed on them
         // A login (no windows yet): number the monitors as i3 did. A reload: leave them alone.
-        var login = workspace.windowList().filter(function (w) { return w.normalWindow; }).length === 0;
+        var login =
+            workspace.windowList().filter(function (w) {
+                return w.normalWindow;
+            }).length === 0;
         if (login) {
             switching++;
-            try { Workspaces.numberScreens(setHome); } finally { switching--; }
+            try {
+                Workspaces.numberScreens(setHome);
+            } finally {
+                switching--;
+            }
             focusUnderPointer();
         }
         adoptTiled();
-        workspace.windowAdded.connect(guard("windowAdded", function (w) {
-            watchClose(w);
-            adoptWindow(w, true);
-        }));
-        workspace.windowRemoved.connect(guard("windowRemoved", function (w) { closingOutside = null; closingTree = null; forgetWindow(w); }));
-        workspace.windowActivated.connect(guard("windowActivated", function (w) {
-            // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
-            log("ACTIVE " + (w ? shortCaption(w) : "none") + (switching ? " (kwin-i3)" : " (KWin)"));
-            if (!w || !wins[id(w)]) {
-                if (w && !w.deleted && w.desktopWindow && !switching) desktopActivated(w);
-                return;
-            }
-            // KWin's own choice after a popup or another window outside the tree closed: the focus
-            // stays where the model has it, as in i3 the focus is where it was when such a window
-            // goes (§5 D7); the close's pass puts it back (72-pointer-stays, case 1).
-            if (closingOutside && !switching) {
-                log("ACTIVE " + shortCaption(w) + " after " + shortCaption(closingOutside) + " closed: the focus stays " + conCaption(model.focused));
-                wantFocus();
-                return;
-            }
-            // The focused window being minimized (§5 C9, i3's move scratchpad): KWin activates its
-            // own choice inside doMinimize, before minimizedChanged (xdgshellwindow.cpp:858), so the
-            // flag on the window is already set while the model's isn't. The focus goes to i3's
-            // next, over KWin's choice; the next pass applies it.
-            var had = model.focused;
-            if (!switching && had && had.win !== null && wins[had.win] && wins[had.win].minimized && !had.minimized && wins[had.win] !== w) {
-                model.setMinimized(had.win, true);
-                var next = model.nextFocused(had);
-                log("ACTIVE " + shortCaption(w) + " on the minimize of " + conCaption(had) + ": i3's choice " + conCaption(next));
-                model.activate(next);
-                wantFocus();
-                return;
-            }
-            // KWin itself activating a window its monitor isn't showing: KWin switches the desktop
-            // before it activates a window elsewhere, so this is a stale choice, not a request.
-            // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
-            // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
-            // KWin activated a window of the workspace it replaced (fuzzer I8).
-            // Not taken into the model; the next pass puts the focus back where the model has it.
-            if (!switching && !w.onAllDesktops && w.output &&
-                w.desktops.indexOf(workspace.currentDesktopForScreen(w.output)) < 0) {
-                log("ACTIVE " + shortCaption(w) + " refused: its workspace isn't shown");
-                wantFocus();
-                return;
-            }
-            // An activation on a workspace with another window fullscreen ends that fullscreen
-            // (unblocksFullscreen, §10 V6b).
-            var back = !switching && opening[id(w)];
-            if (back && back !== true && !back.deleted) {
-                log("FULLSCREEN " + shortCaption(back) + ": keeps the focus over " + shortCaption(w) + " (opening)");
-                workspace.activeWindow = back;
-                return;
-            }
-            var unblock = switching || back ? null : unblocksFullscreen(w);
-            if (unblock) {
-                var ended = model.activateUnblock(unblock);
-                log("FULLSCREEN " + (ended && wins[ended.win] ? shortCaption(wins[ended.win]) : "?") + ": ends, " + shortCaption(w) + " activated");
-                schedule(Tree.wsOf(unblock));
-            }
-            // A modal dialog activated: its parent takes the place right behind it in the focus
-            // order, as in i3 the parent was focused at its opening (KWin activates a new window's modal dialog in its place, so the parent never got in).
-            if (w.modal && w.transientFor && !w.transientFor.deleted && model.byWin[id(w.transientFor)]) model.focusWin(id(w.transientFor));
-            model.focusWin(id(w));
-            // The pointer follows an activation to another output (Alt+Tab, the task manager, an
-            // app's request; i3's focus_on_window_activation ends in workspace_show), unless it
-            // is there already (§5 A2); kwin-i3's own activations warp from applyFocus. Not KWin's
-            // pick at a close (closingTree): the close's pass corrects it, and i3 sets no warp
-            // at a close (tree.c).
-            if (w.output && !closingTree) {
-                var crossed = focusedOutput !== null && focusedOutput !== w.output.name;
-                focusedOutput = w.output.name;
-                if (crossed && !switching && warps() && pointerOn() !== w.output && !pointerInside(w)) invoke("MoveMouseToFocus");
-            }
-            // No pass follows KWin's own activation (focus follows mouse, a click, Alt+Tab): the
-            // rings and the group bars' colours are told here, in the same turn (plan.md
-            // "Focus"); kwin-i3's own are told at the end of its pass.
-            if (!switching) { tellRings(); tellBars(); }
-        }));
+        workspace.windowAdded.connect(
+            guard("windowAdded", function (w) {
+                watchClose(w);
+                adoptWindow(w, true);
+            })
+        );
+        workspace.windowRemoved.connect(
+            guard("windowRemoved", function (w) {
+                closingOutside = null;
+                closingTree = null;
+                forgetWindow(w);
+            })
+        );
+        workspace.windowActivated.connect(
+            guard("windowActivated", function (w) {
+                // Every activation, and whether kwin-i3 asked for it: who moved focus, in a capture.
+                log(
+                    "ACTIVE " +
+                        (w ? shortCaption(w) : "none") +
+                        (switching ? " (kwin-i3)" : " (KWin)")
+                );
+                if (!w || !wins[id(w)]) {
+                    if (w && !w.deleted && w.desktopWindow && !switching)
+                        desktopActivated(w);
+                    return;
+                }
+                // KWin's own choice after a popup or another window outside the tree closed: the focus
+                // stays where the model has it, as in i3 the focus is where it was when such a window
+                // goes (§5 D7); the close's pass puts it back (72-pointer-stays, case 1).
+                if (closingOutside && !switching) {
+                    log(
+                        "ACTIVE " +
+                            shortCaption(w) +
+                            " after " +
+                            shortCaption(closingOutside) +
+                            " closed: the focus stays " +
+                            conCaption(model.focused)
+                    );
+                    wantFocus();
+                    return;
+                }
+                // The focused window being minimized (§5 C9, i3's move scratchpad): KWin activates its
+                // own choice inside doMinimize, before minimizedChanged (xdgshellwindow.cpp:858), so the
+                // flag on the window is already set while the model's isn't. The focus goes to i3's
+                // next, over KWin's choice; the next pass applies it.
+                var had = model.focused;
+                if (
+                    !switching &&
+                    had &&
+                    had.win !== null &&
+                    wins[had.win] &&
+                    wins[had.win].minimized &&
+                    !had.minimized &&
+                    wins[had.win] !== w
+                ) {
+                    model.setMinimized(had.win, true);
+                    var next = model.nextFocused(had);
+                    log(
+                        "ACTIVE " +
+                            shortCaption(w) +
+                            " on the minimize of " +
+                            conCaption(had) +
+                            ": i3's choice " +
+                            conCaption(next)
+                    );
+                    model.activate(next);
+                    wantFocus();
+                    return;
+                }
+                // KWin itself activating a window its monitor isn't showing: KWin switches the desktop
+                // before it activates a window elsewhere, so this is a stale choice, not a request.
+                // A monitor unplugged while it showed the focused, empty workspace: kwin-i3 showed that
+                // workspace on the other, as i3 does (randr.c move_content), and a millisecond later
+                // KWin activated a window of the workspace it replaced (fuzzer I8).
+                // Not taken into the model; the next pass puts the focus back where the model has it.
+                if (
+                    !switching &&
+                    !w.onAllDesktops &&
+                    w.output &&
+                    w.desktops.indexOf(
+                        workspace.currentDesktopForScreen(w.output)
+                    ) < 0
+                ) {
+                    log(
+                        "ACTIVE " +
+                            shortCaption(w) +
+                            " refused: its workspace isn't shown"
+                    );
+                    wantFocus();
+                    return;
+                }
+                // An activation on a workspace with another window fullscreen ends that fullscreen
+                // (unblocksFullscreen, §10 V6b).
+                var back = !switching && opening[id(w)];
+                if (back && back !== true && !back.deleted) {
+                    log(
+                        "FULLSCREEN " +
+                            shortCaption(back) +
+                            ": keeps the focus over " +
+                            shortCaption(w) +
+                            " (opening)"
+                    );
+                    workspace.activeWindow = back;
+                    return;
+                }
+                var unblock = switching || back ? null : unblocksFullscreen(w);
+                if (unblock) {
+                    var ended = model.activateUnblock(unblock);
+                    log(
+                        "FULLSCREEN " +
+                            (ended && wins[ended.win]
+                                ? shortCaption(wins[ended.win])
+                                : "?") +
+                            ": ends, " +
+                            shortCaption(w) +
+                            " activated"
+                    );
+                    schedule(Tree.wsOf(unblock));
+                }
+                // A modal dialog activated: its parent takes the place right behind it in the focus
+                // order, as in i3 the parent was focused at its opening (KWin activates a new window's modal dialog in its place, so the parent never got in).
+                if (
+                    w.modal &&
+                    w.transientFor &&
+                    !w.transientFor.deleted &&
+                    model.byWin[id(w.transientFor)]
+                )
+                    model.focusWin(id(w.transientFor));
+                model.focusWin(id(w));
+                // The pointer follows an activation to another output (Alt+Tab, the task manager, an
+                // app's request; i3's focus_on_window_activation ends in workspace_show), unless it
+                // is there already (§5 A2); kwin-i3's own activations warp from applyFocus. Not KWin's
+                // pick at a close (closingTree): the close's pass corrects it, and i3 sets no warp
+                // at a close (tree.c).
+                if (w.output && !closingTree) {
+                    var crossed =
+                        focusedOutput !== null &&
+                        focusedOutput !== w.output.name;
+                    focusedOutput = w.output.name;
+                    if (
+                        crossed &&
+                        !switching &&
+                        warps() &&
+                        pointerOn() !== w.output &&
+                        !pointerInside(w)
+                    )
+                        invoke("MoveMouseToFocus");
+                }
+                // No pass follows KWin's own activation (focus follows mouse, a click, Alt+Tab): the
+                // rings and the group bars' colours are told here, in the same turn (plan.md
+                // "Focus"); kwin-i3's own are told at the end of its pass.
+                if (!switching) {
+                    tellRings();
+                    tellBars();
+                }
+            })
+        );
         workspace.cursorPosChanged.connect(guard("pointer", pointerMoved));
         seedPointer();
         readShowing();
-        workspace.currentDesktopChanged.connect(guard("desktop shown", function (previous, current, output) {
-            log("SHOWN " + (output ? output.name : "?") + " " + (previous ? deskNum(previous) : "-") + " -> " +
-                (current ? deskNum(current) : "-") + (switching ? " (kwin-i3)" : " (outside)"));
-            // What the output shows now, into the model at once (KWin has written it before
-            // emitting); the focus order waits for syncShown.
-            var o = output && !rebuilding ? model.output(output.name) : null, n = current ? deskNum(current) : 0;
-            if (o) model.setShows(o, n >= 1 && n <= NAMES.length ? model.workspaces[n] || null : null);
-            // A window floated while this workspace was hidden is given its size now (floatDue).
-            if (n >= 1 && n <= NAMES.length && model.workspaces[n] && hasFloatDue(model.workspaces[n])) schedule(model.workspaces[n]);
-            recordShown(previous, current, output);
-        }));
+        workspace.currentDesktopChanged.connect(
+            guard("desktop shown", function (previous, current, output) {
+                log(
+                    "SHOWN " +
+                        (output ? output.name : "?") +
+                        " " +
+                        (previous ? deskNum(previous) : "-") +
+                        " -> " +
+                        (current ? deskNum(current) : "-") +
+                        (switching ? " (kwin-i3)" : " (outside)")
+                );
+                // What the output shows now, into the model at once (KWin has written it before
+                // emitting); the focus order waits for syncShown.
+                var o =
+                        output && !rebuilding
+                            ? model.output(output.name)
+                            : null,
+                    n = current ? deskNum(current) : 0;
+                if (o)
+                    model.setShows(
+                        o,
+                        n >= 1 && n <= NAMES.length
+                            ? model.workspaces[n] || null
+                            : null
+                    );
+                // A window floated while this workspace was hidden is given its size now (floatDue).
+                if (
+                    n >= 1 &&
+                    n <= NAMES.length &&
+                    model.workspaces[n] &&
+                    hasFloatDue(model.workspaces[n])
+                )
+                    schedule(model.workspaces[n]);
+                recordShown(previous, current, output);
+            })
+        );
         workspace.screensChanged.connect(guard("screens", screensChanged));
         // KWin emits it before screensChanged within one output change (workspace.cpp
         // updateOutputs), and alone for a priority change: the order only, so screensChanged
         // still tells a new output from the model's.
-        workspace.screenOrderChanged.connect(guard("screen order", function () {
-            model.orderOutputs(Workspaces.ordered().map(function (s) { return s.name; }));
-        }));
+        workspace.screenOrderChanged.connect(
+            guard("screen order", function () {
+                model.orderOutputs(
+                    Workspaces.ordered().map(function (s) {
+                        return s.name;
+                    })
+                );
+            })
+        );
         winOptions();
         options.configChanged.connect(guard("settings", settingsChanged));
-        workspace.desktopsChanged.connect(guard("desktops", desktopListChanged));
+        workspace.desktopsChanged.connect(
+            guard("desktops", desktopListChanged)
+        );
         deskIds = desktopIds();
         // The helper's action, not a key (startDrag): bound to one, it finds no drag and does
         // nothing. Not in registerKeys, so not on the Keys page.
-        registerShortcut("kwin-i3 Tiling Drag", "kwin-i3: tiling drag (run by the mouse, no key)", "",
-                         guard("Tiling Drag", startDrag));
-        registerShortcut("kwin-i3 Tiling Resize", "kwin-i3: tiling resize (run by the mouse, no key)", "",
-                         guard("Tiling Resize", startResize));
-        registerShortcut("kwin-i3 Floated Moved", "kwin-i3: a floated container moved (run by the mouse, no key)", "",
-                         guard("Floated Moved", floatedMoved));
-        registerShortcut("kwin-i3 Tab Click", "kwin-i3: a group's tab clicked (run by the mouse, no key)", "",
-                         guard("Tab Click", tabEvent));
-        registerShortcut("kwin-i3 Window Pressed", "kwin-i3: a window pressed inside the focused container (run by the mouse, no key)", "",
-                         guard("Window Pressed", windowPressed));
+        registerShortcut(
+            "kwin-i3 Tiling Drag",
+            "kwin-i3: tiling drag (run by the mouse, no key)",
+            "",
+            guard("Tiling Drag", startDrag)
+        );
+        registerShortcut(
+            "kwin-i3 Tiling Resize",
+            "kwin-i3: tiling resize (run by the mouse, no key)",
+            "",
+            guard("Tiling Resize", startResize)
+        );
+        registerShortcut(
+            "kwin-i3 Floated Moved",
+            "kwin-i3: a floated container moved (run by the mouse, no key)",
+            "",
+            guard("Floated Moved", floatedMoved)
+        );
+        registerShortcut(
+            "kwin-i3 Tab Click",
+            "kwin-i3: a group's tab clicked (run by the mouse, no key)",
+            "",
+            guard("Tab Click", tabEvent)
+        );
+        registerShortcut(
+            "kwin-i3 Window Pressed",
+            "kwin-i3: a window pressed inside the focused container (run by the mouse, no key)",
+            "",
+            guard("Window Pressed", windowPressed)
+        );
         // The helper's resize mode changed (plugin/resizemode.cpp): read it. Not in registerKeys,
         // so not on the Keys page.
-        registerShortcut("kwin-i3 Mode Changed", "kwin-i3: the resize mode changed (run by the helper, no key)", "",
-                         guard("Mode Changed", askMode));
+        registerShortcut(
+            "kwin-i3 Mode Changed",
+            "kwin-i3: the resize mode changed (run by the helper, no key)",
+            "",
+            guard("Mode Changed", askMode)
+        );
         askMode();
         tellDrag(true);
         adoptRestSoon("kwin-i3 loaded");
@@ -4545,27 +7723,46 @@ var KI3 = (function () {
         // Armed only at a login: after a reload mid-session (windows open), the next activity
         // switch would renumber every monitor back to 1, 2 ….
         var renumbered = !login;
-        workspace.currentActivityChanged.connect(guard("activity", function () {
-            if (renumbered) return;
-            renumbered = true;
-            switching++;
-            try { Workspaces.numberScreens(setHome); } finally { switching--; }
-            focusUnderPointer();
-            scheduleAll();
-            wantFocus();
-        }));
+        workspace.currentActivityChanged.connect(
+            guard("activity", function () {
+                if (renumbered) return;
+                renumbered = true;
+                switching++;
+                try {
+                    Workspaces.numberScreens(setHome);
+                } finally {
+                    switching--;
+                }
+                focusUnderPointer();
+                scheduleAll();
+                wantFocus();
+            })
+        );
         registerKeys();
         // The helper plugin fits the keys that mean a key position to the keyboard layout.
         // No reply asked: without the plugin, nothing happens.
-        callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "SetReleased", false);
-        callDBus("org.kde.KWin", "/kwini3helper", "net.local.kwini3helper", "FitKeys");
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3helper",
+            "net.local.kwini3helper",
+            "SetReleased",
+            false
+        );
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3helper",
+            "net.local.kwini3helper",
+            "FitKeys"
+        );
         checkLayoutKeys();
         checkHelperKeys();
         checkPerOutput();
-        options.perOutputVirtualDesktopsChanged.connect(guard("per-output", function () {
-            checkPerOutput();
-            if (options.perOutputVirtualDesktops) reshowHomes();
-        }));
+        options.perOutputVirtualDesktopsChanged.connect(
+            guard("per-output", function () {
+                checkPerOutput();
+                if (options.perOutputVirtualDesktops) reshowHomes();
+            })
+        );
         scheduleAll();
         syncShown();
     }
@@ -4579,45 +7776,110 @@ var KI3 = (function () {
     // two misses in a row turn the frame off (one slow answer must not re-tile
     // everything).
     // after(m): run once with the first answer, or with null after 250 ms (the load path).
-    var effectAsk = 0, frameMisses = 0, frameKnown = false;
+    var effectAsk = 0,
+        frameMisses = 0,
+        frameKnown = false;
     function checkFrame(after) {
-        var n = ++effectAsk, answered = false, done = false;
-        var finish = function (m) { if (done || !after) return; done = true; after(m); };
-        if (after) later(250, function () { finish(null); });
-        callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "Stats", guard("frame check", function (m) {
-            answered = true;
-            if (n === effectAsk) {
-                frameMisses = 0;
-                effectSeen = !!m;
-                if (!m || m.focused !== focusTold) focusTold = null;     // a reloaded effect: tell it again
-                // The frame first, so the windows adopted below see it.
-                setFrame(!!(m && m.supported && m.frameWidth !== undefined));
-                tellRing();             // again on every answer: a reloaded effect starts with the ring on
-                // An effect that lost what it was told (reloaded while the frame stayed on): tell
-                // it again.
-                if (m) {
-                    var has = {};
-                    for (var i = 0; i < m.floating.length; i++) has[m.floating[i]] = true;
-                    var lost = Object.keys(told).some(function (k) { return told[k] === true && !has[k]; });
-                    // The rings likewise (SetRing; Stats lists the windows it holds a class for).
-                    var rings = {};
-                    (m.rings || []).forEach(function (k) { rings[k] = true; });
-                    if (Object.keys(ringTold).some(function (k) { return !rings[k]; })) { ringTold = {}; lost = true; }
-                    // The bars likewise: a reloaded effect lost them; a reloaded script never
-                    // told the ones the effect still draws.
-                    var bars = {};
-                    (m.bars || []).forEach(function (k) { bars[k] = true; if (!barTold[k]) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetBar", k, 0, 0, 0, 0, false, 0, "", ""); });
-                    Object.keys(barTold).forEach(function (k) { if (!bars[k]) { delete barTold[k]; delete spanTold[k]; kick(); } });
-                    // The saved trees likewise (SetMemo): a reloaded effect has none, and a tree is
-                    // told only when it changes, so a workspace left alone would come back at the
-                    // next load from the tiles alone (a plugin install, a capture).
-                    var memo = m.memo || {};
-                    if (Object.keys(memoTold).some(function (k) { return memoTold[k] && memo[k] !== memoTold[k]; })) { memoTold = {}; lost = true; }
-                    if (lost) { told = {}; scheduleAll(); }
+        var n = ++effectAsk,
+            answered = false,
+            done = false;
+        var finish = function (m) {
+            if (done || !after) return;
+            done = true;
+            after(m);
+        };
+        if (after)
+            later(250, function () {
+                finish(null);
+            });
+        callDBus(
+            "org.kde.KWin",
+            "/kwini3hold",
+            "net.local.kwini3hold",
+            "Stats",
+            guard("frame check", function (m) {
+                answered = true;
+                if (n === effectAsk) {
+                    frameMisses = 0;
+                    effectSeen = !!m;
+                    if (!m || m.focused !== focusTold) focusTold = null; // a reloaded effect: tell it again
+                    // The frame first, so the windows adopted below see it.
+                    setFrame(
+                        !!(m && m.supported && m.frameWidth !== undefined)
+                    );
+                    tellRing(); // again on every answer: a reloaded effect starts with the ring on
+                    // An effect that lost what it was told (reloaded while the frame stayed on): tell
+                    // it again.
+                    if (m) {
+                        var has = {};
+                        for (var i = 0; i < m.floating.length; i++)
+                            has[m.floating[i]] = true;
+                        var lost = Object.keys(told).some(function (k) {
+                            return told[k] === true && !has[k];
+                        });
+                        // The rings likewise (SetRing; Stats lists the windows it holds a class for).
+                        var rings = {};
+                        (m.rings || []).forEach(function (k) {
+                            rings[k] = true;
+                        });
+                        if (
+                            Object.keys(ringTold).some(function (k) {
+                                return !rings[k];
+                            })
+                        ) {
+                            ringTold = {};
+                            lost = true;
+                        }
+                        // The bars likewise: a reloaded effect lost them; a reloaded script never
+                        // told the ones the effect still draws.
+                        var bars = {};
+                        (m.bars || []).forEach(function (k) {
+                            bars[k] = true;
+                            if (!barTold[k])
+                                callDBus(
+                                    "org.kde.KWin",
+                                    "/kwini3hold",
+                                    "net.local.kwini3hold",
+                                    "SetBar",
+                                    k,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    false,
+                                    0,
+                                    "",
+                                    ""
+                                );
+                        });
+                        Object.keys(barTold).forEach(function (k) {
+                            if (!bars[k]) {
+                                delete barTold[k];
+                                delete spanTold[k];
+                                kick();
+                            }
+                        });
+                        // The saved trees likewise (SetMemo): a reloaded effect has none, and a tree is
+                        // told only when it changes, so a workspace left alone would come back at the
+                        // next load from the tiles alone (a plugin install, a capture).
+                        var memo = m.memo || {};
+                        if (
+                            Object.keys(memoTold).some(function (k) {
+                                return memoTold[k] && memo[k] !== memoTold[k];
+                            })
+                        ) {
+                            memoTold = {};
+                            lost = true;
+                        }
+                        if (lost) {
+                            told = {};
+                            scheduleAll();
+                        }
+                    }
                 }
-            }
-            finish(m);
-        }));
+                finish(m);
+            })
+        );
         later(1000, function () {
             if (answered || n !== effectAsk) return;
             if (++frameMisses >= 2 || !frameOn) setFrame(false);
@@ -4629,13 +7891,23 @@ var KI3 = (function () {
         var first = !frameKnown;
         frameKnown = true;
         frameOn = on;
-        told = {}; ringTold = {}; barTold = {}; spanTold = {}; memoTold = {};   // a new effect knows nothing: the next pass tells it again
-        log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
+        told = {};
+        ringTold = {};
+        barTold = {};
+        spanTold = {};
+        memoTold = {}; // a new effect knows nothing: the next pass tells it again
+        log(
+            "FRAME " +
+                (on
+                    ? "on: the effect draws it"
+                    : "off: no effect, decorations as they are")
+        );
         // The first answer either way, and every change: a border no frame will replace is given
         // back, including one a reload's predecessor took (not recorded here). Tiled
         // windows lose theirs again on the next pass if the frame is on.
         Object.keys(wins).forEach(function (key) {
-            var w = wins[key], con = model.byWin[key];
+            var w = wins[key],
+                con = model.byWin[key];
             var tiled = con && !floats(con);
             if (on && tiled && tiledBorderless()) return;
             giveBorder(w);
@@ -4657,9 +7929,15 @@ var KI3 = (function () {
         // The rules changed: every rule runs anew on every window (each window's record cleared),
         // as a reload would in i3; a window a rule doesn't
         // reach stays as it is, floated or tiled by hand included (reclassify).
-        if (changed.some(function (k) { return RULE_KEYS.indexOf(k) >= 0; })) {
+        if (
+            changed.some(function (k) {
+                return RULE_KEYS.indexOf(k) >= 0;
+            })
+        ) {
             ruleRan = {};
-            workspace.windowList().forEach(function (w) { if (!w.deleted) reclassify(w); });
+            workspace.windowList().forEach(function (w) {
+                if (!w.deleted) reclassify(w);
+            });
         }
         // A new look: the effect told now; the next pass gives or takes each tiled window's
         // border (tiledBorder) and redoes the padding. No loop gives borders back here: the pass
@@ -4679,7 +7957,12 @@ var KI3 = (function () {
     function unusedWorkspace(s, preferAssigned) {
         if (preferAssigned) {
             for (var k = 1; k <= NAMES.length; k++) {
-                if (Workspaces.assigned(k) !== s.name || model.workspaces[k] || Workspaces.showing(k)) continue;
+                if (
+                    Workspaces.assigned(k) !== s.name ||
+                    model.workspaces[k] ||
+                    Workspaces.showing(k)
+                )
+                    continue;
                 Workspaces.ensure(k);
                 if (!deskOf(k)) continue;
                 setHome(k, s);
@@ -4687,10 +7970,16 @@ var KI3 = (function () {
             }
         }
         for (var n = 1; n <= NAMES.length; n++) {
-            var m = model.workspaces[n], a = Workspaces.assigned(n);
+            var m = model.workspaces[n],
+                a = Workspaces.assigned(n);
             if (a && a !== s.name) continue;
             Workspaces.ensure(n);
-            if (!deskOf(n) || (m && (m.nodes.length || m.floating.length)) || Workspaces.showing(n)) continue;
+            if (
+                !deskOf(n) ||
+                (m && (m.nodes.length || m.floating.length)) ||
+                Workspaces.showing(n)
+            )
+                continue;
             setHome(n, s);
             return n;
         }
@@ -4717,7 +8006,11 @@ var KI3 = (function () {
     // (pendingShown, above). Not while kwin-i3 switches, or the model is rebuilt.
     function recordShown(previous, current, output) {
         if (switching || rebuilding || !current || !output) return;
-        pendingShown.push({ output: output.name, previous: previous ? deskNum(previous) : 0, current: deskNum(current) });
+        pendingShown.push({
+            output: output.name,
+            previous: previous ? deskNum(previous) : 0,
+            current: deskNum(current),
+        });
         if (pendingTimer) return;
         pendingTimer = true;
         later(0, function () {
@@ -4736,35 +8029,84 @@ var KI3 = (function () {
     // across outputs brings the pointer, as a key does (§5 A2).
     function shownOutside(e) {
         if (rebuilding) return;
-        var names = workspace.screens.map(function (s) { return s.name; });
-        var known = model.outputs().map(function (o) { return o.name; });
-        if (known.some(function (n) { return names.indexOf(n) < 0; }) ||
-            names.some(function (n) { return known.indexOf(n) < 0; })) return;
-        var num = e.current, output = null;
-        workspace.screens.forEach(function (s) { if (s.name === e.output) output = s; });
+        var names = workspace.screens.map(function (s) {
+            return s.name;
+        });
+        var known = model.outputs().map(function (o) {
+            return o.name;
+        });
+        if (
+            known.some(function (n) {
+                return names.indexOf(n) < 0;
+            }) ||
+            names.some(function (n) {
+                return known.indexOf(n) < 0;
+            })
+        )
+            return;
+        var num = e.current,
+            output = null;
+        workspace.screens.forEach(function (s) {
+            if (s.name === e.output) output = s;
+        });
         if (!output || num < 1 || !deskOf(num)) return;
         // A virtual desktop past 10 shown from outside (the Overview): not kwin-i3's (decision 9),
         // so the output goes back to what it showed.
         if (num > NAMES.length) {
-            if (e.previous >= 1 && e.previous <= NAMES.length && deskOf(e.previous)) {
+            if (
+                e.previous >= 1 &&
+                e.previous <= NAMES.length &&
+                deskOf(e.previous)
+            ) {
                 showOn(deskOf(e.previous), output);
-                log("SHOWN " + num + " on " + output.name + " outside kwin-i3: past 10, not a workspace; " + e.previous + " again");
+                log(
+                    "SHOWN " +
+                        num +
+                        " on " +
+                        output.name +
+                        " outside kwin-i3: past 10, not a workspace; " +
+                        e.previous +
+                        " again"
+                );
             }
             return;
         }
-        if (workspace.currentDesktopForScreen(output) !== deskOf(num)) return;    // switched again since
+        if (workspace.currentDesktopForScreen(output) !== deskOf(num)) return; // switched again since
         var m = model.workspaces[num];
-        var occupied = !!(m && (m.nodes.length || m.floating.length) && hasHome(num));
-        var where = occupied ? outputOfNum(num) : Workspaces.assignedScreen(num) || output;
+        var occupied = !!(
+            m &&
+            (m.nodes.length || m.floating.length) &&
+            hasHome(num)
+        );
+        var where = occupied
+            ? outputOfNum(num)
+            : Workspaces.assignedScreen(num) || output;
         if (where !== output) {
-            if (e.previous >= 1 && deskOf(e.previous)) showOn(deskOf(e.previous), output);
-            if (workspace.currentDesktopForScreen(where) !== deskOf(num)) showOn(deskOf(num), where);
-            log("SHOWN " + num + " on " + output.name + " outside kwin-i3: it lives on " + where.name + ", shown there; the focus follows");
+            if (e.previous >= 1 && deskOf(e.previous))
+                showOn(deskOf(e.previous), output);
+            if (workspace.currentDesktopForScreen(where) !== deskOf(num))
+                showOn(deskOf(num), where);
+            log(
+                "SHOWN " +
+                    num +
+                    " on " +
+                    output.name +
+                    " outside kwin-i3: it lives on " +
+                    where.name +
+                    ", shown there; the focus follows"
+            );
         } else {
             if (!occupied) claimHome(num, output);
-            log("SHOWN " + num + " on " + output.name + " outside kwin-i3: the focus follows");
+            log(
+                "SHOWN " +
+                    num +
+                    " on " +
+                    output.name +
+                    " outside kwin-i3: the focus follows"
+            );
         }
-        var ws = wsModel(num), old = model.focused;
+        var ws = wsModel(num),
+            old = model.focused;
         model.activate(focusOf(ws));
         pushSticky(outputOf(ws), old);
         wantFocus(true);
@@ -4777,13 +8119,25 @@ var KI3 = (function () {
     // focus (§5 D5), the pointer following (A2). src/outputs.js decides from a snapshot; the
     // reconcile's relocate carries the windows, over KWin's own moves (plan.md decision 10).
     function outputState() {
-        var st = { outputs: Workspaces.ordered().map(function (s) { return s.name; }), homes: {}, assigned: {}, occupied: {}, focused: null };
+        var st = {
+            outputs: Workspaces.ordered().map(function (s) {
+                return s.name;
+            }),
+            homes: {},
+            assigned: {},
+            occupied: {},
+            focused: null,
+        };
         var hs = homes();
-        Object.keys(hs).forEach(function (n) { st.homes[n] = hs[n]; });
+        Object.keys(hs).forEach(function (n) {
+            st.homes[n] = hs[n];
+        });
         for (var n = 1; n <= NAMES.length; n++) {
-            var list = Workspaces.assignedList(n), m = model.workspaces[n];
+            var list = Workspaces.assignedList(n),
+                m = model.workspaces[n];
             if (list.length) st.assigned[n] = list.slice();
-            if (m && (m.nodes.length || m.floating.length)) st.occupied[n] = true;
+            if (m && (m.nodes.length || m.floating.length))
+                st.occupied[n] = true;
         }
         var fws = focusedWs();
         st.focused = fws ? fws.num : null;
@@ -4791,27 +8145,43 @@ var KI3 = (function () {
     }
     function screensChanged() {
         checkPerOutput();
-        var names = Workspaces.ordered().map(function (s) { return s.name; });
-        var known = model.outputs().map(function (o) { return o.name; });
-        var lost = known.filter(function (n) { return names.indexOf(n) < 0; });
-        var added = names.filter(function (n) { return known.indexOf(n) < 0; });
+        var names = Workspaces.ordered().map(function (s) {
+            return s.name;
+        });
+        var known = model.outputs().map(function (o) {
+            return o.name;
+        });
+        var lost = known.filter(function (n) {
+            return names.indexOf(n) < 0;
+        });
+        var added = names.filter(function (n) {
+            return known.indexOf(n) < 0;
+        });
         // Desktop changes queued this turn are the outputs' own (KWin giving a new or a lost
         // output's desktop away), not a user's `workspace N`: shownOutside, a turn later, would
         // see the model's outputs refreshed below and take them for one.
         if (lost.length || added.length) pendingShown = [];
-        syncOutputs();      // the new outputs and every rect, before anything is placed on them
-        var first = Workspaces.ordered()[0], fws = focusedWs();
+        syncOutputs(); // the new outputs and every rect, before anything is placed on them
+        var first = Workspaces.ordered()[0],
+            fws = focusedWs();
         // B. Lost outputs: their workspaces move for good; the focused one is shown on the first
         // output (i3's workspace_show(next) in move_content; 84-unplug-focus).
         lost.forEach(function (name) {
-            var moves = Outputs.homesAfterLoss(name, outputState()), moved = [];
+            var moves = Outputs.homesAfterLoss(name, outputState()),
+                moved = [];
             Object.keys(moves).forEach(function (n) {
                 setHomeName(+n, moves[n]);
                 if (moves[n]) moved.push(n + " to " + moves[n]);
             });
             model.removeOutput(name);
-            log("OUTPUT " + name + " lost" + (moved.length ? ": workspace " + moved.join(", ") : ""));
-            if (fws && moves[fws.num] && first && deskOf(fws.num)) showOn(deskOf(fws.num), screenNamed(moves[fws.num]) || first);
+            log(
+                "OUTPUT " +
+                    name +
+                    " lost" +
+                    (moved.length ? ": workspace " + moved.join(", ") : "")
+            );
+            if (fws && moves[fws.num] && first && deskOf(fws.num))
+                showOn(deskOf(fws.num), screenNamed(moves[fws.num]) || first);
         });
         // C. New outputs, in KWin's order: the assigned workspaces move to each; a source left
         // showing one of them shows its most recently focused one with windows (S10's rule), else
@@ -4820,28 +8190,54 @@ var KI3 = (function () {
         added.forEach(function (name) {
             var X = screenNamed(name);
             if (!X) return;
-            var moving = Outputs.movingTo(name, outputState()), shown = [];
+            var moving = Outputs.movingTo(name, outputState()),
+                shown = [];
             moving.forEach(function (n) {
                 var src = homes()[n];
                 Workspaces.ensure(n);
                 if (!deskOf(n)) return;
                 setHome(n, X);
-                if (src && src !== name && Workspaces.showing(n) && Workspaces.showing(n).name === src) {
-                    var back = Outputs.sourceShows(src, focusOrderOn(src), outputState()) || unusedWorkspace(screenNamed(src));
-                    if (back && deskOf(back)) { showOn(deskOf(back), screenNamed(src)); shown.push(src + " shows " + back); }
+                if (
+                    src &&
+                    src !== name &&
+                    Workspaces.showing(n) &&
+                    Workspaces.showing(n).name === src
+                ) {
+                    var back =
+                        Outputs.sourceShows(
+                            src,
+                            focusOrderOn(src),
+                            outputState()
+                        ) || unusedWorkspace(screenNamed(src));
+                    if (back && deskOf(back)) {
+                        showOn(deskOf(back), screenNamed(src));
+                        shown.push(src + " shows " + back);
+                    }
                 }
             });
-            var show = Outputs.newShows(name, outputState()) || unusedWorkspace(X);
-            if (show) Workspaces.ensure(show);      // its first assigned one may not exist yet (i3 makes it)
+            var show =
+                Outputs.newShows(name, outputState()) || unusedWorkspace(X);
+            if (show) Workspaces.ensure(show); // its first assigned one may not exist yet (i3 makes it)
             if (show && deskOf(show)) {
                 if (!hasHome(show)) setHome(show, X);
-                if (workspace.currentDesktopForScreen(X) !== deskOf(show)) showOn(deskOf(show), X);
+                if (workspace.currentDesktopForScreen(X) !== deskOf(show))
+                    showOn(deskOf(show), X);
             }
-            log("OUTPUT " + name + " here" + (moving.length ? ": workspace " + moving.join(", ") + " moved to it" : "") +
-                (show ? "; it shows " + show : "") + (shown.length ? "; " + shown.join(", ") : ""));
+            log(
+                "OUTPUT " +
+                    name +
+                    " here" +
+                    (moving.length
+                        ? ": workspace " + moving.join(", ") + " moved to it"
+                        : "") +
+                    (show ? "; it shows " + show : "") +
+                    (shown.length ? "; " + shown.join(", ") : "")
+            );
         });
         syncShown();
-        workspace.screens.forEach(function (s) { pushSticky(s, null); });   // sticky windows follow what each output shows now
+        workspace.screens.forEach(function (s) {
+            pushSticky(s, null);
+        }); // sticky windows follow what each output shows now
         seedPointer();
         armRefit();
         scheduleAll();
@@ -4860,6 +8256,8 @@ var KI3 = (function () {
     return {
         start: start,
         // for the live tests: the model as text
-        describe: function (n) { return model.describe(n); },
+        describe: function (n) {
+            return model.describe(n);
+        },
     };
 })();

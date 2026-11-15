@@ -22,20 +22,54 @@ test("every default key matches i3's default config, translated", () => {
 test("no key is bound to two actions", () => {
     const seen = {};
     for (const [action, keys] of Object.entries(KEYS))
-        for (const k of keys) { assert.ok(!seen[k], `${k}: ${seen[k]} and ${action}`); seen[k] = action; }
+        for (const k of keys) {
+            assert.ok(!seen[k], `${k}: ${seen[k]} and ${action}`);
+            seen[k] = action;
+        }
 });
 
 test("every key has an action behind it", () => {
     for (const action of Object.keys(KEYS))
-        assert.ok(src.includes(`"${action}": function`) || ["Focus", "Move"].some((p) => action.startsWith(p + " ")),
-            `no action for "${action}"`);
+        assert.ok(
+            // The actions table's key: quoted, or bare where the name is an identifier.
+            src.includes(`"${action}": function`) ||
+                src.includes(`\n        ${action}: function`) ||
+                ["Focus", "Move"].some((p) => action.startsWith(p + " ")),
+            `no action for "${action}"`
+        );
 });
 
 test("workspace keys: Meta+1..0, and Meta+<shifted symbol> to move (Meta+Shift+digit arrives so)", () => {
-    const names = Function("return " + src.match(/var NAMES = (\[[^\]]*\]);/)[1])();
-    const shifted = Function("return " + src.match(/var SHIFTED = (\[[^\]]*\]);/)[1])();
-    assert.deepStrictEqual(names, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]);
-    assert.deepStrictEqual(shifted, ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"]);
+    const names = Function(
+        "return " + src.match(/var NAMES = (\[[^\]]*\]);/)[1]
+    )();
+    const shifted = Function(
+        "return " + src.match(/var SHIFTED = (\[[^\]]*\]);/)[1]
+    )();
+    assert.deepStrictEqual(names, [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+    ]);
+    assert.deepStrictEqual(shifted, [
+        "!",
+        "@",
+        "#",
+        "$",
+        "%",
+        "^",
+        "&",
+        "*",
+        "(",
+        ")",
+    ]);
     for (const k of ['"Meta+" + k', '"Meta+" + SHIFTED[i]'])
         assert.ok(src.includes(k), `workspace binding ${k} missing`);
 });
