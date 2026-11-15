@@ -136,3 +136,20 @@ stray line, `' ' ')"`, after "onto a: at once" opens a single quote that closes 
 in the next comment, so the timing check after it is swallowed into a string and the shell runs
 the rest as a command that isn't found. The line carries a shellcheck disable until it goes.
 Next: delete it and run `71-popup-grace.sh` alone; a red there is diagnosed like any other.
+
+**119. Tests that move the pointer and then press** (2026-11-15, from the release's 86 red: G16
+moved onto another window of a focus-parent selection before pressing, and focus follows mouse
+collapsed the selection first, under load; the trap is in `kwin-notes.md`). The same shape in 86:
+G13's container drag and the Escape on a title bar. Proposed with them: a rule for scenario authors
+in `docs/testing.md` (wait for the activation a move causes before pressing; no move between a
+selection and its press), P3 rule 3 asking a red/green log diff before a scenario goes to the alone
+tail, millisecond stamps in `tools/logsink.py`, and `kwin-notes.md` lines on a script's
+synchronous `callDBus` into KWin and the test bus's default limits. Next: the maintainer's word on
+each, then each made.
+
+**120. The helper reads only the committed tile mode** (2026-11-15, from the same diagnosis).
+`plugin/tilingdrag.cpp` tests `quickTileMode()` at six places, where FrameFocus and the hold count
+`requestedQuickTileMode()` too: a client slow to ack its tile looks untiled to the helper's presses
+(G1-G5, G13, G16, Z3, Z5) meanwhile. Not this red's cause, and not yet seen live. Next: a test-KWin
+probe with a SIGSTOPped client re-tiled, pressed with Meta+Shift, to show whether the press goes
+wrong; then the spec drafted for it (with its review) is built or dropped.
