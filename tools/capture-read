@@ -7,7 +7,11 @@ by time, with the user's press and note where they fall. Read a capture with thi
 Usage: capture-read DIR [SECONDS]   the SECONDS before the press (default 60; 0 for all) and the
                                     capture's own few after it
 """
-import os, re, sys
+
+import os
+import re
+import sys
+from pathlib import Path
 
 STAMP = re.compile(r"^(\d\d):(\d\d):(\d\d)(?:\.(\d{3}))?\s(.*)$")
 
@@ -19,7 +23,7 @@ def secs(m):
 
 def fmt(t):
     t %= 86400
-    return "%02d:%02d:%06.3f" % (t // 3600, t % 3600 // 60, t % 60)
+    return f"{int(t // 3600):02d}:{int(t % 3600 // 60):02d}:{t % 60:06.3f}"
 
 
 def main():
@@ -29,13 +33,18 @@ def main():
     before = float(sys.argv[2]) if len(sys.argv) > 2 else 60
     m = re.search(r"_(\d\d)(\d\d)(\d\d)\.(\d{3})$", d)
     if not m:
-        sys.exit("capture-read: %s is not a capture directory (<date>_HHMMSS.mmm)" % d)
-    press = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)) + int(m.group(4)) / 1000
+        sys.exit(f"capture-read: {d} is not a capture directory (<date>_HHMMSS.mmm)")
+    press = (
+        int(m.group(1)) * 3600
+        + int(m.group(2)) * 60
+        + int(m.group(3))
+        + int(m.group(4)) / 1000
+    )
 
-    events = []   # (time, order, source, text)
+    events = []  # (time, order, source, text)
 
     def add(t, src, text):
-        if t > press + 3600:   # logged before a midnight the press came after
+        if t > press + 3600:  # logged before a midnight the press came after
             t -= 86400
         events.append((t, len(events), src, text))
 
@@ -44,37 +53,40 @@ def main():
     state = os.path.join(d, "state.txt")
     in_log = False
     if os.path.exists(state):
-        for line in open(state, errors="replace"):
-            line = line.rstrip("\n")[9:]
-            if line.startswith("== "):
-                in_log = line == "== log"
-                continue
-            if in_log and line != "DUMP END":
-                lm = STAMP.match(line)
-                if lm:
-                    add(secs(lm), "i3  ", lm.group(5))
+        with open(state, errors="replace") as fh:
+            for line in fh:
+                line = line.rstrip("\n")[9:]
+                if line.startswith("== "):
+                    in_log = line == "== log"
+                    continue
+                if in_log and line != "DUMP END":
+                    lm = STAMP.match(line)
+                    if lm:
+                        add(secs(lm), "i3  ", lm.group(5))
     else:
         print("(no state.txt: kwin-i3 did not answer)")
 
     hold = os.path.join(d, "hold.txt")
     if os.path.exists(hold):
-        for line in open(hold, errors="replace"):
-            hm = STAMP.match(line.rstrip("\n"))
-            if hm:
-                add(secs(hm), "hold", hm.group(5))
+        with open(hold, errors="replace") as fh:
+            for line in fh:
+                hm = STAMP.match(line.rstrip("\n"))
+                if hm:
+                    add(secs(hm), "hold", hm.group(5))
     else:
         print("(no hold.txt: kwini3hold not loaded)")
 
     pointer = os.path.join(d, "pointer.txt")
     if os.path.exists(pointer):
-        for line in open(pointer, errors="replace"):
-            pm = STAMP.match(line.rstrip("\n"))
-            if pm:
-                add(secs(pm), "ptr ", pm.group(5))
+        with open(pointer, errors="replace") as fh:
+            for line in fh:
+                pm = STAMP.match(line.rstrip("\n"))
+                if pm:
+                    add(secs(pm), "ptr ", pm.group(5))
 
     note = ""
     if os.path.exists(os.path.join(d, "note.txt")):
-        note = open(os.path.join(d, "note.txt"), errors="replace").read().strip()
+        note = Path(d, "note.txt").read_text(errors="replace").strip()
     add(press, "----", "PRESS" + (": " + note if note else ""))
 
     events.sort()
@@ -84,7 +96,7 @@ def main():
             continue
         gap = "" if prev is None else "+%.3f" % (t - prev)
         prev = t
-        print("%s %9s %s %s" % (fmt(t), gap, src, text))
+        print(f"{fmt(t)} {gap:>9} {src} {text}")
 
 
 main()

@@ -16,18 +16,27 @@ what a plain left press does (press). Windows are A, B, ...; presses a, b, ...; 
 Rows the same as the one above are folded into one line with their count.
 On the test KWin's bus when DBUS_SESSION_BUS_ADDRESS points there, as busctl does.
 """
-import json, subprocess, sys
 
-DEST, PATH, IFACE = "org.kde.KWin", "/kwini3helper/pointer", "net.local.kwini3helper.Pointer"
+import json
+import subprocess
+import sys
+
+DEST, PATH, IFACE = (
+    "org.kde.KWin",
+    "/kwini3helper/pointer",
+    "net.local.kwini3helper.Pointer",
+)
 
 
 def call(method, sig="", *args):
     cmd = ["busctl", "--user", "--json=short", "call", DEST, PATH, IFACE, method]
     if sig:
         cmd += [sig] + [str(a) for a in args]
-    out = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
     if out.returncode:
-        sys.exit("pointer-map: %s failed: %s (is kwini3helper loaded, with the probe?)" % (method, out.stderr.strip()))
+        sys.exit(
+            f"pointer-map: {method} failed: {out.stderr.strip()} (is kwini3helper loaded, with the probe?)"
+        )
     return json.loads(out.stdout)["data"][0]
 
 
@@ -56,8 +65,18 @@ def map_rect(x, y, w, h):
                 out["presses"].append(p)
             pmap.append(out["presses"].index(p))
         for row in part["rows"]:
-            out["rows"].append([[wmap[c[0]] if c[0] >= 0 else -1, wmap[c[1]] if c[1] >= 0 else -1,
-                                 wmap[c[2]] if c[2] >= 0 else -1, wmap[c[3]] if c[3] >= 0 else -1, pmap[c[4]]] for c in row])
+            out["rows"].append(
+                [
+                    [
+                        wmap[c[0]] if c[0] >= 0 else -1,
+                        wmap[c[1]] if c[1] >= 0 else -1,
+                        wmap[c[2]] if c[2] >= 0 else -1,
+                        wmap[c[3]] if c[3] >= 0 else -1,
+                        pmap[c[4]],
+                    ]
+                    for c in row
+                ]
+            )
     return out
 
 
@@ -71,17 +90,24 @@ def show_map(m):
     fields = m["cell"]
     width = len(rows[0])
     head = "  ".join(f.ljust(width) for f in fields)
-    print("x from %d, %d px wide; y from %d" % (x0, width, y0))
+    print(f"x from {int(x0)}, {width} px wide; y from {int(y0)}")
     print("      y  " + head)
     prev, count, start = None, 0, 0
 
     def flush():
         if prev is not None:
-            label = "%7d" % (y0 + start) if count == 1 else "%7d+%d" % (y0 + start, count - 1)
-            print("%-9s%s" % (label, prev))
+            label = (
+                f"{int(y0 + start):7d}"
+                if count == 1
+                else f"{int(y0 + start):7d}+{count - 1}"
+            )
+            print(f"{label:<9}{prev}")
 
     for j, row in enumerate(rows):
-        line = "  ".join("".join(letter(c[k], "a" if k == len(fields) - 1 else "A") for c in row) for k in range(len(fields)))
+        line = "  ".join(
+            "".join(letter(c[k], "a" if k == len(fields) - 1 else "A") for c in row)
+            for k in range(len(fields))
+        )
         if line == prev:
             count += 1
             continue
@@ -90,13 +116,21 @@ def show_map(m):
     flush()
     print()
     for i, w in enumerate(m["windows"]):
-        print("  %s  %s  frame %s buffer %s  %s" % (letter(i, "A"), w["name"], fmt(w["frame"]), fmt(w["buffer"]), w["caption"][:50]))
+        print(
+            "  {}  {}  frame {} buffer {}  {}".format(
+                letter(i, "A"),
+                w["name"],
+                fmt(w["frame"]),
+                fmt(w["buffer"]),
+                w["caption"][:50],
+            )
+        )
     for i, p in enumerate(m["presses"]):
-        print("  %s  %s" % (letter(i, "a"), p))
+        print("  {}  {}".format(letter(i, "a"), p))
 
 
 def fmt(r):
-    return "%g,%g %gx%g" % tuple(r)
+    return "{:g},{:g} {:g}x{:g}".format(*tuple(r))
 
 
 def gaps(pad):
@@ -111,15 +145,33 @@ def gaps(pad):
             # b right of a, facing edges at most 40 px apart, overlapping in y
             if 0 <= bx - (ax + aw) <= 40 and min(ay + ah, by + bh) > max(ay, by):
                 top, bottom = max(ay, by), min(ay + ah, by + bh)
-                found.append((a, b, int(ax + aw - pad), int(top), int(bx - (ax + aw) + 2 * pad), int(bottom - top)))
+                found.append(
+                    (
+                        a,
+                        b,
+                        int(ax + aw - pad),
+                        int(top),
+                        int(bx - (ax + aw) + 2 * pad),
+                        int(bottom - top),
+                    )
+                )
             # b below a
             if 0 <= by - (ay + ah) <= 40 and min(ax + aw, bx + bw) > max(ax, bx):
                 left, right = max(ax, bx), min(ax + aw, bx + bw)
-                found.append((a, b, int(left), int(ay + ah - pad), int(right - left), int(by - (ay + ah) + 2 * pad)))
+                found.append(
+                    (
+                        a,
+                        b,
+                        int(left),
+                        int(ay + ah - pad),
+                        int(right - left),
+                        int(by - (ay + ah) + 2 * pad),
+                    )
+                )
     if not found:
         print("no gap between two tiled windows on screen")
     for a, b, x, y, w, h in found:
-        print("== gap between %s and %s: %d,%d %dx%d" % (a["name"], b["name"], x, y, w, h))
+        print(f"== gap between {a['name']} and {b['name']}: {x},{y} {w}x{h}")
         if h > w:
             show_map(map_rect(x, y, w, h))
         else:
@@ -142,20 +194,47 @@ def main():
         sys.exit(__doc__.strip())
     if a[0] == "windows":
         for w in json.loads(call("Windows")):
-            print("%-34s frame %-22s buffer %-22s%s%s  %s" % (w["name"], fmt(w["frame"]), fmt(w["buffer"]),
-                  " tiled" if w["tiled"] else "", " deco" if w["decoration"] else "", w["caption"][:40]))
+            print(
+                f"{w['name']:<34} frame {fmt(w['frame']):<22} buffer {fmt(w['buffer']):<22}"
+                + (" tiled" if w["tiled"] else "")
+                + (" deco" if w["decoration"] else "")
+                + f"  {w['caption'][:40]}"
+            )
     elif a[0] == "probe" and len(a) in (3, 4):
         p = json.loads(call("Probe", "dd", float(a[1]), float(a[2])))
         if a[3:] == ["--json"]:
             print(json.dumps(p, indent=1))
             return
-        print("at %g,%g: KWin gives the pointer to %s; a left press: %s" % (*p["pos"], p["toplevel"], p["press"]))
+        print(
+            "at {:g},{:g}: KWin gives the pointer to {}; a left press: {}".format(
+                *p["pos"], p["toplevel"], p["press"]
+            )
+        )
         print("windows over it, top first:")
         for w in p["windows"]:
-            flags = [k for k in ("shown", "inFrame", "inBuffer", "inVisible", "onRing", "hitTest", "decoration") if w[k]]
-            print("  %-34s frame %-20s buffer %-20s %s  %s" % (w["name"], fmt(w["frame"]), fmt(w["buffer"]), " ".join(flags), w["caption"][:40]))
+            flags = [
+                k
+                for k in (
+                    "shown",
+                    "inFrame",
+                    "inBuffer",
+                    "inVisible",
+                    "onRing",
+                    "hitTest",
+                    "decoration",
+                )
+                if w[k]
+            ]
+            print(
+                f"  {w['name']:<34} frame {fmt(w['frame']):<20} buffer {fmt(w['buffer']):<20} "
+                f"{' '.join(flags)}  {w['caption'][:40]}"
+            )
         n = p["pointerNow"]
-        print("the pointer now: %g,%g, hover %s, focus %s, cursor %s" % (*n["pos"], n["hover"], n["focus"], n["cursor"]))
+        print(
+            "the pointer now: {:g},{:g}, hover {}, focus {}, cursor {}".format(
+                *n["pos"], n["hover"], n["focus"], n["cursor"]
+            )
+        )
     elif a[0] == "map" and len(a) == 5:
         show_map(map_rect(*map(int, a[1:])))
     elif a[0] == "gaps":

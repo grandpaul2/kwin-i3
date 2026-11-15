@@ -18,22 +18,35 @@ A control's name is what a screen reader says for it: its own accessible name, e
 the label it is labelled by (Kirigami's FormLayout links each field to its label), without the
 label's colon. Only visible controls count (a hidden inline message's buttons don't).
 """
+
 import sys
 import time
 
 import gi
-gi.require_version("Atspi", "2.0")
-from gi.repository import Atspi  # noqa: E402
 
-CONTROLS = {"push button", "button", "check box", "radio button", "combo box", "spin button",
-            "toggle button", "slider", "text", "color chooser", "page tab"}
+gi.require_version("Atspi", "2.0")
+from gi.repository import Atspi
+
+CONTROLS = {
+    "push button",
+    "button",
+    "check box",
+    "radio button",
+    "combo box",
+    "spin button",
+    "toggle button",
+    "slider",
+    "text",
+    "color chooser",
+    "page tab",
+}
 S = Atspi.StateType
 
 
 def children(a):
     try:
         return [a.get_child_at_index(i) for i in range(a.get_child_count())]
-    except Exception:
+    except Exception:  # noqa: BLE001 - an accessible can vanish mid-walk, raising anything
         return []
 
 
@@ -52,16 +65,19 @@ def walk(a, parent=None, seen=None):
 def has(a, state):
     try:
         return a.get_state_set().contains(state)
-    except Exception:
+    except Exception:  # noqa: BLE001 - an accessible can vanish mid-walk, raising anything
         return False
 
 
 def labelled_by(a):
     try:
         for r in a.get_relation_set() or []:
-            if r.get_relation_type() == Atspi.RelationType.LABELLED_BY and r.get_n_targets():
+            if (
+                r.get_relation_type() == Atspi.RelationType.LABELLED_BY
+                and r.get_n_targets()
+            ):
                 return r.get_target(0).get_name() or ""
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - an accessible can vanish mid-walk, raising anything
         pass
     return ""
 
@@ -77,9 +93,11 @@ def is_control(a, parent):
         return False
     # A spin box's or combo box's own text part, and a label's text, are parts of another
     # control, which carries the name.
-    if role == "text" and parent is not None and parent.get_role_name() in ("spin button", "combo box", "label"):
-        return False
-    return True
+    return not (
+        role == "text"
+        and parent is not None
+        and parent.get_role_name() in ("spin button", "combo box", "label")
+    )
 
 
 def app_named(n):
@@ -102,15 +120,24 @@ def page(app, title):
     the tab shown."""
     for _ in range(50):
         for a, _ in walk(app):
-            if a.get_role_name() == "panel" and a.get_name() == title and has(a, S.SHOWING):
+            if (
+                a.get_role_name() == "panel"
+                and a.get_name() == title
+                and has(a, S.SHOWING)
+            ):
                 return a
         time.sleep(0.1)
     sys.exit(f"a11y: no page {title!r} showing")
 
 
 def scroll_bars(app):
-    return [b for b, _ in walk(app) if b.get_role_name() == "scroll bar" and has(b, S.SHOWING)
-            and b.get_maximum_value() > b.get_minimum_value()]
+    return [
+        b
+        for b, _ in walk(app)
+        if b.get_role_name() == "scroll bar"
+        and has(b, S.SHOWING)
+        and b.get_maximum_value() > b.get_minimum_value()
+    ]
 
 
 def page_controls(app):
@@ -119,20 +146,30 @@ def page_controls(app):
     is scrolled top to bottom and a control visible at any point counts (a list view creates its
     rows only as they come into view, so this finds those too). Left at the top."""
     found = {}
+
     def look():
         # What each one is, read when first seen: a list view deletes the rows it scrolls past.
         for a, p in walk(app):
             try:
-                if a.path not in found and has(a, S.VISIBLE) and (is_control(a, p) or empty_heading(a, p)):
-                    found[a.path] = {"name": name(a), "role": a.get_role_name(), "desc": a.get_description() or "",
-                                     "enabled": has(a, S.ENABLED) and has(a, S.FOCUSABLE)}
-            except Exception:
+                if (
+                    a.path not in found
+                    and has(a, S.VISIBLE)
+                    and (is_control(a, p) or empty_heading(a, p))
+                ):
+                    found[a.path] = {
+                        "name": name(a),
+                        "role": a.get_role_name(),
+                        "desc": a.get_description() or "",
+                        "enabled": has(a, S.ENABLED) and has(a, S.FOCUSABLE),
+                    }
+            except Exception:  # noqa: BLE001, S110 - an accessible can vanish mid-walk, raising anything
                 pass
+
     bars = scroll_bars(app)
     look()
     for b in bars:
         lo, hi = b.get_minimum_value(), b.get_maximum_value()
-        for i in range(0, 11):
+        for i in range(11):
             b.set_current_value(lo + (hi - lo) * i / 10)
             time.sleep(0.1)
             look()
@@ -143,8 +180,12 @@ def page_controls(app):
 
 def empty_heading(a, parent):
     # Kirigami's FormLayout gives every row a heading for its label, empty for a row without one.
-    return a.get_role_name() == "heading" and not (a.get_name() or "").strip() \
-        and parent is not None and parent.get_role_name() == "form"
+    return (
+        a.get_role_name() == "heading"
+        and not (a.get_name() or "").strip()
+        and parent is not None
+        and parent.get_role_name() == "form"
+    )
 
 
 def ancestors(a):
@@ -154,7 +195,7 @@ def ancestors(a):
         while p is not None and len(out) < 64:
             out.append(p)
             p = p.get_parent()
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 - an accessible can vanish mid-walk, raising anything
         pass
     return out
 
@@ -163,12 +204,26 @@ def dump(app):
     depth = {}
     for a, p in walk(app):
         d = depth[a] = depth.get(p, -1) + 1 if p is not None else 0
-        flags = "".join(c for c, s in (("F", S.FOCUSABLE), ("f", S.FOCUSED), ("e", S.ENABLED),
-                                         ("V", S.VISIBLE), ("s", S.SHOWING)) if has(a, s))
+        flags = "".join(
+            c
+            for c, s in (
+                ("F", S.FOCUSABLE),
+                ("f", S.FOCUSED),
+                ("e", S.ENABLED),
+                ("V", S.VISIBLE),
+                ("s", S.SHOWING),
+            )
+            if has(a, s)
+        )
         desc = a.get_description() or ""
         lb = labelled_by(a)
-        print("  " * d + f"[{a.get_role_name()}] {a.get_name() or ''!r}"
-              + (f" desc={desc!r}" if desc else "") + f" {flags}" + (f" labelledby={lb!r}" if lb else ""))
+        print(
+            "  " * d
+            + f"[{a.get_role_name()}] {a.get_name() or ''!r}"
+            + (f" desc={desc!r}" if desc else "")
+            + f" {flags}"
+            + (f" labelledby={lb!r}" if lb else "")
+        )
 
 
 def audit(app):
@@ -184,10 +239,17 @@ def audit(app):
         elif not any(c.isalpha() for c in n) and n:
             bad.append(f"{role} named only {n!r}, which says nothing about what it is")
         elif not n:
-            bad.append(f"unnamed {role}" + (f" (description {c['desc']!r})" if c["desc"] else ""))
+            bad.append(
+                f"unnamed {role}"
+                + (f" (description {c['desc']!r})" if c["desc"] else "")
+            )
         else:
             seen.setdefault(n, []).append(role)
-    bad += [f"{len(r)} controls named {n!r} ({', '.join(r)})" for n, r in seen.items() if len(r) > 1]
+    bad += [
+        f"{len(r)} controls named {n!r} ({', '.join(r)})"
+        for n, r in seen.items()
+        if len(r) > 1
+    ]
     for b in bad:
         print(b)
     return 1 if bad else 0
@@ -222,7 +284,9 @@ def fixed(app, a):
         return True
     b = bars[0]
     v, y = b.get_current_value(), a.get_extents(Atspi.CoordType.WINDOW).y
-    b.set_current_value(b.get_minimum_value() if v > b.get_minimum_value() else b.get_maximum_value())
+    b.set_current_value(
+        b.get_minimum_value() if v > b.get_minimum_value() else b.get_maximum_value()
+    )
     time.sleep(0.2)
     moved = a.get_extents(Atspi.CoordType.WINDOW).y != y
     b.set_current_value(v)
@@ -234,21 +298,23 @@ def box(app, n):
     a = find(app, n)
     h = viewport(app)
     # A tab sits in the tab bar above every page's scroller: never scrolled.
-    if a.get_role_name() == "page tab" or (not in_view(a, h) and has(a, S.SHOWING) and fixed(app, a)):
+    if a.get_role_name() == "page tab" or (
+        not in_view(a, h) and has(a, S.SHOWING) and fixed(app, a)
+    ):
         h = (-100000, 100000)
     if not in_view(a, h):
         # The page's vertical scroll bar, set through its value (0-100) until the control is in
         # view: the injected wheel can't scroll (tools/ei-send).
         for b in scroll_bars(app):
             lo, hi = b.get_minimum_value(), b.get_maximum_value()
-            for i in range(0, 21):
+            for i in range(21):
                 b.set_current_value(lo + (hi - lo) * i / 20)
                 time.sleep(0.05)
                 if in_view(a, h):
                     break
             if in_view(a, h):
                 break
-        time.sleep(0.3)                          # the page settles after the jump
+        time.sleep(0.3)  # the page settles after the jump
     e = a.get_extents(Atspi.CoordType.WINDOW)
     if not in_view(a, h):
         sys.exit(f"a11y: {n!r} can't be scrolled into view (at {e.x},{e.y})")

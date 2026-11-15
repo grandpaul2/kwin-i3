@@ -22,13 +22,24 @@ Script lines (a line starting with # is a comment):
                                    to HOLD)
 NAME names the window that step opened, for later steps.
 """
-import math, os, shlex, subprocess, sys, time
+
+import math
+import os
+import shlex
+import subprocess
+import sys
+import time
+
 import dbus
 
-if os.environ.get("KI3_INNER") != "1" or "/tmp/dbus-" not in os.environ.get("DBUS_SESSION_BUS_ADDRESS", ""):
-    sys.exit("play.py: only inside tools/testkwin.sh (this would type into the real desktop)")
+if os.environ.get("KI3_INNER") != "1" or "/tmp/dbus-" not in os.environ.get(
+    "DBUS_SESSION_BUS_ADDRESS", ""
+):
+    sys.exit(
+        "play.py: only inside tools/testkwin.sh (this would type into the real desktop)"
+    )
 
-HOLD = 2.4          # after each key: time for a viewer to see what it did
+HOLD = 2.4  # after each key: time for a viewer to see what it did
 
 
 def read_time(text):
@@ -36,16 +47,29 @@ def read_time(text):
     return max(1.5, 0.8 + 0.33 * len(text.split()))
 
 
-START, END = 2.0, 3.0   # the desktop still before the first step; the last result held
-OPEN_LIMIT = 15     # seconds for a new window before the run fails
-TYPE_GAP = 0.12     # between typed characters
-SPEED = 1400        # pointer, px a second, each move between 0.5 and 1.2 s
+START, END = 2.0, 3.0  # the desktop still before the first step; the last result held
+OPEN_LIMIT = 15  # seconds for a new window before the run fails
+TYPE_GAP = 0.12  # between typed characters
+SPEED = 1400  # pointer, px a second, each move between 0.5 and 1.2 s
 FRAME = 1 / 60
 
 # evdev codes, as tests/live/lib.sh's EVDEV
-EVDEV = {"Meta": 125, "Shift": 42, "Ctrl": 29, "Alt": 56,
-         "Left": 105, "Right": 106, "Up": 103, "Down": 108, "Space": 57, "Tab": 15,
-         "Enter": 28, "Return": 28, "Escape": 1, ";": 39}
+EVDEV = {
+    "Meta": 125,
+    "Shift": 42,
+    "Ctrl": 29,
+    "Alt": 56,
+    "Left": 105,
+    "Right": 106,
+    "Up": 103,
+    "Down": 108,
+    "Space": 57,
+    "Tab": 15,
+    "Enter": 28,
+    "Return": 28,
+    "Escape": 1,
+    ";": 39,
+}
 EVDEV.update({c: n for n, c in enumerate("QWERTYUIOP", 16)})
 EVDEV.update({c: n for n, c in enumerate("ASDFGHJKL", 30)})
 EVDEV.update({c: n for n, c in enumerate("ZXCVBNM", 44)})
@@ -65,8 +89,11 @@ def chord_codes(chord):
             sys.exit(f"play.py: unknown key {p!r} in {chord!r}")
     code = lambda p: EVDEV.get(p, EVDEV.get(p.upper()))
     m = [code(p) for p in mods]
-    return ([f"key {c} down" for c in m] + [f"key {code(key)} down", f"key {code(key)} up"]
-            + [f"key {c} up" for c in reversed(m)])
+    return (
+        [f"key {c} down" for c in m]
+        + [f"key {code(key)} down", f"key {code(key)} up"]
+        + [f"key {c} up" for c in reversed(m)]
+    )
 
 
 def char_codes(ch):
@@ -82,14 +109,24 @@ def char_codes(ch):
 
 class Input:
     """tools/inject.py's connection, kept open; tracks where the pointer is."""
+
     def __init__(self, x, y):
-        sender = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bin", "ei-send")
-        self.eis = dbus.Interface(bus.get_object("org.kde.KWin", "/org/kde/KWin/EIS/RemoteDesktop"),
-                                  "org.kde.KWin.EIS.RemoteDesktop")
+        sender = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "bin", "ei-send"
+        )
+        self.eis = dbus.Interface(
+            bus.get_object("org.kde.KWin", "/org/kde/KWin/EIS/RemoteDesktop"),
+            "org.kde.KWin.EIS.RemoteDesktop",
+        )
         fd, self.cookie = self.eis.connectToEIS(1 | 2)
         fd = fd.take()
-        self.p = subprocess.Popen([sender, str(fd)], pass_fds=[fd], stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE, text=True)
+        self.p = subprocess.Popen(
+            [sender, str(fd)],
+            pass_fds=[fd],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        )
         os.close(fd)
         if self.p.stdout.readline().strip() != "ready":
             sys.exit("play.py: ei-send never became ready")
@@ -97,7 +134,8 @@ class Input:
 
     def send(self, cmds):
         for c in cmds:
-            self.p.stdin.write(c + "\n"); self.p.stdin.flush()
+            self.p.stdin.write(c + "\n")
+            self.p.stdin.flush()
             if self.p.stdout.readline().strip() != "ok":
                 sys.exit(f"play.py: ei-send failed at: {c}")
 
@@ -114,9 +152,12 @@ class Input:
         self.x, self.y = x, y
 
     def close(self):
-        self.p.stdin.close(); self.p.wait()
-        try: self.eis.disconnect(self.cookie)
-        except dbus.DBusException: pass
+        self.p.stdin.close()
+        self.p.wait()
+        try:
+            self.eis.disconnect(self.cookie)
+        except dbus.DBusException:
+            pass
 
 
 def log_lines():
@@ -132,11 +173,17 @@ def kjs(js):
     n = f"kjs-{time.time_ns()}"
     path = os.path.join(os.environ["KI3_TMP"], n + ".js")
     with open(path, "w") as f:
-        f.write('function log(s) { callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", "kjs: " + s); }\n'
-                f'try {{\n{js}\n}} catch (e) {{ log("ERROR " + e); }}\nlog("{n}-END");\n')
+        f.write(
+            'function log(s) { callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", "kjs: " + s); }\n'
+            f'try {{\n{js}\n}} catch (e) {{ log("ERROR " + e); }}\nlog("{n}-END");\n'
+        )
     before = len(log_lines())
-    scripting = dbus.Interface(bus.get_object("org.kde.KWin", "/Scripting"), "org.kde.kwin.Scripting")
-    scripting.loadScript(path, n, signature="ss")      # overloaded (s, ss): introspection picks s
+    scripting = dbus.Interface(
+        bus.get_object("org.kde.KWin", "/Scripting"), "org.kde.kwin.Scripting"
+    )
+    scripting.loadScript(
+        path, n, signature="ss"
+    )  # overloaded (s, ss): introspection picks s
     scripting.start()
     end, done = time.time() + 5, False
     while time.time() < end and not done:
@@ -144,7 +191,11 @@ def kjs(js):
         if not done:
             time.sleep(0.02)
     scripting.unloadScript(n)
-    out = [l.split("kjs: ", 1)[1] for l in log_lines()[before:] if "kjs: " in l and f"{n}-END" not in l]
+    out = [
+        l.split("kjs: ", 1)[1]
+        for l in log_lines()[before:]
+        if "kjs: " in l and f"{n}-END" not in l
+    ]
     if not done or any(l.startswith("ERROR ") for l in out):
         sys.exit(f"play.py: kjs failed: {out or 'no answer'}")
     return out
@@ -153,8 +204,10 @@ def kjs(js):
 def windows():
     """internalId -> (x, y, w, h) of every normal window."""
     found = {}
-    for l in kjs('workspace.windowList().forEach(function (w) { if (w.normalWindow) { var g = w.frameGeometry; '
-                 'log(w.internalId + " " + g.x + " " + g.y + " " + g.width + " " + g.height); } });'):
+    for l in kjs(
+        "workspace.windowList().forEach(function (w) { if (w.normalWindow) { var g = w.frameGeometry; "
+        'log(w.internalId + " " + g.x + " " + g.y + " " + g.width + " " + g.height); } });'
+    ):
         wid, *g = l.split()
         found[wid] = tuple(int(float(v)) for v in g)
     return found
@@ -169,7 +222,7 @@ def wait_new(log_before, ids_before):
             if new:
                 return new.pop()
         time.sleep(0.05)
-    sys.exit("play.py: no new window within %d s" % OPEN_LIMIT)
+    sys.exit(f"play.py: no new window within {OPEN_LIMIT} s")
 
 
 def named(rest):
@@ -184,21 +237,35 @@ def main():
     script, timeline, t0 = sys.argv[1], sys.argv[2], float(sys.argv[3])
     park = tuple(int(v) for v in os.environ["KI3_VIDEO_PARK"].split(","))
     steps = []
-    for n, line in enumerate(open(script), 1):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        cmd, _, rest = line.partition(" ")
-        if cmd not in ("say", "key", "open", "run", "type", "point", "wait", "pace"):
-            sys.exit(f"play.py: {script}:{n}: unknown step {cmd!r}")
-        steps.append((n, cmd, rest.strip()))
+    with open(script) as fh:
+        for n, line in enumerate(fh, 1):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            cmd, _, rest = line.partition(" ")
+            if cmd not in (
+                "say",
+                "key",
+                "open",
+                "run",
+                "type",
+                "point",
+                "wait",
+                "pace",
+            ):
+                sys.exit(f"play.py: {script}:{n}: unknown step {cmd!r}")
+            steps.append((n, cmd, rest.strip()))
 
-    out = open(timeline, "w")
+    out = open(timeline, "w")  # noqa: SIM115 - written through the whole run, closed at exit
+
     def mark(kind, text):
-        out.write(f"{int((time.time() - t0) * 1000)}\t{kind}\t{text}\n"); out.flush()
+        out.write(f"{int((time.time() - t0) * 1000)}\t{kind}\t{text}\n")
+        out.flush()
+
     def caption_first(caption):
         if caption:
-            mark("caption", caption); time.sleep(read_time(caption))
+            mark("caption", caption)
+            time.sleep(read_time(caption))
 
     names = {}
     hold = HOLD
@@ -217,25 +284,33 @@ def main():
             chord, _, rest = rest.partition(" ")
             name, caption = named(rest.strip())
             caption_first(caption)
-            log_before, ids_before = len(log_lines()), set(windows()) if cmd == "open" else set()
+            log_before, ids_before = (
+                len(log_lines()),
+                set(windows()) if cmd == "open" else set(),
+            )
             mark("key", chord)
             io.send(chord_codes(chord))
             if cmd == "open":
                 wid = wait_new(log_before, ids_before)
-                if name: names[name] = wid
+                if name:
+                    names[name] = wid
             time.sleep(hold)
         elif cmd == "run":
             app, _, rest = rest.partition(" ")
             name, caption = named(rest.strip())
             caption_first(caption)
             log_before, ids_before = len(log_lines()), set(windows())
-            subprocess.Popen(shlex.split(app), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.Popen(
+                shlex.split(app), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
             wid = wait_new(log_before, ids_before)
-            if name: names[name] = wid
+            if name:
+                names[name] = wid
             time.sleep(hold)
         elif cmd == "type":
             for ch in rest:
-                io.send(char_codes(ch)); time.sleep(TYPE_GAP)
+                io.send(char_codes(ch))
+                time.sleep(TYPE_GAP)
             time.sleep(0.6)
         elif cmd == "point":
             target, _, caption = rest.partition(" ")

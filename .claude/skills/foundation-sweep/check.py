@@ -5,6 +5,7 @@ Run from the repo root: python3 .claude/skills/foundation-sweep/check.py
 Prints one line per finding, grouped by check. The finders are given this output as already
 found, so they spend nothing on it. Read-only.
 """
+
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -12,8 +13,16 @@ from pathlib import Path
 
 ROOT = Path.cwd()
 BEHAVIOUR = ROOT / "docs/behaviour.md"
-STANDING = ["docs/behaviour.md", "docs/plan.md", "docs/philosophy.md", "docs/definitions.md",
-            "docs/README.md", "README.md", "CONTRIBUTING.md", "AGENTS.md"]
+STANDING = [
+    "docs/behaviour.md",
+    "docs/plan.md",
+    "docs/philosophy.md",
+    "docs/definitions.md",
+    "docs/README.md",
+    "README.md",
+    "CONTRIBUTING.md",
+    "AGENTS.md",
+]
 MARKS = ("=", "≠", "+")
 ROW = re.compile(r"\| ([A-Z]\d+[a-z]?) \|")
 PIPE = re.compile(r"(?<!\\)\|")
@@ -46,14 +55,22 @@ def check_marks(out):
 
 # Where a date is a session stamp, not a fact: the rules and rows, and the code's comments. The
 # README (a version's date), definitions.md (the Stage's start) and CONTRIBUTING may date facts.
-DATELESS = ["docs/behaviour.md", "docs/plan.md", "docs/philosophy.md", "docs/README.md", "AGENTS.md"]
+DATELESS = [
+    "docs/behaviour.md",
+    "docs/plan.md",
+    "docs/philosophy.md",
+    "docs/README.md",
+    "AGENTS.md",
+]
 COMMENTED = ["src/*.js", "plugin/*.cpp", "plugin/*.h"]
 
 
 def check_stamps(out):
     """State, not history: no 'Before,' and no stage or review stamps in the standing docs, and
     no dates in the rules, the rows or the code's comments."""
-    pat = re.compile(r"\b[Bb]efore, |Refinement stage|code review of|the spec's|Decided \d|built \d")
+    pat = re.compile(
+        r"\b[Bb]efore, |Refinement stage|code review of|the spec's|Decided \d|built \d"
+    )
     date = re.compile(r"\b20\d\d-\d\d-\d\d\b")
     for f in STANDING:
         p = ROOT / f
@@ -70,7 +87,9 @@ def check_stamps(out):
             for n, line in enumerate(p.read_text().splitlines(), 1):
                 c = line.find("//")
                 if c >= 0 and date.search(line[c:]):
-                    out.append(f"{p.relative_to(ROOT)}:{n}: a dated comment ({line.strip()[:70]}...)")
+                    out.append(
+                        f"{p.relative_to(ROOT)}:{n}: a dated comment ({line.strip()[:70]}...)"
+                    )
 
 
 def check_tables(out):
@@ -86,7 +105,9 @@ def check_tables(out):
                 if want is None:
                     want = k
                 elif k != want:
-                    out.append(f"{f}:{n}: {k - 1} cells where the header has {want - 1}")
+                    out.append(
+                        f"{f}:{n}: {k - 1} cells where the header has {want - 1}"
+                    )
             else:
                 want = None
 
@@ -94,7 +115,7 @@ def check_tables(out):
 def check_settings(out):
     """behaviour.md §11's defaults against src/settings.js and main.xml, the code deciding."""
     js = (ROOT / "src/settings.js").read_text()
-    code = dict(re.findall(r"^\s*(\w+): \{[^}]*?def: \"([^\"]*)\"", js, re.M))
+    code = dict(re.findall(r"^\s*(\w+): \{[^}]*?def: \"([^\"]*)\"", js, re.MULTILINE))
     xml = {}
     for e in ET.parse(ROOT / "package/contents/config/main.xml").iter():
         if e.tag.endswith("entry"):
@@ -107,30 +128,43 @@ def check_settings(out):
             c = cells(line)
             keys = re.findall(r"`(\w+)`", c[0])
             parts = [x.strip() for x in c[1].split(", ")]
-            for i, key in enumerate(keys):  # a row of several keys pairs them with its defaults
+            for i, key in enumerate(
+                keys
+            ):  # a row of several keys pairs them with its defaults
                 doc[key] = parts[i] if len(parts) == len(keys) else c[1]
     for key in sorted(code):
         if key not in doc:
             out.append(f"behaviour.md §11: no row for `{key}` (src/settings.js has it)")
             continue
         d = doc[key].strip("`").split(" (")[0].strip("`")
-        if d.lower() not in (code[key].lower(), "empty" if code[key] == "" else "\0") and \
-                not (code[key] in ("true", "false") and d in ("on", "off")):
-            out.append(f"behaviour.md §11 `{key}`: {doc[key]!r}, the code {code[key]!r}")
-        if key in xml and xml[key].lower() != code[key].lower() and \
-                not (xml[key] == "" and code[key] == ""):
+        if d.lower() not in (
+            code[key].lower(),
+            "empty" if code[key] == "" else "\0",
+        ) and not (code[key] in ("true", "false") and d in ("on", "off")):
+            out.append(
+                f"behaviour.md §11 `{key}`: {doc[key]!r}, the code {code[key]!r}"
+            )
+        if (
+            key in xml
+            and xml[key].lower() != code[key].lower()
+            and not (xml[key] == "" and code[key] == "")
+        ):
             out.append(f"main.xml `{key}`: {xml[key]!r}, src/settings.js {code[key]!r}")
 
 
 def main():
-    checks = [("marks and reasons", check_marks), ("history and stamps", check_stamps),
-              ("table shape", check_tables), ("settings defaults", check_settings)]
+    checks = [
+        ("marks and reasons", check_marks),
+        ("history and stamps", check_stamps),
+        ("table shape", check_tables),
+        ("settings defaults", check_settings),
+    ]
     total = 0
     for name, fn in checks:
         out = []
         try:
             fn(out)
-        except Exception as e:  # a check that breaks says so; the others still run
+        except Exception as e:  # noqa: BLE001 - a check that breaks says so; the others still run
             out.append(f"(the check failed: {e})")
         print(f"## {name}: {len(out)}")
         for line in out:

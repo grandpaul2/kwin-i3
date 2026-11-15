@@ -7,11 +7,17 @@ it on needs a KWin restart. So scripts call:
 Usage: logsink.py <file> [bus name]   (runs until killed; run it under `timeout`)
 The default name is the test log's; tools/capture passes net.local.kwini3.dump.
 """
-import sys, time
-import dbus, dbus.service, dbus.mainloop.glib
+
+import sys
+import time
+
+import dbus
+import dbus.mainloop.glib
+import dbus.service
 from gi.repository import GLib
 
 NAME = sys.argv[2] if len(sys.argv) > 2 else "net.local.kwini3.log"
+
 
 class Sink(dbus.service.Object):
     def __init__(self, bus, out):
@@ -21,8 +27,9 @@ class Sink(dbus.service.Object):
     @dbus.service.method(NAME, in_signature="s", out_signature="")
     def Log(self, line):
         stamp = time.strftime("%H:%M:%S ")
-        with open(self.out, "a") as f:          # one call may carry several lines
+        with open(self.out, "a") as f:  # one call may carry several lines
             f.writelines(stamp + l + "\n" for l in line.split("\n"))
+
 
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 bus = dbus.SessionBus()

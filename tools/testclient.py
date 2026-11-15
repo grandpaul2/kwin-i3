@@ -23,12 +23,17 @@
 
 Runs until killed. Software rendering, so it works in the headless test KWin.
 """
-import argparse, os, sys, time
+
+import argparse
+import os
+import sys
+import time
 
 os.environ.setdefault("GSK_RENDERER", "cairo")
 import gi
+
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, GLib
+from gi.repository import GLib, Gtk
 
 
 def size(s):
@@ -43,7 +48,9 @@ def main():
     p.add_argument("--min", type=size)
     p.add_argument("--fixed", action="store_true")
     p.add_argument("--dialog", action="store_true")
-    p.add_argument("--dialog-delay", type=float, default=0)   # the dialog this long after the window
+    p.add_argument(
+        "--dialog-delay", type=float, default=0
+    )  # the dialog this long after the window
     p.add_argument("--map-delay", type=float, default=0)
     p.add_argument("--retitle")
     p.add_argument("--app-id")
@@ -54,7 +61,7 @@ def main():
     a = p.parse_args()
 
     if a.app_id:
-        GLib.set_prgname(a.app_id)          # GTK uses it as the xdg_toplevel app id
+        GLib.set_prgname(a.app_id)  # GTK uses it as the xdg_toplevel app id
     app = Gtk.Application(application_id=None)
 
     def activate(app):
@@ -65,34 +72,52 @@ def main():
         win.set_child(Gtk.Label(label=a.title))
         if a.color:
             css = Gtk.CssProvider()
-            css.load_from_string("window, label { background-color: %s; color: %s; }" % (a.color, a.color))
-            Gtk.StyleContext.add_provider_for_display(win.get_display(), css,
-                                                      Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            css.load_from_string(
+                f"window, label {{ background-color: {a.color}; color: {a.color}; }}"
+            )
+            Gtk.StyleContext.add_provider_for_display(
+                win.get_display(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
         if a.min:
             win.get_child().set_size_request(*a.min)
         if a.fixed:
             win.set_resizable(False)
         if a.clicks:
+
             def note(what):
                 with open(a.clicks, "a") as f:
                     f.write(what + "\n")
+
             # A click gesture, any button. (EventControllerLegacy's "event" reaches Python as None.)
             # "unpaired-release" is a release whose press this window never saw.
-            g = Gtk.GestureClick(button=0, propagation_phase=Gtk.PropagationPhase.CAPTURE)
-            g.connect("pressed", lambda g, n, x, y: note("press %d" % g.get_current_button()))
-            g.connect("released", lambda g, n, x, y: note("release %d" % g.get_current_button()))
-            g.connect("unpaired-release", lambda g, x, y, b, s: note("unpaired-release %d" % b))
+            g = Gtk.GestureClick(
+                button=0, propagation_phase=Gtk.PropagationPhase.CAPTURE
+            )
+            g.connect(
+                "pressed", lambda g, n, x, y: note(f"press {g.get_current_button()}")
+            )
+            g.connect(
+                "released",
+                lambda g, n, x, y: note(f"release {g.get_current_button()}"),
+            )
+            g.connect(
+                "unpaired-release",
+                lambda g, x, y, b, s: note(f"unpaired-release {b}"),
+            )
             win.add_controller(g)
 
         def show():
             win.present()
             if a.resize_delay:
                 last = [None]
+
                 def layout(surface, width, height):
                     if last[0] is not None and last[0] != (width, height):
-                        time.sleep(a.resize_delay)      # blocks the frame at the new size
+                        time.sleep(a.resize_delay)  # blocks the frame at the new size
                     last[0] = (width, height)
+
                 win.get_surface().connect("layout", layout)
+
             def open_dialog():
                 d = Gtk.Window(title=a.title + " dialog", transient_for=win, modal=True)
                 # Not below KWin's 150 px minimum for a decorated window (xdgshellwindow.cpp
@@ -102,13 +127,18 @@ def main():
                 d.set_child(Gtk.Label(label="dialog"))
                 d.present()
                 return False
-            if a.dialog and a.dialog_delay:       # a dialog opened later, e.g. while fullscreen
+
+            if (
+                a.dialog and a.dialog_delay
+            ):  # a dialog opened later, e.g. while fullscreen
                 GLib.timeout_add(int(a.dialog_delay * 1000), open_dialog)
             elif a.dialog:
                 open_dialog()
             if a.retitle:
                 secs, new = a.retitle.split(":", 1)
-                GLib.timeout_add(int(float(secs) * 1000), lambda: (win.set_title(new), False)[1])
+                GLib.timeout_add(
+                    int(float(secs) * 1000), lambda: (win.set_title(new), False)[1]
+                )
             return False
 
         if a.map_delay:
