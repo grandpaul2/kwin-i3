@@ -130,12 +130,14 @@ live.
 **115. The tree held to the publishable bar** (2026-11-14). Every tracked file holds only what a
 public project should: working, personal and business material and anything sensitive live
 outside the tree, the rest in the project's voice. The tree is already near it: the design records
-and notes left in October and November, and the mechanical audit is at zero (`behaviour.md`'s row
-ids S10 and S11 allowed as row ids). Milestones: (1) an inventory of every tracked file (keep,
+and notes left in October and November, and the mechanical audit is at zero (`behaviour.md`'s
+output rows allowed as row ids). Milestones: (1) an inventory of every tracked file (keep,
 rewrite, move out, delete, link), reviewed before anything moves; (2) one short branch per
 milestone below, in a worktree, main brought in by merge, `OPEN.md` edited on main only; (3) the
 moves, references rewritten in the same commit; (4) the rewrite, graded area by area (the
 project's documentation or working material, no line on an agent's own conduct, nothing that
 would embarrass it); (5) the audit at zero; (6) the grader at zero open findings; (7) the last
-merge, its message saying what changed and why; (8) a dry run of a fresh single-commit history,
-built and audited locally, not pushed. Next: (1)'s inventory.
+merge, its message saying what changed and why; (8) a dry run of the fresh single-commit history the
+repo gets at a release (`main` and `stable` on that one commit, the release tagged there, the old
+history kept in a private repo, the release notes telling users to clone again), built and audited
+locally, not pushed. Next: (1)'s inventory.
