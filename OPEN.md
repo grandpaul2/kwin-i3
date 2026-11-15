@@ -140,6 +140,6 @@ would embarrass it); (5) the audit at zero; (6) the grader at zero open findings
 merge, its message saying what changed and why; (8) a dry run of the fresh single-commit history the
 repo gets at a release (`main` and `stable` on that one commit, the release tagged there, the old
 history kept in a private repo, the release notes telling users to clone again), built and audited
-locally, not pushed. (1) is written: no file moves whole, two docs lose a section, about 60
-files have dated, historical or machine-specific comments to rewrite. Next: the inventory's
-review, then (3) on its branch.
+locally, not pushed. (1) and (3) are done: no file moved whole; `fuzz-design.md` is the fuzzer
+as it is, `pointer.md` names no desktop. Next: (4), about 60 files whose dated, historical or
+machine-specific comments state the reason instead, on its branch.
