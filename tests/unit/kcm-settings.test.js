@@ -3,8 +3,6 @@
 const test = require("node:test");
 const assert = require("node:assert");
 const K = require("../../kcm/ui/settings.js");
-const fs = require("node:fs");
-const path = require("node:path");
 
 test("workspace monitors: read as the script reads them, written back in order", () => {
     assert.deepStrictEqual(K.parseOutputs("2=DP-6, 1=DP-4"), {

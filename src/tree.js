@@ -537,7 +537,7 @@ var Tree = (function () {
     // con_descend_direction: the leaf of a subtree met first when entering it moving `dir`;
     // across the grain, the most recently focused child.
     function descendDirection(con, dir) {
-        var most = null,
+        var most,
             nodes = con.nodes.filter(reachable);
         if (isLeaf(con)) return con;
         if (dir === LEFT || dir === RIGHT) {

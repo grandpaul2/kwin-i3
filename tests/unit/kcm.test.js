@@ -14,14 +14,14 @@ const table = JSON.parse(
 
 function registered() {
     const get = (re) => Function("return " + src.match(re)[1])();
-    const fn = src.match(/function registerKeys\(\) \{[\s\S]*?\n    \}\n/);
+    const fn = src.match(/function registerKeys\(\) \{[\s\S]*?\n {4}\}\n/);
     assert.ok(fn, "registerKeys not found in src/kwin.js");
     const out = [];
     const reg = (action, friendly, key) => out.push([action, key]);
     // The actions with no default key: the UNBOUND table, the loop that adds the output moves, and the one that adds the
     // no-back-and-forth workspace actions.
     const unbound = src.match(
-        /(var UNBOUND = \{[\s\S]*?\n    \}\);\n(?:[^\n]*\n)*?    NAMES\.forEach[\s\S]*?\n    \}\);\n)/
+        /(var UNBOUND = \{[\s\S]*?\n {4}\}\);\n(?:[^\n]*\n)*? {4}NAMES\.forEach[\s\S]*?\n {4}\}\);\n)/
     );
     assert.ok(unbound, "UNBOUND not found in src/kwin.js");
     const UNBOUND = Function(
@@ -50,7 +50,7 @@ function registered() {
         "callDBus",
         fn[0] + "registerKeys();"
     )(
-        get(/var KEYS = (\{[\s\S]*?\n    \});/),
+        get(/var KEYS = (\{[\s\S]*?\n {4}\});/),
         get(/var NAMES = (\[[^\]]*\]);/),
         get(/var SHIFTED = (\[[^\]]*\]);/),
         {},
@@ -84,7 +84,7 @@ test("every action the script registers has its row and default on the Keys page
 test("no key is registered in its dead Shift+symbol form", () => {
     for (const [action, key] of registered())
         assert.ok(
-            !/Shift\+([0-9;',./\[\]\\=`-])$/.test(key),
+            !/Shift\+([0-9;',./[\]\\=`-])$/.test(key),
             `${action}: ${key} never fires`
         );
 });

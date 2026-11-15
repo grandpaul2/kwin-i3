@@ -226,7 +226,7 @@ test("classify: the default rules float Spectacle, the password prompt, KRuler, 
                         path.join(__dirname, "../../src/settings.js"),
                         "utf8"
                     )
-                    .match(/DEFAULT_RULES =([\s\S]*?);\n    var TABLE/)[1] +
+                    .match(/DEFAULT_RULES =([\s\S]*?);\n {4}var TABLE/)[1] +
                 ");"
         )(),
     });

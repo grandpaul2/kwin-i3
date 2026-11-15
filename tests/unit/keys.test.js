@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const src = fs.readFileSync(path.join(__dirname, "../../src/kwin.js"), "utf8");
-const block = src.match(/var KEYS = (\{[\s\S]*?\n    \});/);
+const block = src.match(/var KEYS = (\{[\s\S]*?\n {4}\});/);
 assert.ok(block, "KEYS table not found in src/kwin.js");
 const KEYS = Function("return " + block[1])();
 

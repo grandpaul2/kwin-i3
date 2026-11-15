@@ -778,7 +778,7 @@ var KI3 = (function () {
     // floated, as a refused window is. A gap of over a minute between looks (a suspend) starts
     // the 3 s again.
     var pendingLook = 0,
-        pendingTimer = false;
+        pendingTimer = false; // eslint-disable-line no-redeclare -- OPEN.md item 107
     function pendingOut(key, w) {
         return pendingFs[key] !== undefined && Rules.pendingFullscreen(w);
     }
@@ -1863,7 +1863,7 @@ var KI3 = (function () {
         endFullscreen(ws);
         model.floatingWindows(ws).forEach(function (f) {
             var w = wins[f.win];
-            if (w) (floatedOf(f) ? lookFloated : lookFloating)(w, ws);
+            if (w) (floatedOf(f) ? lookFloated : lookFloating)(w);
         });
         // A window that left a floated container for the tiles (tree_move out of it, a move to a
         // workspace) is a tiling window again.
@@ -2483,8 +2483,8 @@ var KI3 = (function () {
     }
     // The look of a window in a floated container: kept above as a floating window (L12), the
     // tiling look (L10a), marked for the effect's ring and the helper's presses (SetFloated).
-    function lookFloated(w, ws) {
-        keepAboveOn(w, ws);
+    function lookFloated(w) {
+        keepAboveOn(w);
         tiledBorder(w);
         tellFloating(w, false);
         tellDragFloating(id(w), false);
@@ -3061,8 +3061,7 @@ var KI3 = (function () {
     function setFloatingLook(w, on) {
         var key = id(w);
         if (on) {
-            var con = model.byWin[key];
-            lookFloating(w, con ? Tree.wsOf(con) : null);
+            lookFloating(w);
             return;
         }
         if (keptAbove[key]) {
@@ -3076,13 +3075,13 @@ var KI3 = (function () {
     // A floating window's look: above the tiling ones on every workspace, as i3 (§7 L12); its
     // own decoration, or the frame in the floating colours with frameOnFloating. Again on every
     // pass, which also takes back a Keep Above the user cleared.
-    function keepAboveOn(w, ws) {
+    function keepAboveOn(w) {
         if (!w.keepAbove) w.keepAbove = true;
         keptAbove[id(w)] = true;
     }
-    function lookFloating(w, ws) {
+    function lookFloating(w) {
         var key = id(w);
-        keepAboveOn(w, ws);
+        keepAboveOn(w);
         tellFloated(key, false);
         if (frameOn && Settings.get("frameOnFloating") && !w.fullScreen)
             takeBorder(w);
@@ -6454,7 +6453,7 @@ var KI3 = (function () {
     function screenBy(spec, from) {
         var all = Workspaces.ordered(),
             i = all.indexOf(from),
-            t = null;
+            t;
         if (spec === "next")
             t = all.length > 1 ? all[(i + 1) % all.length] : null;
         else if (spec === "primary") t = all[0];
@@ -6928,7 +6927,7 @@ var KI3 = (function () {
             }
         });
         workspace.screens.forEach(function (s) {
-            workspace.desktops.forEach(function (d, i) {
+            workspace.desktops.forEach(function (d) {
                 try {
                     var root = workspace.rootTile(s, d),
                         rk = s.name + "/" + d.id;
