@@ -40,9 +40,12 @@ KeyOverride::KeyOverride()
     m_coalesce.setSingleShot(true);
     m_coalesce.setInterval(0);
     connect(&m_coalesce, &QTimer::timeout, this, &KeyOverride::refresh);
-    QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
-                                          QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("yourShortcutsChanged"),
-                                          this, SLOT(onShortcutsChanged(QDBusMessage)));
+    QDBusConnection::sessionBus().connect(QStringLiteral("org.kde.kglobalaccel"),
+                                          QStringLiteral("/kglobalaccel"),
+                                          QStringLiteral("org.kde.KGlobalAccel"),
+                                          QStringLiteral("yourShortcutsChanged"),
+                                          this,
+                                          SLOT(onShortcutsChanged(QDBusMessage)));
     refresh();
     // Installed whether on or off: off, both filters pass every event at their first test.
     input()->installInputEventFilter(this);
@@ -91,7 +94,7 @@ void KeyOverride::refresh()
         }
     }
     if (actions.isEmpty() || m_released) {
-        m_keys.clear();         // kwin-i3 not running: nothing held, the tile editor's key included
+        m_keys.clear(); // kwin-i3 not running: nothing held, the tile editor's key included
         m_held.clear();
         return;
     }
@@ -115,7 +118,7 @@ void KeyOverride::refresh()
         QPointer<QAction> action(a);
         LayoutKeys::askKeys(this, a->objectName(), [this, generation, table, held, pending, action](const QList<int> &keys) {
             if (generation != m_generation) {
-                return;     // another refresh started: its table wins
+                return; // another refresh started: its table wins
             }
             for (int key : keys) {
                 table->insert(key, action);
@@ -132,7 +135,7 @@ void KeyOverride::setReleased(bool released)
 {
     m_released = released;
     if (released) {
-        ++m_generation;         // a refresh under way is dropped
+        ++m_generation; // a refresh under way is dropped
         m_keys.clear();
         m_held.clear();
     } else {

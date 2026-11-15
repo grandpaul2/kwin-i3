@@ -50,7 +50,7 @@ public:
 private:
     struct Want {
         QString action;
-        QList<int> keys;     // Qt key combinations (one, or none if the layout has no symbol there)
+        QList<int> keys; // Qt key combinations (one, or none if the layout has no symbol there)
     };
     QList<Want> plan() const;
     void apply(const QList<Want> &wants, const QString &plan);

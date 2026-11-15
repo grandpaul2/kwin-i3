@@ -5,17 +5,31 @@
 Helper::Helper()
     : m_frameFocus(&m_tilingDrag)
     , m_pointerProbe(&m_frameFocus)
-    , m_gapStrips([this] { return m_tilingDrag.resizeGap(); }, [this] { return m_frameFocus.frameWidth(); })
+    , m_gapStrips(
+          [this] {
+              return m_tilingDrag.resizeGap();
+          },
+          [this] {
+              return m_frameFocus.frameWidth();
+          })
 {
-    m_tilingDrag.onResizeGapChanged = [this] { m_gapStrips.dirty(); };
-    m_layoutKeys.onKeysChanged = [this] { m_keyOverride.refresh(); };
-    m_layoutKeys.onOverridePlan = [this] { return m_keyOverride.plan(); };
-    m_layoutKeys.onReleased = [this](bool released) { m_keyOverride.setReleased(released); };
+    m_tilingDrag.onResizeGapChanged = [this] {
+        m_gapStrips.dirty();
+    };
+    m_layoutKeys.onKeysChanged = [this] {
+        m_keyOverride.refresh();
+    };
+    m_layoutKeys.onOverridePlan = [this] {
+        return m_keyOverride.plan();
+    };
+    m_layoutKeys.onReleased = [this](bool released) {
+        m_keyOverride.setReleased(released);
+    };
     KWin::input()->installInputEventFilter(&m_pointerProbe);
     KWin::input()->installInputEventFilter(&m_frameFocus);
     KWin::input()->installInputEventFilter(&m_tilingDrag);
     KWin::input()->installInputEventFilter(m_tilingDrag.grab());
-    KWin::input()->installInputEventFilter(m_tilingDrag.floatMove());   // ahead of KWin's move filter, its weight
+    KWin::input()->installInputEventFilter(m_tilingDrag.floatMove()); // ahead of KWin's move filter, its weight
 }
 
 Helper::~Helper()

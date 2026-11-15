@@ -4,8 +4,8 @@
 // without the plugins. The keys are on the Keys tab (keys.cpp).
 
 #include "keys.h"
-#include "setup.h"
 #include "kwini3settings.h"
+#include "setup.h"
 
 #include <KApplicationTrader>
 #include <KConfigGroup>
@@ -29,7 +29,14 @@
 
 // The tabs, in main.qml's order. Defaults resets the tab shown: what is Plasma's back to Plasma,
 // what is kwin-i3's to its default (docs/philosophy.md, "How it presents itself").
-enum Tab { TilingTab, GapsTab, WorkspacesTab, RulesTab, FrameTab, KeysTab };
+enum Tab {
+    TilingTab,
+    GapsTab,
+    WorkspacesTab,
+    RulesTab,
+    FrameTab,
+    KeysTab
+};
 
 // Each tab's settings (main.xml). forWindow is two tabs': its workspace rules are Workspaces',
 // the rest Window Rules'. debugLog and holdTimeoutMs (internal) are on no tab, so Defaults never
@@ -38,21 +45,42 @@ static QStringList tabKeys(int tab)
 {
     switch (tab) {
     case TilingTab:
-        return {QStringLiteral("resizeStep"), QStringLiteral("floatingStep"), QStringLiteral("focusFollowsMouse"), QStringLiteral("mouseWarping"), QStringLiteral("focusWrapping"),
-                QStringLiteral("tilingDrag"), QStringLiteral("holdEnabled")};
+        return {QStringLiteral("resizeStep"),
+                QStringLiteral("floatingStep"),
+                QStringLiteral("focusFollowsMouse"),
+                QStringLiteral("mouseWarping"),
+                QStringLiteral("focusWrapping"),
+                QStringLiteral("tilingDrag"),
+                QStringLiteral("holdEnabled")};
     case GapsTab:
-        return {QStringLiteral("gapsInner"), QStringLiteral("gapsOuter"), QStringLiteral("gapsTop"), QStringLiteral("gapsRight"),
-                QStringLiteral("gapsBottom"), QStringLiteral("gapsLeft"), QStringLiteral("smartGaps"), QStringLiteral("workspaceGaps")};
+        return {QStringLiteral("gapsInner"),
+                QStringLiteral("gapsOuter"),
+                QStringLiteral("gapsTop"),
+                QStringLiteral("gapsRight"),
+                QStringLiteral("gapsBottom"),
+                QStringLiteral("gapsLeft"),
+                QStringLiteral("smartGaps"),
+                QStringLiteral("workspaceGaps")};
     case WorkspacesTab:
-        return {QStringLiteral("workspaceLayout"), QStringLiteral("defaultOrientation"), QStringLiteral("workspaceAutoBackAndForth"),
+        return {QStringLiteral("workspaceLayout"),
+                QStringLiteral("defaultOrientation"),
+                QStringLiteral("workspaceAutoBackAndForth"),
                 QStringLiteral("workspaceOutputs")};
     case RulesTab:
-        return {QStringLiteral("assign"), QStringLiteral("popupDuringFullscreen"), QStringLiteral("floatingMinimumSize"),
+        return {QStringLiteral("assign"),
+                QStringLiteral("popupDuringFullscreen"),
+                QStringLiteral("floatingMinimumSize"),
                 QStringLiteral("floatingMaximumSize")};
     case FrameTab:
-        return {QStringLiteral("tiledLook"), QStringLiteral("frameWidth"), QStringLiteral("frameActive"), QStringLiteral("frameInactive"),
-                QStringLiteral("frameIndicatorActive"), QStringLiteral("frameIndicatorInactive"), QStringLiteral("hideEdgeBorders"),
-                QStringLiteral("roundedCorners"), QStringLiteral("frameOnFloating")};
+        return {QStringLiteral("tiledLook"),
+                QStringLiteral("frameWidth"),
+                QStringLiteral("frameActive"),
+                QStringLiteral("frameInactive"),
+                QStringLiteral("frameIndicatorActive"),
+                QStringLiteral("frameIndicatorInactive"),
+                QStringLiteral("hideEdgeBorders"),
+                QStringLiteral("roundedCorners"),
+                QStringLiteral("frameOnFloating")};
     case KeysTab:
         return {QStringLiteral("endSession"), QStringLiteral("keysOverride")};
     }
@@ -160,18 +188,30 @@ public:
         connect(m_setup, &SetupModel::edited, this, &KWinI3Kcm::settingsChanged);
     }
 
-    KWinI3Settings *settings() const { return m_settings.get(); }
-    int currentTab() const { return m_tab; }
+    KWinI3Settings *settings() const
+    {
+        return m_settings.get();
+    }
+    int currentTab() const
+    {
+        return m_tab;
+    }
     void setCurrentTab(int tab)
     {
         if (tab == m_tab)
             return;
         m_tab = tab;
         Q_EMIT currentTabChanged();
-        settingsChanged();      // Defaults greys or not for the tab now shown
+        settingsChanged(); // Defaults greys or not for the tab now shown
     }
-    KeysModel *keys() const { return m_keys; }
-    SetupModel *setup() const { return m_setup; }
+    KeysModel *keys() const
+    {
+        return m_keys;
+    }
+    SetupModel *setup() const
+    {
+        return m_setup;
+    }
 
     void load() override
     {
@@ -189,8 +229,10 @@ public:
         m_setup->load();
         // The helper's key override reads kwin-i3's keys again (a key bound here); without the
         // plugins nothing answers.
-        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3helper"), QStringLiteral("net.local.kwini3helper"), QStringLiteral("RefreshKeys")));
+        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                                               QStringLiteral("/kwini3helper"),
+                                                                               QStringLiteral("net.local.kwini3helper"),
+                                                                               QStringLiteral("RefreshKeys")));
         if (settings)
             reconfigure();
         settingsChanged();
@@ -237,7 +279,7 @@ public:
     // class, sorted by name.
     Q_INVOKABLE QVariantList applications() const
     {
-        QMap<QString, QPair<QString, QString>> byClass;         // class -> (sort key, name)
+        QMap<QString, QPair<QString, QString>> byClass; // class -> (sort key, name)
         const auto apps = KApplicationTrader::query([](const KService::Ptr &p) {
             return !p->noDisplay() && !p->exec().isEmpty();
         });
@@ -254,7 +296,9 @@ public:
         QList<QPair<QString, QVariantMap>> sorted;
         for (auto it = byClass.cbegin(); it != byClass.cend(); ++it)
             sorted.append({it.value().first, QVariantMap{{QStringLiteral("name"), it.value().second}, {QStringLiteral("id"), it.key()}}});
-        std::sort(sorted.begin(), sorted.end(), [](const auto &x, const auto &y) { return x.first < y.first; });
+        std::sort(sorted.begin(), sorted.end(), [](const auto &x, const auto &y) {
+            return x.first < y.first;
+        });
         QVariantList out;
         for (const auto &e : sorted)
             out << e.second;
@@ -267,8 +311,10 @@ public:
     // doesn't manage).
     Q_INVOKABLE void pickWindow()
     {
-        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-                                                  QStringLiteral("org.kde.KWin"), QStringLiteral("queryWindowInfo"));
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                  QStringLiteral("/KWin"),
+                                                  QStringLiteral("org.kde.KWin"),
+                                                  QStringLiteral("queryWindowInfo"));
         auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(msg, -1), this);
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *w) {
             QDBusPendingReply<QVariantMap> reply = *w;
@@ -287,18 +333,22 @@ public:
         m_scriptEnabled = KConfigGroup(config, QStringLiteral("Plugins")).readEntry("kwin-i3Enabled", false);
         m_scriptLoaded = kwinI3Loaded();
         // The installed effect's id carries a hash (tools/plugin-install.sh): kwini3hold-<hash>.
-        auto prop = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
-                                                   QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
+        auto prop = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                   QStringLiteral("/Effects"),
+                                                   QStringLiteral("org.freedesktop.DBus.Properties"),
+                                                   QStringLiteral("Get"));
         prop << QStringLiteral("org.kde.kwin.Effects") << QStringLiteral("loadedEffects");
         const QStringList effects = QDBusConnection::sessionBus().call(prop).arguments().value(0).value<QDBusVariant>().variant().toStringList();
         m_holdLoaded = std::any_of(effects.begin(), effects.end(), [](const QString &e) {
             return e.startsWith(QLatin1String("kwini3hold"));
         });
-        m_frameAvailable = m_holdLoaded;    // the effect draws the frame
+        m_frameAvailable = m_holdLoaded; // the effect draws the frame
         // The helper (kwini3helper, a KWin plugin): the tiling drag and resize, frame focus, the
         // resize mode, the layout keys, the key override.
-        auto plugins = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Plugins"),
-                                                      QStringLiteral("org.freedesktop.DBus.Properties"), QStringLiteral("Get"));
+        auto plugins = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                      QStringLiteral("/Plugins"),
+                                                      QStringLiteral("org.freedesktop.DBus.Properties"),
+                                                      QStringLiteral("Get"));
         plugins << QStringLiteral("org.kde.KWin.Plugins") << QStringLiteral("LoadedPlugins");
         const QStringList loaded = QDBusConnection::sessionBus().call(plugins).arguments().value(0).value<QDBusVariant>().variant().toStringList();
         // Installed, its id carries a hash too (kwini3helper-<hash>); the test KWin's has none.
@@ -306,8 +356,10 @@ public:
             return p.startsWith(QLatin1String("kwini3helper"));
         });
         // End session's Sleep shows only where the machine can sleep, as Plasma's logout screen.
-        auto canSuspend = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.login1"), QStringLiteral("/org/freedesktop/login1"),
-                                                         QStringLiteral("org.freedesktop.login1.Manager"), QStringLiteral("CanSuspend"));
+        auto canSuspend = QDBusMessage::createMethodCall(QStringLiteral("org.freedesktop.login1"),
+                                                         QStringLiteral("/org/freedesktop/login1"),
+                                                         QStringLiteral("org.freedesktop.login1.Manager"),
+                                                         QStringLiteral("CanSuspend"));
         m_canSuspend = QDBusConnection::systemBus().call(canSuspend).arguments().value(0).toString() == QLatin1String("yes");
         m_keys->load();
         m_setup->load();
@@ -322,7 +374,10 @@ Q_SIGNALS:
     void windowPickFailed(const QString &error);
 
 private:
-    bool isSaveNeeded() const override { return m_settings->isSaveNeeded() || m_keys->isSaveNeeded() || m_setup->isSaveNeeded(); }
+    bool isSaveNeeded() const override
+    {
+        return m_settings->isSaveNeeded() || m_keys->isSaveNeeded() || m_setup->isSaveNeeded();
+    }
     // The tab shown at its defaults (as defaults() makes it).
     bool isDefaults() const override
     {
@@ -375,12 +430,14 @@ private:
 
     static void reconfigure()
     {
-        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
+        QDBusConnection::sessionBus().asyncCall(QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                                               QStringLiteral("/KWin"),
+                                                                               QStringLiteral("org.kde.KWin"),
+                                                                               QStringLiteral("reconfigure")));
     }
 
     std::unique_ptr<KWinI3Settings> m_settings;
-    int m_tab = TilingTab;      // the first tab, shown when the page opens
+    int m_tab = TilingTab; // the first tab, shown when the page opens
     KeysModel *m_keys;
     SetupModel *m_setup;
     bool m_scriptEnabled = false;

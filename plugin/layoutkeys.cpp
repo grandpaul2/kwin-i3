@@ -12,8 +12,8 @@
 #include <QDBusArgument>
 #include <QDBusConnection>
 #include <QDBusMessage>
-#include <QDBusPendingCallWatcher>
 #include <QDBusMetaType>
+#include <QDBusPendingCallWatcher>
 #include <QDBusPendingReply>
 #include <QKeySequence>
 #include <QLoggingCategory>
@@ -55,7 +55,7 @@ struct Slot {
     int evdev;
     int level;
     int mods;
-    const char *us;      // kwin-i3's registered default
+    const char *us; // kwin-i3's registered default
 };
 const Slot s_slots[] = {
     {"kwin-i3 Workspace 1", KEY_1, 0, Qt::META, "Meta+1"},
@@ -142,16 +142,15 @@ KConfigGroup stored()
 
 void LayoutKeys::askKeys(QObject *context, const QString &action, std::function<void(const QList<int> &)> done)
 {
-    QDBusMessage ask = QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"),
-                                                      QStringLiteral("shortcutKeys"));
+    QDBusMessage ask =
+        QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("shortcutKeys"));
     ask << actionId(action);
     auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(ask), context);
     QObject::connect(watcher, &QDBusPendingCallWatcher::finished, context, [done](QDBusPendingCallWatcher *self) {
         self->deleteLater();
         const QDBusMessage reply = self->reply();
-        done(reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty()
-                 ? fromArgument(reply.arguments().first().value<QDBusArgument>())
-                 : QList<int>());
+        done(reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty() ? fromArgument(reply.arguments().first().value<QDBusArgument>())
+                                                                                        : QList<int>());
     });
 }
 
@@ -159,8 +158,10 @@ LayoutKeys::LayoutKeys()
 {
     qDBusRegisterMetaType<KeySeq>();
     qDBusRegisterMetaType<QList<KeySeq>>();
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper"), QStringLiteral("net.local.kwini3helper"),
-                                                 this, QDBusConnection::ExportAllSlots);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper"),
+                                                 QStringLiteral("net.local.kwini3helper"),
+                                                 this,
+                                                 QDBusConnection::ExportAllSlots);
     // KWin matches the current layout's symbol only, so the keys follow it: refitted when the
     // layout is switched, and when layouts are added, removed or reordered (kxkbrc).
     if (auto layout = KWin::input()->keyboard()->keyboardLayout()) {
@@ -276,8 +277,8 @@ void LayoutKeys::apply(const QList<Want> &wants, const QString &plan)
     auto pending = std::make_shared<int>(wants.size());
     auto change = std::make_shared<QList<Want>>();
     for (const Want &w : wants) {
-        QDBusMessage ask = QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"),
-                                                          QStringLiteral("shortcutKeys"));
+        QDBusMessage ask =
+            QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("shortcutKeys"));
         ask << actionId(w.action);
         auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(ask), this);
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, w, pending, change, plan](QDBusPendingCallWatcher *self) {
@@ -330,7 +331,9 @@ void LayoutKeys::set(const QList<Want> &change, const QString &plan)
 
 QDBusPendingCall LayoutKeys::setKeys(const QString &action, const QList<int> &keys)
 {
-    QDBusMessage msg = QDBusMessage::createMethodCall(s_service, QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"),
+    QDBusMessage msg = QDBusMessage::createMethodCall(s_service,
+                                                      QStringLiteral("/kglobalaccel"),
+                                                      QStringLiteral("org.kde.KGlobalAccel"),
                                                       QStringLiteral("setForeignShortcutKeys"));
     QList<KeySeq> seqs;
     for (int k : keys) {

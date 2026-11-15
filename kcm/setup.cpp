@@ -62,9 +62,8 @@ static QString stock(const SetupModel::Change &c)
         QFile f(QStandardPaths::locate(QStandardPaths::GenericDataLocation, QStringLiteral("config.kcfg/kwin.kcfg")));
         kcfg = f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.readAll()) : QStringLiteral("");
     }
-    const auto m = QRegularExpression(QStringLiteral("<entry name=\"%1\"[^>]*>(.*?)</entry>").arg(c.key),
-                                      QRegularExpression::DotMatchesEverythingOption)
-                       .match(kcfg);
+    const auto m =
+        QRegularExpression(QStringLiteral("<entry name=\"%1\"[^>]*>(.*?)</entry>").arg(c.key), QRegularExpression::DotMatchesEverythingOption).match(kcfg);
     const auto d = QRegularExpression(QStringLiteral("<default>([^<]*)</default>")).match(m.captured(1));
     // An enum's default is its C++ name (Options::ClickToFocus); kwinrc holds the choice alone.
     return d.captured(1).section(QStringLiteral("::"), -1);
@@ -89,16 +88,26 @@ static void write(const SetupModel::Change &c, const QJsonValue &v)
 SetupModel::SetupModel(QObject *parent)
     : QObject(parent)
 {
-    const auto w = [](const QString &key, const QString &value) { return Change{QStringLiteral("kwinrc"), QStringLiteral("Windows"), key, value}; };
-    const auto on = [](const QString &v) { return v == QLatin1String("true"); };
+    const auto w = [](const QString &key, const QString &value) {
+        return Change{QStringLiteral("kwinrc"), QStringLiteral("Windows"), key, value};
+    };
+    const auto on = [](const QString &v) {
+        return v == QLatin1String("true");
+    };
     // The Plasma column's line: "Plasma: " and the value in the words of Plasma's own settings, so
     // it can be found there; what the setting does is in the row's help
     // (docs/style-settings-page.md, "Saying what to pick").
-    const auto said = [](const QString &v) { return i18nc("@info Plasma's value for a setting, in Plasma's own words", "Plasma: %1", v); };
-    Row perOutput{QStringLiteral("perOutput"), i18nc("@option:check", "Screens switch workspaces separately"),
-                  i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Turned off, every screen is put on the same workspace. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
-                  {}, false,
-                  {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))}, nullptr};
+    const auto said = [](const QString &v) {
+        return i18nc("@info Plasma's value for a setting, in Plasma's own words", "Plasma: %1", v);
+    };
+    Row perOutput{QStringLiteral("perOutput"),
+                  i18nc("@option:check", "Screens switch workspaces separately"),
+                  i18n("In i3 a workspace lives on one screen; switching every screen together puts windows on the wrong one. Turned off, every screen is put "
+                       "on the same workspace. Plasma's setting: Virtual Desktops, \"Switch desktops independently for each screen\"."),
+                  {},
+                  false,
+                  {w(QStringLiteral("PerOutputVirtualDesktops"), QStringLiteral("true"))},
+                  nullptr};
     perOutput.plasma = [ch = perOutput.changes, on, said](const Getter &g) {
         return said(on(g(ch[0])) ? i18nc("@item a setting's state", "On") : i18nc("@item a setting's state", "Off"));
     };
@@ -109,18 +118,32 @@ SetupModel::SetupModel(QObject *parent)
     // every effect of its group off (the effects' X-KWin-Exclusive-Category), the stock ones first.
     // Other animations, and the global speed, stay as they are.
     const auto fx = [](const QString &effect, bool onByDefault) {
-        return Change{QStringLiteral("kwinrc"), QStringLiteral("Plugins"), effect + QStringLiteral("Enabled"), QStringLiteral("false"),
+        return Change{QStringLiteral("kwinrc"),
+                      QStringLiteral("Plugins"),
+                      effect + QStringLiteral("Enabled"),
+                      QStringLiteral("false"),
                       onByDefault ? QStringLiteral("true") : QStringLiteral("false")};
     };
-    Row anim{QStringLiteral("animations"), i18nc("@option:check", "Set window animations to none"),
-             i18n("Opening and closing, maximizing, minimizing, full screen and virtual desktop switching, each set to None, as i3 has none. Other animations and the animation speed stay as they are. Plasma's setting: Animations, Desktop animations."),
-             {}, true,
-             {fx(QStringLiteral("scale"), true), fx(QStringLiteral("glide"), false), fx(QStringLiteral("fade"), false),
-              fx(QStringLiteral("maximize"), true), fx(QStringLiteral("squash"), true), fx(QStringLiteral("magiclamp"), false),
-              fx(QStringLiteral("fullscreen"), true), fx(QStringLiteral("slide"), true), fx(QStringLiteral("fadedesktop"), false)},
+    Row anim{QStringLiteral("animations"),
+             i18nc("@option:check", "Set window animations to none"),
+             i18n("Opening and closing, maximizing, minimizing, full screen and virtual desktop switching, each set to None, as i3 has none. Other animations "
+                  "and the animation speed stay as they are. Plasma's setting: Animations, Desktop animations."),
+             {},
+             true,
+             {fx(QStringLiteral("scale"), true),
+              fx(QStringLiteral("glide"), false),
+              fx(QStringLiteral("fade"), false),
+              fx(QStringLiteral("maximize"), true),
+              fx(QStringLiteral("squash"), true),
+              fx(QStringLiteral("magiclamp"), false),
+              fx(QStringLiteral("fullscreen"), true),
+              fx(QStringLiteral("slide"), true),
+              fx(QStringLiteral("fadedesktop"), false)},
              nullptr};
     anim.plasma = [ch = anim.changes, said](const Getter &g) {
-        const auto on = [&](int i) { return g(ch[i]) == QLatin1String("true"); };
+        const auto on = [&](int i) {
+            return g(ch[i]) == QLatin1String("true");
+        };
         QStringList what;
         if (on(0) || on(1) || on(2))
             what << i18nc("@item an animation, in a list", "Open/close");
@@ -135,7 +158,6 @@ SetupModel::SetupModel(QObject *parent)
         return said(what.isEmpty() ? i18nc("@item no animations", "None") : what.join(QStringLiteral(", ")));
     };
     m_defs << anim;
-
 }
 
 QString SetupModel::before(const Change &c) const
@@ -178,13 +200,17 @@ QString SetupModel::effective(const Change &c) const
 
 bool SetupModel::differs(const Row &r) const
 {
-    return std::any_of(r.changes.begin(), r.changes.end(), [this](const Change &c) { return effective(c) != c.value; });
+    return std::any_of(r.changes.begin(), r.changes.end(), [this](const Change &c) {
+        return effective(c) != c.value;
+    });
 }
 
 bool SetupModel::changedByUs(const Row &r) const
 {
     const QJsonObject save = readSave();
-    return std::any_of(r.changes.begin(), r.changes.end(), [&save](const Change &c) { return save.contains(idOf(c)); });
+    return std::any_of(r.changes.begin(), r.changes.end(), [&save](const Change &c) {
+        return save.contains(idOf(c));
+    });
 }
 
 void SetupModel::load()
@@ -197,16 +223,29 @@ void SetupModel::load()
         const bool d = differs(r), c = changedByUs(r);
         m_needed = m_needed || (d && !r.optional);
         m_initial[r.id] = !d;
-        const Getter now = [this](const Change &ch) { return effective(ch); };
-        const Getter was = [this](const Change &ch) { return before(ch); };
-        const Getter plasmaG = [this](const Change &ch) { const QString p = plasmaSide(ch); return p.isEmpty() ? effective(ch) : p; };
+        const Getter now = [this](const Change &ch) {
+            return effective(ch);
+        };
+        const Getter was = [this](const Change &ch) {
+            return before(ch);
+        };
+        const Getter plasmaG = [this](const Change &ch) {
+            const QString p = plasmaSide(ch);
+            return p.isEmpty() ? effective(ch) : p;
+        };
         const QString earlier = r.plasma(was);
-        m_rows << QVariantMap{{QStringLiteral("id"), r.id},         {QStringLiteral("title"), r.title},
-                              {QStringLiteral("why"), r.why},       {QStringLiteral("note"), r.note},
-                              {QStringLiteral("optional"), r.optional}, {QStringLiteral("changed"), c},
+        m_rows << QVariantMap{{QStringLiteral("id"), r.id},
+                              {QStringLiteral("title"), r.title},
+                              {QStringLiteral("why"), r.why},
+                              {QStringLiteral("note"), r.note},
+                              {QStringLiteral("optional"), r.optional},
+                              {QStringLiteral("changed"), c},
                               // What the Plasma column means for this row: Plasma's current way where
                               // it differs, else what choosing Plasma brings back.
-                              {QStringLiteral("plasmaSide"), d ? r.plasma(now) : c ? earlier : r.plasma(plasmaG)}};
+                              {QStringLiteral("plasmaSide"),
+                               d ? r.plasma(now)
+                                   : c ? earlier
+                                       : r.plasma(plasmaG)}};
     }
     m_wanted = m_initial;
     Q_EMIT changed();
@@ -262,7 +301,7 @@ void SetupModel::save()
         if (m_wanted.value(r.id).toBool())
             failed << applyRow(r);
         else if (changedByUs(r))
-            giveBackRow(r);       // what the reader had before kwin-i3 changed it
+            giveBackRow(r); // what the reader had before kwin-i3 changed it
         else
             setPlasmaSide(r);
     }
@@ -272,8 +311,10 @@ void SetupModel::save()
     for (const Row &r : m_defs)
         for (const Change &c : r.changes)
             if (c.group == QLatin1String("Plugins") && effective(c) == QLatin1String("false")) {
-                auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Effects"),
-                                                          QStringLiteral("org.kde.kwin.Effects"), QStringLiteral("unloadEffect"));
+                auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                                          QStringLiteral("/Effects"),
+                                                          QStringLiteral("org.kde.kwin.Effects"),
+                                                          QStringLiteral("unloadEffect"));
                 msg << c.key.chopped(int(qstrlen("Enabled")));
                 QDBusConnection::sessionBus().call(msg);
             }
@@ -283,8 +324,8 @@ void SetupModel::save()
 
 void SetupModel::reconfigure() const
 {
-    QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-                                                                      QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
+    QDBusConnection::sessionBus().call(
+        QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"), QStringLiteral("org.kde.KWin"), QStringLiteral("reconfigure")));
 }
 
 // kwin-i3's value for one row; returns what failed.
@@ -299,7 +340,9 @@ QStringList SetupModel::applyRow(const Row &r)
         QJsonObject save = readSave();
         QJsonObject e = save.value(idOf(c)).toObject();
         if (e.isEmpty())
-            e = QJsonObject{{QStringLiteral("file"), c.file}, {QStringLiteral("group"), c.group}, {QStringLiteral("key"), c.key},
+            e = QJsonObject{{QStringLiteral("file"), c.file},
+                            {QStringLiteral("group"), c.group},
+                            {QStringLiteral("key"), c.key},
                             {QStringLiteral("old"), raw(c)}};
         e[QStringLiteral("set")] = c.value;
         save[idOf(c)] = e;

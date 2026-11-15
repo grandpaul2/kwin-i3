@@ -25,7 +25,7 @@ public:
         setFormat(format);
         setFlags(Qt::FramelessWindowHint | Qt::BypassWindowManagerHint | Qt::WindowDoesNotAcceptFocus);
         setTitle(s_title);
-        setCursor(Qt::ArrowCursor);           // i3's on its frames and the root (x.c:171)
+        setCursor(Qt::ArrowCursor); // i3's on its frames and the root (x.c:171)
         setMinimumSize(QSize(1, 1));
         setProperty("KWIN_SKIP_CLOSE_ANIMATION", true);
     }
@@ -136,7 +136,7 @@ QRegion GapStrips::strips() const
             }
         }
         if (!fullscreen) {
-            all += (grown - frames) & area;   // area: KWin's Rect, a QRect
+            all += (grown - frames) & area; // area: KWin's Rect, a QRect
         }
     }
     // Everything else on screen is above the tiles (floating windows keep above, panels, popups,

@@ -20,8 +20,7 @@ using namespace KWin;
 ResizeMode::ResizeMode()
     : InputEventFilter(InputFilterOrder::TabBox)
 {
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3mode"), QStringLiteral("net.local.kwini3mode"),
-                                                 this, QDBusConnection::ExportAllSlots);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3mode"), QStringLiteral("net.local.kwini3mode"), this, QDBusConnection::ExportAllSlots);
     // The script asks again (Mode): a helper replaced while the mode was on (make plugin-install)
     // starts with it off, and the script would otherwise go on ignoring its keys.
     invoke(QStringLiteral("kwin-i3 Mode Changed"));
@@ -29,7 +28,7 @@ ResizeMode::ResizeMode()
 
 ResizeMode::~ResizeMode()
 {
-    leave();        // the effect's banner off; the script asks the next helper (above)
+    leave(); // the effect's banner off; the script asks the next helper (above)
     if (m_installed && input()) {
         input()->uninstallInputEventFilter(this);
     }
@@ -83,16 +82,20 @@ void ResizeMode::leave()
 void ResizeMode::tell()
 {
     invoke(QStringLiteral("kwin-i3 Mode Changed"));
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3hold"),
-                                              QStringLiteral("net.local.kwini3hold"), QStringLiteral("SetMode"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                              QStringLiteral("/kwini3hold"),
+                                              QStringLiteral("net.local.kwini3hold"),
+                                              QStringLiteral("SetMode"));
     msg << m_mode;
     QDBusConnection::sessionBus().asyncCall(msg);
 }
 
 void ResizeMode::invoke(const QString &action)
 {
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"),
+                                              QStringLiteral("invokeShortcut"));
     msg << action;
     QDBusConnection::sessionBus().asyncCall(msg);
 }
@@ -112,8 +115,7 @@ bool ResizeMode::keyboardKey(KeyboardKeyEvent *event)
     // The key Resize Mode is bound to (Meta+R by default, by position), its modifiers exactly, as
     // i3 matches a binding's (bindings.c, mods_match): Meta+Shift+R and the like go on, as in i3
     // to the window (here to KWin's shortcuts).
-    const bool leaves = m_leaveKey ? QKeyCombination(mods, event->key).toCombined() == m_leaveKey
-                                   : code == KEY_R && mods == Qt::MetaModifier;
+    const bool leaves = m_leaveKey ? QKeyCombination(mods, event->key).toCombined() == m_leaveKey : code == KEY_R && mods == Qt::MetaModifier;
     if (leaves) {
         if (press) {
             leave();
@@ -169,8 +171,10 @@ QString ResizeMode::TerminalService() const
 void ResizeMode::LaunchTerminal()
 {
     const QString service = TerminalService();
-    auto reg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
-                                              QStringLiteral("org.kde.KGlobalAccel"), QStringLiteral("doRegister"));
+    auto reg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/kglobalaccel"),
+                                              QStringLiteral("org.kde.KGlobalAccel"),
+                                              QStringLiteral("doRegister"));
     reg << QStringList{service, QStringLiteral("_launch"), service, QStringLiteral("Launch")};
     // Never waited for: this runs in the compositor, and a busy kglobalacceld would stall the
     // desktop. The launch follows the registration's answer, whatever it is (the component may be
@@ -180,8 +184,10 @@ void ResizeMode::LaunchTerminal()
         w->deleteLater();
         QString path = QStringLiteral("/component/") + service;
         path.replace(QLatin1Char('.'), QLatin1Char('_')).replace(QLatin1Char('-'), QLatin1Char('_'));
-        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), path,
-                                                  QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+        auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                                  path,
+                                                  QStringLiteral("org.kde.kglobalaccel.Component"),
+                                                  QStringLiteral("invokeShortcut"));
         msg << QStringLiteral("_launch");
         QDBusConnection::sessionBus().asyncCall(msg);
     });

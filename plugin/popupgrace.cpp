@@ -43,5 +43,5 @@ void PopupGrace::restore()
     KSharedConfigPtr config = KSharedConfig::openConfig(QStringLiteral("kwinrc"), KConfig::NoGlobals);
     config->reparseConfiguration();
     const bool ffm = config->group(QStringLiteral("Script-kwin-i3")).readEntry("focusFollowsMouse", true);
-    KWin::options->setDelayFocusInterval(ffm ? 0 : config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 300));     // kwin.kcfg's default
+    KWin::options->setDelayFocusInterval(ffm ? 0 : config->group(QStringLiteral("Windows")).readEntry("DelayFocusInterval", 300)); // kwin.kcfg's default
 }

@@ -42,8 +42,10 @@ FrameFocus::FrameFocus(TilingDrag *drag)
 static QString sideOf(const Window *w, const QPointF &pos)
 {
     const RectF frame = w->frameGeometry();
-    return pos.y() < frame.top() ? QStringLiteral("top") : pos.x() < frame.left() ? QStringLiteral("left")
-         : pos.x() >= frame.right() ? QStringLiteral("right") : QStringLiteral("bottom");
+    return pos.y() < frame.top()   ? QStringLiteral("top")
+        : pos.x() < frame.left()   ? QStringLiteral("left")
+        : pos.x() >= frame.right() ? QStringLiteral("right")
+                                   : QStringLiteral("bottom");
 }
 
 static bool customTiled(const Window *w)
@@ -102,8 +104,8 @@ KWin::Window *FrameFocus::tiledFrameAt(const QPointF &pos) const
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         Window *w = *it;
-        if (w->isClient() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isFullScreen()
-            && customTiled(w) && w->frameGeometry().contains(pos)) {
+        if (w->isClient() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isFullScreen() && customTiled(w)
+            && w->frameGeometry().contains(pos)) {
             return w;
         }
     }
@@ -112,8 +114,8 @@ KWin::Window *FrameFocus::tiledFrameAt(const QPointF &pos) const
 
 bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 {
-    if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || !w->isOnCurrentActivity()
-        || w->isFullScreen() || w->decoration() || GapStrips::isStrip(w)) {
+    if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || !w->isOnCurrentActivity() || w->isFullScreen() || w->decoration()
+        || GapStrips::isStrip(w)) {
         return false;
     }
     // Tiled (kwin-i3's custom tiles), or floating with its border taken while floating

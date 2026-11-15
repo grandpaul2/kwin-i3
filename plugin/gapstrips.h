@@ -47,6 +47,6 @@ private:
     std::function<int()> m_reach;
     std::function<int()> m_frameWidth;
     QTimer m_timer;
-    std::vector<std::unique_ptr<QWindow>> m_windows;   // one per rect of the region, reused
+    std::vector<std::unique_ptr<QWindow>> m_windows; // one per rect of the region, reused
     QRegion m_region;
 };

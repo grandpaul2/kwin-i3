@@ -71,11 +71,11 @@ private:
 
     bool m_on = false;
     bool m_released = false;
-    QHash<int, QPointer<QAction>> m_keys;       // a Qt key combination -> kwin-i3's action
-    QSet<int> m_held;                           // the tile editor's keys: held, no action run
-    QSet<quint32> m_marked;                     // scan codes on their way to After
-    int m_generation = 0;                       // a refresh's answers, stale once another starts
-    QTimer m_coalesce;                          // a burst of rebinds, one refresh
+    QHash<int, QPointer<QAction>> m_keys; // a Qt key combination -> kwin-i3's action
+    QSet<int> m_held; // the tile editor's keys: held, no action run
+    QSet<quint32> m_marked; // scan codes on their way to After
+    int m_generation = 0; // a refresh's answers, stale once another starts
+    QTimer m_coalesce; // a burst of rebinds, one refresh
     KConfigWatcher::Ptr m_watcher;
     After m_after;
 };

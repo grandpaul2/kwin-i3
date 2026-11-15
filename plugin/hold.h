@@ -18,8 +18,8 @@
 
 #include <QElapsedTimer>
 #include <QHash>
-#include <QSet>
 #include <QPointer>
+#include <QSet>
 #include <QTimer>
 #include <QVariantMap>
 
@@ -32,7 +32,11 @@
 // stops on a failure; KI3_PAINTED ends a hook that painted.
 #ifdef KI3_PAINT_RESULT
 using PaintResult = bool;
-#define KI3_PAINT(call) do { if (!(call)) return false; } while (0)
+#define KI3_PAINT(call)                                                                                                                                        \
+    do {                                                                                                                                                       \
+        if (!(call))                                                                                                                                           \
+            return false;                                                                                                                                      \
+    } while (0)
 #define KI3_PAINTED return true
 #else
 using PaintResult = void;
@@ -44,9 +48,9 @@ using PaintResult = void;
 // the colour premultiplied (glshader.cpp:465), 6.7's as it is (:478). Multiplying by alpha again
 // would draw the drop indicator at a quarter, not half (86-tiling-drag on 6.8.2).
 #ifdef KI3_PREMULTIPLIED_COLOUR
-constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 1;       // GL_ONE
+constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 1; // GL_ONE
 #else
-constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 0x0302;  // GL_SRC_ALPHA
+constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 0x0302; // GL_SRC_ALPHA
 #endif
 
 class Hold : public KWin::CrossFadeEffect
@@ -58,13 +62,27 @@ public:
 
     static bool supported();
 
-    void reconfigure(ReconfigureFlags flags) override;   // a --notify write; KWin's own reconfigure arrives as Workspace::configChanged (hold.cpp)
+    void reconfigure(ReconfigureFlags flags) override; // a --notify write; KWin's own reconfigure arrives as Workspace::configChanged (hold.cpp)
     bool isActive() const override;
     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
-    PaintResult paintScreen(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, int mask, const KWin::Region &deviceRegion, KWin::LogicalOutput *screen) override;
+    PaintResult paintScreen(const KWin::RenderTarget &renderTarget,
+                            const KWin::RenderViewport &viewport,
+                            int mask,
+                            const KWin::Region &deviceRegion,
+                            KWin::LogicalOutput *screen) override;
     void prePaintWindow(KWin::RenderView *view, KWin::EffectWindow *w, KWin::WindowPrePaintData &data) override;
-    PaintResult paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
-    PaintResult drawWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
+    PaintResult paintWindow(const KWin::RenderTarget &renderTarget,
+                            const KWin::RenderViewport &viewport,
+                            KWin::EffectWindow *w,
+                            int mask,
+                            const KWin::Region &deviceRegion,
+                            KWin::WindowPaintData &data) override;
+    PaintResult drawWindow(const KWin::RenderTarget &renderTarget,
+                           const KWin::RenderViewport &viewport,
+                           KWin::EffectWindow *w,
+                           int mask,
+                           const KWin::Region &deviceRegion,
+                           KWin::WindowPaintData &data) override;
     void postPaintScreen() override;
     bool blocksDirectScanout() const override;
     int requestedEffectChainPosition() const override;
@@ -163,22 +181,20 @@ private:
     // One held window. A snapshot (redirected into a texture, drawn at `frame`), or a closing
     // window kept by refWindow (KWin draws it as it was), or a new window that got a tile while
     // hidden (drawn not at all until the release).
-    struct Held
-    {
+    struct Held {
         KWin::RectF frame;
         bool snapshot = false;
         bool closed = false;
         bool joined = false;
-        bool settledHidden = false;                      // went to another desktop / minimized
+        bool settledHidden = false; // went to another desktop / minimized
         std::optional<KWin::EffectWindowVisibleRef> visible; // keeps a hidden one drawn
     };
-    struct Hidden
-    {
-        std::shared_ptr<KWin::ItemEffect> effect;        // keeps it off hardware planes
+    struct Hidden {
+        std::shared_ptr<KWin::ItemEffect> effect; // keeps it off hardware planes
         QElapsedTimer since;
-        int limitMs = 0;                                 // shown after this long without a tile
-        bool named = false;                              // kwin-i3 moves it (HoldNew): other moves keep it hidden
-        bool landing = false;                            // tiled, released, its app still drawing the tile
+        int limitMs = 0; // shown after this long without a tile
+        bool named = false; // kwin-i3 moves it (HoldNew): other moves keep it hidden
+        bool landing = false; // tiled, released, its app still drawing the tile
     };
 
     void loadConfig();
@@ -190,39 +206,60 @@ private:
     void onDeleted(KWin::EffectWindow *w);
     void onAboutToChange(KWin::EffectWindow *w);
 
-    bool tiled(KWin::EffectWindow *w) const;                // in a tile, or floated whole (SetFloated)
-    bool holding() const;                                   // a hold, or a new window hidden
-    bool framed(KWin::EffectWindow *w) const;               // in one of kwin-i3's tiles, no decoration
-    bool floatingFramed(KWin::EffectWindow *w) const;       // floating, its decoration taken (frameOnFloating)
-    bool ringed(KWin::EffectWindow *w) const;               // drawn with a ring: framed with the tiled ring, or floatingFramed; not one hidden on every side
-    void updateRadius(KWin::EffectWindow *w);               // rounded while framed
+    bool tiled(KWin::EffectWindow *w) const; // in a tile, or floated whole (SetFloated)
+    bool holding() const; // a hold, or a new window hidden
+    bool framed(KWin::EffectWindow *w) const; // in one of kwin-i3's tiles, no decoration
+    bool floatingFramed(KWin::EffectWindow *w) const; // floating, its decoration taken (frameOnFloating)
+    bool ringed(KWin::EffectWindow *w) const; // drawn with a ring: framed with the tiled ring, or floatingFramed; not one hidden on every side
+    void updateRadius(KWin::EffectWindow *w); // rounded while framed
     void updateRadii();
     void resetRadii();
     // One window's ring as kwin-i3 last said (SetRing); without an entry, by KWin's active window.
-    enum Side { Left = 1, Right = 2, Top = 4, Bottom = 8 };
-    struct Ring
-    {
-        int cls = 0;                                        // 0 focused, 1 unfocused
-        int indicator = 0;                                  // 0 none, else the Side (Right or Bottom)
-        int hidden = 0;                                     // Sides not drawn
+    enum Side {
+        Left = 1,
+        Right = 2,
+        Top = 4,
+        Bottom = 8
     };
-    struct Bar
-    {
+    struct Ring {
+        int cls = 0; // 0 focused, 1 unfocused
+        int indicator = 0; // 0 none, else the Side (Right or Bottom)
+        int hidden = 0; // Sides not drawn
+    };
+    struct Bar {
         KWin::RectF rect;
-        bool indicator = false;                             // drawn in the class's indicator colour
+        bool indicator = false; // drawn in the class's indicator colour
     };
     Ring ringOf(KWin::EffectWindow *w) const;
     void repaintRingOf(const QString &id);
     QList<Bar> ring(const KWin::RectF &frame, double scale, double radius, const Ring &how) const;
     void repaintRing(KWin::EffectWindow *w, const KWin::RectF &frame);
-    void paintFrame(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void paintFrame(const KWin::RenderTarget &renderTarget,
+                    const KWin::RenderViewport &viewport,
+                    KWin::EffectWindow *w,
+                    const KWin::Region &deviceRegion,
+                    const KWin::WindowPaintData &data);
     KWin::EffectWindow *windowById(const QString &id) const;
-    void paintBanner(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    void paintBanner(const KWin::RenderTarget &renderTarget,
+                     const KWin::RenderViewport &viewport,
+                     KWin::EffectWindow *w,
+                     const KWin::Region &deviceRegion,
+                     const KWin::WindowPaintData &data);
     struct TabBar;
-    KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const;   // logical, above `frame`
-    void repaintBar(KWin::EffectWindow *w, const QString &key);  // that one bar, where it is now
-    void paintBars(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
-    void paintBar(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, TabBar &bar, const KWin::RectF &drawn, double radius, const KWin::Region &deviceRegion, const KWin::WindowPaintData &data);
+    KWin::RectF barRect(const TabBar &bar, const KWin::RectF &frame) const; // logical, above `frame`
+    void repaintBar(KWin::EffectWindow *w, const QString &key); // that one bar, where it is now
+    void paintBars(const KWin::RenderTarget &renderTarget,
+                   const KWin::RenderViewport &viewport,
+                   KWin::EffectWindow *w,
+                   const KWin::Region &deviceRegion,
+                   const KWin::WindowPaintData &data);
+    void paintBar(const KWin::RenderTarget &renderTarget,
+                  const KWin::RenderViewport &viewport,
+                  TabBar &bar,
+                  const KWin::RectF &drawn,
+                  double radius,
+                  const KWin::Region &deviceRegion,
+                  const KWin::WindowPaintData &data);
     bool shown(KWin::EffectWindow *w) const;
     bool eligible(KWin::EffectWindow *w) const;
     bool settled(KWin::EffectWindow *w) const;
@@ -243,7 +280,7 @@ private:
     bool m_enabled = true;
     int m_timeoutMs = 200;
     int m_frameWidth = 1;
-    QString m_mode;                                          // the helper's mode: "resize" shows the banner
+    QString m_mode; // the helper's mode: "resize" shows the banner
     struct Banner {
         std::unique_ptr<KWin::GLTexture> texture;
         QSize size;
@@ -251,7 +288,7 @@ private:
     // The banner's text, drawn once per output scale (else two monitors at two scales
     // redraw it on every paint); cleared when the settings change (its colour).
     std::map<double, Banner> m_banners;
-    bool m_bannersStale = false;    // set by loadConfig; cleared in the paint, where GL is current
+    bool m_bannersStale = false; // set by loadConfig; cleared in the paint, where GL is current
     // SetBar, by the bar's key (the shown window's internal id, "#N" after it for a further bar:
     // sorted, a window's bars are next to each other, from lower_bound of its id). The image is
     // drawn at the paint, where GL is current, for the width and scale it is painted at, and
@@ -259,28 +296,28 @@ private:
     struct TabBar {
         int dx = 0;
         int dy = 0;
-        int w = 0;                                          // logical, as told
+        int w = 0; // logical, as told
         int height = 0;
         bool stacked = false;
         int active = 0;
-        int cls = 0;                                        // 0 focused, 1 unfocused, as Ring
-        bool round = false;                                 // its top corners rounded (SetBar's "round")
-        bool fillLeft = false;                              // the notch under its left corner filled ("fill-left")
-        bool fillRight = false;                             // and under its right one ("fill-right")
-        double radius = 0;                                  // logical, drawn with
+        int cls = 0; // 0 focused, 1 unfocused, as Ring
+        bool round = false; // its top corners rounded (SetBar's "round")
+        bool fillLeft = false; // the notch under its left corner filled ("fill-left")
+        bool fillRight = false; // and under its right one ("fill-right")
+        double radius = 0; // logical, drawn with
         QStringList titles;
         std::unique_ptr<KWin::GLTexture> texture;
-        QSize size;                                         // the texture's, device pixels
+        QSize size; // the texture's, device pixels
         double scale = 0;
-        int width = 0;                                      // logical, drawn for
-        bool span = false;                                  // SetBarSpan: the window's width x ratio
+        int width = 0; // logical, drawn for
+        bool span = false; // SetBarSpan: the window's width x ratio
         double ratio = 1;
     };
-    QHash<QString, double> m_barSpan;                       // SetBarSpan's ratio, by bar key, for a bar told later
+    QHash<QString, double> m_barSpan; // SetBarSpan's ratio, by bar key, for a bar told later
     std::map<QString, TabBar> m_bars;
-    static QString barWindow(const QString &key);                // the window's id in a bar key
+    static QString barWindow(const QString &key); // the window's id in a bar key
     bool hasBar(KWin::EffectWindow *w) const;
-    void eraseBars(const QString &windowId);                     // all of a window's; makes GL current
+    void eraseBars(const QString &windowId); // all of a window's; makes GL current
     // SetBar calls that came while a hold was open, applied in order at its release: a held
     // snapshot is drawn at its old place, where only the old bar matches (a new bar's offset on an
     // old place would draw it beside the group until the release).
@@ -292,57 +329,56 @@ private:
         QString cls, titles;
     };
     QList<BarCall> m_barsHeld;
-    QHash<QString, QString> m_memo;                         // SetMemo, by desktop id
+    QHash<QString, QString> m_memo; // SetMemo, by desktop id
     // i3's colour classes (docs/behaviour.md §7 L3), by Ring::cls; an invalid indicator colour
     // means the class's frame colour (the setting's empty value).
     QColor m_frameColour[2]{QColor(0x4c, 0x78, 0x99), QColor(0x33, 0x33, 0x33)};
     QColor m_indicatorColour[2]{QColor(0x3d, 0xae, 0xe9), QColor()};
     bool m_frameOnFloating = false;
     bool m_roundedCorners = true;
-    bool m_tiledRing = true;                                // SetTiledRing; on until told
-    QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
-    QSet<QString> m_floated;                                // SetFloated, by internal id
-    QHash<QString, Ring> m_rings;                           // SetRing, by internal id
-    QSet<QString> m_indicatorShown;                         // ShowIndicator, by internal id
-    QSet<QString> m_rounded;                                // windows this effect gave a radius, by internal id
-    QString m_focusedId;                                    // SetFocused: the tree's focused window
-    KWin::RectF m_drop;                                     // SetDropIndicator; empty when none
-    KWin::RectF m_bands;                                    // SetDropBands; empty when none
+    bool m_tiledRing = true; // SetTiledRing; on until told
+    QSet<QString> m_floating; // kwin-i3's floating windows, by internal id
+    QSet<QString> m_floated; // SetFloated, by internal id
+    QHash<QString, Ring> m_rings; // SetRing, by internal id
+    QSet<QString> m_indicatorShown; // ShowIndicator, by internal id
+    QSet<QString> m_rounded; // windows this effect gave a radius, by internal id
+    QString m_focusedId; // SetFocused: the tree's focused window
+    KWin::RectF m_drop; // SetDropIndicator; empty when none
+    KWin::RectF m_bands; // SetDropBands; empty when none
     int m_bandActive = -1;
-    bool m_bandSwap = true;                                 // SetDropSwap
+    bool m_bandSwap = true; // SetDropSwap
     struct BandsImage {
         std::unique_ptr<KWin::GLTexture> texture;
-        QSize size;                                         // device pixels
+        QSize size; // device pixels
         double scale = 0;
         QSize logical;
         int active = -1;
     };
-    BandsImage m_bandsImage;                                // drawn at the paint, where GL is current
+    BandsImage m_bandsImage; // drawn at the paint, where GL is current
     void paintBands(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, const KWin::Region &deviceRegion);
-    Qt::CursorShape m_dragShape = Qt::SizeAllCursor;        // the shape it grabs with now
-    QTimer m_dragCursor;                                    // SetDragCursor: running while it grabs
-    KWin::RectF m_outline;                                  // SetOutline; empty when none
-    QTimer m_outlineExpiry;                                 // SetOutline: clears it unless renewed
+    Qt::CursorShape m_dragShape = Qt::SizeAllCursor; // the shape it grabs with now
+    QTimer m_dragCursor; // SetDragCursor: running while it grabs
+    KWin::RectF m_outline; // SetOutline; empty when none
+    QTimer m_outlineExpiry; // SetOutline: clears it unless renewed
 
     QHash<KWin::EffectWindow *, Held> m_held;
     // Where and how opaque each window's ring and bars were last drawn (an earlier effect's paint
     // data, Scale's opening say), and the ring places to repaint after this frame when that moved.
-    struct Drawn
-    {
+    struct Drawn {
         KWin::RectF rect;
         double opacity = 1;
     };
     QHash<KWin::EffectWindow *, Drawn> m_drawn;
     QList<QPair<QPointer<KWin::EffectWindow>, KWin::RectF>> m_ringDamage;
     void trackDrawn(KWin::EffectWindow *w, const KWin::WindowPaintData &data);
-    QHash<KWin::EffectWindow *, Hidden> m_hidden;        // new windows not placed yet
+    QHash<KWin::EffectWindow *, Hidden> m_hidden; // new windows not placed yet
     // Windows that opened while Glide was loaded: no ring while another effect draws the window
     // from its own copy (Glide's tilt, which the ring can't follow; behaviour.md L18). Cleared at
     // the first paint that finds none, ringed or not.
     QSet<KWin::EffectWindow *> m_opening;
     QSet<KWin::EffectWindow *> m_pendingClose; // kept, waiting for a neighbour
     QList<QPointer<KWin::EffectWindow>> m_dragging;
-    QStringList m_events;                                   // note(): the last 500, for Events
+    QStringList m_events; // note(): the last 500, for Events
 
     bool m_open = false;
     bool m_snapshotting = false;
@@ -351,12 +387,11 @@ private:
     QTimer m_deadline;
     QTimer m_quiet;
 
-    struct
-    {
+    struct {
         quint64 transactions = 0, timeouts = 0, closeHoldsKept = 0, closeHoldsDropped = 0;
         quint64 newHidden = 0, snapshots = 0;
         double lastMs = 0, maxMs = 0, lastHiddenMs = 0, maxHiddenMs = 0;
         double lastSnapshotMs = 0, maxSnapshotMs = 0;
-        quint64 frames = 0, framesHolding = 0;              // screens painted while active, and while holding
+        quint64 frames = 0, framesHolding = 0; // screens painted while active, and while holding
     } m_stats;
 };

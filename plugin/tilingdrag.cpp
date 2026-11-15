@@ -102,16 +102,24 @@ QString TilingDrag::groupPlaced()
 {
     const QRectF r = m_groupPlaced;
     m_groupPlaced = QRectF();
-    return r.isNull() ? QString() : QStringLiteral("%1 %2 %3 %4 %5").arg(std::lround(r.x())).arg(std::lround(r.y())).arg(std::lround(r.width())).arg(std::lround(r.height())).arg(m_groupKey);
+    return r.isNull() ? QString()
+                      : QStringLiteral("%1 %2 %3 %4 %5")
+                            .arg(std::lround(r.x()))
+                            .arg(std::lround(r.y()))
+                            .arg(std::lround(r.width()))
+                            .arg(std::lround(r.height()))
+                            .arg(m_groupKey);
 }
 
 void TilingDrag::tellOutline(const QRectF &rect)
 {
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3hold"),
-                                              QStringLiteral("net.local.kwini3hold"), QStringLiteral("SetOutline"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                              QStringLiteral("/kwini3hold"),
+                                              QStringLiteral("net.local.kwini3hold"),
+                                              QStringLiteral("SetOutline"));
     const bool on = rect.isValid() && !rect.isEmpty();
-    msg << int(on ? std::lround(rect.x()) : 0) << int(on ? std::lround(rect.y()) : 0)
-        << int(on ? std::lround(rect.width()) : 0) << int(on ? std::lround(rect.height()) : 0);
+    msg << int(on ? std::lround(rect.x()) : 0) << int(on ? std::lround(rect.y()) : 0) << int(on ? std::lround(rect.width()) : 0)
+        << int(on ? std::lround(rect.height()) : 0);
     QDBusConnection::sessionBus().asyncCall(msg);
 }
 
@@ -125,8 +133,8 @@ bool TilingDrag::takesSelectionPress(PointerButtonEvent *event) const
 {
     // The checks pointerButton makes before it reaches the selection's press, so FrameFocus skips
     // its notice only for a press this filter will take.
-    if (!m_on || !m_modifierDrag || event->button != Qt::LeftButton || m_selection.isEmpty() || dragging()
-        || input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
+    if (!m_on || !m_modifierDrag || event->button != Qt::LeftButton || m_selection.isEmpty() || dragging() || input()->pointer()->isConstrained()
+        || workspace()->globalShortcutsDisabled()) {
         return false;
     }
     const BarSpot *bar = nullptr;
@@ -173,7 +181,7 @@ bool TilingDragKeys::keyboardKey(KeyboardKeyEvent *event)
     if (m_drag->dragging() && event->state == KeyboardKeyState::Pressed) {
         m_drag->cancelFromOutside();
     }
-    return false;               // the key goes on: its binding still runs, as in i3
+    return false; // the key goes on: its binding still runs, as in i3
 }
 
 TilingDragGrab::TilingDragGrab(TilingDrag *drag)
@@ -277,12 +285,18 @@ TilingDrag::TilingDrag()
             m_shiftLatched = false;
         }
     });
-    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] { loadConfig(); });
-    QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] { loadConfig(); });
+    QObject::connect(m_watcher.get(), &KConfigWatcher::configChanged, &m_context, [this] {
+        loadConfig();
+    });
+    QObject::connect(workspace(), &Workspace::configChanged, &m_context, [this] {
+        loadConfig();
+    });
     for (Window *window : workspace()->windows()) {
         watchMoves(window);
     }
-    QObject::connect(workspace(), &Workspace::windowAdded, &m_context, [this](Window *window) { watchMoves(window); });
+    QObject::connect(workspace(), &Workspace::windowAdded, &m_context, [this](Window *window) {
+        watchMoves(window);
+    });
     // kwin-i3 says SetOn at every reconfigure: one now, for a helper loaded after it.
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
     // The outlined group drag (§9 F1b): the rect to the effect at most once a frame, and again
@@ -349,7 +363,7 @@ void TilingDrag::watchMoves(Window *window)
 TilingDrag::~TilingDrag()
 {
     if (m_groupActive && m_outlineShown) {
-        tellOutline(QRectF());       // unloaded mid-drag (the effect's expiry is the backstop)
+        tellOutline(QRectF()); // unloaded mid-drag (the effect's expiry is the backstop)
     }
     if (m_keysInstalled && input()) {
         input()->uninstallInputEventFilter(&m_keys);
@@ -377,10 +391,17 @@ QString TilingDrag::state()
         m_offUnanswered = false;
         m_on = true;
     }
-    const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag") : m_phase == Phase::Drop ? "drop" : m_phase == Phase::Cancel ? "cancel" : "none";
-    const QString s = QStringLiteral("%1 %2 %3 %4 %5").arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id).arg(int(m_pos.x())).arg(int(m_pos.y()))
-                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side) + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab)
-                          + QLatin1Char(' ') + m_kind + QStringLiteral(" %1 %2").arg(int(m_start.x())).arg(int(m_start.y()));
+    const char *phase = m_phase == Phase::Drag ? (m_resize ? "resize" : "drag")
+        : m_phase == Phase::Drop               ? "drop"
+        : m_phase == Phase::Cancel             ? "cancel"
+                                               : "none";
+    const QString s = QStringLiteral("%1 %2 %3 %4 %5")
+                          .arg(QLatin1String(phase), m_id.isEmpty() ? QStringLiteral("-") : m_id)
+                          .arg(int(m_pos.x()))
+                          .arg(int(m_pos.y()))
+                          .arg(m_side.isEmpty() ? QStringLiteral("-") : m_side)
+        + QLatin1Char(' ') + (m_tab.isEmpty() ? QStringLiteral("-") : m_tab) + QLatin1Char(' ') + m_kind
+        + QStringLiteral(" %1 %2").arg(int(m_start.x())).arg(int(m_start.y()));
     if (m_phase == Phase::Drop || m_phase == Phase::Cancel) {
         m_phase = Phase::None;
         m_id.clear();
@@ -393,7 +414,7 @@ void TilingDrag::setOn(bool on)
     m_on = on;
     m_offUnanswered = false;
     if (!on) {
-        m_floating.clear();     // kwin-i3 gone: a new instance tells its own
+        m_floating.clear(); // kwin-i3 gone: a new instance tells its own
         if (m_groupActive && m_outlineShown) {
             tellOutline(QRectF());
         }
@@ -434,8 +455,10 @@ void TilingDrag::noticePressed(Window *window)
 
 void TilingDrag::tellWindowPressed()
 {
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"),
+                                              QStringLiteral("invokeShortcut"));
     msg << QStringLiteral("kwin-i3 Window Pressed");
     QDBusConnection::sessionBus().asyncCall(msg);
 }
@@ -474,8 +497,7 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
     m_groupStart.clear();
     QRectF all;
     for (Window *w : workspace()->windows()) {
-        if (w->isDeleted() || w->isMinimized() || w->isFullScreen()
-            || m_floated.value(w->internalId().toString()).section(QLatin1Char(' '), 0, 0) != group) {
+        if (w->isDeleted() || w->isMinimized() || w->isFullScreen() || m_floated.value(w->internalId().toString()).section(QLatin1Char(' '), 0, 0) != group) {
             continue;
         }
         const RectF f = w->frameGeometry();
@@ -545,8 +567,10 @@ void TilingDrag::tellGroupCursor(bool on)
     }
     m_groupCursorTold.restart();
     const int shape = !m_groupResize ? 0 : m_groupLeft == m_groupTop ? 3 : 4;
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/kwini3hold"),
-                                              QStringLiteral("net.local.kwini3hold"), QStringLiteral("SetDragCursor"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                              QStringLiteral("/kwini3hold"),
+                                              QStringLiteral("net.local.kwini3hold"),
+                                              QStringLiteral("SetDragCursor"));
     msg << on << (on ? shape : 0);
     QDBusConnection::sessionBus().asyncCall(msg);
     if (!on) {
@@ -628,7 +652,7 @@ void TilingDrag::endGroup(bool revert)
         } else {
             tellOutline(QRectF());
         }
-        revert = false;               // nothing moved to put back
+        revert = false; // nothing moved to put back
     }
     if (revert) {
         for (int i = 0; i < m_group.size(); ++i) {
@@ -639,8 +663,10 @@ void TilingDrag::endGroup(bool revert)
     }
     m_group.clear();
     m_groupStart.clear();
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"),
+                                              QStringLiteral("invokeShortcut"));
     msg << QStringLiteral("kwin-i3 Floated Moved");
     QDBusConnection::sessionBus().asyncCall(msg);
 }
@@ -669,8 +695,10 @@ void TilingDrag::warp(int x, int y)
 void TilingDrag::begin()
 {
     m_phase = Phase::Drag;
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"),
+                                              QStringLiteral("invokeShortcut"));
     msg << (m_resize ? QStringLiteral("kwin-i3 Tiling Resize") : QStringLiteral("kwin-i3 Tiling Drag"));
     QDBusConnection::sessionBus().asyncCall(msg);
     m_unanswered.start();
@@ -838,11 +866,11 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         m_taken |= event->button;
         return true;
     }
-    m_taken &= ~event->button;      // a press starts afresh (as FrameFocus::pointerButton)
+    m_taken &= ~event->button; // a press starts afresh (as FrameFocus::pointerButton)
     if (!m_on || input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
         return false;
     }
-    if (pressBar(event)) {          // a group's bar, any button, with or without a modifier (FrameFocus asks too)
+    if (pressBar(event)) { // a group's bar, any button, with or without a modifier (FrameFocus asks too)
         return true;
     }
     if (event->button != Qt::LeftButton && event->button != Qt::RightButton) {
@@ -889,7 +917,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         e.setAccepted(false);
         QCoreApplication::sendEvent(window->decoration(), &e);
         if (e.isAccepted()) {
-            return true;    // a title-bar button
+            return true; // a title-bar button
         }
         if (floatedHas(window, QStringLiteral("top"))) {
             window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
@@ -952,7 +980,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return true;
         }
     } else if (mods != Qt::NoModifier || !window->decoration() || window->decoration()->sectionUnderMouse() != Qt::TitleBarArea) {
-        return false;   // the client's press, an edge's resize: KWin's
+        return false; // the client's press, an edge's resize: KWin's
     } else if (!m_titlebarDrag) {
         // tiling_drag off or modifier (G3): the title bar activates and raises, nothing moves.
         window->performMousePressCommand(window->isActive() ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1(), event->position);
@@ -972,7 +1000,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return true;
         }
         window->performMousePressCommand(window->isActive() ? options->commandActiveTitlebar1() : options->commandInactiveTitlebar1(), event->position);
-        noticePressed(window);      // i3 focuses first (step 3), then drags (step 8)
+        noticePressed(window); // i3 focuses first (step 3), then drags (step 8)
         threshold = true;
     }
     takePress(window, Qt::LeftButton, event->position, false, QString(), threshold);
@@ -990,17 +1018,17 @@ bool TilingDrag::pressKindChange(Window *window, PointerButtonEvent *event, Wind
         return false;
     }
     if (m_shiftLatched) {
-        m_taken |= Qt::LeftButton;      // nothing until Meta or Shift is released
+        m_taken |= Qt::LeftButton; // nothing until Meta or Shift is released
         return true;
     }
     m_shiftLatched = true;
     if (floatIt) {
-        m_float.start(floatIt);         // the move without Shift: no custom-tile drop (TilingDragFloat)
+        m_float.start(floatIt); // the move without Shift: no custom-tile drop (TilingDragFloat)
         floatIt->performMousePressCommand(Options::MouseActivateRaiseAndMove, event->position);
         return true;
     }
     takePress(window, Qt::LeftButton, event->position, false, QString(), false);
-    m_kind = QStringLiteral("tile");    // told in State: only this press tiles a floating window
+    m_kind = QStringLiteral("tile"); // told in State: only this press tiles a floating window
     return true;
 }
 
@@ -1044,7 +1072,7 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
     }
     Window *window = frameOwner(input()->pointer()->hover(), event->position);
     if (window && !window->isDeleted() && !window->isFullScreen() && m_floated.contains(window->internalId().toString())) {
-        return pressGroup(window, event, true);    // a floated container resized whole (click.c, step 6)
+        return pressGroup(window, event, true); // a floated container resized whole (click.c, step 6)
     }
     if (window && !window->isDeleted() && !window->isDesktop() && !GapStrips::isStrip(window)) {
         if (window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
@@ -1059,7 +1087,7 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
         return false;
     }
     window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
-    noticePressed(window);          // i3 focuses first (step 3), then resizes (step 9)
+    noticePressed(window); // i3 focuses first (step 3), then resizes (step 9)
     takePress(window, Qt::RightButton, event->position, true, QString(), false);
     return true;
 }
@@ -1123,8 +1151,10 @@ int TilingDrag::barAt(const QPointF &pos, const BarSpot **bar) const
 void TilingDrag::tellTab(const QString &event)
 {
     m_tabEvent = event;
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/component/kwin"),
-                                              QStringLiteral("org.kde.kglobalaccel.Component"), QStringLiteral("invokeShortcut"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"),
+                                              QStringLiteral("/component/kwin"),
+                                              QStringLiteral("org.kde.kglobalaccel.Component"),
+                                              QStringLiteral("invokeShortcut"));
     msg << QStringLiteral("kwin-i3 Tab Click");
     QDBusConnection::sessionBus().asyncCall(msg);
 }
@@ -1149,7 +1179,7 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
         return false;
     }
     Window *shown = nullptr;
-    const QString windowId = bar->key.section(QLatin1Char('#'), 0, 0);   // "id#N": a further bar of that window
+    const QString windowId = bar->key.section(QLatin1Char('#'), 0, 0); // "id#N": a further bar of that window
     for (Window *w : workspace()->windows()) {
         if (w->internalId().toString() == windowId) {
             shown = w;
@@ -1218,10 +1248,10 @@ bool TilingDrag::pointerAxis(PointerAxisEvent *event)
     }
     const int v120 = event->deltaV120 != 0 ? event->deltaV120 : int(std::lround(event->delta * 8));
     if (v120 == 0) {
-        return true;                    // the end of a touchpad scroll (libinput's stop event)
+        return true; // the end of a touchpad scroll (libinput's stop event)
     }
     if ((m_scrollV120 < 0) != (v120 < 0)) {
-        m_scrollV120 = 0;               // a change of direction starts afresh
+        m_scrollV120 = 0; // a change of direction starts afresh
     }
     m_scrollV120 += v120;
     if (std::abs(m_scrollV120) < 120) {

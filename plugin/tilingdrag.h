@@ -15,12 +15,12 @@
 
 #include <KConfigWatcher>
 
-#include <QObject>
-#include <QPointer>
-#include <QPointF>
 #include <QElapsedTimer>
 #include <QHash>
 #include <QList>
+#include <QObject>
+#include <QPointF>
+#include <QPointer>
 #include <QRectF>
 #include <QSet>
 #include <QTimer>
@@ -164,7 +164,10 @@ public:
 
     QString state();
     void setOn(bool on);
-    bool on() const { return m_on; }
+    bool on() const
+    {
+        return m_on;
+    }
     void setResizeGap(int px)
     {
         m_resizeGap = px;
@@ -172,24 +175,45 @@ public:
             onResizeGapChanged();
         }
     }
-    int resizeGap() const { return m_resizeGap; }
-    std::function<void()> onResizeGapChanged;   // the gap strips follow it (gapstrips.h)
+    int resizeGap() const
+    {
+        return m_resizeGap;
+    }
+    std::function<void()> onResizeGapChanged; // the gap strips follow it (gapstrips.h)
     void warp(int x, int y);
     void setFloating(const QString &id, bool on);
     void setFloated(const QString &id, const QString &group);
-    void setFocusParent(const QString &id) { m_focusParent = id; }
+    void setFocusParent(const QString &id)
+    {
+        m_focusParent = id;
+    }
     void setSelection(const QString &ids);
-    void setOutlineShown(bool on) { m_outlineShown = on; }
+    void setOutlineShown(bool on)
+    {
+        m_outlineShown = on;
+    }
     QString groupPlaced();
     // A press this filter will take as G16's (Meta+Shift+left on a window of the selection, with
     // tilingDrag's modifier): FrameFocus then tells no "Window Pressed", which would collapse
     // the selection to that window before the drag starts.
     bool takesSelectionPress(KWin::PointerButtonEvent *event) const;
-    void setDropTargets(bool any) { m_dropTargets = any; }
-    void setFloatDropTargets(bool any) { m_floatDropTargets = any; }
-    void setTiledRing(bool on) { m_tiledRingTold = on ? 1 : 0; }
+    void setDropTargets(bool any)
+    {
+        m_dropTargets = any;
+    }
+    void setFloatDropTargets(bool any)
+    {
+        m_floatDropTargets = any;
+    }
+    void setTiledRing(bool on)
+    {
+        m_tiledRingTold = on ? 1 : 0;
+    }
     // The script's ring verdict: 1 on, 0 off, -1 not told yet (FrameFocus falls back to kwinrc).
-    int tiledRingTold() const { return m_tiledRingTold; }
+    int tiledRingTold() const
+    {
+        return m_tiledRingTold;
+    }
     // The tiling window whose frame holds pos, over `hover` when the pointer is on a neighbour's
     // invisible resize band (i3's frames clip each client, manage.c:557; §9 Z9).
     KWin::Window *frameOwner(KWin::Window *hover, const QPointF &pos) const;
@@ -206,9 +230,18 @@ public:
     // whole (route_click, step 6: floating_resize_window).
     bool pressFloatedRing(KWin::Window *window, KWin::PointerButtonEvent *event);
     void cancelFromOutside();
-    bool dragging() const { return m_taken & m_button; }   // a press taken, its release not yet
-    TilingDragGrab *grab() { return &m_grab; }
-    TilingDragFloat *floatMove() { return &m_float; }
+    bool dragging() const
+    {
+        return m_taken & m_button;
+    } // a press taken, its release not yet
+    TilingDragGrab *grab()
+    {
+        return &m_grab;
+    }
+    TilingDragFloat *floatMove()
+    {
+        return &m_float;
+    }
     // A left or right press on a tiled window's ring (FrameFocus; i3's tiling_resize on a border,
     // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
     void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
@@ -220,7 +253,13 @@ public:
     QString tabEvent();
 
 private:
-    enum class Phase { None, Pressed, Drag, Drop, Cancel };
+    enum class Phase {
+        None,
+        Pressed,
+        Drag,
+        Drop,
+        Cancel
+    };
 
     bool pressResize(KWin::PointerButtonEvent *event);
     bool pressKindChange(KWin::Window *window, KWin::PointerButtonEvent *event, KWin::Window *floatIt);
@@ -231,8 +270,8 @@ private:
     // `activate` false: the press focuses by kwin-i3's rule instead (a tab, "Tab Click").
     bool pressGroup(KWin::Window *window, KWin::PointerButtonEvent *event, bool resize, bool activate = true);
     void groupMotion(const QPointF &pos);
-    QRectF placeGroup(const QRectF &to);     // the windows into `to`, as the drag scales them
-    void tellOutline(const QRectF &rect);    // kwini3hold's SetOutline, empty to clear
+    QRectF placeGroup(const QRectF &to); // the windows into `to`, as the drag scales them
+    void tellOutline(const QRectF &rect); // kwini3hold's SetOutline, empty to clear
     void endGroup(bool revert);
     void begin();
     void cancel();
@@ -252,41 +291,41 @@ private:
     // i3's tiling_drag (§9 G3), from kwinrc [Script-kwin-i3] tilingDrag: "off", "modifier",
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
-    QSet<QString> m_floating;         // kwin-i3's floating windows, by internal id (SetFloating)
-    QHash<QString, QString> m_floated;   // SetFloated: internal id -> "group" or "group top"
+    QSet<QString> m_floating; // kwin-i3's floating windows, by internal id (SetFloating)
+    QHash<QString, QString> m_floated; // SetFloated: internal id -> "group" or "group top"
     bool m_groupActive = false;
     bool m_groupResize = false;
-    bool m_groupLeft = false, m_groupTop = false;   // the corner a resize moves
+    bool m_groupLeft = false, m_groupTop = false; // the corner a resize moves
     QList<QPointer<KWin::Window>> m_group;
-    QList<QRectF> m_groupStart;       // each window's frame at the press
-    bool m_outlineShown = false;      // SetOutlineShown
-    QRectF m_groupTo;                 // the outlined drag's rect for the windows, null until a motion
-    QMarginsF m_groupBars;            // the floated bars beside the windows: the outline's margins
-    QRectF m_groupPlaced;             // GroupPlaced
-    QString m_groupKey;               // the dragged container's key (SetFloated's group), for GroupPlaced
-    QTimer m_outlineSend;             // at most one SetOutline per frame
-    QTimer m_outlineRenew;            // the effect's outline renewed while the drag lasts
-    QRectF m_groupUnion;              // all of them together at the press
+    QList<QRectF> m_groupStart; // each window's frame at the press
+    bool m_outlineShown = false; // SetOutlineShown
+    QRectF m_groupTo; // the outlined drag's rect for the windows, null until a motion
+    QMarginsF m_groupBars; // the floated bars beside the windows: the outline's margins
+    QRectF m_groupPlaced; // GroupPlaced
+    QString m_groupKey; // the dragged container's key (SetFloated's group), for GroupPlaced
+    QTimer m_outlineSend; // at most one SetOutline per frame
+    QTimer m_outlineRenew; // the effect's outline renewed while the drag lasts
+    QRectF m_groupUnion; // all of them together at the press
     QPointF m_groupPress;
-    QElapsedTimer m_groupCursorTold;  // the effect's cursor, asked again while the drag lasts
+    QElapsedTimer m_groupCursorTold; // the effect's cursor, asked again while the drag lasts
     void tellGroupCursor(bool on);
     KConfigWatcher::Ptr m_watcher;
-    QObject m_context;                // owns the subscriptions, so they end with the filter (framefocus.h)
-    QString m_side;                   // a ring press's side, else empty
-    QString m_tab;                    // a Meta press's tab, "key:index", else empty (State)
+    QObject m_context; // owns the subscriptions, so they end with the filter (framefocus.h)
+    QString m_side; // a ring press's side, else empty
+    QString m_tab; // a Meta press's tab, "key:index", else empty (State)
     // What a Meta+Shift drag is for (State): "tile" a floating one (§9 G13), "float" the selected
     // container (G16), "-" anything else.
     QString m_kind = QStringLiteral("-");
-    QSet<QString> m_selection;        // SetSelection: the focused container's windows, by internal id
-    QPointer<KWin::Window> m_window;  // the dragged window, from the press
+    QSet<QString> m_selection; // SetSelection: the focused container's windows, by internal id
+    QPointer<KWin::Window> m_window; // the dragged window, from the press
     QString m_id;
     QPointF m_start, m_pos;
-    bool m_resize = false;            // the drag is a Meta+right resize (m_button is the right button)
-    Qt::MouseButton m_button = Qt::NoButton;   // the button of the drag taken, until its release
-    bool m_offUnanswered = false;  // m_on turned off by the 500 ms timeout, not by kwin-i3
+    bool m_resize = false; // the drag is a Meta+right resize (m_button is the right button)
+    Qt::MouseButton m_button = Qt::NoButton; // the button of the drag taken, until its release
+    bool m_offUnanswered = false; // m_on turned off by the 500 ms timeout, not by kwin-i3
     int m_resizeGap = 0;
-    bool m_threshold = false;         // a title-bar press: a drag only past the start-drag distance
-    Qt::MouseButtons m_taken;         // presses taken: their releases are this filter's too
+    bool m_threshold = false; // a title-bar press: a drag only past the start-drag distance
+    Qt::MouseButtons m_taken; // presses taken: their releases are this filter's too
     Phase m_phase = Phase::None;
     // A drag kwin-i3 never asked about: it isn't there (unloaded without its release). The drag
     // ends and the presses are KWin's again.
@@ -296,21 +335,21 @@ private:
         QRectF rect;
         bool stacked = false;
         int n = 0;
-        int floated = 0;              // the spec's last field
+        int floated = 0; // the spec's last field
     };
-    QList<BarSpot> m_bars;            // SetBars
-    QString m_tabEvent;               // TabEvent's answer
-    QString m_scrollBar;              // the bar the scroll below was on
+    QList<BarSpot> m_bars; // SetBars
+    QString m_tabEvent; // TabEvent's answer
+    QString m_scrollBar; // the bar the scroll below was on
     Qt::Orientation m_scrollOrientation = Qt::Vertical;
-    int m_scrollV120 = 0;             // a scroll not yet a whole step, in 120ths of one
-    QString m_focusParent;            // SetFocusParent
-    bool m_dropTargets = true;        // SetDropTargets
-    bool m_floatDropTargets = true;   // SetFloatDropTargets
+    int m_scrollV120 = 0; // a scroll not yet a whole step, in 120ths of one
+    QString m_focusParent; // SetFocusParent
+    bool m_dropTargets = true; // SetDropTargets
+    bool m_floatDropTargets = true; // SetFloatDropTargets
     // One float or tile per press of the keys (§9 G5, G13): set by a Meta+Shift+left press taken,
     // cleared when Meta or Shift is released, so the window just changed, still under the pointer
     // with the keys held, isn't changed straight back by a second press.
     bool m_shiftLatched = false;
-    int m_tiledRingTold = -1;         // SetTiledRing
+    int m_tiledRingTold = -1; // SetTiledRing
     // The tab under pos on a bar no other window covers: its bar, and the index; -1 for none.
     int barAt(const QPointF &pos, const BarSpot **bar) const;
     void tellTab(const QString &event);

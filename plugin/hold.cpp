@@ -3,10 +3,10 @@
 #include <utility>
 
 #include <core/output.h>
-#include <effect/effecthandler.h>
 #include <core/region.h>
 #include <core/rendertarget.h>
 #include <core/renderviewport.h>
+#include <effect/effecthandler.h>
 #include <opengl/glshader.h>
 #include <opengl/glshadermanager.h>
 #include <opengl/glvertexbuffer.h>
@@ -25,8 +25,8 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPalette>
-#include <QScopeGuard>
 #include <QPen>
+#include <QScopeGuard>
 #include <QTime>
 
 #include <cmath>
@@ -63,9 +63,9 @@ struct BlendState {
 
 // kwin-i3's settings group.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
-static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
-static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
-static const int s_landMs = 1000;  // a new window still drawing its tile at the release: hidden this long at most
+static const int s_graceMs = 20; // a closing window waits this long for a neighbour; a new one for a tile
+static const int s_quietMs = 3; // kwin-i3's second pass comes microseconds after the first
+static const int s_landMs = 1000; // a new window still drawing its tile at the release: hidden this long at most
 // Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
 // scales and rounds a window's radius per output (itemrenderer_opengl.cpp:190).
 static const qreal s_radius = 5.0;
@@ -100,17 +100,23 @@ Hold::Hold()
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
 
     m_deadline.setSingleShot(true);
-    connect(&m_deadline, &QTimer::timeout, this, [this] { release(true); });
+    connect(&m_deadline, &QTimer::timeout, this, [this] {
+        release(true);
+    });
     m_quiet.setSingleShot(true);
     m_quiet.setTimerType(Qt::PreciseTimer);
     m_quiet.setInterval(s_quietMs);
     connect(&m_quiet, &QTimer::timeout, this, &Hold::queueCheck);
     m_dragCursor.setSingleShot(true);
     m_dragCursor.setInterval(500);
-    connect(&m_dragCursor, &QTimer::timeout, this, [this] { effects->stopMouseInterception(this); });
+    connect(&m_dragCursor, &QTimer::timeout, this, [this] {
+        effects->stopMouseInterception(this);
+    });
     m_outlineExpiry.setSingleShot(true);
     m_outlineExpiry.setInterval(500);
-    connect(&m_outlineExpiry, &QTimer::timeout, this, [this] { SetOutline(0, 0, 0, 0); });
+    connect(&m_outlineExpiry, &QTimer::timeout, this, [this] {
+        SetOutline(0, 0, 0, 0);
+    });
 
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
@@ -123,9 +129,7 @@ Hold::Hold()
     // What the effect draws about focus follows kwin-i3's tree, never KWin's active window
     // (plan.md, "Focus"; i3's x.c:498-512): SetFocused says which window that is.
 
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3hold"),
-                                                 QStringLiteral("net.local.kwini3hold"),
-                                                 this, QDBusConnection::ExportAllSlots);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3hold"), QStringLiteral("net.local.kwini3hold"), this, QDBusConnection::ExportAllSlots);
     // kwin-i3 draws no frame of its own without this effect: KWin's
     // reconfigure is how it hears that the effect came or went (it asks Stats on every one).
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
@@ -155,15 +159,15 @@ void Hold::reconfigure(ReconfigureFlags)
 void Hold::loadConfig()
 {
     m_bannersStale = true;
-    m_bandsImage.active = -2;              // the colours may have changed: drawn again
+    m_bandsImage.active = -2; // the colours may have changed: drawn again
     for (auto &[id, bar] : m_bars) {
-        bar.width = -1;                       // the colours may have changed
+        bar.width = -1; // the colours may have changed
     }
     auto config = m_watcher->config();
     config->reparseConfiguration();
     const KConfigGroup group = config->group(s_group);
     m_enabled = group.readEntry("holdEnabled", true);
-    m_timeoutMs = group.readEntry("holdTimeoutMs", 200);   // tests raise it to capture mid-hold
+    m_timeoutMs = group.readEntry("holdTimeoutMs", 200); // tests raise it to capture mid-hold
     // Out of its range (10-2000 ms, settings.js), the default, as the script reads it (§11): a
     // layout never waits longer than 2 s, nor not at all (a negative timer never fires).
     if (m_timeoutMs < 10 || m_timeoutMs > 2000) {
@@ -174,7 +178,7 @@ void Hold::loadConfig()
     m_frameWidth = fw >= 1 && fw <= 10 ? fw : 1;
     const auto colour = [&group](const char *key, const QColor &def) {
         const QColor c(group.readEntry(key, def.name()));
-        return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def;    // opaque whatever it says
+        return c.isValid() ? QColor(c.red(), c.green(), c.blue()) : def; // opaque whatever it says
     };
     m_frameColour[0] = colour("frameActive", QColor(0x4c, 0x78, 0x99));
     m_frameColour[1] = colour("frameInactive", QColor(0x33, 0x33, 0x33));
@@ -242,7 +246,7 @@ void Hold::watchWindow(EffectWindow *w)
     connect(w, &EffectWindow::windowFinishUserMovedResized, this, [this](EffectWindow *w) {
         m_dragging.removeAll(w);
     });
-    updateRadius(w);    // one already tiled when it comes (a rule, a restored session)
+    updateRadius(w); // one already tiled when it comes (a rule, a restored session)
 }
 
 void Hold::onAdded(EffectWindow *w)
@@ -262,7 +266,7 @@ void Hold::onAdded(EffectWindow *w)
     // windows (a Wayland transient is still "Normal" by type): kwin-i3 floats them.
     Window *win = w->window();
     if (win && win->isInternal()) {
-        return;     // KWin's own windows and kwini3helper's gap strips: nothing kwin-i3 places
+        return; // KWin's own windows and kwini3helper's gap strips: nothing kwin-i3 places
     }
     const bool transient = w->isDialog() || w->isModal() || (win && win->transientFor());
     if (w->isNormalWindow() && !transient && shown(w) && !w->isFullScreen() && !w->isDeleted()) {
@@ -274,7 +278,7 @@ void Hold::onClosed(EffectWindow *w)
 {
     m_dragging.removeAll(w);
     repaintRing(w, w->frameGeometry());
-    if (m_hidden.remove(w)) {      // never shown: nothing to keep on screen
+    if (m_hidden.remove(w)) { // never shown: nothing to keep on screen
         note(QStringLiteral("close %1: never shown").arg(name(w)));
         m_held.remove(w);
         queueCheck();
@@ -285,7 +289,7 @@ void Hold::onClosed(EffectWindow *w)
     }
     if (auto it = m_held.find(w); it != m_held.end()) {
         if (!it->closed) {
-            it->closed = true;             // keeps its snapshot; counts as settled
+            it->closed = true; // keeps its snapshot; counts as settled
             w->refWindow();
             grabClose(w);
             note(QStringLiteral("close %1: kept, held already").arg(name(w)));
@@ -354,12 +358,12 @@ void Hold::onAboutToChange(EffectWindow *w)
         return;
     }
     if (auto hidden = m_hidden.find(w); hidden != m_hidden.end()) {
-        if (m_held.contains(w)) {           // already joined
+        if (m_held.contains(w)) { // already joined
             restartQuiet();
             queueCheck();
             return;
         }
-        if (tiled(w) && shown(w)) {         // its tile places it: join, still hidden, no snapshot
+        if (tiled(w) && shown(w)) { // its tile places it: join, still hidden, no snapshot
             Held h;
             h.joined = true;
             m_held.insert(w, h);
@@ -367,9 +371,9 @@ void Hold::onAboutToChange(EffectWindow *w)
             ensureOpen();
             restartQuiet();
             queueCheck();
-        } else if (hidden->named) {         // kwin-i3 moving it to its output or desktop: not placed yet
+        } else if (hidden->named) { // kwin-i3 moving it to its output or desktop: not placed yet
             note(QStringLiteral("new %1: moved, still hidden").arg(name(w)));
-        } else {                            // placed by other means (floated): show it
+        } else { // placed by other means (floated): show it
             note(QStringLiteral("new %1: shown, not tiled").arg(name(w)));
             unhide(w);
         }
@@ -406,8 +410,7 @@ bool Hold::tiled(EffectWindow *w) const
 // every window that way, and a tile closing then must not be held.
 bool Hold::shown(EffectWindow *w) const
 {
-    return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden()
-        && !w->isHiddenByShowDesktop();
+    return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden() && !w->isHiddenByShowDesktop();
 }
 
 bool Hold::outputDragged(EffectWindow *w) const
@@ -422,8 +425,7 @@ bool Hold::outputDragged(EffectWindow *w) const
 
 bool Hold::eligible(EffectWindow *w) const
 {
-    return tiled(w) && shown(w) && !w->isFullScreen() && !w->isDeleted() && w->screen()
-        && !w->bufferGeometry().isEmpty() && !outputDragged(w);
+    return tiled(w) && shown(w) && !w->isFullScreen() && !w->isDeleted() && w->screen() && !w->bufferGeometry().isEmpty() && !outputDragged(w);
 }
 
 // The frame is where KWin asked it to be (within a device pixel): no configure outstanding.
@@ -435,7 +437,9 @@ bool Hold::settled(EffectWindow *w) const
     }
     const RectF a = win->frameGeometry(), b = win->moveResizeGeometry();
     const qreal scale = w->screen() ? w->screen()->scale() : 1.0;
-    auto near = [scale](qreal x, qreal y) { return std::abs((x - y) * scale) < 0.51; };
+    auto near = [scale](qreal x, qreal y) {
+        return std::abs((x - y) * scale) < 0.51;
+    };
     return near(a.x(), b.x()) && near(a.y(), b.y()) && near(a.width(), b.width()) && near(a.height(), b.height());
 }
 
@@ -445,7 +449,7 @@ void Hold::snapshot(EffectWindow *w)
 {
     QElapsedTimer t;
     t.start();
-    m_snapshotting = true;      // drawWindow: the plain chain, not our snapshot-only path
+    m_snapshotting = true; // drawWindow: the plain chain, not our snapshot-only path
     redirect(w);
     m_snapshotting = false;
     const double ms = t.nsecsElapsed() / 1e6;
@@ -492,7 +496,7 @@ void Hold::armHidden(EffectWindow *w, int ms)
 
 void Hold::HoldNew(const QString &id, int ms)
 {
-    ms = std::min(ms, 1000);    // kwin-i3 asks 200: a larger ask would keep a window unseen
+    ms = std::min(ms, 1000); // kwin-i3 asks 200: a larger ask would keep a window unseen
     EffectWindow *w = nullptr;
     const auto windows = effects->stackingOrder();
     for (EffectWindow *x : windows) {
@@ -504,7 +508,7 @@ void Hold::HoldNew(const QString &id, int ms)
         return;
     }
     auto it = m_hidden.find(w);
-    if (ms <= 0) {                          // placed: shown now, unless its tile has it (the release shows it)
+    if (ms <= 0) { // placed: shown now, unless its tile has it (the release shows it)
         if (it != m_hidden.end() && !m_held.contains(w)) {
             note(QStringLiteral("new %1: shown, placed by kwin-i3").arg(name(w)));
             unhide(w);
@@ -573,10 +577,13 @@ void Hold::queueCheck()
         return;
     }
     m_checkQueued = true;
-    QMetaObject::invokeMethod(this, [this] {
-        m_checkQueued = false;
-        check();
-    }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        this,
+        [this] {
+            m_checkQueued = false;
+            check();
+        },
+        Qt::QueuedConnection);
 }
 
 // Never synchronous (a same-size move settles inside the call that made it, before the next
@@ -605,8 +612,9 @@ void Hold::check()
             // settled, but its snapshot stays on screen (a hidden window leaves the stacking
             // order, and its slot would show wallpaper while the neighbours are still held).
             if (h.snapshot) {
-                h.visible.emplace(w, EffectWindow::PAINT_DISABLED | EffectWindow::PAINT_DISABLED_BY_DESKTOP
-                                      | EffectWindow::PAINT_DISABLED_BY_MINIMIZE | EffectWindow::PAINT_DISABLED_BY_ACTIVITY);
+                h.visible.emplace(w,
+                                  EffectWindow::PAINT_DISABLED | EffectWindow::PAINT_DISABLED_BY_DESKTOP | EffectWindow::PAINT_DISABLED_BY_MINIMIZE
+                                      | EffectWindow::PAINT_DISABLED_BY_ACTIVITY);
             }
             h.settledHidden = true;
             continue;
@@ -639,7 +647,7 @@ void Hold::release(bool timedOut)
     if (timedOut) {
         ++m_stats.timeouts;
     }
-    QStringList late;                  // the ones a timeout gave up on
+    QStringList late; // the ones a timeout gave up on
     if (timedOut) {
         for (auto it = m_held.cbegin(); it != m_held.cend(); ++it) {
             if (!it->closed && !it->settledHidden && !settled(it.key())) {
@@ -647,7 +655,9 @@ void Hold::release(bool timedOut)
             }
         }
     }
-    note(QStringLiteral("release after %1 ms, %2 held%3").arg(ms, 0, 'f', 1).arg(m_held.size())
+    note(QStringLiteral("release after %1 ms, %2 held%3")
+             .arg(ms, 0, 'f', 1)
+             .arg(m_held.size())
              .arg(timedOut ? QStringLiteral(", TIMED OUT waiting for ") + late.join(QStringLiteral("; ")) : QString()));
     // Taken out whole: unrefWindow can delete a window, and windowDeleted then edits these lists.
     // One container only: a second copy would detach, and its visible refs (reset below) would
@@ -770,7 +780,12 @@ void Hold::prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData 
     effects->prePaintWindow(view, w, data);
 }
 
-PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
+PaintResult Hold::paintWindow(const RenderTarget &renderTarget,
+                              const RenderViewport &viewport,
+                              EffectWindow *w,
+                              int mask,
+                              const Region &deviceRegion,
+                              WindowPaintData &data)
 {
     if (auto it = m_held.constFind(w); it != m_held.cend() && it->snapshot) {
         // CrossFadeEffect draws the snapshot over the window's current frame; put it back on
@@ -781,7 +796,7 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
             data.setXScale(data.xScale() * old.width() / cur.width());
             data.setYScale(data.yScale() * old.height() / cur.height());
         }
-        data.setCrossFadeProgress(0);   // the snapshot only, never the live window
+        data.setCrossFadeProgress(0); // the snapshot only, never the live window
     }
     KI3_PAINT(effects->paintWindow(renderTarget, viewport, w, mask, deviceRegion, data));
     const bool hidden = m_hidden.contains(w), barred = hasBar(w);
@@ -800,8 +815,9 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
                 m_opening.erase(it);
                 if (ringedNow) {
                     const RectF cur = w->frameGeometry();
-                    m_ringDamage.append({QPointer<EffectWindow>(w), RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(),
-                                                                          cur.width() * data.xScale(), cur.height() * data.yScale())});
+                    m_ringDamage.append(
+                        {QPointer<EffectWindow>(w),
+                         RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale())});
                 }
             }
         }
@@ -827,7 +843,11 @@ PaintResult Hold::paintWindow(const RenderTarget &renderTarget, const RenderView
 // of wherever the window is drawn, in device pixels, as the ring is. KWin 6.7.5 gives an effect
 // no way to draw an offscreen QML scene of its own (OffscreenQuickView has no texture access in
 // its public header), so the banner is a plain textured quad.
-void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
+void Hold::paintBanner(const RenderTarget &renderTarget,
+                       const RenderViewport &viewport,
+                       EffectWindow *w,
+                       const Region &deviceRegion,
+                       const WindowPaintData &data)
 {
     const double scale = viewport.scale();
     if (m_bannersStale) {
@@ -865,7 +885,7 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
     if (drawn.width() * scale < banner.size.width() + 8) {
-        return;                                 // too narrow a window for the banner
+        return; // too narrow a window for the banner
     }
     const int x = std::lround(drawn.x() * scale + (drawn.width() * scale - banner.size.width()) / 2);
     const int y = std::lround((drawn.y() + 12) * scale);
@@ -883,7 +903,7 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
     binder.shader()->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     const BlendState kept;
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied, as the image is
     banner.texture->bind();
     for (const Rect &r : visible.rects()) {
         QMatrix4x4 mvp = viewport.projectionMatrix();
@@ -932,7 +952,7 @@ Hold::Ring Hold::ringOf(EffectWindow *w) const
     if (it != m_rings.cend()) {
         return *it;
     }
-    Ring r;      // not told its class (yet): the tree's focus decides, as SetRing would
+    Ring r; // not told its class (yet): the tree's focus decides, as SetRing would
     r.cls = !m_focusedId.isEmpty() && w->internalId().toString() == m_focusedId ? 0 : 1;
     return r;
 }
@@ -961,7 +981,7 @@ void Hold::SetFocused(const QString &id)
         }
     }
     if (!m_mode.isEmpty()) {
-        effects->addRepaintFull();     // the banner moves with it
+        effects->addRepaintFull(); // the banner moves with it
     }
 }
 
@@ -974,14 +994,18 @@ void Hold::SetRing(const QString &id, const QString &cls, const QString &indicat
     if (cls.isEmpty()) {
         m_rings.remove(id);
     } else if (!windowById(id)) {
-        return;     // gone already (an async call crossing its deletion): kept, it never left
+        return; // gone already (an async call crossing its deletion): kept, it never left
     } else {
         Ring r;
         r.cls = cls == QLatin1String("focused") ? 0 : 1;
         r.indicator = indicator == QLatin1String("right") ? Right : indicator == QLatin1String("bottom") ? Bottom : 0;
         const QStringList sides = hidden.split(QLatin1Char(' '), Qt::SkipEmptyParts);
         for (const QString &s : sides) {
-            r.hidden |= s == QLatin1String("left") ? Left : s == QLatin1String("right") ? Right : s == QLatin1String("top") ? Top : s == QLatin1String("bottom") ? Bottom : 0;
+            r.hidden |= s == QLatin1String("left") ? Left
+                : s == QLatin1String("right")      ? Right
+                : s == QLatin1String("top")        ? Top
+                : s == QLatin1String("bottom")     ? Bottom
+                                                   : 0;
         }
         m_rings.insert(id, r);
     }
@@ -996,17 +1020,17 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     }
     EffectWindow *w = windowById(barWindow(id));
     if (w) {
-        repaintBar(w, id);                   // where it was
+        repaintBar(w, id); // where it was
     }
     if (titles.isEmpty() || height <= 0 || width <= 0) {
         if (m_bars.count(id)) {
-            effects->makeOpenGLContextCurrent();     // its texture goes with it
+            effects->makeOpenGLContextCurrent(); // its texture goes with it
             m_bars.erase(id);
         }
         return;
     }
     if (!w) {
-        return;                              // gone already (an async call crossing its deletion)
+        return; // gone already (an async call crossing its deletion)
     }
     TabBar &bar = m_bars[id];
     bar.dx = dx;
@@ -1023,7 +1047,7 @@ void Hold::SetBar(const QString &id, int dx, int dy, int width, int height, bool
     bar.titles = titles.split(QChar(0x1f));
     bar.span = m_barSpan.contains(id);
     bar.ratio = m_barSpan.value(id, 1);
-    bar.width = -1;                          // drawn again at the next paint, where GL is current
+    bar.width = -1; // drawn again at the next paint, where GL is current
     repaintBar(w, id);
 }
 
@@ -1067,7 +1091,7 @@ void Hold::SetBarSpan(const QString &id, bool on, int ratio)
     }
     it->second.span = on && r > 0;
     it->second.ratio = r > 0 ? r : 1;
-    it->second.width = -1;                  // drawn again at the next paint
+    it->second.width = -1; // drawn again at the next paint
     if (EffectWindow *w = windowById(barWindow(id))) {
         repaintBar(w, id);
     }
@@ -1091,7 +1115,7 @@ void Hold::eraseBars(const QString &windowId)
     if (it == m_bars.end() || barWindow(it->first) != windowId) {
         return;
     }
-    effects->makeOpenGLContextCurrent();         // the textures go with them
+    effects->makeOpenGLContextCurrent(); // the textures go with them
     while (it != m_bars.end() && barWindow(it->first) == windowId) {
         it = m_bars.erase(it);
     }
@@ -1104,7 +1128,7 @@ void Hold::repaintBar(EffectWindow *w, const QString &key)
         return;
     }
     const RectF b = barRect(it->second, w->frameGeometry());
-    const double below = s_radius + m_frameWidth + 1;       // the notches it may fill under it
+    const double below = s_radius + m_frameWidth + 1; // the notches it may fill under it
     effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height() + below) + 1));
 }
 
@@ -1127,7 +1151,13 @@ void Hold::paintBars(const RenderTarget &renderTarget, const RenderViewport &vie
     }
 }
 
-void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &viewport, TabBar &bar, const RectF &drawn, double radius, const Region &deviceRegion, const WindowPaintData &data)
+void Hold::paintBar(const RenderTarget &renderTarget,
+                    const RenderViewport &viewport,
+                    TabBar &bar,
+                    const RectF &drawn,
+                    double radius,
+                    const Region &deviceRegion,
+                    const WindowPaintData &data)
 {
     const RectF rect = barRect(bar, drawn);
     const double scale = viewport.scale();
@@ -1272,7 +1302,7 @@ void Hold::paintBar(const RenderTarget &renderTarget, const RenderViewport &view
     binder.shader()->setUniform(GLShader::Vec4Uniform::ModulationConstant, QVector4D(opacity, opacity, opacity, opacity));
     const BlendState kept;
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied, as the image is
     bar.texture->bind();
     for (const Rect &r : visible.rects()) {
         // Each visible piece as its own quad: the texture's matching part, placed there.
@@ -1336,8 +1366,11 @@ void Hold::SetDragCursor(bool on, int shape)
     // 1: left-right and 2: up-down, the tiling resize's (i3's XCURSOR_CURSOR_RESIZE_*); 3: top-left
     // to bottom-right and 4: top-right to bottom-left, a floated container's resize from a corner
     // (floating.c:719-722); else the move's.
-    const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor : shape == 2 ? Qt::SizeVerCursor
-        : shape == 3 ? Qt::SizeFDiagCursor : shape == 4 ? Qt::SizeBDiagCursor : Qt::SizeAllCursor;
+    const Qt::CursorShape cursor = shape == 1 ? Qt::SizeHorCursor
+        : shape == 2                          ? Qt::SizeVerCursor
+        : shape == 3                          ? Qt::SizeFDiagCursor
+        : shape == 4                          ? Qt::SizeBDiagCursor
+                                              : Qt::SizeAllCursor;
     // A second startMouseInterception while grabbing is ignored (the effect is already grabbing):
     // a new shape mid-grab goes through defineCursor.
     if (!m_dragCursor.isActive()) {
@@ -1351,7 +1384,9 @@ void Hold::SetDragCursor(bool on, int shape)
 
 void Hold::SetOutline(int x, int y, int width, int height)
 {
-    const auto clamp = [](int v) { return std::clamp(v, -100000, 100000); };
+    const auto clamp = [](int v) {
+        return std::clamp(v, -100000, 100000);
+    };
     x = clamp(x), y = clamp(y), width = clamp(width), height = clamp(height);
     const RectF outline = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
     if (outline.isEmpty()) {
@@ -1374,7 +1409,9 @@ void Hold::SetOutline(int x, int y, int width, int height)
 void Hold::SetDropIndicator(int x, int y, int width, int height)
 {
     // Far past any output, the rounding to device pixels would overflow.
-    const auto clamp = [](int v) { return std::clamp(v, -100000, 100000); };
+    const auto clamp = [](int v) {
+        return std::clamp(v, -100000, 100000);
+    };
     x = clamp(x), y = clamp(y), width = clamp(width), height = clamp(height);
     const RectF drop = width > 0 && height > 0 ? RectF(x, y, width, height) : RectF();
     if (drop == m_drop) {
@@ -1410,8 +1447,8 @@ PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderView
     if (!m_outline.isEmpty()) {
         const RectF &o = m_outline;
         const double t = std::min({2.0, o.width() / 2, o.height() / 2});
-        fills << RectF(o.x(), o.y(), o.width(), t) << RectF(o.x(), o.bottom() - t, o.width(), t)
-              << RectF(o.x(), o.y() + t, t, o.height() - 2 * t) << RectF(o.right() - t, o.y() + t, t, o.height() - 2 * t);
+        fills << RectF(o.x(), o.y(), o.width(), t) << RectF(o.x(), o.bottom() - t, o.width(), t) << RectF(o.x(), o.y() + t, t, o.height() - 2 * t)
+              << RectF(o.right() - t, o.y() + t, t, o.height() - 2 * t);
     }
     if (fills.isEmpty()) {
         KI3_PAINTED;
@@ -1420,12 +1457,13 @@ PaintResult Hold::paintScreen(const RenderTarget &renderTarget, const RenderView
     const double scale = viewport.scale();
     QList<QVector2D> verts;
     for (const RectF &f : fills) {
-        const Rect device(std::round(f.x() * scale) - origin.x(), std::round(f.y() * scale) - origin.y(),
-                          std::round(f.width() * scale), std::round(f.height() * scale));
+        const Rect device(std::round(f.x() * scale) - origin.x(),
+                          std::round(f.y() * scale) - origin.y(),
+                          std::round(f.width() * scale),
+                          std::round(f.height() * scale));
         for (const Rect &r : (deviceRegion & device).rects()) {
             const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
-            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
-                  << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+            verts << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1) << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
         }
     }
     if (verts.isEmpty()) {
@@ -1489,8 +1527,7 @@ bool Hold::framed(EffectWindow *w) const
     if (!win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration() || !w->isNormalWindow()) {
         return false;
     }
-    return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom)
-        || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
+    return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
         || m_floated.contains(w->internalId().toString());
 }
 
@@ -1524,7 +1561,7 @@ void Hold::updateRadii()
 
 void Hold::resetRadii()
 {
-    if (!workspace()) {     // stackingOrder() needs it (effecthandler.cpp:975)
+    if (!workspace()) { // stackingOrder() needs it (effecthandler.cpp:975)
         m_rounded.clear();
         return;
     }
@@ -1552,7 +1589,7 @@ QList<Hold::Bar> Hold::ring(const RectF &frame, double scale, double radius, con
     const double ix1 = std::round((frame.x() + frame.width()) * scale), iy1 = std::round((frame.y() + frame.height()) * scale);
     const double ox0 = std::round((frame.x() - f) * scale), oy0 = std::round((frame.y() - f) * scale);
     const double ox1 = std::round((frame.x() + frame.width() + f) * scale), oy1 = std::round((frame.y() + frame.height() + f) * scale);
-    const bool rightTall = how.indicator == Right;           // the right bar owns its corners
+    const bool rightTall = how.indicator == Right; // the right bar owns its corners
     const bool left = !(how.hidden & Left), right = !(how.hidden & Right), top = !(how.hidden & Top), bottom = !(how.hidden & Bottom);
     // Where the top and bottom bars start and end: a hidden side takes its corner away, the
     // tall right bar its own.
@@ -1584,8 +1621,8 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
         const RectF b = barRect(it->second, frame);
         effects->addRepaint(Rect(std::floor(b.x()), std::floor(b.y()), std::ceil(b.width()) + 1, std::ceil(b.height()) + 1));
     }
-    const double f = m_frameWidth + 1;      // and a pixel of slack for the rounding
-    const double r = m_roundedCorners ? s_radius : 0;   // the wedges inside the corners
+    const double f = m_frameWidth + 1; // and a pixel of slack for the rounding
+    const double r = m_roundedCorners ? s_radius : 0; // the wedges inside the corners
     const RectF outer = frame.adjusted(-f, -f, f, f);
     effects->addRepaint(Rect(std::floor(outer.x()), std::floor(outer.y()), frame.width() + 2 * f + 1, f + 1 + r));
     effects->addRepaint(Rect(std::floor(outer.x()), std::floor(frame.y() + frame.height() - 1 - r), frame.width() + 2 * f + 1, f + 2 + r));
@@ -1601,13 +1638,17 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
 // Drawn with KWin's border shader (what Breeze's outline uses, base.frag): the inner edge the
 // window's rect with the radius KWin clips the window to, so the ring follows its corners; the
 // outer edge the frame width beyond. In global device pixels, as the vertices are.
-void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, const Region &deviceRegion, const WindowPaintData &data)
+void Hold::paintFrame(const RenderTarget &renderTarget,
+                      const RenderViewport &viewport,
+                      EffectWindow *w,
+                      const Region &deviceRegion,
+                      const WindowPaintData &data)
 {
     const RectF cur = w->frameGeometry();
     const RectF drawn(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale());
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const double scale = viewport.scale();
-    const double radius = std::round(w->window()->borderRadius().topLeft() * scale);   // as KWin rounds its clip
+    const double radius = std::round(w->window()->borderRadius().topLeft() * scale); // as KWin rounds its clip
     const double ix0 = std::round(drawn.x() * scale), iy0 = std::round(drawn.y() * scale);
     const double ix1 = std::round((drawn.x() + drawn.width()) * scale), iy1 = std::round((drawn.y() + drawn.height()) * scale);
     // The class and the indicator side as kwin-i3 said (SetRing), else by KWin's active window;
@@ -1616,14 +1657,15 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     const QColor colour = m_frameColour[how.cls];
     // The indicator only after a split key (ShowIndicator), else the frame's colour.
     const QColor indicator = !m_indicatorShown.contains(w->internalId().toString()) ? colour
-        : m_indicatorColour[how.cls].isValid() ? m_indicatorColour[how.cls] : colour;
-    QList<QVector2D> verts[2];                             // the frame's, the indicator's
+        : m_indicatorColour[how.cls].isValid()                                      ? m_indicatorColour[how.cls]
+                                                                                    : colour;
+    QList<QVector2D> verts[2]; // the frame's, the indicator's
     for (const Bar &bar : ring(drawn, scale, radius, how)) {
         const Rect device(bar.rect.x() - origin.x(), bar.rect.y() - origin.y(), bar.rect.width(), bar.rect.height());
         for (const Rect &r : (deviceRegion & device).rects()) {
             const float x0 = r.x() + origin.x(), y0 = r.y() + origin.y(), x1 = x0 + r.width(), y1 = y0 + r.height();
-            verts[bar.indicator ? 1 : 0] << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1)
-                                         << QVector2D(x0, y1) << QVector2D(x1, y1) << QVector2D(x1, y0);
+            verts[bar.indicator ? 1 : 0] << QVector2D(x1, y0) << QVector2D(x0, y0) << QVector2D(x0, y1) << QVector2D(x0, y1) << QVector2D(x1, y1)
+                                         << QVector2D(x1, y0);
         }
     }
     if (verts[0].isEmpty() && verts[1].isEmpty()) {
@@ -1684,14 +1726,15 @@ void Hold::paintFrame(const RenderTarget &renderTarget, const RenderViewport &vi
     }
 }
 
-PaintResult Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
+PaintResult
+Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewport &viewport, EffectWindow *w, int mask, const Region &deviceRegion, WindowPaintData &data)
 {
     if (m_snapshotting) {
         // redirect() renders the window through the chain: the live window, not our snapshot.
         return Effect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
     }
     if (m_hidden.contains(w)) {
-        KI3_PAINTED;                    // not placed yet: nothing at all
+        KI3_PAINTED; // not placed yet: nothing at all
     }
     // Held: the snapshot only (progress 0). Anything else: live.
     return CrossFadeEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
@@ -1710,12 +1753,11 @@ PaintResult Hold::drawWindow(const RenderTarget &renderTarget, const RenderViewp
 void Hold::trackDrawn(EffectWindow *w, const WindowPaintData &data)
 {
     const RectF cur = w->frameGeometry();
-    const Drawn now{RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(),
-                          cur.width() * data.xScale(), cur.height() * data.yScale()),
+    const Drawn now{RectF(cur.x() + data.xTranslation(), cur.y() + data.yTranslation(), cur.width() * data.xScale(), cur.height() * data.yScale()),
                     std::clamp(data.opacity(), 0.0, 1.0)};
     auto it = m_drawn.find(w);
     if (it == m_drawn.end()) {
-        m_drawn.insert(w, now);     // an animation changes it at the next paint, which repaints
+        m_drawn.insert(w, now); // an animation changes it at the next paint, which repaints
         return;
     }
     if (it->rect != now.rect || it->opacity != now.opacity) {
@@ -1753,8 +1795,8 @@ void Hold::postPaintScreen()
 // so two events between the same frames were drawn together.
 void Hold::note(const QString &what)
 {
-    m_events.append(QTime::currentTime().toString(QStringLiteral("HH:mm:ss.zzz")) + QStringLiteral(" f")
-                    + QString::number(m_stats.frames) + QLatin1Char(' ') + what);
+    m_events.append(QTime::currentTime().toString(QStringLiteral("HH:mm:ss.zzz")) + QStringLiteral(" f") + QString::number(m_stats.frames) + QLatin1Char(' ')
+                    + what);
     if (m_events.size() > s_eventsKeep) {
         m_events.removeFirst();
     }
@@ -1792,8 +1834,10 @@ QVariantMap Hold::Stats() const
     m[QStringLiteral("frameWidth")] = m_frameWidth;
     m[QStringLiteral("frameOnFloating")] = m_frameOnFloating;
     m[QStringLiteral("tiledRing")] = m_tiledRing;
-    m[QStringLiteral("drop")] = m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
-    m[QStringLiteral("outline")] = m_outline.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_outline.x()).arg(m_outline.y()).arg(m_outline.width()).arg(m_outline.height());
+    m[QStringLiteral("drop")] =
+        m_drop.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_drop.x()).arg(m_drop.y()).arg(m_drop.width()).arg(m_drop.height());
+    m[QStringLiteral("outline")] =
+        m_outline.isEmpty() ? QString() : QStringLiteral("%1,%2 %3x%4").arg(m_outline.x()).arg(m_outline.y()).arg(m_outline.width()).arg(m_outline.height());
     m[QStringLiteral("floating")] = QStringList(m_floating.cbegin(), m_floating.cend());
     m[QStringLiteral("rings")] = QStringList(m_rings.keyBegin(), m_rings.keyEnd());
     m[QStringLiteral("floated")] = QStringList(m_floated.cbegin(), m_floated.cend());
@@ -1841,7 +1885,7 @@ void Hold::SetDropSwap(bool swap)
         return;
     }
     m_bandSwap = swap;
-    m_bandsImage.active = -2;              // the third band's name changed: drawn again
+    m_bandsImage.active = -2; // the third band's name changed: drawn again
     if (!m_bands.isEmpty()) {
         effects->addRepaint(m_bands.adjusted(-1, -1, 1, 1).toAlignedRect());
     }
@@ -1925,10 +1969,16 @@ void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &vi
                 path.addRoundedRect(QRectF(icon.right() - w - lw, y0, w, h), s / 20, s / 20);
                 const double ax0 = icon.x() + w + lw * 3, ax1 = icon.right() - w - lw * 3, a = s * 0.08;
                 const double ya = icon.y() + s * 0.42, yb = icon.y() + s * 0.58;
-                path.moveTo(ax0, ya); path.lineTo(ax1, ya);
-                path.moveTo(ax1 - a, ya - a); path.lineTo(ax1, ya); path.lineTo(ax1 - a, ya + a);
-                path.moveTo(ax1, yb); path.lineTo(ax0, yb);
-                path.moveTo(ax0 + a, yb - a); path.lineTo(ax0, yb); path.lineTo(ax0 + a, yb + a);
+                path.moveTo(ax0, ya);
+                path.lineTo(ax1, ya);
+                path.moveTo(ax1 - a, ya - a);
+                path.lineTo(ax1, ya);
+                path.lineTo(ax1 - a, ya + a);
+                path.moveTo(ax1, yb);
+                path.lineTo(ax0, yb);
+                path.moveTo(ax0 + a, yb - a);
+                path.lineTo(ax0, yb);
+                path.lineTo(ax0 + a, yb + a);
             }
             QPainterPath text;
             if (label) {
@@ -1965,7 +2015,7 @@ void Hold::paintBands(const RenderTarget &renderTarget, const RenderViewport &vi
     binder.shader()->setColorspaceUniforms(ColorDescription::sRGB, renderTarget.colorDescription(), RenderingIntent::Perceptual);
     const BlendState kept;
     glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);        // premultiplied, as the image is
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied, as the image is
     img.texture->bind();
     for (const Rect &r : visible.rects()) {
         QMatrix4x4 mvp = viewport.projectionMatrix();

@@ -29,7 +29,10 @@ public:
 public Q_SLOTS:
     // D-Bus: org.kde.KWin /kwini3mode net.local.kwini3mode. "resize" enters, "" leaves.
     void SetMode(const QString &mode);
-    QString Mode() const { return m_mode; }
+    QString Mode() const
+    {
+        return m_mode;
+    }
     // kdeglobals [General] TerminalService (Konsole when unset), launched as Plasma launches an
     // app's shortcut: its desktop file's kglobalaccel component and its _launch action.
     void LaunchTerminal();

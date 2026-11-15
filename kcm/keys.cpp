@@ -53,14 +53,16 @@ static KeySeq toBus(const QKeySequence &seq)
 
 static QKeySequence fromBus(const KeySeq &s)
 {
-    const auto k = [&s](int i) { return QKeyCombination::fromCombined(s.keys.value(i)); };
+    const auto k = [&s](int i) {
+        return QKeyCombination::fromCombined(s.keys.value(i));
+    };
     return QKeySequence(k(0), k(1), k(2), k(3));
 }
 
 static QDBusMessage kga(const QString &method, const QVariantList &args)
 {
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
-                                              QStringLiteral("org.kde.KGlobalAccel"), method);
+    auto msg =
+        QDBusMessage::createMethodCall(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"), QStringLiteral("org.kde.KGlobalAccel"), method);
     msg.setArguments(args);
     return QDBusConnection::sessionBus().call(msg);
 }
@@ -81,14 +83,15 @@ static std::optional<QList<KeySeq>> keysOf(const QString &component, const QStri
 
 static bool setKeys(const QString &component, const QString &action, const QList<KeySeq> &keys)
 {
-    return kga(QStringLiteral("setForeignShortcutKeys"), {actionId(component, action), QVariant::fromValue(keys)}).type()
-        == QDBusMessage::ReplyMessage;
+    return kga(QStringLiteral("setForeignShortcutKeys"), {actionId(component, action), QVariant::fromValue(keys)}).type() == QDBusMessage::ReplyMessage;
 }
 
 bool kwinI3Loaded()
 {
-    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"), QStringLiteral("/Scripting"),
-                                              QStringLiteral("org.kde.kwin.Scripting"), QStringLiteral("isScriptLoaded"));
+    auto msg = QDBusMessage::createMethodCall(QStringLiteral("org.kde.KWin"),
+                                              QStringLiteral("/Scripting"),
+                                              QStringLiteral("org.kde.kwin.Scripting"),
+                                              QStringLiteral("isScriptLoaded"));
     msg << QStringLiteral("kwin-i3");
     const auto reply = QDBusConnection::sessionBus().call(msg);
     return reply.type() == QDBusMessage::ReplyMessage && reply.arguments().value(0).toBool();
@@ -112,8 +115,10 @@ static QVariantList layoutTable()
     xkb_keymap *keymap = ctx ? xkb_keymap_new_from_names(ctx, &names, XKB_KEYMAP_COMPILE_NO_FLAGS) : nullptr;
     QVariantList out;
     if (keymap) {
-        const QDBusMessage reply = QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(
-            QStringLiteral("org.kde.keyboard"), QStringLiteral("/Layouts"), QStringLiteral("org.kde.KeyboardLayouts"), QStringLiteral("getLayout")));
+        const QDBusMessage reply = QDBusConnection::sessionBus().call(QDBusMessage::createMethodCall(QStringLiteral("org.kde.keyboard"),
+                                                                                                     QStringLiteral("/Layouts"),
+                                                                                                     QStringLiteral("org.kde.KeyboardLayouts"),
+                                                                                                     QStringLiteral("getLayout")));
         xkb_layout_index_t current = reply.type() == QDBusMessage::ReplyMessage && !reply.arguments().isEmpty() ? reply.arguments().first().toUInt() : 0;
         if (current >= xkb_keymap_num_layouts(keymap))
             current = 0;
@@ -121,7 +126,9 @@ static QVariantList layoutTable()
             const xkb_keysym_t *syms = nullptr;
             return xkb_keymap_key_get_syms_by_level(keymap, evdev + 8, current, level, &syms) > 0 ? xkb_keysym_to_utf32(syms[0]) : 0;
         };
-        const auto qtKey = [](char32_t c) { return int(QChar::toUpper(c)); };
+        const auto qtKey = [](char32_t c) {
+            return int(QChar::toUpper(c));
+        };
         for (int evdev = 1; evdev < 64; ++evdev) {
             const char32_t base = sym(evdev, 0), up = sym(evdev, 1);
             if (base > 0x20 && up > 0x20)
@@ -192,8 +199,11 @@ void KeysModel::load()
             qFatal("kcm_kwin_i3: commands.json missing from the build");
         for (const auto group : QJsonDocument::fromJson(f.readAll()).array()) {
             for (const auto command : group[QStringLiteral("commands")].toArray()) {
-                Row row{group[QStringLiteral("group")].toString(), command[QStringLiteral("label")].toString(),
-                        command[QStringLiteral("note")].toString(), command[QStringLiteral("setting")].toString(), {}};
+                Row row{group[QStringLiteral("group")].toString(),
+                        command[QStringLiteral("label")].toString(),
+                        command[QStringLiteral("note")].toString(),
+                        command[QStringLiteral("setting")].toString(),
+                        {}};
                 for (const auto a : command[QStringLiteral("actions")].toArray()) {
                     Slot s;
                     s.action = a[0].toString();

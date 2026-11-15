@@ -27,12 +27,12 @@ public:
     ~Helper() override;
 
 private:
-    TilingDrag m_tilingDrag;        // before FrameFocus, which takes a pointer to it
+    TilingDrag m_tilingDrag; // before FrameFocus, which takes a pointer to it
     FrameFocus m_frameFocus;
-    PointerProbe m_pointerProbe;    // after FrameFocus, which it reads (and is told by)
-    GapStrips m_gapStrips;          // after both: reads TilingDrag's reach, FrameFocus's frame
+    PointerProbe m_pointerProbe; // after FrameFocus, which it reads (and is told by)
+    GapStrips m_gapStrips; // after both: reads TilingDrag's reach, FrameFocus's frame
     LayoutKeys m_layoutKeys;
     PopupGrace m_popupGrace;
-    ResizeMode m_resizeMode;        // installs its key filter itself, only while the mode is on
-    KeyOverride m_keyOverride;      // installs its two key filters itself
+    ResizeMode m_resizeMode; // installs its key filter itself, only while the mode is on
+    KeyOverride m_keyOverride; // installs its two key filters itself
 };

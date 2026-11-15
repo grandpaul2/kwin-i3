@@ -40,8 +40,10 @@ PointerProbe::PointerProbe(FrameFocus *frameFocus)
             note(QStringLiteral("cursor %1 at %2, pointer focus %3").arg(cursor, at(input()->pointer()->pos()), name(input()->pointer()->focus())));
         }
     });
-    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper/pointer"), QStringLiteral("net.local.kwini3helper.Pointer"),
-                                                 this, QDBusConnection::ExportAllSlots);
+    QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3helper/pointer"),
+                                                 QStringLiteral("net.local.kwini3helper.Pointer"),
+                                                 this,
+                                                 QDBusConnection::ExportAllSlots);
 }
 
 PointerProbe::~PointerProbe()
@@ -53,13 +55,13 @@ PointerProbe::~PointerProbe()
 static QString kind(const Window *w)
 {
     return w->isDesktop()        ? QStringLiteral("desktop")
-         : w->isDock()           ? QStringLiteral("dock")
-         : w->isAppletPopup()    ? QStringLiteral("appletpopup")
-         : w->isNotification()   ? QStringLiteral("notification")
-         : w->isOnScreenDisplay() ? QStringLiteral("osd")
-         : w->isPopupWindow()    ? QStringLiteral("popup")
-         : w->isDialog()         ? QStringLiteral("dialog")
-         : w->isNormalWindow()   ? QStringLiteral("normal")
+        : w->isDock()            ? QStringLiteral("dock")
+        : w->isAppletPopup()     ? QStringLiteral("appletpopup")
+        : w->isNotification()    ? QStringLiteral("notification")
+        : w->isOnScreenDisplay() ? QStringLiteral("osd")
+        : w->isPopupWindow()     ? QStringLiteral("popup")
+        : w->isDialog()          ? QStringLiteral("dialog")
+        : w->isNormalWindow()    ? QStringLiteral("normal")
                                  : QStringLiteral("other");
 }
 
@@ -115,8 +117,11 @@ void PointerProbe::watch(Window *w)
 {
     connect(w, &Window::interactiveMoveResizeStarted, this, [this, w] {
         note(QStringLiteral("KWin %1 started on %2, edge %3, pointer %4, anchor %5, %6")
-                 .arg(w->isInteractiveResize() ? QStringLiteral("resize") : QStringLiteral("move"), name(w),
-                      gravity(w->interactiveMoveResizeGravity()), at(input()->pointer()->pos()), at(w->interactiveMoveResizeAnchor()),
+                 .arg(w->isInteractiveResize() ? QStringLiteral("resize") : QStringLiteral("move"),
+                      name(w),
+                      gravity(w->interactiveMoveResizeGravity()),
+                      at(input()->pointer()->pos()),
+                      at(w->interactiveMoveResizeAnchor()),
                       w->tile() ? QStringLiteral("in a KWin tile (live tile resize)") : QStringLiteral("no tile")));
     });
     connect(w, &Window::interactiveMoveResizeFinished, this, [this, w] {
@@ -232,17 +237,19 @@ QString PointerProbe::Probe(double x, double y) const
     }
     const auto pointer = input()->pointer();
     return QString::fromUtf8(QJsonDocument(QJsonObject{
-        {QStringLiteral("pos"), QJsonArray{x, y}},
-        {QStringLiteral("toplevel"), name(top)},
-        {QStringLiteral("press"), m_frameFocus->decide(pos, top, Qt::LeftButton).describe()},
-        {QStringLiteral("windows"), windows},
-        {QStringLiteral("pointerNow"), QJsonObject{
-            {QStringLiteral("pos"), QJsonArray{pointer->pos().x(), pointer->pos().y()}},
-            {QStringLiteral("hover"), name(pointer->hover())},
-            {QStringLiteral("focus"), name(pointer->focus())},
-            {QStringLiteral("cursor"), cursorNow()},
-        }},
-    }).toJson(QJsonDocument::Indented));
+                                               {QStringLiteral("pos"), QJsonArray{x, y}},
+                                               {QStringLiteral("toplevel"), name(top)},
+                                               {QStringLiteral("press"), m_frameFocus->decide(pos, top, Qt::LeftButton).describe()},
+                                               {QStringLiteral("windows"), windows},
+                                               {QStringLiteral("pointerNow"),
+                                                QJsonObject{
+                                                    {QStringLiteral("pos"), QJsonArray{pointer->pos().x(), pointer->pos().y()}},
+                                                    {QStringLiteral("hover"), name(pointer->hover())},
+                                                    {QStringLiteral("focus"), name(pointer->focus())},
+                                                    {QStringLiteral("cursor"), cursorNow()},
+                                                }},
+                                           })
+                                 .toJson(QJsonDocument::Indented));
 }
 
 // Each pixel's centre: the topmost shown window whose buffer covers it ("drawn"; a buffer can be
@@ -311,11 +318,15 @@ QString PointerProbe::Map(int x, int y, int width, int height) const
             {QStringLiteral("buffer"), rect(w->bufferGeometry())},
         });
     }
-    return QString::fromUtf8(QJsonDocument(QJsonObject{
-        {QStringLiteral("origin"), QJsonArray{x, y}},
-        {QStringLiteral("cell"), QJsonArray{QStringLiteral("buffer"), QStringLiteral("frame"), QStringLiteral("ring"), QStringLiteral("toplevel"), QStringLiteral("press")}},
-        {QStringLiteral("windows"), windows},
-        {QStringLiteral("presses"), QJsonArray::fromStringList(decisions)},
-        {QStringLiteral("rows"), rows},
-    }).toJson(QJsonDocument::Compact));
+    return QString::fromUtf8(
+        QJsonDocument(
+            QJsonObject{
+                {QStringLiteral("origin"), QJsonArray{x, y}},
+                {QStringLiteral("cell"),
+                 QJsonArray{QStringLiteral("buffer"), QStringLiteral("frame"), QStringLiteral("ring"), QStringLiteral("toplevel"), QStringLiteral("press")}},
+                {QStringLiteral("windows"), windows},
+                {QStringLiteral("presses"), QJsonArray::fromStringList(decisions)},
+                {QStringLiteral("rows"), rows},
+            })
+            .toJson(QJsonDocument::Compact));
 }

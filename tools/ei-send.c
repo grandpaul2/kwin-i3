@@ -13,13 +13,13 @@
 //
 // Build: make tools  (gcc, libei-devel)
 #include <errno.h>
+#include <libei.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <libei.h>
 
 #define BTN_LEFT 0x110
 #define BTN_RIGHT 0x111
@@ -28,18 +28,23 @@
 static struct ei *ei;
 static struct ei_device *absdev, *kbd, *scrolldev;
 static uint32_t sequence = 1;
-static bool abs_on, kbd_on;     // resumed by KWin and emulating (libei 1.6 has no state getter)
+static bool abs_on, kbd_on; // resumed by KWin and emulating (libei 1.6 has no state getter)
 static struct ei_ping *pending; // the round trip in flight, and whether KWin has answered it
 static bool ponged;
 
-static void handle_events(void) {
+static void handle_events(void)
+{
     struct ei_event *e;
     while ((e = ei_get_event(ei))) {
         struct ei_device *d = ei_event_get_device(e);
         switch (ei_event_get_type(e)) {
         case EI_EVENT_SEAT_ADDED:
-            ei_seat_bind_capabilities(ei_event_get_seat(e), EI_DEVICE_CAP_POINTER_ABSOLUTE,
-                                      EI_DEVICE_CAP_BUTTON, EI_DEVICE_CAP_SCROLL, EI_DEVICE_CAP_KEYBOARD, NULL);
+            ei_seat_bind_capabilities(ei_event_get_seat(e),
+                                      EI_DEVICE_CAP_POINTER_ABSOLUTE,
+                                      EI_DEVICE_CAP_BUTTON,
+                                      EI_DEVICE_CAP_SCROLL,
+                                      EI_DEVICE_CAP_KEYBOARD,
+                                      NULL);
             break;
         case EI_EVENT_DEVICE_ADDED:
             if (ei_device_has_capability(d, EI_DEVICE_CAP_POINTER_ABSOLUTE) && !absdev)
@@ -51,15 +56,20 @@ static void handle_events(void) {
             break;
         case EI_EVENT_DEVICE_RESUMED:
             ei_device_start_emulating(d, sequence++);
-            if (d == absdev) abs_on = true;
-            if (d == kbd) kbd_on = true;
+            if (d == absdev)
+                abs_on = true;
+            if (d == kbd)
+                kbd_on = true;
             break;
         case EI_EVENT_DEVICE_PAUSED:
-            if (d == absdev) abs_on = false;
-            if (d == kbd) kbd_on = false;
+            if (d == absdev)
+                abs_on = false;
+            if (d == kbd)
+                kbd_on = false;
             break;
         case EI_EVENT_PONG:
-            if (ei_event_pong_get_ping(e) == pending) ponged = true;
+            if (ei_event_pong_get_ping(e) == pending)
+                ponged = true;
             break;
         case EI_EVENT_DISCONNECT:
             fprintf(stderr, "ei-send: KWin disconnected\n");
@@ -71,17 +81,19 @@ static void handle_events(void) {
     }
 }
 
-
 // Process KWin's events for up to ms milliseconds (or until ready() holds, if given).
-static void pump(int ms, bool (*ready)(void)) {
+static void pump(int ms, bool (*ready)(void))
+{
     struct timespec start, now;
     clock_gettime(CLOCK_MONOTONIC, &start);
     for (;;) {
-        if (ready && ready()) return;
+        if (ready && ready())
+            return;
         clock_gettime(CLOCK_MONOTONIC, &now);
         long left = ms - ((now.tv_sec - start.tv_sec) * 1000 + (now.tv_nsec - start.tv_nsec) / 1000000);
-        if (left <= 0) return;
-        struct pollfd p = { .fd = ei_get_fd(ei), .events = POLLIN };
+        if (left <= 0)
+            return;
+        struct pollfd p = {.fd = ei_get_fd(ei), .events = POLLIN};
         if (poll(&p, 1, (int)left) > 0) {
             ei_dispatch(ei);
             handle_events();
@@ -89,31 +101,49 @@ static void pump(int ms, bool (*ready)(void)) {
     }
 }
 
-static bool devices_ready(void) { return abs_on && kbd_on; }
-static bool synced(void) { return ponged; }
+static bool devices_ready(void)
+{
+    return abs_on && kbd_on;
+}
+static bool synced(void)
+{
+    return ponged;
+}
 
 // A round trip: once KWin answers, it has processed every event sent before (libei.h, ei_ping).
 // Without it, inject.py's disconnect can reach KWin before the events do, and under load a
 // scenario's first key is lost. The 10 ms pump after each command is the pace: without it a
 // drag's steps arrive at once and KWin doesn't see a drag.
-static void sync_kwin(void) {
+static void sync_kwin(void)
+{
     pending = ei_new_ping(ei);
     ponged = false;
     ei_ping(pending);
     pump(5000, synced);
-    if (!ponged) fprintf(stderr, "ei-send: KWin didn't answer a ping in 5 s\n");
+    if (!ponged)
+        fprintf(stderr, "ei-send: KWin didn't answer a ping in 5 s\n");
     ei_ping_unref(pending);
     pending = NULL;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 2) { fprintf(stderr, "usage: ei-send <fd>\n"); return 2; }
+int main(int argc, char **argv)
+{
+    if (argc != 2) {
+        fprintf(stderr, "usage: ei-send <fd>\n");
+        return 2;
+    }
     ei = ei_new_sender(NULL);
     ei_configure_name(ei, "kwin-i3 tests");
     int rc = ei_setup_backend_fd(ei, atoi(argv[1]));
-    if (rc != 0) { fprintf(stderr, "ei-send: setup failed: %s\n", strerror(-rc)); return 1; }
+    if (rc != 0) {
+        fprintf(stderr, "ei-send: setup failed: %s\n", strerror(-rc));
+        return 1;
+    }
     pump(5000, devices_ready);
-    if (!devices_ready()) { fprintf(stderr, "ei-send: no pointer/keyboard devices after 5 s\n"); return 1; }
+    if (!devices_ready()) {
+        fprintf(stderr, "ei-send: no pointer/keyboard devices after 5 s\n");
+        return 1;
+    }
     printf("ready\n");
     fflush(stdout);
 
@@ -121,7 +151,8 @@ int main(int argc, char **argv) {
     while (fgets(line, sizeof line, stdin)) {
         char cmd[16], a[32], b[32];
         int n = sscanf(line, "%15s %31s %31s", cmd, a, b);
-        if (n < 1) continue;
+        if (n < 1)
+            continue;
         if (!strcmp(cmd, "abs") && n == 3) {
             ei_device_pointer_motion_absolute(absdev, atof(a), atof(b));
             ei_device_frame(absdev, ei_now(ei));
@@ -130,7 +161,10 @@ int main(int argc, char **argv) {
             ei_device_button_button(absdev, code, !strcmp(b, "down"));
             ei_device_frame(absdev, ei_now(ei));
         } else if (!strcmp(cmd, "scroll") && n == 2) {
-            if (!scrolldev) { fprintf(stderr, "ei-send: no scroll device\n"); return 2; }
+            if (!scrolldev) {
+                fprintf(stderr, "ei-send: no scroll device\n");
+                return 2;
+            }
             ei_device_scroll_discrete(scrolldev, 0, atoi(a) * 120);
             ei_device_frame(scrolldev, ei_now(ei));
         } else if (!strcmp(cmd, "key") && n == 3) {
@@ -142,8 +176,8 @@ int main(int argc, char **argv) {
             fprintf(stderr, "ei-send: bad command: %s", line);
             return 2;
         }
-        pump(10, NULL);          // the pace between commands (a drag's steps rely on it)
-        sync_kwin();             // and KWin has it before the next command, or the disconnect
+        pump(10, NULL); // the pace between commands (a drag's steps rely on it)
+        sync_kwin(); // and KWin has it before the next command, or the disconnect
         printf("ok\n");
         fflush(stdout);
     }

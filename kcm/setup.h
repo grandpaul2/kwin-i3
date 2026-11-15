@@ -38,25 +38,28 @@ public:
     // (Apply gives back what Plasma had before); as it is otherwise.
     void givePlasmaBack(const QString &only);
     bool isPlasmaBack(const QString &only) const;
-    bool isSaveNeeded() const { return m_wanted != m_initial; }
+    bool isSaveNeeded() const
+    {
+        return m_wanted != m_initial;
+    }
 
     struct Change {
         QString file, group, key, value;
-        QString stock = {};             // its stock value where kwin.kcfg has none (an effect's EnabledByDefault)
-        QString other = {};             // Plasma's side where the stock value is kwin-i3's own (empty: left as it is)
+        QString stock = {}; // its stock value where kwin.kcfg has none (an effect's EnabledByDefault)
+        QString other = {}; // Plasma's side where the stock value is kwin-i3's own (empty: left as it is)
     };
     // A value as Plasma holds it, from wherever it is read (Plasma's settings, or the save).
     using Getter = std::function<QString(const Change &)>;
     struct Row {
         QString id, title, why, note;
         bool optional = false;
-        QList<Change> changes;                       // config rows
+        QList<Change> changes; // config rows
         std::function<QString(const Getter &)> plasma; // what Plasma does with these values
     };
 
 Q_SIGNALS:
     void changed();
-    void edited();      // a tick changed: the page's Apply and Reset follow
+    void edited(); // a tick changed: the page's Apply and Reset follow
 
 private:
     QString effective(const Change &c) const;

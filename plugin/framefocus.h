@@ -29,11 +29,11 @@ public:
     // (pointerprobe.h), so the probe can't say other than what a press does.
     struct Decision {
         enum Kind {
-            Pass,       // not this filter's: on to KWin's filters and the window under the pointer
-            Ring,       // on a frame ring: activate and raise, the press and its release taken
+            Pass, // not this filter's: on to KWin's filters and the window under the pointer
+            Ring, // on a frame ring: activate and raise, the press and its release taken
             RingResize, // on a tiled window's ring: i3's resize on `side` (TilingDrag::pressRing)
-            GapResize,  // in the gap: i3's resize of the nearest tiled window on `side`
-            Margin,     // over a tiled window's margin, no tiled window in reach: taken, nothing
+            GapResize, // in the gap: i3's resize of the nearest tiled window on `side`
+            Margin, // over a tiled window's margin, no tiled window in reach: taken, nothing
             FloatedResize, // on a floated window's ring, no neighbour that side: the container whole
         };
         Kind kind = Pass;
@@ -42,18 +42,24 @@ public:
         QString describe() const;
     };
     Decision decide(const QPointF &pos, KWin::Window *hover, Qt::MouseButton button) const;
-    void setProbe(PointerProbe *probe) { m_probe = probe; }
+    void setProbe(PointerProbe *probe)
+    {
+        m_probe = probe;
+    }
     // `w` has a frame ring and `pos` is on it (what kwini3hold draws there; ringWindow's test).
     bool onRing(const KWin::Window *w, const QPointF &pos) const;
-    int frameWidth() const { return m_frameWidth; }
+    int frameWidth() const
+    {
+        return m_frameWidth;
+    }
 
 private:
     KWin::Window *ringWindow(const QPointF &pos, KWin::Window *hover) const;
     bool overTiledMargin(const QPointF &pos, KWin::Window *hover) const;
     KWin::Window *tiledFrameAt(const QPointF &pos) const;
 
-    TilingDrag *m_drag;                   // a ring press is its resize on that side (§9 Z3)
-    PointerProbe *m_probe = nullptr;      // records each press's decision
+    TilingDrag *m_drag; // a ring press is its resize on that side (§9 Z3)
+    PointerProbe *m_probe = nullptr; // records each press's decision
     KConfigWatcher::Ptr m_watcher;
     // Owns this filter's subscriptions, so they end with it. Not m_watcher: KDE's config watcher
     // is shared by everyone watching kwinrc and outlives an unloaded plugin, whose library KWin
@@ -63,11 +69,11 @@ private:
     int m_frameWidth = 1;
     bool m_frameOnFloating = false;
     bool m_tiledRing = true;
-    QPointer<KWin::Window> m_ringWindow;  // the window whose frame the pointer is on, if any
-    QPointer<KWin::Window> m_raised;      // the tiled window last raised over a neighbour's band
-    QPointer<KWin::Window> m_pointerIn;   // the window the pointer is in or on the ring of, last motion
+    QPointer<KWin::Window> m_ringWindow; // the window whose frame the pointer is on, if any
+    QPointer<KWin::Window> m_raised; // the tiled window last raised over a neighbour's band
+    QPointer<KWin::Window> m_pointerIn; // the window the pointer is in or on the ring of, last motion
     // A press in or on the ring of the window SetFocusParent names, or with `entered` the pointer
     // reaching it: kwin-i3 is told (TilingDrag::tellWindowPressed).
     void noticeFocusParent(KWin::Window *hover, const QPointF &pos, bool entered);
-    Qt::MouseButtons m_taken;             // presses taken on a frame: their releases are ours too
+    Qt::MouseButtons m_taken; // presses taken on a frame: their releases are ours too
 };
