@@ -119,7 +119,7 @@ These are the project's rules, not suggestions.
   The exception is the look: blending with Plasma is a reason, at no performance cost.
 - **Understand, then decide.** When a fix fails or a second one is proposed, the model of the
   problem is usually wrong: map it fully (i3 first, what KWin allows, measured not guessed), then
-  give a verdict on cost against value. Going back to how it was is fine; we know more.
+  give a verdict on cost against value. Going back to how it was is fine, once the full map says so.
 - **Cause before fix.** No retry, repaint or belt-and-braces for a bug whose cause isn't known.
   Narrow it from evidence: the capture, a test-KWin trace, KWin's source for the installed version
   (`rpm -q kwin`, then `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`; don't guess), a web
@@ -143,7 +143,7 @@ These are the project's rules, not suggestions.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
   window classes or regexes to know; choose from a list over typing an identifier; side text off
-  the rows. **The settings page is finished, and took long to get right**: anything added to it,
+  the rows. **The settings page is finished**: anything added to it,
   moved or removed follows `docs/style-settings-page.md`, "Adding to the page" (its place and
   shape from the page as it stands, the whole tab screenshotted before and after), and is judged
   live by the maintainer before it is done.
@@ -172,8 +172,8 @@ catastrophically. Its runs are the only runs: `make unit` and the changed scenar
 work needs it, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
 owed. No run over 5 minutes, ever. Fault runs, fuzzing and
 stock runs wait in `LATER.md`. A case it doesn't cover is the maintainer's call. **No new test of
-any kind without the maintainer's go, and only with a strong case** (its rule 5: an agent given a
-handle will grab it).
+any kind without the maintainer's go, and only with a strong case** (its rule 5: the suite grows by
+decision, not because a test can be written).
 
 - **Before a rerun**: is what's under test rebuilt (`make build` for the script, `make plugin` for
   the plugins, `make kcm` for the settings page's QML)? Name the cause from the evidence first; one

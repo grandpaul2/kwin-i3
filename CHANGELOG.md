@@ -161,26 +161,26 @@ Before this (since v1.0.0):
   Meta+Shift+; and Meta+Shift+1..0 never fired; their twins Meta+: and Meta+!..) did (probed in
   the test KWin). Only the twins are registered now, and the old actions are
   unregistered at load, so the settings page's Keys list shows one box per key. The keys pressed
-  are the same (`tests/live/38-retired-keys.sh`).
+  are the same.
 - The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`),
   picked in the settings page's colour button.
 - kwin-i3's own page in System Settings > Window Management: every setting, laid
   out as Plasma's pages are, Apply that applies without the plugins, and a Keys sub-page where a
   key another shortcut holds is named and taken on Apply (`make restore-keys` gives it back);
   `make kcm-install`. The Configure form is tidied to match.
-- Settings, step 5: the plugins' settings move into the form (`frameWidth`, new; the frame's colours;
+- Settings: the plugins' settings move into the form (`frameWidth`, new; the frame's colours;
   the hold's kill switch and timeout), their old groups still read. **Apply applies** with the
   plugins: the KWin plugin, renamed `kwini3helper` (frame focus, settings apply), watches `kwinrc`
   and has KWin reconfigure; the frame and the hold take new values on any reconfigure, so the
   `--notify`-only rule is gone.
-- Settings, step 4: gaps, i3's `gaps inner` and `gaps outer`, by KWin's tile padding and an
+- Settings: gaps, i3's `gaps inner` and `gaps outer`, by KWin's tile padding and an
   inset root tile; a change applies at Meta+Shift+C, rebuilding the tiles once.
-- Settings, step 3: `workspaceOutputs`, i3's `workspace N output X` (`1=DP-4, 2=DP-6`), at
+- Settings: `workspaceOutputs`, i3's `workspace N output X` (`1=DP-4, 2=DP-6`), at
   login, for a workspace first used, and when a monitor appears; unlisted workspaces as before.
-- Settings, step 2: `resizeStep` (Meta+Ctrl+arrows, default 10 %), `defaultOrientation`
+- Settings: `resizeStep` (Meta+Ctrl+arrows, default 10 %), `defaultOrientation`
   (i3's `default_orientation`, default auto) and `focusWrapping` (i3's `focus_wrapping`, all four
   modes ported from `get_tree_next`, default yes), in the form and the README.
-- Settings, step 1: a Configure form in System Settings for the
+- Settings: a Configure form in System Settings for the
   script's keys, and i3's reload, **Meta+Shift+C**, which has KWin reparse its config and kwin-i3
   take the new values (the form itself tells KWin nothing on save). A changed rule re-judges the
   open windows; a window floated or tiled by hand under an unchanged verdict stays.
@@ -191,7 +191,7 @@ Before this (since v1.0.0):
 - Fix: after a reload, un-floating a window left it kept above (and, since the frame colours,
   green): the new instance had not recorded the keep-above flag the old one set. A window
   kwin-i3 floats now owns its flag, set by it or not, and a window a reload finds kept above
-  and in no tile stays floating instead of being re-tiled by the rules. Found by the review: a
+  and in no tile stays floating instead of being re-tiled by the rules. Also: a
   window floated by hand went back to tiled at its next caption change (seconds, for a browser),
   because the rules were re-applied on every change; they now act only when their verdict
   changes (`tests/live/60-load.sh`,
@@ -204,8 +204,7 @@ Before this (since v1.0.0):
   size limits (a caption change floated it the same way); and, as in i3, the newcomer opens
   behind the fullscreen window without taking its focus (its own dialog excepted), also when
   sent there while the workspace is hidden or when the workspace is shown again with Meta+N.
-  Found from a capture; `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test; six live mutants and
-  one unit mutant.
+  `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test.
 - The frame paints the active floating window green (`#4c995a`), so a floating window is told
   from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
   (`[kwin-i3-frame]`, README), changed live with `--notify`
@@ -217,22 +216,21 @@ Before this (since v1.0.0):
   KWin start if the build no longer matches the installed kdecoration.
 - Fix: after a monitor replug, activating a fullscreen window KWin could not move switched the
   other monitor to that window's workspace, so both monitors showed it and its tiled windows
-  stood off-screen (fuzz I2, seed 7; `tests/live/46-replug-fullscreen.sh`).
+  stood off-screen (`tests/live/46-replug-fullscreen.sh`).
 - Fix: when a monitor returns, KWin restores every window's geometry from that layout, as a
   pending resize kwin-i3's refit could not see; a window whose tile had changed meanwhile ended up
   at its old size. After a screens change, tiled windows are refitted as their frames change until
-  each shows its tile (fuzz I10; `tests/live/47-replug-restore.sh`).
+  each shows its tile (`tests/live/47-replug-restore.sh`).
 - Fix: a window that KWin itself tiles on a returning monitor (one with a modal dialog) kept
   kwin-i3's record of its old tile, which the invariant check read as "not in its tile" and could
-  throw on once that tile was gone (fuzz I1, seed 2; `tests/live/48-replug-listed.sh`).
+  throw on once that tile was gone (`tests/live/48-replug-listed.sh`).
 - Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
   of KWin's `tile.cpp` removed from the tree (git history before v1.0.0 has them).
 - The floating-title default is empty; a streaming setup's title, once a
   default, is a user's rule now.
-- Test client: the dialog starts at 200x160, above KWin's 150 px decorated minimum (fuzz I9,
-  seed 28: a smaller dialog on a hidden desktop can't take the resize KWin sends with a move).
+- Test client: the dialog starts at 200x160, above KWin's 150 px decorated minimum (a smaller dialog on a hidden desktop can't take the resize KWin sends with a move).
 
-## 1.0.0 — 2026-10-23
+## v1.0.0 (2026-10-23)
 
 Feature complete for daily use. One KWin script plus two small KWin plugins:
 

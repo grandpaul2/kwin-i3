@@ -154,7 +154,7 @@ appended:
 Screenshot the whole of each tab the change touches, before and after, at full width and at half
 a screen, in each state it can be in (plugins loaded or not, a setting already right), and set
 them side by side: the change should look as if it was always there, and nothing else on the
-tab should move. Read them yourself, then hand them over. Scenarios `37` and `76` take them
+tab should move. They are compared before they go to the maintainer. Scenarios `37` and `76` take them
 (`KI3_SHOTS=<dir>`) and cover the changes they drive (`docs/testing.md`). The test KWin has no
 plugins, so its Frame section is all greyed.
 

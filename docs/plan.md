@@ -1,8 +1,7 @@
 # kwin-i3 — plan
 
 The scope, what is left out, the reasons a difference from i3 may have, and the standing
-decisions. The history (the phases, the switch-over checklist, the first plan inside Krohnkite) is
-in git: `git show f3fa510:docs/plan.md`.
+decisions.
 
 ## Goal
 
@@ -278,7 +277,7 @@ follows it:
      (`con_fix_percent`). Reconcile writes them to the tiles. A size changed *in KWin* (a border
      drag) is read back into the tree once, when the drag ends, not on every
      `relativeGeometryChanged`.
-   - Considered and rejected for now: tiles as the only structure. It removes the
+   - Not tiles as the only structure. It removes the
      projection, but i3's flatten and move rules would then be written against a structure that
      collapses on its own and can't be tested without a fake. Revisit if the projection proves costly.
 4. **One idempotent `reconcile(workspace)`** applies the tree to KWin: compute the wanted tile tree
@@ -291,7 +290,7 @@ follows it:
    hold zero or several windows fall back to inserting after the focus. KWin's saved defaults (the
    3-column template) hold no windows and are discarded.
 6. **Tile calls, in this order, always**: `oldTile.unmanage(w)`, then change `w.desktops` / output,
-   then `newTile.manage(w)`. `manage` refuses a window not on the tile's desktop (verified, round 4).
+   then `newTile.manage(w)`. `manage` refuses a window not on the tile's desktop (probed).
    `window.tile =` is deprecated in 6.7 and is not used.
 7. **Our own tile events are expected, everything else is foreign.** The adapter records
    `expected[window] = tile` before each `manage`/`unmanage` and clears it when the matching
@@ -320,9 +319,8 @@ follows it:
    KWin's desktops, which are numbered, and removing one renumbers every desktop after it. The cap
    at 10 is not KWin's (it allows 25) but the keys' reach, i3's default config binding ten: past
    10 is out of scope, reason (d).
-10. **Outputs come and go as in i3's `randr.c`** (replacing an earlier "every workspace goes
-    back": a remembered output that isn't there was the state behind most
-    replug bugs, scenarios 42, 45-48, fuzzer I2):
+10. **Outputs come and go as in i3's `randr.c`** (no remembered output is kept for one that isn't
+    there: that state was behind most replug bugs, scenarios 42, 45-48):
     - **an output goes away**: its workspaces all move to the first output, the primary first
       (KWin's `workspace.screenOrder`), for good, except an empty one that isn't focused, which i3
       closes and here simply stops having an output (`behaviour.md` W4) (as i3's `randr.c` "Move the content of an outputs container to the
@@ -358,8 +356,8 @@ entries): `kwin-i3 <verb>`, e.g. `kwin-i3 Workspace 1`, `kwin-i3 Move Left`, `kw
 **Focus follows i3**: every way focus changes is a row of `behaviour.md` §5 set against i3. That
 table is the home of the rules; this is the why.
 
-- **Why i3's rules, not exceptions**: the earlier rules asked "does kwin-i3 manage it?" and grew
-  an exception for each answer; "places itself" held kinds i3 keeps apart. Asked "which of i3's
+- **Why i3's rules, not exceptions**: asked "does kwin-i3 manage it?", each answer needs an
+  exception, and a catch-all like "places itself" holds kinds i3 keeps apart. Asked "which of i3's
   kinds is it?", each row has i3's answer.
 - **Why the pointer matters**: in i3 the focused output, the pointer's and (here) KWin's active
   output, where new windows open, are one. Crossing onto an output focuses it (B2), and focus

@@ -29,7 +29,7 @@ orchestrator whose cost can't be bounded at launch.
    file fetched once into the working directory and named in the briefs, not by each agent.
    `docs/kwin-notes.md` first: most of what KWin can't do is already there.
 3. **The base**: the last sweep is the last commit whose subject starts `Foundation sweep:`
-   (`git log -1 --grep='^Foundation sweep:' --format=%h`; before the first one, `531b86b`, the
+   (`git log -1 --grep='^Foundation sweep:' --format=%h`; before any, `531b86b`, the
    foundations' rewrite). `git log --oneline BASE..HEAD` and
    `git diff --stat BASE..HEAD -- docs src plugin kcm widget` show what changed since; each
    brief gets that list, so agents read the whole area but look hardest where it moved.
@@ -37,7 +37,7 @@ orchestrator whose cost can't be bounded at launch.
    per area, so the findings survive the session's context. Nothing from it enters the tree
    (`docs/README.md`: a review is not kept as a file).
 5. **The mechanical checks**, before any agent: `python3 .claude/skills/foundation-sweep/check.py`
-   from the repo root (read-only; a second). It finds what a script can: a ≠ row naming no reason,
+   from the repo root (read-only; it takes about a second). It finds what a script can: a ≠ row naming no reason,
    an = row whose note carries a ≠, history and stamps in the standing docs, a broken table row,
    `behaviour.md` §11 against the code's defaults. Fix those first, as settled at step 1; what
    is left goes to every finder as `CHECKED`, already found: the cheapest findings, and ones the agents
@@ -60,8 +60,8 @@ by default, **each fact with one owner**, so nothing is found twice:
 
 Fewer when little changed (merge C1 into C2); never more than six finders. The C areas compare
 code with rows, a mechanical reading: run them on a cheaper model than the session's (Sonnet
-where the harness offers it) and let the evaluation say whether they missed more. The person
-stays reachable while they run: answer them, and read each area's file as its agent finishes.
+where the harness offers it) and let the evaluation say whether they missed more. Each
+area's file is read as its agent finishes.
 
 **A finding** (every agent writes them in this shape):
 
@@ -99,8 +99,8 @@ Every finding of severity high, every finding settled as a code fix, every reaso
 every step-5 conflict goes to a **checker**: one agent not shown the finder's conclusion, given
 only the claim and its citations, reading only the sources they cite, not the foundations
 (`briefs.md`, "Checker"). A refuted finding goes; a partial one is restated as checked. Doc-only
-findings the session can check with a grep are checked as it fixes them. (The first sweep: 24
-claims, 124k tokens, none refuted, four narrowed: worth it for what it narrows.)
+findings the session can check with a grep are checked as it fixes them. The checker is cheap next
+to a wrong fix: it narrows claims before they reach the maintainer.
 
 ## 4. Report to the maintainer
 
@@ -120,8 +120,8 @@ In the conversation, not a file. Short, numbered once, each number one topic:
 - **Docs**: commit as settled, grouped by doc, the commit saying why; the conflicts' edits once
   the maintainer answers. A rule change edits its foundation in the same commit
   (`philosophy.md`, "The foundations stay true"), and **every doc that restates the rule**: grep
-  for it (AGENTS.md restates `philosophy.md`'s decision steps; the first sweep's worst round-two
-  finding was one restatement left behind). A row marked "being fixed" names its `OPEN.md` item,
+  for it (AGENTS.md restates `philosophy.md`'s decision steps; a restatement left behind is the
+  commonest round-two finding). A row marked "being fixed" names its `OPEN.md` item,
   and the item names the row. Then `check.py` again: clean before round two.
 - **Code**: by `AGENTS.md` and `docs/testing.md`'s lean runs: the go, the build, `make unit` and
   the changed scenarios, the go to reload. Long runs in the background with a recurring check.
@@ -162,8 +162,6 @@ lands.
 ## Budget
 
 Five finders, one checker, one round-two reader: seven agents, in small batches, each read by the
-session. Say the count and the estimate before launching; ask before going past it. The first
-sweep (base `531b86b`, 269 commits) cost about 1.7M tokens: five finders 263k-318k each (the C
-areas on the session's model), the checker 124k, round two 149k. With the mechanical checks, one
-owner per fact, the shorter common part for the C areas and a cheaper model there, the estimate
-for a sweep that size is about 1.1-1.2M.
+session. For a sweep over a few hundred commits, about 1.1-1.2M tokens: the finders about 200-300k
+each, the checker and round two about 150k each; the mechanical checks, one owner per fact and a
+cheaper model for the C areas keep it there.

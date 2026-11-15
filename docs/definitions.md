@@ -1,8 +1,8 @@
 # kwin-i3's words: one name per thing
 
-Every other doc, every commit message and every reply uses these words in these senses. Rules
-have gone wrong on words that meant two things ("manage", "places itself", "active", "desktop",
-"home"); this page is why they don't now.
+Every other doc, every commit message and every review uses these words in these senses. A word
+that means two things ("manage", "places itself", "active", "desktop", "home") makes a rule
+ambiguous; this page gives each thing one name.
 
 **The rules for words**
 - **i3's word wherever i3 has the thing** (ride i3, hard). KWin's word only for things that
@@ -51,15 +51,15 @@ output (i3: the X root window; KWin/Plasma: the **desktop window**, Plasma's wal
 workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (+), because
 "manage" is already KWin's for putting a window in a tile (`Tile.manage`, decision 6).
 
-**Not used any more:** "places itself" (now: override-redirect, or floating), "unmanaged" and
-"managed" as a kind, "Plasma window(s)" for a kind, "left alone", "tiled" (now:
+**Not used:** "places itself" (say: override-redirect, or floating), "unmanaged" and
+"managed" as a kind, "Plasma window(s)" for a kind, "left alone", "tiled" (say:
 **tiling**, i3's).
 
 ## The tree (i3's)
 
 | word | means | i3 |
 |---|---|---|
-| **tree** | kwin-i3's model of every output's workspaces and their containers (`src/tree.js`); "the model" in older docs is the tree | the tree (`tree.c`) |
+| **tree** | kwin-i3's model of every output's workspaces and their containers (`src/tree.js`); also called the model | the tree (`tree.c`) |
 | **container** | any node: a workspace, a split container, a window's container, a floating container; above the workspaces, the root, each output and its content (`behaviour.md` §2) | con |
 | **split container** | a container holding others, side by side (`splith`) or one above the other (`splitv`); it draws nothing | split con |
 | **layout** | a container's or workspace's `splith`, `splitv`, `tabbed` or `stacked`; its **orientation** is h or v, tabbed counting as h and stacked as v | `layout`, `con_orientation` |
@@ -86,8 +86,8 @@ workspace (i3's `manage_window`). kwin-i3's docs and code say **adopt** for it (
 | **assign** | a rule sending new windows matching its criteria to a workspace or output | `assign` | — |
 | **back-and-forth** | going to the previously focused workspace | `workspace back_and_forth` | — |
 
-**Not used any more:** "home" (it meant "a workspace's output", plus a remembered output that is
-away; now: a workspace's output, or its workspace output); "assignment" for a workspace output;
+**Not used:** "home" (it meant "a workspace's output", plus a remembered output that is
+away; say: a workspace's output, or its workspace output); "assignment" for a workspace output;
 "desktop" alone (say virtual desktop or desktop window); "monitor" or "screen" for an output.
 
 ## Focus, pointer and KWin's side of them

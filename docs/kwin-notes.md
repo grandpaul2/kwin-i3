@@ -1,9 +1,9 @@
 # KWin as found: the traps
 
-What KWin 6.7.5 (and Plasma around it) actually does where it surprised us, read from its source
-or probed in the test KWin. Each line cost a session or more to find. Read the section for the
+What KWin 6.7.5 (and Plasma around it) actually does where it surprises, read from its source
+or probed in the test KWin. Read the section for the
 part of KWin you are about to touch before you touch it. kwin-i3's *answer* to each lives in
-`behaviour.md` or the spec named; this page is KWin's side only.
+`behaviour.md`; this page is KWin's side only.
 
 Sources: KWin's source for the installed version (`rpm -q kwin` / `pacman -Q kwin`, then
 `invent.kde.org/plasma/kwin/-/raw/v<version>/src/...`; `git clone --depth 1 --branch v6.7.5`
@@ -15,7 +15,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - `Tile::manage` lists a window but places it (`requestTile`) only if the tile's desktop is current;
   on a hidden desktop `w.tile` stays null, and a second `manage()` returns early for a listed window.
 - `Tile::isActive`: only a tile on its output's **shown** desktop resizes its windows. Pick tiles by
-  the window's own output (a scenario padded the other monitor's tile for days and tested nothing).
+  the window's own output: another output's tile takes the call and changes nothing.
 - `requestTile(nullptr)` (unmanage) restores the window's pre-tile geometry, fullscreen or not.
 - `setPadding` / `setRelativeGeometry` moveResize every window listed in the tile, fullscreen or
   not; KWin keeps a fullscreen window listed in its tile until a rebuild.
@@ -186,10 +186,9 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   a request (scenario 87, part 4; `opening` in `src/kwin.js`).
 - `activateWindow` activates a window's modal dialog in its place (`findModal`): the parent never
   gets `windowActivated`.
-- A parent resized by its tile (a rebuild after a sibling's fullscreen ended) was followed, the
+- A parent resized by its tile (a rebuild after a sibling's fullscreen ended) is followed, the
   same millisecond, by KWin activating its open modal dialog, which had opened without the focus
-  (scenario 32, `leave_fullscreen`, before a fullscreen window's place was kept). Seen, not yet read
-  in the source; it is not the dialog's own activation request, which never came without the resize.
+  (seen in scenario 32's `leave_fullscreen`; not read in the source). It is not the dialog's own activation request, which never came without the resize.
 - Every activation (xdg-activation, Alt+Tab, a task manager click, a script) goes through one
   `activateWindow` and one `ActivationDesktopPolicy`; a script can't tell them apart. DoNothing
   breaks Alt+Tab and the task manager.
@@ -269,13 +268,13 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   press's `key` to `Qt::Key_unknown` and lets it on (the shortcut filter passes `event->key` to
   kglobalacceld, 6.7.5 and 6.8.2 `input.cpp:1080`), so kglobalacceld resets and matches nothing;
   a second filter right after `GlobalShortcut` takes it (`addFilteredKey`) before any window
-  sees it. Probe 92: no launcher in either release order, and no window got the key.
+  sees it. Probed: no launcher in either release order, and no window got the key.
 - **KWin 6.8 doesn't parent its `Scripting` object**: 6.7.5 creates it with the workspace as
   parent (`workspace.cpp:336`), 6.8.2 holds it in a `unique_ptr` (`:343`), so a search of the
   workspace's children finds no script and no script's actions there. Both register it at
   `/Scripting` and create each script as its child (`scripting.cpp:682`, `:868` / `:671`, `:816`):
   `QDBusConnection::sessionBus().objectRegisteredAt("/Scripting")`, a lookup in KWin's own process,
-  finds it on both (the key override's table, P6's Arch run).
+  finds it on both (the key override's table).
 - **Filters of one weight run newest first**: `installInputEventFilter` inserts at the
   `lower_bound` of its weight (6.7.5 `input.cpp:2952`), so a plugin's filter at `TabBox` runs
   before KWin's own TabBox filter.
@@ -292,8 +291,8 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   value-type property lazily, `qv4qobjectwrapper.cpp:299-306`): `var g = w.frameGeometry` read
   after the window changes gives the new rect. Copy its fields to keep it across a KWin call. An
   X11 window's frame changes inside the call; a Wayland window's too for a move or an unchanged
-  size, only a size change waiting for the client's ack. `unmanageFrom`'s write-back wrote the
-  restored rect back for X11 windows until it copied (a fullscreen X11 window shrank on a rebuild).
+  size, only a size change waiting for the client's ack. So `unmanageFrom` copies the
+  restored rect before writing it back: written back live, a fullscreen X11 window shrank on a rebuild.
 - `callDBus` converts arguments by `QJSValue::toVariant()` (`scripting.cpp:345`): no unsigned ints,
   no typed arrays, so typed methods (kglobalaccel's `a(ai)`, `Notify`'s `susssasa{sv}i`) are refused.
   It calls back only on a reply: on an error or a dead service it logs and never calls; guard with a timeout.
@@ -379,8 +378,8 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   and the script compares Stats with what it told and tells it again (`checkFrame`). A script
   that tells only what changed never repairs a loss on its own.
 - An effect's paint hooks run only while its `isActive()` says so: anything it draws (kwini3hold's
-  ring, a group's bar) must keep it active, or it silently draws nothing (the bar was missing in
-  the looks without a ring until a shown bar counted).
+  ring, a group's bar) must keep it active, or it silently draws nothing (a shown bar counts, in
+  the looks without a ring too).
 - A held snapshot is drawn at the window's old frame (the paint data's translate and scale), so
   anything drawn relative to that window must use its old values too until the hold releases.
 - **What an effect draws in `paintWindow` follows only the paint data** (translate, scale,
@@ -455,7 +454,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - `kwin_wayland --virtual` needs a GPU render node in 6.8: with none it logs "Found no render
   device!" and runs with compositing off (supportInformation: "Compositing is not active"), and
   no window is ever resized to its tile, only placed (a container with no `/dev/dri`:
-  10-tiling 18 of 33 red). Arch's `kwin_wayland` carries `cap_sys_nice=ep`, which rootless podman
+  the scenarios that need resized tiles fail). Arch's `kwin_wayland` carries `cap_sys_nice=ep`, which rootless podman
   won't exec. Both handled in `tools/box.sh`.
 - plasmawindowed (the widget in a window, 67) resizes itself once just after it tiles, to its whole
   row of thumbnails (4936 px wide at x -548); kwin-i3's refit puts it back within milliseconds. A
@@ -500,13 +499,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   neither slides them nor slides others away from them (`slideback.cpp:94`, `:167`, `:307`).
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
   pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. kwin-i3 leaves it as the
-  distribution ships it (a keep-below workaround was declined).
+  distribution ships it.
 - On NVIDIA (a driver with kernel suspend notifiers), waking from suspend can
   reset the GPU: the kernel logs `nvidia-drm … Failed to register auto-value-update`, and seconds
   later Firefox logs `[GFX1-]: Handle DeviceReset` and redraws its windows from scratch, a flash on
   every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
-  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (seen in 1 of 8
-  resumes on one boot).
+  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this.
 - **Plasma 6.8's OSDs (volume, brightness) can show cut off**, their top part only: plasmashell
   sizes the OSD's own surface too short (KDE bug 527636, since 6.8.0, often after an output
   change or a resume; the candidate fix is plasma-workspace MR 7278). A capture taken while it
@@ -526,7 +524,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   while its group was being built), and the next key acts from there. Park it (`point 20 20`)
   before building a layout a check depends on. A settled group never does it: with the pointer
   anywhere over `T[f V[g]]`, a window h opened into V took f into its tile behind it, f stayed
-  lowest in the stacking and KWin activated only h (probe, branch `probe-hidden-tab`).
+  lowest in the stacking and KWin activated only h (probed).
   A floated window's ring is the window beneath it to KWin's hover: a pointer that never moved,
   left where a floated container's ring lands (the screen's centre is the seam of a floated
   two-window split), activates that window at the next stacking change (the raise of a focus
