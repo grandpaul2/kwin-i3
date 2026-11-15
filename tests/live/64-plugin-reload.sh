@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # needs: plugin
 # The helper plugin unloaded and loaded again in a running KWin, as make plugin-install does:
-# KWin keeps the old library, and nothing of the unloaded instance may outlive it. On
-# 2026-10-24 the frame-click filter's settings subscription did (KDE's config watcher is shared
+# KWin keeps the old library, and nothing of the unloaded instance may outlive it. The
+# frame-click filter's settings subscription did (KDE's config watcher is shared
 # by everyone watching kwinrc, so it lived on): the next config change called the unloaded
 # instance and KWin crashed, taking every app with it.
 source "$(dirname "$0")/lib.sh"

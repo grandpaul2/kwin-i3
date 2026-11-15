@@ -8,7 +8,7 @@
 Either way DIR gets trace.json (every action, fully resolved: window captions and coordinates,
 never indexes), result.json, the kwin-i3 log, and the last Dump State. A run stops at the first
 step whose invariants fail. tests/fuzz/run.py drives this: many seeds, replays, shrinking.
-Design and review: docs/fuzz-design.md.
+Design: docs/fuzz-design.md.
 """
 import argparse, json, os, random, re, signal, subprocess, sys, time
 
@@ -21,8 +21,8 @@ LOG = os.environ["KI3_LOG"]
 TMP = os.environ["KI3_TMP"]
 MAX_WINDOWS = 8
 KEYS = list(json.load(open(os.path.join(ROOT, "tests", "keys.json"))))   # never the Selftest ones
-# Meta+Shift+N's action id kept its "(symbol)" (src/kwin.js registerKeys): without it, from
-# 2026-10-24 until 2026-10-30, the fuzzer's moves to a workspace invoked nothing.
+# Meta+Shift+N's action id keeps its "(symbol)" (src/kwin.js registerKeys): without it, the
+# fuzzer's moves to a workspace invoke nothing.
 KEYS += ["Workspace %d" % n for n in range(1, 5)] + ["Move to Workspace %d (symbol)" % n for n in range(1, 5)]
 # The unbound ones, as in i3: sticky, back-and-forth,
 # next/prev, the outputs. A quarter of the key draws, so the bound keys keep most of them.
@@ -84,7 +84,7 @@ class Kwin:
             return []
 
     def dump(self):
-        """One Dump State snapshot, parsed. In-process and atomic (design review 3)."""
+        """One Dump State snapshot, parsed. In-process and atomic."""
         try:
             before = os.path.getsize(self.dumpfile)
         except FileNotFoundError:
@@ -125,7 +125,7 @@ class Kwin:
     def inject(self, cmds):
         r = subprocess.run([os.path.join(ROOT, "tools", "inject.py")] + cmds, capture_output=True, text=True, timeout=10)
         if r.returncode != 0:
-            # Nothing may stay held down for the next action (design review 16).
+            # Nothing may stay held down for the next action.
             subprocess.run([os.path.join(ROOT, "tools", "inject.py")] +
                            ["key %d up" % k for k in EVDEV.values()] + ["btn left up", "btn right up"],
                            capture_output=True, timeout=10)
@@ -135,7 +135,7 @@ class Kwin:
 
     def settle(self, pointer=False):
         """Quiet log (kjs lines aside) for 250 ms, then two dumps 100 ms apart that agree."""
-        time.sleep(0.35 if pointer else 0.05)   # focus follows the mouse after 150 ms (review 5)
+        time.sleep(0.35 if pointer else 0.05)   # focus follows the mouse after 150 ms
         end = time.time() + 10
         while time.time() < end:
             n = self.quiet_count()
@@ -203,7 +203,7 @@ class Kwin:
             end = time.time() + 5
             while time.time() < end and len(self.dump()["outputs"]) != want:
                 time.sleep(0.1)
-            # KWin briefly puts windows on the old monitor; wait for kwin-i3's pass after it (review 10).
+            # KWin briefly puts windows on the old monitor; wait for kwin-i3's pass after it.
             time.sleep(0.5)
         elif op == "effect":
             # The effect gone and back (a Plasma update, the user's Desktop Effects page): kwin-i3
@@ -236,7 +236,7 @@ def shape(d):
                        d["ws"]], sort_keys=True)
 
 
-# ---- invariants (docs/fuzz-design.md, as amended by its review) ----------------------------
+# ---- invariants (docs/fuzz-design.md) -------------------------------------------------------------
 
 def inside(r, o):
     return r[0] >= o[0] and r[1] >= o[1] and r[0] + r[2] <= o[0] + o[2] and r[1] + r[3] <= o[1] + o[3]
@@ -358,9 +358,9 @@ def check(k, d, prev):
                 bad.append(("I2", "%s %s outside %s %s" % (w["caption"], w["frame"], o["name"], o["geom"])))
             if w["min"] == prev_min.get(w["id"]) and (w["client"][2] < w["min"][0] or w["client"][3] < w["min"][1]):
                 bad.append(("I5", "%s client %s below its minimum %s" % (w["caption"], w["client"][2:], w["min"])))
-            # The rect kwin-i3 asks for, inside the tile's padding (the 1 px frame, the gaps: window
-            # modes, 2026-10-24). It comes from kwin-i3's own windowRect, so it is checked on its own
-            # too: inside its tile, by at most MAX_PAD a side (review: a wrong padding would move the
+            # The rect kwin-i3 asks for, inside the tile's padding (the 1 px frame, the
+            # gaps). It comes from kwin-i3's own windowRect, so it is checked on its own
+            # too: inside its tile, by at most MAX_PAD a side (a wrong padding would move the
             # frame and "want" together, unseen). No fallback to the tile: a missing "want" fails.
             if w["tile"]:
                 want = w.get("want")

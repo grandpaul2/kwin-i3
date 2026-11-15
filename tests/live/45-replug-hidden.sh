@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The fuzzer's I2 (seed 1 of 2026-10-22's campaign, shrunk from 46 actions to these 10): the
+# The fuzzer's I2 (shrunk from 46 actions to these 10): the
 # second monitor goes away and comes back. Its workspace (2) is hidden on the first meanwhile, and
 # taking 2's window off its tile made KWin give it back its size from before it was tiled; a hidden
 # window never acknowledges a new size, and KWin applies no geometry to it until it does, so when

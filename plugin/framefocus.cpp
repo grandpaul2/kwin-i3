@@ -131,20 +131,20 @@ bool FrameFocus::onRing(const Window *w, const QPointF &pos) const
 
 // Focus follows the mouse onto a frame, as into a client: the request KWin's own
 // Window::pointerEnterEvent makes. Not pointerEnterEvent itself: KWin has just stored this
-// pointer position as the focus-mouse position, so its "has the mouse moved" check would refuse
-// (a review). No cancel when the frame is left for another window: KWin has already
+// pointer position as the focus-mouse position, so its "has the mouse moved" check would refuse.
+// No cancel when the frame is left for another window: KWin has already
 // requested that window's focus, and cancelDelayFocus would drop it.
 bool FrameFocus::pointerMotion(PointerMotionEvent *event)
 {
     noticeFocusParent(input()->pointer()->hover(), event->position, true);
     // A tiled neighbour's invisible band over this tiled window's own frame (an app drawing its
     // own frame, stacked above): raise this one among the tiles, so that each tiled window owns
-    // its whole frame, as a clipped client does in i3 (spec-gap-ownership.md, part B). Tiled
+    // its whole frame, as a clipped client does in i3. Tiled
     // windows never overlap visibly, so the order among them shows nothing (probed: no pixel
     // changed), and floating windows keep above. The raise is a stacking change, at which KWin
     // enters the owner at the position this motion has just stored, and pointerEnterEvent takes
     // that for a pointer that hasn't moved: focus follows mouse would never reach the owner, the
-    // pointer counting as in it from then on (probe 94, a capture). So the request
+    // pointer counting as in it from then on (probed, a capture). So the request
     // its enter would have made, as for the ring below.
     Window *hover = input()->pointer()->hover();
     if (overTiledMargin(event->position, hover)) {
@@ -192,7 +192,7 @@ void FrameFocus::noticeFocusParent(Window *hover, const QPointF &pos, bool enter
 
 // A plain press on a frame: what a press in the window does (activate and raise by the
 // [MouseBindings] CommandWindow* commands, as i3's click on a border), and the press and its
-// release go no further, to the desktop beneath (review R1-12). A press with modifiers is
+// release go no further, to the desktop beneath. A press with modifiers is
 // KWin's own (Meta+drag), and so is everything while a game holds the pointer or a window
 // inhibits shortcuts (input.cpp globalWindowAction skips those too).
 bool FrameFocus::pointerButton(PointerButtonEvent *event)
@@ -209,7 +209,7 @@ bool FrameFocus::pointerButton(PointerButtonEvent *event)
     }
     // A press starts afresh: a filter before this one may have taken the release of a press
     // taken here, which would otherwise leave the bit set and eat the next release of that
-    // button anywhere (review of the change, finding 5).
+    // button anywhere.
     m_taken &= ~event->button;
     // A press this filter doesn't act on goes on to KWin, except over a strip of kwin-i3's own
     // (gapstrips.h): KWin counts it a window (an InternalWindow is always a client) and would run
@@ -277,7 +277,7 @@ FrameFocus::Decision FrameFocus::decide(const QPointF &pos, Window *hover, Qt::M
         const bool gap = !hover || hover->isDesktop() || GapStrips::isStrip(hover) || overTiledMargin(pos, hover);
         // Inside another tiled window's own frame, under this one's band: that window's pixel,
         // which only the app holding the pointer could hand on. Nothing, not a resize of it
-        // (spec-gap-ownership.md, part C; the raise in pointerMotion makes it rare).
+        // (the raise in pointerMotion makes it rare).
         if (overTiledMargin(pos, hover) && tiledFrameAt(pos)) {
             return {Decision::Margin, hover, QString()};
         }

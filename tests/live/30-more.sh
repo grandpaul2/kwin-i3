@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Phase 2, one monitor: the ignore rules, up/down, the error guard, and a reload with floating
-# and minimized windows (the gaps the test review listed, 2026-10-22).
+# and minimized windows (cases the other scenarios left out).
 source "$(dirname "$0")/lib.sh"
 on() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { $2 } })" >/dev/null; }
 load_kwin_i3
@@ -85,7 +85,7 @@ on b 'w.minimized = false;'
 check "b back in its place"                 wait_tree 1 "V[c a* b] ~f"
 
 # A window whose minimum can't fit beside the others floats instead of hanging off the screen
-# (the plan's rule; the live-desktop review saw 580 px off a 1280 px screen).
+# (the plan's rule; seen live 580 px off a 1280 px screen).
 for c in a c b f; do kclose "$c"; done
 client --title p; client --title q
 client --title big --min 900x500
@@ -101,7 +101,7 @@ check "big"                                 poll inside big
 check "logged why"                          wait_log '^.{9}FLOAT big: '
 
 # Minimums that fit in total but not in i3's shares: they get the space from neighbours with
-# room to spare (seen live, 2026-10-22: KeePassXC, minimum 800 px, in a 640 px quarter, hung
+# room to spare (seen live: KeePassXC, minimum 800 px, in a 640 px quarter, hung
 # 162 px onto the other monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
 kclose big; kclose p; kclose q; kclose r
 key "Workspace 3"                          # a fresh, horizontal workspace

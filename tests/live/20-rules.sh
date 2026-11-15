@@ -90,14 +90,14 @@ check "minimized: main fills the screen"    geom_is main "0,0 1280x720"
 on a 'w.minimized = false;'
 check "unminimized: back on the left"       geom_is a "0,0 640x720"
 
-# a reload keeps the layout (decision 5). Focus main first: after the unminimize KWin may hand
-# a the focus late, and under load c then opened beside a (seen 2026-10-22 with the fuzzer running).
+# a reload keeps the layout (`plan.md` decision 5). Focus main first: after the unminimize KWin may hand
+# a the focus late, and under load c then opened beside a (seen under the fuzzer's load).
 on main 'workspace.activeWindow = w;'
 check "main focused"                        wait_tree 1 "H[a main*]"
 client --title c
 key "Split V"; client --title d
 check "before reload"                       wait_tree 1 "H[a main V[c d*]]"
-m=$(mark)       # everything below must be logged by the reloaded script (review fault 4)
+m=$(mark)       # everything below must be logged by the reloaded script
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 load_kwin_i3
 check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
@@ -109,7 +109,7 @@ key "Release"
 check "release logs"                        wait_log '^.{9}RELEASED$'
 tiled_count_is() { [[ "$(kjs 'var n = 0; workspace.windowList().forEach(function (w) { if (w.tile) n++; }); log(n)')" == "$1" ]]; }
 check "no window is left in a tile"         poll tiled_count_is 0
-own_size() {   # a real geometry (review fault 2: empty must not pass), and not a tile's
+own_size() {   # a real geometry (empty must not pass), and not a tile's
     local g; g=$(geom a)
     [[ $g =~ ^-?[0-9]+,-?[0-9]+\ [0-9]+x[0-9]+$ && $g != "0,0 427x720" && $g != "0,0 1280x720" ]]
 }

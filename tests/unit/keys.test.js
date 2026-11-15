@@ -11,7 +11,7 @@ const block = src.match(/var KEYS = (\{[\s\S]*?\n    \});/);
 assert.ok(block, "KEYS table not found in src/kwin.js");
 const KEYS = Function("return " + block[1])();
 
-// The spec: tests/keys.json, the author's old i3 config translated. Shared with the live key sweep
+// The spec: tests/keys.json, i3's default keys as kwin-i3 binds them. Shared with the live key sweep
 // (tests/live/50-keys.sh), so neither reads the table it is checking.
 const want = require("../keys.json");
 

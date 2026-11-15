@@ -3,8 +3,7 @@
 # it.
 #   KI3_KCM_ROOT   the Qt plugin dir (default ~/.local/lib/kwin-i3/kcm-plugins). Its own dir, not
 #                  the plugins' one: it goes on the whole session's QT_PLUGIN_PATH (environment.d),
-#                  and the plugins' dir is KWin's alone (version-locked KWin plugins; until
-#                  2026-10-24 also a decoration every app listing decorations would load).
+#                  and the plugins' dir is KWin's alone (version-locked KWin plugins).
 #                  Set (tests): no environment.d file, no .desktop file.
 # The .so is replaced by renaming a new file over it: a running System Settings may have the old one
 # mapped. Its id is the file name, so it can't carry the plugins' hash suffix.

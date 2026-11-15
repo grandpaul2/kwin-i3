@@ -392,5 +392,5 @@ table is the home of the rules; this is the why.
 - **Cost to KWin: measured small, not a risk** (a probe in the test KWin with the plugins, not
   kept): loading kwin-i3 adds about 16 MB to KWin (8 MB heap, 4 MB libraries, 4 MB shared buffers),
   flat over windows closed and reopened; idle CPU is KWin's own (the script runs no polling timer);
-  a new window's layout takes 2 ms on the desktop, its drawn layout 6.4 ms (a capture). The gap strips (about 3 per tiling window, never fewer, `plugin/gapstrips.cpp`)
+  a new window's layout takes 2 ms on a desktop, its drawn layout 6.4 ms (a capture). The gap strips (about 3 per tiling window, never fewer, `plugin/gapstrips.cpp`)
   are tens of kB each. Performance work is in KWin, its effects and Plasma, not here.

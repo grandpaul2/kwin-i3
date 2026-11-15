@@ -15,8 +15,8 @@ pix() { "$shot" same "$png" "$1" "$2" "$3" 2; }
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 # near <x> <y> <frame> <app>: an antialiased arc pixel, nearer the frame's colour than the app's
-# or the background's (78's): how far it leans to the app is the GPU's (55,48,48 on the desktop's
-# NVIDIA, 68,33,33 on the laptop's AMD, 2026-10-29)
+# or the background's (78's): how far it leans to the app is the GPU's (55,48,48 on
+# NVIDIA, 68,33,33 on AMD)
 near() {
     python3 -c 'import sys
 p, f, a = (tuple(map(int, v.split(","))) for v in sys.argv[1:4])

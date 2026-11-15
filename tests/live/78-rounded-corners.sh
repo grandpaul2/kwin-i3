@@ -66,7 +66,7 @@ check "  its far corner, at the screen's"   rounded 1278 718 $ACT $LIME -1 -1
 key "Focus Left"; capture
 check "focus moved: the arcs recoloured"    eval 'rounded 1 1 $ACT $RED && rounded 638 718 $ACT $RED -1 -1 && rounded 641 1 $INACT $LIME && rounded 1278 718 $INACT $LIME -1 -1'
 
-# Floated: Breeze's corners (the probe, 2026-10-25: its bottom corner pixel is not the app's).
+# Floated: Breeze's corners (probed: its bottom corner pixel is not the app's).
 key "Focus Right"; key "Floating Toggle"
 check "b floats"                            poll eval '[[ "$(tree 1)" == *"~b"* ]]'
 sleep 0.5; read -r bxy bwh <<<"$(fc b)"; bx=${bxy%,*}; by=${bxy#*,}; bw=${bwh%x*}; bh=${bwh#*x}

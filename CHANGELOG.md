@@ -155,16 +155,16 @@ Before this (since v1.0.0):
 
 - A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
   resize: Firefox's session restore had left one window over its neighbour and one off the
-  monitor (A capture, 2026-10-25). At most once a second per window, and never mid-answer to
+  monitor (a capture). At most once a second per window, and never mid-answer to
   kwin-i3's own resize.
 - The dead Shift+symbol keys are gone: a Shift+key that types a symbol arrives as the symbol, so
   Meta+Shift+; and Meta+Shift+1..0 never fired; their twins Meta+: and Meta+!..) did (probed in
-  the test KWin, 2026-10-24). Only the twins are registered now, and the old actions are
+  the test KWin). Only the twins are registered now, and the old actions are
   unregistered at load, so the settings page's Keys list shows one box per key. The keys pressed
   are the same (`tests/live/38-retired-keys.sh`).
 - The active floating window's frame defaults to a muted green, `#4d7254` (was `#4c995a`),
   picked in the settings page's colour button.
-- kwin-i3's own page in System Settings > Window Management (live 2026-10-24): every setting, laid
+- kwin-i3's own page in System Settings > Window Management: every setting, laid
   out as Plasma's pages are, Apply that applies without the plugins, and a Keys sub-page where a
   key another shortcut holds is named and taken on Apply (`make restore-keys` gives it back);
   `make kcm-install`. The Configure form is tidied to match.
@@ -188,7 +188,7 @@ Before this (since v1.0.0):
   Meta+Shift+drag; `[kwin-i3-mouse]` is no longer read. `kwini3mouse` stays for focus on the
   frame alone. The plugins are optional: README's install is the script, the plugins a section of
   their own, and `make test` without `kwin-devel` skips the three plugin scenarios, saying so.
-- Fix (live 2026-10-24): after a reload, un-floating a window left it kept above (and, since the frame colours,
+- Fix: after a reload, un-floating a window left it kept above (and, since the frame colours,
   green): the new instance had not recorded the keep-above flag the old one set. A window
   kwin-i3 floats now owns its flag, set by it or not, and a window a reload finds kept above
   and in no tile stays floating instead of being re-tiled by the rules. Found by the review: a
@@ -196,7 +196,7 @@ Before this (since v1.0.0):
   because the rules were re-applied on every change; they now act only when their verdict
   changes (`tests/live/60-load.sh`,
   `20-rules.sh`).
-- Fix (live 2026-10-24): a window opened on a workspace whose focused window was fullscreen seemed not to open.
+- Fix: a window opened on a workspace whose focused window was fullscreen seemed not to open.
   The rebuild of the tiles for the newcomer lost the fullscreen window its tile, KWin refused to
   tile it again (a fullscreen window is not resizable to KWin), and kwin-i3 floated it,
   monitor-sized and above the tiles; leaving fullscreen changed nothing. It now stays in the tree
@@ -206,11 +206,11 @@ Before this (since v1.0.0):
   sent there while the workspace is hidden or when the workspace is shown again with Meta+N.
   Found from a capture; `tests/live/32-fullscreen-open.sh`, `53-hold.sh` section 8, a unit test; six live mutants and
   one unit mutant.
-- The frame paints the active floating window green (live 2026-10-24) (`#4c995a`), so a floating window is told
+- The frame paints the active floating window green (`#4c995a`), so a floating window is told
   from a tiled one; inactive stays i3's grey. The four colours are kwinrc keys
   (`[kwin-i3-frame]`, README), changed live with `--notify`
   (`tests/live/54-frame.sh` section 2b).
-- **kwini3frame** (live 2026-10-23), a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
+- **kwini3frame**, a third plugin: i3's 1 px frame as a KDecoration3 decoration that starts
   nothing from the pointer (no resize cursor or edge drag, no title-bar move, no menu), replacing
   the Aurorae theme. Focus on the frame follows i3 (hover and click) through kwini3mouse.
   `make plugin-install` selects it in kwinrc; `tools/frame-guard.sh` falls back to Breeze before a
@@ -226,7 +226,7 @@ Before this (since v1.0.0):
   kwin-i3's record of its old tile, which the invariant check read as "not in its tile" and could
   throw on once that tile was gone (fuzz I1, seed 2; `tests/live/48-replug-listed.sh`).
 - Licensed GPL-2.0-or-later (LICENSE, NOTICE); the phase-0 spike scripts and the reference copy
-  of KWin's `tile.cpp` removed from the tree (git history before 2026-10-23 has them).
+  of KWin's `tile.cpp` removed from the tree (git history before v1.0.0 has them).
 - The floating-title default is empty; a streaming setup's title, once a
   default, is a user's rule now.
 - Test client: the dialog starts at 200x160, above KWin's 150 px decorated minimum (fuzz I9,
@@ -234,8 +234,7 @@ Before this (since v1.0.0):
 
 ## 1.0.0 — 2026-10-23
 
-Feature complete for daily use, after two nights' work (2026-10-21 to 2026-10-23), and in
-daily use since 2026-10-22. One KWin script plus two small KWin plugins:
+Feature complete for daily use. One KWin script plus two small KWin plugins:
 
 - **The i3 tree** (`src/tree.js`), ported from i3's source: insertion after the focus, `tree_move`
   with every case, split and toggle-split, tree-based focus in a direction, close with i3's

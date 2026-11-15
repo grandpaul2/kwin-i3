@@ -97,7 +97,7 @@ def main():
                 d = Gtk.Window(title=a.title + " dialog", transient_for=win, modal=True)
                 # Not below KWin's 150 px minimum for a decorated window (xdgshellwindow.cpp
                 # minSize): a smaller dialog on a hidden desktop gets a resize with every move
-                # KWin sends it, and never applies it (fuzz I9, seed 28, 2026-10-23).
+                # KWin sends it, and never applies it (fuzz I9).
                 d.set_default_size(200, 160)
                 d.set_child(Gtk.Label(label="dialog"))
                 d.present()

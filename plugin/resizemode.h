@@ -8,7 +8,7 @@
 // mode's state is the helper's: it tells kwin-i3 through a hidden action (kwin-i3 Mode Changed,
 // then Mode()) and kwini3hold directly (the banner on the focused window), as the drag does.
 // Also C's terminal: kdeglobals' default terminal launched through kglobalaccel, so it gets its
-// own systemd scope, not KWin's (probe 92).
+// own systemd scope, not KWin's (probed).
 #pragma once
 
 #include <input.h>

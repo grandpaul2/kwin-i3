@@ -40,7 +40,7 @@ test("every action the script registers has its row and default on the Keys page
 });
 
 // A Shift+key that types a symbol arrives as that symbol: Meta+Shift+; never fires, Meta+: does
-// (probed 2026-10-24, KWin 6.7.5). Letters and arrows are unaffected.
+// (probed, KWin 6.7.5). Letters and arrows are unaffected.
 test("no key is registered in its dead Shift+symbol form", () => {
     for (const [action, key] of registered())
         assert.ok(!/Shift\+([0-9;',./\[\]\\=`-])$/.test(key), `${action}: ${key} never fires`);

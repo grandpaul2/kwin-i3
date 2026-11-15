@@ -2,8 +2,8 @@
 # needs: plugin
 # The mouse with the kwini3helper plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
 # 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock: Meta+left-drag
-# moves, Meta+right-drag resizes; a tiled window's Meta+left-drag is the helper's tiling drag. The plugin's mouse chords (Meta+Shift+drag moved) were dropped on
-# 2026-10-24 (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
+# moves, Meta+right-drag resizes; a tiled window's Meta+left-drag is the helper's tiling drag. The plugin's old mouse chords (Meta+Shift+drag moved) are
+# gone (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks
 plugin_loaded() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -q '"kwini3helper"'; }
@@ -15,7 +15,7 @@ moved_by() {   # moved_by <caption> <x,y before> <dx> <dy>: the frame's top left
     [[ "$x,$y" == "$((${2%,*} + $3)),$((${2#*,} + $4))" ]]
 }
 # A slow drag, 20 ms between events: lib.sh's sdrag sends them back to back, and then GTK never
-# reports the release (seen 2026-10-22), which the pass-through checks below need.
+# reports the release, which the pass-through checks below need.
 sdrag() {   # sdrag <mods> <button> x1 y1 x2 y2
     local -a mods cmds; local k s
     IFS=+ read -ra mods <<<"$1"

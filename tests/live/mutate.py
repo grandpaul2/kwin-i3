@@ -2,7 +2,7 @@
 """Deliberate faults in src/kwin.js and src/rules.js; each must make a live check FAIL.
 Run: make mutate-live.
 
-- The unmutated suite must pass first, or nothing here means anything (test review fault 7).
+- The unmutated suite must pass first, or nothing here means anything.
 - A fault counts as caught only when a check printed FAIL: a timeout, a crash or a harness error is
   reported as such, not as caught.
 - Each fault names the scenario expected to catch it, which runs first with KI3_FAILFAST=1; the
@@ -20,7 +20,7 @@ import os, subprocess, sys
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 # Every fault is built into package/, and the live desktop loads kwin-i3 from a checkout's package/
 # (~/.local/share/kwin/scripts/kwin-i3): one KWin reload mid-run would give it a broken window
-# manager. Run it from a worktree instead (2026-10-22).
+# manager. Run it from a worktree instead.
 live = os.path.realpath(os.path.expanduser("~/.local/share/kwin/scripts/kwin-i3"))
 if live == os.path.realpath("package"):
     sys.exit("mutate.py: this checkout's package/ is the live kwin-i3; run it in a worktree:\n"
@@ -73,7 +73,7 @@ muts = [
  (M, "src/kwin.js", "a returning monitor's workspace not restored", "            if (allBack) {", "            if (false) {"),
  (X, "src/kwin.js", "minimums not shared out", "        if (sumMin > total) return want;", "        return want;"),
  (X, "src/kwin.js", "tile minimums left in place while sizing", "            prepareTiles(root, screen, true);   // sizes first", "            prepareTiles(root, screen);   // sizes first"),
- # The fuzzer's finds, 2026-10-22 (tests/fuzz, docs/fuzz-design.md)
+ # The fuzzer's finds (tests/fuzz, docs/fuzz-design.md)
  (M, "src/kwin.js", "an empty workspace leaves a hidden window active", "            if (f.type === \"ws\" && ac && Tree.wsOf(ac) !== ws) workspace.activeWindow = null;", ""),
  (I, "src/kwin.js", "a window resized smaller than its tile stays so", "            refit(root);\n", ""),
  (I, "src/kwin.js", "fullscreen geometry lost on unmanage", "        if (g) w.frameGeometry = g;\n", ""),
@@ -191,26 +191,26 @@ ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G, Z]
 # start is KWin's root x, which kwin-i3 wrote as inset/width, and snap() gives back that same double
 # for any whole-pixel inset; it stays exact as a guard (CustomTile compares edges exactly). The same
 # for snapping the last child's end: setSizes writes a tile only when it is off by more than 1e-4,
-# so a last-bit difference never reaches KWin on its own (2026-10-24, both run, both green).
+# so a last-bit difference never reaches KWin on its own (both run, both green).
 # Also known equivalent, not listed: dropping `|| dragging` from the desktopsChanged guard. The
 # window then joins the other monitor's workspace when it crosses rather than when dropped; the
 # end state is the same, so no test can tell. The guard stays: it keeps kwin-i3 from moving a
 # window while it is still being dragged.
-# Also not listed, with reasons (2026-10-22):
+# Also not listed, with reasons:
 # - "Meta+N moves a gone home": the fix in gotoWorkspace overlaps the screensChanged restore (a
 #   returning monitor shows again what it showed), which corrects the same symptom; kept as
 #   defence in depth, no test can separate them.
 # - "untile() back to w.tile in dropWindow" (and the other five call sites): with the relocate
 #   guard in place no test drops a hidden, listed window any more; untile is kept because KWin's
 #   listing without w.tile on a hidden desktop is real (KWin 6.7.5 Tile::manage), so unmanaging
-#   by w.tile alone is wrong wherever it happens (fuzzer I1, 2026-10-22).
-# - An `outOfTiles` record beside w.tile (built and removed 2026-10-24): the spec review predicted
+#   by w.tile alone is wrong wherever it happens (fuzzer I1).
+# - An `outOfTiles` record beside w.tile (built and removed): thought needed against
 #   a rebuild loop while w.tile lagged the client's acknowledgement. w.tile is KWin's *requested*
 #   tile (window.h:595, READ requestedTile), which Tile::unmanage clears at once; a client stopped
 #   with SIGSTOP (answering nothing) showed tile=null right after the unmanage, two passes, no
 #   spin. The mutant was equivalent, so the record is gone; 32-fullscreen-open.sh keeps the
 #   stopped client and the pass counts.
-# - "the hand-back only on a shown workspace" (keepsFullscreenFocus, 2026-10-24): KWin's own
+# - "the hand-back only on a shown workspace" (keepsFullscreenFocus): KWin's own
 #   activation of a new window on a hidden desktop switches that desktop first
 #   (SwitchToOtherDesktop), so by windowAdded the workspace is shown and the guard never fires in a
 #   test. It stays: activating the fullscreen window on a hidden workspace would switch desktops.

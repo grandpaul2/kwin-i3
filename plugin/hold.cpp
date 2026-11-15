@@ -126,7 +126,7 @@ Hold::Hold()
     QDBusConnection::sessionBus().registerObject(QStringLiteral("/kwini3hold"),
                                                  QStringLiteral("net.local.kwini3hold"),
                                                  this, QDBusConnection::ExportAllSlots);
-    // kwin-i3 draws no frame of its own without this effect (spec-window-modes R5): KWin's
+    // kwin-i3 draws no frame of its own without this effect: KWin's
     // reconfigure is how it hears that the effect came or went (it asks Stats on every one).
     QMetaObject::invokeMethod(workspace(), &Workspace::reconfigure, Qt::QueuedConnection);
 }
@@ -746,7 +746,7 @@ int Hold::requestedEffectChainPosition() const
     return 90;
 }
 
-// A fullscreen game or video scans out directly unless a hold is on (review R1-3).
+// A fullscreen game or video scans out directly unless a hold is on.
 bool Hold::blocksDirectScanout() const
 {
     return holding();
@@ -906,8 +906,8 @@ void Hold::SetMode(const QString &mode)
 }
 
 // A floating window kwin-i3 took the decoration of, with frameOnFloating: the frame in the
-// floating colours. Not one that draws its own title bar (its decoration policy is the client's:
-// review R1-5), not fullscreen, not minimized.
+// floating colours. Not one that draws its own title bar (its decoration policy is the
+// client's), not fullscreen, not minimized.
 bool Hold::floatingFramed(EffectWindow *w) const
 {
     Window *win = w->window();
@@ -1539,7 +1539,7 @@ void Hold::resetRadii()
 
 // The bars around `frame`, in device pixels (logical x scale): each from the window's rounded
 // edge out to the rounded edge of the frame width beyond it, which is the middle of the padding
-// between two windows, so neighbours meet with no overlap and no gap at any scale (review R1-6).
+// between two windows, so neighbours meet with no overlap and no gap at any scale.
 // Top and bottom span the corners, except the right side when it is the indicator: i3 draws
 // that side full height (x.c:591). With a radius (device px) each bar reaches that far inside
 // the window too: the wedge between a corner and its arc is the frame's, and inside the rect.
@@ -1595,9 +1595,9 @@ void Hold::repaintRing(EffectWindow *w, const RectF &frame)
 
 // The ring around wherever the window is drawn: its frame moved and scaled as the paint data says
 // (a held snapshot at its old frame, a sliding desktop), clipped to the region this paint may
-// touch, which leaves out windows above it (review R1-1), and as opaque as the window (a fade).
+// touch, which leaves out windows above it, and as opaque as the window (a fade).
 // Read after effects->paintWindow has returned: the effects after this one in the chain have
-// changed the same paint data by then (Hold asks for no chain position; spec R1-16).
+// changed the same paint data by then (Hold asks for no chain position).
 // Drawn with KWin's border shader (what Breeze's outline uses, base.frag): the inner edge the
 // window's rect with the radius KWin clips the window to, so the ring follows its corners; the
 // outer edge the frame width beyond. In global device pixels, as the vertices are.

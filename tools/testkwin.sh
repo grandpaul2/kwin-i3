@@ -8,7 +8,7 @@
 #   KI3_SHOW_KWIN=1                      print the test KWin's own output at the end
 #   KI3_DESKTOPS=<n>                     the test KWin's virtual desktops (default 10; stock is 1)
 #   KI3_PEROUTPUT=true|false             per-output desktops (default true; stock is false)
-#   KI3_OUTPUTS=<n>                      the number of outputs (default 2; 1 is a laptop's screen)
+#   KI3_OUTPUTS=<n>                      the number of outputs (default 2; 1 is a laptop's own screen)
 #   KI3_SCALE=<s>                        each output's scale (default 1; 2 or 1.5 for HiDPI): the
 #                                        pixels grow, each output stays 1280x720 logical, so the
 #                                        scenarios' geometry holds (OPEN.md item 50)
@@ -26,12 +26,12 @@
 #
 # History, so it isn't undone:
 # - The environment is set BEFORE the private bus starts: dbus-daemon hands its environment to
-#   whatever it starts. The first version (2026-10-21) set it after, and the portals and ksecretd
-#   the test bus started pointed at the live display and config.
+#   whatever it starts. Set after, the portals and ksecretd the test bus
+#   started would point at the live display and config.
 # - The private bus starts NO services (a bus config with no service directories). With them, every
 #   test window started xdg-desktop-portal-kde on the test bus, which aborted when the test KWin
-#   went away: 22 core dumps in a night, each a "Service Crash" notification on the live desktop
-#   (2026-10-22). KWin and the GTK test client run fine without a portal.
+#   went away: 22 core dumps in a night, each a "Service Crash" notification on the live desktop.
+#   KWin and the GTK test client run fine without a portal.
 # - Teardown stops the clients first, then KWin (waiting for it), then anything left on the bus.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -41,8 +41,8 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     trap 'rm -rf "$tmp"' EXIT
     export KI3_TMP=$tmp KI3_INNER=1
     # A Plasma session's own variables, whoever starts the test: without them Qt loads no KDE
-    # platform theme, and KWin and the apps get Qt's fonts and style (over ssh on the Arch laptop,
-    # 2026-10-29: Breeze's title bar 36 px, not 28, and the settings page's spin boxes took no
+    # platform theme, and KWin and the apps get Qt's fonts and style (over ssh, for one:
+    # Breeze's title bar 36 px, not 28, and the settings page's spin boxes took no
     # typing). The desktop's tests had them only by inheriting the desktop session's.
     export XDG_CURRENT_DESKTOP=KDE KDE_FULL_SESSION=true KDE_SESSION_VERSION=6
     export XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data XDG_STATE_HOME=$tmp/state XDG_CACHE_HOME=$tmp/cache
@@ -51,7 +51,7 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     # Only the plugin a test asks for, never one from the caller's environment.
     if [[ -n ${KI3_PLUGIN:-} ]]; then export QT_PLUGIN_PATH=$KI3_PLUGIN; else unset QT_PLUGIN_PATH; fi
     # No system bus: the test KWin read the live session's lock state through it, and while that
-    # screen was locked nothing tiled and input was swallowed (input-test review, 2026-10-22).
+    # screen was locked nothing tiled and input was swallowed.
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none
     mkdir -p "$XDG_CONFIG_HOME"
     cat > "$tmp/bus.conf" <<'CONF'
@@ -114,7 +114,7 @@ debugLog=true
 gapsInner=0
 gapsOuter=0
 RC
-# Gaps pinned at 0, kwin-i3's default until 2026-10-25 (now 2 and 0): the scenarios' geometry is
+# Gaps pinned at 0 (kwin-i3's defaults are 2 and 0): the scenarios' geometry is
 # written for no gaps. 26-gaps deletes the keys to check the defaults.
 # The decoration is Breeze, KWin's default; with the plugins the effect draws the frame around
 # tiled windows.
@@ -127,7 +127,7 @@ sink=$!
 # KI3_PACKAGE=1: kwin-i3 installed as a package, where KWin Scripts finds it (off, as
 # metadata.json's EnabledByDefault has it). Before KWin starts: KPackage caches the list of
 # packages at KWin's first look, so one linked later is never seen, and turning it on does nothing
-# (found by 37-settings-page.sh, 2026-10-24). Only when asked: KWin unloads a listed package that
+# (found by 37-settings-page.sh). Only when asked: KWin unloads a listed package that
 # isn't turned on whenever it rescans (every kjs), and the other scenarios load main.js by
 # loadScript under the same name, without turning it on.
 if [[ ${KI3_PACKAGE:-} == 1 ]]; then
@@ -149,7 +149,7 @@ kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count "${KI3_OUTPUTS
     --width "$width" --height "$height" --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
 kwin=$!
 up=""
-# Up to 15 s: with every live scenario starting a KWin at once (15 since 2026-10-22), 5 s was
+# Up to 15 s: with every live scenario starting a KWin at once, 5 s was
 # too short for some (testkwin: KWin or the log sink did not start).
 for _ in $(seq 150); do
     if [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && busctl --user status org.kde.KWin >/dev/null 2>&1 &&

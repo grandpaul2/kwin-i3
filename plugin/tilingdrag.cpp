@@ -838,7 +838,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         m_taken |= event->button;
         return true;
     }
-    m_taken &= ~event->button;      // a press starts afresh (FrameFocus::pointerButton, finding 5)
+    m_taken &= ~event->button;      // a press starts afresh (as FrameFocus::pointerButton)
     if (!m_on || input()->pointer()->isConstrained() || workspace()->globalShortcutsDisabled()) {
         return false;
     }

@@ -497,7 +497,7 @@ var Tree = (function () {
     // tree_open_con, for a window KWin has put on workspace `ws`: it goes after the focus of that
     // workspace. Focus does not change here; KWin's activation tells us later (focusWin).
     M.open = function (win, ws) {
-        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf (review)
+        if (this.byWin[win]) return this.byWin[win];       // added twice: no ghost leaf
         var f = this.focused && wsOf(this.focused) === ws ? this.focused : this.descendFocused(ws);
         var con = f === ws ? ws : f.parent;
         if (isFloatingCon(con)) {                          // tree_open_con: the tiling focus's spot
@@ -1474,7 +1474,7 @@ var Tree = (function () {
     };
 
     // con_toggle_fullscreen: one fullscreen window per workspace. KWin allows several (F11 in a
-    // browser, then a video); two flags would block all directional focus (code review). Tiled
+    // browser, then a video); two flags would block all directional focus. Tiled
     // or floating alike (con_enable_fullscreen): a floating fullscreen window blocks focus too.
     M.fullscreenOn = function (ws) { return fullscreenOn(ws); };   // the workspace's fullscreen window, or null
     M.setFullscreen = function (win, on) {

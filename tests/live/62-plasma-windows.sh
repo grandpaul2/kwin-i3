@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
-# Window modes, pieces (iii)+(iv): a workspace whose new windows float
-# (a for_window rule on its number), the floating mark kept by the effect (decision 5c), the frame on floating
+# Window modes: a workspace whose new windows float
+# (a for_window rule on its number), the floating mark kept by the effect, the frame on floating
 # windows (frameOnFloating).
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
@@ -66,7 +66,7 @@ set_setting frameOnFloating true
 check "frameOnFloating: p borderless"       poll prop_is p noBorder true
 g=$(geom p); px=${g%%,*}; r=${g#*,}; py=${r%% *}; s=${g#* }; ph=${s#*x}
 check "  its frame, the focused colour, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $ACT
-# A window that draws its own title bar is never framed floating (review R1-5, finding 2).
+# A window that draws its own title bar is never framed floating.
 client --title z --csd --color blue
 check "z (CSD) floats on workspace 3"       poll floating z 3
 check "  kwin-i3 left its decoration alone" prop_is z noBorder false

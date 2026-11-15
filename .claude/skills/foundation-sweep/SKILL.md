@@ -40,8 +40,8 @@ orchestrator whose cost can't be bounded at launch.
    from the repo root (read-only; a second). It finds what a script can: a ≠ row naming no reason,
    an = row whose note carries a ≠, history and stamps in the standing docs, a broken table row,
    `behaviour.md` §11 against the code's defaults. Fix those first, as settled at step 1; what
-   is left goes to every finder as `CHECKED`, already found. On the tree before the first sweep it
-   found 126 lines, the agents' cheapest findings and the ones they missed. A new mechanical
+   is left goes to every finder as `CHECKED`, already found: the cheapest findings, and ones the agents
+   miss. A new mechanical
    check, once a sweep shows one is possible, goes into `check.py`.
 
 ## 1. Find (agents, in the background)

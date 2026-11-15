@@ -46,7 +46,7 @@ test("i3Kind: KRunner, Plasma's system windows, the logout screen and Spectacle'
     for (const c of ["krunner", "kded5", "kded6", "xwaylandvideobridge", "ksplashqml", "kwin_wayland", "ksmserver-logout-greeter"])
         assert.strictEqual(R.i3Kind(win({ resourceClass: c })), "override-redirect", c);
     assert.strictEqual(R.i3Kind(win({ resourceName: "krunner", resourceClass: "org.kde.krunner" })), "override-redirect", "by name");
-    assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle", fullScreen: true })), "override-redirect", "the region overlay (probe 93)");
+    assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle", fullScreen: true })), "override-redirect", "the region overlay (probed)");
     assert.strictEqual(R.i3Kind(win({ resourceClass: "org.kde.spectacle" })), null, "Spectacle's own window is a rule's (floating by default)");
     assert.strictEqual(R.i3Kind(win({ resourceClass: "plasmashell" })), null, "plasmashell's ordinary windows are a rule's");
 });
@@ -71,7 +71,7 @@ test("classify: i3's float at manage: transient, modal, fixed size, dialog, util
                      { utility: true, normalWindow: false }, { toolbar: true, normalWindow: false }, { splash: true, normalWindow: false },
                      { caption: "kwin-i3 capture note" }])
         assert.strictEqual(kind(R, f), "floating", JSON.stringify(f));
-    // KWin calls a fullscreen window not resizeable: it is judged by its own limits (B of spec-fullscreen-tree).
+    // KWin calls a fullscreen window not resizeable: it is judged by its own limits.
     assert.strictEqual(kind(R, { fullScreen: true, resizeable: false, minSize: { width: 100, height: 100 }, maxSize: { width: 2000, height: 2000 } }), "tiling");
     assert.strictEqual(kind(R, { fullScreen: true, resizeable: false, minSize: { width: 100, height: 100 }, maxSize: { width: 100, height: 100 } }), "floating");
     // A Wayland window with a fullscreen request pending reads the same (not resizeable, not yet

@@ -24,7 +24,7 @@ hold_set() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "
 _stat_is() { [[ "$(stat "$1")" == "$2" ]]; }
 wait_stat() { poll _stat_is "$1" "$2" && return 0; echo "    $1 is $(stat "$1"), wanted $2"; return 1; }
 # The first config read under the full parallel suite (17 KWins starting at once) took more than
-# the 5 s a wait allows (2026-10-23, three runs): the effect's reconfigure is a KWin timer plus a
+# the 5 s a wait allows (three runs in three): the effect's reconfigure is a KWin timer plus a
 # KConfigWatcher notification, both slow then. Only the first wait gets the slack.
 wait_stat_slow() { WAIT=$((5 + slack)) wait_stat "$@"; }
 capture() { "$shot" capture Virtual-0 "$png"; }
@@ -145,7 +145,7 @@ client --title c --color blue --resize-delay 0.8
 #    snapshot stays on screen while its slow neighbour grows (a visible ref keeps it drawn).
 check "a | c"                               wait_tree 1 "H[a c*]"
 # Settled at its tile first: a plain GTK 4 window's bounds are asked for again once its border
-# goes (spec-window-modes "why" 5), one more of this slow client's 0.8 s resizes.
+# goes, one more of this slow client's 0.8 s resizes.
 check "c settled at its tile"               geom_is c "641,1 638x718"
 key "Focus Left"
 check "a focused"                           wait_tree 1 "H[a* c]"
@@ -183,7 +183,7 @@ check "leaving fullscreen: KWin's restore alone, not held ($n transactions)"   b
 # A newcomer under the fullscreen window: the rebuild for it
 # loses c its tile (KWin refuses a fullscreen window), a second pass lays out without c: the
 # newcomer's placement and up to two rebuilds, held. Leaving: KWin's restore, then the rebuild
-# that takes c back in beside h and i (bounds measured 2026-10-24).
+# that takes c back in beside h and i (bounds measured).
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = true; });' >/dev/null
 wait_tree 1 "H[c! h*]"
 wait_stat open False
@@ -253,7 +253,7 @@ check "empty again"                         wait_tree 1 "H[]*"
 client --title p --color red; client --title q --color lime --resize-delay 0.8
 check "p | q"                               wait_tree 1 "H[p q*]"
 # Settled at its tile first: this slow client's resizes, and its bounds asked again once its
-# border went (spec-window-modes "why" 5), take ~2.5 s; a fixed 1.2 s wait failed 4 of 4 runs.
+# border went, take ~2.5 s; a fixed 1.2 s wait failed 4 of 4 runs.
 check "q settled at its tile"               geom_is q "641,1 638x718"
 wait_stat open False
 t=$(stat transactions)
@@ -288,8 +288,8 @@ check "empty yet again"                     wait_tree 1 "H[]*"
 
 # 13. Unloading the effect in the middle of a hold: nothing breaks, and it loads again.
 #     The action must change j's size: a swap of two halves only moves them, KWin sends no
-#     configure for an unchanged size, and the hold lasted ~4 ms, open to a poll by luck
-#     (2026-10-24). Toggle Split makes both 1280x360, so the slow j holds it ~1.5 s.
+#     configure for an unchanged size, and the hold lasted ~4 ms, open to a poll by luck.
+#     Toggle Split makes both 1280x360, so the slow j holds it ~1.5 s.
 hold_set TimeoutMs 2000
 client --title i --color red; client --title j --color lime --resize-delay 1.5
 check "i | j"                               wait_tree 1 "H[i j*]"

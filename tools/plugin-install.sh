@@ -41,7 +41,7 @@ prop() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins "
 busctl --user status org.kde.KWin >/dev/null 2>&1 || { echo "no KWin on this bus: installed only"; exit 0; }
 # A plugin's id is its file name (Qt ignores an "Id" in the metadata), so each build has its own.
 for old in $(prop LoadedPlugins | grep -oE '"kwini3helper[^"]*"' | tr -d '"'); do
-    # not fatal: the new one must still load (review, 2026-10-24)
+    # not fatal: the new one must still load
     [[ $old == "$id" ]] || busctl --user call org.kde.KWin /Plugins org.kde.KWin.Plugins UnloadPlugin s "$old" || true
 done
 prop LoadedPlugins | grep -q "\"$id\"" ||

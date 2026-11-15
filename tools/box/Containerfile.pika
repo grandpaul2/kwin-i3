@@ -1,4 +1,4 @@
-# PikaOS (Debian unstable-based, its own Plasma: KWin 6.7.4 in "nest", 2026-10-30) for the test
+# PikaOS (Debian unstable-based, its own Plasma: KWin 6.7.4 in "nest") for the test
 # KWin and the plugin build as a PikaOS user has them (docs/testing.md P5; tools/box.sh with
 # KI3_BOX=pika). The package names here are the README's for PikaOS and Debian: kwin-dev doesn't
 # pull in libdrm-dev, libkdecorations3-dev or libxkbcommon-dev, which KWin's cmake files need.

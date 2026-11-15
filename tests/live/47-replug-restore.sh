@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The fuzzer's I10 (seed 14 of 2026-10-23's run, shrunk to 7 actions): a tiled window's frame is
+# The fuzzer's I10 (shrunk to 7 actions): a tiled window's frame is
 # not its tile. a is half the first monitor while the second is plugged in; the second goes away,
 # and meanwhile the layout changes so that a's tile is a third. When the monitor returns, KWin
 # (PlacementTracker, workspace.cpp updateOutputs) puts a back to the half it had in the two-monitor

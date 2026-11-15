@@ -463,7 +463,7 @@ test("send a window inside a floated split to another workspace: it tiles there 
     assert.strictEqual(d(m), "H[a] ~V[b*]");
 });
 
-// ---- cases found by the mutation battery (2026-10-21) ---------------------------------------
+// ---- cases found by the mutation battery ----------------------------------------------------
 
 test("toggle split: no redundant one-child containers pile up (i3 #3001)", () => {
     const m = model();
@@ -716,7 +716,7 @@ test("resizeNeighbouring: refused, nothing changed, when either would vanish", (
     assert.deepStrictEqual(pct(m, "a", "b"), [0.5, 0.5]);
 });
 
-// ---- from the code review (2026-10-22) ------------------------------------------------------------
+// ---- more edge cases ---------------------------------------------------------------------------
 
 test("fullscreen is one per workspace: a second clears the first (con_toggle_fullscreen)", () => {
     const m = model();
