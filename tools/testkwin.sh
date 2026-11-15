@@ -54,7 +54,7 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     # screen is locked nothing tiles and input is swallowed.
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none
     mkdir -p "$XDG_CONFIG_HOME"
-    cat > "$tmp/bus.conf" <<'CONF'
+    cat >"$tmp/bus.conf" <<'CONF'
 <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
@@ -78,12 +78,14 @@ fi
 tmp=$KI3_TMP
 bus=$DBUS_SESSION_BUS_ADDRESS
 kwin=""
-on_bus() {   # pids attached to the test bus, except this script
+# shellcheck disable=SC2329 # called by teardown, which the trap runs
+on_bus() { # pids attached to the test bus, except this script
     for p in $(pgrep -u "$(id -u)" .); do
-        [[ $p == $$ ]] && continue
-        { tr '\0' '\n' < /proc/$p/environ; } 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$bus" && echo "$p"
+        [[ $p == "$$" ]] && continue
+        { tr '\0' '\n' </proc/"$p"/environ; } 2>/dev/null | grep -qxF "DBUS_SESSION_BUS_ADDRESS=$bus" && echo "$p"
     done
 }
+# shellcheck disable=SC2329 # run by the trap
 teardown() {
     [[ -n ${KI3_KEEP_LOG:-} && -f ${KI3_LOG:-} ]] && cp "$KI3_LOG" "$KI3_KEEP_LOG"
     # 1: the command's clients (everything on the bus but KWin and the log sink)
@@ -91,7 +93,10 @@ teardown() {
     # 2: KWin itself, and wait for it to finish
     if [[ -n $kwin ]]; then
         kill "$kwin" 2>/dev/null || true
-        for _ in $(seq 30); do kill -0 "$kwin" 2>/dev/null || break; sleep 0.1; done
+        for _ in $(seq 30); do
+            kill -0 "$kwin" 2>/dev/null || break
+            sleep 0.1
+        done
     fi
     # 3: anything still there
     for p in $(on_bus); do kill "$p" 2>/dev/null || true; done
@@ -101,7 +106,7 @@ trap teardown EXIT
 
 # Plasma's stock settings and shortcuts, as a new user's: focus follows mouse, the key override
 # and the rest are kwin-i3's to win at runtime (its defaults).
-cat > "$XDG_CONFIG_HOME/kwinrc" <<RC
+cat >"$XDG_CONFIG_HOME/kwinrc" <<RC
 [Desktops]
 Number=${KI3_DESKTOPS:-10}
 Rows=1
@@ -143,7 +148,10 @@ if [[ -n "${KI3_XWAYLAND:-}" ]]; then
 fi
 xbefore=$(ls /tmp/.X11-unix/)
 size=${KI3_SIZE:-1280x720}
-[[ $size =~ ^[0-9]+x[0-9]+$ ]] || { echo "testkwin: KI3_SIZE must be WxH, not $size" >&2; exit 1; }
+[[ $size =~ ^[0-9]+x[0-9]+$ ]] || {
+    echo "testkwin: KI3_SIZE must be WxH, not $size" >&2
+    exit 1
+}
 width=${size%x*} height=${size#*x}
 kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count "${KI3_OUTPUTS:-2}" --scale "${KI3_SCALE:-1}" \
     --width "$width" --height "$height" --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
@@ -153,28 +161,42 @@ up=""
 # (testkwin: KWin or the log sink did not start).
 for _ in $(seq 150); do
     if [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && busctl --user status org.kde.KWin >/dev/null 2>&1 &&
-       busctl --user status net.local.kwini3.log >/dev/null 2>&1; then up=1; break; fi
+        busctl --user status net.local.kwini3.log >/dev/null 2>&1; then
+        up=1
+        break
+    fi
     sleep 0.1
 done
-[[ -n $up ]] || { echo "testkwin: KWin or the log sink did not start" >&2; cat "$tmp/kwin.out" >&2; exit 1; }
+[[ -n $up ]] || {
+    echo "testkwin: KWin or the log sink did not start" >&2
+    cat "$tmp/kwin.out" >&2
+    exit 1
+}
 # KI3_SCALE: --scale alone doesn't stick (KWin 6.7.5: its output config store sets a virtual
 # output, which has no physical size, back to scale 1 with the pixels kept), so kscreen-doctor sets
 # it, its backend in-process (the private bus starts no kscreen service), and places the outputs
 # side by side again (they keep their pixel positions: Virtual-1 at x=1920 for 1.5).
 if [[ ${KI3_SCALE:-1} != 1 ]]; then
-    for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=(output.Virtual-$o.scale.$KI3_SCALE output.Virtual-$o.position.$((o * width)),0); done
+    for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=("output.Virtual-$o.scale.$KI3_SCALE" "output.Virtual-$o.position.$((o * width)),0"); done
     KSCREEN_BACKEND_INPROCESS=1 kscreen-doctor "${args[@]}" >/dev/null 2>&1 ||
-        { echo "testkwin: kscreen-doctor could not set scale $KI3_SCALE" >&2; exit 1; }
+        {
+            echo "testkwin: kscreen-doctor could not set scale $KI3_SCALE" >&2
+            exit 1
+        }
 fi
 if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     # KWin picks the display number itself and starts Xwayland on the first connection, so
     # the display is the X socket that appeared after the test KWin started.
     for _ in $(seq 50); do
+        # shellcheck disable=SC2086 # xbefore is a list of socket names, split on purpose
         new=$(comm -13 <(printf '%s\n' $xbefore | sort) <(ls /tmp/.X11-unix/ | sort) | head -1)
         [[ -n "$new" ]] && break
         sleep 0.2
     done
-    [[ -n "$new" ]] || { echo "testkwin: no Xwayland socket appeared" >&2; exit 1; }
+    [[ -n "$new" ]] || {
+        echo "testkwin: no Xwayland socket appeared" >&2
+        exit 1
+    }
     export DISPLAY=:${new#X}
     exec 9>&-
 fi

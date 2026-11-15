@@ -10,59 +10,60 @@ wait_log 'kwin-i3 loaded$'
 client --title a
 client --title ruler --app-id org.kde.kruler
 client --title b
-check "KRuler floats (a default rule)"      wait_tree 1 "H[a b*] ~ruler"
-check "and keeps its own size"              geom_is ruler "440,196 400x328"
+check "KRuler floats (a default rule)" wait_tree 1 "H[a b*] ~ruler"
+check "and keeps its own size" geom_is ruler "440,196 400x328"
 kclose ruler
 # a managed window made sticky (on all desktops) floats, in the tree (§3 R3, X4);
 # back on one desktop it stays floating there; Floating Toggle tiles it again
 on b 'w.onAllDesktops = true;'
-check "made sticky: floating, focused"      wait_tree 1 "H[a] ~b*"
-check "a fills the screen"                  geom_is a "0,0 1280x720"
+check "made sticky: floating, focused" wait_tree 1 "H[a] ~b*"
+check "a fills the screen" geom_is a "0,0 1280x720"
 on b 'w.desktops = [workspace.desktops[0]];'
 check "on one desktop again: still floating" wait_tree 1 "H[a] ~b*"
 key "Floating Toggle"
-check "tiled again: back, focused"          wait_tree 1 "H[a b*]"
+check "tiled again: back, focused" wait_tree 1 "H[a b*]"
 
 # up and down
 on b 'workspace.activeWindow = w;'
 key "Split V"
 client --title c
-check "H[a V[b c*]]"                        wait_tree 1 "H[a V[b c*]]"
+check "H[a V[b c*]]" wait_tree 1 "H[a V[b c*]]"
 key "Focus Up"
-check "focus up"                            wait_tree 1 "H[a V[b* c]]"
+check "focus up" wait_tree 1 "H[a V[b* c]]"
 key "Focus Down"
-check "focus down"                          wait_tree 1 "H[a V[b c*]]"
+check "focus down" wait_tree 1 "H[a V[b c*]]"
 key "Move Up"
-check "move up"                             wait_tree 1 "H[a V[c* b]]"
-check "c on top now"                        geom_is c "640,0 640x360"
+check "move up" wait_tree 1 "H[a V[c* b]]"
+check "c on top now" geom_is c "640,0 640x360"
 key "Move Down"
-check "move down"                           wait_tree 1 "H[a V[b c*]]"
+check "move down" wait_tree 1 "H[a V[b c*]]"
 key "Grow Height"
-check "grow height: c gains 10%"            geom_is c "640,288 640x432"
+check "grow height: c gains 10%" geom_is c "640,288 640x432"
 
 # the guard: an exception in an action is logged and kwin-i3 carries on
 m=$(mark)
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Throw"
-check "an exception is logged"              wait_log '^.{9}ERROR in Selftest Throw: Error: selftest' "$m"
+check "an exception is logged" wait_log '^.{9}ERROR in Selftest Throw: Error: selftest' "$m"
 key "Move Up"
-check "and the next action still works"     wait_tree 1 "H[a V[c* b]]" "$m"
+check "and the next action still works" wait_tree 1 "H[a V[c* b]]" "$m"
 
 # reload with a floating and a minimized window
 client --title f --fixed
 on a 'w.minimized = true;'
-check "a minimized, f floating"             wait_tree 1 "H[a_ V[c b]] ~f*"
-check "minimized a gives up its space"      geom_is c "0,0 1280x432"
+check "a minimized, f floating" wait_tree 1 "H[a_ V[c b]] ~f*"
+check "minimized a gives up its space" geom_is c "0,0 1280x432"
 m=$(mark)
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
 load_kwin_i3
-check "reloaded"                            wait_log 'kwin-i3 loaded$' "$m"
-check "floating stays floating"             wait_log '^.{9}TREE 1 .*~f' "$m"
-check "the tiled layout is kept"            geom_is c "0,0 1280x432"
+check "reloaded" wait_log 'kwin-i3 loaded$' "$m"
+check "floating stays floating" wait_log '^.{9}TREE 1 .*~f' "$m"
+check "the tiled layout is kept" geom_is c "0,0 1280x432"
 on a 'w.minimized = false;'
 # Known limit (plan, policies): while a is minimized KWin's tiles hold only V[c b], so a reload
 # can't know a's old place; it comes back after the focus.
 back_in_tree() {
-    local t; t=$(tree 1 "$m")
+    local t
+    t=$(tree 1 "$m")
     local words=" ${t//[\[\]*!]/ } "
     [[ $words == *" a "* && $words == *" ~f "* ]]
 }
@@ -72,67 +73,87 @@ check "the minimized window comes back into the tree" poll back_in_tree
 # next (the one used before), and a focus key never lands on the minimized one. The tree is
 # V[c a b] here (a came back after the focused c, the known limit above).
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")')" == "$1" ]]; }
-check "V[c a b]"                            poll eval '[[ "$(tree 1)" == "V[c a"*"b]"* ]]'
-on c 'workspace.activeWindow = w;'; on b 'workspace.activeWindow = w;'
-check "b focused, c used before it"         poll active_is b
+check "V[c a b]" poll eval '[[ "$(tree 1)" == "V[c a"*"b]"* ]]'
+on c 'workspace.activeWindow = w;'
+on b 'workspace.activeWindow = w;'
+check "b focused, c used before it" poll active_is b
 m=$(mark)
 on b 'w.minimized = true;'
 check "b minimized: the focus goes to c (i3's next)" poll active_is c
-check "  the tree marks it"                 wait_log '^.{9}TREE 1 .*b_' "$m"
+check "  the tree marks it" wait_log '^.{9}TREE 1 .*b_' "$m"
 key "Focus Up"
 check "Focus Up from c (the top) wraps to a, skipping the minimized b at the bottom" poll active_is a
 on b 'w.minimized = false;'
-check "b back in its place"                 wait_tree 1 "V[c a* b] ~f"
+check "b back in its place" wait_tree 1 "V[c a* b] ~f"
 
 # A window whose minimum can't fit beside the others floats instead of hanging off the screen
 # (the plan's rule).
 for c in a c b f; do kclose "$c"; done
-client --title p; client --title q
+client --title p
+client --title q
 client --title big --min 900x500
-check "big floats, p and q tile"            wait_tree 1 "V[p q] ~big*"
+check "big floats, p and q tile" wait_tree 1 "V[p q] ~big*"
 inside() {
-    local g; g=$(geom "$1")
+    local g
+    g=$(geom "$1")
     [[ $g =~ ^(-?[0-9]+),(-?[0-9]+)\ ([0-9]+)x([0-9]+)$ ]] || return 1
-    (( BASH_REMATCH[1] >= 0 && BASH_REMATCH[1] + BASH_REMATCH[3] <= 1280 ))
+    ((BASH_REMATCH[1] >= 0 && BASH_REMATCH[1] + BASH_REMATCH[3] <= 1280))
 }
-check "every window inside the screen: p"   poll inside p
-check "q"                                   poll inside q
-check "big"                                 poll inside big
-check "logged why"                          wait_log '^.{9}FLOAT big: '
+check "every window inside the screen: p" poll inside p
+check "q" poll inside q
+check "big" poll inside big
+check "logged why" wait_log '^.{9}FLOAT big: '
 
 # Minimums that fit in total but not in i3's shares: they get the space from neighbours with
 # room to spare (KeePassXC's 800 px minimum in a 640 px quarter would hang 162 px onto the other
 # monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
-kclose big; kclose p; kclose q; kclose r
-key "Workspace 3"                          # a fresh, horizontal workspace
+kclose big
+kclose p
+kclose q
+kclose r
+key "Workspace 3" # a fresh, horizontal workspace
 client --title s1
 client --title w1 --min 500x300
 client --title w2 --min 500x300
 has_tiled_row() { [[ "$(tree 3)" == "H[s1 w1 w2*]" ]]; }
-check "three in a row, all tiled"           poll has_tiled_row
+check "three in a row, all tiled" poll has_tiled_row
 min_ok() {
-    local g x w; for c in w1 w2; do
-        g=$(geom $c); [[ $g =~ ^(-?[0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1
+    local g x w
+    for c in w1 w2; do
+        g=$(geom $c)
+        [[ $g =~ ^(-?[0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1
         x=${BASH_REMATCH[1]} w=${BASH_REMATCH[2]}
-        (( w >= 500 && x >= 0 && x + w <= 1280 )) || return 1
+        ((w >= 500 && x >= 0 && x + w <= 1280)) || return 1
     done
 }
 check "each wide window gets its minimum, inside the screen" poll min_ok
 row_meets() {
-    local g; g=$(geom s1); [[ $g =~ ^0,[0-9]+\ ([0-9]+)x ]] || return 1; local e=${BASH_REMATCH[1]}
-    g=$(geom w1); [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1; (( BASH_REMATCH[1] == e )) || return 1; e=$((BASH_REMATCH[1] + BASH_REMATCH[2]))
-    g=$(geom w2); [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1; (( BASH_REMATCH[1] == e && BASH_REMATCH[1] + BASH_REMATCH[2] == 1280 ))
+    local g
+    g=$(geom s1)
+    [[ $g =~ ^0,[0-9]+\ ([0-9]+)x ]] || return 1
+    local e=${BASH_REMATCH[1]}
+    g=$(geom w1)
+    [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1
+    ((BASH_REMATCH[1] == e)) || return 1
+    e=$((BASH_REMATCH[1] + BASH_REMATCH[2]))
+    g=$(geom w2)
+    [[ $g =~ ^([0-9]+),[0-9]+\ ([0-9]+)x ]] || return 1
+    ((BASH_REMATCH[1] == e && BASH_REMATCH[1] + BASH_REMATCH[2] == 1280))
 }
 check "and the row still meets edge to edge" poll row_meets
-kclose s1; kclose w1; kclose w2
+kclose s1
+kclose w1
+kclose w2
 key "Workspace 1"
 
 # A reconcile that throws every time: three retries 250 ms apart, then it waits for an event
 # (never at once for ever, which would spin KWin). Then it recovers on the next event.
-client --title p; client --title q; client --title big --min 900x500
+client --title p
+client --title q
+client --title big --min 900x500
 m=$(mark)
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
-check "it gives up after 3 retries"         wait_log '^.{9}WARN giving up after 3 errors' "$m"
+check "it gives up after 3 retries" wait_log '^.{9}WARN giving up after 3 errors' "$m"
 sleep 1
 errors=$(after "$m" | grep -c 'ERROR in reconcile')
 # One error per model workspace per round, four rounds: workspaces 1 and 3 here, and 2, which
@@ -141,7 +162,7 @@ check "a bounded number of errors ($errors)" test "$errors" -ge 4 -a "$errors" -
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"
 m=$(mark)
 client --title r
-check "and it recovers on the next event"   wait_tree 1 "V[p q r*] ~big" "$m"
+check "and it recovers on the next event" wait_tree 1 "V[p q r*] ~big" "$m"
 
 # clean_log would see the deliberate ERRORs above: look for anything else
 others_clean() { ! grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | grep -vE 'Selftest Throw|selftest reconcile|giving up after 3' | grep -q .; }

@@ -5,3 +5,6 @@ external-sources=true
 # SC2016 (a $ inside single quotes): here that $ is meant literally, in awk, jq and busctl
 # programs and in strings for another shell.
 disable=SC2016
+# SC2012 (ls for a file list): the scripts list only directories they name themselves (captures by
+# time, X sockets), never a user's file names.
+disable=SC2012

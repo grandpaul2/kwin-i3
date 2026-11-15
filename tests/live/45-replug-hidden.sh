@@ -14,24 +14,33 @@ settle() { sleep 1; }
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "2=Virtual-1"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-client --title w3 --retitle 0.5:w3r; settle
-client --title w4 --retitle 0.5:w4r; settle
-key "Move to Workspace 2"; settle
+client --title w3 --retitle 0.5:w3r
+settle
+client --title w4 --retitle 0.5:w4r
+settle
+key "Move to Workspace 2"
+settle
 check "w4 sent to workspace 2, on the second monitor" poll eval '[[ "$(tree 2)" == "H[w4"* ]]'
-client --title w5 --retitle 0.5:w5r; settle
-client --title w6 --min 900x530; settle
-client --title w7; settle
-client --title w8 --retitle 0.5:w8r; settle
-client --title w9 --dialog; settle
-check "w9's dialog is up"                   poll eval '[[ "$(tree 1)" == *"~w9_dialog"* ]]'
-timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1; settle
-check "the second monitor is gone"          poll screens_are 1
+client --title w5 --retitle 0.5:w5r
+settle
+client --title w6 --min 900x530
+settle
+client --title w7
+settle
+client --title w8 --retitle 0.5:w8r
+settle
+client --title w9 --dialog
+settle
+check "w9's dialog is up" poll eval '[[ "$(tree 1)" == *"~w9_dialog"* ]]'
+timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
+settle
+check "the second monitor is gone" poll screens_are 1
 # A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
 # first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here
 # (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
 timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
-check "it is back"                          poll screens_are 2
-check "workspace 2 is w4r alone"            wait_tree 2 "H[w4r]"
-check "w4r fills the second monitor again"  geom_is w4r "1280,0 1280x720"
-check "no invariant failures or errors"     clean_log
+check "it is back" poll screens_are 2
+check "workspace 2 is w4r alone" wait_tree 2 "H[w4r]"
+check "w4r fills the second monitor again" geom_is w4r "1280,0 1280x720"
+check "no invariant failures or errors" clean_log
 finish

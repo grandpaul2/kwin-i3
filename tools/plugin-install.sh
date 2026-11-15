@@ -11,13 +11,19 @@
 # unloaded and the new one loaded (the id is the file name). KWin refuses a build for another KWin version (the IID carries major.minor.patch).
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
-built=${KI3_PLUGIN_SO:-$here/plugin/build/bin/kwin/plugins/kwini3helper.so}   # (tests: another build)
+built=${KI3_PLUGIN_SO:-$here/plugin/build/bin/kwin/plugins/kwini3helper.so} # (tests: another build)
 effect=${KI3_EFFECT_SO:-$here/plugin/build/bin/kwin/effects/plugins/kwini3hold.so}
 root=${KI3_PLUGIN_ROOT:-$HOME/.local/lib/kwin-i3/qt6plugins}
 dir=$root/kwin/plugins
 edir=$root/kwin/effects/plugins
-[[ -f $built ]] || { echo "plugin-install: no $built (make plugin)" >&2; exit 1; }
-[[ -f $effect ]] || { echo "plugin-install: no $effect (make plugin)" >&2; exit 1; }
+[[ -f $built ]] || {
+    echo "plugin-install: no $built (make plugin)" >&2
+    exit 1
+}
+[[ -f $effect ]] || {
+    echo "plugin-install: no $effect (make plugin)" >&2
+    exit 1
+}
 
 # place <built .so> <dir> <base>: a new file per build, the old ones gone; prints the new id.
 place() {
@@ -38,7 +44,10 @@ eid=$(place "$effect" "$edir" kwini3hold)
 [[ -z ${KI3_PLUGIN_ROOT:-} ]] && "$here/tools/kwin-dropin.sh"
 
 prop() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins "$1" 2>/dev/null; }
-busctl --user status org.kde.KWin >/dev/null 2>&1 || { echo "no KWin on this bus: installed only"; exit 0; }
+busctl --user status org.kde.KWin >/dev/null 2>&1 || {
+    echo "no KWin on this bus: installed only"
+    exit 0
+}
 # A plugin's id is its file name (Qt ignores an "Id" in the metadata), so each build has its own.
 for old in $(prop LoadedPlugins | grep -oE '"kwini3helper[^"]*"' | tr -d '"'); do
     # not fatal: the new one must still load
@@ -69,4 +78,3 @@ if [[ "$(eff isEffectLoaded s "$eid")" == "b true" ]]; then
 else
     echo "KWin did not load the effect $eid (not seen yet, or built for another KWin version?)" >&2
 fi
-

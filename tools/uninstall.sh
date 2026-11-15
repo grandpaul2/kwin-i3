@@ -52,7 +52,7 @@ if [[ -f $dropin ]]; then
     systemctl --user daemon-reload 2>/dev/null
 fi
 for f in "${XDG_CONFIG_HOME:-$HOME/.config}/environment.d/kwin-i3.conf" \
-         "${XDG_DATA_HOME:-$HOME/.local/share}/applications/kcm_kwin_i3.desktop"; do
+    "${XDG_DATA_HOME:-$HOME/.local/share}/applications/kcm_kwin_i3.desktop"; do
     [[ -f $f ]] && rm -f "$f" && gone "$f"
 done
 if kpackagetool6 -t Plasma/Applet -s net.local.kwini3.workspaces >/dev/null 2>&1; then

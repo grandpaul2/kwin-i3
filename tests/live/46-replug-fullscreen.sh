@@ -15,18 +15,24 @@ settle() { sleep 1; }
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "2=Virtual-1"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-client --title b --fixed --size 770x230; settle
-key "Move to Workspace 2"; settle
-check "b went to workspace 2"               wait_tree 2 "H[] ~b"
-key "Workspace 2"; settle
-check "the second monitor shows 2"          poll shows Virtual-1 2
-timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1; settle
-check "the second monitor is gone"          poll screens_are 1
-busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Window Fullscreen" >/dev/null; settle
+client --title b --fixed --size 770x230
+settle
+key "Move to Workspace 2"
+settle
+check "b went to workspace 2" wait_tree 2 "H[] ~b"
+key "Workspace 2"
+settle
+check "the second monitor shows 2" poll shows Virtual-1 2
+timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
+settle
+check "the second monitor is gone" poll screens_are 1
+busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Window Fullscreen" >/dev/null
+settle
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
-check "it is back"                          poll screens_are 2
-settle; settle
-check "the first monitor shows 1 again"     poll shows Virtual-0 1
-check "the second monitor shows 2 again"    poll shows Virtual-1 2
-check "no invariant failures or errors"     clean_log
+check "it is back" poll screens_are 2
+settle
+settle
+check "the first monitor shows 1 again" poll shows Virtual-0 1
+check "the second monitor shows 2 again" poll shows Virtual-1 2
+check "no invariant failures or errors" clean_log
 finish

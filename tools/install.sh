@@ -5,7 +5,7 @@
 # shortcuts hold, Plasma's settings) wait for the first run, after the log-out; this changes none.
 #   KI3_SCRIPTS_DIR   KWin's user script dir (default $XDG_DATA_HOME/kwin/scripts; tests)
 set -euo pipefail
-here=$(cd "$(dirname "$0")/.." && pwd -P)   # physical, as readlink -f below gives the link's target
+here=$(cd "$(dirname "$0")/.." && pwd -P) # physical, as readlink -f below gives the link's target
 scripts=${KI3_SCRIPTS_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/kwin/scripts}
 link=$scripts/kwin-i3
 
@@ -39,8 +39,14 @@ if loaded; then
     # An update: the new script in place of the old (it re-tiles the windows once).
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
     busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
-    for _ in 1 2 3 4 5 6 7 8 9 10; do loaded && break; sleep 0.2; done
-    if loaded; then echo "install: kwin-i3 reloaded"; else echo "install: kwin-i3 didn't load again: journalctl --user -b | grep kwin-i3" >&2; exit 1; fi
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        loaded && break
+        sleep 0.2
+    done
+    if loaded; then echo "install: kwin-i3 reloaded"; else
+        echo "install: kwin-i3 didn't load again: journalctl --user -b | grep kwin-i3" >&2
+        exit 1
+    fi
 else
     echo
     echo "install: done. Log out and in once: KWin finds a new script and its plugins only at login."

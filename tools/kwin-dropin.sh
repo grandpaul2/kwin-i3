@@ -7,7 +7,6 @@
 # Takes effect at the next login.
 #   HOME, KI3_PLUGIN_ROOT, KI3_KCM_ROOT as the two install scripts have them.
 set -euo pipefail
-here=$(cd "$(dirname "$0")/.." && pwd)
 plugins=${KI3_PLUGIN_ROOT:-$HOME/.local/lib/kwin-i3/qt6plugins}
 kcm=${KI3_KCM_ROOT:-$HOME/.local/lib/kwin-i3/kcm-plugins}
 path=""
@@ -19,7 +18,7 @@ want="[Service]
 Environment=QT_PLUGIN_PATH=$path"
 if [[ "$(cat "$dropin" 2>/dev/null)" != "$want" ]]; then
     mkdir -p "$(dirname "$dropin")"
-    printf '%s\n' "$want" > "$dropin"
+    printf '%s\n' "$want" >"$dropin"
     systemctl --user daemon-reload 2>/dev/null || true
     echo "wrote $dropin (KWin reads it at the next login)"
 fi

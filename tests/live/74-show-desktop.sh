@@ -15,9 +15,13 @@ showing() { busctl --user get-property org.kde.KWin /KWin org.kde.KWin showingDe
 showing_is() { [[ "$(showing)" == "$1" ]]; }
 # KWin's D-Bus showDesktop(bool) lasts only while the caller stays on the bus (dbusinterface.cpp
 # watches the service), and busctl leaves at once; the Show Desktop shortcut (a toggle) holds.
-show_desktop() { showing_is "$1" || busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Show Desktop"; poll showing_is "$1"; }
-stand_in() {    # stand_in <title> <type> <geometry>: open one; its pid in $sid
-    python3 -I "$root/tools/popupclient.py" --title "$1" --type "$2" --geometry "$3" >/dev/null 2>&1 & sid=$!
+show_desktop() {
+    showing_is "$1" || busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Show Desktop"
+    poll showing_is "$1"
+}
+stand_in() { # stand_in <title> <type> <geometry>: open one; its pid in $sid
+    python3 -I "$root/tools/popupclient.py" --title "$1" --type "$2" --geometry "$3" >/dev/null 2>&1 &
+    sid=$!
     poll _has_window "$1"
 }
 activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") workspace.activeWindow = w; });" >/dev/null; }
@@ -28,10 +32,11 @@ wait_log 'kwin-i3 loaded$'
 # that answer activates the tile hidden by Show Desktop in case 1 (a load-time step, not the pass
 # under test).
 wait_log '^.{9}FRAME '
-stand_in desk desktop 1280x720+0+0; desk=$sid
+stand_in desk desktop 1280x720+0+0
+desk=$sid
 point 300 300
 client --title a
-check "a tiles on the left"                 wait_tree 1 "H[a*]"
+check "a tiles on the left" wait_tree 1 "H[a*]"
 
 # 1. A popup has the focus (the panel's menu) and Show Desktop goes on; then the popup closes.
 #    Show Desktop stays on and the desktop keeps the focus.
@@ -40,14 +45,17 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 # setActiveFullScreenEffect). KWin's, as it is after any desktop switch; the wait lets the slide
 # end.
 sleep 3
-stand_in pop popup 300x200+100+400; pop=$sid
+stand_in pop popup 300x200+100+400
+pop=$sid
 activate pop
-check "1. the popup is active"              poll active_is pop
+check "1. the popup is active" poll active_is pop
 show_desktop true
 check "1. Show Desktop on: the desktop is active" poll active_is desk
-kill "$pop"; poll _no_window pop; sleep 0.5
+kill "$pop"
+poll _no_window pop
+sleep 0.5
 check "1. the popup closed: Show Desktop is still on" showing_is true
-check "1. the desktop still has the focus"  active_is desk
+check "1. the desktop still has the focus" active_is desk
 show_desktop false
 check "1. Show Desktop off: a has the focus back" poll active_is a
 
@@ -55,22 +63,28 @@ check "1. Show Desktop off: a has the focus back" poll active_is a
 #    two land either side of kwin-i3's pass, and only some orders go wrong.
 off=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
-    stand_in pop popup 300x200+100+400; pop=$sid
-    activate pop; poll active_is pop
-    kill "$pop"; show_desktop true
-    poll _no_window pop; sleep 0.3
+    stand_in pop popup 300x200+100+400
+    pop=$sid
+    activate pop
+    poll active_is pop
+    kill "$pop"
+    show_desktop true
+    poll _no_window pop
+    sleep 0.3
     showing_is true || off=$((off + 1))
-    show_desktop false; poll active_is a
+    show_desktop false
+    poll active_is a
 done
 check "2. popup closed then Show Desktop on, ten times: stayed on each time (went off $off times)" test "$off" -eq 0
 
 # 3. A tile closing while Show Desktop is on: it stays on, and the other tile gets the focus
 #    when it ends.
 client --title b
-check "3. b beside a"                       wait_tree 1 "H[a b*]"
+check "3. b beside a" wait_tree 1 "H[a b*]"
 show_desktop true
 check "3. Show Desktop on: the desktop is active" poll active_is desk
-kclose b; sleep 0.5
+kclose b
+sleep 0.5
 check "3. b closed: Show Desktop is still on" showing_is true
 show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
@@ -84,7 +98,7 @@ m=$(mark)
 "$INJECT" "abs 640 300" "wait 30" "btn left down" "wait 30" "btn left up"
 sleep 0.5
 check "4. a click over the hidden tile: not taken as a resize" eval '! after "$m" | grep -q "RESIZE"'
-check "4. Show Desktop is still on"         showing_is true
+check "4. Show Desktop is still on" showing_is true
 show_desktop false
 check "4. Show Desktop off: a has the focus" poll active_is a
 
@@ -93,6 +107,7 @@ check "4. Show Desktop off: a has the focus" poll active_is a
 activate desk
 check "5. the desktop clicked: a has the focus back" poll active_is a
 
-kill "$desk"; poll _no_window desk
-check "no invariant failures or errors"     clean_log
+kill "$desk"
+poll _no_window desk
+check "no invariant failures or errors" clean_log
 finish

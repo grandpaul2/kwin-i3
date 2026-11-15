@@ -3,16 +3,24 @@
 # Window modes: a workspace whose new windows float
 # (a for_window rule on its number), the floating mark kept by the effect, the frame on floating
 # windows (frameOnFloating).
+# shellcheck disable=SC2034 # the checks' eval strings read these, where shellcheck can't see
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
-ACT=76,120,153     # the focused class (§7 L3; floating windows have no colours of their own)
+ACT=76,120,153 # the focused class (§7 L3; floating windows have no colours of their own)
 prop() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(w.$2); })"; }
 prop_is() { [[ "$(prop "$1" "$2")" == "$3" ]]; }
 floating() { [[ "$(tree "$2")" == *"~$1"* ]]; }
-set_setting() { kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
+set_setting() {
+    kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key "$1" "$2"
+    busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
+}
 uuid() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") log(String(w.internalId)); })"; }
-effect_floats() { local u; u=$(uuid "$1"); [[ -n $u ]] && busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -qF "$u"; }
+effect_floats() {
+    local u
+    u=$(uuid "$1")
+    [[ -n $u ]] && busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -qF "$u"
+}
 pixel_is() { "$shot" capture Virtual-0 "$png" && "$shot" same "$png" "$1" "$2" "$3" 2; }
 
 # The shipped window rules (main.xml's default) and workspace 3's, as the Workspaces tab writes it:
@@ -21,57 +29,68 @@ rules=$(sed -n '/<entry name="forWindow"/{n;s/.*<default>\(.*\)<\/default>.*/\1/
 set_setting forWindow "$rules; [workspace=\"^3\$\"] floating enable"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-check "frame on"                            wait_log '^.{9}FRAME on'
+check "frame on" wait_log '^.{9}FRAME on'
 
 # 1. Workspace 3 opens Plasma windows: floating, its title bar, kept above as everywhere (§7 L12).
 key "Workspace 3"
 client --title p --color red
-check "p opens floating on workspace 3"     poll floating p 3
-check "  with its title bar"                prop_is p noBorder false
-check "  kept above, as i3"                 prop_is p keepAbove true
-check "  the effect knows it floats"        poll effect_floats p
+check "p opens floating on workspace 3" poll floating p 3
+check "  with its title bar" prop_is p noBorder false
+check "  kept above, as i3" prop_is p keepAbove true
+check "  the effect knows it floats" poll effect_floats p
 
 # 2. Meta+Shift+Space: i3's mode, and back.
 key "Floating Toggle"
-check "p tiles"                             poll eval '! floating p 3'
-check "  borderless"                        poll prop_is p noBorder true
+check "p tiles" poll eval '! floating p 3'
+check "  borderless" poll prop_is p noBorder true
 key "Floating Toggle"
-check "p floats again, its title bar"       poll prop_is p noBorder false
+check "p floats again, its title bar" poll prop_is p noBorder false
 
 # 3. Moved to another workspace it stays floating and above; back, still above.
 key "Move to Workspace 1"
-check "p on workspace 1, floating"          poll floating p 1
-check "  kept above there"                  poll prop_is p keepAbove true
+check "p on workspace 1, floating" poll floating p 1
+check "  kept above there" poll prop_is p keepAbove true
 key "Workspace 1"
 key "Move to Workspace 3"
-check "back on 3: still kept above"         poll prop_is p keepAbove true
+check "back on 3: still kept above" poll prop_is p keepAbove true
 key "Workspace 3"
 
 # 4. A reload: p is still floating, by the effect's mark.
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
-m=$(mark); load_kwin_i3
-check "reloaded, with the effect's set"     wait_log '^.{9}ADOPTED with the effect' "$m"
-check "p still floating"                    poll floating p 3 "$m"
+m=$(mark)
+load_kwin_i3
+check "reloaded, with the effect's set" wait_log '^.{9}ADOPTED with the effect' "$m"
+check "p still floating" poll floating p 3 "$m"
 
 # 5. A window opened on an i3 workspace tiles, as before.
 key "Workspace 1"
 client --title t --color blue
-check "t tiles on workspace 1"              wait_tree 1 "H[t*]"
+check "t tiles on workspace 1" wait_tree 1 "H[t*]"
 
 # 6. The frame on floating windows: p loses its title bar, the frame in the colour classes (§7
 #    L11; p is the focused window).
 key "Workspace 3"
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "p") workspace.activeWindow = w; });' >/dev/null
 set_setting frameOnFloating true
-check "frameOnFloating: p borderless"       poll prop_is p noBorder true
-g=$(geom p); px=${g%%,*}; r=${g#*,}; py=${r%% *}; s=${g#* }; ph=${s#*x}
+check "frameOnFloating: p borderless" poll prop_is p noBorder true
+g=$(geom p)
+px=${g%%,*}
+r=${g#*,}
+py=${r%% *}
+s=${g#* }
+ph=${s#*x}
 check "  its frame, the focused colour, just left of it" poll pixel_is $((px - 1)) $((py + ph / 2)) $ACT
 # A window that draws its own title bar is never framed floating.
 client --title z --csd --color blue
-check "z (CSD) floats on workspace 3"       poll floating z 3
+check "z (CSD) floats on workspace 3" poll floating z 3
 check "  kwin-i3 left its decoration alone" prop_is z noBorder false
-g=$(geom z); zx=${g%%,*}; r=${g#*,}; zy=${r%% *}; s=${g#* }; zh=${s#*x}
-check "  no frame of ours beside it"        eval '! pixel_is $((zx - 1)) $((zy + zh / 2)) $ACT && ! pixel_is $((zx - 1)) $((zy + zh / 2)) 51,51,51'
+g=$(geom z)
+zx=${g%%,*}
+r=${g#*,}
+zy=${r%% *}
+s=${g#* }
+zh=${s#*x}
+check "  no frame of ours beside it" eval '! pixel_is $((zx - 1)) $((zy + zh / 2)) $ACT && ! pixel_is $((zx - 1)) $((zy + zh / 2)) 51,51,51'
 kclose z
 # The effect reloaded while the frame stays on: kwin-i3 tells it again which windows float.
 eid=$(busctl --user get-property org.kde.KWin /Effects org.kde.kwin.Effects loadedEffects | grep -o '"kwini3hold[^"]*"' | tr -d '"')
@@ -79,6 +98,6 @@ busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects unloadEffect s "$e
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s "$eid" >/dev/null
 check "effect reloaded: it knows p floats again" poll effect_floats p
 set_setting frameOnFloating false
-check "off: its title bar back"             poll prop_is p noBorder false
-check "no invariant failures or errors"     clean_log
+check "off: its title bar back" poll prop_is p noBorder false
+check "no invariant failures or errors" clean_log
 finish

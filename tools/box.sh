@@ -21,18 +21,29 @@ image=kwin-i3-box-$box
 
 case ${1:-} in
 build)
-    exec podman build -t "$image" -f "$repo/tools/box/Containerfile.$box" "$repo/tools/box" ;;
-run|shell)
-    [[ $1 == shell ]] && set -- bash || shift
-    [[ $# -gt 0 ]] || { echo "usage: tools/box.sh run <command...>" >&2; exit 2; }
+    exec podman build -t "$image" -f "$repo/tools/box/Containerfile.$box" "$repo/tools/box"
+    ;;
+run | shell)
+    if [[ $1 == shell ]]; then set -- bash; else shift; fi
+    [[ $# -gt 0 ]] || {
+        echo "usage: tools/box.sh run <command...>" >&2
+        exit 2
+    }
     out=()
-    if [[ -n ${KI3_BOX_OUT:-} ]]; then mkdir -p "$KI3_BOX_OUT"; out=(-v "$(cd "$KI3_BOX_OUT" && pwd):/out"); fi
-    tty=(); [[ -t 0 ]] && tty=(-it)
+    if [[ -n ${KI3_BOX_OUT:-} ]]; then
+        mkdir -p "$KI3_BOX_OUT"
+        out=(-v "$(cd "$KI3_BOX_OUT" && pwd):/out")
+    fi
+    tty=()
+    [[ -t 0 ]] && tty=(-it)
     gpu=()
     for d in /sys/class/drm/renderD*; do
         [[ $(cat "$d/device/vendor" 2>/dev/null) == 0x10de ]] || gpu+=(--device "/dev/dri/${d##*/}")
     done
-    [[ ${#gpu[@]} -gt 0 ]] || { echo "box: no Mesa render node (AMD, Intel) for KWin 6.8" >&2; exit 1; }
+    [[ ${#gpu[@]} -gt 0 ]] || {
+        echo "box: no Mesa render node (AMD, Intel) for KWin 6.8" >&2
+        exit 1
+    }
     exec podman run --rm "${tty[@]}" --userns=keep-id --security-opt label=disable --tmpfs /tmp:rw,mode=1777 \
         "${gpu[@]}" -v "$repo:/src:ro" "${out[@]}" -e HOME=/work/.home -e KI3_JOBS="${KI3_JOBS:-4}" \
         "$image" bash -c '
@@ -44,7 +55,10 @@ run|shell)
             cd /work/kwin-i3
             status=0; "$@" || status=$?
             [[ -d /out && -d tests/live/out ]] && cp -a tests/live/out/. /out/
-            exit $status' box "$@" ;;
+            exit $status' box "$@"
+    ;;
 *)
-    sed -n '2,12p' "$0" >&2; exit 2 ;;
+    sed -n '2,12p' "$0" >&2
+    exit 2
+    ;;
 esac

@@ -13,13 +13,14 @@ client --title a --color red
 wait_tree 1 "H[a*]" >/dev/null
 key "Split V"
 client --title g --color blue
-check "a over g"                            wait_tree 1 "V[a g*]"
-check "g fits its half at once"             poll eval '[[ "$(fc g)" == "1,361 1278x358 client 1,361 1278x358" ]]' || echo "    g: $(fc g)"
-check "  (inside the bounds: none asked)"   bash -c "! grep -qE '^.{9}BOUNDS g' '$KI3_LOG'"
+check "a over g" wait_tree 1 "V[a g*]"
+check "g fits its half at once" poll eval '[[ "$(fc g)" == "1,361 1278x358 client 1,361 1278x358" ]]' || echo "    g: $(fc g)"
+check "  (inside the bounds: none asked)" bash -c "! grep -qE '^.{9}BOUNDS g' '$KI3_LOG'"
 
 kclose a
-check "a closed: g fills the monitor"       poll eval '[[ "$(fc g)" == "1,1 1278x718 client 1,1 1278x718" ]]' || echo "    g: $(fc g)"
-echo "    g now: $(fc g)"; grep -E "CLOSE a|TILE g|GEOM g|BOUNDS" "$KI3_LOG" | tail -6 | cut -c10- | cut -c1-200
-check "  (by the bounds, logged)"           wait_log '^.{9}BOUNDS g'
-check "no invariant failures or errors"     clean_log
+check "a closed: g fills the monitor" poll eval '[[ "$(fc g)" == "1,1 1278x718 client 1,1 1278x718" ]]' || echo "    g: $(fc g)"
+echo "    g now: $(fc g)"
+grep -E "CLOSE a|TILE g|GEOM g|BOUNDS" "$KI3_LOG" | tail -6 | cut -c10- | cut -c1-200
+check "  (by the bounds, logged)" wait_log '^.{9}BOUNDS g'
+check "no invariant failures or errors" clean_log
 finish

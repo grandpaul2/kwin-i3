@@ -8,7 +8,7 @@
 # machine must not go red with nothing to fix. The JS tools come from node_modules
 # (make lint-tools, the versions in package-lock.json); this script never fetches anything.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 2
 
 # The versions the tree is formatted and checked with (major.minor; clang-format's major).
 CLANG_FORMAT=22
@@ -19,7 +19,10 @@ SHFMT=3.7
 SHELLCHECK=0.11
 
 mode=${1:-check}
-[[ $mode == check || $mode == format ]] || { echo "usage: $0 check|format [cpp qml js py sh]" >&2; exit 2; }
+[[ $mode == check || $mode == format ]] || {
+    echo "usage: $0 check|format [cpp qml js py sh]" >&2
+    exit 2
+}
 shift || true
 langs=("$@")
 [[ ${#langs[@]} -gt 0 ]] || langs=(cpp qml js py sh)
@@ -27,14 +30,21 @@ langs=("$@")
 failed=()
 skip() { echo "lint: skipped $1 ($2)"; }
 run() { # run NAME CMD...: a finding is a non-zero exit
-    local name=$1; shift
+    local name=$1
+    shift
     "$@" || failed+=("$name")
 }
 
 # The first of the names that is installed.
 which_of() {
     local c
-    for c in "$@"; do command -v "$c" && return 0; [[ -x $c ]] && { echo "$c"; return 0; }; done
+    for c in "$@"; do
+        command -v "$c" && return 0
+        [[ -x $c ]] && {
+            echo "$c"
+            return 0
+        }
+    done
     return 1
 }
 # A version as major.minor from a tool's version text.
@@ -47,8 +57,14 @@ pkg_version() {
 }
 # usable NAME WANT HAVE: whether a tool at version HAVE may run, saying why not.
 usable() {
-    [[ -n $3 ]] || { skip "$1" "version unknown, want $2"; return 1; }
-    [[ $3 == "$2" ]] || { skip "$1" "version $3, want $2"; return 1; }
+    [[ -n $3 ]] || {
+        skip "$1" "version unknown, want $2"
+        return 1
+    }
+    [[ $3 == "$2" ]] || {
+        skip "$1" "version $3, want $2"
+        return 1
+    }
 }
 
 # Tracked files by extension, and the extensionless scripts by their #! line.
@@ -63,14 +79,23 @@ files() {
     cpp) git ls-files '*.cpp' '*.h' '*.c' ;;
     qml) git ls-files '*.qml' ;;
     js) git ls-files '*.js' '*.mjs' '*.json' | grep -vxE 'package/contents/code/main\.js|package-lock\.json' ;;
-    py) { git ls-files '*.py'; by_shebang python; } ;;
-    sh) { git ls-files '*.sh' '*.bashrc'; by_shebang 'bash|/sh'; } ;;
+    py) {
+        git ls-files '*.py'
+        by_shebang python
+    } ;;
+    sh) {
+        git ls-files '*.sh' '*.bashrc'
+        by_shebang 'bash|/sh'
+    } ;;
     esac
 }
 
 lang_cpp() {
     local cf v
-    cf=$(which_of clang-format) || { skip clang-format "not installed"; return; }
+    cf=$(which_of clang-format) || {
+        skip clang-format "not installed"
+        return
+    }
     v=$("$cf" --version | grep -oE 'version [0-9]+' | grep -oE '[0-9]+')
     usable clang-format "$CLANG_FORMAT" "$v" || return
     if [[ $mode == format ]]; then
@@ -107,7 +132,10 @@ lang_qml() {
 
 lang_js() {
     [[ -x node_modules/.bin/prettier && -x node_modules/.bin/eslint ]] ||
-        { skip "prettier, eslint" "no node_modules: make lint-tools"; return; }
+        {
+            skip "prettier, eslint" "no node_modules: make lint-tools"
+            return
+        }
     if [[ $mode == format ]]; then
         node_modules/.bin/prettier --log-level warn --write "${list[@]}"
     else
@@ -118,7 +146,10 @@ lang_js() {
 
 lang_py() {
     local r v
-    r=$(which_of ruff) || { skip ruff "not installed"; return; }
+    r=$(which_of ruff) || {
+        skip ruff "not installed"
+        return
+    }
     v=$("$r" --version | minor)
     usable ruff "$RUFF" "$v" || return
     if [[ $mode == format ]]; then
@@ -132,7 +163,10 @@ lang_py() {
 lang_sh() {
     local s v
     if s=$(which_of shfmt); then
-        v=$({ "$s" --version 2>/dev/null; pkg_version shfmt; } | minor)
+        v=$({
+            "$s" --version 2>/dev/null
+            pkg_version shfmt
+        } | minor)
         if usable shfmt "$SHFMT" "$v"; then
             if [[ $mode == format ]]; then
                 "$s" -i 4 -w "${list[@]}"
@@ -155,7 +189,10 @@ lang_sh() {
 for lang in "${langs[@]}"; do
     case $lang in
     cpp | qml | js | py | sh) ;;
-    *) echo "$0: no language $lang" >&2; exit 2 ;;
+    *)
+        echo "$0: no language $lang" >&2
+        exit 2
+        ;;
     esac
     mapfile -t list < <(files "$lang")
     [[ ${#list[@]} -gt 0 ]] && "lang_$lang"

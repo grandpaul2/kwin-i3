@@ -15,21 +15,26 @@ settle() { sleep 1; }
 kwriteconfig6 --file kwinrc --group Script-kwin-i3 --key workspaceOutputs "2=Virtual-1"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-client --title a; settle
-client --title b; settle
-check "a is the left half"                  geom_is a "0,0 640x720"
+client --title a
+settle
+client --title b
+settle
+check "a is the left half" geom_is a "0,0 640x720"
 timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1
-check "the second monitor is gone"          poll screens_are 1
+check "the second monitor is gone" poll screens_are 1
 settle
-client --title c; settle
-kclose b; settle
-client --title d; settle
-check "a is a third now"                    geom_is a "0,0 427x720"
+client --title c
+settle
+kclose b
+settle
+client --title d
+settle
+check "a is a third now" geom_is a "0,0 427x720"
 timeout 10 kscreen-doctor output.Virtual-1.enable >/dev/null 2>&1
-check "it is back"                          poll screens_are 2
+check "it is back" poll screens_are 2
 settle
-check "a is still a third"                  geom_is a "0,0 427x720"
-check "c is the middle third"               geom_is c "427,0 426x720"
-check "d is the last third"                 geom_is d "853,0 427x720"
-check "no invariant failures or errors"     clean_log
+check "a is still a third" geom_is a "0,0 427x720"
+check "c is the middle third" geom_is c "427,0 426x720"
+check "d is the last third" geom_is d "853,0 427x720"
+check "no invariant failures or errors" clean_log
 finish

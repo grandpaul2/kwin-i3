@@ -12,7 +12,10 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 built=$here/kcm/build/bin/plasma/kcms/systemsettings/kcm_kwin_i3.so
 root=${KI3_KCM_ROOT:-$HOME/.local/lib/kwin-i3/kcm-plugins}
 dir=$root/plasma/kcms/systemsettings
-[[ -f $built ]] || { echo "kcm-install: no $built (make kcm)" >&2; exit 1; }
+[[ -f $built ]] || {
+    echo "kcm-install: no $built (make kcm)" >&2
+    exit 1
+}
 
 mkdir -p "$dir"
 install -m 644 "$built" "$dir/.kcm_kwin_i3.so.tmp"
@@ -33,7 +36,7 @@ want="# kwin-i3's System Settings page (kwin-i3/tools/kcm-install.sh)
 QT_PLUGIN_PATH=$root\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}"
 if [[ "$(cat "$envd" 2>/dev/null)" != "$want" ]]; then
     mkdir -p "$(dirname "$envd")"
-    printf '%s\n' "$want" > "$envd"
+    printf '%s\n' "$want" >"$envd"
     echo "wrote $envd (the session reads it at the next login)"
 fi
 if [[ ":$(systemctl --user show-environment | sed -n 's/^QT_PLUGIN_PATH=//p'):" != *":$root:"* ]]; then

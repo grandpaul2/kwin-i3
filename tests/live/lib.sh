@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Helpers for live scenarios. Sourced inside tools/testkwin.sh (headless KWin, private bus).
 # Every wait polls for the event it needs; no helper sleeps a fixed time and hopes.
 #
@@ -18,12 +19,13 @@
 #   KI3_FAILFAST=1        stop at the first FAIL (the mutation battery uses this)
 here_live=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 root=$(cd "$here_live/../.." && pwd)
-passed=0; failed=0
-WAIT=${KI3_WAIT:-5}                     # seconds any one wait may take
+passed=0
+failed=0
+WAIT=${KI3_WAIT:-5} # seconds any one wait may take
 
 # Before the sink's first line there is no log: 0. The braces silence the redirect's own error,
 # which a 2>/dev/null after it comes too late for.
-mark() { { wc -l < "$KI3_LOG"; } 2>/dev/null || echo 0; }
+mark() { { wc -l <"$KI3_LOG"; } 2>/dev/null || echo 0; }
 after() { tail -n +"$((${1:-0} + 1))" "$KI3_LOG" 2>/dev/null; }
 
 # poll <cmd...>: retry cmd every 0.05 s for up to $WAIT seconds.
@@ -31,7 +33,7 @@ poll() {
     local end=$((SECONDS + WAIT))
     while :; do
         "$@" && return 0
-        (( SECONDS >= end )) && return 1
+        ((SECONDS >= end)) && return 1
         sleep 0.05
     done
 }
@@ -39,7 +41,8 @@ poll() {
 kjs() {
     # A unique id per call without shell state: kjs runs in subshells ($(kjs ...)), where a
     # counter never advances.
-    local n="kjs-$(date +%s%N)-$RANDOM" before f
+    local n before f
+    n="kjs-$(date +%s%N)-$RANDOM"
     f=$KI3_TMP/$n.js
     {
         echo 'function log(s) { callDBus("net.local.kwini3.log", "/", "net.local.kwini3.log", "Log", "kjs: " + s); }'
@@ -47,19 +50,29 @@ kjs() {
         echo "$1"
         echo "} catch (e) { log(\"ERROR \" + e); }"
         echo "log(\"$n-END\");"
-    } > "$f"
+    } >"$f"
     before=$(mark)
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting loadScript ss "$f" "$n" >/dev/null
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting start
     local end=$((SECONDS + WAIT)) done=""
-    while (( SECONDS < end )); do
-        after "$before" | grep -qF "kjs: $n-END" && { done=1; break; }
+    while ((SECONDS < end)); do
+        after "$before" | grep -qF "kjs: $n-END" && {
+            done=1
+            break
+        }
         sleep 0.02
     done
     busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s "$n" >/dev/null
-    local out; out=$(after "$before" | grep '^.\{9\}kjs: ' | grep -vF "$n-END" | cut -c15-)
-    if [[ -z $done ]]; then echo "kjs: no answer in ${WAIT}s (a syntax error?): $1" >&2; return 1; fi
-    if grep -q '^ERROR ' <<<"$out"; then echo "kjs: $(grep '^ERROR ' <<<"$out" | head -1)" >&2; return 1; fi
+    local out
+    out=$(after "$before" | grep '^.\{9\}kjs: ' | grep -vF "$n-END" | cut -c15-)
+    if [[ -z $done ]]; then
+        echo "kjs: no answer in ${WAIT}s (a syntax error?): $1" >&2
+        return 1
+    fi
+    if grep -q '^ERROR ' <<<"$out"; then
+        echo "kjs: $(grep '^ERROR ' <<<"$out" | head -1)" >&2
+        return 1
+    fi
     [[ -n $out ]] && printf '%s\n' "$out"
     return 0
 }
@@ -75,7 +88,7 @@ _no_window() { ! _has_window "$1"; }
 
 client() {
     local title="" a=("$@") i
-    for ((i = 0; i < ${#a[@]}; i++)); do [[ ${a[i]} == --title ]] && title=${a[i+1]}; done
+    for ((i = 0; i < ${#a[@]}; i++)); do [[ ${a[i]} == --title ]] && title=${a[i + 1]}; done
     "$root/tools/testclient.py" "$@" >/dev/null 2>&1 &
     if [[ -n $title ]] && ! poll _has_window "$title"; then
         echo "    client: no window \"$title\" after ${WAIT}s" >&2
@@ -103,11 +116,14 @@ set_layouts() {
 }
 
 key() {
-    local m; m=$(mark)
+    local m
+    m=$(mark)
     # Move to Workspace N's action is "... (symbol)": the key it holds is Meta+<symbol> (src/kwin.js).
-    local id="kwin-i3 $1"; [[ $1 =~ ^Move\ to\ Workspace\ [0-9]+$ ]] && id+=" (symbol)"
+    local id="kwin-i3 $1"
+    [[ $1 =~ ^Move\ to\ Workspace\ [0-9]+$ ]] && id+=" (symbol)"
     busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "$id"
-    local re; re=$(printf '%s' "$1" | sed 's/[][()\\.*^$+?{}|]/\\&/g')   # "Workspace 6 (no back-and-forth)" has parens
+    local re
+    re=$(printf '%s' "$1" | sed 's/[][()\\.*^$+?{}|]/\\&/g') # "Workspace 6 (no back-and-forth)" has parens
     wait_log "^.{9}ACTION $re\$" "$m" || echo "    key: \"$1\" did not run within ${WAIT}s" >&2
 }
 
@@ -115,7 +131,8 @@ tree() { after "${2:-0}" | grep -E "^.{9}TREE $1 " | tail -1 | cut -d' ' -f4-; }
 _tree_is() { [[ "$(tree "$1" "$3")" == "$2" ]]; }
 wait_tree() {
     poll _tree_is "$1" "$2" "${3:-0}" && return 0
-    echo "    workspace $1 is: $(tree "$1" "${3:-0}")   wanted: $2"; return 1
+    echo "    workspace $1 is: $(tree "$1" "${3:-0}")   wanted: $2"
+    return 1
 }
 
 geom() {
@@ -124,25 +141,42 @@ geom() {
 _geom_is() { [[ "$(geom "$1")" == "$2" ]]; }
 wait_geom() {
     poll _geom_is "$1" "$2" && return 0
-    echo "    $1 is at $(geom "$1"), wanted $2"; return 1
+    echo "    $1 is at $(geom "$1"), wanted $2"
+    return 1
 }
 geom_is() { wait_geom "$@"; }
 
 clean_log() {
-    local bad; bad=$(grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | head -1)
+    local bad
+    bad=$(grep -E '^.{9}(INVARIANT|ERROR|WARN)' "$KI3_LOG" | head -1)
     [[ -z $bad ]] && return 0
-    echo "    log: ${bad:9}"; return 1
+    echo "    log: ${bad:9}"
+    return 1
 }
 
-ok()   { passed=$((passed + 1)); echo "  ok   $*"; }
-fail() {
-    failed=$((failed + 1)); echo "  FAIL $*"
-    if [[ -n ${KI3_FAILFAST:-} ]]; then finish; exit 1; fi
+ok() {
+    passed=$((passed + 1))
+    echo "  ok   $*"
 }
-check() { local msg=$1; shift; if "$@"; then ok "$msg"; else fail "$msg"; fi; }
+fail() {
+    failed=$((failed + 1))
+    echo "  FAIL $*"
+    if [[ -n ${KI3_FAILFAST:-} ]]; then
+        finish
+        exit 1
+    fi
+}
+check() {
+    local msg=$1
+    shift
+    if "$@"; then ok "$msg"; else fail "$msg"; fi
+}
 finish() {
     echo "  $passed passed, $failed failed"
-    (( passed + failed > 0 )) || { echo "  FAIL no checks ran"; return 1; }
+    ((passed + failed > 0)) || {
+        echo "  FAIL no checks ran"
+        return 1
+    }
     [[ $failed -eq 0 ]]
 }
 
@@ -160,20 +194,22 @@ declare -A EVDEV=(
 )
 INJECT="$root/tools/inject.py"
 press() {
-    local -a parts mods cmds; local k
+    local -a parts mods cmds
+    local k
     IFS=+ read -ra parts <<<"$1"
     local key=${parts[-1]}
     unset 'parts[-1]'
     mods=("${parts[@]}")
-    [[ $key == ":" ]] && mods+=(Shift)           # ':' is Shift+; on a US keyboard
+    [[ $key == ":" ]] && mods+=(Shift) # ':' is Shift+; on a US keyboard
     for k in "${mods[@]}"; do cmds+=("key ${EVDEV[$k]} down"); done
     cmds+=("key ${EVDEV[$key]} down" "key ${EVDEV[$key]} up")
     for ((k = ${#mods[@]} - 1; k >= 0; k--)); do cmds+=("key ${EVDEV[${mods[k]}]} up"); done
     "$INJECT" "${cmds[@]}"
 }
 point() { "$INJECT" "abs $1 $2" "wait 30"; }
-drag() {   # drag <mods> <button> x1 y1 x2 y2
-    local -a mods cmds; local k s
+drag() { # drag <mods> <button> x1 y1 x2 y2
+    local -a mods cmds
+    local k s
     IFS=+ read -ra mods <<<"$1"
     local b=$2 x1=$3 y1=$4 x2=$5 y2=$6
     cmds+=("abs $x1 $y1" "wait 30")
@@ -188,11 +224,13 @@ drag() {   # drag <mods> <button> x1 y1 x2 y2
 # An accessibility bus of the test's own, for tools/a11y.py: its
 # runtime directory is the test's, since the live session's bus lives in $XDG_RUNTIME_DIR/at-spi
 # and a second launcher there would sit beside it. Apps started after this register on it.
+# shellcheck disable=SC2034 # for the scenarios that source this file
 A11Y="python3 -I $root/tools/a11y.py"
 a11y_start() {
     mkdir -p "$KI3_TMP/run"
     # Fedora keeps them in /usr/libexec, Arch in /usr/lib.
-    local dir; for dir in /usr/libexec /usr/lib; do [[ -x $dir/at-spi-bus-launcher ]] && break; done
+    local dir
+    for dir in /usr/libexec /usr/lib; do [[ -x $dir/at-spi-bus-launcher ]] && break; done
     XDG_RUNTIME_DIR=$KI3_TMP/run $dir/at-spi-bus-launcher --launch-immediately >/dev/null 2>&1 &
     poll eval 'busctl --user status org.a11y.Bus >/dev/null 2>&1' || return 1
     $dir/at-spi2-registryd --use-gnome-session=false >/dev/null 2>&1 &

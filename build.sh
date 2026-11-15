@@ -13,10 +13,13 @@ tmp=$(mktemp)
         echo "// ---- $f"
         cat "$f"
     done
-} > "$tmp"
+} >"$tmp"
 mv "$tmp" "$out"
 # Every src/ file must be in the list, or it is silently left out of the build.
 for f in src/*.js; do
-    [[ " ${files[*]} " == *" $f "* ]] || { echo "build.sh: $f is not in the files list" >&2; exit 1; }
+    [[ " ${files[*]} " == *" $f "* ]] || {
+        echo "build.sh: $f is not in the files list" >&2
+        exit 1
+    }
 done
 node --check "$out"
