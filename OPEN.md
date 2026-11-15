@@ -124,17 +124,3 @@ Tiling key step's help speaking of the floating step's px, the pointer help narr
 `mouseWarping`, the rules help leaving out class; the unfocused indicator colour off the page,
 though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
 live.
-
-**115. The tree held to the publishable bar** (2026-11-14). Every tracked file holds only what a
-public project should: working, personal and business material and anything sensitive live
-outside the tree, the rest in the project's voice. Milestones: (1) an inventory of every tracked
-file, reviewed before anything moves; (2) one short branch per milestone, in a worktree, main
-brought in by merge, `OPEN.md` edited on main only; (3) the moves, references rewritten in the
-same commit; (4) the rewrite, graded area by area (the project's documentation or working
-material, no line on an agent's own conduct, nothing that would embarrass it); (5) the audit at
-zero; (6) the grader at zero open findings; (7) the last merge, its message saying what changed
-and why; (8) a dry run of the fresh single-commit history the repo gets at a release (`main` and
-`stable` on that one commit, the release tagged there, the old history kept in a private repo, the
-release notes telling users to clone again), built and audited locally, not pushed. Done through (7):
-every area graded, each finding fixed or kept with its reason, the audit and the sweep's check at
-zero. Open: (8). Next: (8), the dry run, built in a scratch directory outside the checkout.

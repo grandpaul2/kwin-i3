@@ -141,6 +141,17 @@ if a user asks for it.
 **Not decided: a release** and its timeline (KDE Store `.kwinscript`, issue template asking for a
 `tools/capture` bundle): not settled; not an item until it is decided. The beta
 (`OPEN.md`) comes first: the repo public, unannounced, its users on the `stable` branch.
+When it is decided, the repo starts a fresh history at it (built and audited once as a dry run):
+(1) the old history, every branch and tag, mirrored into a private archive; (2) the release
+commit on main as any other: the version, a CHANGELOG entry telling users to clone again (the
+path stays `~/kwin-i3`, so `make install` is all that follows; `git pull` in an old clone stops
+at "unrelated histories" and changes nothing), README's tags line from that version on;
+(3) a new repository from main's tree (`git archive`), one commit, `main` and `stable` on it, the
+release tagged there; (4) checked before it goes out: the publish audit with `--history` at 0,
+`make build` reproducing the committed `main.js`, `make unit` green; (5) `main` and `stable`
+force-pushed, the old tags and the probe branches deleted from origin, the tag pushed, the
+release notes the CHANGELOG entry; (6) every checkout and worktree cloned again. The one
+force-push of `stable` is this; `docs/testing.md`'s rule holds after it.
 
 ## i3 parity
 
