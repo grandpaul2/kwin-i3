@@ -3,7 +3,6 @@
 // the focus (mouseWarping), where the focus goes from the last window (focusWrapping), the tiling
 // drag (tilingDrag), and layout changes all at once (holdEnabled).
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
@@ -25,11 +24,15 @@ KCM.SimpleKCM {
             UnitSpinBox {
                 id: resizeStepBox
                 unit: "%"
-                from: 1; to: 50
+                from: 1
+                to: 50
                 value: root.settings.resizeStep
                 onValueModified: root.settings.resizeStep = value
                 Accessible.name: i18nc("@label:spinbox", "Resize step")
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "resizeStep" }
+                KCM.SettingStateBinding {
+                    configObject: root.settings
+                    settingName: "resizeStep"
+                }
             }
             Help {
                 topic: i18nc("@item help topic", "the key step")
@@ -40,11 +43,15 @@ KCM.SimpleKCM {
             id: floatingStepBox
             Kirigami.FormData.label: i18nc("@label:spinbox", "Floating key step:")
             unit: "px"
-            from: 1; to: 200
+            from: 1
+            to: 200
             value: root.settings.floatingStep
             onValueModified: root.settings.floatingStep = value
             Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
-            KCM.SettingStateBinding { configObject: root.settings; settingName: "floatingStep" }
+            KCM.SettingStateBinding {
+                configObject: root.settings
+                settingName: "floatingStep"
+            }
         }
         RowLayout {
             Kirigami.FormData.label: i18nc("@label", "Focus follows the mouse:")
@@ -56,7 +63,10 @@ KCM.SimpleKCM {
                 recommended: true
                 checked: root.settings.focusFollowsMouse
                 onToggled: root.settings.focusFollowsMouse = checked
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "focusFollowsMouse" }
+                KCM.SettingStateBinding {
+                    configObject: root.settings
+                    settingName: "focusFollowsMouse"
+                }
             }
             Help {
                 topic: i18nc("@item help topic", "focus follows the mouse")
@@ -73,7 +83,10 @@ KCM.SimpleKCM {
                 recommended: true
                 checked: root.settings.mouseWarping === "output"
                 onToggled: root.settings.mouseWarping = checked ? "output" : "none"
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "mouseWarping" }
+                KCM.SettingStateBinding {
+                    configObject: root.settings
+                    settingName: "mouseWarping"
+                }
             }
             Help {
                 topic: i18nc("@item help topic", "the pointer")
@@ -89,10 +102,22 @@ KCM.SimpleKCM {
                 columnWidth: root.listColumn
                 settingName: "focusWrapping"
                 model: [
-                    { text: i18nc("@item:inlistbox", "Next screen, then wrap"), value: "yes" },
-                    { text: i18nc("@item:inlistbox", "Next screen only"), value: "no" },
-                    { text: i18nc("@item:inlistbox", "Always wrap"), value: "force" },
-                    { text: i18nc("@item:inlistbox", "Stay on the workspace"), value: "workspace" },
+                    {
+                        text: i18nc("@item:inlistbox", "Next screen, then wrap"),
+                        value: "yes"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Next screen only"),
+                        value: "no"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Always wrap"),
+                        value: "force"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Stay on the workspace"),
+                        value: "workspace"
+                    },
                 ]
             }
             Help {
@@ -110,10 +135,22 @@ KCM.SimpleKCM {
                 settingName: "tilingDrag"
                 applies: kcm.helperLoaded       // plugin/tilingdrag.cpp
                 model: [
-                    { text: i18nc("@item:inlistbox", "Titlebar, or Meta anywhere"), value: "modifier titlebar" },
-                    { text: i18nc("@item:inlistbox", "Meta anywhere"), value: "modifier" },
-                    { text: i18nc("@item:inlistbox", "Titlebar"), value: "titlebar" },
-                    { text: i18nc("@item:inlistbox", "Neither: no dragging"), value: "off" },
+                    {
+                        text: i18nc("@item:inlistbox", "Titlebar, or Meta anywhere"),
+                        value: "modifier titlebar"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Meta anywhere"),
+                        value: "modifier"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Titlebar"),
+                        value: "titlebar"
+                    },
+                    {
+                        text: i18nc("@item:inlistbox", "Neither: no dragging"),
+                        value: "off"
+                    },
                 ]
             }
             Help {
@@ -132,13 +169,16 @@ KCM.SimpleKCM {
                 recommended: true
                 checked: root.settings.holdEnabled
                 onToggled: root.settings.holdEnabled = checked
-                KCM.SettingStateBinding { configObject: root.settings; settingName: "holdEnabled"; extraEnabledConditions: kcm.holdLoaded }
+                KCM.SettingStateBinding {
+                    configObject: root.settings
+                    settingName: "holdEnabled"
+                    extraEnabledConditions: kcm.holdLoaded
+                }
             }
             Help {
                 topic: i18nc("@item help topic", "layout changes")
                 toolTipText: i18n("A new layout appears in one go, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
             }
         }
-
     }
 }

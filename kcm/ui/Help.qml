@@ -1,9 +1,5 @@
 import QtQuick
-import QtQuick.Controls as QQC2
-import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.kcmutils as KCM
-import org.kde.kquickcontrols as KQC
 
 // A setting's help, ending in its i3 directive. It sits in
 // a RowLayout with its control; FormLayout then labels the row, not the control

@@ -48,7 +48,10 @@ KCM.ScrollViewKCM {
                 enabled: kcm.helperLoaded
                 checked: kcm.settings.keysOverride
                 onToggled: kcm.settings.keysOverride = checked
-                KCM.SettingStateBinding { configObject: kcm.settings; settingName: "keysOverride" }
+                KCM.SettingStateBinding {
+                    configObject: kcm.settings
+                    settingName: "keysOverride"
+                }
             }
             Help {
                 topic: i18nc("@item help topic", "key conflicts")
@@ -98,15 +101,30 @@ KCM.ScrollViewKCM {
                                 valueRole: "value"
                                 // Sleep only where the machine can sleep, as Plasma's logout screen (or
                                 // where it is already the setting, so the box never shows another).
-                                model: [
-                                    ...(kcm.canSuspend || stored === "sleep" ? [{ text: i18nc("@item:inlistbox", "Sleep"), value: "sleep" }] : []),
-                                    { text: i18nc("@item:inlistbox", "Shut down"), value: "shutdown" },
-                                    { text: i18nc("@item:inlistbox", "Log out"), value: "logout" },
-                                    { text: i18nc("@item:inlistbox", "Show logout screen"), value: "ask" },
+                                model: [...(kcm.canSuspend || stored === "sleep" ? [
+                                            {
+                                                text: i18nc("@item:inlistbox", "Sleep"),
+                                                value: "sleep"
+                                            }
+                                        ] : []),
+                                    {
+                                        text: i18nc("@item:inlistbox", "Shut down"),
+                                        value: "shutdown"
+                                    },
+                                    {
+                                        text: i18nc("@item:inlistbox", "Log out"),
+                                        value: "logout"
+                                    },
+                                    {
+                                        text: i18nc("@item:inlistbox", "Show logout screen"),
+                                        value: "ask"
+                                    },
                                 ]
                                 // As main.qml's ChoiceBox: not a binding on indexOfValue, which runs before the model is set.
                                 readonly property string stored: kcm.settings[row.setting]
-                                function sync() { currentIndex = indexOfValue(stored) }
+                                function sync() {
+                                    currentIndex = indexOfValue(stored);
+                                }
                                 onStoredChanged: sync()
                                 onCountChanged: sync()
                                 Component.onCompleted: sync()
@@ -165,7 +183,8 @@ KCM.ScrollViewKCM {
                                 // override decides which runs); this item's own check would
                                 // offer to take it from its holder at once, beyond Reset.
                                 checkForConflictsAgainst: KQC.ShortcutType.None
-                                modifierlessAllowed: false
+                                // Deprecated for patterns: OPEN.md item 117.
+                                modifierlessAllowed: false // qmllint disable deprecated
                                 multiKeyShortcutsAllowed: false
                                 // KDE's control names its own buttons by the key ("Meta+J", " None ")
                                 // and "Clear Key Sequence", alike in every row, so a screen reader
@@ -174,19 +193,16 @@ KCM.ScrollViewKCM {
                                 // 6.31 KeySequenceItem.qml); naming them belongs upstream.
                                 Component.onCompleted: {
                                     const b = children;
-                                    if (b.length !== 3 || !b.every((c) => "checkable" in c)) {
+                                    if (b.length !== 3 || !b.every(c => "checkable" in c)) {
                                         console.warn("kwin-i3 keys: KeySequenceItem's buttons have changed; they keep KDE's names");
                                         return;
                                     }
                                     const n = slot.index + 1;
-                                    b[0].Accessible.name = Qt.binding(() => i18nc("command, key slot, its key", "%1, key %2: %3",
-                                        row.label, n, slot.modelData.keyText || i18nc("no key set", "none")));
+                                    b[0].Accessible.name = Qt.binding(() => i18nc("command, key slot, its key", "%1, key %2: %3", row.label, n, slot.modelData.keyText || i18nc("no key set", "none")));
                                     b[1].Accessible.name = i18nc("@action:button command, key slot", "Clear %1, key %2", row.label, n);
                                     b[2].Accessible.name = i18nc("@action:button command, key slot", "Cancel recording %1, key %2", row.label, n);
                                 }
-                                QQC2.ToolTip.text: !slot.modelData.defaultText ? i18n("No default key")
-                                    : slot.defaultKeysText ? i18n("Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText)
-                                    : i18n("Default: %1", slot.modelData.defaultText)
+                                QQC2.ToolTip.text: !slot.modelData.defaultText ? i18n("No default key") : slot.defaultKeysText ? i18n("Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText) : i18n("Default: %1", slot.modelData.defaultText)
                                 QQC2.ToolTip.visible: hovered
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
                             }

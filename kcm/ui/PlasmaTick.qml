@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
@@ -13,7 +12,7 @@ RowLayout {
     property string row
     property bool recommended
     property bool showName                  // a row with no FormLayout label names itself
-    readonly property var model: kcm.setup.rows.find((r) => r.id === row) || ({})
+    readonly property var model: kcm.setup.rows.find(r => r.id === row) || ({})
     spacing: Kirigami.Units.smallSpacing
     Tick {
         id: box
@@ -28,6 +27,6 @@ RowLayout {
     }
     Help {
         topic: root.model.title || ""
-        toolTipText: [root.model.why, root.model.note, i18n("This is Plasma's own setting: changing it here is the same as in System Settings, and kwin-i3 gives back what it was when you untick it and apply.")].filter((s) => s).join(" ")
+        toolTipText: [root.model.why, root.model.note, i18n("This is Plasma's own setting: changing it here is the same as in System Settings, and kwin-i3 gives back what it was when you untick it and apply.")].filter(s => s).join(" ")
     }
 }

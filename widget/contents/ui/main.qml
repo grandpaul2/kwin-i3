@@ -23,7 +23,9 @@ PlasmoidItem {
     property int pending: 0                 // the workspace a scroll last asked for, until the next gather
     property real wheelRest: 0              // angleDelta not yet a whole step (a touchpad's small ones)
 
-    TaskManager.VirtualDesktopInfo { id: desktops }
+    TaskManager.VirtualDesktopInfo {
+        id: desktops
+    }
     TaskManager.TasksModel {
         id: tasks
         groupMode: TaskManager.TasksModel.GroupDisabled
@@ -33,53 +35,119 @@ PlasmoidItem {
         filterNotMinimized: false
     }
 
-    function role(row, r) { return tasks.data(tasks.index(row, 0), r); }
+    function role(row, r) {
+        return tasks.data(tasks.index(row, 0), r);
+    }
     function gather() {
         const R = TaskManager.AbstractTasksModel;
-        const screens = Qt.application.screens.map(s => ({ name: s.name, x: s.virtualX, y: s.virtualY, width: s.width, height: s.height }));
+        const screens = Qt.application.screens.map(s => ({
+                    name: s.name,
+                    x: s.virtualX,
+                    y: s.virtualY,
+                    width: s.width,
+                    height: s.height
+                }));
         const shown = {};
-        screens.forEach(s => { const d = desktops.currentDesktopByScreenName(s.name); if (d !== undefined && d !== null) shown[s.name] = d; });
+        screens.forEach(s => {
+            const d = desktops.currentDesktopByScreenName(s.name);
+            if (d !== undefined && d !== null)
+                shown[s.name] = d;
+        });
         const windows = [];
         for (let i = 0; i < tasks.count; i++) {
-            if (!role(i, R.IsWindow)) continue;
+            if (!role(i, R.IsWindow))
+                continue;
             const g = role(i, R.Geometry);
-            if (!g || g.width === undefined) continue;          // a window not placed yet
+            if (!g || g.width === undefined)
+                continue;          // a window not placed yet
             windows.push({
                 desktops: (role(i, R.VirtualDesktops) || []).map(String),
                 onAll: !!role(i, R.IsOnAllVirtualDesktops),
-                x: g.x, y: g.y, width: g.width, height: g.height,
-                active: !!role(i, R.IsActive),
+                x: g.x,
+                y: g.y,
+                width: g.width,
+                height: g.height,
+                active: !!role(i, R.IsActive)
             });
         }
         const ids = desktops.desktopIds.map(String);
         Object.keys(shown).forEach(k => shown[k] = String(shown[k]));
-        const next = Logic.workspaces({ desktops: ids, names: desktops.desktopNames, screens: screens, shown: shown, windows: windows });
+        const next = Logic.workspaces({
+            desktops: ids,
+            names: desktops.desktopNames,
+            screens: screens,
+            shown: shown,
+            windows: windows
+        });
         // Only a real change rebuilds the thumbnails (a title or icon change would recreate every
         // delegate, and a click landing mid-rebuild would be lost).
         const json = JSON.stringify(next);
-        if (json === root.spacesJson) return;
+        if (json === root.spacesJson)
+            return;
         root.spacesJson = json;
         root.spaces = next;
         root.pending = 0;
         // For tests/live/67-workspace-widget.sh (QT_LOGGING_RULES="qml.debug=true"); silent otherwise.
         console.debug("kwin-i3 workspaces: " + JSON.stringify(next.map(s => [s.num, s.screen, s.width, s.height, s.windows.length, s.shown, s.focused])));
     }
-    Timer { id: refresh; interval: 30; onTriggered: root.gather() }
-    Connections { target: desktops; function onDesktopIdsChanged() { refresh.restart(); } function onCurrentDesktopChanged() { refresh.restart(); }
-                  function onCurrentDesktopForScreenChanged() { refresh.restart(); } function onDesktopNamesChanged() { refresh.restart(); } }
-    Connections { target: tasks; function onDataChanged() { refresh.restart(); } function onRowsInserted() { refresh.restart(); }
-                  function onRowsRemoved() { refresh.restart(); } function onModelReset() { refresh.restart(); } }
-    Connections { target: Qt.application; function onScreensChanged() { refresh.restart(); } }
+    Timer {
+        id: refresh
+        interval: 30
+        onTriggered: root.gather()
+    }
+    Connections {
+        target: desktops
+        function onDesktopIdsChanged() {
+            refresh.restart();
+        }
+        function onCurrentDesktopChanged() {
+            refresh.restart();
+        }
+        function onCurrentDesktopForScreenChanged() {
+            refresh.restart();
+        }
+        function onDesktopNamesChanged() {
+            refresh.restart();
+        }
+    }
+    Connections {
+        target: tasks
+        function onDataChanged() {
+            refresh.restart();
+        }
+        function onRowsInserted() {
+            refresh.restart();
+        }
+        function onRowsRemoved() {
+            refresh.restart();
+        }
+        function onModelReset() {
+            refresh.restart();
+        }
+    }
+    Connections {
+        target: Qt.application
+        function onScreensChanged() {
+            refresh.restart();
+        }
+    }
     Component.onCompleted: gather()
 
     // kwin-i3's "Workspace N" (Meta+N), so the widget and the key do the same.
     function show(num) {
         console.debug("kwin-i3 workspaces: show " + num);
         const reply = DBus.SessionBus.asyncCall({
-            "service": "org.kde.kglobalaccel", "path": "/component/kwin", "iface": "org.kde.kglobalaccel.Component",
-            "member": "invokeShortcut", "arguments": [new DBus.string("kwin-i3 Workspace " + num)], "signature": "(s)"
+            "service": "org.kde.kglobalaccel",
+            "path": "/component/kwin",
+            "iface": "org.kde.kglobalaccel.Component",
+            "member": "invokeShortcut",
+            "arguments": [new DBus.string("kwin-i3 Workspace " + num)],
+            "signature": "(s)"
         });
-        reply.finished.connect(() => { if (reply.isError) console.warn("kwin-i3 workspaces: " + reply.error.message); });
+        reply.finished.connect(() => {
+            if (reply.isError)
+                console.warn("kwin-i3 workspaces: " + reply.error.message);
+        });
     }
 
     fullRepresentation: GridLayout {
@@ -101,8 +169,11 @@ PlasmoidItem {
             id: taskFrame
             visible: false
             imagePath: "widgets/tasks"
-            prefix: [({ [PlasmaCore.Types.LeftEdge]: "west", [PlasmaCore.Types.TopEdge]: "north",
-                        [PlasmaCore.Types.RightEdge]: "east" }[Plasmoid.location] || "south") + "-normal", "normal"]
+            prefix: [({
+                        [PlasmaCore.Types.LeftEdge]: "west",
+                        [PlasmaCore.Types.TopEdge]: "north",
+                        [PlasmaCore.Types.RightEdge]: "east"
+                    }[Plasmoid.location] || "south") + "-normal", "normal"]
         }
         // For tests/live/67-workspace-widget.sh, as the workspaces line below.
         readonly property string frameReport: [taskFrame.margins.left, taskFrame.margins.right, taskFrame.margins.top, taskFrame.margins.bottom, lead].join(" ")
@@ -118,14 +189,17 @@ PlasmoidItem {
         // One workspace per wheel notch (120), a touchpad's small deltas added up; steps taken
         // before kwin-i3's answer reaches the widget go on from the one last asked for.
         WheelHandler {
-            onWheel: (event) => {
+            onWheel: event => {
                 const d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;
                 root.wheelRest += d;
                 while (Math.abs(root.wheelRest) >= 120) {
                     const dir = root.wheelRest < 0 ? 1 : -1;
                     root.wheelRest += dir * 120;
                     const n = Logic.step(root.spaces, dir, root.pending);
-                    if (n !== null) { root.pending = n; root.show(n); }
+                    if (n !== null) {
+                        root.pending = n;
+                        root.show(n);
+                    }
                 }
             }
         }
@@ -143,13 +217,15 @@ PlasmoidItem {
                 readonly property string label: Logic.label(modelData.num, modelData.name, defaultName)
                 Layout.preferredHeight: root.vertical ? row.thickness / aspect : row.thickness
                 // Numbers only: a named workspace's button widens to fit "2 mail".
-                Layout.preferredWidth: root.vertical ? row.thickness
-                    : Math.max(row.thickness * aspect, root.numbersOnly && isNamed ? metrics.width + row.thickness * 0.4 : 0)
-                TextMetrics { id: metrics; font.pixelSize: Math.max(8, row.thickness * 0.5); font.bold: space.modelData.focused; text: space.label }
+                Layout.preferredWidth: root.vertical ? row.thickness : Math.max(row.thickness * aspect, root.numbersOnly && isNamed ? metrics.width + row.thickness * 0.4 : 0)
+                TextMetrics {
+                    id: metrics
+                    font.pixelSize: Math.max(8, row.thickness * 0.5)
+                    font.bold: space.modelData.focused
+                    text: space.label
+                }
                 radius: 2
-                color: modelData.focused ? Qt.alpha(Kirigami.Theme.highlightColor, 0.55)
-                     : modelData.shown ? Qt.alpha(Kirigami.Theme.highlightColor, 0.25)
-                     : Qt.alpha(Kirigami.Theme.textColor, 0.08)
+                color: modelData.focused ? Qt.alpha(Kirigami.Theme.highlightColor, 0.55) : modelData.shown ? Qt.alpha(Kirigami.Theme.highlightColor, 0.25) : Qt.alpha(Kirigami.Theme.textColor, 0.08)
                 border.width: 1
                 border.color: modelData.shown ? Kirigami.Theme.highlightColor : Qt.alpha(Kirigami.Theme.textColor, 0.3)
 
@@ -185,16 +261,13 @@ PlasmoidItem {
                     hoverEnabled: true
                     onClicked: root.show(space.modelData.num)
                     Accessible.role: Accessible.Button
-                    Accessible.name: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name)
-                                                   : i18n("Workspace %1", space.modelData.num)
+                    Accessible.name: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name) : i18n("Workspace %1", space.modelData.num)
                     Accessible.onPressAction: root.show(space.modelData.num)
                 }
                 PlasmaCore.ToolTipArea {
                     anchors.fill: parent
-                    mainText: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name)
-                                            : i18n("Workspace %1", space.modelData.num)
-                    subText: space.modelData.focused ? i18n("Shown, with the focus")
-                           : space.modelData.shown ? i18n("Shown on its output") : ""
+                    mainText: space.isNamed ? i18n("Workspace %1: %2", space.modelData.num, space.modelData.name) : i18n("Workspace %1", space.modelData.num)
+                    subText: space.modelData.focused ? i18n("Shown, with the focus") : space.modelData.shown ? i18n("Shown on its output") : ""
                 }
             }
         }

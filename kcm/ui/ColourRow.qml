@@ -21,12 +21,15 @@ RowLayout {
         Layout.preferredWidth: columnWidth - defaultButton.implicitWidth - parent.spacing
         showAlphaChannel: false
         color: parent.shown
-        onAccepted: (c) => kcm.settings[parent.settingName] = c.toString()
+        onAccepted: c => kcm.settings[parent.settingName] = c.toString()
         Accessible.name: parent.name
         KCM.SettingStateBinding {
             configObject: kcm.settings
+            // qmllint disable missing-property
+            // The row's own properties, through bar.parent, which qmllint types as a plain Item.
             settingName: bar.parent.settingName
             extraEnabledConditions: bar.parent.applies
+            // qmllint enable missing-property
         }
     }
     QQC2.Button {

@@ -125,6 +125,11 @@ Tiling key step's help speaking of the floating step's px, the pointer help narr
 though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
 live.
 
+**117. The Keys tab's key control uses a deprecated property** (2026-11-15, found by qmllint).
+`kcm/ui/Keys.qml` sets `KeySequenceItem`'s `modifierlessAllowed`, which KQuickControls deprecates
+for `patterns`; the line carries a qmllint disable until it changes. Next: the KF6 release that
+added `patterns`, against the oldest supported Plasma's (6.7), then a spec for the settings page.
+
 **116. Each language's standard formatter and linter, run by the build or tests** (2026-11-15).
 None is configured today, and each first reformat is large (measured against HEAD 2dca3cd, lines
 changed): C++ with KDE's ECM `.clang-format` ~1,400, QML with `qmlformat` ~1,400, Python with

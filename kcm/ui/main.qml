@@ -10,7 +10,6 @@ import QtQuick.Templates as T
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
-import "settings.js" as Logic
 
 KCM.AbstractKCM {
     id: root
@@ -46,10 +45,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && (!kcm.holdLoaded || !kcm.helperLoaded)
-            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. Install them: make plugin-install",
-                        [!kcm.holdLoaded ? i18n("no frame") : "",
-                         !kcm.helperLoaded ? i18n("no mouse dragging") : "",
-                         !kcm.helperLoaded ? i18n("no resize mode") : ""].filter(s => s).join(", "))
+            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. Install them: make plugin-install", [!kcm.holdLoaded ? i18n("no frame") : "", !kcm.helperLoaded ? i18n("no mouse dragging") : "", !kcm.helperLoaded ? i18n("no resize mode") : ""].filter(s => s).join(", "))
         }
         // The first-run step (docs/plan.md, "Install and first run"): while a Plasma setting
         // kwin-i3 needs differs (per-output desktops), the page says so and opens its tab.
@@ -86,9 +82,7 @@ KCM.AbstractKCM {
             id: tabs
             property int currentIndex: 0
             readonly property int count: tabNames.length
-            readonly property var tabNames: [i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"),
-                i18nc("@title:tab", "Workspaces"), i18nc("@title:tab", "Window Rules"),
-                i18nc("@title:tab", "Frame"), i18nc("@title:tab", "Keys")]
+            readonly property var tabNames: [i18nc("@title:tab", "Tiling"), i18nc("@title:tab", "Gaps"), i18nc("@title:tab", "Workspaces"), i18nc("@title:tab", "Window Rules"), i18nc("@title:tab", "Frame"), i18nc("@title:tab", "Keys")]
             Layout.fillWidth: true
             Layout.preferredHeight: 34
             implicitHeight: 34
@@ -101,61 +95,76 @@ KCM.AbstractKCM {
                 anchors.fill: parent
                 color: tabs.base
                 // The window's background, under a selected tab's tint (Breeze paints it first).
-                Item { id: windowSet; Kirigami.Theme.colorSet: Kirigami.Theme.Window; Kirigami.Theme.inherit: false }
+                Item {
+                    id: windowSet
+                    Kirigami.Theme.colorSet: Kirigami.Theme.Window
+                    Kirigami.Theme.inherit: false
+                }
             }
             Row {
-            Repeater {
-                model: tabs.tabNames
-                T.TabButton {
-                    id: tab
-                    required property string modelData
-                    required property int index
-                    readonly property bool selected: tabs.currentIndex === index
-                    checked: selected
-                    onClicked: tabs.currentIndex = index
-                    text: modelData
-                    width: tabs.width / tabs.count
-                    height: tabs.height
-                    hoverEnabled: true
-                    Accessible.name: modelData
-                    contentItem: QQC2.Label {
-                        text: tab.text
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideRight
-                    }
-                    background: Item {
-                        Rectangle {
-                            visible: tab.selected
-                            anchors.fill: parent
-                            color: windowSet.Kirigami.Theme.backgroundColor
+                Repeater {
+                    model: tabs.tabNames
+                    T.TabButton {
+                        id: tab
+                        required property string modelData
+                        required property int index
+                        readonly property bool selected: tabs.currentIndex === index
+                        checked: selected
+                        onClicked: tabs.currentIndex = index
+                        text: modelData
+                        width: tabs.width / tabs.count
+                        height: tabs.height
+                        hoverEnabled: true
+                        Accessible.name: modelData
+                        contentItem: QQC2.Label {
+                            text: tab.text
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
                         }
-                        Rectangle {               // a tab's own fill: selected, hovered, plain
-                            anchors.fill: parent
-                            color: tab.selected ? Qt.alpha(Kirigami.Theme.highlightColor, Kirigami.Theme.frameContrast)
-                                 : tab.hovered ? Qt.alpha(Kirigami.Theme.hoverColor, Kirigami.Theme.frameContrast)
-                                 : tabs.base
-                            border.width: tab.selected ? 1 : 0
-                            border.color: tabs.line
-                        }
-                        Rectangle {               // the selected tab's highlight line
-                            visible: tab.selected
-                            anchors { left: parent.left; right: parent.right; top: parent.top }
-                            height: 3
-                            color: Kirigami.Theme.highlightColor
-                        }
-                        Rectangle {               // the separator before an unselected tab, but the first's and the one after the selected
-                            visible: !tab.selected && tab.index > 0 && tabs.currentIndex !== tab.index - 1
-                            x: 0; width: 1
-                            anchors { top: parent.top; bottom: parent.bottom; topMargin: 8; bottomMargin: 8 }
-                            color: tabs.line
+                        background: Item {
+                            Rectangle {
+                                visible: tab.selected
+                                anchors.fill: parent
+                                // windowSet is an item; qmllint types it var.
+                                color: windowSet.Kirigami.Theme.backgroundColor // qmllint disable prefixed-import-type
+                            }
+                            Rectangle {               // a tab's own fill: selected, hovered, plain
+                                anchors.fill: parent
+                                color: tab.selected ? Qt.alpha(Kirigami.Theme.highlightColor, Kirigami.Theme.frameContrast) : tab.hovered ? Qt.alpha(Kirigami.Theme.hoverColor, Kirigami.Theme.frameContrast) : tabs.base
+                                border.width: tab.selected ? 1 : 0
+                                border.color: tabs.line
+                            }
+                            Rectangle {               // the selected tab's highlight line
+                                visible: tab.selected
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                }
+                                height: 3
+                                color: Kirigami.Theme.highlightColor
+                            }
+                            Rectangle {               // the separator before an unselected tab, but the first's and the one after the selected
+                                visible: !tab.selected && tab.index > 0 && tabs.currentIndex !== tab.index - 1
+                                x: 0
+                                width: 1
+                                anchors {
+                                    top: parent.top
+                                    bottom: parent.bottom
+                                    topMargin: 8
+                                    bottomMargin: 8
+                                }
+                                color: tabs.line
+                            }
                         }
                     }
                 }
             }
-            }
         }
-        Kirigami.Separator { Layout.fillWidth: true }
+        Kirigami.Separator {
+            Layout.fillWidth: true
+        }
     }
 
     StackLayout {
@@ -163,7 +172,10 @@ KCM.AbstractKCM {
         currentIndex: tabs.currentIndex
         Repeater {
             model: ["Tiling.qml", "Gaps.qml", "Workspaces.qml", "WindowRules.qml", "Frame.qml", "Keys.qml"]
-            Loader { required property string modelData; source: modelData }
+            Loader {
+                required property string modelData
+                source: modelData
+            }
         }
     }
 }
