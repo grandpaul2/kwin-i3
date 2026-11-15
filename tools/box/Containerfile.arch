@@ -1,8 +1,9 @@
 # Arch's KWin for the test KWin, as an Arch-based user (CachyOS) has it (docs/testing.md P5;
 # tools/box.sh builds and runs it). Arch pinned to one day of the Arch Linux Archive, so a rebuild
 # gets the same KWin (6.8.2-2, CachyOS's 6.8.2-2.1 the same build); the pin moves forward when Arch
-# ships a newer one. kwin_wayland's file
-# capability (cap_sys_nice, realtime scheduling) is removed: rootless podman refuses to exec it.
+# ships a newer one.
+# kwin_wayland's file capability (cap_sys_nice, realtime scheduling) is removed: rootless podman
+# refuses to exec it.
 FROM docker.io/library/archlinux:latest
 ARG ARCHIVE_DATE=2026/11/04
 RUN echo "Server = https://archive.archlinux.org/repos/${ARCHIVE_DATE}/\$repo/os/\$arch" > /etc/pacman.d/mirrorlist \

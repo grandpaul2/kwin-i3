@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # needs: plugin
 # timing: alone
-# Where a new window opens, and desktop switches made from outside.
-# From a capture: Prism Launcher's modal dialog
-# opened while the focus was on the other monitor's empty workspace, KWin gave it that workspace,
-# switched Prism's monitor to it, and kwin-i3 took Prism along. As i3 (manage.c, workspace_show):
+# Where a new window opens, and desktop switches made from outside. The case: Prism Launcher's
+# modal dialog opened while the focus is on the other monitor's empty workspace; KWin gives it that
+# workspace and switches Prism's monitor to it. As i3 (manage.c, workspace_show):
 # (1) a new window opens on the focused workspace, wherever the pointer is (§5 C1); (2) a modal
 # dialog opens on its parent's workspace, nothing moves, no output switches, the focus stays (C2,
 # C3); (3) a desktop switched from outside on any output is `workspace N`: N shows on its own
@@ -39,7 +38,8 @@ check "Meta+2: the empty 2 on the right has the focus" poll screen_is Virtual-1
 sleep 0.3
 check "the pointer stayed on the left (mouseWarping none)" cursor_on Virtual-0
 # No pointer motion here: over the left's bare root with the focus on the right, a motion would
-# pull the focus to the left's workspace, as i3's check_crossing_screen_boundary (§5 B2). The pointer is already on the left, so KWin opens a there.
+# pull the focus to the left's workspace, as i3's check_crossing_screen_boundary (§5 B2).
+# The pointer is already on the left, so KWin opens a there.
 m=$(mark)
 client --title a
 check "a opens on the focused workspace 2"  wait_tree 2 "H[a*]"

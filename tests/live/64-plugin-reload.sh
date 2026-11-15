@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # needs: plugin
 # The helper plugin unloaded and loaded again in a running KWin, as make plugin-install does:
-# KWin keeps the old library, and nothing of the unloaded instance may outlive it. The
-# frame-click filter's settings subscription did (KDE's config watcher is shared
-# by everyone watching kwinrc, so it lived on): the next config change called the unloaded
-# instance and KWin crashed, taking every app with it.
+# KWin keeps the old library, and nothing of the unloaded instance may outlive it. The frame-click
+# filter's settings subscription is the case: KDE's config watcher is shared by everyone watching
+# kwinrc, so a subscription left on it would have the next config change call the unloaded
+# instance, and KWin would crash, taking every app with it.
 source "$(dirname "$0")/lib.sh"
 alive() { busctl --user call org.kde.KWin /KWin org.kde.KWin currentDesktop >/dev/null 2>&1; }
 helper() { busctl --user get-property org.kde.KWin /Plugins org.kde.KWin.Plugins LoadedPlugins | grep -o '"kwini3helper[^"]*"' | tr -d '"'; }

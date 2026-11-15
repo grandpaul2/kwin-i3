@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # needs: plugin
-# The mouse with the kwini3helper plugin loaded (plugin/framefocus.cpp; its frame focus is tested in
-# 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock: Meta+left-drag
-# moves, Meta+right-drag resizes; a tiled window's Meta+left-drag is the helper's tiling drag. The plugin's old mouse chords (Meta+Shift+drag moved) are
+# The mouse with the kwini3helper plugin loaded (plugin/framefocus.cpp; its frame focus is tested
+# in 54-frame.sh), driven by real input. Window move and resize are KWin's own, stock:
+# Meta+left-drag moves, Meta+right-drag resizes; a tiled window's Meta+left-drag is the helper's
+# tiling drag. Meta+Shift+drag is no chord of kwin-i3's (docs/plan.md, Scope), and a
+# [kwin-i3-mouse] entry an older version left in kwinrc does nothing.
 # gone (docs/plan.md, Scope); a [kwin-i3-mouse] entry left in kwinrc does nothing.
 source "$(dirname "$0")/lib.sh"
 clicks=$KI3_TMP/clicks
@@ -43,7 +45,7 @@ check "Meta+drag moved w by (100,60)"       poll moved_by w "$p0" 100 60
 check "w kept its size"                     [ "$(size w)" == "$s0" ]
 check "w saw no click"                      saw_nothing
 
-# 2. Meta+Shift+left-drag no longer moves, the leftover chord entry notwithstanding: the click
+# 2. Meta+Shift+left-drag doesn't move, the leftover chord entry notwithstanding: the click
 #    reaches the window.
 read -r cx cy < <(centre w); p0=$(pos w)
 sdrag Meta+Shift left "$cx" "$cy" $((cx + 100)) $((cy + 60))

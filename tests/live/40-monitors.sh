@@ -62,8 +62,8 @@ check "Meta+5 from the second monitor opens there" poll shows Virtual-1 5
 key "Workspace 2"
 key "Focus Left"
 
-# A monitor drops out and comes back (a monitor waking from
-# sleep; i3's rule): its workspaces move to the first monitor for good; the returning monitor shows a
+# A monitor drops out and comes back (as one does waking from sleep; i3's rule): its workspaces
+# move to the first monitor for good; the returning monitor shows a
 # free workspace, not the one it showed; an assignment (workspaceOutputs) is what brings a workspace
 # back. The focus goes to the first monitor's workspace after either change (§5 D5).
 key "Workspace 1"
@@ -79,7 +79,8 @@ check "b is on the remaining monitor"       poll on_output b Virtual-0
 check "the first monitor keeps showing 1, with the focus" poll active_is c
 m=$(mark)
 # A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
-# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
+# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here
+# (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
 timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 two_screens() { [[ "$(kjs 'log(workspace.screens.length)')" == 2 ]]; }
 check "it is back"                          poll two_screens
@@ -109,7 +110,8 @@ key "Workspace 2"
 check "Meta+2 shows 2 on the remaining monitor" poll shows Virtual-0 2
 m=$(mark)
 # A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
-# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
+# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here
+# (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
 timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 check "replugged"                           poll two_screens
 # After kwin-i3 has reconciled, not the first moment: KWin itself briefly puts b back on its old
@@ -125,9 +127,9 @@ check "and the pointer came with it"        poll cursor_on Virtual-0
 set_key workspaceOutputs --delete
 key "Reload Settings"
 
-# The fuzzer's first find (I8, shrunk to 2 steps): moving the only window away leaves its
-# workspace empty and focused, as in i3. KWin kept the moved window active, hidden on the other
-# workspace, so typing went into a window nobody could see.
+# The fuzzer's I8: moving the only window away leaves its workspace empty and focused, as in i3.
+# KWin keeps the moved window active, hidden on the other workspace, so typing would go into a
+# window nobody can see.
 check "c is active"                         poll active_is c
 key "Move to Workspace 6"
 check "c went to workspace 6"               wait_tree 6 "H[c]"

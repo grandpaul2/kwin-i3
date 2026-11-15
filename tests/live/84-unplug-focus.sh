@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# The fuzzer's I8 (fixed in 122ffa1): the focused monitor shows an empty workspace and is
-# unplugged. As in i3 (randr.c move_content), that workspace moves to the remaining monitor, is
-# shown there and keeps the focus; KWin then activated a window of the workspace it replaced,
-# which stayed hidden: the active window on a desktop no monitor showed. This plain case KWin gets
-# right by itself (the long trace's trigger was not pinned down; that trace, in git at 1a9e32d,
-# is the red one): it guards that kwin-i3 keeps the empty workspace focused.
+# The fuzzer's I8: the focused monitor shows an empty workspace and is unplugged. As in i3
+# (randr.c move_content), that workspace moves to the remaining monitor, is shown there and keeps
+# the focus; KWin can then activate a window of the workspace it replaced, which stays hidden: the
+# active window on a desktop no monitor shows. KWin gets this plain case right by itself (the
+# fuzzer's longer trace reaches the bad activation another way): it guards that kwin-i3 keeps the
+# empty workspace focused.
 source "$(dirname "$0")/lib.sh"
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
 active() { kjs 'var a = workspace.activeWindow; log(a ? a.caption : "none");'; }

@@ -119,7 +119,7 @@ check "frame: Meta+drag c to b's left side"  wait_tree 1 "V[H[c* b]]" "$m"
 echo "    $(dropped $m)"
 # The frames landed before the next drag: KWin keeps the pointer in the window it was in until
 # the pointer moves, so a drag starting while c is still in its old place enters c, and focus
-# follows mouse focuses it (a red under the batch's load, its drop late).
+# follows mouse focuses it (under the batch's load the drop lands late).
 poll eval '[[ "$(fc c)" == "1,1 638x718" && "$(fc b)" == "641,1 638x718" ]]'
 
 # i3's G1: a Meta-drag of a window that isn't focused leaves the focus where it was
@@ -347,19 +347,19 @@ check "  nothing changed"                   eval '[[ "$(tree 1)" == "$t0" ]]' ||
 kclose e
 poll eval '[[ "$(tree 1)" != *e* ]]'
 
-# A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3). An app that draws its own frame keeps an invisible resize border past it (a GTK
-# header bar here, VS Code live), as KWin reports no tiled edges for a padded tile: a press there
-# stays kwin-i3's (OPEN.md item 43), never the app's own resize, which KWin ran as its live tile
-# resize.
+# A plain press in the gap is i3's resize too, as on the nearest window's ring (Z3). An app that
+# draws its own frame keeps an invisible resize border past it (a GTK header bar here, VS Code
+# too), as KWin reports no tiled edges for a padded tile: a press there stays kwin-i3's, never the
+# app's own resize, which KWin would run as its live tile resize.
 kclose c; kclose b
 set_key gapsInner 16
 client --title L --csd
 check "L, drawing its own frame"            poll eval '[[ "$(tree 1)" == *L* ]]'
 key "Split H"; client --title R
 check "L | R"                               poll eval '[[ "$(tree 1)" == *"L R*"* ]]'
-# Focus follows the mouse out of L, through its margin, into R (B1; probed, a
-# capture): the margin over R's frame raises R, and the raise must not cost R its focus. At a
-# 4 px gap, where L's margin reaches R's frame.
+# Focus follows the mouse out of L, through its margin, into R (B1): the margin over R's frame
+# raises R, and the raise must not cost R its focus. At a 4 px gap, where L's margin reaches
+# R's frame.
 set_key gapsInner 4
 key "Focus Left"
 poll eval '[[ "$(kjs "log(workspace.activeWindow.caption)")" == L ]]'

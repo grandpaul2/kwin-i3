@@ -93,10 +93,9 @@ static bool devices_ready(void) { return abs_on && kbd_on; }
 static bool synced(void) { return ponged; }
 
 // A round trip: once KWin answers, it has processed every event sent before (libei.h, ei_ping).
-// Before it, only a fixed 10 ms pump followed each command, after which inject.py's disconnect
-// could reach KWin before the events did: under the full suite's load a scenario's first key
-// was lost. The pump stays as the pace: without it a drag's steps arrive at once
-// and KWin doesn't see a drag (26, 41, 51 failed).
+// Without it, inject.py's disconnect can reach KWin before the events do, and under load a
+// scenario's first key is lost. The 10 ms pump after each command is the pace: without it a
+// drag's steps arrive at once and KWin doesn't see a drag.
 static void sync_kwin(void) {
     pending = ei_new_ping(ei);
     ponged = false;

@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# The fuzzer's I2 (shrunk from 51 actions to this): the second
-# monitor goes away; its workspace (2) holds a fixed-size window that is made fullscreen on the
-# first monitor meanwhile (a fullscreen request such a window cannot apply). When the monitor
-# returns, kwin-i3 shows 1 and 2 again and moves 2's windows to the second monitor, but KWin
-# leaves that window's output at the first. Then kwin-i3 activates it (it is the focus), and
-# activating a window on a hidden desktop switches the current desktop of ITS output: the first
-# monitor was switched to 2. Both showed 2, and workspace 2's tiled windows (not in this
-# reduction) stood outside the first monitor. kwin-i3 now puts back what that monitor showed.
+# The fuzzer's I2 (shrunk from 51 actions to this): the second monitor goes away; its workspace
+# (2) holds a fixed-size window that is made fullscreen on the first monitor meanwhile (a
+# fullscreen request such a window cannot apply). When the monitor returns, kwin-i3 shows 1 and 2
+# again and moves 2's windows to the second monitor, but KWin leaves that window's output at the
+# first. Then kwin-i3 activates it (it is the focus), and activating a window on a hidden desktop
+# switches the current desktop of ITS output: the first monitor is switched to 2, and both would
+# show 2. kwin-i3 puts back what that monitor showed.
 source "$(dirname "$0")/lib.sh"
 shows() { [[ "$(kjs "workspace.screens.forEach(function (s) { if (s.name === \"$1\") log(workspace.desktops.indexOf(workspace.currentDesktopForScreen(s)) + 1); })")" == "$2" ]]; }
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }

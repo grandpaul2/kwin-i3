@@ -14,12 +14,11 @@ load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 
 # 1. Resizing an edge with no neighbour (here a lone window) changes no share, so it changes no
-#    tile either: the window must still go back to filling its tile, as in i3 (fuzzer I10,
-#    shrunk to: open a window, Meta+right-drag it).
+#    tile either: the window must still go back to filling its tile, as in i3 (the fuzzer's I10).
 #    A resize drag with the client's answer to its last step still in flight at the release: kwin-i3
 #    puts the window back in its tile at each step, so at the end the frame fits and nothing is
-#    written, then the late answer lands (under make test: 1176 wide, 2 runs in 7). A slow
-#    client (20 ms a resize) and steps 30 ms apart, the last one with the release: stuck 10 of 10.
+#    written, then the late answer lands. A slow client (20 ms a resize) and steps 30 ms apart, the
+#    last one with the release, make that happen every run.
 slow_drag() {
     "$INJECT" "abs 960 360" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" \
         "abs 934 381" "wait 30" "abs 908 402" "wait 30" "abs 882 423" "wait 30" "abs 856 445" "wait 0" \
@@ -41,7 +40,7 @@ check "solo fills the monitor again"        geom_is solo "0,0 1280x720"
 
 #    A fullscreen window Meta+dragged to the other monitor goes to the workspace shown there and
 #    stays fullscreen on it. KWin refuses to tile a window that is already fullscreen, and that
-#    refusal used to float it, small, on the old monitor (fuzzer I9). Leaving fullscreen tiles it.
+#    refusal must not float it on the old monitor (the fuzzer's I9). Leaving fullscreen tiles it.
 fs() { busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "Window Fullscreen"; }
 fs
 check "solo is fullscreen"                  wait_tree 1 "H[solo*!]"

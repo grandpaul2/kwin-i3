@@ -463,7 +463,7 @@ test("send a window inside a floated split to another workspace: it tiles there 
     assert.strictEqual(d(m), "H[a] ~V[b*]");
 });
 
-// ---- cases found by the mutation battery ----------------------------------------------------
+// ---- split, move and focus edge cases -------------------------------------------------------
 
 test("toggle split: no redundant one-child containers pile up (i3 #3001)", () => {
     const m = model();
@@ -497,7 +497,7 @@ test("focus: from a window that isn't fullscreen, on past another that is (con_f
 });
 
 // ---- i3's own testsuite (testcases/t/, branch next), translated ------------------------------
-// The independent check: these expectations come from tests run against real i3, not from my
+// The independent check: these expectations come from tests run against real i3, not from a
 // reading of its source. `cmd 'open'` is a new focused window; `focus parent` is activate(parent).
 
 test("i3 t/124-move.t §1-2: lone window can't move; two windows swap and stop at the edges", () => {

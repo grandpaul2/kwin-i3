@@ -10,7 +10,7 @@ source "$(dirname "$0")/lib.sh"
 plan() { busctl --user call org.kde.KWin /kwini3helper net.local.kwini3helper Plan 2>/dev/null; }
 plan_has() { plan | grep -qF -- "$1"; }
 # A layout change reaches the helper through the keyboard daemon: 20 s, not 5, under the batch's
-# load (item 34: "the helper fitted French" missed its 5 s).
+# load.
 fitted() { WAIT=20 poll plan_has "$@"; }
 layout() { set_layouts "$1"; }
 runs() {    # runs <keys by position> <action>: the key press runs that kwin-i3 action

@@ -15,7 +15,7 @@ const KEYS = Function("return " + block[1])();
 // (tests/live/50-keys.sh), so neither reads the table it is checking.
 const want = require("../keys.json");
 
-test("every default key matches the old i3 config", () => {
+test("every default key matches i3's default config, translated", () => {
     assert.deepStrictEqual(KEYS, want);
 });
 

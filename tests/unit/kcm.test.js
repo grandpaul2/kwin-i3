@@ -16,8 +16,7 @@ function registered() {
     assert.ok(fn, "registerKeys not found in src/kwin.js");
     const out = [];
     const reg = (action, friendly, key) => out.push([action, key]);
-    // The actions with no default key: the UNBOUND table and the loop that adds the output moves.
-    // The UNBOUND table, the loop that adds the output moves, and the one that adds the
+    // The actions with no default key: the UNBOUND table, the loop that adds the output moves, and the one that adds the
     // no-back-and-forth workspace actions.
     const unbound = src.match(/(var UNBOUND = \{[\s\S]*?\n    \}\);\n(?:[^\n]*\n)*?    NAMES\.forEach[\s\S]*?\n    \}\);\n)/);
     assert.ok(unbound, "UNBOUND not found in src/kwin.js");
@@ -40,7 +39,7 @@ test("every action the script registers has its row and default on the Keys page
 });
 
 // A Shift+key that types a symbol arrives as that symbol: Meta+Shift+; never fires, Meta+: does
-// (probed, KWin 6.7.5). Letters and arrows are unaffected.
+// (KWin 6.7.5). Letters and arrows are unaffected.
 test("no key is registered in its dead Shift+symbol form", () => {
     for (const [action, key] of registered())
         assert.ok(!/Shift\+([0-9;',./\[\]\\=`-])$/.test(key), `${action}: ${key} never fires`);

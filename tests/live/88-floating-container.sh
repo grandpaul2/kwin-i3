@@ -85,7 +85,7 @@ kclose c
 check "closed with its windows"             wait_tree 1 "H[a*]"
 
 # Windows tiled already at a load have no recorded size of their own: each takes KWin's restore,
-# its size out of the tile, as one floating window does (a capture: 75x50, the size limit's floor).
+# its size out of the tile, as one floating window does (never the size limit's floor, 75x50).
 client --title d
 key "Split V"
 client --title e

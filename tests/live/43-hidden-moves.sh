@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # The fuzzer's I1, shrunk: windows sent between hidden workspaces. On a hidden desktop KWin lists
-# a window in a tile without placing it (no w.tile); rebuilding that root unmanaged by w.tile, so
-# the window stayed listed, rode into a child tile when the root split, and was never managed
-# again: kwin-i3's own check said "not in its tile". It must be clean, and right when shown.
+# a window in a tile without placing it (no w.tile), so a root's rebuild can't find it by w.tile:
+# left listed, it would ride into a child tile when the root splits and never be managed again
+# (kwin-i3's own check: "not in its tile"). It must be clean, and right when shown.
 source "$(dirname "$0")/lib.sh"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
@@ -25,9 +25,9 @@ check "still no invariant failures"         clean_log
 
 # Round 3: Meta+Shift+3 with a modal dialog up (focus is always on the dialog), to a hidden
 # workspace with windows on the other monitor. KWin moves the parent along with its dialog and,
-# for a moment, gives both two desktops: kwin-i3 took that for "made sticky", dropped and
-# re-adopted them, and dropping by w.tile (null on a hidden desktop) left the parent listed but
-# never placed: "not in its tile", and an untiled window, on the wrong monitor, when shown.
+# for a moment, gives both two desktops. That moment is not "made sticky": taken for it, the two
+# are dropped and re-adopted, and a drop by w.tile (null on a hidden desktop) leaves the parent
+# listed but never placed, untiled and on the wrong monitor when shown.
 key "Workspace 6"
 check "Meta+6 (from the second monitor): 3 is hidden there now" wait_tree 6 "H[]*"
 key "Workspace 1"

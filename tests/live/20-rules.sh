@@ -91,7 +91,7 @@ on a 'w.minimized = false;'
 check "unminimized: back on the left"       geom_is a "0,0 640x720"
 
 # a reload keeps the layout (`plan.md` decision 5). Focus main first: after the unminimize KWin may hand
-# a the focus late, and under load c then opened beside a (seen under the fuzzer's load).
+# a the focus late, and under load c then opens beside a.
 on main 'workspace.activeWindow = w;'
 check "main focused"                        wait_tree 1 "H[a main*]"
 client --title c

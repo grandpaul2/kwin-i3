@@ -65,7 +65,7 @@ m=$(mark); key "Reload Settings"
 check "the rule floats c"                   wait_tree 3 "H[] ~c*" "$m"
 check "  at its size"                       size_is c $SIZE
 
-# 6. Already tiled at a reload (no record): KWin's own restore, as before.
+# 6. Already tiled at a reload (no record): KWin's own restore.
 client --title d --size 400x300 --color blue
 check "d tiles"                             poll eval '[[ "$(tree 3)" == *"d*"* ]]'
 busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting unloadScript s kwin-i3 >/dev/null
