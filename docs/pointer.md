@@ -75,27 +75,25 @@ server decoration's border, a window action (Meta+right; `TilingDrag` takes it o
 window), the task manager's Resize (`window.cpp:1778`), or Alt+F8. The probe logs every start
 (`KWin resize started on ..., edge, pointer, in a KWin tile`) and finish.
 
-## The live gaps
+## The gaps
 
-First map, 2026-10-28, a live desktop (gapsInner 4, frame 1; Firefox alone on monitor 1,
-Alacritty | VS Code on monitor 2). `pointer-map gaps 4`:
+What `pointer-map gaps` shows, with an inner gap of 4 and the 1 px frame:
 
-- **Alacritty | VS Code** (x 3833-3846): the 6 px gap is all kwin-i3's resize: the ring column of
-  each, then two gap columns each side. KWin gives **every** gap pixel to VS Code (its input region
-  reaches 10 px past its frame, its buffer 16), so the gap there is `overTiledMargin`'s, not the
-  desktop's.
-- **Below VS Code** (y 1398 and down, the outer gap): inside VS Code's buffer (to y 1425) and past
-  the gap reach: `margin`, a press taken and nothing done.
-- **Firefox | Alacritty**, across the monitor edge (x 2553-2566): two outer gaps, not siblings;
-  4 px each side are the resize, the 4 px in the middle pass to the desktop.
-- Firefox's and Alacritty's buffers are their frames: neither takes the pointer outside itself.
+- **Between two tiled windows whose buffers are their frames** (a terminal, Firefox): the gap is
+  all kwin-i3's resize, the ring column of each and then the gap columns on each side.
+- **Beside an app whose input region reaches past its frame** (Chromium and Electron apps such as
+  VS Code: 10 px of input, a 16 px buffer): KWin gives **every** gap pixel to that app, so the gap
+  there is `overTiledMargin`'s, not the desktop's. In an outer gap, inside its buffer and past the
+  gap reach, a press is `margin`: taken, and nothing done.
+- **Across the edge between two outputs**: two outer gaps, not siblings; the part of each next to
+  its window is the resize, and the middle passes to the desktop.
 
-## The hover cursor (test KWin, 2026-10-28)
+## The hover cursor (test KWin)
 
 i3 shows the arrow on frames and in the gaps (`x.c:171`, `XCURSOR_CURSOR_POINTER`; the gap is the
 root window) and a resize cursor only on the window it puts up once a resize has started
-(`resize.c:238`). Alacritty | VS Code | Alacritty at those gaps, the pointer moved across both
-gaps, no press:
+(`resize.c:238`). Alacritty | VS Code | Alacritty with gaps, the pointer moved across both gaps,
+no press:
 
 - Between two terminals' gaps the desktop has the pointer: the arrow, as i3.
 - Beside VS Code, **VS Code has the pointer across the whole gap and both rings** and shows its own
