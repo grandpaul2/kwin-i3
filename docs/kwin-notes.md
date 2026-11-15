@@ -543,7 +543,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 
 - Its KWin logs to the user journal as `kwin_wayland`, with its own PID, and most of its lines
   don't name the test (a scenario's "No such object path '/kwini3hold'" while the effect loads):
-  read the live KWin's lines by its PID (`.claude/commands/sessionstart.md`).
+  read the live KWin's lines by its PID (`.claude/session-start.md`).
 - `tools/a11y.py box` finds a control only among the rows a list view has created: one far down
   a long list (the Keys page's End session) isn't there until the list scrolls near it, so `box`
   says "no control named". Set the page's scroll bar first (`a11y.scroll_bars`), then `box`
