@@ -72,8 +72,9 @@ These are the project's rules, not suggestions.
   confirmation is never an `OPEN.md` next action.
 - An `OPEN.md` number goes in the text with its file ("`OPEN.md` item 14"): its numbers have
   gaps.
-- **Session start and end**: when the person says so, follow `docs/session-start.md`
-  or `sessionend.md` (Claude Code's `/sessionstart` and `/sessionend`; plain steps for any agent).
+- **Session start and end**: when the person says so, follow `docs/session-start.md` or
+  `docs/session-end.md` (plain steps for any agent; where shared session steps are installed,
+  they run these).
 - **The foundation sweep**: every so often, the foundations, `behaviour.md`, i3's source and the
   code are read against each other, and the maintainer gets only the conflicts between
   foundations: `.claude/skills/foundation-sweep/` (Claude Code's `/foundation-sweep`; plain steps).

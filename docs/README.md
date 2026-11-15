@@ -14,6 +14,7 @@ home and point there from the other.
 | what KWin and Plasma actually do where they surprised us (the traps, from source and probes) | `kwin-notes.md` |
 | how the settings page looks and reads | `style-settings-page.md` |
 | how a press travels through KWin to kwin-i3, and the hover cursor (`kwin-notes.md` holds KWin's traps, this the path) | `pointer.md` |
+| what a session checks at its start and tidies at its end | `session-start.md`, `session-end.md` |
 | work for now / held until the Stage ends | `../OPEN.md` / `../LATER.md` (the only open lists) |
 | installing and configuring, for a user | `../README.md` |
 | how an agent works here, and how work lands (pull requests) | `../AGENTS.md` (`../CLAUDE.md` loads it for Claude Code) |
@@ -32,7 +33,8 @@ Edited in place whenever what they describe changes, in the same commit as the c
   (the phases, the switch-over) is in git.
 - **`behaviour.md`**: the behaviour as built, from the code. Where a doc disagrees, the code
   decides and this page follows it.
-- **`testing.md`**, **`debugging.md`**, **`style-settings-page.md`**: procedures.
+- **`testing.md`**, **`debugging.md`**, **`style-settings-page.md`**, **`session-start.md`**,
+  **`session-end.md`**: procedures.
 - **`kwin-notes.md`**: KWin's behaviour as found, by topic; a new trap gets a line, a wrong one is
   corrected in place.
 - **`fuzz-design.md`**: the fuzzer and the capture key (tools still in use).

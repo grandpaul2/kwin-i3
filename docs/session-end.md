@@ -1,51 +1,29 @@
----
-description: End a kwin-i3 session - tidy, report what's open, commit and push
-allowed-tools: Read, Write, Edit, Bash
----
+# kwin-i3: the end of a session
 
-End of a kwin-i3 session. **A wrap-up: it starts no work**, not even a short test run. Leave the
-repo clean and pushed, and everything still open written in `OPEN.md`.
+This project's part of a session's end. It runs after the shared steps (`OPEN.md` rewritten, what
+was learned put in its home, commit and push); where those aren't installed, do them too.
 
-## 1. What was learned
+1. **Homes**: a KWin trap goes in `docs/kwin-notes.md`, a decision in its home
+   (`docs/README.md`), a working rule in `AGENTS.md`. Routine fixes need nothing; the commit says
+   what changed.
+2. **`OPEN.md`**: every finding from this session (a red test, a capture, a review comment) leaves
+   **fixed**, **won't-fix with a written reason**, or **as a line there**; a find that can wait for
+   the end of the Stage goes in `LATER.md` instead (its header has the rules). A change that went
+   live this session is **done** unless a problem was reported with it. On a pull-request branch,
+   edit only the item the PR is for.
+3. **Tidy**:
+   - No debug trace lines in `src/` (`git diff src/ | grep -n TRACE` is empty), and `./build.sh`
+     leaves `package/` unchanged from what will be committed.
+   - No leftover worktrees: `git worktree list` shows only this checkout (`git worktree remove
+     --force` the rest, after a look at what's in them).
+   - No leftover test runs: `pgrep -af 'tests/fuzz/|tests/live/|testkwin.sh'` is empty; stop any
+     by PID.
+   - Captures handled this session (a test exists for each) are deleted from
+     `~/.local/state/kwin-i3/captures/`. Ones not reached stay, and get a line in `OPEN.md`.
+4. **The live desktop**: if `package/` differs from what KWin last loaded, say so. Reload only on
+   the desktop owner's go.
+5. **Pull requests**: on a pull request's branch, push it rebased on `main` and say whether the PR
+   is ready for review.
 
-A fact about this repo that came up goes **into the repo**, where both people's agents read it: a
-KWin trap in `docs/kwin-notes.md`, a decision in its home (`docs/README.md`), a working rule in
-`AGENTS.md`. Private memory holds only what is about the person you work with. Routine fixes need
-nothing; the commit says what changed.
-
-## 2. OPEN.md
-
-Rewrite `OPEN.md` to the state now: done items come out, new ones go in with a next action. Every
-finding from this session (a red test, a capture, a review comment) leaves **fixed**,
-**won't-fix with a written reason**, or **as a line there**. A find that can wait for the end of the
-Stage goes in `LATER.md` instead (its header has the rules). Nothing else may carry an open list.
-A change that went live this session is **done** unless a problem was reported with it: never
-leave it waiting for someone's "it works". On a pull-request branch, edit only the
-item the PR is for.
-
-## 3. Tidy
-
-- No debug trace lines in `src/` (`git diff src/ | grep -n TRACE` is empty), and `./build.sh`
-  leaves `package/` unchanged from what will be committed.
-- No leftover worktrees: `git worktree list` shows only this checkout (`git worktree remove --force`
-  the rest, after a look at what's in them).
-- No leftover test runs: `pgrep -af 'tests/fuzz/|tests/live/|testkwin.sh'` is empty. Stop any by
-  PID, never with a pattern that matches your own shell.
-- Captures handled this session (a test exists for each) are deleted from
-  `~/.local/state/kwin-i3/captures/`. Ones not reached stay, and get a line in `OPEN.md`.
-
-## 4. The live desktop
-
-If `package/` differs from what KWin last loaded, say so. Reload only on the desktop owner's go.
-
-## 5. Commit and push
-
-- This repo: commit what's left in related groups, with the *why*, and push (on main in the
-  maintainer's sessions; on its branch in a pull request's, rebased on `main`, and say whether the PR is ready
-  for review).
-- Anything your own `CLAUDE.local.md` adds to the session's end.
-
-## 6. Report
-
-A few lines: what changed (with commit hashes), whether the desktop runs what is committed, what's in
-`OPEN.md`, any pull request opened or waiting, and anything waiting on the maintainer. Then confirm the repo is clean and pushed.
+The report adds: whether the desktop runs what is committed, and any pull request opened or
+waiting.
