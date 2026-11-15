@@ -383,7 +383,8 @@ table is the home of the rules; this is the why.
 - **Reconcile churn**: windows jumping or resizing twice. The diff keeps it to what changed; the live
   tests count geometry changes per operation.
 - **Apps not met yet** (what Krohnkite handled: Steam, Minecraft, Electron apps that re-parent,
-  apps opening several windows at once). Each one met becomes a live test with the test client.
+  apps opening several windows at once). Each one met is a case for a live test with the test
+  client, under `docs/testing.md` rule 5.
 - **Input** is tested through libei in the headless KWin (`tools/inject.py`; scenarios 50, 51, 52,
   86); it can't send scroll.
 - **kwinrc churn**: KWin rewrites `[Tiling]` on every tile change. Harmless; kwinrc is not captured.
