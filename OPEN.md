@@ -7,10 +7,8 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-14** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
-after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). The live desktop runs
-Plasma 6.8.2 and main's script at 9207f9a, its plugins at 3feca98 (unchanged since; settings page
-at 9207f9a). `stable` is at
+Last reconciled: **2026-11-15** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). `stable` is at
 `v1.5.0` (2026-11-14, c49b810).
 
 ## Stage
@@ -129,18 +127,14 @@ live.
 
 **115. The tree held to the publishable bar** (2026-11-14). Every tracked file holds only what a
 public project should: working, personal and business material and anything sensitive live
-outside the tree, the rest in the project's voice. The tree is already near it: the design records
-and notes left in October and November, and the mechanical audit is at zero (`behaviour.md`'s
-output rows allowed as row ids). Milestones: (1) an inventory of every tracked file (keep,
-rewrite, move out, delete, link), reviewed before anything moves; (2) one short branch per
-milestone below, in a worktree, main brought in by merge, `OPEN.md` edited on main only; (3) the
-moves, references rewritten in the same commit; (4) the rewrite, graded area by area (the
-project's documentation or working material, no line on an agent's own conduct, nothing that
-would embarrass it); (5) the audit at zero; (6) the grader at zero open findings; (7) the last
-merge, its message saying what changed and why; (8) a dry run of the fresh single-commit history the
-repo gets at a release (`main` and `stable` on that one commit, the release tagged there, the old
-history kept in a private repo, the release notes telling users to clone again), built and audited
-locally, not pushed. (1), (3), (4)'s mechanical pass and (5) are done: no file moved whole,
-`fuzz-design.md` is the fuzzer as it is, and no comment or doc cites a date, an unpublished
-review or probe, or one person's machine for its reason. Next: (6), the grader, by area, its
-cost estimated first.
+outside the tree, the rest in the project's voice. Milestones: (1) an inventory of every tracked
+file, reviewed before anything moves; (2) one short branch per milestone, in a worktree, main
+brought in by merge, `OPEN.md` edited on main only; (3) the moves, references rewritten in the
+same commit; (4) the rewrite, graded area by area (the project's documentation or working
+material, no line on an agent's own conduct, nothing that would embarrass it); (5) the audit at
+zero; (6) the grader at zero open findings; (7) the last merge, its message saying what changed
+and why; (8) a dry run of the fresh single-commit history the repo gets at a release (`main` and
+`stable` on that one commit, the release tagged there, the old history kept in a private repo, the
+release notes telling users to clone again), built and audited locally, not pushed. Open: (6) for
+the code, the tests and the tools, by directory, its cost estimated first; then (7) and (8). Next:
+(6) on `src/`.
