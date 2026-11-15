@@ -230,6 +230,14 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   removing an internal window is a stacking change: move such windows, never add/remove them.
 - At an output crossing, `cursorPosChanged` comes first, `activeScreen` is already the new output,
   and FFM's activation comes the next turn.
+- **FFM activates a turn after the enter, never inside it**, delay 0 included
+  (`Window::pointerEnterEvent` → `Workspace::requestDelayFocus`, a `QTimer`; 6.8.2
+  `window.cpp:2917-2936`, `workspace.cpp:1720`). A press sent right after a move can land before or
+  after the activation: a test that moves onto another window and presses races it (on a loaded
+  machine the activation often wins). Whether the move is an enter at all depends on the window
+  KWin last hit-tested under the still pointer, re-tested only on a stacking change, never on a
+  resize: a pointer left on a seam counts as inside the window that was there at the last
+  stacking change. Move, wait for the activation, then press without moving.
 - Over a decoration the pointer has no focus window (`InputDeviceHandler::updateFocus`): neither
   hover nor click focuses there unless a filter before the decoration filter does it.
 - KWin updates no focus or decoration while a button is held (`focusUpdatesBlocked`).

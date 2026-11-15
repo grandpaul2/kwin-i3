@@ -29,6 +29,19 @@ set_key() {
     sleep 0.5
 }
 active() { kjs "log(workspace.activeWindow ? workspace.activeWindow.caption : 'none')"; }
+# The pointer onto c's centre by way of e's, so it enters c (focus follows mouse activates c),
+# then e made KWin's active window without moving it: G16's press on the member the selection
+# doesn't keep active. Sets cx, cy.
+on_c_e_active() {
+    local ex ey
+    sleep 0.5 # the layout settled before the centres are read
+    read -r ex ey <<<"$(centre e)"
+    read -r cx cy <<<"$(centre c)"
+    "$INJECT" "abs $ex $ey" "wait 100" "abs $cx $cy" "wait 100"
+    poll eval '[[ "$(active)" == c ]]'
+    kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "e") workspace.activeWindow = w; })'
+    poll eval '[[ "$(active)" == e ]]'
+}
 dropped() { wait_log "^.{9}DRAG (dropped|no drop|cancelled|not started)" "$1" && after "$1" | grep -E '^.{9}DRAG ' | tail -1 | cut -c10-; }
 wid() { fc "$1" | cut -d" " -f2 | cut -dx -f1; }
 indicator() { busctl --user call org.kde.KWin /kwini3hold net.local.kwini3hold Stats | grep -o '"drop" s "[^"]*"' | cut -d'"' -f4; }
@@ -346,17 +359,19 @@ poll eval '[[ "$(tree 1)" != *e* ]]'
 # G16: Meta+Shift+drag on a window of the selected container (Meta+A) floats the container whole,
 # as Meta+Shift+Space would. Pressed on the member the selection doesn't keep active (c, e being
 # KWin's active one): the selection stays. Mid-drag an outline the container's size and the
-# windows still tiled; at the release one floating container at the outline's place.
+# windows still tiled; at the release one floating container at the outline's place. The pointer
+# is on c before the selection and doesn't move until the press: entering c after it would focus
+# c and collapse the selection (B1, i3's handle_enter_notify), racing the press.
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; })'
 poll eval '[[ "$(active)" == *c* ]]'
 term e "#ff00ff"
 check "c and e in a split again" poll eval '[[ "$(tree 1)" == *"V[c e"* ]]'
+on_c_e_active
 key "Focus Parent"
 sleep 0.5
 echo "    $(tree 1)"
-read -r cx cy <<<"$(centre c)"
 m=$(mark)
-"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+"$INJECT" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
     "abs $((cx + 40)) $((cy + 20))" "wait 60" "abs $((cx + 120)) $((cy + 60))" "wait 1000" "btn left up" "wait 60" \
     "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" &
 held=$!
@@ -377,11 +392,12 @@ check "  no window pressed: the selection was kept" eval '! after "$m" | grep -q
 # Tiled again (the container keeps the focus), then a drag with Escape: nothing changes.
 key "Floating Toggle"
 check "tiled again" poll eval '[[ "$(tree 1)" != *"~"* ]]'
+on_c_e_active
+key "Focus Parent"
 sleep 0.5
 t0=$(tree 1)
-read -r cx cy <<<"$(centre c)"
 m=$(mark)
-"$INJECT" "abs $cx $cy" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
+"$INJECT" "wait 30" "key ${EVDEV[Meta]} down" "key ${EVDEV[Shift]} down" "wait 30" "btn left down" \
     "abs $((cx + 40)) $((cy + 20))" "wait 60" "abs $((cx + 120)) $((cy + 60))" "wait 300" \
     "key ${EVDEV[Shift]} up" "key ${EVDEV[Meta]} up" "wait 60" "key ${EVDEV[Escape]} down" "key ${EVDEV[Escape]} up" "wait 60" "btn left up"
 check "G16: Escape cancels" wait_log '^.{9}DRAG cancelled' "$m"
