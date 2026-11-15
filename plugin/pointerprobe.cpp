@@ -144,7 +144,7 @@ static QString at(const QPointF &p)
 }
 
 // A crossing: the window KWin gives the pointer changes, or what a left press would do does.
-// Not every motion: a crossing is what a transition zone is made of.
+// Not every motion: only a crossing, where the window or the decision changes.
 bool PointerProbe::pointerMotion(PointerMotionEvent *event)
 {
     Window *top = input()->findToplevel(event->position);

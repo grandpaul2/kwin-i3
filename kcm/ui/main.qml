@@ -80,8 +80,8 @@ KCM.AbstractKCM {
         // 34 px (TabBar_StaticTabMinHeight); a tab on the view's background a shade darker, a
         // separator between two unselected tabs inset 8 px; the selected one tinted with the
         // highlight at the frame contrast, outlined, a 3 px highlight line on top.
-        // A plain item, not T.TabBar: its content sat half a tab above the bar (17 px, a ListView
-        // or a Row alike). The buttons stay TabButtons, page tabs to a screen reader.
+        // A plain item, not T.TabBar, which puts its content half a tab above the bar (17 px, a
+        // ListView or a Row alike). The buttons stay TabButtons, page tabs to a screen reader.
         Item {
             id: tabs
             property int currentIndex: 0

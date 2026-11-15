@@ -1,7 +1,5 @@
 # kwini3helper: kwin-i3's KWin plugin: focus on the frame, i3's tiling drag, kwin-i3's keys over
-# Plasma's, keys
-# fitted to the keyboard layout, panel popups' grace
-#, i3's resize mode.
+# Plasma's, keys fitted to the keyboard layout, panel popups' grace, i3's resize mode.
 # kwini3hold: atomic layout changes and i3's frame around tiled windows, a KWin effect.
 # Built against the installed kwin-devel; KWin refuses a build from another KWin version.
 cmake_minimum_required(VERSION 3.22)
@@ -15,8 +13,8 @@ include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 # Emptied at every configure (make plugin configures each time), so bin holds only what is built
-# now: the test KWins and the fuzzer load from it, and a renamed or retired plugin left there was
-# loaded by every test.
+# now: the test KWins and the fuzzer load from it, and a renamed or retired plugin left there
+# would be loaded by every test.
 file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_CXX_STANDARD 23)

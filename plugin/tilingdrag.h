@@ -6,8 +6,7 @@
 // resizes at the release. The helper only carries the drag: a hidden kwin-i3 action says it began,
 // and kwin-i3 polls State() over D-Bus until it ends (a script has no inbound D-Bus). kwin-i3
 // works out the target and the zone, tells kwini3hold the indicator, and moves the window in its
-// tree. Installed by the helper plugin (helper.cpp); the probes it came from: the spec, items 7
-// and 9, "Probe result".
+// tree. Installed by the helper plugin (helper.cpp).
 #pragma once
 
 #include <functional>
@@ -45,10 +44,10 @@ public Q_SLOTS:
     QString State();
     // kwin-i3 is there to drop (at its start), or gone (its release): presses are KWin's.
     void SetOn(bool on);
-    // How far outside a tiled window's frame a Meta+right still takes it (the gap, spec B); 0
+    // How far outside a tiled window's frame a Meta+right still takes it (the gap); 0
     // takes none. Told with SetOn, so a reconfigure's new gaps arrive.
     void SetResizeGap(int px);
-    // Moves the pointer (i3 warps it onto the resize bar at the press, spec D); during a resize
+    // Moves the pointer (i3 warps it onto the resize bar at the press); during a resize
     // State() reports it at once, the warp's own motion being no event to this filter.
     void Warp(int x, int y);
     // kwin-i3 ends the drag (a window closed on the focused workspace, i3's drain_drag_events;

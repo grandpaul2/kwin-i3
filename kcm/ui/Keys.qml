@@ -169,7 +169,7 @@ KCM.ScrollViewKCM {
                                 multiKeyShortcutsAllowed: false
                                 // KDE's control names its own buttons by the key ("Meta+J", " None ")
                                 // and "Clear Key Sequence", alike in every row, so a screen reader
-                                // never heard the command (tests/live/75-settings-a11y.sh). Its
+                                // can't hear the command. Its
                                 // buttons are its children: record, clear, cancel (kdeclarative
                                 // 6.31 KeySequenceItem.qml); naming them belongs upstream.
                                 Component.onCompleted: {

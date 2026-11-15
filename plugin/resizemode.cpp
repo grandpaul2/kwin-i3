@@ -165,7 +165,7 @@ QString ResizeMode::TerminalService() const
 
 // As kglobalacceld launches an application's shortcut (kserviceactioncomponent.cpp): the
 // service's component is made if it isn't there (doRegister), then its _launch action invoked.
-// Probe 92: Alacritty.desktop and org.kde.konsole.desktop both opened this way.
+// Probed: Alacritty.desktop and org.kde.konsole.desktop both open this way.
 void ResizeMode::LaunchTerminal()
 {
     const QString service = TerminalService();

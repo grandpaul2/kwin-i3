@@ -55,7 +55,7 @@ static bool customTiled(const Window *w)
 // frame keeps an invisible resize border there (VS Code, Chromium's frame; a GTK header bar),
 // since KWin reports no tiled edges for a tile with padding (tile.cpp Tile::anchors), and kwin-i3's
 // tiles always have padding. A press there would be the app's resize, KWin's live tile resize
-// (OPEN.md item 43): the ring and the gap stay kwin-i3's, as beside any other window.
+// (Plasma's, not i3's): the ring and the gap stay kwin-i3's, as beside any other window.
 bool FrameFocus::overTiledMargin(const QPointF &pos, Window *hover) const
 {
     return hover && hover->isClient() && customTiled(hover) && !hover->frameGeometry().contains(pos);
@@ -144,8 +144,8 @@ bool FrameFocus::pointerMotion(PointerMotionEvent *event)
     // changed), and floating windows keep above. The raise is a stacking change, at which KWin
     // enters the owner at the position this motion has just stored, and pointerEnterEvent takes
     // that for a pointer that hasn't moved: focus follows mouse would never reach the owner, the
-    // pointer counting as in it from then on (probed, a capture). So the request
-    // its enter would have made, as for the ring below.
+    // pointer counting as in it from then on (probed, a capture). So this makes the
+    // request its enter would have made, as for the ring below.
     Window *hover = input()->pointer()->hover();
     if (overTiledMargin(event->position, hover)) {
         if (Window *owner = tiledFrameAt(event->position); owner && owner != hover && owner != m_raised) {

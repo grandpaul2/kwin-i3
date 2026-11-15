@@ -64,8 +64,8 @@ struct BlendState {
 // kwin-i3's settings group.
 static const QString s_group = QStringLiteral("Script-kwin-i3");
 static const int s_graceMs = 20;   // a closing window waits this long for a neighbour; a new one for a tile
-static const int s_quietMs = 3;
-static const int s_landMs = 1000;  // a new window still drawing its tile at the release: hidden this long at most    // kwin-i3's second pass comes microseconds after the first
+static const int s_quietMs = 3;    // kwin-i3's second pass comes microseconds after the first
+static const int s_landMs = 1000;  // a new window still drawing its tile at the release: hidden this long at most
 // Breeze's: 2.5 x smallSpacing (2 on Wayland), breezedecoration.cpp:857. Logical, unsnapped: KWin
 // scales and rounds a window's radius per output (itemrenderer_opengl.cpp:190).
 static const qreal s_radius = 5.0;
@@ -403,7 +403,7 @@ bool Hold::tiled(EffectWindow *w) const
 }
 
 // isHidden() leaves Show Desktop out (KWin window.cpp:4521): Plasma's edit mode and Peek hide
-// every window that way, and a tile closing then must not be held (an audit).
+// every window that way, and a tile closing then must not be held.
 bool Hold::shown(EffectWindow *w) const
 {
     return w->isOnCurrentDesktop() && w->isOnCurrentActivity() && !w->isMinimized() && !w->isHidden()
@@ -725,7 +725,7 @@ bool Hold::isActive() const
     const auto windows = effects->stackingOrder();
     for (EffectWindow *w : windows) {
         // A group's bar too: in the titlebars and bare looks no window has a ring, and the
-        // effect sat out of the paint chain, so no bar was drawn. And a window not shown that
+        // effect would sit out of the paint chain and draw no bar. And a window not shown that
         // KWin paints all the same, while an effect holds it visible (Slide's departing desktop,
         // Window Aperture's Show Desktop): its item is visible exactly then (6.7.5
         // scene/windowitem.cpp:160-192), and its ring goes with it.
@@ -738,9 +738,9 @@ bool Hold::isActive() const
 
 // Late in the chain, after Slide (50, slide.h:197): the ring and a held snapshot are drawn with
 // the paint data the effects before this one gave the window (Slide's offset during a desktop
-// switch, Scale's opening, a fade), so they move with it. At the default 0 this effect ran first
-// and drew the ring at the window's own place while Slide drew the window elsewhere (seen
-// live).
+// switch, Scale's opening, a fade), so they move with it. At the default 0 this effect would run
+// first and draw the ring at the window's own place while Slide draws the window elsewhere
+// (seen live).
 int Hold::requestedEffectChainPosition() const
 {
     return 90;
@@ -870,7 +870,7 @@ void Hold::paintBanner(const RenderTarget &renderTarget, const RenderViewport &v
     const int x = std::lround(drawn.x() * scale + (drawn.width() * scale - banner.size.width()) / 2);
     const int y = std::lround((drawn.y() + 12) * scale);
     // Only what this paint may touch, as the tab bars: KWin scissors no effect's own draws, and a
-    // partial repaint blended the whole banner again over pixels that already held it.
+    // partial repaint would blend the whole banner again over pixels that already hold it.
     const QPoint origin = viewport.scaledRenderRect().topLeft();
     const Rect device(x - origin.x(), y - origin.y(), banner.size.width(), banner.size.height());
     const Region visible = deviceRegion & device;

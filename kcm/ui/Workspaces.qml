@@ -17,7 +17,7 @@ KCM.SimpleKCM {
     readonly property var settings: kcm.settings
     readonly property var lists: Logic.parseOutputLists(settings.workspaceOutputs)
     readonly property var plasma: Logic.floatingWorkspaceList(settings.forWindow)
-    // Connected monitors, by name and model ("DP-4 — DELL U2723QE").
+    // Connected monitors, by name and model ("DP-1 — the monitor's model").
     readonly property var screens: Qt.application.screens.map((s) => ({
         name: s.name, text: s.model ? i18nc("output name — model", "%1 — %2", s.name, s.model) : s.name }))
 
