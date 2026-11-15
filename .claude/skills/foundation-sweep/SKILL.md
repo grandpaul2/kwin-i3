@@ -29,8 +29,8 @@ orchestrator whose cost can't be bounded at launch.
    file fetched once into the working directory and named in the briefs, not by each agent.
    `docs/kwin-notes.md` first: most of what KWin can't do is already there.
 3. **The base**: the last sweep is the last commit whose subject starts `Foundation sweep:`
-   (`git log -1 --grep='^Foundation sweep:' --format=%h`; before any, `531b86b`, the
-   foundations' rewrite). `git log --oneline BASE..HEAD` and
+   (`git log -1 --grep='^Foundation sweep:' --format=%h`; before any, the first commit,
+   `git rev-list --max-parents=0 HEAD`). `git log --oneline BASE..HEAD` and
    `git diff --stat BASE..HEAD -- docs src plugin kcm widget` show what changed since; each
    brief gets that list, so agents read the whole area but look hardest where it moved.
 4. **A working directory outside the repo** (the session's scratch directory) holding one file

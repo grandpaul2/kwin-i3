@@ -12,9 +12,8 @@ The fuzzer is held for the Stage (`LATER.md`, "Reliability") and runs in runs of
 ## Why pixel invariants
 
 `checkInvariants` (`src/kwin.js`) checks KWin's *relative* tile geometry (fractions) and tile
-membership. A 1 px hole between windows (ae6867f) and windows below their minimum size (c0d6183,
-58be5d9) are in real pixels: neither shows in fractions. The fuzzer checks what is on screen,
-read from KWin.
+membership. A 1 px hole between windows and windows below their minimum size are in real
+pixels: neither shows in fractions. The fuzzer checks what is on screen, read from KWin.
 
 ## The fuzzer (`tests/fuzz/fuzz.py`, `tests/fuzz/run.py`)
 
