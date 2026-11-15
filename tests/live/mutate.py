@@ -204,18 +204,17 @@ ALL = [H, T, R, X, M, U, P, D, K, I, L, C, F, S, W, G, Z]
 #   guard in place no test drops a hidden, listed window any more; untile is kept because KWin's
 #   listing without w.tile on a hidden desktop is real (KWin 6.7.5 Tile::manage), so unmanaging
 #   by w.tile alone is wrong wherever it happens (fuzzer I1).
-# - An `outOfTiles` record beside w.tile (built and removed): thought needed against
-#   a rebuild loop while w.tile lagged the client's acknowledgement. w.tile is KWin's *requested*
-#   tile (window.h:595, READ requestedTile), which Tile::unmanage clears at once; a client stopped
-#   with SIGSTOP (answering nothing) showed tile=null right after the unmanage, two passes, no
-#   spin. The mutant was equivalent, so the record is gone; 32-fullscreen-open.sh keeps the
-#   stopped client and the pass counts.
+# - An `outOfTiles` record beside w.tile, against a rebuild loop while w.tile lags the client's
+#   acknowledgement: not needed. w.tile is KWin's *requested* tile (window.h:595, READ
+#   requestedTile), which Tile::unmanage clears at once; a client stopped with SIGSTOP (answering
+#   nothing) shows tile=null right after the unmanage, two passes, no spin. Such a record is an
+#   equivalent mutant; 32-fullscreen-open.sh keeps the stopped client and the pass counts.
 # - "the hand-back only on a shown workspace" (keepsFullscreenFocus): KWin's own
 #   activation of a new window on a hidden desktop switches that desktop first
 #   (SwitchToOtherDesktop), so by windowAdded the workspace is shown and the guard never fires in a
 #   test. It stays: activating the fullscreen window on a hidden workspace would switch desktops.
 # - "windows missing from stackingOrder not adopted": guards a timing race (a window too new to be
-#   in stackingOrder when kwin-i3 loads) seen twice but not reproducible on demand; one harmless line.
+#   in stackingOrder when kwin-i3 loads) that no test reproduces on demand; one harmless line.
 
 def run(scenarios, failfast):
     env = dict(os.environ, KI3_FAILFAST="1") if failfast else dict(os.environ)
@@ -243,7 +242,7 @@ def main():
     only = [o for o in os.environ.get("KI3_ONLY", "").split("|") if o]
     chosen = [m for m in muts if (not only or any(o in m[2] for o in only)) and (not one or m[0] == one)]
     # KI3_ONLY: the baseline is the scenarios its faults name, not the whole suite, so a flake
-    # elsewhere doesn't block it (OPEN.md item 34 (e)).
+    # elsewhere doesn't block it.
     base_set = [one] if one else sorted({m[0] for m in chosen}) if only else ALL
     if not base_set:
         print("KI3_ONLY: no fault matches"); return 2

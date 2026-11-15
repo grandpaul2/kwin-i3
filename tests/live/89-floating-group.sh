@@ -16,8 +16,8 @@ client --title e
 check "a | V[d e]"                          wait_tree 1 "H[a V[d e*]]"
 
 # A tabbed group floated whole: its bar on the shown window's top edge, ring and all, from the
-# float on (a capture: drawn mid-window until the next pass, the frame not landed when told), and
-# after a Meta+right resize, as wide as the window (a capture: left behind at the old width, the
+# float on (not mid-window until the next pass, as when the frame hasn't landed when told), and
+# after a Meta+right resize, as wide as the window (not left behind at the old width, the
 # container creeping a few pixels each time).
 key "Layout Tabbed"
 check "d e tabbed"                          wait_tree 1 "H[a T[d e*]]"
@@ -37,7 +37,7 @@ check "Meta+right: e 80 px narrower"        poll eval 'read -r _ _ w _ < <(xywh 
 check "  its bar with it"                   poll onbar || echo "    bar $(barrect) / e $(xywh e)"
 check "  the top edge where it was"         poll eval 'read -r _ y _ _ < <(xywh e); (( y == ey ))'
 
-# A tabbed group of two splits, the focus on the lower window of the shown one (a capture): sized
+# A tabbed group of two splits, the focus on the lower window of the shown one: sized
 # from its windows all the way down, not the size floor (i3's split child counts 0; T16), and
 # its bar drawn against the shown tab's top window, so it stays on the container's top while a
 # resize is still under way (read with the button held).

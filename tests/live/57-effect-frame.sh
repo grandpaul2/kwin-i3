@@ -36,7 +36,7 @@ key "Focus Left"
 echo "    a: $(fc a)   b: $(fc b)"; kjs "var s = workspace.screens[0], r = workspace.rootTile(s, workspace.currentDesktopForScreen(s)); log(JSON.stringify(r.relativeGeometry) + \" pad \" + r.padding + \" kids \" + r.tiles.map(function (t) { return JSON.stringify(t.relativeGeometry) + \" p\" + t.padding; }).join(\" \"))"; sleep 0.3; capture
 check "focus moved: a active, b inactive"   eval 'pix 0 360 $ACT && pix 639 360 $ACT && pix 640 360 $INACT && pix 1279 360 $INACT'
 # A focus change kwin-i3 didn't make (focus follows mouse, a click, Alt+Tab): no pass follows,
-# the ring follows all the same (a capture).
+# the ring follows all the same.
 kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"b\") workspace.activeWindow = w; });"
 # No pass follows, so no TREE line: KWin's activation, as logged.
 check "b activated from outside"            wait_log '^.{9}ACTIVE b \(KWin\)$'
@@ -96,7 +96,7 @@ check "floating b has its title bar back"   eval 'f=$(fc b); [[ ${f%% client*} !
 kclose b; sleep 0.3
 kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key holdTimeoutMs 2000; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure
 sleep 0.5
-# 2 s, not 0.4: the screenshot after the key must land inside the hold, under load too (item 34).
+# 2 s, not 0.4: the screenshot after the key must land inside the hold, under load too.
 client --title c --color blue --resize-delay 2
 check "a | c"                               wait_tree 1 "H[a c*]"
 # c on screen in its tile (its own resizes take 2 s each): the frames where the hold will keep them.

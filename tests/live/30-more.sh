@@ -85,7 +85,7 @@ on b 'w.minimized = false;'
 check "b back in its place"                 wait_tree 1 "V[c a* b] ~f"
 
 # A window whose minimum can't fit beside the others floats instead of hanging off the screen
-# (the plan's rule; seen live 580 px off a 1280 px screen).
+# (the plan's rule).
 for c in a c b f; do kclose "$c"; done
 client --title p; client --title q
 client --title big --min 900x500
@@ -101,8 +101,8 @@ check "big"                                 poll inside big
 check "logged why"                          wait_log '^.{9}FLOAT big: '
 
 # Minimums that fit in total but not in i3's shares: they get the space from neighbours with
-# room to spare (seen live: KeePassXC, minimum 800 px, in a 640 px quarter, hung
-# 162 px onto the other monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
+# room to spare (KeePassXC's 800 px minimum in a 640 px quarter would hang 162 px onto the other
+# monitor). 1280 px: p | V-less row of p, wide1, wide2 at 1/3 = 427 each.
 kclose big; kclose p; kclose q; kclose r
 key "Workspace 3"                          # a fresh, horizontal workspace
 client --title s1
@@ -128,7 +128,7 @@ kclose s1; kclose w1; kclose w2
 key "Workspace 1"
 
 # A reconcile that throws every time: three retries 250 ms apart, then it waits for an event
-# (it used to retry at once for ever, spinning KWin). Then it recovers on the next event.
+# (never at once for ever, which would spin KWin). Then it recovers on the next event.
 client --title p; client --title q; client --title big --min 900x500
 m=$(mark)
 busctl --user call org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component invokeShortcut s "kwin-i3 Selftest Break Reconcile"

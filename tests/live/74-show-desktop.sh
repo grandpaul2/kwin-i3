@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # needs: xwayland
 # needs: plugin
-# "Show Panel Configuration" in the panel's menu once did nothing. Plasma turns Show Desktop on for its edit mode as the menu closes.
-# The menu closing is a window removed, so kwin-i3 ran a passive focus pass; the pass found the
-# desktop active, which it took for "nothing has the focus", and gave the focus back to the tile.
-# Activating a window hidden by Show Desktop turns Show Desktop off (kwin activation.cpp), which
-# ends Plasma's edit mode, and the configuration window went with it. While Show Desktop is on,
-# the desktop holds the focus on purpose: a window going away must not move it.
+# "Show Panel Configuration" in the panel's menu: Plasma turns Show Desktop on for its edit mode
+# as the menu closes. The menu closing is a window removed, so kwin-i3 runs a passive focus pass,
+# which must not take the desktop being active for "nothing has the focus" and give the focus
+# back to the tile: activating a window hidden by Show Desktop turns Show Desktop off (kwin
+# activation.cpp), which ends Plasma's edit mode, and the configuration window with it. While Show
+# Desktop is on, the desktop holds the focus on purpose: a window going away must not move it.
 # Stand-ins (tools/popupclient.py): a desktop window like Plasma's, a panel popup like the menu.
 source "$(dirname "$0")/lib.sh"
 active() { kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")'; }
@@ -25,8 +25,8 @@ activate() { kjs "workspace.windowList().forEach(function (w) { if (w.caption ==
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 # The load settles first: its frame check answers a second after a load without the effect, and
-# that answer activated the tile hidden by Show Desktop in case 1 (a load-time step, not the pass
-# under test; traced).
+# that answer activates the tile hidden by Show Desktop in case 1 (a load-time step, not the pass
+# under test).
 wait_log '^.{9}FRAME '
 stand_in desk desktop 1280x720+0+0; desk=$sid
 point 300 300
@@ -37,8 +37,8 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 #    Show Desktop stays on and the desktop keeps the focus.
 # The load switches the second output to desktop 2, and KWin's Slide animates it: a full-screen
 # effect, and its end turns Show Desktop off and activates the tile (effecthandler.cpp
-# setActiveFullScreenEffect; probed). KWin's, as it
-# is after any desktop switch; the wait lets the slide end.
+# setActiveFullScreenEffect). KWin's, as it is after any desktop switch; the wait lets the slide
+# end.
 sleep 3
 stand_in pop popup 300x200+100+400; pop=$sid
 activate pop
@@ -52,7 +52,7 @@ show_desktop false
 check "1. Show Desktop off: a has the focus back" poll active_is a
 
 # 2. Plasma's order: the popup closes, and Show Desktop goes on right after. Ten times, as the
-#    two land either side of kwin-i3's pass (on a desktop it worked twice in nine tries).
+#    two land either side of kwin-i3's pass, and only some orders go wrong.
 off=0
 for i in 1 2 3 4 5 6 7 8 9 10; do
     stand_in pop popup 300x200+100+400; pop=$sid
@@ -75,7 +75,7 @@ check "3. b closed: Show Desktop is still on" showing_is true
 show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
 
-# 5. A click where a tile hidden by Show Desktop sits reaches the desktop beneath (Plasma's edit
+# 4. A click where a tile hidden by Show Desktop sits reaches the desktop beneath (Plasma's edit
 #    mode: Exit Edit Mode, a capture): the helper's frame and gap clicks skip a
 #    window Show Desktop hides (KWin's isShown; isHidden doesn't count it), as i3 routes a click
 #    to mapped windows only.
@@ -83,15 +83,15 @@ show_desktop true
 m=$(mark)
 "$INJECT" "abs 640 300" "wait 30" "btn left down" "wait 30" "btn left up"
 sleep 0.5
-check "5. a click over the hidden tile: not taken as a resize" eval '! after "$m" | grep -q "RESIZE"'
-check "5. Show Desktop is still on"         showing_is true
+check "4. a click over the hidden tile: not taken as a resize" eval '! after "$m" | grep -q "RESIZE"'
+check "4. Show Desktop is still on"         showing_is true
 show_desktop false
-check "5. Show Desktop off: a has the focus" poll active_is a
+check "4. Show Desktop off: a has the focus" poll active_is a
 
-# 4. A click on the desktop with Show Desktop off (i3's root click, §5 B4): the focus
+# 5. A click on the desktop with Show Desktop off (i3's root click, §5 B4): the focus
 #    goes to that output's workspace at once; the desktop doesn't keep the keyboard.
 activate desk
-check "4. the desktop clicked: a has the focus back" poll active_is a
+check "5. the desktop clicked: a has the focus back" poll active_is a
 
 kill "$desk"; poll _no_window desk
 check "no invariant failures or errors"     clean_log

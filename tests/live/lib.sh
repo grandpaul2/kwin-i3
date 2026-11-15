@@ -22,8 +22,7 @@ passed=0; failed=0
 WAIT=${KI3_WAIT:-5}                     # seconds any one wait may take
 
 # Before the sink's first line there is no log: 0. The braces silence the redirect's own error,
-# which a 2>/dev/null after it comes too late for (it printed after the tally: testkwin.sh's
-# stderr filter holds it until the end).
+# which a 2>/dev/null after it comes too late for.
 mark() { { wc -l < "$KI3_LOG"; } 2>/dev/null || echo 0; }
 after() { tail -n +"$((${1:-0} + 1))" "$KI3_LOG" 2>/dev/null; }
 
@@ -94,8 +93,8 @@ wait_log() { poll _logged_since "$1" "${2:-0}"; }
 
 # set_layouts <list>: the keyboard layouts as System Settings sets them: kxkbrc, then KConfig's
 # ConfigChanged signal, which KWin's KConfigWatcher hears. Sent by gdbus, which waits for the
-# message to go out: kwriteconfig6 --notify sends and exits, and on a slower machine the
-# signal was lost 4 times in 30 (the file changed, KWin never heard).
+# message to go out: kwriteconfig6 --notify sends and exits, and under load the signal can be
+# lost (the file changes, KWin never hears).
 set_layouts() {
     kwriteconfig6 --file kxkbrc --group Layout --key Use true
     kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1"

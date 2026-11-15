@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build, then run every live scenario, each in its own headless KWin, all at once; then the ones
 # marked "# timing: alone", one by one, so their timing checks measure the code, not ~30 KWins
-# sharing one GPU (53-hold's 240 Hz snapshot: 1.2 ms alone, 70-112 ms in the batch).
+# sharing one GPU (53-hold's snapshot takes tens of times longer in the batch).
 #   tests/live/run.sh [scenario...]      default: every NN-*.sh
 # Each scenario's output is printed whole, in order, when all are done. A scenario counts as
 # passed only if it exits 0 AND printed its "N passed, 0 failed" line.
@@ -15,8 +15,8 @@ for t in "${scenarios[@]}"; do
     # "# needs: xwayland" runs in the batch: testkwin.sh finds each Xwayland's display under a lock.
     if grep -qE '^# timing: alone$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
 done
-# At most KI3_JOBS test KWins at once (default: one per core), the rest queued: with all 44 at once
-# on 16 cores, some missed testkwin's 15 s start (all green when rerun).
+# At most KI3_JOBS test KWins at once (default: one per core), the rest queued: with every
+# scenario at once, some miss testkwin's 15 s start.
 maxjobs=${KI3_JOBS:-$(nproc)}
 # How many test KWins share the GPU: timing checks (53-hold.sh) allow for it; 1 for those alone.
 export KI3_PARALLEL=$(( ${#batch[@]} < maxjobs ? ${#batch[@]} : maxjobs ))

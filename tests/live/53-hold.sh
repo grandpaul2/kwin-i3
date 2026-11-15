@@ -12,8 +12,8 @@ png=$KI3_TMP/shot.png
 BG=0,0,0; RED=255,0,0; LIME=0,255,0; BLUE=0,0,255
 # Timing checks: strict alone, which is how run.sh runs this ("# timing: alone", after the
 # batch). Run inside a parallel batch by hand (KI3_PARALLEL test KWins on one GPU), a snapshot
-# measured at 0.9 ms alone took 20-112 ms, so they get slack there. The strict numbers are the
-# ones that matter for the desktop.
+# that takes about a millisecond alone takes tens of milliseconds, so they get slack there. The
+# strict numbers are the ones that matter for the desktop.
 slack=1; (( ${KI3_PARALLEL:-1} > 1 )) && slack=15
 
 stats() { busctl --user --json=short call org.kde.KWin /kwini3hold net.local.kwini3hold Stats 2>/dev/null |
@@ -23,9 +23,9 @@ stat() { stats | grep "^$1=" | cut -d= -f2; }
 hold_set() { kwriteconfig6 --notify --file kwinrc --group Script-kwin-i3 --key "hold$1" "$2"; busctl --user call org.kde.KWin /KWin org.kde.KWin reconfigure; }
 _stat_is() { [[ "$(stat "$1")" == "$2" ]]; }
 wait_stat() { poll _stat_is "$1" "$2" && return 0; echo "    $1 is $(stat "$1"), wanted $2"; return 1; }
-# The first config read under the full parallel suite (17 KWins starting at once) took more than
-# the 5 s a wait allows (three runs in three): the effect's reconfigure is a KWin timer plus a
-# KConfigWatcher notification, both slow then. Only the first wait gets the slack.
+# The first config read under the full parallel suite (every KWin starting at once) takes more
+# than the 5 s a wait allows: the effect's reconfigure is a KWin timer plus a KConfigWatcher
+# notification, both slow then. Only the first wait gets the slack.
 wait_stat_slow() { WAIT=$((5 + slack)) wait_stat "$@"; }
 capture() { "$shot" capture Virtual-0 "$png"; }
 pixel() { "$shot" same "$png" "$1" "$2" "$3"; }     # pixel x y r,g,b (prints what it saw on a miss)
@@ -70,9 +70,9 @@ check "the dialog was not hidden (only g)"  _stat_is newHidden $((h + 1))
 kclose "g dialog"; kclose g
 check "a | b again"                         wait_tree 1 "H[a b*]"
 
-# 1. The case that prompted the effect: a big window on the left, two stacked on the right, the bottom one slow (c).
-#    Moving c left makes three columns; without the effect its new column shows black until it
-#    has redrawn, while a and b have already moved.
+# 1. The case the effect is for: a big window on the left, two stacked on the right, the bottom
+#    one slow (c). Moving c left makes three columns; without the effect its new column shows
+#    black until it has redrawn, while a and b have already moved.
 key "Split V"
 client --title c --color blue --resize-delay 0.8
 check "a | b over c"                        wait_tree 1 "H[a V[b c*]]"
@@ -180,10 +180,10 @@ wait_tree 1 "H[c h*]"
 wait_stat open False
 n=$(( $(stat transactions) - t ))
 check "leaving fullscreen: KWin's restore alone, not held ($n transactions)"   between "$n" 0 1
-# A newcomer under the fullscreen window: the rebuild for it
-# loses c its tile (KWin refuses a fullscreen window), a second pass lays out without c: the
-# newcomer's placement and up to two rebuilds, held. Leaving: KWin's restore, then the rebuild
-# that takes c back in beside h and i (bounds measured).
+# A newcomer under the fullscreen window: the rebuild for it loses c its tile (KWin refuses a
+# fullscreen window), and a second pass lays out without c: the newcomer's placement and up to
+# two rebuilds, held. Leaving: KWin's restore, then the rebuild that takes c back in beside h and
+# i (bounds measured).
 kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") w.fullScreen = true; });' >/dev/null
 wait_tree 1 "H[c! h*]"
 wait_stat open False
@@ -253,7 +253,7 @@ check "empty again"                         wait_tree 1 "H[]*"
 client --title p --color red; client --title q --color lime --resize-delay 0.8
 check "p | q"                               wait_tree 1 "H[p q*]"
 # Settled at its tile first: this slow client's resizes, and its bounds asked again once its
-# border went, take ~2.5 s; a fixed 1.2 s wait failed 4 of 4 runs.
+# border goes, take ~2.5 s: the check waits for the settle, not a fixed time.
 check "q settled at its tile"               geom_is q "641,1 638x718"
 wait_stat open False
 t=$(stat transactions)
@@ -288,7 +288,7 @@ check "empty yet again"                     wait_tree 1 "H[]*"
 
 # 13. Unloading the effect in the middle of a hold: nothing breaks, and it loads again.
 #     The action must change j's size: a swap of two halves only moves them, KWin sends no
-#     configure for an unchanged size, and the hold lasted ~4 ms, open to a poll by luck.
+#     configure for an unchanged size, and the hold would last a few ms, open to a poll by luck.
 #     Toggle Split makes both 1280x360, so the slow j holds it ~1.5 s.
 hold_set TimeoutMs 2000
 client --title i --color red; client --title j --color lime --resize-delay 1.5

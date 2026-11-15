@@ -24,8 +24,8 @@ KEYS = list(json.load(open(os.path.join(ROOT, "tests", "keys.json"))))   # never
 # Meta+Shift+N's action id keeps its "(symbol)" (src/kwin.js registerKeys): without it, the
 # fuzzer's moves to a workspace invoke nothing.
 KEYS += ["Workspace %d" % n for n in range(1, 5)] + ["Move to Workspace %d (symbol)" % n for n in range(1, 5)]
-# The unbound ones, as in i3: sticky, back-and-forth,
-# next/prev, the outputs. A quarter of the key draws, so the bound keys keep most of them.
+# The actions i3's default config leaves unbound: sticky, back-and-forth, next/prev, the
+# outputs. A quarter of the key draws, so the bound keys keep most of them.
 UNBOUND = ["Sticky Toggle", "Workspace Back and Forth", "Move to Workspace Back and Forth"]
 UNBOUND += ["%s %s%s" % (v, d, o) for v in ("Workspace", "Move to Workspace") for d in ("Next", "Prev") for o in ("", " on Output")]
 UNBOUND += ["%s %s" % (v, d) for v in ("Focus Output", "Move to Output", "Move Workspace to Output")
@@ -265,9 +265,8 @@ def frame_pixels(k, d, o, tiled, wins):
     floating window or a dialog is skipped: the frame is below it."""
     # A window on all desktops (sticky) has none listed: it covers every desktop. A floating
     # window's outline and shadow reach past its frame (Breeze's shadow, up to SHADOW px) and
-    # cover the frame below, as a floating window is above the tiled ones (campaign 2: grey
-    # frames 1 px from a floating window's edge). Shown on its own output is shown: a floating
-    # window may reach across onto this one (campaign 2, seed 13).
+    # cover the frame below, as a floating window is above the tiled ones. Shown on its own output is shown: a
+    # floating window may reach across onto this one.
     shows = {x["name"]: x["shows"] for x in d["outputs"]}
     covers = [[w["frame"][0] - SHADOW, w["frame"][1] - SHADOW, w["frame"][2] + 2 * SHADOW, w["frame"][3] + 2 * SHADOW]
               for w in wins.values() if w["id"] not in {t["id"] for t in tiled}
@@ -330,7 +329,7 @@ def check(k, d, prev):
     lines = k.log_lines()
     for l in lines[k.log_seen:]:
         # The resize mode's badge ("Resize (Esc)", drawn by the effect on the focused window)
-        # covers frames: I11 waits it out (campaign 2, seed 18).
+        # covers frames: I11 waits it out.
         if l[9:].startswith("MODE "):
             k.mode = l[14:] != "off"
     for l in lines[k.log_seen:]:
@@ -379,8 +378,8 @@ def check(k, d, prev):
                     bad.append(("I3", "%s and %s overlap by %dx%d on %s" % (a["caption"], b["caption"], wh[0], wh[1], o["name"])))
         if tiled:
             # Each frame grown back by its tile's padding (tile minus want), so a right frame covers
-            # its tile exactly and a frame 1 px short still leaves a 1 px hole (the snap() bug this
-            # was validated on, inside I10's 1 px slack).
+            # its tile exactly and a frame 1 px short still leaves a 1 px hole, which I10's
+            # 1 px slack would hide.
             covered = sum(overlap(grown(w), o["geom"])[0] for w in tiled)
             if covered < o["geom"][2] * o["geom"][3]:
                 bad.append(("I4", "%s: tiled windows cover %d of %d px (a hole)" % (o["name"], covered, o["geom"][2] * o["geom"][3])))

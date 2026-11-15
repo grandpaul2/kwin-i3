@@ -4,11 +4,11 @@
 # kwin-i3's own settings page, driven as a person would: injected
 # clicks and keys on kcmshell6 in the test KWin. No plugins are loaded, so what Apply does here it
 # does without them. Controls are found by their accessible names (tools/a11y.py, on the test's own
-# accessibility bus) and clicked at their on-screen box, so a relayout doesn't move the clicks
-#; the pixel checks look at the header and the Keys rows, at
-# 1280x720 with the window filling Virtual-0. KI3_SHOTS=<dir> keeps every screenshot.
-# Alone, after the batch: it clicks after the page's slide animations, and in the batch (~30 test
-# KWins at once) kcmshell6 took longer than 5 s to show its window.
+# accessibility bus) and clicked at their on-screen box, so a relayout doesn't move the clicks;
+# the pixel checks look at the header and the Keys rows, at 1280x720 with the window filling
+# Virtual-0. KI3_SHOTS=<dir> keeps every screenshot.
+# Alone, after the batch: it clicks after the page's slide animations, and in the batch kcmshell6
+# can take longer than 5 s to show its window.
 source "$(dirname "$0")/lib.sh"
 kga() { busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel "$@"; }
 keys_of() { kga shortcutKeys as 4 "$1" "$2" x "$2"; }

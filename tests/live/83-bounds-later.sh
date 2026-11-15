@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # needs: plugin
 # Plain GTK 4 (the test client) keeps within the bounds KWin sent in its first configure, sized
-# for the title bar it had then. A first tile inside those bounds fits,
-# so the bounds are stale only when a later tile is bigger: here a vertical split's lower half,
-# then the whole monitor once its neighbour closes. It stayed 26 px short before c386531
-# (fuzzer I10).
+# for the title bar it had then. A first tile inside those bounds fits, so the bounds are stale
+# only when a later tile is bigger: here a vertical split's lower half, then the whole monitor
+# once its neighbour closes (the fuzzer's I10).
 source "$(dirname "$0")/lib.sh"
 fc() { kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, c = w.clientGeometry; log(f.x+','+f.y+' '+f.width+'x'+f.height+' client '+c.x+','+c.y+' '+c.width+'x'+c.height); } });"; }
 load_kwin_i3

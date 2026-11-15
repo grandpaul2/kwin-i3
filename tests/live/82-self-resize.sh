@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # A tiled window that resizes itself goes back in its tile, as i3 refuses a tiled window's own
-# resize (Firefox's session restore, a capture).
-# A well-behaved client can't do what Firefox did (GTK 3 and 4 keep the size KWin last
-# configured: tried), so the resize is written from outside
+# resize (Firefox's session restore does it).
+# A well-behaved client doesn't (GTK 3 and 4 keep the size KWin last configured), so the resize
+# is written from outside
 # kwin-i3: to kwin-i3 it is the same, a frame change it didn't ask for.
 source "$(dirname "$0")/lib.sh"
 load_kwin_i3
@@ -22,7 +22,7 @@ check "b resized itself: asked back into its tile"   wait_geom b "$tb"
 check "logged once"                                  test "$(refits b "$m")" == 1
 check "a untouched"                                  test "$(geom a)" == "$ta"
 
-# a, focused and on top, grows over b, as the first did; the screenshot shows each colour in
+# a, focused and on top, grows over b; the screenshot shows each colour in
 # its own half only.
 key "Focus Left"; wait_tree 1 "H[a* b]" >/dev/null
 sleep 1.1; resize a 1200 700

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# The fuzzer's I10 (shrunk to 7 actions): a tiled window's frame is
-# not its tile. a is half the first monitor while the second is plugged in; the second goes away,
-# and meanwhile the layout changes so that a's tile is a third. When the monitor returns, KWin
-# (PlacementTracker, workspace.cpp updateOutputs) puts a back to the half it had in the two-monitor
-# layout, after kwin-i3 has reconciled: the restore is a pending resize that frameGeometry does not
-# show until the client commits it, so refit saw a fitting window. kwin-i3 now refits a tiled window
-# whenever its frame changes and no longer matches its tile.
+# The fuzzer's I10 (shrunk to 7 actions): a tiled window's frame is not its tile. a is half the
+# first monitor while the second is plugged in; the second goes away, and meanwhile the layout
+# changes so that a's tile is a third. When the monitor returns, KWin (PlacementTracker,
+# workspace.cpp updateOutputs) puts a back to the half it had in the two-monitor layout, after
+# kwin-i3 has reconciled: the restore is a pending resize that frameGeometry does not show until
+# the client commits it, so a refit at the reconcile sees a fitting window. kwin-i3 refits a tiled
+# window whenever its frame changes and no longer matches its tile.
 source "$(dirname "$0")/lib.sh"
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
-# The fuzzer settles about a second after each action; without that the failure didn't show.
+# A second's settle after each action, as the fuzzer has it, is part of the case.
 settle() { sleep 1; }
 # A lost monitor's workspaces move to the first one for good, as in i3; only an
 # assignment brings 2 back to the returning monitor, which this scenario's geometry checks rely on.

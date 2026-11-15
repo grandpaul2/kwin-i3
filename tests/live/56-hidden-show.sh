@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# From a capture: a terminal sent to a hidden workspace (Meta+Shift+3) showed,
-# when that workspace was next shown (Meta+3), as a small box for a moment, then at its tile.
-# Every frame it shows on the way must be its tile.
+# A terminal sent to a hidden workspace (Meta+Shift+3) must not show, when that workspace is
+# next shown (Meta+3), as a small box for a moment before its tile: every frame it shows on the
+# way must be its tile.
 source "$(dirname "$0")/lib.sh"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'

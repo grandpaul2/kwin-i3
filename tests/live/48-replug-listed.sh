@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# The fuzzer's I1 (138 steps). Workspace 2, two windows that each
-# have a modal dialog, lives on the second monitor. The monitor goes away, 2 is shown on the first,
-# the monitor comes back; over and over, with the gap before the return varied, because the failure
-# is a race (it showed in about one run of four). When the monitor returns KWin may put a window
-# and its dialog back on it itself, into that monitor's tile; kwin-i3 had the first monitor's tile
-# as "the tile we put it in". The INVARIANT line "window w3 not in its tile" came from that stale
-# record. Placing a window the tile already lists now takes that tile as the one it is in.
+# The fuzzer's I1 (138 steps). Workspace 2, two windows that each have a modal dialog, lives on
+# the second monitor. The monitor goes away, 2 is shown on the first, the monitor comes back; over
+# and over, with the gap before the return varied, because the failure is a race. When the monitor
+# returns KWin may put a window and its dialog back on it itself, into that monitor's tile, while
+# kwin-i3's record still says the first monitor's tile (INVARIANT "window w3 not in its tile").
+# Placing a window the tile already lists takes that tile as the one it is in.
 source "$(dirname "$0")/lib.sh"
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
 settle() { sleep 1; }

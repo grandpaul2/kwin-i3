@@ -1,7 +1,6 @@
-// Unit tests for src/rules.js (node --test): the i3 kind of each
-// window (docs/behaviour.md §3), the rule parser (B), the
-// once-per-window record (X2), `assign` (N12), and the old list settings read as rules (C), with
-// two real titles as a case. Windows are stubs with KWin's window properties (window.h).
+// Unit tests for src/rules.js (node --test): the i3 kind of each window (docs/behaviour.md §3),
+// the rule parser (B), the once-per-window record (X2) and `assign` (N12). Windows are stubs with
+// KWin's window properties (window.h).
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
@@ -90,7 +89,7 @@ test("classify: the default rules float Spectacle, the password prompt, KRuler, 
     assert.strictEqual(kind(R, { resourceClass: "org.kde.kruler" }), "floating");
     assert.strictEqual(kind(R, { resourceClass: "plasmashell" }), "floating", "Configure Desktop and Wallpaper");
     assert.strictEqual(kind(R, { resourceClass: "org.kde.plasmashell", dialog: true, normalWindow: false }), "floating");
-    assert.strictEqual(kind(R, { resourceClass: "org.freedesktop.impl.portal.desktop.kde" }), "floating", "the screen-share picker, no parent (OPEN.md 62)");
+    assert.strictEqual(kind(R, { resourceClass: "org.freedesktop.impl.portal.desktop.kde" }), "floating", "the screen-share picker, no parent");
     assert.strictEqual(kind(R, { resourceClass: "org.kde.kate" }), "tiling");
 });
 

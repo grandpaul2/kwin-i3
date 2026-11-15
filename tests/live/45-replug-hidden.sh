@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# The fuzzer's I2 (shrunk from 46 actions to these 10): the
-# second monitor goes away and comes back. Its workspace (2) is hidden on the first meanwhile, and
-# taking 2's window off its tile made KWin give it back its size from before it was tiled; a hidden
-# window never acknowledges a new size, and KWin applies no geometry to it until it does, so when
-# the monitor returned the window stayed out of sight on the first monitor at 400x328, tiled on 2
-# but not in its tile. kwin-i3 now keeps a hidden window's geometry when it takes it off a tile.
+# The fuzzer's I2 (shrunk from 46 actions to these 10): the second monitor goes away and comes
+# back. Its workspace (2) is hidden on the first meanwhile, and taking a window off its tile makes
+# KWin give it back its size from before it was tiled; a hidden window never acknowledges a new
+# size, and KWin applies no geometry to it until it does, so the window would stay out of sight on
+# the first monitor, tiled on 2 but not in its tile. kwin-i3 keeps a hidden window's geometry when
+# it takes it off a tile.
 source "$(dirname "$0")/lib.sh"
 screens_are() { [[ "$(kjs 'log(workspace.screens.length)')" == "$1" ]]; }
-# The fuzzer settles about a second after each action; without that the failure didn't show.
+# A second's settle after each action, as the fuzzer has it, is part of the case.
 settle() { sleep 1; }
 # A lost monitor's workspaces move to the first one for good, as in i3; only an
 # assignment brings 2 back to the returning monitor, which this scenario's geometry checks rely on.
@@ -27,7 +27,8 @@ check "w9's dialog is up"                   poll eval '[[ "$(tree 1)" == *"~w9_d
 timeout 10 kscreen-doctor output.Virtual-1.disable >/dev/null 2>&1; settle
 check "the second monitor is gone"          poll screens_are 1
 # A plain enable gives the returning output priority 1 (it becomes KWin's primary, screenOrder's
-# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
+# first); Plasma's display daemon puts the saved priorities back on a real replug, so do that here
+# (on Virtual-1: setting Virtual-0 to the 1 it already has is a no-op).
 timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 check "it is back"                          poll screens_are 2
 check "workspace 2 is w4r alone"            wait_tree 2 "H[w4r]"

@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # kwin-i3 loaded into a KWin that already has windows (a reload, or a login where a restored
-# window came first): every window must end up managed, tiled or floating, none lost (a
-# live desktop once showed a window left out).
+# window came first): every window must end up managed, tiled or floating, none lost.
 source "$(dirname "$0")/lib.sh"
 client --title a; client --title b
 client --title fixed --fixed
 client --title main --dialog
 # Windows still appearing as kwin-i3 loads: KWin's stackingOrder can leave a new window out, and it
-# came before the script, so no windowAdded follows (fault battery: this must not depend on luck).
+# came before the script, so no windowAdded follows: adoption must not depend on luck.
 "$root/tools/testclient.py" --title c >/dev/null 2>&1 &
 "$root/tools/testclient.py" --title d >/dev/null 2>&1 &
 sleep 0.15

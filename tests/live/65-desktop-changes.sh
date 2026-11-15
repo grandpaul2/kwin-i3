@@ -8,7 +8,7 @@ on_desk() { kjs "workspace.windowList().forEach(function (w) { if (w.normalWindo
 in_tree() { [[ "$(tree "$2" "${3:-0}")" == *"$1"* ]]; }
 desk_id() { kjs "log(workspace.desktops[$1 - 1].id)"; }
 # The trees logged since the last rebuild: a pass that ran between the mark and the desktop change
-# logged by the old numbers, legitimately (seen once in six runs).
+# logged by the old numbers, legitimately (a race: it happens only some runs).
 since_rebuild() { grep -nE '^.{9}DESKTOPS adopted again' "$KI3_LOG" | tail -1 | cut -d: -f1; }
 nobody_twice() {   # each one-letter caption in exactly one workspace's last tree since the rebuild
     local c n t r; r=$(since_rebuild)

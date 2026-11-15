@@ -11,7 +11,7 @@
 #   KI3_OUTPUTS=<n>                      the number of outputs (default 2; 1 is a laptop's own screen)
 #   KI3_SCALE=<s>                        each output's scale (default 1; 2 or 1.5 for HiDPI): the
 #                                        pixels grow, each output stays 1280x720 logical, so the
-#                                        scenarios' geometry holds (OPEN.md item 50)
+#                                        scenarios' geometry holds
 #   KI3_SIZE=<w>x<h>                     each output's logical size (default 1280x720, which every
 #                                        scenario's geometry assumes; tools/video uses 1920x1080)
 #   KI3_TIMEOUT=<s>                      the whole run's limit (default 120; the fuzzer sets its own)
@@ -24,14 +24,14 @@
 # Inside the command: WAYLAND_DISPLAY is the test KWin, the session bus is private (so busctl
 # --user reaches the test KWin), and KI3_LOG is the file tools/logsink.py writes.
 #
-# History, so it isn't undone:
+# Why the bus is set up so:
 # - The environment is set BEFORE the private bus starts: dbus-daemon hands its environment to
 #   whatever it starts. Set after, the portals and ksecretd the test bus
 #   started would point at the live display and config.
 # - The private bus starts NO services (a bus config with no service directories). With them, every
-#   test window started xdg-desktop-portal-kde on the test bus, which aborted when the test KWin
-#   went away: 22 core dumps in a night, each a "Service Crash" notification on the live desktop.
-#   KWin and the GTK test client run fine without a portal.
+#   test window starts xdg-desktop-portal-kde on the test bus, which aborts when the test KWin
+#   goes away, and each crash is a "Service Crash" notification on the caller's desktop. KWin and
+#   the GTK test client run fine without a portal.
 # - Teardown stops the clients first, then KWin (waiting for it), then anything left on the bus.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -41,17 +41,17 @@ if [[ "${KI3_INNER:-}" != 1 ]]; then
     trap 'rm -rf "$tmp"' EXIT
     export KI3_TMP=$tmp KI3_INNER=1
     # A Plasma session's own variables, whoever starts the test: without them Qt loads no KDE
-    # platform theme, and KWin and the apps get Qt's fonts and style (over ssh, for one:
-    # Breeze's title bar 36 px, not 28, and the settings page's spin boxes took no
-    # typing). The desktop's tests had them only by inheriting the desktop session's.
+    # platform theme, and KWin and the apps get Qt's fonts and style (Breeze's title bar
+    # 36 px, not 28, and the settings page's spin boxes take no typing): a test started over ssh
+    # has none to inherit.
     export XDG_CURRENT_DESKTOP=KDE KDE_FULL_SESSION=true KDE_SESSION_VERSION=6
     export XDG_CONFIG_HOME=$tmp/config XDG_DATA_HOME=$tmp/data XDG_STATE_HOME=$tmp/state XDG_CACHE_HOME=$tmp/cache
     export WAYLAND_DISPLAY=ki3test-${tmp##*.}
     unset DISPLAY XAUTHORITY
     # Only the plugin a test asks for, never one from the caller's environment.
     if [[ -n ${KI3_PLUGIN:-} ]]; then export QT_PLUGIN_PATH=$KI3_PLUGIN; else unset QT_PLUGIN_PATH; fi
-    # No system bus: the test KWin read the live session's lock state through it, and while that
-    # screen was locked nothing tiled and input was swallowed.
+    # No system bus: through it the test KWin reads the live session's lock state, and while that
+    # screen is locked nothing tiles and input is swallowed.
     export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/nonexistent/none
     mkdir -p "$XDG_CONFIG_HOME"
     cat > "$tmp/bus.conf" <<'CONF'
@@ -127,7 +127,7 @@ sink=$!
 # KI3_PACKAGE=1: kwin-i3 installed as a package, where KWin Scripts finds it (off, as
 # metadata.json's EnabledByDefault has it). Before KWin starts: KPackage caches the list of
 # packages at KWin's first look, so one linked later is never seen, and turning it on does nothing
-# (found by 37-settings-page.sh). Only when asked: KWin unloads a listed package that
+# (37-settings-page.sh needs it). Only when asked: KWin unloads a listed package that
 # isn't turned on whenever it rescans (every kjs), and the other scenarios load main.js by
 # loadScript under the same name, without turning it on.
 if [[ ${KI3_PACKAGE:-} == 1 ]]; then
@@ -136,7 +136,7 @@ if [[ ${KI3_PACKAGE:-} == 1 ]]; then
 fi
 # The display is found as the X socket that appears while this KWin starts (below), so two test
 # KWins with Xwayland starting at once could each take the other's: one at a time, from the list
-# before to the socket found. The lock goes with this shell's fd 9 (OPEN.md item 34 (a)).
+# before to the socket found. The lock goes with this shell's fd 9.
 if [[ -n "${KI3_XWAYLAND:-}" ]]; then
     exec 9>/tmp/kwin-i3-test-xwayland.lock
     flock 9
@@ -149,8 +149,8 @@ kwin_wayland --virtual ${KI3_XWAYLAND:+--xwayland} --output-count "${KI3_OUTPUTS
     --width "$width" --height "$height" --socket "$WAYLAND_DISPLAY" >"$tmp/kwin.out" 2>&1 9>&- &
 kwin=$!
 up=""
-# Up to 15 s: with every live scenario starting a KWin at once, 5 s was
-# too short for some (testkwin: KWin or the log sink did not start).
+# Up to 15 s: with every live scenario starting a KWin at once, 5 s is too short for some
+# (testkwin: KWin or the log sink did not start).
 for _ in $(seq 150); do
     if [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]] && busctl --user status org.kde.KWin >/dev/null 2>&1 &&
        busctl --user status net.local.kwini3.log >/dev/null 2>&1; then up=1; break; fi
@@ -160,7 +160,7 @@ done
 # KI3_SCALE: --scale alone doesn't stick (KWin 6.7.5: its output config store sets a virtual
 # output, which has no physical size, back to scale 1 with the pixels kept), so kscreen-doctor sets
 # it, its backend in-process (the private bus starts no kscreen service), and places the outputs
-# side by side again (they kept their pixel positions: Virtual-1 at x=1920 for 1.5).
+# side by side again (they keep their pixel positions: Virtual-1 at x=1920 for 1.5).
 if [[ ${KI3_SCALE:-1} != 1 ]]; then
     for o in $(seq 0 $((${KI3_OUTPUTS:-2} - 1))); do args+=(output.Virtual-$o.scale.$KI3_SCALE output.Virtual-$o.position.$((o * width)),0); done
     KSCREEN_BACKEND_INPROCESS=1 kscreen-doctor "${args[@]}" >/dev/null 2>&1 ||

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # needs: xwayland
 # The pointer follows focus only when focus changes monitor (i3's mouse_warping output), never
-# because a window closed on the monitor the pointer is on (once, closing the start
-# menu sent the pointer to the middle of the left monitor). Virtual-0 at x 0, Virtual-1 at x 1280.
+# because a window closed on the monitor the pointer is on (closing the start menu must not send
+# the pointer anywhere). Virtual-0 at x 0, Virtual-1 at x 1280.
 # The panel popup is a stand-in (tools/popupclient.py: the test KWins have no Plasma panel).
 source "$(dirname "$0")/lib.sh"
 active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }

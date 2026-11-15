@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # needs: plugin
 # timing: alone
-# (f floats where KWin first placed it, which shifts under load: in PikaOS's batch it covered the
-# point that hovers b; green alone)
+# (f floats where KWin first placed it, which shifts under load: in a parallel batch it can cover
+# the point that hovers b)
 # Closing the focused window focuses the one used before it, as i3 (con_next_focused, con.c:1651).
-# Found from a capture, where closing a window always focused the leftmost one: H[A V[A A*]], the pointer over the left one and back (focus follows
-# mouse: both activated), Meta+Shift+Q: KWin activates the left one, the most recent in its
-# one-list focus chain (focuschain.cpp:252), and kwin-i3 followed. i3 looks in the closed
-# window's own container first: the one above.
+# H[A V[A A*]], the pointer over the left one and back (focus follows mouse: both activated),
+# Meta+Shift+Q: KWin activates the left one, the most recent in its one-list focus chain
+# (focuschain.cpp:252), and kwin-i3 must not follow it. i3 looks in the closed window's own
+# container first: the one above.
 source "$(dirname "$0")/lib.sh"
 active() { kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "none")'; }
 active_is() { [[ "$(active)" == "$1" ]]; }

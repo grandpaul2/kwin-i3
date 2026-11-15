@@ -2,7 +2,7 @@
 # needs: plugin
 # tools/capture with kwini3hold loaded: its events (hold.txt) are saved beside kwin-i3's log, and
 # tools/capture-read merges the two around the press (docs/debugging.md). A close of one of two
-# tiled windows is OPEN.md item 21's case: the kept close, the survivor's snapshot, the release.
+# tiled windows is the hold's case: the kept close, the survivor's snapshot, the release.
 source "$(dirname "$0")/lib.sh"
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
@@ -28,7 +28,7 @@ out=$("$root/tools/capture-read" "$dir")
 # (either is right; this checks the merge, not the focus).
 check "capture-read: both sources"          eval 'grep -qE " hold f[0-9]+ close b: kept" <<<"$out" && grep -qE " i3   CLOSE b (kept|chose) a" <<<"$out"'
 # Not "last": capture-read prints the few lines logged after the press too, and under load
-# one lands there (item 34). The press is in the timeline, and the timeline is in time order.
+# one lands there. The press is in the timeline, and the timeline is in time order.
 check "capture-read: the press, in time order" eval 'grep -q " ---- PRESS" <<<"$out" && grep -E "^[0-9]{2}:" <<<"$out" | cut -c1-12 | sort -c'
 check "capture-read: a's GEOM after its snapshot" eval 'grep -E " (hold f[0-9]+ snapshot a|i3   GEOM a 1,1 638x718 -> 1,1 1278x718)" <<<"$out" | head -1 | grep -q snapshot'
 check "no invariant failures or errors"     clean_log

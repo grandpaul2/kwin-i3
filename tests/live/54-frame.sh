@@ -88,10 +88,9 @@ check "b active by script"                  poll active_is b
 click 639 360
 check "a click on a's right frame activates a" poll active_is a
 check "  and a's client saw nothing"        saw ""
-# A press on the ring is i3's resize from a border (§9 Z3: any button; the
-# shares change at the release), never a tiling drag, and the app sees none of it. The two
-# drags below once expected nothing. The left drag from a's
-# right ring widens a; the layout is then opened afresh for the sections after.
+# A press on the ring is i3's resize from a border (§9 Z3: any button; the shares change at the
+# release), never a tiling drag, and the app sees none of it. The left drag from a's right ring
+# widens a; the layout is then opened afresh for the sections after.
 m=$(mark)
 sdrag "" right 639 360 639 360
 check "a right press on the frame: no tiling drag" no_drag "$m"
