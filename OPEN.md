@@ -135,6 +135,5 @@ material, no line on an agent's own conduct, nothing that would embarrass it); (
 zero; (6) the grader at zero open findings; (7) the last merge, its message saying what changed
 and why; (8) a dry run of the fresh single-commit history the repo gets at a release (`main` and
 `stable` on that one commit, the release tagged there, the old history kept in a private repo, the
-release notes telling users to clone again), built and audited locally, not pushed. Open: (6) for the
-tests and the tools, its cost estimated first (the docs, `src/`, `plugin/`, `kcm/` and `widget/`
-are done); then (7) and (8). Next: (6) on `tests/`.
+release notes telling users to clone again), built and audited locally, not pushed. Done through (6):
+every area graded, each finding fixed or kept with its reason. Open: (7) and (8). Next: (7).
