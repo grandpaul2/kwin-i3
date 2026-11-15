@@ -51,9 +51,8 @@ kept with the `OPEN.md` item that names it.
 ## What none of these show
 
 - **What got drawn between two frames.** The log says what was asked and reported, and when; a
-  flash shows on screen only. Next step if a timeline can't settle one: a replay buffer of the last
-  ~10 s of the screen saved on the same press (`gpu-screen-recorder`'s replay mode, untested here;
-  its own proposal), or a reproduction in the test KWin read with `tools/shot.py`.
+  flash shows on screen only. When a timeline can't settle one: a reproduction in the test KWin read
+  with `tools/shot.py`.
 - **What is at a point now**: not a record but a question, `tools/pointer-map` (`docs/pointer.md`).
 - **KWin's reasons**: why it activated or moved a window. Read KWin's source for the installed
   version (AGENTS.md, "Finding bugs"), or trace it from a helper probe in a worktree.

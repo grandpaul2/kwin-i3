@@ -17,7 +17,7 @@ This page is the short version.
    `tools/testkwin.sh`; nothing touches your desktop). Its log is `$TMPDIR/tmp.*/10-tiling.sh.log`.
    The whole suite (`make test`, several minutes) runs at most once a session, when the work needs
    it: `docs/testing.md` is deliberately lean.
-4. `gh` installed and logged in (`gh auth login`): the session commands list pull requests with it.
+4. `gh` installed and logged in (`gh auth login`): `docs/session-start.md` lists open pull requests with it.
 
 If you run kwin-i3 yourself, the checkout your `~/.local/share/kwin/scripts/kwin-i3` links to is what
 your KWin loads: do your work in a git worktree, never on a branch there.

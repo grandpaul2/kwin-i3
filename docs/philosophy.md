@@ -70,16 +70,14 @@ In order:
 
 **The exception: overall style and feel.** How kwin-i3 looks (colours, sizes, gaps, decoration,
 indicators, banners) and feels in use is judged on the live desktop, **after it is built**, and
-that verdict carries weight (i3's three ring colours were specced, built, and dropped live: so
-many colours confused more than they told). Even there,
+that verdict carries weight (i3's three ring colours, built, confused more than they told, so
+they were left out). Even there,
 a suggestion that goes against these norms gets **heavy push back first**: the norm it breaks,
 the precedent, i3's way, said plainly before anything is built. If it stands, it is recorded as
 a difference with "judged live" as its reason, or the norm itself changes, here, in the same commit.
 
 The exception is for the verdict in use and for suggestions, never a reason to ask before
-building: a behaviour the steps above decide is built as they decide it, and judged in use (a
-question about floating windows over a fullscreen one was once asked, though i3, reason (a) and
-the C5 precedent already decided it).
+building: a behaviour the steps above decide is built as they decide it, and judged in use.
 
 This is about deciding *what* kwin-i3 does. Putting anything on a live desktop still needs its owner's
 go for that change (`AGENTS.md`, "Nothing goes live").
@@ -138,17 +136,16 @@ against i3 and the code every so often, to catch what slipped.
 
 - **Copy i3 by default**, ported from i3's source, not from memory (`AGENTS.md`): "ride i3, hard"
  . i3's word for anything i3 has (`docs/definitions.md`).
-- **Check i3's real behaviour before calling something a gap**: twice what looked
-  like a gap was i3 itself (a resize key changes a container's share against its siblings; a
-  launcher-started game opened where you were in i3 too).
+- **Check i3's real behaviour before calling something a gap**: what looks like one
+  is often i3 itself (a resize key changes a container's share against its siblings; a
+  launcher-started game opens where you were in i3 too).
 - **Diverge only for one of the reasons in `docs/plan.md`, and write it down**: the row in
   `docs/behaviour.md` marked ≠ carries the reason; those rows are the list of differences.
 
 ## Defaults
 
 - **The defaults are the product.** During the Stage, the maintainer's desktop runs what a new
-  user gets, kwin-i3's recommended Plasma settings included; personal customisations come back
-  later.
+  user gets, kwin-i3's recommended Plasma settings included.
 - **The product is the script and its two plugins**, and it is designed for both: no default,
   rule, setting or test is chosen for the script running without them. It still runs the tree,
   workspaces, keys and floating then, and the settings page's banner names what is missing

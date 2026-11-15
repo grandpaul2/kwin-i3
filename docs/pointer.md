@@ -1,7 +1,6 @@
 # The pointer: what is at each pixel, and what a press there does
 
-No more guessing: the gap handle was once changed
-twice on guesses about which window gets a press. This file is the home of how a press travels
+This file is the home of how a press travels
 through KWin 6.7.5 to kwin-i3, read from KWin's source, and of the tools that show it on a real
 screen. `behaviour.md` says what kwin-i3 does; this says why the pointer ends up where it does.
 
@@ -100,14 +99,14 @@ no press:
   `w-resize` / `e-resize`: Plasma's look where i3 has none. The press there is kwin-i3's resize.
 - **VS Code's border reaches 10 px past its frame, 4 px into the terminal's own content** (it is
   stacked above): a click there never reaches the terminal, and `FrameFocus` takes it as a margin
-  press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). Closed by `FrameFocus::decide`'s Margin case.
+  press and resizes the terminal's **bottom** (`sideOf` on a point inside the frame). `FrameFocus::decide`'s Margin case takes it instead.
 - Both come from one cause: KWin sends the app no tiled edges for a padded tile (`Tile::anchors`),
   so it keeps its invisible resize border.
 - KWin can't send them for a padded tile, and nothing else sets them (`tile.cpp:190`
   `Tile::anchors`, `xdgshellwindow.cpp:907` the only reader; no constrained states in 6.7.5).
   Chromium's 10 px input band reads maximized/fullscreen and its client-shadow flag, not tiled
-  (`frame_view_layout_linux.cc:141`; read, not traced to the end).
-- **VS Code with `"window.titleBarStyle": "native"`** (test KWin, same sweep): buffer = frame, the
+  (`frame_view_layout_linux.cc:141`).
+- **VS Code with `"window.titleBarStyle": "native"`** (test KWin): buffer = frame, the
   gaps and rings are no window's (KWin's `default` arrow), the terminals keep all their pixels,
   every press there kwin-i3's resize: i3's picture exactly.
 
