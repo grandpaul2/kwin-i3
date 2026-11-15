@@ -136,5 +136,5 @@ zero; (6) the grader at zero open findings; (7) the last merge, its message sayi
 and why; (8) a dry run of the fresh single-commit history the repo gets at a release (`main` and
 `stable` on that one commit, the release tagged there, the old history kept in a private repo, the
 release notes telling users to clone again), built and audited locally, not pushed. Open: (6) for
-the code, the tests and the tools, by directory, its cost estimated first; then (7) and (8). Next:
-(6) on `src/`.
+`plugin/`, `kcm/`, `widget/`, the tests and the tools, by directory, its cost estimated first (the
+docs and `src/` are done); then (7) and (8). Next: (6) on `plugin/`.
