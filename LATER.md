@@ -41,7 +41,7 @@ faults for each scenario added meanwhile (`KI3_SCENARIO=NN-name.sh`); the fuzz c
 there: 86-tiling-drag's 59 faults in `tests/live/mutate.py`, 23 of them never run, one ("the helper
 not turned on at a reconfigure") with a from-text that ends mid-line, and the survivors of the rest
 not sorted (a check to add, code to remove, or not visible in the test KWin). Many faults'
-from-texts no longer match the code (about 64 of 146 in `tests/live/mutate.py`, 8 of 20 in
+from-texts no longer match the code (66 of 146 in `tests/live/mutate.py`, 8 of 20 in
 `tests/unit/mutate.py`: the centre swap, the drop outline, Meta+Shift, the monitor code in the
 model): rewrite them from the code before the run.
 

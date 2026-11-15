@@ -113,7 +113,6 @@ def shrink(actions, sig, work):
         cands = [c for c in cands if c and len(c) < len(actions)]
         if not cands or time.time() > stop:
             return None
-        tries[0]
 
         def run1(c, n):  # counted when it starts, not when queued
             with lock:

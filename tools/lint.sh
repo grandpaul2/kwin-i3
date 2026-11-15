@@ -129,10 +129,37 @@ lang_qml() {
     [[ $mode == check ]] || return
     if ql=$(which_of qmllint-qt6 /usr/lib64/qt6/bin/qmllint /usr/lib/qt6/bin/qmllint qmllint); then
         v=$("$ql" --version | minor)
-        usable qmllint "$QMLLINT" "$v" && run qmllint "$ql" --max-warnings 0 "${list[@]}"
+        usable qmllint "$QMLLINT" "$v" && kde_modules && run qmllint "$ql" --max-warnings 0 "${list[@]}"
     else
         skip qmllint "not installed"
     fi
+}
+
+# Whether every KDE QML module the files import is installed: without one, qmllint reports the
+# import, which is the machine's, not the code's.
+kde_modules() {
+    local qp dir m
+    qp=$(which_of qtpaths6 qtpaths-qt6 /usr/lib64/qt6/bin/qtpaths /usr/lib/qt6/bin/qtpaths) || {
+        skip qmllint "no qtpaths to find the QML modules"
+        return 1
+    }
+    dir=$("$qp" --query QT_INSTALL_QML)
+    while read -r m; do
+        [[ -f $dir/${m//.//}/qmldir ]] || {
+            skip qmllint "QML module $m not installed"
+            return 1
+        }
+    done < <(grep -ho '^import org\.kde[a-zA-Z.]*' "${list[@]}" | sort -u | cut -d' ' -f2)
+}
+
+# eslint 10's own requirement (its package.json "engines").
+node_ok() {
+    local v
+    v=$(node -p 'process.versions.node' 2>/dev/null) || return 1
+    node -e '
+        const [a, b] = process.argv[1].split(".").map(Number);
+        process.exit((a === 20 && b >= 19) || (a === 22 && b >= 13) || a >= 24 ? 0 : 1);
+    ' "$v"
 }
 
 lang_js() {
@@ -141,11 +168,17 @@ lang_js() {
             skip "prettier, eslint" "no node_modules: make lint-tools"
             return
         }
+    node_ok || {
+        skip "prettier, eslint" "node $(node -p 'process.versions.node' 2>/dev/null), want 20.19, 22.13 or 24+"
+        return
+    }
     if [[ $mode == format ]]; then
         node_modules/.bin/prettier --log-level warn --write "${list[@]}"
     else
         run prettier node_modules/.bin/prettier --log-level warn --check "${list[@]}"
-        run eslint node_modules/.bin/eslint --max-warnings 0 .
+        local js=() f
+        for f in "${list[@]}"; do [[ $f == *.json ]] || js+=("$f"); done
+        run eslint node_modules/.bin/eslint --max-warnings 0 "${js[@]}"
     fi
 }
 

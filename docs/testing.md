@@ -34,8 +34,8 @@ change; the reload of a desktop is its owner's go.
 Style is each language's formatter's; nothing about style is written anywhere else.
 `make format` rewrites every tracked file to it; `make lint` (`tools/lint.sh`) checks formatting
 and runs each language's linter, in about 15 seconds, and `make unit` runs it first, so every
-change is checked by it. `tools/lint.sh check js` (or `cpp`, `qml`,
-`py`, `sh`) does one language.
+change is checked by it (a check inside the tests, added with the go, rule 5).
+`tools/lint.sh check js` (or `cpp`, `qml`, `py`, `sh`) does one language.
 
 | language | formatter | linter | config |
 |---|---|---|---|
@@ -51,12 +51,14 @@ change is checked by it. `tools/lint.sh check js` (or `cpp`, `qml`,
   names them). A tool that is missing, or at another version, is skipped with a line saying so,
   because another version formats differently, and a machine must not go red with nothing to
   fix. Moving to a new version is its own commit: the version changed in `tools/lint.sh` and here,
-  and the tree reformatted.
+  and the tree reformatted. qmllint is skipped, too, when a KDE QML module the files import
+  isn't installed, and prettier and eslint when node is older than eslint needs.
 - **Where a config differs from the tool's default, the reason is in the config.** In short: a
   4-space indent for JS and shell, as the C++ and QML beside them; no comma after a call's last
   argument, which an older Qt's engine may not parse; qmllint's unqualified-access check off,
   because the settings page's `kcm` and the widget's `plasmoid` are context properties it can't
-  see; shellcheck's SC2016 off (a literal `$` in single quotes, on purpose here); ruff's rule set
+  see; shellcheck's SC2016 off (a literal `$` in single quotes, on purpose here) and SC2012 (`ls`
+  lists only directories the scripts name themselves), and sourced files followed; ruff's rule set
   written out, because its default set changes between releases; eslint told which names
   `src/`'s files share, because `build.sh` makes them one script.
 - **A real bug a linter finds** is not fixed under the lint: the line gets the linter's disable
