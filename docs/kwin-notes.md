@@ -76,7 +76,10 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   is then a no-op forever.
 - A same-size move is applied synchronously inside the caller (`moveResizeInternal`); a resize waits
   for the client's commit, so a check right after a resize reads the old frame.
-  `frameGeometryAboutToChange` fires first either way, even when nothing changes. Windows of one
+  `frameGeometryAboutToChange` fires first either way, even when nothing changes, and
+  `Window::moveResize` has no equality guard: the same rect written again to a client that
+  doesn't answer is a new configure and a new announcement each time, which the hold takes for a
+  layout change and waits out (so `refit` asks once per frame and tile). Windows of one
   layout change land 2-13 ms apart (240 Hz monitor). So a position worked out against a window's
   frame just after it was told a new one is against the old (a floated group's bar drawn
   mid-window): work from the rect it was told. A `moveResize` outside an interactive resize sends
@@ -511,8 +514,10 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - On NVIDIA (a driver with kernel suspend notifiers), waking from suspend can
   reset the GPU: the kernel logs `nvidia-drm … Failed to register auto-value-update`, and seconds
   later Firefox logs `[GFX1-]: Handle DeviceReset` and redraws its windows from scratch, a flash on
-  every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
-  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this.
+  every screen it fills. Firefox can also stop answering for minutes first (KWin's "Not
+  Responding" in its caption, kwini3hold's `TIMED OUT waiting for` it), and an Alacritty window
+  can exit (status 101). Below the window manager, i3's too: a capture just after
+  `PM: suspend exit` in `journalctl -b` showing this, with kwin-i3's log quiet, is this.
 - **Plasma 6.8's OSDs (volume, brightness) can show cut off**, their top part only: plasmashell
   sizes the OSD's own surface too short (KDE bug 527636, since 6.8.0, often after an output
   change or a resume; the candidate fix is plasma-workspace MR 7278). A capture taken while it

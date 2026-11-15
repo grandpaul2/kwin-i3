@@ -339,6 +339,39 @@ check "j is where it should be" geom_is j "0,360 1280x360"
 busctl --user call org.kde.KWin /Effects org.kde.kwin.Effects loadEffect s kwini3hold >/dev/null
 check "loaded again" effect_loaded true
 check "counters start afresh" _stat_is transactions 0
+kclose i
+kclose j
+
+# 14. A client that stops answering with a resize outstanding (SIGSTOP; live, a browser hung by a
+#     GPU reset on resume) is asked into its tile once, as i3 pushes a rect once (x.c
+#     x_push_node): keys on the other monitor, which don't touch it, open no hold on it.
+active_is() { [[ "$(kjs 'log(workspace.activeWindow ? workspace.activeWindow.caption : "")')" == "$1" ]]; }
+hold_set TimeoutMs 200
+client --title hp
+client --title hq --color blue
+check "hp | hq" wait_tree 1 "H[hp hq*]"
+hqpid=$(pgrep -f "testclient.py --title hq" | head -1)
+kill -STOP "$hqpid"
+client --title hr --color red
+# Beside hq or beside hp, by where the focus is as it opens: either way hq is asked for a third.
+_three() { [[ "$(tree 1)" =~ ^H\[(hp hr\* hq|hp hq hr\*)\]$ ]]; }
+check "hr opens beside them" poll _three
+key "Workspace 2"
+client --title hs
+client --title ht
+check "hs | ht on the other monitor" wait_tree 2 "H[hs ht*]"
+sleep 0.5 # the newcomers' holds over, and hq's one ask timed out
+to=$(stat timeouts)
+for _ in 1 2 3; do
+    key "Focus Left"
+    poll active_is hs
+    key "Focus Right"
+    poll active_is ht
+done
+sleep 0.3
+check "six keys beside a hung client: no hold timeout" _stat_is timeouts "$to"
+kill -CONT "$hqpid"
+for w in hp hq hr hs ht; do kclose "$w"; done
 
 check "no invariant failures or errors" clean_log
 finish

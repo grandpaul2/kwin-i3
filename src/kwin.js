@@ -1488,7 +1488,7 @@ var KI3 = (function () {
     // can list a window in a tile whose w.tile is null (a monitor going away; the fuzzer again).
     function refit(t) {
         t.windows.forEach(function (w) {
-            fitToTile(w, t);
+            fitToTile(w, t, true);
         });
         t.tiles.forEach(refit);
     }
@@ -1502,17 +1502,28 @@ var KI3 = (function () {
             Math.abs(g.height - a.height) <= 1
         );
     }
-    function fitToTile(w, t) {
+    var refitAsked = {}; // window id -> "frame tile" it was last asked into its tile with
+    // once: not again for a frame and tile it was already asked with, as i3 pushes a rect only
+    // when it differs from the last one pushed (x.c x_push_node, state->rect). Every pass refits,
+    // and KWin announces each write as a coming geometry change (moveResizeInternal), even one
+    // equal to the configure still outstanding: a client that has stopped answering held the
+    // hold for its whole timeout on every key, on every monitor.
+    function fitToTile(w, t, once) {
         if (w.tile !== t || w.move || w.resize || !wins[id(w)]) return;
         if (w.fullScreen) {
             fitFullscreen(w);
             return;
         }
-        if (
-            !fits(w, t) ||
-            (pinned(t) && !exactly(w.frameGeometry, windowRect(t)))
-        )
-            w.frameGeometry = windowRect(t);
+        var key = id(w),
+            a = windowRect(t);
+        if (fits(w, t) && !(pinned(t) && !exactly(w.frameGeometry, a))) {
+            delete refitAsked[key];
+            return;
+        }
+        var seen = rectKey(w.frameGeometry) + " " + rectKey(a);
+        if (once && refitAsked[key] === seen) return;
+        refitAsked[key] = seen;
+        w.frameGeometry = a;
     }
     function exactly(g, a) {
         return (
@@ -4200,6 +4211,7 @@ var KI3 = (function () {
         delete selfFitAt[key];
         delete selfFitLater[key];
         delete lastFit[key];
+        delete refitAsked[key];
         delete pinFit[key];
         delete fsFit[key];
         delete keptAbove[key];
@@ -4567,6 +4579,7 @@ var KI3 = (function () {
                     // reconcile's refit: watched until a frame shows its tile (51-input, section 1).
                     if (armed[key] !== true) armed[key] = "pending";
                     delete lastFit[key];
+                    delete refitAsked[key];
                 }
                 // Dropped on another monitor: as a dragged window does in i3.
                 if (kind === "move" && w.output !== outputOf(ws))
@@ -7412,6 +7425,7 @@ var KI3 = (function () {
                 expected = {};
                 armed = {};
                 lastFit = {};
+                refitAsked = {};
                 pinFit = {};
                 fsFit = {};
                 selfFitAt = {};
