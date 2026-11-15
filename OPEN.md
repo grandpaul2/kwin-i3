@@ -140,6 +140,7 @@ would embarrass it); (5) the audit at zero; (6) the grader at zero open findings
 merge, its message saying what changed and why; (8) a dry run of the fresh single-commit history the
 repo gets at a release (`main` and `stable` on that one commit, the release tagged there, the old
 history kept in a private repo, the release notes telling users to clone again), built and audited
-locally, not pushed. (1) and (3) are done: no file moved whole; `fuzz-design.md` is the fuzzer
-as it is, `pointer.md` names no desktop. Next: (4), about 60 files whose dated, historical or
-machine-specific comments state the reason instead, on its branch.
+locally, not pushed. (1), (3), (4)'s mechanical pass and (5) are done: no file moved whole,
+`fuzz-design.md` is the fuzzer as it is, and no comment or doc cites a date, an unpublished
+review or probe, or one person's machine for its reason. Next: (6), the grader, by area, its
+cost estimated first.
