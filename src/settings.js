@@ -1,19 +1,21 @@
-// Settings: every key in kwinrc's [Script-kwin-i3] group, with its type and default
-//. The plugins read theirs too (the frame's, the hold's,
+// Settings: every key in kwinrc's [Script-kwin-i3] group, with its type and default.
+// The plugins read theirs too (the frame's, the hold's,
 // tilingDrag), each with its own fallback for a value this table would refuse. The one table
 // package/contents/config/main.xml (the settings page's class) and the README follow;
 // tests/unit/settings.test.js holds the table and main.xml together.
 //
 // Read at load and again on every KWin reconfigure (options.configChanged; Meta+Shift+C asks for
 // one; the settings page's Apply asks for one too): a script sees a new value only once KWin has
-// reparsed its config, so a hand edit of kwinrc takes Meta+Shift+C, as i3's reload. load() returns the keys whose value changed.
+// reparsed its config, so a hand edit of kwinrc takes Meta+Shift+C, as i3's reload.
+// load() returns the keys whose value changed.
 
 var Settings = (function () {
     // The window rules in i3's syntax, one per line (src/rules.js parses them; docs/behaviour.md
     // §3, §11 N12-N15). The defaults float the Plasma tools i3 would float (Spectacle, the
     // password prompt, KRuler, plasmashell's ordinary windows, the desktop portal's dialogs: Qt
     // dialogs on X11, typeless and often parentless on Wayland); the system windows are built in.
-    // Each by whole names (a class also seen without org.kde. is given both ways), as the settings page shows names.
+    // Each rule names a whole class (one also seen without org.kde. is given both ways), as the
+    // settings page shows names.
     var DEFAULT_RULES = "[class=\"^org\\.kde\\.spectacle$\"] floating enable; " +
         "[class=\"^org\\.kde\\.polkit-kde-authentication-agent-1$\"] floating enable; " +
         "[class=\"^org\\.kde\\.kruler$\"] floating enable; " +
@@ -56,9 +58,10 @@ var Settings = (function () {
         // i3's hide_edge_borders (§7 L6): smart and smart_no_gaps drop a lone window's ring; the
         // per-edge values hide the ring's side at the output's edge (the strip stays: KWin's reason).
         hideEdgeBorders: { type: "choice", def: "none", choices: ["none", "vertical", "horizontal", "both", "smart", "smart_no_gaps"] },
-        // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the page has them.
-        // i3's colour classes (§7 L3): focused and unfocused (focused_inactive left out); the indicator is the side where the next window opens on a
-        // window alone in its split (L4), an empty colour being the class's frame colour.
+        // The frame: drawn by kwini3hold, its room left by the script (frameWidth); here so the
+        // page has them. i3's colour classes (§7 L3): focused and unfocused (focused_inactive left
+        // out); the indicator is the side where the next window opens on a window alone in its
+        // split (L4), an empty colour being the class's frame colour.
         frameWidth: { type: "int", def: "1", min: 1, max: 10 },
         frameActive: { type: "colour", def: "#4c7899" },
         frameInactive: { type: "colour", def: "#333333" },
@@ -90,8 +93,8 @@ var Settings = (function () {
             return n >= t.min && n <= t.max ? n : null;
         }
         if (type === "choice") return t.choices.indexOf(text) >= 0 ? text : null;
-        // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces taken, given back
-        // without (rejected, the default stood in silently).
+        // "WxH", 0 and -1 allowed (Rules.parseSize); i3 writes "75 x 50": spaces are taken and
+        // the value given back without them.
         // Below -1 is no size (Rules.parseSize): refused here, so it logs its WARN.
         if (type === "size") { var sz = /^\s*(-?[0-9]+)\s*x\s*(-?[0-9]+)\s*$/.exec(text); return sz && +sz[1] >= -1 && +sz[2] >= -1 ? sz[1] + "x" + sz[2] : null; }
         if (type === "text") return text;                                              // the rules, parsed by Rules

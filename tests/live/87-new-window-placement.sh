@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # needs: plugin
 # timing: alone
-# Where a new window opens, and desktop switches made from outside .
+# Where a new window opens, and desktop switches made from outside.
 # From a capture: Prism Launcher's modal dialog
 # opened while the focus was on the other monitor's empty workspace, KWin gave it that workspace,
 # switched Prism's monitor to it, and kwin-i3 took Prism along. As i3 (manage.c, workspace_show):

@@ -545,8 +545,8 @@ var Tree = (function () {
     // i3's con->sticky (cmd_sticky), set on the window's con: its floating container is then
     // visible on every workspace of its output (con_is_sticky looks down from it), a split or a
     // group floated whole included. Only a window in a floating container carries it here: a
-    // sticky window made tiling is taken off all desktops first (C, KWin's tiles belong to one
-    // desktop).
+    // sticky window made tiling is taken off all desktops first (KWin's tiles belong to one
+    // desktop, §3 X4).
     M.setSticky = function (con, on) {
         if (con && con.win !== null && insideFloating(con)) con.sticky = !!on;
         return con;
@@ -1318,7 +1318,7 @@ var Tree = (function () {
     // sibling along that orientation grows by ppt, the siblings give it up equally. False if it
     // can't (nothing to resize against, or someone would vanish). i3's floor is one pixel of the
     // split (percent_for_1px, resize.c:131-136): sizeOf(split) gives its px along the orientation
-    // (kwin.js has the tiles); without it, a thousandth (about 1-3 px on these outputs).
+    // (kwin.js has the tiles); without it, a thousandth (a few px on a common output).
     var MIN_SHARE = 0.001;
     M.resize = function (con, what, ppt, sizeOf) {
         // Inside a floating container i3 resizes the container (cmd_resize_floating): not here.
@@ -1488,10 +1488,6 @@ var Tree = (function () {
 
     // ---- adopting and reading ---------------------------------------------------------------
 
-    // Rebuild a workspace's tiling tree from a spec read off KWin's live tiles at start-up:
-    // { layout, percent, kids: [spec...] } for a split, { win, percent } for a window. Replaces
-    // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
-    // until focusWin() calls refine them.
     // A snapshot's focus order (indices of tiled children, most recent first) where it has one;
     // a workspace's floating containers stay after its tiled ones.
     function adoptOrder(c, s) {
@@ -1511,6 +1507,10 @@ var Tree = (function () {
         adoptOrder(c, s);
         return c;
     }
+    // Rebuild a workspace's tiling tree from a spec read off KWin's live tiles at start-up:
+    // { layout, percent, kids: [spec...] } for a split, { win, percent } for a window. Replaces
+    // whatever the workspace held; floating windows are untouched. Focus stacks follow child order
+    // until focusWin() calls refine them.
     M.adopt = function (ws, spec) {
         var self = this, wsLayout = ws.wsLayout;
         // A group at a workspace's top (a tile-read of a workspace that is one group; a tree saved

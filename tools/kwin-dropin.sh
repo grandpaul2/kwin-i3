@@ -3,8 +3,8 @@
 # QT_PLUGIN_PATH for KWin (the plugins' dir).
 # Environment= replaces the session's QT_PLUGIN_PATH for KWin, and every app KWin launches (an
 # app on a global shortcut: kglobalaccel runs in KWin) inherits KWin's, so the settings page's dir
-# goes in too when it is installed; without it, such a System Settings lacks the page
-#. Takes effect at the next login.
+# goes in too when it is installed; without it, such a System Settings lacks the page.
+# Takes effect at the next login.
 #   HOME, KI3_PLUGIN_ROOT, KI3_KCM_ROOT as the two install scripts have them.
 set -euo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd)
