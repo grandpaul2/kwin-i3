@@ -10,8 +10,7 @@ changes. The script runs without them, and the settings page says at its top whe
 
 **Status: in beta**: public but unannounced, used daily by a few people; report bugs with a
 capture (Install, step 6). Install the `stable` branch: each version there has been in daily
-use on `main` first and passed the tests on Plasma 6.7 and 6.8. Feature complete (v1.0.0,
-2026-10-23), in daily use since 2026-10-22.
+use on `main` first and passed the tests on Plasma 6.7 and 6.8. Feature complete since v1.0.0.
 The core of i3 is here, tabbed and stacked layouts included; what is left out is deliberate
 (urgency, marks, the scratchpad). The goal is i3's feel inside Plasma,
 not all of i3: from here the work is making it configurable and reliable, not adding more of i3

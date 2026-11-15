@@ -12,7 +12,7 @@ One timeline, the SECONDS before the press (default 60; 0 for everything held): 
 before, and the press with the user's note last. Start every diagnosis here. The bug is in the lines
 before the press, often several seconds before it.
 
-What a layout change looks like (test KWin, a close of b beside a, 2026-10-25):
+What a layout change looks like (test KWin, a close of b beside a):
 
 ```
 21:40:34.482    +0.045 i3   ACTION Close

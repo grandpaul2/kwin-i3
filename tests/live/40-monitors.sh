@@ -62,8 +62,8 @@ check "Meta+5 from the second monitor opens there" poll shows Virtual-1 5
 key "Workspace 2"
 key "Focus Left"
 
-# A monitor drops out and comes back (the monitor-wake bug of
-# 2026-10-21; i3's rule): its workspaces move to the first monitor for good; the returning monitor shows a
+# A monitor drops out and comes back (a monitor waking from
+# sleep; i3's rule): its workspaces move to the first monitor for good; the returning monitor shows a
 # free workspace, not the one it showed; an assignment (workspaceOutputs) is what brings a workspace
 # back. The focus goes to the first monitor's workspace after either change (§5 D5).
 key "Workspace 1"
@@ -113,7 +113,7 @@ m=$(mark)
 timeout 10 kscreen-doctor output.Virtual-1.enable output.Virtual-1.priority.2 >/dev/null 2>&1
 check "replugged"                           poll two_screens
 # After kwin-i3 has reconciled, not the first moment: KWin itself briefly puts b back on its old
-# monitor, and a wrong home moves it away again a moment later (fault battery, 2026-10-22).
+# monitor, and a wrong home moves it away again a moment later.
 check "reconciled after the replug"         wait_log '^.{9}TREE 2 ' "$m"
 check "b goes home to its assigned monitor, and stays: it fills the second monitor" geom_is b "1280,0 1280x720"
 sleep 0.3

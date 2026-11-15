@@ -39,7 +39,7 @@ poll() {
 
 kjs() {
     # A unique id per call without shell state: kjs runs in subshells ($(kjs ...)), where a
-    # counter never advances (review fault 1).
+    # counter never advances.
     local n="kjs-$(date +%s%N)-$RANDOM" before f
     f=$KI3_TMP/$n.js
     {
@@ -94,8 +94,8 @@ wait_log() { poll _logged_since "$1" "${2:-0}"; }
 
 # set_layouts <list>: the keyboard layouts as System Settings sets them: kxkbrc, then KConfig's
 # ConfigChanged signal, which KWin's KConfigWatcher hears. Sent by gdbus, which waits for the
-# message to go out: kwriteconfig6 --notify sends and exits, and on the slower laptop the signal
-# was lost 4 times in 30 (2026-10-29: the file changed, KWin never heard).
+# message to go out: kwriteconfig6 --notify sends and exits, and on a slower machine the
+# signal was lost 4 times in 30 (the file changed, KWin never heard).
 set_layouts() {
     kwriteconfig6 --file kxkbrc --group Layout --key Use true
     kwriteconfig6 --file kxkbrc --group Layout --key LayoutList "$1"

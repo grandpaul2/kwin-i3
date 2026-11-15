@@ -111,7 +111,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   monitors that keep their hot-plug line in standby never reach the placeholder.
 - A monitor unplugged under a fullscreen X11 window in its tile: the window passes through its
   pre-tile size (the tile's unmanage) and KWin puts it fullscreen on the remaining monitor in the
-  same millisecond; on replug it comes back covering its own (probed 2026-11-07). Nothing for
+  same millisecond; on replug it comes back covering its own (probed on 6.8.2). Nothing for
   kwin-i3 to refit.
 - `PlacementTracker` re-requests fullscreen, and puts a returning monitor's windows back on it,
   **after** a script's replug reconcile.
@@ -146,7 +146,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - GTK maps a dialog child before its parent window (the dialog's `windowAdded` comes first).
 - `isHidden()` leaves Show Desktop out; `isShown()` counts it (`window.cpp:4518/4521`). A hit test
   needs `isShown()` and `isOnCurrentActivity()`. A script has neither `isShown` nor the Show Desktop
-  flag, but hears `hiddenByShowDesktopChanged` (no argument; probe 97). Show Desktop hides every
+  flag, but hears `hiddenByShowDesktopChanged` (no argument; probed). Show Desktop hides every
   window but docks, desktops, their transients, unmanaged and input-method ones
   (`breaksShowingDesktop`, `workspace.cpp:1743`), and one of those opening ends it. `isOnCurrentDesktop` is per output.
 - A window given a desktop its monitor doesn't show is hidden.
@@ -168,12 +168,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   On Wayland the title bar arrives with the client's answer to the configure
   (`configureDecoration`, `xdgshellwindow.cpp:1635`): right after the flag flips, frame = client. A
   tile's frame then keeps its size and the client shrinks by the title bar, so only
-  `clientGeometryChanged` shows it, not `frameGeometryChanged` (probe 96, 2026-10-30).
+  `clientGeometryChanged` shows it, not `frameGeometryChanged` (probed on 6.7.5).
 - A Wayland window is transient only when its app names a parent (`set_parent`, or a portal's
   `parent_window` through xdg-foreign, `xdgshellwindow.cpp:1165`). There is no dialog type, so a
   parentless portal dialog (Firefox's screen-share picker) arrives as a plain `Normal` window.
-- `resourceName` (i3's class instance) can be empty for a native Wayland window (KeePassXC's, live
-  KWin 6.x, 2026-11-01); `resourceClass` (the app id) is always there. Anything keyed on the
+- `resourceName` (i3's class instance) can be empty for a native Wayland window (KeePassXC's, on
+  6.7 and 6.8); `resourceClass` (the app id) is always there. Anything keyed on the
   instance needs the class as a fallback.
 
 ## Activation and focus (`activation.cpp`, `workspace.cpp`)
@@ -205,8 +205,8 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   stays on the bus; tests toggle the "Show Desktop" shortcut instead.
 - **A full-screen effect starting or ending turns Show Desktop off** (`setActiveFullScreenEffect`,
   `effecthandler.cpp:440-454`), and the off activates the focus chain's window. Slide is one while it
-  animates: Show Desktop turned on during a desktop switch's slide ends when the slide does (probe 99,
-  gdb on the test KWin, 2026-10-30: the load's own switch, `OPEN.md` item 53).
+  animates: Show Desktop turned on during a desktop switch's slide ends when the slide does (gdb on
+  the test KWin, 6.7.5: the load's own switch).
 - `Workspace::switchToOutput` focuses a window on that screen (or the desktop); it doesn't move the pointer.
 - A brand-new output shows `initialDesktopForNewOutput`: the activity's last desktop for it, else 1.
 - A press on, or focus follows mouse into, the window that is already active activates nothing:
@@ -257,14 +257,14 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   shortcuts**: the filters run in order and the first that takes an event ends it (6.7.5
   `input.h:154-166`; order `LockScreen`, `ScreenEdge`, `TabBox`, `GlobalShortcut`, `:367-372`), so
   a filter that takes the press and runs the script's action (`invokeShortcut`) keeps it from the
-  holder with the lower serial (probe 91: stock Quick Tile Left and kwin-i3's Focus Left both on
+  holder with the lower serial (probed: stock Quick Tile Left and kwin-i3's Focus Left both on
   Meta+Left, the filter's press ran Focus Left). KWin's own shortcut filter skips while a window
   inhibits shortcuts (`waylandServer()->isKeyboardShortcutsInhibited()`, `input.cpp:1077-1084`):
   such a filter must too. **But a press kept from kglobalacceld breaks Meta alone**: its
   modifier-only state (Meta opens the launcher on release) resets only on a non-modifier key event
   reaching it (kglobalacceld 6.7.5 `globalshortcutsregistry.cpp:498-519`), and nothing a plugin can
   reach resets it (`GlobalShortcutsManager` isn't exported; 6.8.2 calls `KGlobalAccelD`
-  directly). Taken outright, Meta+Left's release of Meta opened the launcher (probe 92); its
+  directly). Taken outright, Meta+Left's release of Meta opened the launcher (probed); its
   release let through fixed only Left-up-first. What works on both versions: the filter sets the
   press's `key` to `Qt::Key_unknown` and lets it on (the shortcut filter passes `event->key` to
   kglobalacceld, 6.7.5 and 6.8.2 `input.cpp:1080`), so kglobalacceld resets and matches nothing;
@@ -298,7 +298,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   no typed arrays, so typed methods (kglobalaccel's `a(ai)`, `Notify`'s `susssasa{sv}i`) are refused.
   It calls back only on a reply: on an error or a dead service it logs and never calls; guard with a timeout.
 - `readConfig(key, def)` gives `def` only for a missing key: one present but empty reads as `""`
-  (probed 2026-10-30), so an emptied text setting stays empty.
+  (probed), so an emptied text setting stays empty.
 - `print()` goes nowhere readable on a desktop; read state through kwin-i3's dump (`docs/debugging.md`).
 - A JS `Error().stack` stops at the nearest native boundary: in a signal handler it never shows who
   caused the signal.
@@ -356,7 +356,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   no setting to turn it off.
 - A focus stealing prevention level of Medium or above stops a new window taking focus
   (`workspace.cpp:931-934`: activated if `mayActivate` or the level is Low or None).
-- **A script can write KWin's live options, and kwinrc stays as it is** (probe 93, 6.7.5):
+- **A script can write KWin's live options, and kwinrc stays as it is** (probed, 6.7.5):
   `options.focusPolicy` (an enum, by number: 0 click, 1 follow mouse), `delayFocusInterval`,
   `nextFocusPrefersMouse`, `focusStealingPreventionLevel`, `electricBorderTiling` and
   `electricBorderMaximize` each hold when written. A `reconfigure` sets every one back to kwinrc's
@@ -390,7 +390,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   other effect can read. A child item of the window's `WindowItem` goes into that texture and
   deforms with the window: an `OutlinedBorderItem` (exported, in 6.7.0 and 6.8.2) around the
   frame, outside it, widens `expandedGeometry` by its thickness and tilts whole under Glide
-  (probe 90, test KWin with `KWIN_EFFECTS_FORCE_ANIMATIONS=1`). The renderer draws only its own
+  (probed, test KWin with `KWIN_EFFECTS_FORCE_ANIMATIONS=1`). The renderer draws only its own
   item types (image, outlined border, surface, decoration, shadow): a subclass of `Item` draws
   nothing. Such an item is the effect's to own and delete (an `Item` deletes no child), and a
   change to it must be told as the window's damage, or an offscreen effect keeps drawing its stale
@@ -403,7 +403,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   KWin's loader loads two of Scale, Glide and Fade side by side if `[Plugins]` says so, and the
   first to take a window's add grab animates it.
 - KWin's exported CMake targets name `Qt6::Widgets` (`KWinTargets.cmake`): a plugin that uses no
-  widget still finds the component, or its configure fails (2026-10-30).
+  widget still finds the component, or its configure fails.
   Unloading one in a running KWin leaves its library loaded: anything it connected must end with it.
   A filter left installed after its object dies crashes KWin on a later mouse move; only a relogin
   cleans it. Never install filters in a destructor.
@@ -441,7 +441,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - A plugin can see modifier releases via `InputRedirection::keyboardModifiersChanged` (`input.h:273`); the helper doesn't use it.
 - kconfig_compiler: a newline inside a kcfg `<default>` isn't safe.
 
-## KWin 6.8 (found on Arch's 6.8.2, 2026-10-29)
+## KWin 6.8 (found on Arch's 6.8.2)
 
 - `Effect::paintScreen`, `paintWindow` and `drawWindow` return `bool` (`[[nodiscard]]`): false
   when painting failed (a GPU reset), and the effect then stops at once (`effect/effect.h`).
@@ -454,12 +454,12 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   no service: SDDM stays until switched by hand.
 - `kwin_wayland --virtual` needs a GPU render node in 6.8: with none it logs "Found no render
   device!" and runs with compositing off (supportInformation: "Compositing is not active"), and
-  no window is ever resized to its tile, only placed (a container with no `/dev/dri`, 2026-10-30:
+  no window is ever resized to its tile, only placed (a container with no `/dev/dri`:
   10-tiling 18 of 33 red). Arch's `kwin_wayland` carries `cap_sys_nice=ep`, which rootless podman
   won't exec. Both handled in `tools/box.sh`.
 - plasmawindowed (the widget in a window, 67) resizes itself once just after it tiles, to its whole
   row of thumbnails (4936 px wide at x -548); kwin-i3's refit puts it back within milliseconds. A
-  test reading its geometry waits for it back in its tile (2026-10-31; 6.7 doesn't).
+  test reading its geometry waits for it back in its tile (6.7 doesn't).
 - The window actions' stock defaults change: `[MouseBindings] CommandAll1` is `Activate, raise
   and move` and `CommandAll3` `Activate, raise and resize` (`kwin.kcfg:49,55`; the latter new,
   `options.cpp:843`), where 6.7.5 has `Move` and `Resize`: a floating window moved with Meta+left
@@ -505,19 +505,19 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   reset the GPU: the kernel logs `nvidia-drm … Failed to register auto-value-update`, and seconds
   later Firefox logs `[GFX1-]: Handle DeviceReset` and redraws its windows from scratch, a flash on
   every screen it fills. Below the window manager, i3's too: a capture with "flash" just after
-  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (2026-10-30; 1 in 8
-  resumes that boot).
+  `PM: suspend exit` in `journalctl -b` and kwin-i3's log quiet is this (seen in 1 of 8
+  resumes on one boot).
 - **Plasma 6.8's OSDs (volume, brightness) can show cut off**, their top part only: plasmashell
   sizes the OSD's own surface too short (KDE bug 527636, since 6.8.0, often after an output
   change or a resume; the candidate fix is plasma-workspace MR 7278). A capture taken while it
   shows has the OSD as an override-redirect `org.kde.plasmashell` window with `client=` equal to
   `frame=` and a height at its minimum (278x20 on 6.8.2), with nothing in kwin-i3's log for it:
-  this bug, not kwin-i3 (2026-11-07).
+  this bug, not kwin-i3.
 - The logout screen (`org.kde.LogoutPrompt`, the global theme's `logout/Logout.qml`; Breeze in
   plasma-workspace 6.7.5): `promptLogout`, `promptShutDown` and `promptReboot` show that one action
   and Cancel, and **do it unasked after a 30 s countdown**; `promptAll` shows every action (Sleep
   and Hibernate only where the machine can, `spdMethods`), with no countdown, Shut Down focused.
-  Escape or a click outside cancels. Read from the source, 2026-10-31.
+  Escape or a click outside cancels. Read from the source.
 
 ## The test KWin (`tools/testkwin.sh`)
 
@@ -546,8 +546,7 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   read the live KWin's lines by its PID (`docs/session-start.md`).
 - `tools/a11y.py box` finds a control only among the rows a list view has created: one far down
   a long list (the Keys page's End session) isn't there until the list scrolls near it, so `box`
-  says "no control named". Set the page's scroll bar first (`a11y.scroll_bars`), then `box`
-  (2026-10-31).
+  says "no control named". Set the page's scroll bar first (`a11y.scroll_bars`), then `box`.
 - It inherits the starting shell's environment: over ssh there is no `XDG_CURRENT_DESKTOP=KDE`, so Qt
   loads no KDE platform theme (other fonts and style, a 36 px title bar). `testkwin.sh` sets the
   session variables.
@@ -587,14 +586,14 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - The scenarios hide their tools' errors (`>/dev/null 2>&1`): a tool missing from a container shows
   only as a check failing ("the second monitor is gone"). Arch's kwin pulls in kscreen-doctor,
   plasmawindowed, gdbus and kpackagetool6; PikaOS's doesn't (`tools/box/Containerfile.pika`). A red
-  only in one container: `command -v` its tools first (2026-10-31).
+  only in one container: `command -v` its tools first.
 - `check "msg" VAR=x cmd` in a live test runs `VAR=x` as a command: wrap it in a function.
 - **gdb on KWin**: `kwin_wayland` has `cap_sys_nice`, so it isn't dumpable and refuses `gdb -p`
   (ptrace_scope 0 or not), and a copy without the capability aborts (no Qt platform plugin from
   another directory). Start it under gdb instead: exec under ptrace drops file capabilities. For a
   probe, `testkwin.sh`'s `kwin_wayland` as `gdb -q -batch -x CMDS --args kwin_wayland`, with
   `set breakpoint pending on`, a `break KWin::...` with `commands` / `bt 30` / `continue`, then
-  `run`; the stacks land in `$KI3_TMP/kwin.out`. `libkwin`'s exported names are enough (probe 99).
+  `run`; the stacks land in `$KI3_TMP/kwin.out`. `libkwin`'s exported names are enough (probed).
 - The same non-dumpable flag refuses `/proc/PID/smaps_rollup`; `/proc/PID/status` (VmRSS, RssAnon,
   RssFile, RssShmem) and `/proc/PID/stat` still read. The test log (`$KI3_LOG`) has whole seconds:
   the milliseconds are only in kwin-i3's in-memory log (A capture).

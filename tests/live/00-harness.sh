@@ -18,7 +18,7 @@ info=$(kjs 'workspace.windowList().forEach(function (w) {
 has() { grep -qF -- "$1" <<<"$info"; }
 check "plain window: normal, resizeable"    has "plain|normal=true|resizeable=true|transient=false"
 check "--fixed: not resizeable"             has "fixed|normal=true|resizeable=false"
-# On Wayland a dialog is a normal window; only transient/modal mark it (2026-10-21).
+# On Wayland a dialog is a normal window; only transient/modal mark it.
 check "--dialog: modal transient dialog"    has "dialoger dialog|normal=true|resizeable=true|transient=true|modal=true"
 check "--map-delay: appears late"           has "slow|normal=true"
 check "--retitle: new title"                has "after|normal=true"

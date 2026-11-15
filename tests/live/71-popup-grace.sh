@@ -4,7 +4,7 @@
 # (its focus checks allow 1 s: in the batch, ~30 KWins share the GPU)
 # needs: plugin
 # Panel popups forgive a stray pointer: with focus follows mouse and no
-# delay (the author's settings, as the test KWin has them), kwini3helper raises KWin's focus delay
+# delay (as the test KWin has them), kwini3helper raises KWin's focus delay
 # to 1.5 s while a panel popup has the focus, and puts kwin-i3's 0 back otherwise. The popup is
 # a stand-in (tools/popupclient.py, an X11 window KWin classes as an applet popup: the test KWins
 # have no Plasma panel); the pointer is moved with real input (tools/inject.py).

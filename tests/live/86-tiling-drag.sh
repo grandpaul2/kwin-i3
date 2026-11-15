@@ -357,8 +357,8 @@ client --title L --csd
 check "L, drawing its own frame"            poll eval '[[ "$(tree 1)" == *L* ]]'
 key "Split H"; client --title R
 check "L | R"                               poll eval '[[ "$(tree 1)" == *"L R*"* ]]'
-# Focus follows the mouse out of L, through its margin, into R (B1; probe 94, a capture
-# 2026-10-29): the margin over R's frame raises R, and the raise must not cost R its focus. At a
+# Focus follows the mouse out of L, through its margin, into R (B1; probed, a
+# capture): the margin over R's frame raises R, and the raise must not cost R its focus. At a
 # 4 px gap, where L's margin reaches R's frame.
 set_key gapsInner 4
 key "Focus Left"

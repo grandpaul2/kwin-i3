@@ -2,7 +2,7 @@
 # needs: plugin
 # The i3 frame: tiled windows have no decoration and kwini3hold draws
 # the frame in the tiles' padding, outside the window; kwini3helper makes it part of its window for
-# focus and clicks (review R1-12). Floating windows keep Breeze. Real input through inject.py.
+# focus and clicks. Floating windows keep Breeze. Real input through inject.py.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/frame.png
@@ -55,7 +55,7 @@ key "Focus Left"
 check "a active: its frame turns blue"      poll pixel_is 639 360 $ACTIVE
 check "b's turns grey"                      pixel_is 640 360 $INACTIVE
 
-# 2. Idle: nothing changes, nothing is painted (review R1-2).
+# 2. Idle: nothing changes, nothing is painted.
 sleep 0.5; f0=$(stat frames); sleep 1; f1=$(stat frames)
 check "idle: no frames painted ($f0 -> $f1)" [ "$f0" == "$f1" ]
 
@@ -89,8 +89,8 @@ click 639 360
 check "a click on a's right frame activates a" poll active_is a
 check "  and a's client saw nothing"        saw ""
 # A press on the ring is i3's resize from a border (§9 Z3: any button; the
-# shares change at the release), never a tiling drag, and the app sees none of it. Found red
-# here 2026-10-28: the two drags below expected nothing. The left drag from a's
+# shares change at the release), never a tiling drag, and the app sees none of it. The two
+# drags below once expected nothing. The left drag from a's
 # right ring widens a; the layout is then opened afresh for the sections after.
 m=$(mark)
 sdrag "" right 639 360 639 360

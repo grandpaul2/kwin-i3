@@ -24,7 +24,7 @@ has the pointer focus.
 
 ## A press, step by step (KWin 6.7.5)
 
-Read from KWin's source for the installed version (`v6.7.5`, `src/`), 2026-10-28.
+Read from KWin's source for the installed version (`v6.7.5`, `src/`).
 
 1. **Hover is computed first, at the press itself.** `PointerInputRedirection` runs `update()`
    on every motion and again on a press, before any filter (`pointer_input.cpp:277`, `296-298`):
@@ -106,7 +106,7 @@ no press:
 - KWin can't send them for a padded tile, and nothing else sets them (`tile.cpp:190`
   `Tile::anchors`, `xdgshellwindow.cpp:907` the only reader; no constrained states in 6.7.5).
   Chromium's 10 px input band reads maximized/fullscreen and its client-shadow flag, not tiled
-  (`frame_view_layout_linux.cc:141`; read 2026-10-28, not traced to the end).
+  (`frame_view_layout_linux.cc:141`; read, not traced to the end).
 - **VS Code with `"window.titleBarStyle": "native"`** (test KWin, same sweep): buffer = frame, the
   gaps and rings are no window's (KWin's `default` arrow), the terminals keep all their pixels,
   every press there kwin-i3's resize: i3's picture exactly.

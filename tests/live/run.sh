@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Build, then run every live scenario, each in its own headless KWin, all at once; then the ones
 # marked "# timing: alone", one by one, so their timing checks measure the code, not ~30 KWins
-# sharing one GPU (53-hold's 240 Hz snapshot: 1.2 ms alone, 70-112 ms in the batch, 2026-10-24).
+# sharing one GPU (53-hold's 240 Hz snapshot: 1.2 ms alone, 70-112 ms in the batch).
 #   tests/live/run.sh [scenario...]      default: every NN-*.sh
 # Each scenario's output is printed whole, in order, when all are done. A scenario counts as
-# passed only if it exits 0 AND printed its "N passed, 0 failed" line (review fault 6).
+# passed only if it exits 0 AND printed its "N passed, 0 failed" line.
 set -u
 LC_NUMERIC=C        # $EPOCHREALTIME with a point, whatever the locale (the timings, below)
 cd "$(dirname "$0")"
@@ -16,7 +16,7 @@ for t in "${scenarios[@]}"; do
     if grep -qE '^# timing: alone$' "$t"; then alone+=("$t"); else batch+=("$t"); fi
 done
 # At most KI3_JOBS test KWins at once (default: one per core), the rest queued: with all 44 at once
-# on 16 cores, some missed testkwin's 15 s start (2026-10-25: 1, then 6, all green when rerun).
+# on 16 cores, some missed testkwin's 15 s start (all green when rerun).
 maxjobs=${KI3_JOBS:-$(nproc)}
 # How many test KWins share the GPU: timing checks (53-hold.sh) allow for it; 1 for those alone.
 export KI3_PARALLEL=$(( ${#batch[@]} < maxjobs ? ${#batch[@]} : maxjobs ))
@@ -68,7 +68,7 @@ for t in "${scenarios[@]}"; do
         [[ $s == 124 ]] && echo "  FAIL timed out"
         [[ $s != 0 && $s != 124 && $s != 1 ]] && echo "  FAIL exited $s"
         # Kept: kwin-i3's log and the scenario's output, so a red that doesn't come back can
-        # still be read (the laptop's 86 on KWin 6.8, 2026-10-29: twice red, its logs gone).
+        # still be read.
         keep=out/$(date +%Y%m%d-%H%M%S)-${t%.sh}
         mkdir -p out && cp "$out/$t.log" "$keep.out" && { [[ -f $out/$t.ki3.log ]] && cp "$out/$t.ki3.log" "$keep.ki3.log"; }
         echo "  kept: tests/live/$keep.out, .ki3.log"

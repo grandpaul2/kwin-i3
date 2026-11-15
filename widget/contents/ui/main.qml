@@ -55,7 +55,7 @@ PlasmoidItem {
         Object.keys(shown).forEach(k => shown[k] = String(shown[k]));
         const next = Logic.workspaces({ desktops: ids, names: desktops.desktopNames, screens: screens, shown: shown, windows: windows });
         // Only a real change rebuilds the thumbnails (a title or icon change would recreate every
-        // delegate, and a click landing mid-rebuild would be lost: review of the widget, 2).
+        // delegate, and a click landing mid-rebuild would be lost).
         const json = JSON.stringify(next);
         if (json === root.spacesJson) return;
         root.spacesJson = json;
@@ -116,7 +116,7 @@ PlasmoidItem {
         }
 
         // One workspace per wheel notch (120), a touchpad's small deltas added up; steps taken
-        // before kwin-i3's answer reaches the widget go on from the one last asked for (review, 1).
+        // before kwin-i3's answer reaches the widget go on from the one last asked for.
         WheelHandler {
             onWheel: (event) => {
                 const d = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x;

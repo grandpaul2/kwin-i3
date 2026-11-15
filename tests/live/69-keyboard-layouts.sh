@@ -23,7 +23,7 @@ META=$((0x10000000)) ALT=$((0x08000000))
 
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
-# No layout set: the system's, which KWin names "" where the system sets none (Arch, 2026-10-29).
+# No layout set: the system's, which KWin names "" where the system sets none (Arch's default).
 us_or_default() { plan_has "layouts us, current us" || plan_has "layouts , current "; }
 check "the helper fitted the US layout"     eval 'WAIT=20 poll us_or_default'
 check "US: Move to Workspace 2 is Meta+@"   plan_has "kwin-i3 Move to Workspace 2 (symbol) = Meta+@"

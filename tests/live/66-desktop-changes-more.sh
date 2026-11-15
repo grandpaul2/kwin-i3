@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Desktop changes, the harder cases (the change review's findings
-# 2, 3 and its test gaps): a floating window and a layout on the desktops that move, the removed
+# Desktop changes, the harder cases: a floating window and a layout on the desktops that move, the removed
 # desktop shown on the second monitor, two removals back to back, a desktop inserted in the middle.
 source "$(dirname "$0")/lib.sh"
 on_desk() { kjs "workspace.windowList().forEach(function (w) { if (w.normalWindow && !w.deleted && w.caption.length === 1) log(w.caption + '=' + (workspace.desktops.indexOf(w.desktops[0]) + 1)); });" | sort | tr '\n' ' '; }
@@ -39,8 +38,7 @@ check "windows on their workspaces' desktops" poll eval '[[ "$(on_desk)" == "b=2
 # 2. Two changes back to back (two pager actions), the second while the first rebuild waits for
 #    the effect's answer (250 ms here, no plugins): the first rebuild has adopted the tiled
 #    windows by the positions after the first change. Desktop 1 removed (b c f: 2 -> 1), then one
-#    inserted at the front (b c f: 1 -> 2): a stale rebuild would leave f apart from b and c
-#    (the review's finding 2).
+#    inserted at the front (b c f: 1 -> 2): a stale rebuild would leave f apart from b and c.
 m=$(mark)
 rm_desk 1
 wait_log '^.{9}DESKTOPS removed or moved' "$m"; sleep 0.08

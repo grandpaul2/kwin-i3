@@ -19,7 +19,7 @@ var Rules = (function () {
     // i3's kind of a window kept out of the tree: "dock", "root", "override-redirect", or null
     // for one that may be in the tree. Plasma's system windows are Normal windows on Wayland,
     // where i3 would never see them: a built-in list, not a setting (R5). Spectacle's region
-    // overlays (one Normal fullscreen window per output, probe 93) are override-redirect too
+    // overlays (one Normal fullscreen window per output, probed) are override-redirect too
     // in the tree they would gather on the focused workspace. An
     // override-redirect window holds the keyboard against kwin-i3's keys (§5 A3), as dmenu's grab
     // in i3, except one KWin activates only as its fallback (fallbackOnly).

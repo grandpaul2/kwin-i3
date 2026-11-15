@@ -204,7 +204,7 @@ QList<LayoutKeys::Want> LayoutKeys::plan() const
 
 // One fit at a time: a second asked for while one is in flight (a quick us → de → us flip) runs
 // when it ends, from the keymap as it is then; two at once could both read the old keys and the
-// slower one leave the wrong layout's (review of the change, finding 1).
+// slower one leave the wrong layout's.
 void LayoutKeys::FitKeys()
 {
     if (m_busy) {

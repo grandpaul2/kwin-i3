@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The fuzzer's I1 (seed 2 of the 2026-10-23 run, 138 steps). Workspace 2, two windows that each
+# The fuzzer's I1 (138 steps). Workspace 2, two windows that each
 # have a modal dialog, lives on the second monitor. The monitor goes away, 2 is shown on the first,
 # the monitor comes back; over and over, with the gap before the return varied, because the failure
 # is a race (it showed in about one run of four). When the monitor returns KWin may put a window

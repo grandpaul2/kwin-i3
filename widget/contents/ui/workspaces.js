@@ -34,7 +34,7 @@ function monitorOf(id, screens, shown, wins) {
     return best || screens[0] || null;
 }
 
-// Workspaces in use (i3bar's rule, decision 2): windows on it, or shown on a monitor. Windows on
+// Workspaces in use (i3bar's rule): windows on it, or shown on a monitor. Windows on
 // all desktops belong to none (kwin-i3 manages none of them).
 function workspaces(d) {
     var out = [];
@@ -63,7 +63,7 @@ function workspaces(d) {
     return out;
 }
 
-// The workspace a scroll goes to (decision 5): the next or previous one in use, from `from` (the
+// The workspace a scroll goes to: the next or previous one in use, from `from` (the
 // one a scroll asked for before the widget heard back), else the focused one, else the first
 // shown, wrapping as i3bar does. null with nothing to go to.
 // (An empty workspace on the focused monitor isn't known as focused: Plasma's task data knows

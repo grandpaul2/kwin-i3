@@ -2,9 +2,9 @@
 # timing: alone
 # needs: plugin
 # The frame's harder cases: the hair at the screen edges of
-# a nested layout after the root changes (R1-7), a floating window over a frame while the frame
-# repaints (R1-1), a client that draws its own title bar (R1-5), release and reload (R4), and a
-# monitor at 125 % (R1-6). Pixels from tools/shot.py: the test KWin's background is black.
+# a nested layout after the root changes, a floating window over a frame while the frame
+# repaints, a client that draws its own title bar, release and reload, and a
+# monitor at 125 %. Pixels from tools/shot.py: the test KWin's background is black.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py
 png=$KI3_TMP/shot.png
@@ -111,7 +111,7 @@ check "  borderless again"                  poll prop_is a noBorder true
 
 # 5. 125 %: the gaps between windows and at the edges are frame, never background (black),
 #    anywhere on the screen: tiled windows and their frames cover all of it. A gap rounds to 2 or
-#    3 device pixels by where its edge falls, so more windows, more edges (R1-6).
+#    3 device pixels by where its edge falls, so more windows, more edges.
 timeout 10 kscreen-doctor output.Virtual-0.scale.1.25 >/dev/null 2>&1
 check "Virtual-0 at 125 % (1024x576 logical)" poll eval '[[ "$(kjs "log(workspace.screens[0].geometry.width)")" == 1024 ]]'
 key "Focus Right"

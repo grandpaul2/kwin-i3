@@ -4,8 +4,8 @@
 # first monitor (1280x720), pixels for the gap itself, and the seams: minimums, fullscreen, a
 # resize drag, a reload with gaps set, a hidden workspace, a monitor unplugged, release. No plugin
 # here, so title bars: each frame 1 px further in a side, the padding 2 more, for the decoration's
-# outline (§6, 2026-10-29), wherever the inner gap isn't 0.
-# Not here: a panel's strut (the test KWin has no panel, nor does the author's desktop); the
+# outline (§6), wherever the inner gap isn't 0.
+# Not here: a panel's strut (the test KWin has no panel); the
 # inset follows KWin's maximize area, which a strut shrinks.
 source "$(dirname "$0")/lib.sh"
 shot=$root/tools/shot.py; png=$KI3_TMP/gaps.png
@@ -51,7 +51,7 @@ check "the root is whole again, padding 0"  poll root_is 1 "0.000,0.000,1.000,1.
 check "same tree"                           _tree_is 1 "H[a V[b c*]]" "$m"
 check "nothing added or dropped"            bash -c "! tail -n +$((m + 1)) '$KI3_LOG' | grep -qE '^.{9}(ADD|FLOAT) '"
 
-# 4b. The defaults (2 between, none more at the edge, since 2026-10-30; testkwin.sh pins 0):
+# 4b. The defaults (2 between, none more at the edge; testkwin.sh pins 0):
 #     with the keys gone, the layout is the one 2 and 0 written out give.
 set_key gapsInner 2; set_key gapsOuter 0
 reload_settings
@@ -184,7 +184,7 @@ reload_settings
 
 # 10. A monitor unplugged and back, with gaps: workspace 2 comes to the first monitor gapped,
 #     and stays there, gapped (§4 W3: a lost output's workspaces move for good,
-#     as i3's; only an assignment brings one back. Found red here 2026-10-28).
+#     as i3's; only an assignment brings one back).
 key "Workspace 2"
 client --title s
 check "s alone on the second monitor"       geom_is s "1311,31 1218x658"

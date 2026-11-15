@@ -118,7 +118,7 @@ away; now: a workspace's output, or its workspace output); "assignment" for a wo
 | **gaps** | space between windows (inner) and at the output's edges (outer); i3's `gaps`. The gap pixels are kwin-i3's: a press there is kwin-i3's, never the app's (in i3 a gap is the root window, where a press focuses the output, `click.c:398-415`; here a press there resizes, `behaviour.md` Z3b) |
 | **gap strip** | the helper's own transparent window over a gap (kwin-i3's, as i3's frame windows are i3's; no kind), so a press there reaches kwin-i3 (never over floating windows, panels or popups; `behaviour.md` Z9) |
 | **capture** | kwin-i3's flight recorder, saved with the user's note by `tools/capture` on a key the user binds (`docs/debugging.md`) |
-| **the Stage** | the period before a public release (`OPEN.md`): development from 2026-10-24, the beta from 2026-10-30; its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised |
+| **the Stage** | the period before a public release (`OPEN.md`): development, then the beta (the repo public, unannounced, a few early users); its rules (lean testing, `LATER.md`'s holds) hold through both. Capitalised |
 | **the beta** | the Stage's second part: the repo public but unannounced, used by a few early users, their bugs fixed as they come (`OPEN.md`) |
 | **`stable`** | the branch users run: main as of its last promotion, tagged `v1.N.0` (`v1.N.M` for a fix since). main is the development line, ahead of it |
 | **a promotion** | moving `stable` to main after `docs/testing.md` P6's gate |

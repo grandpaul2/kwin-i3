@@ -26,7 +26,7 @@ load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 # The load settles first: its frame check answers a second after a load without the effect, and
 # that answer activated the tile hidden by Show Desktop in case 1 (a load-time step, not the pass
-# under test; traced 2026-10-25, OPEN.md).
+# under test; traced).
 wait_log '^.{9}FRAME '
 stand_in desk desktop 1280x720+0+0; desk=$sid
 point 300 300
@@ -37,7 +37,7 @@ check "a tiles on the left"                 wait_tree 1 "H[a*]"
 #    Show Desktop stays on and the desktop keeps the focus.
 # The load switches the second output to desktop 2, and KWin's Slide animates it: a full-screen
 # effect, and its end turns Show Desktop off and activates the tile (effecthandler.cpp
-# setActiveFullScreenEffect; probe 99, 2026-10-30). KWin's, as it
+# setActiveFullScreenEffect; probed). KWin's, as it
 # is after any desktop switch; the wait lets the slide end.
 sleep 3
 stand_in pop popup 300x200+100+400; pop=$sid
@@ -76,7 +76,7 @@ show_desktop false
 check "3. Show Desktop off: a has the focus" poll active_is a
 
 # 5. A click where a tile hidden by Show Desktop sits reaches the desktop beneath (Plasma's edit
-#    mode: Exit Edit Mode, a capture 2026-10-29): the helper's frame and gap clicks skip a
+#    mode: Exit Edit Mode, a capture): the helper's frame and gap clicks skip a
 #    window Show Desktop hides (KWin's isShown; isHidden doesn't count it), as i3 routes a click
 #    to mapped windows only.
 show_desktop true

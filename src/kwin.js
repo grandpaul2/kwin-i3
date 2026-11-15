@@ -27,7 +27,7 @@ var KI3 = (function () {
     var HAIR = 1e-6;                                 // the root's inset at no gaps (rootRect)
     var GRID = 1048576;                              // tile edges are multiples of 1/GRID (grid)
     var gapCache = {}, passWs = null;                // each workspace's gaps for the pass, and the workspace the pass is on (gaps)
-    // The floating mark (spec-window-modes decision 5c): with the effect, it keeps the set of
+    // The floating mark: with the effect, it keeps the set of
     // floating windows (told[key]: what it was last told), which outlives a reload of this
     // script; at load the answer says which windows were floating (atLoadFloating).
     var told = {}, atLoadFloating = {};
@@ -117,7 +117,7 @@ var KI3 = (function () {
 
     // After an error: reconcile everything again 250 ms later, at most 3 times in a row; then wait
     // for the next real event. Retrying at once used to re-arm a 0 ms timer for ever, spinning
-    // KWin's main thread on a repeating error (code review).
+    // KWin's main thread on a repeating error.
     var failures = 0, retryTimer = null;
     function retrySoon() {
         failures++;
@@ -270,7 +270,7 @@ var KI3 = (function () {
     // ---- scheduling ------------------------------------------------------------------------
 
     // A one-off timer, kept in `timers` until it fires: a QTimer held only by a local could be
-    // collected first (review of the change, finding 4).
+    // collected first.
     var timers = {}, timerSeq = 0;
     function later(ms, fn) {
         var n = ++timerSeq, tm = new QTimer();
@@ -504,7 +504,7 @@ var KI3 = (function () {
     var tabDrag = null;     // { key, con } of a tab just clicked (a window or a container): a drag from that press takes it whole
 
     // Returns KWin's answer: manage() refuses a window that isn't resizeable or isn't on the
-    // tile's desktop. A refused window floats instead of leaving a hole (code review).
+    // tile's desktop. A refused window floats instead of leaving a hole.
     function manageInto(tile, w) {
         expected[id(w)] = tile;
         log("TILE " + shortCaption(w) + " -> " + rectLog(windowRect(tile)));
@@ -819,7 +819,7 @@ var KI3 = (function () {
     // or KWin leaves it where it was. The headless tests run Breeze (a 28 px title
     // bar, 150 px enforced minimum) unless a scenario selects the frame (tools/testkwin.sh).
     function frameMin(w) {
-        // Its border taken: no decoration, even while the client hasn't answered yet (R1-13).
+        // Its border taken: no decoration, even while the client hasn't answered yet.
         if (tookBorder[id(w)]) return { w: w.minSize.width, h: w.minSize.height };
         var m = w.minSize, f = w.frameGeometry, c = w.clientGeometry;
         var bw = c ? Math.max(0, f.width - c.width) : 0, bh = c ? Math.max(0, f.height - c.height) : 0;
@@ -1050,7 +1050,7 @@ var KI3 = (function () {
     // later reconcile that changes it. A new tile is a new size, which KWin does send; refitting a
     // slow client's answer to the old one only doubled the request (53-hold, a closing window).
     var reconciling = false, armed = {}, lastFit = {}, pinFit = {};
-    // Plain GTK 4 (spec-window-modes "why" 5): KWin tells a client its largest size only in a
+    // Plain GTK 4: KWin tells a client its largest size only in a
     // configure with no size (sendRoleConfigure), in practice its first, with the title bar,
     // and GTK 4 keeps within it. borderGone holds those bounds, worked out when the border goes
     // (takeBorder). A tiled window short of its tile at the first frame change after the border
@@ -1129,7 +1129,7 @@ var KI3 = (function () {
     // the frame before the change fitted. A slow client answering kwin-i3's own resize in steps
     // never starts from a fitting frame, so it isn't asked twice (53-hold). At most once a
     // second per window, so a client that flips back each time isn't asked without end; a second
-    // resize inside that second is asked back when it ends, not dropped (review: session restore
+    // resize inside that second is asked back when it ends, not dropped (session restore
     // comes in bursts).
     var selfFitAt = {}, selfFitLater = {};
     function refitSelfResize(w, old) {   // not during a drag (the caller knows)
@@ -1213,7 +1213,7 @@ var KI3 = (function () {
         // Gaps: the root's inset changes only on a rebuild. KWin moves a root's children with
         // it but forces an edge that changes with no tile beyond it back to the screen's border
         // (CustomTile::setRelativeGeometry), while children split from an inset root inherit
-        // its edges (probed). Then padding, then minimums (review).
+        // its edges (probed). Then padding, then minimums.
         var inset = rootRect(area, ws), reinset = !exactRect(root.relativeGeometry, inset) || !edgesIntact(root);
         prepareTiles(root, area);
         var want = shapeOfProjection(p), have = shapeOfTile(root);
@@ -1608,7 +1608,7 @@ var KI3 = (function () {
                  height: Math.min(Math.max(height, lo(min.h, 50)), hi(max.h, all.y2 - all.y1)) };
     }
 
-    // The plan's rule "a window that can't fit floats" (code review: a window with a 900 px
+    // The plan's rule "a window that can't fit floats" (a window with a 900 px
     // minimum hung 580 px off a 1280 px screen; a row of 12 windows broke KWin's sizing). While
     // the tiled windows' minimum sizes can't fit the screen, float the one with the largest
     // minimum along the axis that overflows. Only while they can't: one floated so goes back to
@@ -1626,7 +1626,7 @@ var KI3 = (function () {
             var worst = null, worstMin = -1;
             model.leaves(ws).forEach(function (leaf) {
                 var w = wins[leaf.win];
-                if (!w || !visibleLeaf(leaf)) return;     // not one out of the tiles (review)
+                if (!w || !visibleLeaf(leaf)) return;     // not one out of the tiles
                 var fm = frameMin(w), m = axis === "w" ? fm.w : fm.h;
                 if (m >= worstMin) { worstMin = m; worst = w; }   // ties: the later one in the tree
             });
@@ -2226,8 +2226,8 @@ var KI3 = (function () {
         if (frameOn) callDBus("org.kde.KWin", "/kwini3hold", "net.local.kwini3hold", "SetTiledRing", tiledRing());
     }
 
-    // A tiled window's border, while the effect draws the frame (spec-window-modes R2). Read
-    // back: a window rule that forces a border wins (review R1-4), and that window then keeps
+    // A tiled window's border, while the effect draws the frame. Read
+    // back: a window rule that forces a border wins, and that window then keeps
     // its title bar. Re-asserted on every pass (the window menu, borderlessMaximizedWindows).
     // A window already without one (a reload's predecessor took it, a session restore) is
     // recorded too: kwin-i3 gives it back when the window stops being tiled.
@@ -2237,10 +2237,10 @@ var KI3 = (function () {
         if (!w.noBorder) {
             // Only a border that exists: a window drawing its own title bar has frame = client,
             // and KWin would store "no border" for it all the same (setDecorationPolicy), which
-            // the effect reads as a border taken (review of (iii)+(iv), finding 2).
+            // the effect reads as a border taken.
             // A title bar just given back (floated, then tiled again before the app answered) isn't
             // there yet either: noted, and the pass that takes it comes when it lands (OPEN.md 55,
-            // probe 98: a 0.5 s client kept its title bar for good).
+            // probed: a 0.5 s client kept its title bar for good).
             if (!serverDecorated(w)) { borderDue[key] = true; return; }
             // The bounds KWin sent with the border (refitOnFrameChange): the placement area less
             // the border, as sendRoleConfigure has it.
@@ -2285,7 +2285,7 @@ var KI3 = (function () {
     // a hidden desktop keeps it (C4), any other opens on the focused workspace (C1), wherever
     // KWin's active output put it. The switch KWin made to activate it is undone (C2), unless it
     // asked. A modal dialog is given its parent's desktop directly, never relocate's move via all
-    // desktops, which would take the parent along (probe 90: KWin ties the two in setDesktops).
+    // desktops, which would take the parent along (probed: KWin ties the two in setDesktops).
     // -> { ws, why } or null (not on one desktop, as wsForWindow).
     function placeNew(w) {
         if (!w.output || (w.desktops.length !== 1 && !w.onAllDesktops)) return null;
@@ -2417,7 +2417,7 @@ var KI3 = (function () {
         if (wins[key]) return;
         // Kept out of the tree by its kind (dock, root, override-redirect; §3): a Normal
         // one is watched, since a later change of class, transience or desktops can bring it in
-        // (reclassify; code review).
+        // (reclassify).
         if (Rules.keptOut(w)) { if (w.normalWindow && !w.deleted) connectWindow(w); return; }
         // The workspace first (placeNew, `assign` included), then the kind: a `workspace`
         // criterion sees the workspace the window opens on, as i3's run_assignments runs after
@@ -2442,7 +2442,7 @@ var KI3 = (function () {
         // (droppedFloating): i3's con keeps its kind while its window is managed.
         if (kind === "tiling" && !fresh && !w.tile && (w.keepAbove || atLoadFloating[key] || droppedFloating[key])) kind = "floating";
         // No border and not to be framed: a session restore of one kwin-i3 took, or a reload
-        // after the effect went (review R1-4). Given back; a rule forcing it wins anyway.
+        // after the effect went. Given back; a rule forcing it wins anyway.
         if (w.noBorder && !(tiledBorderless() && kind === "tiling")) w.noBorder = false;
         wins[key] = w;
         delete droppedFloating[key];
@@ -2641,8 +2641,8 @@ var KI3 = (function () {
             var con = model.setMinimized(key, w.minimized);     // i3's scratchpad rule (§5 C9)
             // The focused window minimized and KWin's own pick not a window of the tree (none, the
             // desktop, a gap strip under the pointer): the focus goes to i3's next here, else the
-            // pass would activate the minimized window and KWin un-minimize it (a
-            // review). With a tree window picked, windowActivated has done this already.
+            // pass would activate the minimized window and KWin un-minimize it.
+            // With a tree window picked, windowActivated has done this already.
             if (con && w.minimized && focusedBefore === con) {
                 var next = model.nextFocused(con);
                 log("MINIMIZED " + conCaption(con) + ": i3's next " + conCaption(next));
@@ -2797,7 +2797,7 @@ var KI3 = (function () {
         // A border kwin-i3 took, given back by the window menu, or one due (borderDue): on Wayland
         // the title bar comes with the client's answer to the configure (configureDecoration),
         // after the pass that wanted it read frame = client and skipped it (takeBorder). The
-        // frame keeps its tile's size and the client shrinks by the title bar (probe 96).
+        // frame keeps its tile's size and the client shrinks by the title bar (probed).
         w.clientGeometryChanged.connect(guard("client", function () {
             if ((tookBorder[key] || borderDue[key]) && !w.noBorder && !reconciling && model.byWin[key] && serverDecorated(w)) schedule(Tree.wsOf(model.byWin[key]));
         }));
@@ -2858,7 +2858,7 @@ var KI3 = (function () {
         // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
         // window is left to focus on a monitor is also the desktop: that pass still brings the
         // focus back (73-override-redirect). The answer rides on focusPending, so it is the pass it
-        // brought that has it, however long a rebuild holds that pass (review).
+        // brought that has it, however long a rebuild holds that pass.
         if (!byKey && a && !a.deleted && (a.desktopWindow || a.dock) && !checked) {
             callDBus("org.kde.KWin", "/KWin", "org.freedesktop.DBus.Properties", "Get", "org.kde.KWin",
                      "showingDesktop", guard("showing desktop", function (showing) {
@@ -3051,7 +3051,7 @@ var KI3 = (function () {
         if (on) for (var k in model.byWin) if (floatsAlone(model.byWin[k]) && wins[k]) tellDragFloating(k, true);
         if (on) { var was = floatedTold; floatedTold = {}; for (var f in was) if (wins[f]) tellFloated(f, was[f]); }
         // How far out of a tiled window's frame a Meta+right still resizes (half the gap between two
-        // windows, the frame's room included; spec-tiling-resize.md, B).
+        // windows, the frame's room included).
         callDBus(DRAG[0], DRAG[1], DRAG[2], "SetResizeGap", on ? Math.ceil(gaps().inner / 2) + 1 : 0);
     }
     // i3's move cursor, from kwini3hold (SetDragCursor): renewed by every poll, so it ends by itself
@@ -3480,7 +3480,7 @@ var KI3 = (function () {
     // moving onto another output over the root window or a dock focuses that output's visible
     // workspace: its fullscreen window, else its last focus, or the empty workspace, with no
     // warp (the pointer is there). Over a tiling or floating window, KWin's own focus follows
-    // mouse activates it (§5 B1), a turn later (probe 91); a window reaching over from another
+    // mouse activates it (§5 B1), a turn later (probed); a window reaching over from another
     // output is a window here, not the root (windowUnder). Over an override-redirect window (a
     // popup spanning the boundary) the model's focus moves and the popup keeps the keyboard (D7).
     // Per motion this costs one rectangle test per output and one comparison; the hit test runs
@@ -3546,7 +3546,7 @@ var KI3 = (function () {
     // Show Desktop, kept for windowUnder: it hides every window kwin-i3 manages and none it keeps
     // out (breaksShowingDesktop, workspace.cpp:1743), yet `hidden` stays false (isHidden leaves it
     // out). A script reads neither the window's flag nor the mode, but hears each window's
-    // hiddenByShowDesktopChanged (probe 97): each one asks KWin for the mode, and
+    // hiddenByShowDesktopChanged (probed): each one asks KWin for the mode, and
     // only the answer to the last question counts.
     var desktopShowing = false, showingAsked = 0;
     function readShowing() {
@@ -3727,7 +3727,7 @@ var KI3 = (function () {
             // An empty one opens on its assigned monitor if that is here, else the focused one.
             var s = occupied ? outputOfNum(n) : Workspaces.assignedScreen(n) || (fws ? outputOf(fws) : workspace.activeScreen);
             // An occupied workspace keeps its home even while that monitor is away, or it would
-            // never go back (code review: reproduced with Meta+2 during an unplug).
+            // never go back (reproduced with Meta+2 during an unplug).
             if (!occupied) claimHome(n, s);
             showOn(deskOf(n), s);
         }
@@ -4100,7 +4100,7 @@ var KI3 = (function () {
 
     // ---- release (the safety valve) --------------------------------------------------------
 
-    // Every step on its own: the safety valve must never stop half-way (code review).
+    // Every step on its own: the safety valve must never stop half-way.
     function release() {
         if (released) return;
         released = true;
@@ -4155,7 +4155,7 @@ var KI3 = (function () {
     // net.local.kwini3.dump (tools/capture). Never throws: a broken part says so and the rest goes.
     function dump() {
         // Collected, then sent in a few large calls: hundreds of small ones would each be a D-Bus
-        // round on KWin's main thread (design review 23).
+        // round on KWin's main thread.
         var lines = [];
         function out(s) { lines.push(String(s)); }
         function part(name, fn) {
@@ -4244,7 +4244,7 @@ var KI3 = (function () {
     function specOf(tile, total, desk) {
         if (!tile.tiles.length) {
             // Only windows that really are on this desktop: KWin can leave a window in a tile
-            // after its desktop changed (spike); those go through adoptWindow instead (review).
+            // after its desktop changed; those go through adoptWindow instead.
             var mine = tile.windows.filter(function (w) {
                 return Rules.classify(w) === "tiling" && w.desktops.length === 1 && w.desktops[0] === desk;
             });
@@ -4275,7 +4275,7 @@ var KI3 = (function () {
 
     function start() {
         model = Tree.create();
-        // The safety valve first, so it exists whatever happens below (code review).
+        // The safety valve first, so it exists whatever happens below.
         registerShortcut("kwin-i3 Release", "kwin-i3: release every window (safety valve)",
                          "Meta+Ctrl+Shift+Q", release);
         // No key: tools/capture (on Meta+Shift+B) invokes it, after starting its sink.
@@ -4316,10 +4316,10 @@ var KI3 = (function () {
         });
     }
     // Then every other window, bottom of the stack first, so focus order follows stacking,
-    // once the effect has said which were floating (decision 5c; 250 ms at most, without it).
+    // once the effect has said which were floating (250 ms at most, without it).
     // stackingOrder can leave out a window that is still mapping, which then never got a
     // windowAdded either (it came before the script): windowList() supplies those (found by
-    // 60-load.sh, after the live-desktop review saw a window left out). `done`: the line logged
+    // 60-load.sh, after a live desktop showed a window left out). `done`: the line logged
     // when every window is adopted (the tests and captures wait for "kwin-i3 loaded").
     // A window kwin-i3 doesn't manage closing: KWin then activates its own next choice before
     // windowRemoved (workspace.cpp removeWindow), which is not the user's (windowActivated).
@@ -4352,9 +4352,9 @@ var KI3 = (function () {
         var wasRebuild = rebuilding;
         rebuilding = false;
         if (wasRebuild) {
-            // A desktop change while this rebuild waited (review of the change, finding 2): again.
+            // A desktop change while this rebuild waited: again.
             if (rebuildAgain || desktopIds().join() !== rebuiltFor) { rebuildAgain = false; startRebuild(); return; }
-            if (options.perOutputVirtualDesktops) showHomes();     // finding 3
+            if (options.perOutputVirtualDesktops) showHomes();     // the homes as the new desktops have them
         }
         scheduleAll();
         wantFocus();
@@ -4385,7 +4385,7 @@ var KI3 = (function () {
     function startRebuild() {
         rebuilding = true;
         later(0, function () {
-            // Never left half done: a failure releases, as a failing load does (review, finding 1).
+            // Never left half done: a failure releases, as a failing load does.
             try {
                 deskIds = desktopIds();
                 rebuiltFor = deskIds.join();
@@ -4541,7 +4541,7 @@ var KI3 = (function () {
         // At login Plasma's activity service connects after scripts load and KWin then restores
         // the desktop each screen showed at logout; number the screens again on that first
         // activity event, once (from i3ws, seen in its log). Connected even when this
-        // load didn't look like a login (a session-restored window can exist already, review);
+        // load didn't look like a login (a session-restored window can exist already);
         // with one activity it never fires mid-session.
         // Armed only at a login: after a reload mid-session (windows open), the next activity
         // switch renumbered every monitor back to 1, 2 … (audit).
@@ -4577,8 +4577,8 @@ var KI3 = (function () {
     // Is the effect there to draw the frame? Asked at load and on every reconfigure (the effect
     // asks for one when it loads or goes): its answer says whether it can draw the frame
     // (supported). callDBus calls back only on a reply: no answer within a second is a miss, and
-    // two misses in a row turn the frame off (one slow answer must not re-tile everything;
-    // finding 3).
+    // two misses in a row turn the frame off (one slow answer must not re-tile
+    // everything).
     // after(m): run once with the first answer, or with null after 250 ms (the load path).
     var effectAsk = 0, frameMisses = 0, frameKnown = false;
     function checkFrame(after) {
@@ -4591,11 +4591,11 @@ var KI3 = (function () {
                 frameMisses = 0;
                 effectSeen = !!m;
                 if (!m || m.focused !== focusTold) focusTold = null;     // a reloaded effect: tell it again
-                // The frame first, so the windows adopted below see it (review of (iii)+(iv), 3).
+                // The frame first, so the windows adopted below see it.
                 setFrame(!!(m && m.supported && m.frameWidth !== undefined));
                 tellRing();             // again on every answer: a reloaded effect starts with the ring on
                 // An effect that lost what it was told (reloaded while the frame stayed on): tell
-                // it again (finding 1).
+                // it again.
                 if (m) {
                     var has = {};
                     for (var i = 0; i < m.floating.length; i++) has[m.floating[i]] = true;
@@ -4633,7 +4633,7 @@ var KI3 = (function () {
         told = {}; ringTold = {}; barTold = {}; spanTold = {}; memoTold = {};   // a new effect knows nothing: the next pass tells it again
         log("FRAME " + (on ? "on: the effect draws it" : "off: no effect, decorations as they are"));
         // The first answer either way, and every change: a border no frame will replace is given
-        // back, including one a reload's predecessor took (not recorded here; finding 2). Tiled
+        // back, including one a reload's predecessor took (not recorded here). Tiled
         // windows lose theirs again on the next pass if the frame is on.
         Object.keys(wins).forEach(function (key) {
             var w = wins[key], con = model.byWin[key];

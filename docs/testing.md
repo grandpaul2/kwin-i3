@@ -58,7 +58,7 @@ then the fix and P1. A check for the bug only under rule 5.
    after it is covered by P1 (its scenarios, and 64 for a plugin change).
 2. A red scenario the change drives: fix it, then rerun only that scenario.
 3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
-   (`# timing: alone`), as 69 did (2026-10-28), not another guessed fix. Red: report
+   (`# timing: alone`), as 69 did, not another guessed fix. Red: report
    it, don't fix it. A red whose cause the logs name in the scenario itself (a check reading
    state before it has settled) is a wrong check, not a flake: the check is corrected, as any
    existing check a change shows wrong, and not moved.
@@ -113,12 +113,11 @@ then.
 
 A question about another distribution's KWin (a beta user's bug there, a red seen only there):
 the scenarios P1 or P2 would run, in an Arch container with Arch's KWin 6.8.2 (an Arch-based
-user's, CachyOS's) on the desktop (`tools/box.sh build` once, then
+user's, CachyOS's) on the host (`tools/box.sh build` once, then
 `tools/box.sh run bash -c 'make tools plugin && tests/live/run.sh NN-name.sh'`, in the
 background; `KI3_BOX_OUT=<dir>` keeps a red's output). It copies the checkout and writes nothing
-to it. It renders on the AMD iGPU through Mesa, so its pixels are AMD's, as the laptop's are.
+to it. It renders through Mesa on the host's AMD or Intel GPU (`tools/box.sh` passes only those), so
+its pixels are Mesa's, never NVIDIA's.
 `KI3_BOX=pika`: PikaOS's KWin 6.7.4 and Debian's package names, the same way, now the only 6.7
 the gate runs (the host is on 6.8). Nothing in either
-reaches a live desktop: a fix still goes live by P3. (2026-10-30: 10, 53, 64 and 86 green on
-both; 86 eight runs in a row on 6.8, where the laptop had two reds after a plugin rebuild, item
-61, closed as no red reproduced: the next red's kept log reopens it.)
+reaches a live desktop: a fix still goes live by P3.

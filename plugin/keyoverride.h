@@ -7,7 +7,7 @@
 //   weight, kwin-notes), a press of one of kwin-i3's keys triggers kwin-i3's action and goes on
 //   with its key set to Qt::Key_unknown: kglobalacceld sees a key no shortcut has, so no Plasma
 //   shortcut runs, and its modifier-only state resets (a press kept from it entirely left Meta's
-//   release opening the launcher, probe 92).
+//   release opening the launcher, probed).
 // - Right after that filter, the marked press, its repeats and its release are taken (and the key
 //   filtered), so no window sees them.
 //

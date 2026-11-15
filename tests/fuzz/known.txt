@@ -1,4 +1,4 @@
 # Fuzz signatures of bugs already in OPEN.md: a campaign counts these and moves on, instead of
-# replaying and shrinking them again every run (that was most of a run's time, 2026-10-23).
+# replaying and shrinking them again every run (that was most of a run's time).
 # One signature prefix per line; the signature is the invariant's message with numbers as N.
 # Remove a line when its bug is fixed, so the fuzzer proves the fix.

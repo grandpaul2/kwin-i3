@@ -8,7 +8,7 @@
 #; the pixel checks look at the header and the Keys rows, at
 # 1280x720 with the window filling Virtual-0. KI3_SHOTS=<dir> keeps every screenshot.
 # Alone, after the batch: it clicks after the page's slide animations, and in the batch (~30 test
-# KWins at once) kcmshell6 took longer than 5 s to show its window (2026-10-24).
+# KWins at once) kcmshell6 took longer than 5 s to show its window.
 source "$(dirname "$0")/lib.sh"
 kga() { busctl --user call org.kde.kglobalaccel /kglobalaccel org.kde.KGlobalAccel "$@"; }
 keys_of() { kga shortcutKeys as 4 "$1" "$2" x "$2"; }

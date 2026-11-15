@@ -40,7 +40,7 @@ def main():
         events.append((t, len(events), src, text))
 
     # state.txt: each line is "<sink's stamp> <dump line>"; in the "== log" section the dump line
-    # is kwin-i3's own "<stamp> <text>" (seconds only in captures before 2026-10-25's 644df66).
+    # is kwin-i3's own "<stamp> <text>" (seconds only in captures from before 644df66).
     state = os.path.join(d, "state.txt")
     in_log = False
     if os.path.exists(state):

@@ -21,7 +21,7 @@ shows() { [[ "$(kjs "workspace.screens.forEach(function (s) { if (s.name === \"$
 load_kwin_i3
 wait_log 'kwin-i3 loaded$'
 # The frame's verdict (no effect here) comes a second after the load, with a pass of its own:
-# before it, or the pass counts below include it (they did, 2026-10-25, once the setup got faster).
+# before it, or the pass counts below include it (they did once the setup got faster).
 wait_log '^.{9}FRAME '
 
 # A + C. b fullscreen; c opens: tiled behind it, no focus; b still fills the monitor and is on top.
@@ -33,8 +33,8 @@ check "b fills the monitor"                 geom_is b "0,0 1280x720"
 # b is stopped (SIGSTOP) while c opens, so it acknowledges nothing: KWin clears a window's tile
 # only on the client's acknowledgement (window.cpp commitTile), so w.tile stays set and a second
 # pass deciding from it would see b in its old tile, rebuild, be refused and schedule again, for
-# ever (review finding 1). kwin-i3 keeps its own record of a window out of the tiles. The count
-# is read once after a pause, not polled: a loop passes through 2 (review of the change).
+# ever. kwin-i3 keeps its own record of a window out of the tiles. The count
+# is read once after a pause, not polled: a loop passes through 2.
 bpid=$(pgrep -f "testclient.py --title b" | head -1)
 kill -STOP "$bpid"
 m=$(mark)
@@ -112,7 +112,7 @@ check "e behind p on 1"                     wait_tree 1 "H[c p! e]" "$m"
 check "the monitor still shows 3"           shows Virtual-0 3
 # A hidden window never acknowledges a configure, so KWin never clears p's w.tile here; a second
 # pass deciding from w.tile would see p in its old tile, rebuild, be refused and schedule again,
-# for ever (review finding 1). kwin-i3 keeps its own record of a window out of the tiles.
+# for ever. kwin-i3 keeps its own record of a window out of the tiles.
 sleep 0.5
 trees_at_most() { (( $(after "$1" | grep -cE '^.{9}TREE 1 ') <= $2 )); }
 check "a few passes, no spin on the hidden workspace" trees_at_most "$m" 4
@@ -184,7 +184,7 @@ key "Workspace 1"
 # A fullscreen window KWin keeps in its tile (no rebuild since, as Firefox alone on its
 # workspace) and a padding change: KWin's Tile::setPadding resizes every window in the tile,
 # fullscreen or not, and the refit skipped fullscreen windows, so it stayed fullscreen at its
-# tile's size, the wallpaper around it (A capture 2026-10-27 03:45, after a reload: the new
+# tile's size, the wallpaper around it (a capture, after a reload: the new
 # instance wrote padding 4, then 6 once the effect answered). A gap or frame-width change that
 # keeps the inset does the same.
 fills_output() { [[ "$(kjs "workspace.windowList().forEach(function (w) { if (w.caption === \"$1\") { var f = w.frameGeometry, o = w.output.geometry; log(f.x === o.x && f.y === o.y && f.width === o.width && f.height === o.height); } })")" == "true" ]]; }
@@ -204,8 +204,8 @@ check "f2 is still in its tile"             in_tile f2
 pad_f2_root 10
 m=$(mark); key "Focus Mode Toggle"; wait_log '^.{9}TREE 4 ' "$m"; sleep 0.5
 check "kwin-i3's padding back: f2 still fills its monitor" fills_output f2
-# The same with f2 answering after the pass, as Firefox did on a reload (A capture
-# 2026-10-28 20:06): KWin changes the frame only when the client answers, so the pass saw the
+# The same with f2 answering after the pass, as Firefox did on a reload (a
+# capture): KWin changes the frame only when the client answers, so the pass saw the
 # monitor-sized frame, and f2 reached its tile's size afterwards. Stopped, it answers only at -CONT.
 f2pid=$(pgrep -f "testclient.py --title f2" | head -1)
 kill -STOP "$f2pid"

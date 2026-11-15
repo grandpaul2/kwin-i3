@@ -18,7 +18,7 @@ wait_log 'kwin-i3 loaded$'
 #    shrunk to: open a window, Meta+right-drag it).
 #    A resize drag with the client's answer to its last step still in flight at the release: kwin-i3
 #    puts the window back in its tile at each step, so at the end the frame fits and nothing is
-#    written, then the late answer lands (make test, 2026-10-24: 1176 wide, 2 runs in 7). A slow
+#    written, then the late answer lands (under make test: 1176 wide, 2 runs in 7). A slow
 #    client (20 ms a resize) and steps 30 ms apart, the last one with the release: stuck 10 of 10.
 slow_drag() {
     "$INJECT" "abs 960 360" "wait 30" "key ${EVDEV[Meta]} down" "btn right down" \

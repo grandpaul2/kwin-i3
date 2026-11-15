@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The fuzzer's I2 (seed 7 of 2026-10-23's campaign, shrunk from 51 actions to this): the second
+# The fuzzer's I2 (shrunk from 51 actions to this): the second
 # monitor goes away; its workspace (2) holds a fixed-size window that is made fullscreen on the
 # first monitor meanwhile (a fullscreen request such a window cannot apply). When the monitor
 # returns, kwin-i3 shows 1 and 2 again and moves 2's windows to the second monitor, but KWin

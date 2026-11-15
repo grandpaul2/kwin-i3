@@ -8,15 +8,13 @@ Every seed runs tests/fuzz/fuzz.py in its own headless test KWin. A failure with
 tests/fuzz/known.txt (a bug already in OPEN.md) is counted and nothing more. A new one is
 replayed twice (0 of 2: "flaky") and recorded; `--reshrink` then shrinks it (see shrink()) to
 the shortest action list that still fails with the same signature, replayed 3 times for a rate.
-Shrinking used to run inside the campaign: a failing seed then held a job slot for up to 20
-minutes, and most of that went to re-shrinking known bugs (review, 2026-10-23), so a "20-minute"
-run took 29 and ran 22 seeds where 50 fit.
+Shrinking runs apart from the campaign: inside it, a failing seed would hold a job slot for up
+to 20 minutes, most of it re-shrinking known bugs.
 Results: tests/fuzz/out/REPORT.md, one section per signature; per seed, tests/fuzz/out/<seed>/,
 and one console line per seed as it ends ("seed 12 ok", "seed 13 I10 ...") for whoever watches.
 Only the first failure of each signature is confirmed and shrunk; the others are counted.
 If the first FAIL_FAST seeds to end all fail with one signature, the campaign stops: that is the
-setup (a stale invariant, a broken build), not a bug, and was once 20 minutes of every seed failing
-at its first window (2026-10-25).
+setup (a stale invariant, a broken build), not a bug.
 """
 import argparse, concurrent.futures as cf, json, os, shutil, subprocess, threading, time
 
@@ -89,8 +87,8 @@ def shrink(actions, sig, work):
     def first_failing(cands):
         """Replay candidates in parallel; the first (in order) that still fails, or None."""
         # Only real reductions: a candidate equal to the trace (dropping a kind it has none of)
-        # "still failed" and looped step 2 until MAX_TRIES ran out (seed 14 spent 13 of its 17
-        # minutes there, 2026-10-23).
+        # "still failed" and looped step 2 until MAX_TRIES ran out (one seed spent 13 of its 17
+        # minutes there).
         cands = [c for c in cands if c and len(c) < len(actions)]
         if not cands or time.time() > stop:
             return None
@@ -102,7 +100,7 @@ def shrink(actions, sig, work):
                 tries[0] += 1
             return fails_same(c, sig, os.path.join(work, "try%s" % n))
         # The first that fails is taken at once, not the first in order: waiting for a whole
-        # batch of ~25 long replays cost 12 minutes a step (2026-10-22). Candidates come
+        # batch of ~25 long replays cost 12 minutes a step. Candidates come
         # shortest first, so the first to fail is near the best; the rest are dropped.
         ex = cf.ThreadPoolExecutor(PAR)
         batch[0] += 1
