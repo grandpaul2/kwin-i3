@@ -1,4 +1,4 @@
-// Logging. KWin drops print() from scripts on this machine (the kwin_scripting category is off),
+// Logging. KWin drops print() from scripts (the kwin_scripting category is off by default),
 // so lines go over D-Bus to tools/logsink.py when [Script-kwin-i3] debugLog=true (src/settings.js
 // sets DEBUG_LOG, at load and on a reload). Silent otherwise: if nothing owns the name, the call
 // fails quietly. The last LOG_KEEP lines are kept in memory either way, for "Dump State"
@@ -8,7 +8,7 @@ var LOG_KEEP = 2000;   // hours of ordinary use, GEOM and TILE lines included; a
 var logRing = [];
 
 function log(line) {
-    // To the millisecond: a flash or a race sits inside one second (OPEN.md item 21).
+    // To the millisecond: a flash or a race sits inside one second.
     var now = new Date(), ms = String(now.getMilliseconds());
     logRing.push(now.toTimeString().slice(0, 8) + "." + "00".slice(ms.length - 1) + ms + " " +
                  String(line).slice(0, 500));   // captions can be URLs

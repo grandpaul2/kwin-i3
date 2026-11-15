@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Workspaces created on demand, as i3 creates them: a stock Plasma has one virtual desktop, and
-# kwin-i3 adds KWin's desktops up to the one a key or a monitor needs, never removing any
-#.
+# kwin-i3 adds KWin's desktops up to the one a key or a monitor needs, never removing any.
 # desktops: 1
 source "$(dirname "$0")/lib.sh"
 count_is() { [[ "$(kjs 'log(workspace.desktops.length)')" == "$1" ]]; }

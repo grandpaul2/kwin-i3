@@ -2,8 +2,7 @@
 # Plasma's, keys
 # fitted to the keyboard layout, panel popups' grace
 #, i3's resize mode.
-# kwini3hold: atomic layout changes and i3's frame around tiled windows, a KWin effect
-#.
+# kwini3hold: atomic layout changes and i3's frame around tiled windows, a KWin effect.
 # Built against the installed kwin-devel; KWin refuses a build from another KWin version.
 cmake_minimum_required(VERSION 3.22)
 project(kwini3 LANGUAGES CXX)
