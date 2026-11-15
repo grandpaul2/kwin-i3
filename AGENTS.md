@@ -24,9 +24,8 @@ These are the project's rules, not suggestions.
 
 ## How work lands
 
-- **The maintainer's sessions** commit to main and push at natural intervals without asking, and
-  don't announce it. Group related changes; say *why* in the message; never commit unverified
-  work. Push when you commit.
+- **The maintainer's sessions** commit to main and push. Group related changes; say *why* in the
+  message; never commit unverified work.
 - **A contributor's sessions** work on a branch in a worktree (`git worktree add
   ../kwin-i3-<branch> -b <branch>`, then `make tools` and, for plugin work, `make plugin` in it),
   push the branch, and open a pull request to main. One `OPEN.md` item (or one new thing) per PR;
@@ -35,7 +34,7 @@ These are the project's rules, not suggestions.
   `make build` and commit the result, never hand-merge a conflict in it. The maintainer merges;
   **the merge is the go**.
 - **The maintainer's go decides what goes in**: behaviour, scope, a new test, anything that changes
-  a foundation doc. Most calls are already decided by the docs (below); ask only what they can't.
+  a foundation doc. Most calls are already decided by the docs (below).
 - **Spec before work, the spec reviewed before building.** Every change to `src/`, `plugin/` or
   `tools/capture`, bug fixes included, starts as a spec, and an outside review of the spec comes
   before any code: it is where a wrong tree is caught, while turning back is cheap. Two workflows,
@@ -71,9 +70,8 @@ These are the project's rules, not suggestions.
   maintainer's.
 - A live change is done at the session's end unless a problem was reported; someone's
   confirmation is never an `OPEN.md` next action.
-- **Ask the maintainer only about a foundation**: a conflict between two, or the repair a hole
-  needs, worked first ("Follow the docs", below). An `OPEN.md` number goes in the text
-  ("`OPEN.md` item 14"): its numbers have gaps.
+- An `OPEN.md` number goes in the text with its file ("`OPEN.md` item 14"): its numbers have
+  gaps.
 - **Session start and end**: when the person says so, follow `.claude/commands/sessionstart.md`
   or `sessionend.md` (Claude Code's `/sessionstart` and `/sessionend`; plain steps for any agent).
 - **The foundation sweep**: every so often, the foundations, `behaviour.md`, i3's source and the
@@ -99,10 +97,10 @@ These are the project's rules, not suggestions.
   with the go: `make plugin-install` (loads into the running KWin), `make kcm-install` and
   `make widget-install`.
 - **Nothing that shows a window on a live desktop** without saying so first.
-- **sudo**: propose the command and let your agent's approval prompt ask. Never ask for a password.
-- **Before asking the person to act at the desk**, look for a read-only query (D-Bus, the journal,
-  config; `docs/kwin-notes.md` "Config and D-Bus"), a test-KWin probe, or the source. Ask only for
-  what none of those can give: what they see, what they want.
+- **sudo** runs only through the agent's approval prompt; a password is never given to an agent.
+- **What the live desktop can tell without a person**: a read-only query (D-Bus, the journal,
+  config; `docs/kwin-notes.md` "Config and D-Bus"), a test-KWin probe, or the source. A desk test
+  is for what none of those can give: what the person sees, what they want.
 
 ## How a problem is worked
 
@@ -110,7 +108,6 @@ These are the project's rules, not suggestions.
   a plan opens with: how i3 does it (its source, file:line), how kwin-i3 copies it, the
   hurdles (KWin, Wayland). Then KWin's detail. i3 behaviour is ported from i3's source
   (`src/move.c`, `src/tree.c`, `src/con.c`; the **4.24 release**, not `next`), not from memory.
-  Nobody should have to ask "how does i3 do it?".
 - **Ride i3 hard.** A difference from i3 needs a specific, explicit reason (KWin can't, Wayland
   forbids it, `plan.md`'s reasons); "minor", "rare", "nobody sees it" and the cost of the change
   are not. This holds inside the code as much as in behaviour: the model's shapes and flags are
@@ -129,20 +126,18 @@ These are the project's rules, not suggestions.
 - **Dive until solved.** A red test is dug into with probes until its cause is named and fixed,
   never parked as "looks flaky". But a symptom inside a trade already accepted (the hold's 200 ms
   timeout letting a slow app flash on close) isn't chased: check the docs' decisions first.
-- **Decide from the docs.** Before putting a question to the maintainer, run `docs/philosophy.md`
-  "How a decision is made" steps 1-4 (its home: the foundations, precedent, i3's source, a hole). If they
-  decide it, it's decided; if not, that's a hole in the docs: say why, and frame the question as
-  the foundation change it would be. Style and feel are judged live after building, not asked
-  before. When a suggestion (anyone's) goes against the norms, push back plainly first.
+- **Decide from the docs.** A question is settled by `docs/philosophy.md` "How a decision is
+  made" steps 1-4 (the foundations, precedent, i3's source, a hole). If they decide it, it's
+  decided; if not, that's a hole in the docs, and its repair is a foundation change. Style and feel
+  are judged live after building. A suggestion (anyone's) against the norms doesn't change them.
 - **Follow the docs; a gap is a hole, not a choice.** `philosophy.md`'s steps settle each step of
-  a plan, i3's source among them; the maintainer is not asked to design, and comes in only for the
-  foundations themselves: a conflict between two, or a hole's repair (`philosophy.md` steps 4-5). So a plan comes as one plan, i3's way, each step citing what settled it,
-  never as options, and a way away from i3 is never laid out as a choice. Where the docs
-  contradict each other or say nothing, don't be creative and don't ask "what do you want here?":
-  say the plan can't be finished from the docs and name the holes that, filled, would finish it.
-  Then work each hole: the premise that let it open, what i3's source says, what Plasma and KWin
-  allow, the precedents and the philosophy. Only then does it go to the maintainer, as a repair
-  to the foundation it belongs in, not a one-time fix.
+  a plan, i3's source among them; the maintainer decides only the foundations themselves: a
+  conflict between two, or a hole's repair (`philosophy.md` steps 4-5). So a plan is one plan,
+  i3's way, each step citing what settled it, never options, and a way away from i3 is never a
+  choice. Where the docs contradict each other or say nothing, the plan can't be finished from
+  them: the holes that, filled, would finish it are named, and each is worked (the premise that
+  let it open, what i3's source says, what Plasma and KWin allow, the precedents and the
+  philosophy) into a repair to the foundation it belongs in, not a one-time fix.
 - **Change a plan minimally.** When one piece of a decided plan is rejected, cut exactly that piece.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
@@ -175,14 +170,15 @@ catastrophically. Its runs are the only runs: `make unit` and the changed scenar
 (and 64 for a plugin change), at most one `make test` per session, at its start and only when the
 work needs it, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
 owed. No run over 5 minutes, ever. Fault runs, fuzzing and
-stock runs wait in `LATER.md`. A case it doesn't cover: ask the maintainer first. **No new test of
+stock runs wait in `LATER.md`. A case it doesn't cover is the maintainer's call. **No new test of
 any kind without the maintainer's go, and only with a strong case** (its rule 5: an agent given a
 handle will grab it).
 
 - **Before a rerun**: is what's under test rebuilt (`make build` for the script, `make plugin` for
   the plugins, `make kcm` for the settings page's QML)? Name the cause from the evidence first; one
   rerun per fix, never one per guess.
-- Before saying "no scenario drives it", grep `tests/live` for every setting the change reads.
+- "No scenario drives it" holds only once `tests/live` has been grepped for every setting the
+  change reads.
 
 ## Working rules
 
