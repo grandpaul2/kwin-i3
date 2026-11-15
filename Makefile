@@ -5,7 +5,7 @@
 PLUGIN_IF := $(if $(wildcard /usr/lib*/cmake/KWin/KWinConfig.cmake /usr/lib/*/cmake/KWin/KWinConfig.cmake),plugin)
 build:
 	./build.sh
-unit:
+unit: lint
 	node --test tests/unit/*.test.js
 # Every language's formatter and linter (docs/testing.md, "Formatting and lint"). make format
 # rewrites; make lint checks. lint-tools fetches the pinned JS tools into node_modules, once per

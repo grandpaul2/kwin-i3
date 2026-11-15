@@ -29,6 +29,11 @@ langs=("$@")
 
 failed=()
 skip() { echo "lint: skipped $1 ($2)"; }
+# The file lists are git's; a copy without .git (tools/box.sh's) has none to check.
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
+    skip everything "not a git checkout"
+    exit 0
+}
 run() { # run NAME CMD...: a finding is a non-zero exit
     local name=$1
     shift

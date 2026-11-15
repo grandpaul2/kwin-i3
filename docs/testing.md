@@ -33,7 +33,8 @@ change; the reload of a desktop is its owner's go.
 
 Style is each language's formatter's; nothing about style is written anywhere else.
 `make format` rewrites every tracked file to it; `make lint` (`tools/lint.sh`) checks formatting
-and runs each language's linter, in about 15 seconds. `tools/lint.sh check js` (or `cpp`, `qml`,
+and runs each language's linter, in about 15 seconds, and `make unit` runs it first, so every
+change is checked by it. `tools/lint.sh check js` (or `cpp`, `qml`,
 `py`, `sh`) does one language.
 
 | language | formatter | linter | config |

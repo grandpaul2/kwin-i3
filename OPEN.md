@@ -80,7 +80,8 @@ and `plan.md` (e) has the modifier the user's. KWin's is `[MouseBindings] Comman
 `pendingTimer` twice, for `recordShown` (an outside desktop switch, D2/D3, handled a turn later)
 and for `checkPending` (V14's 150 ms look at a pending fullscreen): while either is armed, the
 other schedules nothing, so after an output change a switch from the Overview, a pager or Alt+Tab
-can wait for the next one. Next: a spec (one flag each).
+can wait for the next one; eslint's `no-redeclare` finds it, and the second declaration carries
+the disable that goes with the fix. Next: a spec (one flag each).
 
 **108. Close acts on KWin's active window, not the tree's focus** (from the foundation sweep;
 `behaviour.md` A5, K12). For a focused window, and an empty focused workspace, Meta+Shift+Q runs
@@ -135,12 +136,3 @@ stray line, `' ' ')"`, after "onto a: at once" opens a single quote that closes 
 in the next comment, so the timing check after it is swallowed into a string and the shell runs
 the rest as a command that isn't found. The line carries a shellcheck disable until it goes.
 Next: delete it and run `71-popup-grace.sh` alone; a red there is diagnosed like any other.
-
-**116. Each language's standard formatter and linter, run by the build or tests** (2026-11-15).
-None is configured today, and each first reformat is large (measured against HEAD 2dca3cd, lines
-changed): C++ with KDE's ECM `.clang-format` ~1,400, QML with `qmlformat` ~1,400, Python with
-`ruff format` ~2,800 (and `ruff check` 128 findings), shell with `shfmt` ~5,000 (`shellcheck`
-~400 lines of findings), JS with `prettier` ~22,000 (the KWin script's built `main.js` aside).
-Next: a spec naming the tool and config per language (KDE's own where Plasma has one), a
-`make lint` target that `make test` runs, and one reformat commit per language, landed when no
-branch or worktree has open work on those files.
