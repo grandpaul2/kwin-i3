@@ -3,6 +3,16 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
+## v1.6.0 (2026-11-15)
+
+- **No change in behaviour.** The code is formatted and linted by each language's standard tools
+  (`make format`, and `make unit` runs the lint), and its comments and docs are written for a
+  public repository.
+- **A test that raced its own spec is corrected**: the Meta+Shift drag of a selected container
+  (`behaviour.md` G16) moved the pointer onto another window of the selection before pressing,
+  which with focus follows mouse collapses the selection; on a slow machine the press lost the
+  race.
+
 ## v1.5.0 (2026-11-14)
 
 - **A window that moves itself to the other monitor stays on its workspace**, as in i3: a game
