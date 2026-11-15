@@ -1,6 +1,6 @@
 // The keys that type a shifted symbol: a KDE shortcut is the
 // symbol, so Meta+Shift+1 is stored as Meta+! on a US keyboard; the page names it by its keys.
-// table: the current layout's keys, each [unshifted, shifted] as Qt keys and the unshifted
+// Takes the layout table: the current layout's keys, each [unshifted, shifted] as Qt keys and the unshifted
 // character as typed (é, not Qt's É) (KeysModel.layoutTable).
 // Returns "Meta+Shift+1", or "" when the key isn't a non-letter symbol typed with Shift.
 var MODS = [[0x10000000, "Meta"], [0x04000000, "Ctrl"], [0x08000000, "Alt"], [0x02000000, "Shift"]];

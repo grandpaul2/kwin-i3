@@ -23,8 +23,8 @@ KCM.SimpleKCM {
     readonly property var settings: kcm.settings
     // Normalised as the page writes rules (formatRule), so the "default" mark doesn't depend on
     // the order of the criteria in the shipped text.
-    // The defaults of releases before the application box took names only, still marked default
-    // in a kwinrc saved with them (they show as text now).
+    // Earlier shipped defaults (before the application box took names only), still marked
+    // default in a kwinrc saved with them (they show as text).
     readonly property var oldDefaults: ['[class="^(org\\.kde\\.)?kruler$"] floating enable',
                                         '[class="^(org\\.kde\\.)?plasmashell$" window_type="normal"] floating enable']
     readonly property var defaults: Logic.splitRules(kcm.defaultValue("forWindow")).map((t) => Logic.formatRule(Logic.parseRule(t, false))).concat(oldDefaults)

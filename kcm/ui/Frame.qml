@@ -41,7 +41,7 @@ KCM.SimpleKCM {
                 toolTipText: i18n("A frame: a thin coloured line around each window, in place of its titlebar. Titlebars: Plasma's own. i3: default_border")
             }
         }
-        // Nothing marks the focused window then; KWin's own effect can (spec, item 6).
+        // Nothing marks the focused window then; KWin's own effect can.
           QQC2.Label {
               visible: root.settings.tiledLook === "bare"
               Layout.maximumWidth: Kirigami.Units.gridUnit * 24

@@ -1,4 +1,4 @@
-// The settings page's reading and writing of the script's setting strings
+// The settings page's reading and writing of the script's setting strings:
 // the page edits rows and lists, kwinrc keeps the strings the
 // script parses (src/settings.js). Pure functions, unit-tested in tests/unit/kcm-settings.test.js.
 

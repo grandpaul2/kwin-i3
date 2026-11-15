@@ -2,9 +2,7 @@
 // is outside every window, so KWin would give a press there to
 // whatever is beneath, the desktop (its menu on a right-click, a rubber band on a drag). This
 // filter makes the frame part of its window for focus and clicks, with KWin's own calls.
-// (It did the same for kwini3frame's decoration until that was retired; and modifier
-// + mouse button chords until earlier that day.) Installed by the
-// helper plugin (helper.cpp).
+// Installed by the helper plugin (helper.cpp).
 #pragma once
 
 #include <input.h>

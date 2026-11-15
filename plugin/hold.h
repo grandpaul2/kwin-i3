@@ -42,7 +42,7 @@ using PaintResult = void;
 
 // A uniform colour with alpha below 1, blended: KWin 6.8's GLShader::setUniform hands the shader
 // the colour premultiplied (glshader.cpp:465), 6.7's as it is (:478). Multiplying by alpha again
-// drew the drop indicator at a quarter, not half (86-tiling-drag on 6.8.2).
+// would draw the drop indicator at a quarter, not half (86-tiling-drag on 6.8.2).
 #ifdef KI3_PREMULTIPLIED_COLOUR
 constexpr unsigned int KI3_COLOUR_SRC_FACTOR = 1;       // GL_ONE
 #else
@@ -248,8 +248,8 @@ private:
         std::unique_ptr<KWin::GLTexture> texture;
         QSize size;
     };
-    // The banner's text, drawn once per output scale (two monitors at two scales redrew it on
-    // every paint); cleared when the settings change (its colour).
+    // The banner's text, drawn once per output scale (else two monitors at two scales
+    // redraw it on every paint); cleared when the settings change (its colour).
     std::map<double, Banner> m_banners;
     bool m_bannersStale = false;    // set by loadConfig; cleared in the paint, where GL is current
     // SetBar, by the bar's key (the shown window's internal id, "#N" after it for a further bar:
@@ -283,7 +283,7 @@ private:
     void eraseBars(const QString &windowId);                     // all of a window's; makes GL current
     // SetBar calls that came while a hold was open, applied in order at its release: a held
     // snapshot is drawn at its old place, where only the old bar matches (a new bar's offset on an
-    // old place drew it beside the group for the hold's 25 ms).
+    // old place would draw it beside the group until the release).
     struct BarCall {
         QString id;
         int dx, dy, width, height;
@@ -299,7 +299,7 @@ private:
     QColor m_indicatorColour[2]{QColor(0x3d, 0xae, 0xe9), QColor()};
     bool m_frameOnFloating = false;
     bool m_roundedCorners = true;
-    bool m_tiledRing = true;                                // SetTiledRing; until told, as before tiledLook
+    bool m_tiledRing = true;                                // SetTiledRing; on until told
     QSet<QString> m_floating;                               // kwin-i3's floating windows, by internal id
     QSet<QString> m_floated;                                // SetFloated, by internal id
     QHash<QString, Ring> m_rings;                           // SetRing, by internal id

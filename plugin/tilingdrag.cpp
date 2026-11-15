@@ -372,7 +372,7 @@ QString TilingDrag::state()
 {
     m_unanswered.stop();
     // kwin-i3 answering late (a busy script, past the 500 ms) is still there: the timeout's "gone"
-    // is undone, else every drag stayed off until the next reconfigure.
+    // is undone, else every drag would stay off until the next reconfigure.
     if (m_offUnanswered) {
         m_offUnanswered = false;
         m_on = true;
@@ -536,8 +536,6 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
     return true;
 }
 
-// Each motion places every window of the container: moved by the pointer's travel, or scaled
-// into the resized whole (kwin-i3 lays the tree out exactly at the release).
 // i3's cursor for the drag (floating.c:606, :719-722): the move's, or the diagonal of the corner a
 // resize moves, kwini3hold's (SetDragCursor), which lets it go 500 ms after the last ask.
 void TilingDrag::tellGroupCursor(bool on)
@@ -556,6 +554,8 @@ void TilingDrag::tellGroupCursor(bool on)
     }
 }
 
+// Each motion places every window of the container: moved by the pointer's travel, or scaled
+// into the resized whole (kwin-i3 lays the tree out exactly at the release).
 void TilingDrag::groupMotion(const QPointF &pos)
 {
     tellGroupCursor(true);
