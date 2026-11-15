@@ -124,3 +124,12 @@ Tiling key step's help speaking of the floating step's px, the pointer help narr
 `mouseWarping`, the rules help leaving out class; the unfocused indicator colour off the page,
 though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
 live.
+
+**116. Each language's standard formatter and linter, run by the build or tests** (2026-11-15).
+None is configured today, and each first reformat is large (measured against HEAD 2dca3cd, lines
+changed): C++ with KDE's ECM `.clang-format` ~1,400, QML with `qmlformat` ~1,400, Python with
+`ruff format` ~2,800 (and `ruff check` 128 findings), shell with `shfmt` ~5,000 (`shellcheck`
+~400 lines of findings), JS with `prettier` ~22,000 (the KWin script's built `main.js` aside).
+Next: a spec naming the tool and config per language (KDE's own where Plasma has one), a
+`make lint` target that `make test` runs, and one reformat commit per language, landed when no
+branch or worktree has open work on those files.
