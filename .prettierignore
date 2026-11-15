@@ -1,0 +1,9 @@
+package/contents/code/main.js
+node_modules/
+package-lock.json
+plugin/build/
+kcm/build/
+tests/live/out/
+tests/fuzz/out*/
+videos/
+tools/bin/

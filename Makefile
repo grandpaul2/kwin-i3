@@ -1,4 +1,4 @@
-.PHONY: build test unit live mutate mutate-live tools video fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
+.PHONY: build format lint lint-tools test unit live mutate mutate-live tools video fuzz fuzz-shrink plugin plugin-install kcm kcm-install widget-install install uninstall
 # The plugins are optional (README, "Optional: the plugins"): the live tests and the fuzzer build
 # them when kwin-devel is installed (its CMake config); without it,
 # tests/live/run.sh skips the scenarios that need the plugins and says so.
@@ -7,6 +7,15 @@ build:
 	./build.sh
 unit:
 	node --test tests/unit/*.test.js
+# Every language's formatter and linter (docs/testing.md, "Formatting and lint"). make format
+# rewrites; make lint checks. lint-tools fetches the pinned JS tools into node_modules, once per
+# checkout or worktree: the only step that uses the network.
+format:
+	tools/lint.sh format
+lint:
+	tools/lint.sh check
+lint-tools:
+	npm ci --no-audit --no-fund
 # The settings page likewise, when kf6-kcmutils-devel is installed.
 KCM_IF := $(if $(wildcard /usr/lib*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake /usr/lib/*/cmake/KF6KCMUtils/KF6KCMUtilsConfig.cmake),kcm)
 live: build tools $(PLUGIN_IF) $(KCM_IF)

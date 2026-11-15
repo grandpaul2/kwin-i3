@@ -343,6 +343,9 @@ make plugin      # the two plugins, into plugin/build
 make fuzz        # 5 min of random actions with pixel invariants (docs/fuzz-design.md; held during the Stage)
 make mutate      # the unit tests against deliberate faults; mutate-live from a worktree
 make tools       # tools/bin/ei-send, the input tool (make test builds it; tests/live/run.sh alone doesn't)
+make lint-tools  # the pinned JS formatter and linter, into node_modules (once per checkout)
+make format      # every language's formatter, rewriting (before each commit)
+make lint        # the formatters' check and the linters (docs/testing.md, "Formatting and lint")
 ```
 
 The live tests never touch the running desktop: `tools/testkwin.sh` starts a private KWin with two

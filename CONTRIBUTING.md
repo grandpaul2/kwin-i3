@@ -30,7 +30,7 @@ your KWin loads: do your work in a git worktree, never on a branch there.
   changes and what it touches; an outside review of it; then the maintainer's go on it in the PR
   (`AGENTS.md`, "How work lands", has the two workflows). Docs alone need none.
 - Work on a branch in a worktree (`git worktree add ../kwin-i3-<branch> -b <branch>`, then
-  `make tools` there), push it, and open a pull request to `main`
+  `make tools` and `make lint-tools` there; `make format` before each commit), push it, and open a pull request to `main`
   (`gh pr create --base main --title "OPEN.md 54: ..."`). One item per PR;
   say which `OPEN.md` item it is, and update that item (only) in the PR.
 - A behaviour change updates `docs/behaviour.md` in the same PR. Run what `docs/testing.md` P1

@@ -1,0 +1,7 @@
+# shellcheck for the shell scripts (tools/lint.sh).
+# Follow a sourced file (tests/live/lib.sh and the rest) from the script's own directory.
+source-path=SCRIPTDIR
+external-sources=true
+# SC2016 (a $ inside single quotes): here that $ is meant literally, in awk, jq and busctl
+# programs and in strings for another shell.
+disable=SC2016

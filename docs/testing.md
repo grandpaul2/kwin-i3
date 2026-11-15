@@ -29,6 +29,41 @@ change; the reload of a desktop is its owner's go.
    change should have a test" are not reasons. Updating an existing check that a decided change
    makes wrong is not a new test.
 
+## Formatting and lint
+
+Style is each language's formatter's; nothing about style is written anywhere else.
+`make format` rewrites every tracked file to it; `make lint` (`tools/lint.sh`) checks formatting
+and runs each language's linter, in about 15 seconds. `tools/lint.sh check js` (or `cpp`, `qml`,
+`py`, `sh`) does one language.
+
+| language | formatter | linter | config |
+|---|---|---|---|
+| C++, C | clang-format 22 | the compiler's warnings | `.clang-format`, KDE's (ECM's `KDEClangFormat`), as Plasma's repos use it |
+| QML | qmlformat 6.11 | qmllint 6.11 | `.qmllint.ini` |
+| JS, JSON | prettier | eslint, recommended rules | `prettier.config.mjs`, `eslint.config.mjs` |
+| Python | ruff 0.17 | ruff | `ruff.toml` |
+| shell | shfmt 3.7, `-i 4` | shellcheck 0.11 | `.shellcheckrc` |
+
+- **The versions are pinned.** prettier's and eslint's are in `package-lock.json`, fetched into
+  `node_modules/` by `make lint-tools`, once per checkout or worktree (the only step that uses
+  the network). The rest are the distribution's packages, at the versions above (`tools/lint.sh`
+  names them). A tool that is missing, or at another version, is skipped with a line saying so,
+  because another version formats differently, and a machine must not go red with nothing to
+  fix. Moving to a new version is its own commit: the version changed in `tools/lint.sh` and here,
+  and the tree reformatted.
+- **Where a config differs from the tool's default, the reason is in the config.** In short: a
+  4-space indent for JS and shell, as the C++ and QML beside them; no comma after a call's last
+  argument, which an older Qt's engine may not parse; qmllint's unqualified-access check off,
+  because the settings page's `kcm` and the widget's `plasmoid` are context properties it can't
+  see; shellcheck's SC2016 off (a literal `$` in single quotes, on purpose here); ruff's rule set
+  written out, because its default set changes between releases; eslint told which names
+  `src/`'s files share, because `build.sh` makes them one script.
+- **A real bug a linter finds** is not fixed under the lint: the line gets the linter's disable
+  comment with the `OPEN.md` item that fixes it.
+- **Not formatted**: CMake (no standard formatter; KDE formats none of its CMake), Markdown
+  (prose wrapped by hand at 100 columns; no standard formatter) and XML (KConfigXT and Wayland
+  protocol files, written by hand in KDE and Wayland too).
+
 ## P1. A change
 
 1. `make unit`.

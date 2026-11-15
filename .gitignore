@@ -8,3 +8,4 @@ tests/live/out/
 CLAUDE.local.md
 .claude/settings.local.json
 videos/
+node_modules/

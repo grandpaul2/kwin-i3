@@ -10,6 +10,7 @@ home and point there from the other.
 | the scope, what is left out, the reasons a difference from i3 may have, the standing decisions, the install's and first run's rules | `plan.md` |
 | what the code does today, exactly, with its known limits; each difference from i3 (its ≠ rows are the list) | `behaviour.md` |
 | how to test, and which runs are the only runs | `testing.md` |
+| the formatters and linters, and how a config differs from a tool's default | `testing.md` |
 | how to read a bug capture | `debugging.md` |
 | what KWin and Plasma actually do where they surprised us (the traps, from source and probes) | `kwin-notes.md` |
 | how the settings page looks and reads | `style-settings-page.md` |

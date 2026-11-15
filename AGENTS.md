@@ -27,12 +27,12 @@ These are the project's rules, not suggestions.
 - **The maintainer's sessions** commit to main and push. Group related changes; say *why* in the
   message; never commit unverified work.
 - **A contributor's sessions** work on a branch in a worktree (`git worktree add
-  ../kwin-i3-<branch> -b <branch>`, then `make tools` and, for plugin work, `make plugin` in it),
-  push the branch, and open a pull request to main. One `OPEN.md` item (or one new thing) per PR;
-  the PR names the item, and its own edits to `OPEN.md` touch that item only. Rebase on main
-  before asking for review. `package/contents/code/main.js` is generated: after a rebase run
-  `make build` and commit the result, never hand-merge a conflict in it. The maintainer merges;
-  **the merge is the go**.
+  ../kwin-i3-<branch> -b <branch>`, then `make tools`, `make lint-tools` and, for plugin work,
+  `make plugin` in it), push the branch, and open a pull request to main. One `OPEN.md` item (or
+  one new thing) per PR; the PR names the item, and its own edits to `OPEN.md` touch that item
+  only. Rebase on main before asking for review. `package/contents/code/main.js` is generated:
+  after a rebase run `make build` and commit the result, never hand-merge a conflict in it. The
+  maintainer merges; **the merge is the go**.
 - **The maintainer's go decides what goes in**: behaviour, scope, a new test, anything that changes
   a foundation doc. Most calls are already decided by the docs (below).
 - **Spec before work, the spec reviewed before building.** Every change to `src/`, `plugin/` or
@@ -183,6 +183,8 @@ decision, not because a test can be written).
 
 ## Working rules
 
+- `make format` before each commit; style is the formatters' (`docs/testing.md`, "Formatting and
+  lint").
 - Edit `src/`, then `docs/testing.md` P1; a behaviour change updates `docs/behaviour.md` in the
   same commit. `make build` (`build.sh`) writes `package/contents/code/main.js`; never edit it by
   hand, but commit it.
