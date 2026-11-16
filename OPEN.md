@@ -76,27 +76,11 @@ the helper's tiling drag, Meta+Shift float and tile and Meta+right resize test M
 and `plan.md` (e) has the modifier the user's. KWin's is `[MouseBindings] CommandAllKey`
 (`options.cpp` `CmdAllModKey`), readable by the helper. Next: a spec.
 
-**108. Close acts on KWin's active window, not the tree's focus** (from the foundation sweep;
-`behaviour.md` A5, K12). For a focused window, and an empty focused workspace, Meta+Shift+Q runs
-KWin's Window Close on KWin's active window, with no re-sync (`KWIN_OWN`); i3's `kill` closes the
-focused con (`commands.c` `cmd_kill`), and on an empty workspace nothing. They differ while a window
-kept out of the tree has the keyboard. Next: a spec.
-
 **110. `sticky` is a kind in the code, where i3 has a flag** (from the foundation sweep;
 `definitions.md` notes it; `AGENTS.md` "Ride i3 hard"). `src/rules.js` `classify`/`i3Kind` return
 `sticky` beside `tiling` and `floating`; i3's `sticky` is a flag on a floating con (`data.h`,
 `con->sticky`), and no reason in `plan.md` keeps the difference. Next: a spec for the model's
 shape (the flag on the floating con, the kind floating).
-
-**111. A title-bar press stays armed through another button's release** (from the foundation
-sweep; `behaviour.md` G7). Before the drag distance is passed, the helper swallows another
-button's release and keeps the press (`pointerButton`, `Phase::Pressed`); i3 ends its grab on any
-release (`drag.c:66-68`), before its threshold too. Next: a spec.
-
-**112. A floated container's resize floor is a fixed 75x50** (from the foundation sweep;
-`behaviour.md` F1a). The helper's `groupMotion` stops at 75x50 whatever `floatingMinimumSize` says;
-i3's resize checks every step against `floating_minimum_size` (`floating.c` `floating_check_size`,
-called from the resize callback, `:673`). Next: a spec.
 
 **113. Three rows keep Plasma's way under reason (e) where kwin-i3 can win** (from the foundation
 sweep). `plan.md` (e) gives the user a Plasma setting only where kwin-i3 can't win it at runtime;
