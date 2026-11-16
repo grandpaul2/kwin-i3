@@ -1,4 +1,5 @@
 #include "gapstrips.h"
+#include "customtiled.h"
 
 #include <core/output.h>
 #include <window.h>
@@ -96,6 +97,7 @@ void GapStrips::watch(Window *w)
     connect(w, &Window::minimizedChanged, this, &GapStrips::dirty);
     connect(w, &Window::fullScreenChanged, this, &GapStrips::dirty);
     connect(w, &Window::quickTileModeChanged, this, &GapStrips::dirty);
+    connect(w, &Window::requestedTileChanged, this, &GapStrips::dirty);
     connect(w, &Window::desktopsChanged, this, &GapStrips::dirty);
     connect(w, &Window::hiddenChanged, this, &GapStrips::dirty);
     connect(w, &Window::outputChanged, this, &GapStrips::dirty);
@@ -110,7 +112,7 @@ static bool shown(const Window *w)
 // Tiled in one of kwin-i3's tiles and on screen (TilingDrag::gapWindow's test).
 static bool tiled(const Window *w)
 {
-    return w->isClient() && shown(w) && !w->isFullScreen() && w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+    return w->isClient() && shown(w) && !w->isFullScreen() && customTiled(w);
 }
 
 QRegion GapStrips::strips() const

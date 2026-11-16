@@ -1,4 +1,5 @@
 #include "hold.h"
+#include "customtiled.h"
 
 #include <utility>
 
@@ -1527,8 +1528,7 @@ bool Hold::framed(EffectWindow *w) const
     if (!win || w->isDeleted() || w->isFullScreen() || w->isMinimized() || w->hasDecoration() || !w->isNormalWindow()) {
         return false;
     }
-    return win->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || win->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
-        || m_floated.contains(w->internalId().toString());
+    return customTiled(win) || m_floated.contains(w->internalId().toString());
 }
 
 // Rounded while framed and roundedCorners is on; set back to none when it stops being either,

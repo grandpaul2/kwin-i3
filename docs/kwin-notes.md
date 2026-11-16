@@ -25,7 +25,9 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - A plugin's `quickTileMode()` is the **committed** tile, which a Wayland client takes only on its
   ack (`commitTile`); `requestedQuickTileMode()` is the request. A floating window tiled while its
   client is stopped stays committed None: a test of `quickTileMode()` alone sees it floating
-  (probed on 6.8.2: the helper declined a Meta press on it, and KWin's own move took it).
+  (probed on 6.8.2: the helper declined a Meta press on it, and KWin's own move took it). The
+  plugins decide from either (`plugin/customtiled.h`). The mirror stays: a window just floated
+  reads requested None, committed still Custom, so it counts tiled until its client's ack.
 - Every tile has a hidden minimum of 15% of the screen (`tile.h` `m_minimumSize`), inherited by
   children. A tile minimum also blocks the in-between steps of moving several edges, so sizes never
   settle: clear minimums while setting sizes.

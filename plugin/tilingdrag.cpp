@@ -1,4 +1,5 @@
 #include "tilingdrag.h"
+#include "customtiled.h"
 #include "gapstrips.h"
 
 #include <effect/globals.h>
@@ -146,8 +147,8 @@ bool TilingDrag::takesSelectionPress(PointerButtonEvent *event) const
         return false;
     }
     Window *window = frameOwner(input()->pointer()->hover(), event->position);
-    return window && !window->isDeleted() && !window->isFullScreen() && window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)
-        && !m_floated.contains(window->internalId().toString()) && m_selection.contains(window->internalId().toString());
+    return window && !window->isDeleted() && !window->isFullScreen() && customTiled(window) && !m_floated.contains(window->internalId().toString())
+        && m_selection.contains(window->internalId().toString());
 }
 
 void TilingDragBus::SetFocusParent(const QString &id)
@@ -437,8 +438,8 @@ Window *TilingDrag::frameOwner(Window *hover, const QPointF &pos) const
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         Window *w = *it;
-        if (w != hover && w->isClient() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity()
-            && w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom) && w->frameGeometry().contains(pos)) {
+        if (w != hover && w->isClient() && w->isShown() && w->isOnCurrentDesktop() && w->isOnCurrentActivity() && customTiled(w)
+            && w->frameGeometry().contains(pos)) {
             return w;
         }
     }
@@ -893,7 +894,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     // KWin's own window action fires on Meta alone (input.cpp:1299), so any other set goes to the
     // app where the setting leaves the press out, as Meta+Shift does.
     const bool metaMore = (mods & Qt::MetaModifier) && mods != Qt::MetaModifier && !metaShift;
-    const bool tiled = window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
+    const bool tiled = customTiled(window);
     const QString floated = m_floated.value(window->internalId().toString());
     if (!floated.isEmpty() && !window->isFullScreen()) {
         // In a floated container (click.c route_click): Meta+Shift tiles it whole, by a tiling drag
@@ -1042,8 +1043,7 @@ Window *TilingDrag::gapWindow(const QPointF &pos) const
     const auto order = workspace()->stackingOrder();
     for (auto it = order.crbegin(); it != order.crend(); ++it) {
         Window *w = *it;
-        if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || !w->isOnCurrentActivity() || w->isFullScreen()
-            || w->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+        if (!w->isClient() || !w->isShown() || !w->isOnCurrentDesktop() || !w->isOnCurrentActivity() || w->isFullScreen() || !customTiled(w)) {
             continue;
         }
         const RectF frame = w->frameGeometry();
@@ -1075,7 +1075,7 @@ bool TilingDrag::pressResize(PointerButtonEvent *event)
         return pressGroup(window, event, true); // a floated container resized whole (click.c, step 6)
     }
     if (window && !window->isDeleted() && !window->isDesktop() && !GapStrips::isStrip(window)) {
-        if (window->quickTileMode() != QuickTileMode(QuickTileFlag::Custom)) {
+        if (!customTiled(window)) {
             return false;
         }
     } else if (m_resizeGap > 0) {

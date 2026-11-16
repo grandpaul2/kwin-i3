@@ -1,4 +1,5 @@
 #include "framefocus.h"
+#include "customtiled.h"
 #include "gapstrips.h"
 #include "pointerprobe.h"
 #include "tilingdrag.h"
@@ -46,11 +47,6 @@ static QString sideOf(const Window *w, const QPointF &pos)
         : pos.x() < frame.left()   ? QStringLiteral("left")
         : pos.x() >= frame.right() ? QStringLiteral("right")
                                    : QStringLiteral("bottom");
-}
-
-static bool customTiled(const Window *w)
-{
-    return w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom) || w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom);
 }
 
 // The pointer over a tiled window's own input area outside its frame: an app that draws its own
