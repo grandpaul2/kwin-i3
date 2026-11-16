@@ -7,7 +7,7 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-15** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+Last reconciled: **2026-11-16** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). `stable` is at
 `v1.6.0` (2026-11-15, 584a643).
 
@@ -101,3 +101,15 @@ selection and its press), P3 rule 3 asking a red/green log diff before a scenari
 tail, millisecond stamps in `tools/logsink.py`, and `kwin-notes.md` lines on a script's
 synchronous `callDBus` into KWin and the test bus's default limits. Next: the maintainer's word on
 each, then each made.
+
+**121. The floating size check leaves out the window's own size hints** (2026-11-16, from item
+112's review). i3's `floating_check_size` (`floating.c:100-183`) first holds the floating con to
+its focused window's minimum, maximum, aspect ratio and increments, net of the border
+(`:84-92`), then to `floating_minimum_size`/`floating_maximum_size`; `src/kwin.js` `checkSize`
+and the helper's whole-container resize (`TilingDrag::sizeLimit`) apply the settings only. Next:
+a spec (both paths, one change).
+
+**122. A floated container's drag doesn't end on another button's release** (2026-11-16, from
+item 111's review). i3's `drag_pointer` ends every drag, a floating move or resize included, on
+any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGroup`,
+`m_groupActive`) ends on its own button's release only. Next: a spec.
