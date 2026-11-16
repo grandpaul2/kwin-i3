@@ -2589,13 +2589,11 @@ var KI3 = (function () {
             w: 0,
             h: 0,
         };
-        var all = { x1: Infinity, y1: Infinity, x2: -Infinity, y2: -Infinity };
+        // i3's total_outputs_dimensions (floating.c:22-35): the outputs' sizes summed.
+        var all = { width: 0, height: 0 };
         workspace.screens.forEach(function (s) {
-            var g = s.geometry;
-            all.x1 = Math.min(all.x1, g.x);
-            all.y1 = Math.min(all.y1, g.y);
-            all.x2 = Math.max(all.x2, g.x + g.width);
-            all.y2 = Math.max(all.y2, g.y + g.height);
+            all.width += s.geometry.width;
+            all.height += s.geometry.height;
         });
         function lo(v, def) {
             return v === -1 ? 1 : v === 0 ? def : v;
@@ -2606,11 +2604,11 @@ var KI3 = (function () {
         return {
             width: Math.min(
                 Math.max(width, lo(min.w, 75)),
-                hi(max.w, all.x2 - all.x1)
+                hi(max.w, all.width)
             ),
             height: Math.min(
                 Math.max(height, lo(min.h, 50)),
-                hi(max.h, all.y2 - all.y1)
+                hi(max.h, all.height)
             ),
         };
     }
@@ -6150,15 +6148,17 @@ var KI3 = (function () {
         "Focus Mode Toggle": function () {
             model.focusModeToggle();
         },
-        // i3's fullscreen toggle and kill: KWin's own actions, on its active window, managed or
-        // not; a stock Plasma binds neither key.
-        // Not on the window KWin falls back to (Rules.fallbackOnly): i3's kill and fullscreen on
-        // an empty workspace do nothing.
+        // i3's fullscreen toggle: KWin's own action, on its active window, managed or not; a stock
+        // Plasma binds neither this key nor Close's.
+        // Not on the window KWin falls back to (Rules.fallbackOnly): i3's fullscreen on an empty
+        // workspace does nothing.
         Fullscreen: function () {
             if (!fallbackActive()) invoke("Window Fullscreen");
         },
-        // i3's kill on a container (focus parent) closes every window in it, on a workspace
-        // every window there, floating ones too (con_close); else KWin's own, on any window.
+        // i3's kill closes the focused con (cmd_kill, con_close): a window; on a container (focus
+        // parent) every window in it, on a workspace every window there, floating ones too; on an
+        // empty workspace nothing. The tree's focus, not KWin's active window (a panel or the
+        // desktop can hold the keyboard).
         Close: function () {
             var f = model.focused;
             if (
@@ -6176,7 +6176,8 @@ var KI3 = (function () {
                 });
                 return;
             }
-            if (!fallbackActive()) invoke("Window Close");
+            var w = f && f.win !== null ? wins[f.win] : null;
+            if (w) w.closeWindow();
         },
         // The helper's mode (plugin/resizemode.cpp): without it nothing happens, and the settings
         // page's banner says the plugins aren't loaded.
@@ -6662,10 +6663,11 @@ var KI3 = (function () {
         };
     });
 
-    // KWin's own actions run on KWin's active window, so not through act(): its focus request
-    // would activate kwin-i3's focused window before KWin's queued action ran, and a window
-    // kwin-i3 doesn't manage would lose the key to it (closed the wrong one; 33-own-keys.sh).
-    // The mode, exit, terminal and launcher act on no window either.
+    // Not through act(). Fullscreen is KWin's own action on KWin's active window: act()'s focus
+    // request would activate kwin-i3's focused window before KWin's queued action ran, and a
+    // window kwin-i3 doesn't manage would lose the key to it. Close would have act()'s focus
+    // request and pass refocus the window being closed. The mode, exit, terminal and launcher act
+    // on no window.
     var KWIN_OWN = {
         Fullscreen: true,
         Close: true,

@@ -24,11 +24,11 @@ check "Meta+Shift+Q: B is gone" poll _no_window B
 check "A alone, focused" wait_tree 1 "H[A*]"
 check "A fills the monitor" geom_is A "0,0 1280x720"
 
-# 3. KWin's action works on a window kwin-i3 doesn't manage (an ignored class) too.
+# 3. Yakuake: sticky floating, in the tree (R3), so the tree's focus when active.
 client --title Y --app-id yakuake
 check "Y is active" poll active_is Y
 press Meta+Shift+Q
-check "Meta+Shift+Q closes unmanaged Y" poll _no_window Y
+check "Meta+Shift+Q closes Yakuake Y" poll _no_window Y
 check "A is still there" _has_window A
 check "no invariant failures or errors" clean_log
 finish

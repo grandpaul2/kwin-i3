@@ -42,7 +42,7 @@ The defaults are i3's with `$mod` = Meta, registered as KWin global shortcuts na
 | Meta+Return, Meta+D | the default terminal (System Settings ▸ Default Applications; plugins), KRunner |
 | Meta+Shift+E | end session: log out (Plasma asks first), or sleep, shut down or Plasma's logout screen, as set on the Keys page |
 | Meta+F | fullscreen (per output, as i3; runs KWin's own action, on any window) |
-| Meta+Shift+Q | close (KWin's own action, on any window; Alt+F4 still works) |
+| Meta+Shift+Q | close the focused window, or every window in a focused container or workspace (i3's `kill`; Alt+F4 still works) |
 | Meta+Shift+C | **reload settings** (i3's reload): KWin reconfigures and kwin-i3 takes the new values, re-tiling nothing that didn't change |
 | Meta+Ctrl+Shift+Q | **release**: hand every window back to KWin and stop, the safety valve |
 
