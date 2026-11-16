@@ -107,3 +107,7 @@ a spec (both paths, one change).
 item 111's review). i3's `drag_pointer` ends every drag, a floating move or resize included, on
 any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGroup`,
 `m_groupActive`) ends on its own button's release only. Next: a spec.
+
+**123. The maintainer's agent memory, drained** (2026-11-16). Agent memory holds nothing across
+sessions; its 14 entries each move to their home (a project fact to its doc, a preference to the
+maintainer's private notes) or are dropped. Next: one session's pass through them.
