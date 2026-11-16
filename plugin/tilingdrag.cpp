@@ -2,6 +2,8 @@
 #include "customtiled.h"
 #include "gapstrips.h"
 
+#include <core/output.h>
+
 #include <effect/globals.h>
 #include <input_event.h>
 #include <options.h>
@@ -21,7 +23,10 @@
 #include <QGuiApplication>
 #include <QHoverEvent>
 #include <QMouseEvent>
+#include <QRegularExpression>
 #include <QStyleHints>
+
+#include <limits>
 
 #include <algorithm>
 #include <cmath>
@@ -379,6 +384,40 @@ void TilingDrag::loadConfig()
     const QString mode = config->group(QStringLiteral("Script-kwin-i3")).readEntry("tilingDrag", QStringLiteral("modifier titlebar"));
     m_modifierDrag = mode.contains(QLatin1String("modifier"));
     m_titlebarDrag = mode.contains(QLatin1String("titlebar"));
+    const auto group = config->group(QStringLiteral("Script-kwin-i3"));
+    m_floatMin = parseSize(group.readEntry("floatingMinimumSize", QString()), QSize(75, 50));
+    m_floatMax = parseSize(group.readEntry("floatingMaximumSize", QString()), QSize(0, 0));
+}
+
+// i3's floating_minimum_size / floating_maximum_size as written: "WxH", each -1 or more; the same
+// rule as src/rules.js parseSize, else the default.
+QSize TilingDrag::parseSize(const QString &text, const QSize &fallback)
+{
+    static const QRegularExpression re(QStringLiteral("^\\s*(-?[0-9]+)\\s*x\\s*(-?[0-9]+)\\s*$"));
+    const auto m = re.match(text);
+    if (!m.hasMatch() || m.captured(1).toInt() < -1 || m.captured(2).toInt() < -1) {
+        return fallback;
+    }
+    return QSize(m.captured(1).toInt(), m.captured(2).toInt());
+}
+
+// floating_check_size's limits on a floating container's width and height (floating.c:186-230),
+// as src/kwin.js checkSize: -1 none, 0 i3's default (75x50; the outputs' sizes summed), the
+// maximum winning over the minimum.
+QSizeF TilingDrag::sizeLimit(const QSizeF &size) const
+{
+    QSizeF all;
+    for (LogicalOutput *output : workspace()->outputs()) {
+        all += output->geometry().size();
+    }
+    const auto lo = [](int v, int def) {
+        return v == -1 ? 1.0 : v == 0 ? double(def) : double(v);
+    };
+    const auto hi = [](int v, double def) {
+        return v == -1 ? std::numeric_limits<double>::infinity() : v == 0 ? def : double(v);
+    };
+    return QSizeF(std::min(std::max(size.width(), lo(m_floatMin.width(), 75)), hi(m_floatMax.width(), all.width())),
+                  std::min(std::max(size.height(), lo(m_floatMin.height(), 50)), hi(m_floatMax.height(), all.height())));
 }
 
 // "phase id x y side tab": side is the ring's side of a Z3 press, a tab's "top", else "-"; tab the
@@ -589,15 +628,21 @@ void TilingDrag::groupMotion(const QPointF &pos)
     if (!m_groupResize) {
         to.translate(d);
     } else {
+        // The container is limited as drawn, its bars with it (i3 limits the floating con), the
+        // edge under the pointer giving way.
+        const QRectF drawn = to.marginsAdded(m_groupBars);
+        const qreal width = drawn.width() + (m_groupLeft ? -d.x() : d.x());
+        const qreal height = drawn.height() + (m_groupTop ? -d.y() : d.y());
+        const QSizeF size = sizeLimit(QSizeF(width, height)).shrunkBy(m_groupBars);
         if (m_groupLeft) {
-            to.setLeft(std::min(to.left() + d.x(), to.right() - 75));
+            to.setLeft(to.right() - size.width());
         } else {
-            to.setRight(std::max(to.right() + d.x(), to.left() + 75));
+            to.setRight(to.left() + size.width());
         }
         if (m_groupTop) {
-            to.setTop(std::min(to.top() + d.y(), to.bottom() - 50));
+            to.setTop(to.bottom() - size.height());
         } else {
-            to.setBottom(std::max(to.bottom() + d.y(), to.top() + 50));
+            to.setBottom(to.top() + size.height());
         }
     }
     if (m_outlineShown) {
@@ -846,10 +891,11 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             hoverAt(event->position);
             return true;
         }
-        // The drag button's release drops; so does any other button's while a drag runs (i3's
-        // drain_drag_events: any release ends it at the pointer, §9 G7). The drag button's own
-        // release afterwards is still ours, taken.
-        if (event->button == m_button || (dragging() && m_phase == Phase::Drag)) {
+        // The drag button's release drops; so does any other button's while the press is held,
+        // before the drag distance too, where nothing has moved (i3's drain_drag_events: any
+        // release ends the drag, §9 G7). The drag button's own release afterwards is still ours,
+        // taken. A group press (phase None) ends on its own button only (endGroup, above).
+        if (event->button == m_button || (dragging() && (m_phase == Phase::Drag || m_phase == Phase::Pressed))) {
             if (m_phase == Phase::Drag) {
                 m_phase = Phase::Drop;
                 m_pos = event->position;

@@ -280,6 +280,8 @@ private:
     void pressDone();
     bool releaseLost(Qt::MouseButtons held);
     void loadConfig();
+    static QSize parseSize(const QString &text, const QSize &fallback);
+    QSizeF sizeLimit(const QSizeF &size) const;
     void watchMoves(KWin::Window *window);
 
     TilingDragBus m_bus;
@@ -291,6 +293,7 @@ private:
     // i3's tiling_drag (§9 G3), from kwinrc [Script-kwin-i3] tilingDrag: "off", "modifier",
     // "titlebar", "modifier titlebar" (the default).
     bool m_modifierDrag = true, m_titlebarDrag = true;
+    QSize m_floatMin{75, 50}, m_floatMax{0, 0}; // floatingMinimumSize, floatingMaximumSize as written
     QSet<QString> m_floating; // kwin-i3's floating windows, by internal id (SetFloating)
     QHash<QString, QString> m_floated; // SetFloated: internal id -> "group" or "group top"
     bool m_groupActive = false;
