@@ -131,12 +131,6 @@ live.
 for `patterns`; the line carries a qmllint disable until it changes. Next: the KF6 release that
 added `patterns`, against the oldest supported Plasma's (6.7), then a spec for the settings page.
 
-**118. `71-popup-grace.sh`'s 0.3 s check never runs** (2026-11-15, found by shellcheck). A
-stray line, `' ' ')"`, after "onto a: at once" opens a single quote that closes at the apostrophe
-in the next comment, so the timing check after it is swallowed into a string and the shell runs
-the rest as a command that isn't found. The line carries a shellcheck disable until it goes.
-Next: delete it and run `71-popup-grace.sh` alone; a red there is diagnosed like any other.
-
 **119. Tests that move the pointer and then press** (2026-11-15, from the release's 86 red: G16
 moved onto another window of a focus-parent selection before pressing, and focus follows mouse
 collapsed the selection first, under load; the trap is in `kwin-notes.md`). The same shape in 86:

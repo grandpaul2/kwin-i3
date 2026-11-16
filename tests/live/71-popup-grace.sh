@@ -77,8 +77,6 @@ check "hovering b: b" within 1 active_is b
 point 300 300
 t=$(now)
 check "onto a: at once" within 1 active_is a
-# shellcheck disable=SC1078,SC1079,SC2026 # a stray line that swallows the next check: OPEN.md item 118
-' ' ')"
 check "in under 0.3 s (took $(since "$t") ms)" test "$(since "$t")" -le 300
 
 # 6. The plugin unloaded while a popup has the focus: kwin-i3's value is put back.
