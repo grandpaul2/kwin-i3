@@ -126,11 +126,6 @@ Tiling key step's help speaking of the floating step's px, the pointer help narr
 though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
 live.
 
-**117. The Keys tab's key control uses a deprecated property** (2026-11-15, found by qmllint).
-`kcm/ui/Keys.qml` sets `KeySequenceItem`'s `modifierlessAllowed`, which KQuickControls deprecates
-for `patterns`; the line carries a qmllint disable until it changes. Next: the KF6 release that
-added `patterns`, against the oldest supported Plasma's (6.7), then a spec for the settings page.
-
 **119. Tests that move the pointer and then press** (2026-11-15, from the release's 86 red: G16
 moved onto another window of a focus-parent selection before pressing, and focus follows mouse
 collapsed the selection first, under load; the trap is in `kwin-notes.md`). The same shape in 86:

@@ -183,8 +183,7 @@ KCM.ScrollViewKCM {
                                 // override decides which runs); this item's own check would
                                 // offer to take it from its holder at once, beyond Reset.
                                 checkForConflictsAgainst: KQC.ShortcutType.None
-                                // Deprecated for patterns: OPEN.md item 117.
-                                modifierlessAllowed: false // qmllint disable deprecated
+                                patterns: KQC.ShortcutPattern.ModifierAndKey
                                 multiKeyShortcutsAllowed: false
                                 // KDE's control names its own buttons by the key ("Meta+J", " None ")
                                 // and "Clear Key Sequence", alike in every row, so a screen reader
