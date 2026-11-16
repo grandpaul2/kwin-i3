@@ -99,8 +99,8 @@ appended:
   windows", never "Disable…" or "When unticked…".
 - **Name what a setting does**, not how it is built: "Show layout changes all at once", not
   "Atomic layout".
-- **A window is named by its i3 kind**: tiling, floating, sticky (floating on every workspace of
-  its screen), and where needed dock, override-redirect, the root window. Never "unmanaged",
+- **A window is named by its i3 kind**: tiling, floating (sticky: floating on every workspace
+  of its screen), and where needed dock, override-redirect, the root window. Never "unmanaged",
   "places itself" or "leave alone": none is true.
 - **No "you", "your", "now" or "please"**, and no "kwin-i3" in a control's own text (a banner may
   name it).

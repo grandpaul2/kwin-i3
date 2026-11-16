@@ -136,18 +136,18 @@ test("i3Kind: KRunner, Plasma's system windows, the logout screen and Spectacle'
     );
 });
 
-test("classify: the kinds kept out come first; on all desktops is sticky (in the tree, floating); other non-Normal types are override-redirect", () => {
+test("classify: the kinds kept out come first; on all desktops floats (in the tree; sticky is the caller's flag); other non-Normal types are override-redirect", () => {
     const { R } = rules();
     assert.strictEqual(kind(R, { deleted: true }), "override-redirect");
     assert.strictEqual(kind(R, { dock: true }), "dock");
     assert.strictEqual(
         kind(R, { onAllDesktops: true, resourceClass: "yakuake" }),
-        "sticky"
+        "floating"
     );
     assert.strictEqual(
         R.keptOut(win({ onAllDesktops: true, resourceClass: "yakuake" })),
         null,
-        "sticky is in the tree"
+        "on all desktops is in the tree"
     );
     assert.strictEqual(
         kind(R, { normalWindow: false }),

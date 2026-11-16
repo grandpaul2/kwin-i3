@@ -37,7 +37,7 @@ maximum), by being on all desktops (then also sticky), or by being transient, th
 
 | word | means | i3 | KWin / Plasma |
 |---|---|---|---|
-| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**; `behaviour.md` and the code call it a kind, `sticky`, being fixed: `OPEN.md` item 110). A floating window's state only: i3 ignores it on a tiling one | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
+| **sticky** | a floating window visible on every workspace of its output (a **sticky floating window**). A floating window's state only: i3 ignores it on a tiling one | `sticky enable` | KWin's "on all desktops" (`onAllDesktops`) |
 | **transient window** (a dialog) | a window that belongs to another, its **parent** | `transient_for`, or the client leader (X11) | `transient`, `transientFor` |
 | **modal dialog** | a transient window the app marks modal; i3 floats it and does nothing more | `_NET_WM_STATE_MODAL` | `modal`; KWin keeps it and its parent on the same virtual desktop and gives it the parent's focus |
 | **fullscreen window** | a window covering its output, on top, its workspace's focus kept on it | `fullscreen` (output mode; global mode is out of scope) | `fullScreen` |

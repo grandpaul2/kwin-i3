@@ -69,12 +69,6 @@ ignores every request of a fullscreen container. Not yet traced: `_NET_WM_FULLSC
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (b)'s diagnosis.
 
-**110. `sticky` is a kind in the code, where i3 has a flag** (from the foundation sweep;
-`definitions.md` notes it; `AGENTS.md` "Ride i3 hard"). `src/rules.js` `classify`/`i3Kind` return
-`sticky` beside `tiling` and `floating`; i3's `sticky` is a flag on a floating con (`data.h`,
-`con->sticky`), and no reason in `plan.md` keeps the difference. Next: a spec for the model's
-shape (the flag on the floating con, the kind floating).
-
 **113. Three rows keep Plasma's way under reason (e) where kwin-i3 can win** (from the foundation
 sweep). `plan.md` (e) gives the user a Plasma setting only where kwin-i3 can't win it at runtime;
 these rows cite it where the helper already takes the press: G2 (the drag distance: Plasma's,

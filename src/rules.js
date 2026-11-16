@@ -3,10 +3,10 @@
 // `for_window [criteria] floating enable|disable`; `assign [criteria] → N | output X`), read from
 // kwinrc's [Script-kwin-i3] group (src/settings.js).
 //
-// Kinds: "tiling", "floating" and "sticky" (on all desktops: floating, on every workspace of its
-// output) are in the tree; "dock" (a panel), "root" (the desktop window) and
-// "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows) are
-// kept out of it.
+// Kinds: "tiling" and "floating" are in the tree; "dock" (a panel), "root" (the desktop window)
+// and "override-redirect" (KRunner, popups, menus, notifications, OSDs, Plasma's system windows)
+// are kept out of it. Sticky is no kind: i3's flag on a floating window's con (data.h, sticky),
+// which kwin.js sets from the window being on all desktops.
 
 var Rules = (function () {
     var S = function (key) {
@@ -15,9 +15,6 @@ var Rules = (function () {
 
     function has(arr, v) {
         return arr.indexOf(String(v)) >= 0;
-    }
-    function managed(kind) {
-        return kind === "tiling" || kind === "floating" || kind === "sticky";
     }
 
     // ---- the kinds kept out of the tree ---------------------------------------------------------
@@ -488,11 +485,11 @@ var Rules = (function () {
             return "override-redirect";
         return null;
     }
-    // "sticky": on all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and
-    // make it sticky"): in the tree, floating. The rules run after, as i3's
-    // for_window does (run_assignments, manage.c:588): `floating disable` tiles it, which here
-    // takes it off all desktops (KWin's tiles belong to one desktop, §3 X4; kwin.js adopts it so);
-    // `floating enable` leaves it sticky. ctx.current "sticky" for one in the tree already.
+    // On all virtual desktops (i3's _NET_WM_DESKTOP all, manage.c:486-490: "float it and make it
+    // sticky"): floating; the sticky flag is the caller's, as i3's nc->sticky. The rules run
+    // after, as i3's for_window does (run_assignments, manage.c:591): `floating disable` tiles it,
+    // which here takes it off all desktops (KWin's tiles belong to one desktop, §3 X4; kwin.js
+    // adopts it so).
     // The window's kind (A). ctx: { ws: the workspace it is on or opens on, current: its kind in
     // the tree ("tiling"/"floating") for a window already adopted, else null, ran: {} the rules
     // already run on it (by index; i3 runs each rule at most once per window, only to apply it,
@@ -503,14 +500,11 @@ var Rules = (function () {
         if (kept) return kept;
         // Not while kwin-i3 itself has it on all desktops to carry it across outputs (ctx.crossing,
         // kwin.js relocate): else a caption change would float a tiled window for good.
-        var sticky = w.onAllDesktops && !ctx.crossing;
-        var kind = sticky
-            ? ctx.current === "tiling"
-                ? "tiling"
-                : "sticky"
-            : ctx.current === "sticky"
-              ? "floating"
-              : ctx.current || (floatsByDefault(w) ? "floating" : "tiling");
+        var kind =
+            ctx.current ||
+            ((w.onAllDesktops && !ctx.crossing) || floatsByDefault(w)
+                ? "floating"
+                : "tiling");
         var ran = ctx.ran || {},
             rules = current().forWindow;
         for (var i = 0; i < rules.length; i++) {
@@ -518,18 +512,14 @@ var Rules = (function () {
             if (
                 !matches(rules[i].crit, w, {
                     ws: ctx.ws,
-                    kind: kind === "sticky" ? "floating" : kind,
+                    kind: kind,
                     focused: ctx.focused,
                     focusedWs: ctx.focusedWs,
                 })
             )
                 continue;
             ran[i] = true;
-            kind = rules[i].floating
-                ? sticky
-                    ? "sticky"
-                    : "floating"
-                : "tiling";
+            kind = rules[i].floating ? "floating" : "tiling";
         }
         return kind;
     }
@@ -574,7 +564,6 @@ var Rules = (function () {
         keptOut: keptOut,
         i3Kind: i3Kind,
         fallbackOnly: fallbackOnly,
-        managed: managed,
         assignFor: assignFor,
         parseForWindow: parseForWindow,
         parseAssign: parseAssign,

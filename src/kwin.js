@@ -4031,8 +4031,10 @@ var KI3 = (function () {
         recordUntiled(w);
         var fs = keepsFullscreenFocus(w, ws, fresh, kind);
         if (fresh) opening[key] = fs || true;
-        if (kind === "floating" || kind === "sticky") {
-            model.setSticky(model.openFloating(key, ws), kind === "sticky");
+        // i3's nc->sticky, from the window (manage.c:486-490); not while relocate carries it.
+        var sticky = w.onAllDesktops && !crossing[key];
+        if (kind === "floating") {
+            model.setSticky(model.openFloating(key, ws), sticky);
             setFloatingLook(w, true);
             if (fresh) clampFloating(w);
         } else {
@@ -4085,6 +4087,7 @@ var KI3 = (function () {
                 w.caption +
                 " " +
                 kind +
+                (kind === "floating" && sticky ? " sticky" : "") +
                 " ws " +
                 ws.num +
                 (placed
@@ -4300,16 +4303,12 @@ var KI3 = (function () {
             w,
             focusCtx({
                 ws: Tree.wsOf(con).num,
-                current: con.sticky
-                    ? "sticky"
-                    : floating
-                      ? "floating"
-                      : "tiling",
+                current: floating ? "floating" : "tiling",
                 ran: ruleRan[key],
                 crossing: !!crossing[key],
             })
         );
-        var wantFloating = kind !== "tiling"; // "sticky" floats too
+        var wantFloating = kind === "floating";
         if (wantFloating === floating) return;
         if (!wantFloating && con.sticky) unstick(w, con); // a rule tiles it: off all desktops first (X4)
         model.toggleFloating(con);
