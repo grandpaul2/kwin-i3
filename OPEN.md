@@ -139,6 +139,7 @@ each, then each made.
 **120. The helper reads only the committed tile mode** (2026-11-15, from the same diagnosis).
 `plugin/tilingdrag.cpp` tests `quickTileMode()` at six places, where FrameFocus and the hold count
 `requestedQuickTileMode()` too: a client slow to ack its tile looks untiled to the helper's presses
-(G1-G5, G13, G16, Z3, Z5) meanwhile. Not this red's cause, and not yet seen live. Next: a test-KWin
-probe with a SIGSTOPped client re-tiled, pressed with Meta+Shift, to show whether the press goes
-wrong; then the spec drafted for it (with its review) is built or dropped.
+(G1-G5, G13, G16, Z3, Z5) meanwhile. Not the 86 red's cause, and not yet seen live; a probe shows
+it (`kwin-notes.md`: a floating window tiled while its client is stopped, then a Meta drag on it,
+is moved by KWin, out of its place in the tree). Next: the maintainer's go on the spec drafted for
+it (reviewed), then built.

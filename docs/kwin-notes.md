@@ -22,6 +22,10 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - `Tile::manage` refuses a fullscreen window (`isResizable` is false while fullscreen is requested).
 - A window's scripting `tile` is the **requested** tile (`window.h` `READ requestedTile`), cleared
   by the unmanage itself, not on the client's ack: safe to decide from (probed with a SIGSTOPped client).
+- A plugin's `quickTileMode()` is the **committed** tile, which a Wayland client takes only on its
+  ack (`commitTile`); `requestedQuickTileMode()` is the request. A floating window tiled while its
+  client is stopped stays committed None: a test of `quickTileMode()` alone sees it floating
+  (probed on 6.8.2: the helper declined a Meta press on it, and KWin's own move took it).
 - Every tile has a hidden minimum of 15% of the screen (`tile.h` `m_minimumSize`), inherited by
   children. A tile minimum also blocks the in-between steps of moving several edges, so sizes never
   settle: clear minimums while setting sizes.
