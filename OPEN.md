@@ -69,13 +69,6 @@ ignores every request of a fullscreen container. Not yet traced: `_NET_WM_FULLSC
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (b)'s diagnosis.
 
-**106. The helper's presses take KWin's window-action modifier** (from the foundation sweep;
-`behaviour.md` N16, being fixed). i3 has one `floating_modifier` for every drag (`click.c:170-171`);
-the helper's tiling drag, Meta+Shift float and tile and Meta+right resize test Meta only
-(`plugin/tilingdrag.cpp` `pointerButton`), while a floating window moves with KWin's modifier (F1)
-and `plan.md` (e) has the modifier the user's. KWin's is `[MouseBindings] CommandAllKey`
-(`options.cpp` `CmdAllModKey`), readable by the helper. Next: a spec.
-
 **110. `sticky` is a kind in the code, where i3 has a flag** (from the foundation sweep;
 `definitions.md` notes it; `AGENTS.md` "Ride i3 hard"). `src/rules.js` `classify`/`i3Kind` return
 `sticky` beside `tiling` and `floating`; i3's `sticky` is a flag on a floating con (`data.h`,

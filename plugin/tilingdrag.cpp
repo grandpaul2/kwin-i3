@@ -148,7 +148,7 @@ bool TilingDrag::takesSelectionPress(PointerButtonEvent *event) const
         return false;
     }
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
-    if (mods != (Qt::MetaModifier | Qt::ShiftModifier)) {
+    if (mods != (floatMod() | Qt::ShiftModifier)) {
         return false;
     }
     Window *window = frameOwner(input()->pointer()->hover(), event->position);
@@ -287,7 +287,7 @@ TilingDrag::TilingDrag()
     // The latch (§9 G5, G13): a release of Meta or Shift, seen with the pointer still
     // (InputRedirection::keyboardModifiersChanged, KWin 6.7.5 input.h:273).
     QObject::connect(input(), &InputRedirection::keyboardModifiersChanged, &m_context, [this](Qt::KeyboardModifiers now, Qt::KeyboardModifiers) {
-        if (!(now & Qt::MetaModifier) || !(now & Qt::ShiftModifier)) {
+        if (!(now & floatMod()) || !(now & Qt::ShiftModifier)) {
             m_shiftLatched = false;
         }
     });
@@ -387,6 +387,11 @@ void TilingDrag::loadConfig()
     const auto group = config->group(QStringLiteral("Script-kwin-i3"));
     m_floatMin = parseSize(group.readEntry("floatingMinimumSize", QString()), QSize(75, 50));
     m_floatMax = parseSize(group.readEntry("floatingMaximumSize", QString()), QSize(0, 0));
+}
+
+Qt::KeyboardModifier TilingDrag::floatMod()
+{
+    return options->commandAllModifier();
 }
 
 // i3's floating_minimum_size / floating_maximum_size as written: "WxH", each -1 or more; the same
@@ -927,19 +932,21 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return pressResize(event);
     }
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
+    const Qt::KeyboardModifier mod = floatMod();
     Window *window = input()->pointer()->hover();
-    if (mods & Qt::MetaModifier) {
+    if (mods & mod) {
         window = frameOwner(window, event->position);
     }
     if (!window || window->isDeleted()) {
         return false;
     }
-    const bool metaShift = mods == (Qt::MetaModifier | Qt::ShiftModifier);
+    const bool modShift = mods == (mod | Qt::ShiftModifier);
     // i3's floating modifier is pressed when its bits are all there, whatever else is held
-    // (click.c:171, (state & mod) == mod): Meta+Ctrl or Meta+Alt is a Meta press too (§9 G1).
-    // KWin's own window action fires on Meta alone (input.cpp:1299), so any other set goes to the
-    // app where the setting leaves the press out, as Meta+Shift does.
-    const bool metaMore = (mods & Qt::MetaModifier) && mods != Qt::MetaModifier && !metaShift;
+    // (click.c:171, (state & mod) == mod): with Meta the modifier, Meta+Ctrl or Meta+Alt is a
+    // Meta press too (§9 G1). KWin's own window action fires on its modifier alone, compared
+    // exactly (input.cpp globalWindowAction), so any other set goes to the app where the setting
+    // leaves the press out, as Meta+Shift does.
+    const bool modMore = (mods & mod) && mods != mod && !modShift;
     const bool tiled = customTiled(window);
     const QString floated = m_floated.value(window->internalId().toString());
     if (!floated.isEmpty() && !window->isFullScreen()) {
@@ -949,10 +956,10 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         // the press is the app's (G3, G4). The floating modifier alone moves it whole (step 5); a
         // title bar resizes against the neighbour above, and moves it whole only where there is
         // none (steps 6, 7); the client's press is the client's.
-        if (metaShift) {
+        if (modShift) {
             return pressKindChange(window, event, nullptr);
         }
-        if (mods & Qt::MetaModifier) {
+        if (mods & mod) {
             return pressGroup(window, event, false);
         }
         if (mods != Qt::NoModifier || !window->decoration() || window->decoration()->sectionUnderMouse() != Qt::TitleBarArea) {
@@ -973,7 +980,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         }
         return pressGroup(window, event, false);
     }
-    if (metaShift && !tiled) {
+    if (modShift && !tiled) {
         // A floating window of kwin-i3's: Meta+Shift tiles it, by a tiling drag (§9 G13, beyond
         // i3). Anything else, a fullscreen window among them, keeps its press.
         if (!m_floating.contains(window->internalId().toString()) || window->isFullScreen()) {
@@ -984,7 +991,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
     if (!tiled) {
         return false;
     }
-    if (metaShift && !window->isFullScreen() && m_selection.contains(window->internalId().toString())) {
+    if (modShift && !window->isFullScreen() && m_selection.contains(window->internalId().toString())) {
         // A window of the selected container (after focus parent): Meta+Shift floats the container
         // whole, as Meta+Shift+Space would (§9 G16): a drag with an outline, floated at the
         // release. Taken with no activation, so the selection stays (FrameFocus asked first).
@@ -1000,13 +1007,13 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         m_kind = QStringLiteral("float");
         return true;
     }
-    if (metaShift && window->isMovable() && window->isMovableAcrossScreens() && !window->isFullScreen()) {
+    if (modShift && window->isMovable() && window->isMovableAcrossScreens() && !window->isFullScreen()) {
         // A tiling window: Meta+Shift floats it (§9 G5, beyond i3), by KWin's own move, which
         // pulls it out of its tile; kwin-i3 floats it where it is dropped.
         return pressKindChange(window, event, window);
     }
     bool threshold = false;
-    if (metaShift || metaMore) {
+    if (modShift || modMore) {
         // i3's swap modifier, read at the press (tiling_drag.c:341): here the same tiling drag as
         // Meta alone, the centre's bands deciding (§9 G11). With tiling_drag off or titlebar (G3),
         // or nowhere to drop (has_drop_targets, G4), the press is the app's, as in i3 (focus,
@@ -1015,7 +1022,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         if (!m_modifierDrag || !m_dropTargets) {
             return false;
         }
-    } else if (mods == Qt::MetaModifier) {
+    } else if (mods == mod) {
         // Anywhere in the window, with no threshold (i3's floating modifier, click.c), and no
         // activation: i3 starts the drag before it focuses anything (step 2 before 3), and after
         // the drop the focus stays unless the dragged window had it (§9 G1). With
@@ -1113,7 +1120,7 @@ Window *TilingDrag::gapWindow(const QPointF &pos) const
 bool TilingDrag::pressResize(PointerButtonEvent *event)
 {
     // Meta held, whatever else is (click.c:171, as the left button's, §9 Z1).
-    if (!(event->modifiersRelevantForShortcuts & Qt::MetaModifier)) {
+    if (!(event->modifiersRelevantForShortcuts & floatMod())) {
         return false;
     }
     Window *window = frameOwner(input()->pointer()->hover(), event->position);
@@ -1235,7 +1242,7 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
     if (!shown || shown->isDeleted()) {
         return true;
     }
-    const bool mod = event->modifiersRelevantForShortcuts & Qt::MetaModifier;
+    const bool withMod = event->modifiersRelevantForShortcuts & floatMod();
     const bool left = event->button == Qt::LeftButton;
     if (!left && event->button != Qt::RightButton) {
         // Any other button focuses the tab and does no more (click.c:261-275, step 3).
@@ -1250,14 +1257,14 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
         // only where there is none a right press resizes the container whole and a left one moves
         // it (steps 6, 7). The tab is focused by kwin-i3's rule, so the press activates nothing.
         tellTab(QStringLiteral("click %1 %2").arg(bar->key).arg(index));
-        if (!mod && bar->floated == 2) {
+        if (!withMod && bar->floated == 2) {
             takePress(shown, event->button, event->position, true, QStringLiteral("top"), true);
         } else {
             pressGroup(shown, event, !left, false);
         }
         return true;
     }
-    if (left && mod && m_modifierDrag) {
+    if (left && withMod && m_modifierDrag) {
         takePress(shown, Qt::LeftButton, event->position, false, QString(), false);
         m_tab = QStringLiteral("%1:%2").arg(bar->key).arg(index);
         return true;
@@ -1266,7 +1273,7 @@ bool TilingDrag::pressBar(PointerButtonEvent *event)
     if (left && m_titlebarDrag) {
         // The drag is the shown window's until kwin-i3 has focused the tab: it reports the tab's
         // window in State() once it knows (the tab clicked is the one that ends up shown).
-        takePress(shown, Qt::LeftButton, event->position, false, QString(), !mod);
+        takePress(shown, Qt::LeftButton, event->position, false, QString(), !withMod);
     } else {
         takePress(shown, event->button, event->position, true, QStringLiteral("top"), true);
     }

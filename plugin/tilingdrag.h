@@ -280,6 +280,9 @@ private:
     void pressDone();
     bool releaseLost(Qt::MouseButtons held);
     void loadConfig();
+    // i3's floating_modifier: KWin's window-action modifier, Meta or Alt as Plasma has it
+    // ([MouseBindings] CommandAllKey; plan.md (e)). "Meta" in this file's comments is this.
+    static Qt::KeyboardModifier floatMod();
     static QSize parseSize(const QString &text, const QSize &fallback);
     QSizeF sizeLimit(const QSizeF &size) const;
     void watchMoves(KWin::Window *window);

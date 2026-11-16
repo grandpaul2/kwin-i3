@@ -164,6 +164,9 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - Shift held during KWin's interactive move means "drop into a custom tile" on release.
 - KWin's window actions (Meta+left move, Meta+right resize) fire only when the modifiers equal
   `CommandAllModifier` exactly (6.7.5 `input.cpp:1299`): Meta+Shift+left reaches the app.
+- With xkb's `grp:alt_shift_toggle` (Alt+Shift switches the layout) and the window-action
+  modifier set to Alt, an Alt+Shift+left press doesn't arrive as Alt+Shift: the layout switches
+  and nothing floats (probed on 6.8.2). Alt+left and Alt+right are unaffected.
 - An app's own move request (`xdg_toplevel.move`, a header bar's drag) is run as KWin's own move
   command (`handleMoveRequested`, `xdgshellwindow.cpp:1045`): no input filter sees it, as for Move
   Window and the window menu's Move. `cancelInteractiveMoveResize` (public) stops one, but not
