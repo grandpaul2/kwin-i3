@@ -76,22 +76,11 @@ the helper's tiling drag, Meta+Shift float and tile and Meta+right resize test M
 and `plan.md` (e) has the modifier the user's. KWin's is `[MouseBindings] CommandAllKey`
 (`options.cpp` `CmdAllModKey`), readable by the helper. Next: a spec.
 
-**107. One flag serves two timers** (from the foundation sweep). `src/kwin.js` declares
-`pendingTimer` twice, for `recordShown` (an outside desktop switch, D2/D3, handled a turn later)
-and for `checkPending` (V14's 150 ms look at a pending fullscreen): while either is armed, the
-other schedules nothing, so after an output change a switch from the Overview, a pager or Alt+Tab
-can wait for the next one; eslint's `no-redeclare` finds it, and the second declaration carries
-the disable that goes with the fix. Next: a spec (one flag each).
-
 **108. Close acts on KWin's active window, not the tree's focus** (from the foundation sweep;
 `behaviour.md` A5, K12). For a focused window, and an empty focused workspace, Meta+Shift+Q runs
 KWin's Window Close on KWin's active window, with no re-sync (`KWIN_OWN`); i3's `kill` closes the
 focused con (`commands.c` `cmd_kill`), and on an empty workspace nothing. They differ while a window
 kept out of the tree has the keyboard. Next: a spec.
-
-**109. A critical notification doesn't match `window_type=notification`** (from the foundation
-sweep; `behaviour.md` R2, R9). `Rules.windowType` tests `w.notification` only, where
-`floatsByDefault` counts `w.criticalNotification` too. Next: a spec.
 
 **110. `sticky` is a kind in the code, where i3 has a flag** (from the foundation sweep;
 `definitions.md` notes it; `AGENTS.md` "Ride i3 hard"). `src/rules.js` `classify`/`i3Kind` return
@@ -135,11 +124,3 @@ selection and its press), P3 rule 3 asking a red/green log diff before a scenari
 tail, millisecond stamps in `tools/logsink.py`, and `kwin-notes.md` lines on a script's
 synchronous `callDBus` into KWin and the test bus's default limits. Next: the maintainer's word on
 each, then each made.
-
-**120. The helper reads only the committed tile mode** (2026-11-15, from the same diagnosis).
-`plugin/tilingdrag.cpp` tests `quickTileMode()` at six places, where FrameFocus and the hold count
-`requestedQuickTileMode()` too: a client slow to ack its tile looks untiled to the helper's presses
-(G1-G5, G13, G16, Z3, Z5) meanwhile. Not the 86 red's cause, and not yet seen live; a probe shows
-it (`kwin-notes.md`: a floating window tiled while its client is stopped, then a Meta drag on it,
-is moved by KWin, out of its place in the tree). Next: the maintainer's go on the spec drafted for
-it (reviewed), then built.
