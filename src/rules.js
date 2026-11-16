@@ -124,7 +124,7 @@ var Rules = (function () {
         if (w.utility) return "utility";
         if (w.toolbar) return "toolbar";
         if (w.splash) return "splash";
-        if (w.notification) return "notification";
+        if (w.notification || w.criticalNotification) return "notification";
         return "normal";
     }
 

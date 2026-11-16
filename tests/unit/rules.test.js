@@ -370,6 +370,31 @@ test("classify: criteria match class, instance, title, window_role, window_type,
         "tiling",
         "floating disable tiles a dialog"
     );
+    // KDE writes a critical notification's type as its own atom, then the notification one, which
+    // is what i3 reads (xcb.c xcb_get_preferred_window_type).
+    const critical = {
+        criticalNotification: true,
+        normalWindow: false,
+        resourceClass: "x",
+    };
+    assert.strictEqual(
+        kind(
+            rules({
+                forWindow: '[window_type="notification"] floating disable',
+            }).R,
+            critical
+        ),
+        "tiling",
+        "a critical notification is window_type notification"
+    );
+    assert.strictEqual(
+        kind(
+            rules({ forWindow: '[window_type="normal"] floating disable' }).R,
+            critical
+        ),
+        "floating",
+        "and not normal"
+    );
     assert.strictEqual(
         kind(R, { resourceClass: "x" }, { ws: 3 }),
         "floating",
