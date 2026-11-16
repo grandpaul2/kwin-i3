@@ -195,6 +195,7 @@ QString PointerProbe::Windows() const
             {QStringLiteral("buffer"), rect(w->bufferGeometry())},
             {QStringLiteral("visible"), rect(w->visibleGeometry())},
             {QStringLiteral("tiled"), w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom)},
+            {QStringLiteral("requested"), w->requestedQuickTileMode() == QuickTileMode(QuickTileFlag::Custom)},
             {QStringLiteral("decoration"), w->decoration() != nullptr},
         });
     }
