@@ -8873,6 +8873,8 @@ var KI3 = (function () {
             guard("drag state", dragState)
         );
     }
+    // The helper's presses: "Meta" in these comments is the window-action modifier the helper
+    // reads (behaviour.md §9, N16), Meta by default.
     // The hidden action: a drag began. A tiled window of kwin-i3's (a tiling drag never starts
     // from anything floating in i3, click.c:251), or a floating window or a container floated
     // whole, Meta+Shift-dragged to be tiled (§9 G13, beyond i3: the helper takes Meta+Shift on
@@ -8918,7 +8920,7 @@ var KI3 = (function () {
                     // Only Meta+Shift's press tiles a floating window (the helper says so: "tile"); any
                     // other drag report for one (a Meta press as KWin's untile lands) starts nothing.
                     if (f[6] !== "tile") {
-                        log("DRAG not started: floating, and not Meta+Shift");
+                        log("DRAG not started: floating, and not the modifier with Shift");
                         return;
                     }
                     tabDrag = null; // a floated group's tab click before: not this drag

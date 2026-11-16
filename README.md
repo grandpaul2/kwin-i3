@@ -66,7 +66,7 @@ starts, such as a game from its launcher, opened where you were in i3 too).
 
 Mouse (Meta here is Plasma's window-action modifier, System Settings ▸ Window Management ▸ Window
 Behavior ▸ Window Actions ▸ Modifier key: Meta by default; set it to Alt and every press below
-takes Alt):
+takes Alt, though with Alt+Shift switching the keyboard layout an Alt+Shift press switches it instead):
 - **Meta+left-drag on a tiling window** is i3's tiling drag (needs the helper plugin): the window
   stays put while a highlight shows where it would land, under a move cursor. Near another
   window's edge it goes beside that window; in the thin strip at an edge it goes beside the whole
