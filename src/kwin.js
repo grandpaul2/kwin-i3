@@ -778,7 +778,7 @@ var KI3 = (function () {
     // floated, as a refused window is. A gap of over a minute between looks (a suspend) starts
     // the 3 s again.
     var pendingLook = 0,
-        pendingTimer = false; // eslint-disable-line no-redeclare -- OPEN.md item 107
+        pendingFsTimer = false;
     function pendingOut(key, w) {
         return pendingFs[key] !== undefined && Rules.pendingFullscreen(w);
     }
@@ -819,10 +819,10 @@ var KI3 = (function () {
             }
             again = true;
         });
-        if (again && !pendingTimer) {
-            pendingTimer = true;
+        if (again && !pendingFsTimer) {
+            pendingFsTimer = true;
             later(150, function () {
-                pendingTimer = false;
+                pendingFsTimer = false;
                 checkPending();
             });
         }
