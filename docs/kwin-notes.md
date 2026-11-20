@@ -517,6 +517,11 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   L12): Dim Inactive leaves them undimmed unless its "Keep above windows" (`DimKeepAbove`) is
   ticked, off by default (6.7.5 `diminactive.cpp:184`, `diminactive.kcfg:17-18`); Slide Back
   neither slides them nor slides others away from them (`slideback.cpp:94`, `:167`, `:307`).
+- **The Overview shows every client window on the desktop, minimized ones too, except one with
+  `skipSwitcher`** (6.8.3 `scripting/windowmodel.cpp:245-309` `WindowFilterModel`, which filters
+  by desktop, output, type and minimized only; `plugins/private/qml/WindowHeapDelegate.qml:34`
+  `activeHidden`), and animates each from its frame on screen: windows sharing one tile (a
+  tabbed or stacked group) fly out of one pile and back. Its z-order is KWin's stacking order.
 - xwaylandvideobridge's idle window ("Wayland to X Recording bridge") takes pointer input it should
   pass through (KDE bugs 525007, 524544): a resize grab there moves nothing. kwin-i3 leaves it as the
   distribution ships it.

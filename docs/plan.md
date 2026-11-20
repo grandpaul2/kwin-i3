@@ -124,7 +124,12 @@ its model (`handlers.c:675-991`):
   only without it; Keep Above and Keep Below are kwin-i3's on its windows (L12);
 - minimize takes the window out of the layout, its place kept (V7, reason (g));
 - a floating window's own actions are KWin's ("The mouse", F1);
-- Show Desktop changes nothing in the tree: the hidden tiles are only not hit (B2, F8b).
+- Show Desktop changes nothing in the tree: the hidden tiles are only not hit (B2, F8b);
+- the Overview and Alt+Tab list every window, a tabbed or stacked group's hidden children too, so
+  the Overview spreads them out of the group's one tile and gathers them back into it. Kept:
+  KWin's only way to leave a window out of the Overview is `skipSwitcher` (`kwin-notes.md`
+  "Plasma"), which takes it out of Alt+Tab as well, and a hidden tab that Plasma's switchers can't
+  pick is a loss to the Plasma user this project is for (`philosophy.md`).
 
 Not covered yet, each its own item or row: activities (R15, `LATER.md` "Reliability"), a user's
 Keep Above on a floating window (`LATER.md` item 27), and KWin's window rules, No Border and shade
