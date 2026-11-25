@@ -124,6 +124,13 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   kwin-i3 to refit.
 - `PlacementTracker` re-requests fullscreen, and puts a returning monitor's windows back on it,
   **after** a script's replug reconcile.
+- **An X11 `_NET_WM_MOVERESIZE` warps the pointer to the request's root point, then starts the
+  move** (6.8.3 `events.cpp:615-636`, `performMousePressCommand(MouseMove)` at
+  `window.cpp:2150-2168`). A second request while the first move runs warps again: that motion is a
+  step of the first move (the position is set before the filters, `pointer_input.cpp:268-286`, and
+  a zero delta still steps through snapping, `window.cpp:1697-1715`), which untiles a tiled window
+  (`:1206-1223`); then it ends the first move as a success, not a cancel (`:2155-2157`), and
+  starts another. Steam sends two in one batch (read from the source and a capture, not probed).
 - An X11 client's own move request (`X11Window::configureRequest`) is run as an interactive
   output change: a window landing on another output has its desktop swapped for that output's
   current one (`finishInteractiveOutputChange`, `window.cpp:4593`), and kwin-i3 hears

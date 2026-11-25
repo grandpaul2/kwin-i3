@@ -78,8 +78,8 @@ without focusing it, where i3 focuses, `click.c:261-277`). Each is i3's way by t
 live verdict, reason (c), if kept. Next: a spec each, judged live.
 
 **114. The settings page's words against its style guide** (from the foundation sweep). The
-plugin banner names three losses where §1 lists more (the terminal key, the key override, the
-position keys, a group's tabs); "Your rules", "No rules of your own", "when you untick it",
+plugin banner names four losses where §1 lists more (the terminal key, the position keys, a
+group's tabs); "Your rules", "No rules of your own", "when you untick it",
 "made from now on" and help naming kwin-i3; strings through `i18n` with no context; the
 Tiling key step's help speaking of the floating step's px, the pointer help narrower than
 `mouseWarping`, the rules help leaving out class; the unfocused indicator colour off the page,
@@ -110,11 +110,12 @@ any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGrou
 
 **124. A tiling X11 window floats when its own title bar is dragged** (2026-11-25, the capture
 2026-11-20_152049.077, kept: Steam). i3 ignores a client's `_NET_WM_MOVERESIZE` on a tiling window
-(`handlers.c:936`); `behaviour.md` X5 has the helper cancel KWin's move. The capture: the helper
-cancelled the first move (in its tile), and Steam's second request 2 ms later started a move with
-the window already out of its tile ("no tile"), which floated it. Next: the diagnosis (why the
-window wasn't back in its tile before the second request: `kwin-notes.md`'s cancelled move
-re-tiling by position), then a spec.
+(`handlers.c:936`); `behaviour.md` X5 has the helper cancel KWin's move on the next turn. Cause:
+Steam sends the request twice in one batch; the second's pointer warp steps the first move, which
+untiles the window, before the cancel runs. Fix: the helper's `TilingDragFloat` takes a motion
+while the move KWin runs is one it refuses (the cancel's own test). Spec and review in the private
+records (`spec-refused-move-race*.md`). Next: the maintainer's go on the spec, then the probe
+(two requests back to back, red first), the build in a worktree, scenario 64.
 
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
