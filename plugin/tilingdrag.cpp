@@ -415,11 +415,33 @@ QSize TilingDrag::parseSize(const QString &text, const QSize &fallback)
     return QSize(m.captured(1).toInt(), m.captured(2).toInt());
 }
 
-// floating_check_size's limits on a floating container's width and height (floating.c:186-230),
-// as src/kwin.js checkSize: -1 none, 0 i3's default (75x50; the outputs' sizes summed), the
-// maximum winning over the minimum.
-QSizeF TilingDrag::sizeLimit(const QSizeF &size) const
+// floating_check_size's limits on a floating container's width and height (floating.c:76-230),
+// as src/kwin.js checkSize: first the focused window's own minimum and maximum (`hint`, null for
+// none), net of its decoration; then the settings, -1 none, 0 i3's default (75x50; the outputs'
+// sizes summed), the maximum winning over the minimum. Aspect ratio and increments aren't held,
+// as in the script.
+QSizeF TilingDrag::sizeLimit(const QSizeF &size, const Window *hint) const
 {
+    QSizeF extra;
+    QSizeF inner = size;
+    if (hint && !hint->isDeleted()) {
+        const RectF f = hint->frameGeometry(), c = hint->clientGeometry();
+        extra = QSizeF(std::max(0.0, f.width() - c.width()), std::max(0.0, f.height() - c.height()));
+        inner -= extra;
+        const QSizeF mn = hint->minSize(), mx = hint->maxSize();
+        if (mn.width() > 0) {
+            inner.setWidth(std::max(inner.width(), mn.width()));
+        }
+        if (mn.height() > 0) {
+            inner.setHeight(std::max(inner.height(), mn.height()));
+        }
+        if (mx.width() > 0 && mx.width() < 1e9) {
+            inner.setWidth(std::min(inner.width(), mx.width()));
+        }
+        if (mx.height() > 0 && mx.height() < 1e9) {
+            inner.setHeight(std::min(inner.height(), mx.height()));
+        }
+    }
     QSizeF all;
     for (LogicalOutput *output : workspace()->outputs()) {
         all += output->geometry().size();
@@ -430,8 +452,8 @@ QSizeF TilingDrag::sizeLimit(const QSizeF &size) const
     const auto hi = [](int v, double def) {
         return v == -1 ? std::numeric_limits<double>::infinity() : v == 0 ? def : double(v);
     };
-    return QSizeF(std::min(std::max(size.width(), lo(m_floatMin.width(), 75)), hi(m_floatMax.width(), all.width())),
-                  std::min(std::max(size.height(), lo(m_floatMin.height(), 50)), hi(m_floatMax.height(), all.height())));
+    return QSizeF(std::min(std::max(inner.width(), lo(m_floatMin.width(), 75)), hi(m_floatMax.width(), all.width())) + extra.width(),
+                  std::min(std::max(inner.height(), lo(m_floatMin.height(), 50)), hi(m_floatMax.height(), all.height())) + extra.height());
 }
 
 // "phase id x y side tab": side is the ring's side of a Z3 press, a tab's "top", else "-"; tab the
@@ -574,6 +596,10 @@ bool TilingDrag::pressGroup(Window *window, PointerButtonEvent *event, bool resi
         }
     }
     workspace()->raiseWindow(window);
+    // i3's con_descend_focused: the container's focused window gives the size hints, the active
+    // one when the press left it in the container, else the pressed one.
+    Window *active = workspace()->activeWindow();
+    m_groupHint = active && m_group.contains(active) ? active : window;
     m_groupUnion = all;
     // The floated groups' bars among these windows (SetBars, floated 1 or 2): the outline is the
     // container as drawn, its bars with its windows.
@@ -647,7 +673,7 @@ void TilingDrag::groupMotion(const QPointF &pos)
         const QRectF drawn = to.marginsAdded(m_groupBars);
         const qreal width = drawn.width() + (m_groupLeft ? -d.x() : d.x());
         const qreal height = drawn.height() + (m_groupTop ? -d.y() : d.y());
-        const QSizeF size = sizeLimit(QSizeF(width, height)).shrunkBy(m_groupBars);
+        const QSizeF size = sizeLimit(QSizeF(width, height), m_groupHint).shrunkBy(m_groupBars);
         if (m_groupLeft) {
             to.setLeft(to.right() - size.width());
         } else {

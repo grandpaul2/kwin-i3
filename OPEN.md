@@ -93,12 +93,12 @@ which about 35 scenarios, `tests/fuzz/fuzz.py` and `tools/capture-read` (`[9:]`,
 `cut -c10-`/`-c15-`/`-c17-` and `[9:]` moved by 4, `capture-read` reading old captures as well,
 then `make test`.
 
-**121. The floating size check leaves out the window's own size hints** (2026-11-16, from item
-112's review). i3's `floating_check_size` (`floating.c:100-183`) first holds the floating con to
-its focused window's minimum, maximum, aspect ratio and increments, net of the border
-(`:84-92`), then to `floating_minimum_size`/`floating_maximum_size`; `src/kwin.js` `checkSize`
-and the helper's whole-container resize (`TilingDrag::sizeLimit`) apply the settings only. Next:
-a spec (both paths, one change).
+**128. An X11 window's aspect ratio and size increments, for a floating size** (2026-11-25, from
+item 121). i3's `floating_check_size` holds them (`floating.c:131-179`); kwin-i3 holds a floating
+window's own minimum and maximum only (`behaviour.md` R20), as KWin keeps neither field for a
+script and Wayland has neither. The helper could read an X11 window's `WM_NORMAL_HINTS` itself
+and tell the script. Next: a spec (the helper reads them, the script's `checkSize` and
+`sizeLimit` apply them, X11 only).
 
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds

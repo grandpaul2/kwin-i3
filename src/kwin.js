@@ -2135,7 +2135,8 @@ var KI3 = (function () {
         var own = ownSize(split),
             width = own.width,
             height = own.height;
-        var size = checkSize(width, height),
+        var focused = model.descendFocused(split),
+            size = checkSize(width, height, focused ? wins[focused.win] : null),
             s = outputOf(ws),
             a = areaOf(s, ws);
         return {
@@ -2561,7 +2562,7 @@ var KI3 = (function () {
             return;
         }
         var g = w.frameGeometry,
-            size = checkSize(g.width, g.height);
+            size = checkSize(g.width, g.height, w);
         if (size.width === g.width && size.height === g.height) return;
         w.frameGeometry = {
             x: g.x,
@@ -2579,8 +2580,33 @@ var KI3 = (function () {
                 " (floating size limits)"
         );
     }
-    // floating_check_size's limits on a width and a height.
-    function checkSize(width, height) {
+    // floating_check_size's limits on a width and a height (floating.c:76-230): first the focused
+    // window's own minimum and maximum (`w`, null for none), net of its decoration, then the
+    // settings. Its aspect ratio and increments aren't held: Wayland's xdg_toplevel has neither,
+    // and KWin keeps neither from an X11 window for a script. The same rule as the helper's
+    // TilingDrag::sizeLimit.
+    function checkSize(width, height, w) {
+        var ex = 0,
+            ey = 0;
+        if (w && !tookBorder[id(w)] && w.clientGeometry) {
+            ex = Math.max(0, w.frameGeometry.width - w.clientGeometry.width);
+            ey = Math.max(0, w.frameGeometry.height - w.clientGeometry.height);
+        }
+        var inner = { width: width - ex, height: height - ey };
+        if (w) {
+            var mn = w.minSize,
+                mx = w.maxSize;
+            if (mn.width > 0) inner.width = Math.max(inner.width, mn.width);
+            if (mn.height > 0) inner.height = Math.max(inner.height, mn.height);
+            if (mx.width > 0 && mx.width < 1e9)
+                inner.width = Math.min(inner.width, mx.width);
+            if (mx.height > 0 && mx.height < 1e9)
+                inner.height = Math.min(inner.height, mx.height);
+        }
+        var held = settingsSize(inner.width, inner.height);
+        return { width: held.width + ex, height: held.height + ey };
+    }
+    function settingsSize(width, height) {
         var min = Rules.parseSize(Settings.get("floatingMinimumSize")) || {
             w: 75,
             h: 50,
@@ -4950,10 +4976,12 @@ var KI3 = (function () {
         var w = floatingWin(c),
             fc = floatedOf(c);
         if (!w && fc && fc.rect) {
-            var d = sign * Settings.get("floatingStep");
+            var d = sign * Settings.get("floatingStep"),
+                focused = model.descendFocused(fc);
             var size = checkSize(
                 Math.max(1, fc.rect.width + (what === "width" ? d : 0)),
-                Math.max(1, fc.rect.height + (what === "height" ? d : 0))
+                Math.max(1, fc.rect.height + (what === "height" ? d : 0)),
+                focused ? wins[focused.win] : null
             );
             fc.rect.width = size.width;
             fc.rect.height = size.height;
@@ -4965,13 +4993,19 @@ var KI3 = (function () {
         noteMoved(id(w));
         var px = sign * Settings.get("floatingStep"),
             g = w.frameGeometry;
+        // i3's cmd_resize_floating: floating_check_size, on the size asked for, before it is set
+        // (a Wayland frame read back is the old one until the client answers).
+        var size = checkSize(
+            Math.max(1, g.width + (what === "width" ? px : 0)),
+            Math.max(1, g.height + (what === "height" ? px : 0)),
+            w
+        );
         w.frameGeometry = {
             x: g.x,
             y: g.y,
-            width: Math.max(1, g.width + (what === "width" ? px : 0)),
-            height: Math.max(1, g.height + (what === "height" ? px : 0)),
+            width: size.width,
+            height: size.height,
         };
-        clampFloating(w); // i3's cmd_resize_floating: floating_check_size
         return true;
     }
 

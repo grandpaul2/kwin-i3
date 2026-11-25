@@ -288,7 +288,7 @@ private:
     // ([MouseBindings] CommandAllKey; plan.md (e)). "Meta" in this file's comments is this.
     static Qt::KeyboardModifier floatMod();
     static QSize parseSize(const QString &text, const QSize &fallback);
-    QSizeF sizeLimit(const QSizeF &size) const;
+    QSizeF sizeLimit(const QSizeF &size, const KWin::Window *hint) const;
     void watchMoves(KWin::Window *window);
 
     TilingDragBus m_bus;
@@ -317,6 +317,7 @@ private:
     QTimer m_outlineRenew; // the effect's outline renewed while the drag lasts
     QRectF m_groupUnion; // all of them together at the press
     QPointF m_groupPress;
+    QPointer<KWin::Window> m_groupHint; // the container's focused window: its size hints (sizeLimit)
     QElapsedTimer m_groupCursorTold; // the effect's cursor, asked again while the drag lasts
     void tellGroupCursor(bool on);
     KConfigWatcher::Ptr m_watcher;
