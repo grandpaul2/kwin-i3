@@ -108,15 +108,6 @@ item 111's review). i3's `drag_pointer` ends every drag, a floating move or resi
 any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGroup`,
 `m_groupActive`) ends on its own button's release only. Next: a spec.
 
-**124. A tiling X11 window floats when its own title bar is dragged** (2026-11-25, the capture
-2026-11-20_152049.077, kept: Steam). i3 ignores a client's `_NET_WM_MOVERESIZE` on a tiling window
-(`handlers.c:936`); `behaviour.md` X5 has the helper cancel KWin's move on the next turn. Cause:
-Steam sends the request twice in one batch; the second's pointer warp steps the first move, which
-untiles the window, before the cancel runs. Fix: the helper's `TilingDragFloat` takes a motion
-while the move KWin runs is one it refuses (the cancel's own test). Spec and review in the private
-records (`spec-refused-move-race*.md`). Next: the maintainer's go on the spec, then the probe
-(two requests back to back, red first), the build in a worktree, scenario 64.
-
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
 clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.

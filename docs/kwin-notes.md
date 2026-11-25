@@ -69,10 +69,14 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - **A tile held across a pass is gone**: kwin-i3's passes make new tiles, so a `w.tile` kept in a
   variable reads `undefined` after one, and two tiles are never compared by identity. Ask the
   question another way (whose root it hangs from: `workspace.rootTile(output, desktop)`).
-- **A cancelled interactive move re-tiles by position** (6.7.5 `window.cpp:1083-1088`): back to
+- **A cancelled interactive move re-tiles by position** (6.8.3 `window.cpp:1069-1076`): back to
   the start geometry, then `setQuickTileMode(Custom, start centre)`, which picks whatever custom
   tile is under that point now, not the one the move started from. A release at a screen edge
-  sets a quick tile instead, one whose root is no custom root tile.
+  sets a quick tile instead, one whose root is no custom root tile. **The pick is among the root's
+  descendants only** (`RootTile::pick`, `customtile.cpp:458-481`), and kwin-i3 tiles a window
+  alone on its workspace in the root tile itself: a cancel finds no tile and untiles it
+  (`window.cpp:3780-3786`), to its restore geometry (probed). `endInteractiveMoveResize` of a move
+  that never stepped leaves it in its tile.
 
 ## Windows and Wayland clients (`window.cpp`, `xdgshellwindow.cpp`)
 
@@ -130,7 +134,9 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   step of the first move (the position is set before the filters, `pointer_input.cpp:268-286`, and
   a zero delta still steps through snapping, `window.cpp:1697-1715`), which untiles a tiled window
   (`:1206-1223`); then it ends the first move as a success, not a cancel (`:2155-2157`), and
-  starts another. Steam sends two in one batch (read from the source and a capture, not probed).
+  starts another. Steam sends two in one batch (probed with two requests from a test client).
+  The request is ignored unless KWin holds the button it names (`events.cpp:622-630`); in a test,
+  press it within one `inject.py` call, which is one libei device.
 - An X11 client's own move request (`X11Window::configureRequest`) is run as an interactive
   output change: a window landing on another output has its desktop swapped for that output's
   current one (`finishInteractiveOutputChange`, `window.cpp:4593`), and kwin-i3 hears
@@ -176,11 +182,11 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
   and nothing floats (probed on 6.8.2). Alt+left and Alt+right are unaffected.
 - An app's own move request (`xdg_toplevel.move`, a header bar's drag) is run as KWin's own move
   command (`handleMoveRequested`, `xdgshellwindow.cpp:1045`): no input filter sees it, as for Move
-  Window and the window menu's Move. `cancelInteractiveMoveResize` (public) stops one, but not
-  inside `interactiveMoveResizeStarted`: `startInteractiveMoveResize` goes on after the emit
-  (`window.cpp:1067-1070`), so queue it a turn. A cancel puts the quick-tile mode back
-  (`finishInteractiveMoveResize`, `window.cpp:1082`); the first step of a move takes it off
-  (`:1234`).
+  Window and the window menu's Move. `endInteractiveMoveResize` and `cancelInteractiveMoveResize`
+  (public) stop one, but not inside `interactiveMoveResizeStarted`: `startInteractiveMoveResize`
+  goes on after the emit (6.8.3 `window.cpp:1055-1057`), so queue it a turn. A cancel puts the
+  quick-tile mode back, except in a root tile (above); the first step of a move takes it off
+  (`:1220-1222`).
 - Spectacle's region overlay is a Normal fullscreen window per output, class `org.kde.spectacle`.
 - KWin shows a script no X11-only property: Plasma's notifications are told by class `org.kde.plasmashell`.
 - `noBorder`'s change signal is `decorationPolicyChanged`; there is no `noBorderChanged` (`window.h:504`).

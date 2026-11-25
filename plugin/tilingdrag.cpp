@@ -211,8 +211,9 @@ bool TilingDragGrab::keyboardKey(KeyboardKeyEvent *event)
     return m_drag->dragging() && m_drag->keyboardKey(event);
 }
 
-TilingDragFloat::TilingDragFloat()
+TilingDragFloat::TilingDragFloat(TilingDrag *drag)
     : InputEventFilter(InputFilterOrder::InteractiveMoveResize)
+    , m_drag(drag)
 {
 }
 
@@ -238,11 +239,15 @@ Window *TilingDragFloat::active() const
 }
 
 // KWin 6.7.5 input.cpp MoveResizeFilter, with Shift taken out of the modifiers.
+// A refused move's motions stop here, ahead of KWin's move filter: its first step would take the
+// window out of its tile before the cancel runs. A client's _NET_WM_MOVERESIZE warps the pointer
+// first, so a second request while the first move runs steps that move (kwin-notes.md).
 bool TilingDragFloat::pointerMotion(PointerMotionEvent *event)
 {
     Window *window = active();
     if (!window) {
-        return false;
+        Window *moving = workspace()->moveResizeWindow();
+        return moving && moving->isInteractiveMove() && m_drag->refusesMove(moving);
     }
     window->updateInteractiveMoveResize(event->position, event->modifiers & ~Qt::ShiftModifier);
     return true;
@@ -280,6 +285,7 @@ TilingDrag::TilingDrag()
     : InputEventFilter(InputFilterOrder::Decoration)
     , m_bus(this)
     , m_grab(this)
+    , m_float(this)
     , m_keys(this)
     , m_watcher(KConfigWatcher::create(KSharedConfig::openConfig(QStringLiteral("kwinrc"))))
 {
@@ -331,13 +337,25 @@ TilingDrag::TilingDrag()
 
 // A tiling window doesn't move (§10 X5): i3 ignores a client's move request on one
 // (handlers.c:936), and has no keyboard or menu move for it. KWin runs each as its own
-// interactive move (an app's header bar: 6.7.5 xdgshellwindow.cpp:1045; Move Window; the window
+// interactive move (an app's header bar: 6.8.3 xdgshellwindow.cpp:869; Move Window; the window
 // menu's Move), which would take the window out of its tile at the first step; the helper starts
-// none on a tiled window. Cancelled on the next turn, not inside the signal: KWin's
-// startInteractiveMoveResize still has work after it (window.cpp:1067-1070). A move whose first
-// step came first has untiled the window already, and goes on as before (floating where dropped).
+// none on a tiled window. Ended on the next turn, not inside the signal: KWin's
+// startInteractiveMoveResize still has work after it (6.8.3 window.cpp:1055-1057). Until then its
+// pointer motions don't reach KWin's move (TilingDragFloat::pointerMotion), so the move never
+// stepped and ending it leaves the window in its tile. Ended, not cancelled: KWin's cancel re-tiles
+// by picking among the root tile's descendants, so a window alone in the root tile would lose it
+// (kwin-notes.md).
 // The one move let through is the helper's own float (§9 G5, TilingDragFloat), for as long as it
 // lasts: ended any way (a release, Escape), the exemption goes with it.
+bool TilingDrag::refusesMove(Window *window) const
+{
+    // In a floated container too: i3 ignores the request of a window whose own con isn't
+    // floating (handlers.c, _NET_WM_MOVERESIZE), and KWin would move that one window alone.
+    // Not during the helper's own group move, which moves windows by Window::move.
+    return m_on && window->isInteractiveMove() && m_float.window() != window
+        && (window->quickTileMode() == QuickTileMode(QuickTileFlag::Custom) || m_floated.contains(window->internalId().toString()));
+}
+
 void TilingDrag::watchMoves(Window *window)
 {
     QObject::connect(window, &Window::interactiveMoveResizeFinished, &m_context, [this, window] {
@@ -346,21 +364,12 @@ void TilingDrag::watchMoves(Window *window)
         }
     });
     QObject::connect(window, &Window::interactiveMoveResizeStarted, &m_context, [this, window] {
-        if (m_float.window() == window) {
+        if (!refusesMove(window)) {
             return;
         }
-        // In a floated container too: i3 ignores the request of a window whose own con isn't
-        // floating (handlers.c, _NET_WM_MOVERESIZE), and KWin would move that one window alone.
-        // Not during the helper's own group move, which moves windows by Window::move.
-        auto ours = [this](Window *w) {
-            return w->quickTileMode() == QuickTileMode(QuickTileFlag::Custom) || m_floated.contains(w->internalId().toString());
-        };
-        if (!m_on || !window->isInteractiveMove() || !ours(window)) {
-            return;
-        }
-        QTimer::singleShot(0, &m_context, [window = QPointer<Window>(window), ours] {
-            if (window && !window->isDeleted() && window->isInteractiveMove() && ours(window)) {
-                window->cancelInteractiveMoveResize();
+        QTimer::singleShot(0, &m_context, [this, window = QPointer<Window>(window)] {
+            if (window && !window->isDeleted() && refusesMove(window)) {
+                window->endInteractiveMoveResize();
             }
         });
     });

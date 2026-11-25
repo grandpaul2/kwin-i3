@@ -138,7 +138,7 @@ private:
 class TilingDragFloat : public KWin::InputEventFilter
 {
 public:
-    TilingDragFloat();
+    explicit TilingDragFloat(TilingDrag *drag);
     void start(KWin::Window *window);
     KWin::Window *window() const;
     void clear();
@@ -149,6 +149,7 @@ public:
 
 private:
     KWin::Window *active() const;
+    TilingDrag *m_drag;
     QPointer<KWin::Window> m_window;
 };
 
@@ -242,6 +243,9 @@ public:
     {
         return &m_float;
     }
+    // A move of a tiling window, which i3 ignores (§10 X5): cancelled on the next turn
+    // (watchMoves), its pointer motions held from KWin's move until then (TilingDragFloat).
+    bool refusesMove(KWin::Window *window) const;
     // A left or right press on a tiled window's ring (FrameFocus; i3's tiling_resize on a border,
     // §9 Z3): a resize against the neighbour on that side ("top", "left", "right", "bottom").
     void pressRing(KWin::Window *window, const QString &side, KWin::PointerButtonEvent *event);
