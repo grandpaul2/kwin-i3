@@ -119,3 +119,21 @@ re-tiling by position), then a spec.
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
 clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.
+
+**126. The tests' keep-or-cut pass, for review before anything is deleted** (2026-11-25, the
+standard's "a test exists only for real harm", `docs/testing.md`'s opening). Proposed cuts, from
+the scenarios' and files' headers (bodies not read line by line): **look** 26 (gaps), 56, 57, 58,
+59, 62, 77, 78, 83, 85, 89 (merge into 88); **annoyance or rare** 44, 46, 47, 71, 72, 74, 82;
+**covered elsewhere** 41, 84, 67 (`widget.test.js`), 76 (37 and `kcm-settings.test.js`);
+**a debugging tool** 70, 80; unit files `kcm`, `lint`, `shifted`, `widget`. Merges among the kept:
+45 with 48, 65 with 66. Doubtful cuts: 26 (gaps decide every tiled window's place, not only its
+look), 44, 46, 47 (fuzzer finds at the seam, where `AGENTS.md` says the finds cluster; 46 leaves a
+monitor on the wrong workspace). Next: the maintainer's word on each group, then the cuts made in
+one commit.
+
+**127. `AGENTS.md` pruned against the standard's three tests** (2026-11-25, standard change 17).
+A line stays only if it carries what an agent can't infer (a fact, the maintainer's stated rule); a
+guard for something that can't be undone belongs in the harness, one for something that can goes
+to judgement; no emphasis where plain words do. `AGENTS.md` is a contributor's agent's whole
+rulebook (no global file of the maintainer's reaches it), so a line the maintainer's global file
+repeats still stays. Next: one pass, its cuts in one commit whose message gives each reason.
