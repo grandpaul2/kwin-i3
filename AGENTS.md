@@ -168,8 +168,8 @@ These are the project's rules, not suggestions.
 
 **`docs/testing.md`, lean for the Stage**: testing's one job now is not to break a live desktop
 catastrophically. Its runs are the only runs: `make unit` and the changed scenario(s) for a change
-(and 64 for a plugin change), at most one `make test` per session, at its start and only when the
-work needs it, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
+(and 64 for a plugin change), `make test` once at a change's end only when it reaches what many
+scenarios drive, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
 owed. No run over 5 minutes, ever. Fault runs, fuzzing and
 stock runs wait in `LATER.md`. A case it doesn't cover is the maintainer's call. **No new test of
 any kind without the maintainer's go, and only with a strong case** (its rule 5: the suite grows by

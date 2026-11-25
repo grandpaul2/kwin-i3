@@ -1,8 +1,11 @@
 # Testing: the procedure (lean, for the Stage)
 
 During the Stage kwin-i3 runs on a handful of desktops whose owners use it all day: they will
-find what's wrong. Testing has one job: **don't break a live desktop catastrophically.**
-Everything beyond that waits for the Stage's end (`LATER.md`, "Reliability"). No improvising:
+find what's wrong. Testing has one job: **don't break a live desktop catastrophically.** Real
+harm here is a crashed or hung KWin, a desktop its user can't work on (windows lost or out of
+reach, the tree, focus, workspaces or keys broken), or a user's Plasma settings lost or not given
+back; a glitch the user sees and can report with the capture key is not. A test exists only for
+real harm that nothing cheaper (the unit tests, lint) catches. Everything beyond that waits for the Stage's end (`LATER.md`, "Reliability"). No improvising:
 the runs below are the only runs.
 
 ## Rules
@@ -88,9 +91,9 @@ then the fix and P1. A check for the bug only under rule 5.
 
 ## P3. Before anything goes live
 
-1. **At most one `make test` per session, at its start, when the work needs it** (~4 min, in
-   the background). A limit, not a duty: a run is never listed as owed. **Not again before a live install later in the session**: a change made
-   after it is covered by P1 (its scenarios, and 64 for a plugin change).
+1. **`make test` once per change, at its end, only when the change reaches what many scenarios
+   drive** (the tree, placement, the KWin seam; ~4 min, in the background). A limit, not a duty:
+   a run is never listed as owed, and a change P1's scenarios cover needs none.
 2. A red scenario the change drives: fix it, then rerun only that scenario.
 3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
    (`# timing: alone`), not another guessed fix. Red: report
@@ -123,7 +126,7 @@ hold:
 3. **Every scenario in both containers** (P5), `KI3_BOX=arch` and `KI3_BOX=pika`, green: one
    container at a time, each in runs of 5 minutes or less (thirds by first digit: `0-4`, `5-6`,
    `7-9`; PikaOS's halves took over 5), in the
-   background on rule 2's timer. A red: P3 steps 2-3. The images build no settings page, so its
+   background, read as rule 2 says. A red: P3 steps 2-3. The images build no settings page, so its
    scenarios (37, 76) run on the host only: it is QML, the same on every distribution.
 
 Then on main: `CHANGELOG.md`'s "Unreleased" gets the version and date, `package/metadata.json`'s

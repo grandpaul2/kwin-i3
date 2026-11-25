@@ -18,7 +18,7 @@ was learned put in its home, commit and push); where those aren't installed, do 
      --force` the rest, after a look at what's in them).
    - No leftover test runs: `pgrep -af 'tests/fuzz/|tests/live/|testkwin.sh'` is empty; stop any
      by PID.
-   - Captures handled this session (a test exists for each) are deleted from
+   - Captures handled this session (fixed, or carried by an `OPEN.md` item that keeps none) are deleted from
      `~/.local/state/kwin-i3/captures/`. Ones not reached stay, and get a line in `OPEN.md`.
 4. **The live desktop**: if `package/` differs from what KWin last loaded, say so. Reload only on
    the desktop owner's go.
