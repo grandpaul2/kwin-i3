@@ -51,6 +51,7 @@ if [[ -f $units/kwin-i3-plugins.path || -f $units/kwin-i3-plugins.service ]]; th
     for u in kwin-i3-plugins.path kwin-i3-plugins.service; do
         [[ -f $units/$u ]] && rm -f "$units/$u" && gone "$units/$u"
     done
+    rm -f "$units/default.target.wants/kwin-i3-plugins.path" # left when systemd couldn't be reached
     systemctl --user daemon-reload 2>/dev/null
 fi
 rm -f "$state/rebuild-failed" "$state/rebuild.log" # the rebuild's own, never the user's

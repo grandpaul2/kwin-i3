@@ -41,7 +41,7 @@ watched=$(cat "$here/plugin/build/kwin-version-file" 2>/dev/null || true)
 if [[ -f $watched ]]; then
     mkdir -p "$units"
     printf '%s\n' "[Unit]" "Description=kwin-i3: rebuild its plugins for the installed KWin" \
-        "[Service]" "Type=oneshot" "ExecStart=$here/tools/plugin-rebuild.sh" \
+        "[Service]" "Type=oneshot" "ExecStart=\"${here//%/%%}/tools/plugin-rebuild.sh\"" \
         "Nice=19" "CPUSchedulingPolicy=idle" "IOSchedulingClass=idle" >"$units/kwin-i3-plugins.service"
     printf '%s\n' "[Unit]" "Description=kwin-i3: rebuild its plugins when KWin is updated" \
         "[Path]" "PathChanged=$watched" "Unit=kwin-i3-plugins.service" \

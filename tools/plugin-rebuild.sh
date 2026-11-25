@@ -5,8 +5,9 @@
 # update this rebuilds the plugins as the user and installs them: loaded at once into a running
 # KWin of that version, else staged for KWin's next start (tools/plugin-install.sh).
 # Nothing to do, or a wait for the rest of a package transaction: silent. A failure: one
-# notification with its cause and the command, said once per KWin version (the record below; a
-# person's make plugin-install clears it).
+# notification with its cause and the command, said once per pair of KWin and development-file
+# versions (the record below; a person's make plugin-install clears it), so installing the missing
+# or lagging development files is tried again by itself.
 set -uo pipefail
 here=$(cd "$(dirname "$0")/.." && pwd -P)
 state=${XDG_STATE_HOME:-$HOME/.local/state}/kwin-i3
@@ -21,7 +22,7 @@ notify() {
 }
 fail() {
     mkdir -p "$state"
-    printf '%s\n%s\n' "$installed" "$1" >"$failed"
+    printf '%s\n%s\n' "$installed $headers" "$1" >"$failed"
     echo "plugin-rebuild: $1" >&2
     notify "kwin-i3's plugins weren't rebuilt for KWin $installed" \
         "$1 Until then there is no frame, no mouse dragging, and Plasma's shortcuts win kwin-i3's shared keys (Meta+1…0). Then run: cd $here && make plugin-install" 0
@@ -46,9 +47,8 @@ if [[ -n $helper && -n $effect &&
     rm -f "$failed"
     exit 0
 fi
-[[ $(head -1 "$failed" 2>/dev/null) == "$installed" ]] && exit 0 # said already
-
 headers=$(headers_version)
+[[ $(head -1 "$failed" 2>/dev/null) == "$installed $headers" ]] && exit 0 # said already
 if [[ -z $headers ]]; then
     # No development files: never built here, nothing to say; built before, it can't be now.
     [[ -n $helper || -n $effect ]] || exit 0
@@ -70,6 +70,8 @@ done
 mkdir -p "$state"
 make -C "$here" plugin >"$state/rebuild.log" 2>&1 ||
     fail "The build failed: $(grep -m1 -E 'error|Error' "$state/rebuild.log" || tail -1 "$state/rebuild.log") (all of it: $state/rebuild.log)."
+# An update landed during the build (its path event was dropped while this ran): start over.
+[[ $(kwin_wayland --version 2>/dev/null | awk '{print $2}') == "$installed" ]] || exec "$0"
 [[ $(built_for "$here/plugin/build/bin/kwin/plugins/kwini3helper.so" PluginFactoryInterface) == "$installed" ]] ||
     fail "The build is for another KWin than $installed."
 out=$("$here/tools/plugin-install.sh" 2>&1) || fail "$(tail -1 <<<"$out")"

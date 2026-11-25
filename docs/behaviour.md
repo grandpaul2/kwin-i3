@@ -1181,7 +1181,8 @@ should fix in their setup is checked at load and logged, where a capture shows i
 it on the settings page's banners (§11, "The settings page"). The script can't send a notification
 (KWin's `callDBus` can't send `Notify`'s signature, `docs/kwin-notes.md`), so the banners carry
 everything the script would say. The one exception is the plugins' rebuild (§1), a separate
-process as `i3-nagbar` is: a rebuild that fails sends one notification, once per KWin version,
+process as `i3-nagbar` is: a rebuild that fails sends one notification, once per KWin and
+development-file versions,
 with its cause and the command (`make plugin-install`, which also clears the record,
 `~/.local/state/kwin-i3/rebuild-failed`).
 
@@ -1193,7 +1194,7 @@ with its cause and the command (`make plugin-install`, which also clears the rec
 - **kwin-i3's plugins aren't loaded** (`HELPER not loaded`, `EFFECT not loaded`; `plan.md`: the
   product is the script and both plugins). The page: the plugins' banner, naming the frame, mouse
   dragging, the resize mode and the shared keys lost to Plasma's shortcuts (§1's table has all
-  that goes without each), and that the plugins rebuild themselves after a Plasma update. The helper from KWin's loaded plugins,
+  that goes without each), and that a failed rebuild's notification said why. The helper from KWin's loaded plugins,
   the effect from its loaded effects.
 
 `Dump State` (the capture key's, K21) sends the outputs, the tree, the windows, a JSON state and the

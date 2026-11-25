@@ -226,8 +226,8 @@ plugin only when it was built for its exact version (major.minor.patch), so ever
 needs a rebuild; kwin-i3 does it itself, as the user, never as root: when KWin's headers change
 it rebuilds in the background and stages the result for KWin's next start, loading it at once
 only into a running KWin of the same version, and at load the script starts the same rebuild when
-KWin lacks either plugin. A rebuild that fails is said once, in a notification, with its cause
-and the one command (`tools/plugin-rebuild.sh`). i3 has no plugins; its rule carried over is that an upgrade never
+KWin lacks either plugin (`tools/plugin-rebuild.sh`). A rebuild that fails is said once, in a
+notification, with its cause and the one command, `make plugin-install`. i3 has no plugins; its rule carried over is that an upgrade never
 breaks the running session (it runs the old binary until `restart`), and that a fault is shown
 at once with its fix to hand (`i3-nagbar`). The release key needs neither plugin, so a failed
 rebuild never locks anyone out.

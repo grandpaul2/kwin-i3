@@ -45,7 +45,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && (!kcm.holdLoaded || !kcm.helperLoaded)
-            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. After a Plasma update they rebuild themselves, and a notification says if that fails. By hand: make plugin-install", [!kcm.holdLoaded ? i18n("no frame") : "", !kcm.helperLoaded ? i18n("no mouse dragging") : "", !kcm.helperLoaded ? i18n("no resize mode") : "", !kcm.helperLoaded ? i18n("Plasma's shortcuts win the keys they share with kwin-i3") : ""].filter(s => s).join(", "))
+            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. If their rebuild after a Plasma update failed, a notification said why. To rebuild them by hand: make plugin-install", [!kcm.holdLoaded ? i18n("no frame") : "", !kcm.helperLoaded ? i18n("no mouse dragging") : "", !kcm.helperLoaded ? i18n("no resize mode") : "", !kcm.helperLoaded ? i18n("shared keys run Plasma's shortcuts") : ""].filter(s => s).join(", "))
         }
         // The first-run step (docs/plan.md, "Install and first run"): while a Plasma setting
         // kwin-i3 needs differs (per-output desktops), the page says so and opens its tab.
