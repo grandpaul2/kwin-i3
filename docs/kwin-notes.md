@@ -323,6 +323,11 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 - `callDBus` converts arguments by `QJSValue::toVariant()` (`scripting.cpp:345`): no unsigned ints,
   no typed arrays, so typed methods (kglobalaccel's `a(ai)`, `Notify`'s `susssasa{sv}i`) are refused.
   It calls back only on a reply: on an error or a dead service it logs and never calls; guard with a timeout.
+  A `callDBus` to `org.kde.KWin` (a plugin's object) is synchronous and in-process (QtDBus
+  loopback, `sendWithReplyLocal`): the plugin holds the new state when the call returns.
+- The test bus (`tools/testkwin.sh`'s `bus.conf`) has dbus-daemon's built-in limits
+  (`max_replies_per_connection` 128, where the session bus has 50000), and its stderr filters
+  the daemon's own warnings out: a burst of calls awaiting replies can be refused there silently.
 - `readConfig(key, def)` gives `def` only for a missing key: one present but empty reads as `""`
   (probed), so an emptied text setting stays empty.
 - `print()` goes nowhere readable on a desktop; read state through kwin-i3's dump (`docs/debugging.md`).

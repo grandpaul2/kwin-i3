@@ -84,6 +84,12 @@ change is checked by it (a check inside the tests, added with the go, rule 5).
 4. Update `docs/behaviour.md` in the same commit. Commit (on a branch if it isn't live yet). No
    new checks for the new behaviour (rule 5).
 
+**A check that moves the pointer** (written or changed): a move onto a window other than the
+active one is an action, since focus follows mouse activates it a turn later
+(`docs/kwin-notes.md`, "The pointer"). Wait for that activation before pressing, never press
+straight after the move, and never move between a focus-parent selection and the press it tests:
+place the pointer first, then set focus by key or script.
+
 ## P2. A bug fix
 
 Diagnosis first (the capture, `tools/capture-read`; KWin's source for KWin's part), the go;
@@ -95,8 +101,10 @@ then the fix and P1. A check for the bug only under rule 5.
    drive** (the tree, placement, the KWin seam; ~4 min, in the background). A limit, not a duty:
    a run is never listed as owed, and a change P1's scenarios cover needs none.
 2. A red scenario the change drives: fix it, then rerun only that scenario.
-3. A red scenario it doesn't: one run of it alone. Green: a flake, so it moves to the alone tail
-   (`# timing: alone`), not another guessed fix. Red: report
+3. A red scenario it doesn't: one run of it alone. Green: its red log diffed against the green
+   one first, since green alone is no proof of a flake; a cause in the scenario is fixed (below),
+   and only a cause in load or timing moves it to the alone tail (`# timing: alone`, with that
+   cause named beside it), not another guessed fix. Red: report
    it, don't fix it. A red whose cause the logs name in the scenario itself (a check reading
    state before it has settled) is a wrong check, not a flake: the check is corrected, as any
    existing check a change shows wrong, and not moved.
