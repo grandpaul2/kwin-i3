@@ -40,6 +40,9 @@ place() {
 }
 id=$(place "$built" "$dir" kwini3helper)
 eid=$(place "$effect" "$edir" kwini3hold)
+# A rebuild's failure, said once per KWin version (tools/plugin-rebuild.sh): a person's install is
+# the answer to it, so the next failure is said again.
+[[ -z ${KI3_PLUGIN_ROOT:-} ]] && rm -f "${XDG_STATE_HOME:-$HOME/.local/state}/kwin-i3/rebuild-failed"
 
 [[ -z ${KI3_PLUGIN_ROOT:-} ]] && "$here/tools/kwin-dropin.sh"
 
@@ -48,6 +51,16 @@ busctl --user status org.kde.KWin >/dev/null 2>&1 || {
     echo "no KWin on this bus: installed only"
     exit 0
 }
+# Never into another KWin version: KWin would refuse the new build after the old one was unloaded,
+# leaving the session with neither. A build for a newer KWin (an update installed, the session not
+# yet restarted) waits for KWin's next start, which loads it from the dir. Unreadable: as before.
+built_version=$(grep -aoE 'PluginFactoryInterface[0-9]+\.[0-9]+\.[0-9]+' "$built" | head -1 | sed 's/^PluginFactoryInterface//')
+running_version=$(busctl --user call org.kde.KWin /KWin org.kde.KWin supportInformation 2>/dev/null |
+    grep -o 'KWin version: [0-9.]*' | head -1 | sed 's/^KWin version: //')
+if [[ -n $built_version && -n $running_version && $built_version != "$running_version" ]]; then
+    echo "staged: built for KWin $built_version, and KWin $running_version is running; it loads at KWin's next start"
+    exit 0
+fi
 # A plugin's id is its file name (Qt ignores an "Id" in the metadata), so each build has its own.
 for old in $(prop LoadedPlugins | grep -oE '"kwini3helper[^"]*"' | tr -d '"'); do
     # not fatal: the new one must still load

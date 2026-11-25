@@ -45,3 +45,14 @@ if(KWin_VERSION VERSION_GREATER_EQUAL 6.7.80)
     target_compile_definitions(kwini3hold PRIVATE KI3_PAINT_RESULT KI3_PREMULTIPLIED_COLOUR)
 endif()
 
+# KWin loads a plugin only into the KWin version it was built for (the IID ends in it), and a
+# package keeps its headers' timestamps, so after a KWin update make sees nothing newer and would
+# relink the old objects. A definition carrying the version changes every object's flags, so a new
+# KWin recompiles (and re-mocs) all of them. The version and KWin's version file are recorded for
+# tools/plugin-rebuild.sh and the path unit tools/install.sh writes.
+foreach(target kwini3helper kwini3hold)
+    target_compile_definitions(${target} PRIVATE KI3_KWIN_VERSION="${KWin_VERSION}")
+endforeach()
+file(WRITE ${CMAKE_BINARY_DIR}/kwin-version "${KWin_VERSION}\n")
+file(WRITE ${CMAKE_BINARY_DIR}/kwin-version-file "${KWin_DIR}/KWinConfigVersion.cmake\n")
+

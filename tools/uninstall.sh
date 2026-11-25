@@ -44,6 +44,16 @@ echo "  unregistered $n kwin-i3 shortcuts"
 
 # 3. The files the install wrote.
 [[ -L $scripts/kwin-i3 ]] && rm -f "$scripts/kwin-i3" && gone "$scripts/kwin-i3"
+units=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user
+if [[ -f $units/kwin-i3-plugins.path || -f $units/kwin-i3-plugins.service ]]; then
+    systemctl --user disable --now kwin-i3-plugins.path >/dev/null 2>&1
+    systemctl --user stop kwin-i3-plugins.service >/dev/null 2>&1
+    for u in kwin-i3-plugins.path kwin-i3-plugins.service; do
+        [[ -f $units/$u ]] && rm -f "$units/$u" && gone "$units/$u"
+    done
+    systemctl --user daemon-reload 2>/dev/null
+fi
+rm -f "$state/rebuild-failed" "$state/rebuild.log" # the rebuild's own, never the user's
 [[ -d $HOME/.local/lib/kwin-i3 ]] && rm -rf "$HOME/.local/lib/kwin-i3" && gone "$HOME/.local/lib/kwin-i3/"
 dropin=$HOME/.config/systemd/user/plasma-kwin_wayland.service.d/kwin-i3-plugin.conf
 if [[ -f $dropin ]]; then

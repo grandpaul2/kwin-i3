@@ -33,6 +33,25 @@ fi
 kwriteconfig6 --file kwinrc --group Plugins --key kwin-i3Enabled true
 
 "$here/tools/plugin-install.sh"
+# The plugins kept built (docs/plan.md, "Scope"): a user service that rebuilds them for a new KWin,
+# started when KWin's development files change (the path unit) and by kwin-i3 at load when KWin
+# lacks a plugin. Only with those files, which the build recorded; the units name this checkout.
+units=${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user
+watched=$(cat "$here/plugin/build/kwin-version-file" 2>/dev/null || true)
+if [[ -f $watched ]]; then
+    mkdir -p "$units"
+    printf '%s\n' "[Unit]" "Description=kwin-i3: rebuild its plugins for the installed KWin" \
+        "[Service]" "Type=oneshot" "ExecStart=$here/tools/plugin-rebuild.sh" \
+        "Nice=19" "CPUSchedulingPolicy=idle" "IOSchedulingClass=idle" >"$units/kwin-i3-plugins.service"
+    printf '%s\n' "[Unit]" "Description=kwin-i3: rebuild its plugins when KWin is updated" \
+        "[Path]" "PathChanged=$watched" "Unit=kwin-i3-plugins.service" \
+        "[Install]" "WantedBy=default.target" >"$units/kwin-i3-plugins.path"
+    if systemctl --user daemon-reload 2>/dev/null && systemctl --user enable --now kwin-i3-plugins.path >/dev/null 2>&1; then
+        echo "install: the plugins rebuild themselves after a KWin update (kwin-i3-plugins.path)"
+    else
+        echo "install: no systemd user session here: after a KWin update, kwin-i3 asks for the rebuild at the next login"
+    fi
+fi
 "$here/tools/kcm-install.sh"
 loaded() { [[ $(busctl --user call org.kde.KWin /Scripting org.kde.kwin.Scripting isScriptLoaded s kwin-i3 2>/dev/null) == "b true" ]]; }
 if loaded; then

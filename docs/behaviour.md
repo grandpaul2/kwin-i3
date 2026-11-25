@@ -47,8 +47,18 @@ runs alone too. What each plugin piece adds, and what happens without it:
 `kwini3hold` and `kwini3helper` are built against the installed KWin and refused by any other
 version. `tools/plugin-install.sh` gives each build a new file name (`kwini3hold-<hash>.so`),
 because KWin never unloads a library and overwriting a mapped one can crash it, then unloads the
-old id and loads the new one over D-Bus. It writes `QT_PLUGIN_PATH` into a systemd drop-in for
-`plasma-kwin_wayland.service`, effective from the next login.
+old id and loads the new one over D-Bus, only into a running KWin of the version it was built for
+(another: the file is placed for KWin's next start, nothing unloaded). It writes `QT_PLUGIN_PATH`
+into a systemd drop-in for `plasma-kwin_wayland.service`, effective from the next login.
+**They keep themselves built** (`plan.md`, "Scope"): the user unit `kwin-i3-plugins.service`
+(`make install` writes it, with KWin's development files) runs `tools/plugin-rebuild.sh`, started
+by `kwin-i3-plugins.path` when KWin's version file changes and by the script at load when KWin
+lacks either plugin (§12). It does nothing while the installed plugins are for the installed KWin;
+otherwise it waits up to 2 min for KWin and its development files to agree (a package transaction
+lands them apart), builds (`make plugin`; the KWin version is a compile definition, so a new KWin
+recompiles every object even though a package keeps its headers' old timestamps) and installs.
+A plugin loaded mid-session sends one notification ("kwin-i3's plugins are back"); a staged one,
+nothing. It refuses a checkout whose `plugin/` has changes of its own.
 
 ### How they talk
 
@@ -1156,6 +1166,10 @@ holds and resets radii it set. The helper, loaded, queues a reconfigure (so the 
 drag on) and a key fit; unloaded, it removes its filters and D-Bus objects and puts back the
 user's focus delay. If the script doesn't poll a started drag within 500 ms, the helper turns the
 tiling drag off; the drag cursor ends by itself 500 ms after the script stops renewing it.
+The script asks which plugins KWin has loaded at load and at every reconfigure, so a plugin loaded
+mid-session (the rebuild, `make plugin-install`) is followed (`HELPER loaded`); at load, either
+missing starts `kwin-i3-plugins.service` over D-Bus (systemd's `StartUnit`), a no-op when the
+plugins are current.
 
 ---
 
@@ -1164,8 +1178,12 @@ tiling drag off; the drag cursor ends by itself 500 ms after the script stops re
 i3 tells a user only of a config error, with `i3-nagbar`; otherwise it writes to its log. kwin-i3
 likewise: a setting that doesn't parse logs a `WARN` and uses its default (§11), and what the user
 should fix in their setup is checked at load and logged, where a capture shows it. The user meets
-it on the settings page's banners (§11, "The settings page"). A script's notification can't reach Plasma (KWin's `callDBus` can't send `Notify`'s
-signature, `docs/kwin-notes.md`), and the banners carry everything one would say.
+it on the settings page's banners (§11, "The settings page"). The script can't send a notification
+(KWin's `callDBus` can't send `Notify`'s signature, `docs/kwin-notes.md`), so the banners carry
+everything the script would say. The one exception is the plugins' rebuild (§1), a separate
+process as `i3-nagbar` is: a rebuild that fails sends one notification, once per KWin version,
+with its cause and the command (`make plugin-install`, which also clears the record,
+`~/.local/state/kwin-i3/rebuild-failed`).
 
 - **Position keys**: without the helper, any keyboard layout other than US (`LAYOUTS … not
   fitted`), as kwin-i3's position keys are set for US (a layout KWin names `""`, its xkb default
@@ -1174,7 +1192,8 @@ signature, `docs/kwin-notes.md`), and the banners carry everything one would say
   of the outputs or the setting. The page: the Plasma settings banner, to its tab (§11).
 - **kwin-i3's plugins aren't loaded** (`HELPER not loaded`, `EFFECT not loaded`; `plan.md`: the
   product is the script and both plugins). The page: the plugins' banner, naming the frame, mouse
-  dragging and the resize mode (§1's table has all that goes without each). The helper from KWin's loaded plugins,
+  dragging, the resize mode and the shared keys lost to Plasma's shortcuts (§1's table has all
+  that goes without each), and that the plugins rebuild themselves after a Plasma update. The helper from KWin's loaded plugins,
   the effect from its loaded effects.
 
 `Dump State` (the capture key's, K21) sends the outputs, the tree, the windows, a JSON state and the

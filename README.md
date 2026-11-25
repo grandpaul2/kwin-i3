@@ -167,11 +167,12 @@ Nothing in Plasma is changed without your say, and `make uninstall` takes it all
    before to `~/.local/state/kwin-i3/captures/<time>/`: its log, a screenshot of every screen, and
    the open windows' titles. Look it over, then send that folder (zipped) with your report.
 
-**After a Plasma update**: the plugins work only with the KWin version they were built against,
-so after each Plasma update, until you run `cd ~/kwin-i3 && make plugin-install`, tiling windows
-have their title bars back and the key override is gone: a key kwin-i3 shares with Plasma runs
-Plasma's shortcut (Meta+L locks the screen, Meta+arrows quick-tile). The settings page and the
-script need nothing. **To
+**After a Plasma update**: nothing to do. The plugins work only with the KWin version they were
+built against, so kwin-i3 rebuilds them itself, in the background, as soon as the update lands,
+and the next login loads them. If that fails (a missing package, a build error), a notification
+says why; until you fix it and run `cd ~/kwin-i3 && make plugin-install`, tiling windows have
+their title bars back and a key kwin-i3 shares with Plasma runs Plasma's shortcut (Meta+1 … 0 the
+task manager's entries, Meta+L locks the screen). The settings page and the script need nothing. **To
 update kwin-i3**: `cd ~/kwin-i3 && git pull && make install` (it reloads kwin-i3, re-tiling the
 windows once). `CHANGELOG.md` says what each version changed. A clone made before `stable` existed is on
 `main`: `git checkout stable` once moves it. To go back to an earlier version:
@@ -205,8 +206,10 @@ KWin finds the effect only through the drop-in, so it loads at that next login. 
 `plugin/build` before trying again: it keeps what it found, Qt 5 included.
 
 **The upkeep**: both plugins are refused by any KWin version other than the one they were built
-against, so after every Plasma update they are off until `make plugin-install` runs again; until
-then tiling windows have their title bars and shared keys run Plasma's shortcuts. One source builds against 6.7 and 6.8 (6.8 changed the
+against, so `make install` also sets up a user service that rebuilds them after every Plasma
+update (`kwin-i3-plugins.path` and `.service` in `~/.config/systemd/user`; `make uninstall`
+removes them). A failure is a notification naming its cause; `make plugin-install` is the fix by
+hand. One source builds against 6.7 and 6.8 (6.8 changed the
 effects' paint calls), so the update needs only that.
 
 **Plain GTK 4 apps** (GTK 4 without libadwaita, with Plasma's title bar) learn their largest size

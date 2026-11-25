@@ -6830,8 +6830,25 @@ var KI3 = (function () {
     // The product is the script and its two plugins (plan.md, "Scope"): without either, logged,
     // and the settings page's banner says so. The helper from KWin's loaded plugins, the effect
     // from its loaded effects (each loaded under a hashed name: kwini3helper-<hash>,
-    // kwini3hold-<hash>).
-    function checkHelperKeys() {
+    // kwini3hold-<hash>). Asked at load and at every reconfigure (each plugin queues one when it
+    // loads, so one loaded mid-session is followed), logged when it changes. At load, a plugin
+    // missing starts the user unit that rebuilds them for the running KWin (tools/plugin-rebuild.sh,
+    // a no-op when they are current): it catches an update made while logged out. No unit (not
+    // installed, a test KWin's bus): the call fails in KWin's journal, nothing else.
+    var holdLoaded = null; // as helperLoaded, the effect
+    function checkHelperKeys(atLoad) {
+        var asked = 0;
+        function answered() {
+            if (++asked < 2 || !atLoad || (helperLoaded && holdLoaded)) return;
+            callDBus(
+                "org.freedesktop.systemd1",
+                "/org/freedesktop/systemd1",
+                "org.freedesktop.systemd1.Manager",
+                "StartUnit",
+                "kwin-i3-plugins.service",
+                "replace"
+            );
+        }
         callDBus(
             "org.kde.KWin",
             "/Plugins",
@@ -6840,11 +6857,15 @@ var KI3 = (function () {
             "org.kde.KWin.Plugins",
             "LoadedPlugins",
             guard("helper keys", function (loaded) {
-                helperLoaded = String(loaded).indexOf("kwini3helper") >= 0;
-                if (!helperLoaded)
+                var now = String(loaded).indexOf("kwini3helper") >= 0;
+                if (now !== helperLoaded)
                     log(
-                        "HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing"
+                        now
+                            ? "HELPER loaded"
+                            : "HELPER not loaded: the mouse, frame focus, the resize mode and the terminal key do nothing"
                     );
+                helperLoaded = now;
+                answered();
             })
         );
         callDBus(
@@ -6855,8 +6876,15 @@ var KI3 = (function () {
             "org.kde.kwin.Effects",
             "loadedEffects",
             guard("effect loaded", function (loaded) {
-                if (String(loaded).indexOf("kwini3hold") < 0)
-                    log("EFFECT not loaded: no frame, no hold");
+                var now = String(loaded).indexOf("kwini3hold") >= 0;
+                if (now !== holdLoaded)
+                    log(
+                        now
+                            ? "EFFECT loaded"
+                            : "EFFECT not loaded: no frame, no hold"
+                    );
+                holdLoaded = now;
+                answered();
             })
         );
     }
@@ -7773,7 +7801,7 @@ var KI3 = (function () {
             "FitKeys"
         );
         checkLayoutKeys();
-        checkHelperKeys();
+        checkHelperKeys(true);
         checkPerOutput();
         options.perOutputVirtualDesktopsChanged.connect(
             guard("per-output", function () {
@@ -7939,6 +7967,7 @@ var KI3 = (function () {
         var changed = Settings.load();
         winOptions();
         checkFrame();
+        checkHelperKeys(false);
         // Every reconfigure, the helper may be new (it asks for one at load); after the load, or a
         // changed gap would leave Meta+right's and the gap press's reach at the old one.
         tellDrag(true);

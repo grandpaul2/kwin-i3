@@ -392,7 +392,16 @@ works too). Plasma 6.8 dropped the X11 session, not Xwayland's windows (`X11Wind
 
 ## Plugins and effects (`plugin/`)
 
-- Both plugins are version-locked to the installed KWin, which refuses a stale build after an update.
+- **Both plugins are version-locked to the exact KWin release** (6.8.3 `src/plugin.h`: the IID is
+  `org.kde.kwin.PluginFactoryInterface` / `EffectPluginFactory` + `KWIN_PLUGIN_VERSION_STRING`,
+  major.minor.patch, "a binary extension must be recompiled with every new KWin release"). A stale
+  build is refused with a journal line (`has mismatching plugin version`, `was built for a
+  different version of KWin`), never a crash. The running version: `/KWin supportInformation`'s
+  "KWin version:" line; a build's: its IID's tail (`grep -ao`).
+- **A package keeps its headers' timestamps** (Fedora's `config-kwin.h` dated days before the
+  update), so after a KWin update make sees nothing newer than the old objects and relinks them,
+  still for the old version. `plugin/CMakeLists.txt` makes the version a compile definition: a
+  changed definition recompiles and re-mocs every object (probed).
 - A plugin reloaded (an install, KWin's own effect reload) starts with nothing the script told the
   last instance (the saved trees, the floating set, the bars): each asks a reconfigure at load,
   and the script compares Stats with what it told and tells it again (`checkFrame`). A script

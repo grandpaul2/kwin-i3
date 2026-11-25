@@ -221,7 +221,16 @@ need a plugin runs without one (`# needs: plugin`, `tests/live/run.sh`), which k
 from breaking, not a test chosen for it. The helper adds the
 mouse (tiling drag, resize, frame focus), the resize mode, the position keys and the terminal key;
 the effect draws the frame and holds layout changes. Without either, the settings page's banner
-says what is missing (`behaviour.md` §13). The plugins cost a rebuild after every Plasma update.
+says what is missing (`behaviour.md` §13). **The plugins keep themselves built.** KWin loads a
+plugin only when it was built for its exact version (major.minor.patch), so every Plasma update
+needs a rebuild; kwin-i3 does it itself, as the user, never as root: when KWin's headers change
+it rebuilds in the background and stages the result for KWin's next start, loading it at once
+only into a running KWin of the same version, and at load the script starts the same rebuild when
+KWin lacks either plugin. A rebuild that fails is said once, in a notification, with its cause
+and the one command (`tools/plugin-rebuild.sh`). i3 has no plugins; its rule carried over is that an upgrade never
+breaks the running session (it runs the old binary until `restart`), and that a fault is shown
+at once with its fix to hand (`i3-nagbar`). The release key needs neither plugin, so a failed
+rebuild never locks anyone out.
 
 ## Install and first run
 
@@ -233,7 +242,8 @@ will do, does it only on Enter, quits having changed nothing on Esc
 follows it:
 
 - **One command, one log-out, one first-run step.** `make install` does every step that needs no
-  choice (the script's link and its enabling, the plugins, the settings page) and is safe to run
+  choice (the script's link and its enabling, the plugins and their rebuild's user units, the
+  settings page) and is safe to run
   again; the log-out is KWin's, which reads a new script's and plugins' paths only at login; every
   choice waits for the first-run step. Packaging is `LATER.md`'s "Release prep".
 - **The first-run step is the settings page**, its banner shown while anything kwin-i3 needs
@@ -263,7 +273,7 @@ follows it:
   beta's users are few and reachable, and a migration is code kept for one upgrade.
 - **Removal deletes what the install wrote**: `make uninstall` gives back every saved change, disables the
   script, and deletes everything the install wrote (the script's link, `~/.local/lib/kwin-i3/`,
-  KWin's drop-in, the session's environment file), naming each.
+  KWin's drop-in, the rebuild's user units, the session's environment file), naming each.
 
 ## Decisions
 
