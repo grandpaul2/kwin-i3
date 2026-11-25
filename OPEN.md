@@ -7,7 +7,7 @@ action** ("none" is not one: an accepted item goes, its reason kept where the de
 Waiting is not a next action either ("when it shows again", "when someone has used it"): such an
 item goes, its facts kept in their homes, and a capture or a red brings it back as a new item.
 
-Last reconciled: **2026-11-19** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
+Last reconciled: **2026-11-25** (the `stable` branch started at v1.1.0 on 2026-10-31; each move
 after `docs/testing.md` P6's gate: green on the host and on Arch and PikaOS). `stable` is at
 `v1.6.0` (2026-11-15, 584a643).
 
@@ -107,3 +107,15 @@ a spec (both paths, one change).
 item 111's review). i3's `drag_pointer` ends every drag, a floating move or resize included, on
 any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGroup`,
 `m_groupActive`) ends on its own button's release only. Next: a spec.
+
+**124. A tiling X11 window floats when its own title bar is dragged** (2026-11-25, the capture
+2026-11-20_152049.077, kept: Steam). i3 ignores a client's `_NET_WM_MOVERESIZE` on a tiling window
+(`handlers.c:936`); `behaviour.md` X5 has the helper cancel KWin's move. The capture: the helper
+cancelled the first move (in its tile), and Steam's second request 2 ms later started a move with
+the window already out of its tile ("no tile"), which floated it. Next: the diagnosis (why the
+window wasn't back in its tile before the second request: `kwin-notes.md`'s cancelled move
+re-tiling by position), then a spec.
+
+**125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
+plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
+clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.
