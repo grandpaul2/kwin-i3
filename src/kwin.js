@@ -120,7 +120,7 @@ var KI3 = (function () {
     // from, so the pointer follows to the new one (i3 warps only from commands: x_set_warp_to in
     // _tree_next and workspace_show). Any other pass (a window closed, settings, monitors) moves
     // no pointer: a panel popup closing on the other monitor sent it to the focused window
-    // although focus never moved (tests/live/72-pointer-stays.sh).
+    // although focus never moved.
     var focusPending = null; // { byKey: a key asked (wantFocus), checked: KWin said Show Desktop is off (applyFocus) }
 
     function id(w) {
@@ -4680,7 +4680,7 @@ var KI3 = (function () {
     // already (i3's x_push_changes with mouse_warping output):
     // only for a pass a key or an outside switch asked for (byKey), as i3 warps from workspace_show
     // and the focus commands, never from a close (the start menu closing sent the pointer across;
-    // 72-pointer-stays). checked: this pass has KWin's answer that Show Desktop
+    // seen live). checked: this pass has KWin's answer that Show Desktop
     // is off (below).
     var focusedOutput = null; // the output the focus was last applied or taken on, by name (not focusOutput, the action below)
     function pointerOn() {
@@ -4728,7 +4728,7 @@ var KI3 = (function () {
         // activating a tile it hid turns it off (kwin activation.cpp activateWindow), which ended
         // the edit mode before its window showed. Scripts can't read
         // the state, so a pass that finds the desktop (or the panel) active asks KWin, and a pass
-        // with the answer goes on only if it is off (74-show-desktop). KWin's last resort when no
+        // with the answer goes on only if it is off. KWin's last resort when no
         // window is left to focus on a monitor is also the desktop: that pass still brings the
         // focus back (73-override-redirect). The answer rides on focusPending, so it is the pass it
         // brought that has it, however long a rebuild holds that pass.
@@ -7531,7 +7531,7 @@ var KI3 = (function () {
                 }
                 // KWin's own choice after a popup or another window outside the tree closed: the focus
                 // stays where the model has it, as in i3 the focus is where it was when such a window
-                // goes (§5 D7); the close's pass puts it back (72-pointer-stays, case 1).
+                // goes (§5 D7); the close's pass puts it back.
                 if (closingOutside && !switching) {
                     log(
                         "ACTIVE " +
@@ -8212,7 +8212,7 @@ var KI3 = (function () {
         var first = Workspaces.ordered()[0],
             fws = focusedWs();
         // B. Lost outputs: their workspaces move for good; the focused one is shown on the first
-        // output (i3's workspace_show(next) in move_content; 84-unplug-focus).
+        // output (i3's workspace_show(next) in move_content).
         lost.forEach(function (name) {
             var moves = Outputs.homesAfterLoss(name, outputState()),
                 moved = [];

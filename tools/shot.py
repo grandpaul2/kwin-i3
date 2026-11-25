@@ -10,7 +10,7 @@ KWin answers only callers it trusts; the test KWin runs with KWIN_SCREENSHOT_NO_
 drawing.
 
 A probe is a process start, two imports and a PNG decode (~45 ms): a test reading many pixels of
-one capture asks for them in one probe (78-rounded-corners read 734 one at a time, 44 s).
+one capture asks for them in one probe (734 read one at a time took 44 s).
 """
 
 import os
