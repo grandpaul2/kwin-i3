@@ -1,31 +1,27 @@
 # kwin-i3 — notes for agents
 
 kwin-i3 is i3's window management as one KWin script and two small KWin plugins. The maintainer
-owns it, decides and merges; contributors' work lands as **pull requests** (below). Most of the
+owns it, decides and merges; contributors' work lands as pull requests (below). Most of the
 work is done through an agent like you (Claude Code, Codex, Cursor and others), so this file is
 the whole rulebook: nothing from one person's machine is loaded for another. Each person's own
 agent files add their personal preferences on top: a global one (Claude Code's
 `~/.claude/CLAUDE.md`) and, for this repo, a gitignored one (`CLAUDE.local.md`). `CLAUDE.md` is
-this file for Claude Code (`@AGENTS.md`) with its few Claude-only lines.
+this file for Claude Code (`@AGENTS.md`).
 
 Read `docs/philosophy.md`, `docs/plan.md` and `docs/behaviour.md` first: what the project is for
 and who for, the scope and its decisions, then what the code does, exactly; `docs/README.md` says
-which doc is the home of which fact. **`docs/kwin-notes.md`** is KWin's behaviour as found, the
+which doc is the home of which fact. `docs/kwin-notes.md` is KWin's behaviour as found, the
 traps that each cost a session: read the section for the part of KWin you touch before you touch
-it, and add a line when you find one. `docs/fuzz-design.md` is why the fuzzer looks the way it
-does. **`OPEN.md` is this repo's list of unfinished work for now, and `LATER.md` of work held until
-the Stage ends**: no other file carries an open list (state, not history; the rules are in their
+it, and add a line when you find one. `OPEN.md` is this repo's list of unfinished work for now,
+and `LATER.md` of work held until the Stage ends: no other file carries an open list (state, not history; the rules are in their
 headers; `LATER.md` shares `OPEN.md`'s numbering). `CONTRIBUTING.md` is the short version for a
 person. Words like **the Stage** (the period before a release, now its beta, `OPEN.md`), **the
 hold** (kwini3hold, the effect that holds the old layout until the new one is drawn) and the rest
 are in `docs/definitions.md`; `behaviour.md`'s row ids (X7, Y1) are its own table rows.
 
-These are the project's rules, not suggestions.
-
 ## How work lands
 
-- **The maintainer's sessions** commit to main and push. Group related changes; say *why* in the
-  message; never commit unverified work.
+- **The maintainer's sessions** commit to main and push, never unverified work.
 - **A contributor's sessions** work on a branch in a worktree (`git worktree add
   ../kwin-i3-<branch> -b <branch>`, then `make tools`, `make lint-tools` and, for plugin work,
   `make plugin` in it), push the branch, and open a pull request to main. One `OPEN.md` item (or
@@ -98,7 +94,6 @@ These are the project's rules, not suggestions.
   with the go: `make plugin-install` (loads into the running KWin), `make kcm-install` and
   `make widget-install`.
 - **Nothing that shows a window on a live desktop** without saying so first.
-- **sudo** runs only through the agent's approval prompt; a password is never given to an agent.
 - **What the live desktop can tell without a person**: a read-only query (D-Bus, the journal,
   config; `docs/kwin-notes.md` "Config and D-Bus"), a test-KWin probe, or the source. A desk test
   is for what none of those can give: what the person sees, what they want.
@@ -108,7 +103,7 @@ These are the project's rules, not suggestions.
 - **Lead with i3, every time**: the project is named for it. A bug, a capture, a design question or
   a plan opens with: how i3 does it (its source, file:line), how kwin-i3 copies it, the
   hurdles (KWin, Wayland). Then KWin's detail. i3 behaviour is ported from i3's source
-  (`src/move.c`, `src/tree.c`, `src/con.c`; the **4.24 release**, not `next`), not from memory.
+  (`src/move.c`, `src/tree.c`, `src/con.c`; the 4.24 release, not `next`), not from memory.
 - **Ride i3 hard.** A difference from i3 needs a specific, explicit reason (KWin can't, Wayland
   forbids it, `plan.md`'s reasons); "minor", "rare", "nobody sees it" and the cost of the change
   are not. This holds inside the code as much as in behaviour: the model's shapes and flags are
@@ -127,18 +122,15 @@ These are the project's rules, not suggestions.
 - **Dive until solved.** A red test is dug into with probes until its cause is named and fixed,
   never parked as "looks flaky". But a symptom inside a trade already accepted (the hold's 200 ms
   timeout letting a slow app flash on close) isn't chased: check the docs' decisions first.
-- **Decide from the docs.** A question is settled by `docs/philosophy.md` "How a decision is
-  made" steps 1-4 (the foundations, precedent, i3's source, a hole). If they decide it, it's
-  decided; if not, that's a hole in the docs, and its repair is a foundation change. Style and feel
-  are judged live after building. A suggestion (anyone's) against the norms doesn't change them.
-- **Follow the docs; a gap is a hole, not a choice.** `philosophy.md`'s steps settle each step of
-  a plan, i3's source among them; the maintainer decides only the foundations themselves: a
-  conflict between two, or a hole's repair (`philosophy.md` steps 4-5). So a plan is one plan,
-  i3's way, each step citing what settled it, never options, and a way away from i3 is never a
-  choice. Where the docs contradict each other or say nothing, the plan can't be finished from
-  them: the holes that, filled, would finish it are named, and each is worked (the premise that
-  let it open, what i3's source says, what Plasma and KWin allow, the precedents and the
-  philosophy) into a repair to the foundation it belongs in, not a one-time fix.
+- **Decide from the docs; a gap is a hole, not a choice.** A question, and each step of a plan,
+  is settled by `docs/philosophy.md` "How a decision is made" steps 1-4 (the foundations,
+  precedent, i3's source, a hole). The maintainer decides only the foundations themselves: a
+  conflict between two, or a hole's repair (steps 4-5). So a plan is one plan, i3's way, each step
+  citing what settled it, never options. Where the docs contradict each other or say nothing, the
+  holes that would finish the plan are named, and each is worked (the premise that let it open,
+  i3's source, what Plasma and KWin allow, the precedents, the philosophy) into a repair to its
+  foundation, not a one-time fix. Style and feel are judged live after building. A suggestion
+  (anyone's) against the norms doesn't change them.
 - **Change a plan minimally.** When one piece of a decided plan is rejected, cut exactly that piece.
 - **Words a user reads** (settings page, README, help text) must be true of what the code does and
   imply no opposite the user would go looking for. Every settings control must be obvious cold: no
@@ -152,28 +144,24 @@ These are the project's rules, not suggestions.
 
 - **Captures**: a key bound to `tools/capture` (README, Install step 6) saves the flight recorder
   (kwin-i3's log, kwini3hold's events, the pointer's, the state, a screenshot, a note) to
-  `~/.local/state/kwin-i3/captures/<time>/`. **Read it with `tools/capture-read DIR` first**: one
+  `~/.local/state/kwin-i3/captures/<time>/`. Read it with `tools/capture-read DIR` first: one
   timeline to the millisecond, the press last. kwin-i3's log never reaches the journal, and
   `debugLog` does nothing live (`docs/debugging.md`).
 - **A capture, a bug report or a red** gets a diagnosis first (i3, then the cause named from the
   evidence); its fix is a change like any other, through the smaller or larger workflow ("How
   work lands"), with a live test watched red before the fix where one can show it.
-- **`make fuzz`** (`tests/fuzz/`, `docs/fuzz-design.md`) runs random actions with pixel invariants.
-  **Not during the Stage** (`LATER.md`, "Reliability"), and when it returns, in runs of 5 minutes
-  or less. `tests/fuzz/run.py --reshrink SEED` shrinks a saved failure again.
+- **`make fuzz`** (`tests/fuzz/`; `docs/fuzz-design.md` is why it looks as it does) runs random
+  actions with pixel invariants. Not during the Stage (`LATER.md`, "Reliability"), and when it
+  returns, in runs of 5 minutes or less. `tests/fuzz/run.py --reshrink SEED` shrinks a saved failure again.
 - Its finds cluster at the KWin seam (hidden desktops, monitor unplug/replug, fullscreen, modal
   dialogs), not in `tree.js`: `docs/kwin-notes.md`.
 
 ## Testing
 
-**`docs/testing.md`, lean for the Stage**: testing's one job now is not to break a live desktop
-catastrophically. Its runs are the only runs: `make unit` and the changed scenario(s) for a change
-(and 64 for a plugin change), `make test` once at a change's end only when it reaches what many
-scenarios drive, a probe for a KWin question. **Tests are tools, not debts**: never list a test as
-owed. No run over 5 minutes, ever. Fault runs, fuzzing and
-stock runs wait in `LATER.md`. A case it doesn't cover is the maintainer's call. **No new test of
-any kind without the maintainer's go, and only with a strong case** (its rule 5: the suite grows by
-decision, not because a test can be written).
+`docs/testing.md`, lean for the Stage: testing's one job now is not to break a live desktop
+catastrophically, and its runs are the only runs. No run over 5 minutes. A test is a tool, never
+listed as owed. A case it doesn't cover is the maintainer's call, and no new test of any kind
+(a tool included) comes without the maintainer's go and a strong case (its rule 5).
 
 - **Before a rerun**: is what's under test rebuilt (`make build` for the script, `make plugin` for
   the plugins, `make kcm` for the settings page's QML)? Name the cause from the evidence first; one
@@ -188,7 +176,6 @@ decision, not because a test can be written).
 - Edit `src/`, then `docs/testing.md` P1; a behaviour change updates `docs/behaviour.md` in the
   same commit. `make build` (`build.sh`) writes `package/contents/code/main.js`; never edit it by
   hand, but commit it.
-- During the Stage (`OPEN.md`), a new test tool is its own proposal.
 - A new KWin trap goes in `docs/kwin-notes.md`; a decision in its home (`docs/README.md`). Facts
   about this project belong in the repo, not in one agent's private memory, so every agent has them.
 - **The repo is public: it speaks for the project, not for a person.** A rule is stated as the

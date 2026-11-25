@@ -119,10 +119,3 @@ re-tiling by position), then a spec.
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
 clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.
-
-**127. `AGENTS.md` pruned against the standard's three tests** (2026-11-25, standard change 17).
-A line stays only if it carries what an agent can't infer (a fact, the maintainer's stated rule); a
-guard for something that can't be undone belongs in the harness, one for something that can goes
-to judgement; no emphasis where plain words do. `AGENTS.md` is a contributor's agent's whole
-rulebook (no global file of the maintainer's reaches it), so a line the maintainer's global file
-repeats still stays. Next: one pass, its cuts in one commit whose message gives each reason.

@@ -109,7 +109,7 @@ In the conversation, not a file. Short, numbered once, each number one topic:
 1. **The conflicts** (step 5 only), grouped by the foundation they would change. Each: the two
    sides, cited; i3's way (file:line); the precedents (row ids, decision numbers); the reasons
    (a)-(g) that bear; **the recommendation, written as the edit to the foundation**, with cost
-   against value. Never as options away from i3 (`AGENTS.md`, "Follow the docs").
+   against value. Never as options away from i3 (`AGENTS.md`, "Decide from the docs").
 2. **The holes closed at step 4**: each one line, the principle written and where.
 3. **Fixed without asking**: counts per class and per doc, one line each; the notable ones named.
 4. **Code mismatches**: the `OPEN.md` items or build-plan stages proposed, a line each. Code
