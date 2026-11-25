@@ -86,15 +86,12 @@ Tiling key step's help speaking of the floating step's px, the pointer help narr
 though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
 live.
 
-**119. Tests that move the pointer and then press** (2026-11-15, from the release's 86 red: G16
-moved onto another window of a focus-parent selection before pressing, and focus follows mouse
-collapsed the selection first, under load; the trap is in `kwin-notes.md`). The same shape in 86:
-G13's container drag and the Escape on a title bar. Proposed with them: a rule for scenario authors
-in `docs/testing.md` (wait for the activation a move causes before pressing; no move between a
-selection and its press), P3 rule 3 asking a red/green log diff before a scenario goes to the alone
-tail, millisecond stamps in `tools/logsink.py`, and `kwin-notes.md` lines on a script's
-synchronous `callDBus` into KWin and the test bus's default limits. Next: the maintainer's word on
-each, then each made.
+**119. Millisecond stamps in the test sink** (2026-11-15, from the release's 86 red; the rest of
+the item is in `docs/testing.md` and `kwin-notes.md`). `tools/logsink.py` stamps `HH:MM:SS `,
+which about 35 scenarios, `tests/fuzz/fuzz.py` and `tools/capture-read` (`[9:]`, a live capture's
+`state.txt` too) read as 9 characters. Next: the stamp to `HH:MM:SS.mmm `, every `^.{9}`,
+`cut -c10-`/`-c15-`/`-c17-` and `[9:]` moved by 4, `capture-read` reading old captures as well,
+then `make test`.
 
 **121. The floating size check leaves out the window's own size hints** (2026-11-16, from item
 112's review). i3's `floating_check_size` (`floating.c:100-183`) first holds the floating con to

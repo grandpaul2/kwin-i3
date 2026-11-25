@@ -98,6 +98,11 @@ poll eval '[[ "$(fc a)" == "0,0 640x360" && "$(fc c)" == "0,360 1280x360" ]]'
 # Mid-drag: the window stays put and the indicator shows the band of c's centre under the pointer
 # (the centre inset by 30 % of its smaller side, 108 px, at most 1.25 times as wide as tall, so
 # 180 px in the middle, then cut in three: the middle one, stacked): then Escape, nothing changes.
+# The pointer placed on a's title bar first and c made active again, then the press without a
+# move (docs/testing.md, "A check that moves the pointer").
+point 200 14
+kjs 'workspace.windowList().forEach(function (w) { if (w.caption === "c") workspace.activeWindow = w; })'
+poll eval '[[ "$(active)" == c ]]'
 m=$(mark)
 "$INJECT" "abs 200 14" "wait 30" "btn left down" "abs 300 200" "wait 40" "abs 640 540" "wait 1200" \
     "key 1 down" "key 1 up" "wait 40" "abs 1000 300" "wait 40" "btn left up" &
@@ -344,8 +349,13 @@ key "Focus Parent"
 key "Floating Toggle"
 check "the split floated whole" poll eval '[[ "$(tree 1)" == *"~"*c*e* ]]'
 echo "    $(tree 1)"
+# The pointer onto c first (focus follows mouse activates it, collapsing the selection), then the
+# container selected again by key, and the drag pressed where the pointer is.
 sleep 0.5
 read -r cx cy <<<"$(centre c)"
+point "$cx" "$cy"
+poll eval '[[ "$(active)" == c ]]'
+key "Focus Parent"
 g=$(fc b)
 bx=${g%%,*}
 m=$(mark)
@@ -353,6 +363,7 @@ drag Meta+Shift left "$cx" "$cy" $((bx + 100)) 360
 check "G13: the floated split dropped on b's left side: tiled whole" wait_log '^.{9}DRAG dropped sibling left.*\(tiled\)' "$m"
 echo "    $(dropped "$m") / $(tree 1)"
 check "  c and e tiled together, before b" poll eval '[[ "$(tree 1)" != *"~"* && "$(tree 1)" == *c*e*b* ]]'
+key "Focus Child" # the selection back to c, so e's next window opens beside it
 kclose e
 poll eval '[[ "$(tree 1)" != *e* ]]'
 
