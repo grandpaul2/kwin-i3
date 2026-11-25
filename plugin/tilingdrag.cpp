@@ -899,7 +899,10 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
             return false;
         }
         m_taken &= ~event->button;
-        if (m_groupActive && event->button == m_button) {
+        // A floated container's move or resize ends on any button's release, as i3's
+        // drag_pointer does (drag.c:67-69, §9 F1a); the drag button's own release afterwards is
+        // still ours, taken (below).
+        if (m_groupActive) {
             endGroup(false);
             pressDone();
             hoverAt(event->position);
@@ -908,7 +911,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         // The drag button's release drops; so does any other button's while the press is held,
         // before the drag distance too, where nothing has moved (i3's drain_drag_events: any
         // release ends the drag, §9 G7). The drag button's own release afterwards is still ours,
-        // taken. A group press (phase None) ends on its own button only (endGroup, above).
+        // taken.
         if (event->button == m_button || (dragging() && (m_phase == Phase::Drag || m_phase == Phase::Pressed))) {
             if (m_phase == Phase::Drag) {
                 m_phase = Phase::Drop;

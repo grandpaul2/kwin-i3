@@ -100,11 +100,6 @@ its focused window's minimum, maximum, aspect ratio and increments, net of the b
 and the helper's whole-container resize (`TilingDrag::sizeLimit`) apply the settings only. Next:
 a spec (both paths, one change).
 
-**122. A floated container's drag doesn't end on another button's release** (2026-11-16, from
-item 111's review). i3's `drag_pointer` ends every drag, a floating move or resize included, on
-any button's release (`drag.c:67-69`); the helper's group press (F1a, `pressGroup`,
-`m_groupActive`) ends on its own button's release only. Next: a spec.
-
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
 clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.
