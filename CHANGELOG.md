@@ -3,6 +3,33 @@
 What changed between the versions that ran on a desktop. Newest first; the git log has the
 detail. Versions are tags (`v1.0.0`) and `package/metadata.json`'s `Version`.
 
+## v1.7.0 (2026-11-25)
+
+- **The plugins rebuild themselves after a Plasma update.** KWin loads a plugin only into the
+  release it was built for, so after an update the frame, the mouse dragging and the shared keys
+  stopped silently. `make install` now sets up a user service that rebuilds them when KWin
+  changes, and a notification says why if a rebuild fails.
+- **Dragging an app's own title bar no longer floats a tiling window** (Steam, GTK header bars,
+  a browser's tab strip), including a window alone on its workspace: i3 ignores the app's move
+  request on a tiling window, and so does kwin-i3 now in every case.
+- **The mouse follows i3 more closely.** A title-bar drag starts after i3's 15 px; a right-press
+  drag on a tiling window's title bar resizes against the window above (Plasma's window menu stays
+  on the title bar's menu button); a floating container's move or resize ends on any button's
+  release; every press uses the modifier set in Plasma (Alt as well as Meta).
+- **A floating window's size respects the app's own minimum and maximum**, before the floating
+  size limits, as in i3, and a floating container's resize holds those limits.
+- **Meta+Shift+Q closes the window i3 would**: the focused one in kwin-i3's tree, never a panel
+  or the desktop that held the keyboard.
+- **A hung app no longer stalls every key.** A client that stops answering (a browser after a GPU
+  reset) is asked into its tile once, not on every pass, which held every layout change for
+  200 ms.
+- **Fixes**: a window tiled while its app was stopped no longer counts as floating for Meta+drag;
+  a desktop switch from the Overview or a pager right after a monitor change is handled at once;
+  KDE's critical notifications float as other notifications do.
+- **Settings page**: the floating key step has its own help, the unfocused split indicator's
+  colour has a row on the Frame tab, the plugins banner names everything missing without them,
+  and the words follow the page's style throughout.
+
 ## v1.6.0 (2026-11-15)
 
 - **No change in behaviour.** The code is formatted and linted by each language's standard tools
