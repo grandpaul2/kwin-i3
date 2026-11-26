@@ -81,6 +81,4 @@ script and Wayland has neither. The helper could read an X11 window's `WM_NORMAL
 and tell the script. Next: a spec (the helper reads them, the script's `checkSize` and
 `sizeLimit` apply them, X11 only).
 
-**125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
-plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
-clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.
+
