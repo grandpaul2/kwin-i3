@@ -80,5 +80,3 @@ window's own minimum and maximum only (`behaviour.md` R20), as KWin keeps neithe
 script and Wayland has neither. The helper could read an X11 window's `WM_NORMAL_HINTS` itself
 and tell the script. Next: a spec (the helper reads them, the script's `checkSize` and
 `sizeLimit` apply them, X11 only).
-
-
