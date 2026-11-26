@@ -35,9 +35,7 @@ audience and the lines drawn: `docs/philosophy.md`.
 **79. The install and first run, built to `plan.md`'s "Install and first run"** (2026-11-01;
 takes in item 26). Built: `make install` and `make uninstall`; the key override (`behaviour.md` §8, "Shared keys");
 Plasma's own settings as rows on Workspaces and Window Rules, with the banner, their save and `make uninstall`'s
-give-back (`behaviour.md` §11); the README's Install to match. To check: `behaviour.md` G2
-names a System Settings page for the drag distance, and the survey of stock 6.7.5 and 6.8.2 found
-none. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
+give-back (`behaviour.md` §11); the README's Install to match. Next: the install walked as a new user on stock CachyOS and PikaOS (`tools/box.sh`), step
 by step, from `git clone` to the banner's Review…; and with the plugins not built: what the
 banners and the Keys tab's greyed override then say. With it, one wording to settle:
 `tools/install.sh`'s closing lines say the page's banner "names any Plasma setting kwin-i3
@@ -68,14 +66,6 @@ ignores every request of a fullscreen container. Not yet traced: `_NET_WM_FULLSC
 (V3's reason doesn't hold on X11), Wayland `set_fullscreen` with an output, a client's
 `_NET_NUMBER_OF_DESKTOPS` (D6). V9 to say KWin 6.8.2 ignores a client's `_NET_WM_DESKTOP` and
 sticky messages. Next: (b)'s diagnosis.
-
-**113. Three rows keep Plasma's way under reason (e) where kwin-i3 can win** (from the foundation
-sweep). `plan.md` (e) gives the user a Plasma setting only where kwin-i3 can't win it at runtime;
-these rows cite it where the helper already takes the press: G2 (the drag distance: Plasma's,
-where i3's is 15 px, `drag.c:46`), Z4 (a right press on a title bar opens the window menu, where
-i3 resizes against the neighbour above, `click.c`), F1 (Meta+right resizes a floating window
-without focusing it, where i3 focuses, `click.c:261-277`). Each is i3's way by the docs, or a
-live verdict, reason (c), if kept. Next: a spec each, judged live.
 
 **119. Millisecond stamps in the test sink** (2026-11-15, from the release's 86 red; the rest of
 the item is in `docs/testing.md` and `kwin-notes.md`). `tools/logsink.py` stamps `HH:MM:SS `,

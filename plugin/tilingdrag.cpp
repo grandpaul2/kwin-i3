@@ -20,11 +20,9 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
-#include <QGuiApplication>
 #include <QHoverEvent>
 #include <QMouseEvent>
 #include <QRegularExpression>
-#include <QStyleHints>
 
 #include <limits>
 
@@ -886,8 +884,10 @@ bool TilingDrag::pointerMotion(PointerMotionEvent *event)
         groupMotion(event->position);
         return true;
     }
-    if (m_phase == Phase::Pressed && m_window
-        && (!m_threshold || (event->position - m_start).manhattanLength() >= QGuiApplication::styleHints()->startDragDistance())) {
+    // i3's drag threshold, 15 logical px in a straight line (drag.c:43-47), for every press that
+    // waits for it (a title bar, a group's bar).
+    const QPointF moved = event->position - m_start;
+    if (m_phase == Phase::Pressed && m_window && (!m_threshold || QPointF::dotProduct(moved, moved) > 15.0 * 15.0)) {
         begin();
     }
     if (m_phase == Phase::Drag) {
@@ -967,7 +967,7 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         return false;
     }
     if (event->button == Qt::RightButton) {
-        return pressResize(event);
+        return pressResize(event) || pressTitlebarRight(event);
     }
     const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
     const Qt::KeyboardModifier mod = floatMod();
@@ -1096,6 +1096,43 @@ bool TilingDrag::pointerButton(PointerButtonEvent *event)
         threshold = true;
     }
     takePress(window, Qt::LeftButton, event->position, false, QString(), threshold);
+    return true;
+}
+
+// A plain right press on a title bar (§9 Z4): i3 resizes against the neighbour above
+// (click.c:355-358, tiling_resize on CLICK_DECORATION), after focusing (step 3). The decoration
+// first, as for the left press: a title-bar button that takes a right press (the menu button) keeps
+// it. A tiling window waits for the drag threshold, as G14's bar; a window of a floated container
+// resizes against its neighbour above inside it, else the container whole (F1a, as its bar).
+bool TilingDrag::pressTitlebarRight(PointerButtonEvent *event)
+{
+    const auto mods = event->modifiersRelevantForShortcuts & ~Qt::KeypadModifier;
+    Window *window = input()->pointer()->hover();
+    if (mods != Qt::NoModifier || !window || window->isDeleted() || window->isFullScreen() || !window->decoration()
+        || window->decoration()->sectionUnderMouse() != Qt::TitleBarArea) {
+        return false;
+    }
+    const bool tiled = customTiled(window);
+    const bool floated = !m_floated.value(window->internalId().toString()).isEmpty();
+    if (!tiled && !floated) {
+        return false; // a floating window's title bar is KWin's (§9 F1)
+    }
+    const QPointF p = event->position - window->pos();
+    QMouseEvent e(QEvent::MouseButtonPress, p, event->position, event->button, event->buttons, event->modifiers);
+    e.setTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(event->timestamp).count());
+    e.setAccepted(false);
+    QCoreApplication::sendEvent(window->decoration(), &e);
+    if (e.isAccepted()) {
+        return true; // a title-bar button
+    }
+    if (floated && !floatedHas(window, QStringLiteral("top"))) {
+        return pressGroup(window, event, true);
+    }
+    window->performMousePressCommand(Options::MouseActivateAndRaise, event->position);
+    if (tiled) {
+        noticePressed(window);
+    }
+    takePress(window, Qt::RightButton, event->position, true, QStringLiteral("top"), tiled);
     return true;
 }
 

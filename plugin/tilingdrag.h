@@ -266,6 +266,7 @@ private:
     };
 
     bool pressResize(KWin::PointerButtonEvent *event);
+    bool pressTitlebarRight(KWin::PointerButtonEvent *event);
     bool pressKindChange(KWin::Window *window, KWin::PointerButtonEvent *event, KWin::Window *floatIt);
     // A floated container moved (Meta+left, its title bar) or resized (Meta+right) whole: its
     // windows step together on every motion, as one (i3's floating_drag_window,

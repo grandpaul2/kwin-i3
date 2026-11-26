@@ -745,8 +745,8 @@ muts = [
         DR,
         "plugin/tilingdrag.cpp",
         "drag: never begins on a motion",
-        "        && (!m_threshold || (event->position - m_start).manhattanLength() >= QGuiApplication::styleHints()->startDragDistance())) {\n        begin();\n    }\n",
-        "        && (!m_threshold || (event->position - m_start).manhattanLength() >= QGuiApplication::styleHints()->startDragDistance())) { }\n",
+        "    if (m_phase == Phase::Pressed && m_window && (!m_threshold || QPointF::dotProduct(moved, moved) > 15.0 * 15.0)) {\n        begin();\n    }\n",
+        "    if (m_phase == Phase::Pressed && m_window && (!m_threshold || QPointF::dotProduct(moved, moved) > 15.0 * 15.0)) { }\n",
     ),
     (
         DR,

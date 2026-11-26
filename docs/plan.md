@@ -162,9 +162,9 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   floating containers, each as i3 routes it. Meta+left is a tiling drag of the pressed container
   at once, without focusing it (step 2): on a tab, that tab's container, a split tab whole
   (`click.c:432-437`). A left press on a title bar or a tab focuses (step 3, the tab rules), then
-  drags past the drag distance (step 8). Meta+right and a press on a border resize against the
-  neighbour (steps 9, 10); on a group's bar, a right press resizes against the neighbour above, the
-  bar being kwin-i3's, not KWin's title bar.
+  drags past i3's 15 px (step 8). Meta+right and a press on a border resize against the
+  neighbour (steps 9, 10); on a title bar or a group's bar, a right press resizes against the
+  neighbour above (step 10), as i3's decoration does.
 - **The gaps are kwin-i3's handles**: a press in a gap, or Meta+right there, resizes against the
   nearest tiling window (`behaviour.md` Z2, Z3b), where i3's gap is the root window and a press
   focuses the output (`click.c:398-415`): reason (c), judged live. Its own strips cover the gaps
@@ -207,10 +207,10 @@ has a row for each case. Where the line runs between kwin-i3 and Plasma:
   asking to be moved by its own header bar (GTK, Electron) would float a tiling window too, where
   i3 ignores the request (`handlers.c:936`). With the helper, kwin-i3 refuses those on a tiling
   window as i3 does, KWin's Move Window and the window menu's Move with them: KWin runs each as its
-  own move before any input filter, and the helper cancels it once started (`behaviour.md` X5).
+  own move before any input filter, and the helper ends it once started (`behaviour.md` X5).
 - **Where it can't match**, each a ≠ row with its reason: a Meta press with nothing to do is
   swallowed, not passed on to the app (G3, G4: KWin's window actions run after the helper and
-  would float the window); the drag distance is Plasma's setting, not i3's 15 px (G2); a
+  would float the window); a
   floating container's resize waits on each app, as the hold does; no mouse bindings (F7, reason
   (d)).
 
