@@ -81,12 +81,6 @@ script and Wayland has neither. The helper could read an X11 window's `WM_NORMAL
 and tell the script. Next: a spec (the helper reads them, the script's `checkSize` and
 `sizeLimit` apply them, X11 only).
 
-**129. Meta+drag on a floating window is KWin's unrestricted move** (2026-11-25, from item 113's
-review). `src/kwin.js` `winOptions` writes `options.commandAll1 = 12`, commented as
-`MouseActivateRaiseAndMove`; in KWin's `MouseCommand` enum (6.8.3 `options.h`) 11 is that, 12
-`MouseActivateRaiseAndUnrestrictedMove`, which skips the move's confinement to the screens and its
-snapping. Next: a spec (the value 11, F1's row; checked against 6.7.5's enum).
-
 **125. The laptop onto the self-rebuilding plugins** (2026-11-25). It is Fedora 44 too, so its
 plugins are likely stale since KWin 6.8.3. Next, when it is up: pull, `make install` (it rebuilds
 clean and sets up `kwin-i3-plugins.path`), scenarios 64 and 10 there, reload.

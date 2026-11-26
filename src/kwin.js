@@ -5956,7 +5956,7 @@ var KI3 = (function () {
         options.focusStealingPreventionLevel = 1;
         options.electricBorderTiling = false;
         options.electricBorderMaximize = false;
-        options.commandAll1 = 12; // MouseActivateRaiseAndMove (options.h:456-484)
+        options.commandAll1 = 12; // MouseActivateRaiseAndUnrestrictedMove (options.h): no snapping, nothing kept on screen, as i3's drag (floating.c:572-588)
     }
     function seedPointer() {
         var s = pointerOn();
