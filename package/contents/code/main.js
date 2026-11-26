@@ -8370,7 +8370,7 @@ var KI3 = (function () {
             g = w.frameGeometry;
         // i3's cmd_resize_floating: floating_check_size, on the size asked for, before it is set
         // (a Wayland frame read back is the old one until the client answers).
-        var size = checkSize(
+        var held = checkSize(
             Math.max(1, g.width + (what === "width" ? px : 0)),
             Math.max(1, g.height + (what === "height" ? px : 0)),
             w
@@ -8378,8 +8378,8 @@ var KI3 = (function () {
         w.frameGeometry = {
             x: g.x,
             y: g.y,
-            width: size.width,
-            height: size.height,
+            width: held.width,
+            height: held.height,
         };
         return true;
     }
