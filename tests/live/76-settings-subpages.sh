@@ -71,7 +71,7 @@ sleep 0.3
 open_tab "Window Rules"
 shot window-rules
 check "the rules are there to edit, one row each" eval 'named "Window Rules" "Rule 1: application" && named "Window Rules" "Add a rule"'
-check "  the shipped rules a group of their own" eval '$A11Y dump kcmshell6 | grep -q "Your rules"'
+check "  the shipped rules a group of their own" eval '$A11Y dump kcmshell6 | grep -q "Added rules"'
 # KWin starts its window selection when the D-Bus call arrives; a click before that only focuses
 # the window, and nothing says when it has started.
 click_named "Window Rules" "Pick a window: add a rule for its application"

@@ -24,7 +24,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Warning
             visible: !kcm.scriptEnabled
-            text: i18n("kwin-i3 is turned off.")
+            text: i18nc("@info", "kwin-i3 is turned off.")
             actions: Kirigami.Action {
                 text: i18nc("@action:button", "Turn On")
                 icon.name: "system-run"
@@ -36,7 +36,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Error
             visible: kcm.scriptEnabled && !kcm.scriptLoaded
-            text: i18n("kwin-i3 is on but not running. Its errors are in the system log: journalctl --user -b | grep kwin-i3")
+            text: i18nc("@info", "kwin-i3 is on but not running. Its errors are in the system log: journalctl --user -b | grep kwin-i3")
         }
         // One message for both plugins, never saying which:
         // the frame needs kwini3hold, the mouse and the resize mode the helper.
@@ -45,7 +45,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && (!kcm.holdLoaded || !kcm.helperLoaded)
-            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. If their rebuild after a Plasma update failed, a notification said why. To rebuild them by hand: make plugin-install", [!kcm.holdLoaded ? i18n("no frame") : "", !kcm.helperLoaded ? i18n("no mouse dragging") : "", !kcm.helperLoaded ? i18n("no resize mode") : "", !kcm.helperLoaded ? i18n("shared keys run Plasma's shortcuts") : ""].filter(s => s).join(", "))
+            text: i18nc("%1 is a list of what is missing", "kwin-i3's plugins aren't loaded: %1. If their rebuild after a Plasma update failed, a notification said why. To rebuild them by hand: make plugin-install", [!kcm.holdLoaded ? i18nc("@item", "no frame") : "", !kcm.holdLoaded ? i18nc("@item", "no tabs on a group") : "", !kcm.helperLoaded ? i18nc("@item", "no mouse dragging") : "", !kcm.helperLoaded ? i18nc("@item", "no resize mode") : "", !kcm.helperLoaded ? i18nc("@item", "no terminal key") : "", !kcm.helperLoaded ? i18nc("@item", "keys as on a US keyboard") : "", !kcm.helperLoaded ? i18nc("@item", "shared keys run Plasma's shortcuts") : ""].filter(s => s).join(", "))
         }
         // The first-run step (docs/plan.md, "Install and first run"): while a Plasma setting
         // kwin-i3 needs differs (per-output desktops), the page says so and opens its tab.
@@ -54,7 +54,7 @@ KCM.AbstractKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: kcm.scriptLoaded && kcm.setup.needed
-            text: i18n("Plasma switches workspaces on every screen together, which works against kwin-i3.")
+            text: i18nc("@info", "Plasma switches workspaces on every screen together, which works against kwin-i3.")
             actions: Kirigami.Action {
                 text: i18nc("@action:button", "Review…")
                 icon.name: "go-next"

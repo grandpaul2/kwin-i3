@@ -126,7 +126,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "new workspaces")
-                    toolTipText: i18n("How the windows of a workspace made from now on are arranged: split, or one group shown as tabs or as stacked rows. A layout key changes it later. i3: workspace_layout")
+                    toolTipText: i18nc("@info:tooltip", "How the windows of each new workspace are arranged: split, or one group shown as tabs or as stacked rows. A layout key changes it later. i3: workspace_layout")
                 }
             }
             RowLayout {
@@ -154,7 +154,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "the split direction")
-                    toolTipText: i18n("Which way a new workspace's windows split. By screen shape: top to bottom on a screen taller than wide, side by side otherwise. i3: default_orientation")
+                    toolTipText: i18nc("@info:tooltip", "Which way a new workspace's windows split. By screen shape: top to bottom on a screen taller than wide, side by side otherwise. i3: default_orientation")
                 }
             }
             RowLayout {
@@ -173,7 +173,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "back and forth")
-                    toolTipText: i18n("Pressing the key of the current workspace goes to the previous one. i3: workspace_auto_back_and_forth")
+                    toolTipText: i18nc("@info:tooltip", "Pressing the key of the current workspace goes to the previous one. i3: workspace_auto_back_and_forth")
                 }
             }
 
@@ -192,7 +192,7 @@ KCM.SimpleKCM {
         // Its help is the table's alone, so it sits by the table's heading, not atop the tab.
         SectionHeading {
             text: i18nc("@title:group", "Each workspace")
-            help: i18n("A workspace given a screen opens there, or on its second screen while the first isn't connected. Others open on the screen that has the focus when they are first shown. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
+            help: i18nc("@info:tooltip", "A workspace given a screen opens there, or on its second screen while the first isn't connected. Others open on the screen that has the focus when they are first shown. On a floating workspace new windows float (a rule in Window Rules). Meta+Shift+Space tiles a floating window or floats a tiling one. A screen that isn't connected is kept for when it returns. i3: workspace N output")
         }
         Kirigami.FormLayout {
             Layout.fillWidth: true

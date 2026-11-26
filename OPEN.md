@@ -77,15 +77,6 @@ i3 resizes against the neighbour above, `click.c`), F1 (Meta+right resizes a flo
 without focusing it, where i3 focuses, `click.c:261-277`). Each is i3's way by the docs, or a
 live verdict, reason (c), if kept. Next: a spec each, judged live.
 
-**114. The settings page's words against its style guide** (from the foundation sweep). The
-plugin banner names four losses where §1 lists more (the terminal key, the position keys, a
-group's tabs); "Your rules", "No rules of your own", "when you untick it",
-"made from now on" and help naming kwin-i3; strings through `i18n` with no context; the
-Tiling key step's help speaking of the floating step's px, the pointer help narrower than
-`mouseWarping`, the rules help leaving out class; the unfocused indicator colour off the page,
-though the guide puts every i3 knob on it. Next: one pass to the guide, screenshotted, judged
-live.
-
 **119. Millisecond stamps in the test sink** (2026-11-15, from the release's 86 red; the rest of
 the item is in `docs/testing.md` and `kwin-notes.md`). `tools/logsink.py` stamps `HH:MM:SS `,
 which about 35 scenarios, `tests/fuzz/fuzz.py` and `tools/capture-read` (`[9:]`, a live capture's

@@ -91,20 +91,20 @@ KCM.SimpleKCM {
             const value = info.resourceClass || info.resourceName || "";
             if (page.picking && value && page.rows.some(r => r.cls === Logic.wholeClass(value))) {
                 // A second pick of the same application: no second row.
-                page.report(Kirigami.MessageType.Information, i18n("%1 already has a rule.", value));
+                page.report(Kirigami.MessageType.Information, i18nc("@info", "%1 already has a rule.", value));
             } else if (page.picking && value) {
                 page.add({
                     cls: Logic.wholeClass(value)
                 });
-                page.report(Kirigami.MessageType.Positive, i18n("Added a rule: %1 floats.", value));
+                page.report(Kirigami.MessageType.Positive, i18nc("@info", "Added a rule: %1 floats.", value));
             } else if (page.picking) {
-                page.report(Kirigami.MessageType.Warning, i18n("That window has no application name."));
+                page.report(Kirigami.MessageType.Warning, i18nc("@info", "That window has no application name."));
             }
             page.picking = false;
         }
         function onWindowPickFailed(error) {
             if (page.picking)
-                page.report(Kirigami.MessageType.Information, error === "org.kde.KWin.Error.InvalidWindow" ? i18n("No rule can reach that window.") : i18n("No window picked."));
+                page.report(Kirigami.MessageType.Information, error === "org.kde.KWin.Error.InvalidWindow" ? i18nc("@info", "No rule can reach that window.") : i18nc("@info", "No window picked."));
             page.picking = false;
         }
     }
@@ -123,11 +123,11 @@ KCM.SimpleKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Information
             visible: page.picking
-            text: i18n("Click a window. Escape cancels.")
+            text: i18nc("@info", "Click a window. Escape cancels.")
         }
     }
     // The rules' help, by the first of their headings: it is the rules' alone, not the settings'.
-    readonly property string rulesHelp: i18n("Rules decide which windows float or tile, and where they open. A rule matches a window's application by name, the name matched whole, its title and role by regular expressions, and its type, and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria, or an application given as a pattern, shows as text; Add Rule as Text writes one in i3's words. i3: for_window, assign")
+    readonly property string rulesHelp: i18nc("@info:tooltip", "Rules decide which windows float or tile, and where they open. A rule matches a window's application by name (i3's class), the name matched whole, its title and role by regular expressions, and its type, and runs when the window opens or changes its title. Dialogs, transient and modal windows, utility windows, toolbars, splash screens, fixed-size windows and windows on all desktops float anyway; a rule can tile them. For float or tile the last matching rule decides; for workspace or screen, the first. A rule with other criteria, or an application given as a pattern, shows as text; Add Rule as Text writes one in i3's words. i3: for_window, assign")
 
     // A pattern field: empty means "any".
     component PatternField: QQC2.TextField {
@@ -740,7 +740,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "new windows in fullscreen")
-                    toolTipText: i18n("Where a window goes when it opens on a workspace that has a fullscreen window. i3: popup_during_fullscreen")
+                    toolTipText: i18nc("@info:tooltip", "Where a window goes when it opens on a workspace that has a fullscreen window. i3: popup_during_fullscreen")
                 }
             }
 
@@ -787,14 +787,14 @@ KCM.SimpleKCM {
                 }
                 SectionHeading {
                     Layout.topMargin: page.defaultCount > 0 ? Kirigami.Units.largeSpacing : Kirigami.Units.largeSpacing * 2
-                    text: page.defaultCount > 0 ? i18nc("@title:group", "Your rules") : i18nc("@title:group", "Rules")
+                    text: page.defaultCount > 0 ? i18nc("@title:group", "Added rules") : i18nc("@title:group", "Rules")
                     help: page.defaultCount > 0 ? "" : page.rulesHelp
                 }
                 RuleList {
                     from: page.defaultCount
                     to: page.rows.length
-                    emptyText: page.defaultCount > 0 ? i18n("No rules of your own") : i18n("No rules")
-                    emptyExplanation: page.rows.length === 0 ? i18n("Dialogs and the other windows that float by themselves float; the rest tile.") : ""
+                    emptyText: page.defaultCount > 0 ? i18nc("@info:placeholder", "No added rules") : i18nc("@info:placeholder", "No rules")
+                    emptyExplanation: page.rows.length === 0 ? i18nc("@info:placeholder", "Dialogs and the other windows that float by themselves float; the rest tile.") : ""
                 }
             }
         }

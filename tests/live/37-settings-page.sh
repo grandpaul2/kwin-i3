@@ -124,7 +124,7 @@ press Meta+Alt+E
 check "Meta+Alt+E: the stand-in's, not Focus Up" not_logged '^.{9}ACTION Focus Up$' "$m"
 
 # 3. A gap typed on the Gaps tab; on the Tiling tab, from the resize step Tab reaches its help,
-#    the floating step (a row of its own), the focus box and its help, the pointer box and its
+#    the floating step and its help, the focus box and its help, the pointer box and its
 #    help, and the focus choice,
 #    where Down picks the next one.
 #    One Apply: both in kwinrc, one reload, and the gap on screen with no plugin loaded. Each
@@ -142,6 +142,8 @@ press Tab
 check "Tab from the resize step reaches its help" test "$($A11Y focused kcmshell6)" == "More about the key step"
 press Tab
 check "then the floating step" test "$($A11Y focused kcmshell6)" == "How far a key moves or resizes a floating window"
+press Tab
+check "then its help" test "$($A11Y focused kcmshell6)" == "More about the floating key step"
 press Tab
 check "then the focus box" test "$($A11Y focused kcmshell6)" == "Focus follows the mouse"
 press Tab

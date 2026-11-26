@@ -10,7 +10,7 @@ import "shifted.js" as Shifted
 
 KCM.ScrollViewKCM {
     id: page
-    title: i18n("Keys")
+    title: i18nc("@title", "Keys")
 
     header: ColumnLayout {
         spacing: 0
@@ -19,9 +19,9 @@ KCM.ScrollViewKCM {
             position: Kirigami.InlineMessage.Position.Header
             type: Kirigami.MessageType.Warning
             visible: !kcm.keys.available
-            text: i18n("kwin-i3 isn't running.")
+            text: i18nc("@info", "kwin-i3 isn't running.")
             actions: Kirigami.Action {
-                text: i18n("Turn On")
+                text: i18nc("@action:button", "Turn On")
                 icon.name: "system-run"
                 visible: !kcm.scriptEnabled
                 onTriggered: kcm.enableScript()
@@ -55,7 +55,7 @@ KCM.ScrollViewKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "key conflicts")
-                toolTipText: i18n("A key that a kwin-i3 command and a Plasma shortcut share runs kwin-i3's command, as i3 takes its own keys, and Meta+T doesn't open Plasma's tile editor. Turned off, Plasma's shortcut runs. Plasma's shortcuts are not changed either way. Needs kwin-i3's plugins.")
+                toolTipText: i18nc("@info:tooltip", "A key that one of these commands and a Plasma shortcut share runs the command, as i3 takes its own keys, and Meta+T doesn't open Plasma's tile editor. Turned off, Plasma's shortcut runs. Plasma's shortcuts are not changed either way. Needs kwin-i3's plugins.")
             }
         }
     }
@@ -130,7 +130,7 @@ KCM.ScrollViewKCM {
                                 Component.onCompleted: sync()
                                 onActivated: kcm.settings[row.setting] = currentValue
                                 Accessible.name: i18nc("command", "%1: what its key does", row.label)
-                                Accessible.description: i18n("Log out and Shut down ask first, and go ahead after 30 seconds.")
+                                Accessible.description: i18nc("@info", "Log out and Shut down ask first, and go ahead after 30 seconds.")
                                 KCM.SettingStateBinding {
                                     configObject: kcm.settings
                                     settingName: row.setting
@@ -201,7 +201,7 @@ KCM.ScrollViewKCM {
                                     b[1].Accessible.name = i18nc("@action:button command, key slot", "Clear %1, key %2", row.label, n);
                                     b[2].Accessible.name = i18nc("@action:button command, key slot", "Cancel recording %1, key %2", row.label, n);
                                 }
-                                QQC2.ToolTip.text: !slot.modelData.defaultText ? i18n("No default key") : slot.defaultKeysText ? i18n("Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText) : i18n("Default: %1", slot.modelData.defaultText)
+                                QQC2.ToolTip.text: !slot.modelData.defaultText ? i18nc("@info:tooltip", "No default key") : slot.defaultKeysText ? i18nc("@info:tooltip", "Default: %1 (%2)", slot.defaultKeysText, slot.modelData.defaultText) : i18nc("@info:tooltip", "Default: %1", slot.modelData.defaultText)
                                 QQC2.ToolTip.visible: hovered
                                 onKeySequenceModified: kcm.keys.setKey(row.index, slot.index, keySequence)
                             }

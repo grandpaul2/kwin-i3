@@ -66,11 +66,11 @@ KCM.SimpleKCM {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.largeSpacing
             wrapMode: Text.Wrap
-            text: i18n("A gap set below for a screen edge or workspace replaces the main gap setting. “Same” keeps it.")
+            text: i18nc("@info", "A gap set below for a screen edge or workspace replaces the main gap setting. “Same” keeps it.")
         }
         Kirigami.ContextualHelpButton {
             Layout.rightMargin: Kirigami.Units.largeSpacing
-            toolTipText: i18n("A workspace's gaps replace the ones above. An outer gap below 0 makes the edge thinner, down to half the gap between windows. i3: gaps top|right|bottom|left, smart_gaps, workspace N gaps")
+            toolTipText: i18nc("@info:tooltip", "A workspace's gaps replace the ones above. An outer gap below 0 makes the edge thinner, down to half the gap between windows. i3: gaps top|right|bottom|left, smart_gaps, workspace N gaps")
         }
     }
 
@@ -129,7 +129,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "gaps")
-                    toolTipText: i18n("The space between tiling windows, and what is added to it at the screen's edges; below 0 takes from it, down to half the space between windows. i3: gaps inner, gaps outer")
+                    toolTipText: i18nc("@info:tooltip", "The space between tiling windows, and what is added to it at the screen's edges; below 0 takes from it, down to half the space between windows. i3: gaps inner, gaps outer")
                 }
             }
             UnitSpinBox {

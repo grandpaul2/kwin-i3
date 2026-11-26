@@ -27,6 +27,6 @@ RowLayout {
     }
     Help {
         topic: root.model.title || ""
-        toolTipText: [root.model.why, root.model.note, i18n("This is Plasma's own setting: changing it here is the same as in System Settings, and kwin-i3 gives back what it was when you untick it and apply.")].filter(s => s).join(" ")
+        toolTipText: [root.model.why, root.model.note, i18nc("@info:tooltip", "This is Plasma's own setting: changing it here is the same as in System Settings. Unticked and applied, it goes back to what it was.")].filter(s => s).join(" ")
     }
 }

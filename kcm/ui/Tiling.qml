@@ -36,21 +36,29 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "the key step")
-                toolTipText: i18n("How far one press of a resize key goes for a tiling window, as a share of its split, and of a move or resize key for a floating window. i3: resize grow width 10 px or 10 ppt, move left 10 px")
+                toolTipText: i18nc("@info:tooltip", "How far one press of a resize key goes for a tiling window, as a share of its split. i3: resize grow width 10 px or 10 ppt")
             }
         }
-        UnitSpinBox {
-            id: floatingStepBox
+        RowLayout {
             Kirigami.FormData.label: i18nc("@label:spinbox", "Floating key step:")
-            unit: "px"
-            from: 1
-            to: 200
-            value: root.settings.floatingStep
-            onValueModified: root.settings.floatingStep = value
-            Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
-            KCM.SettingStateBinding {
-                configObject: root.settings
-                settingName: "floatingStep"
+            Kirigami.FormData.buddyFor: floatingStepBox
+            spacing: Kirigami.Units.smallSpacing
+            UnitSpinBox {
+                id: floatingStepBox
+                unit: "px"
+                from: 1
+                to: 200
+                value: root.settings.floatingStep
+                onValueModified: root.settings.floatingStep = value
+                Accessible.name: i18nc("@label:spinbox", "How far a key moves or resizes a floating window")
+                KCM.SettingStateBinding {
+                    configObject: root.settings
+                    settingName: "floatingStep"
+                }
+            }
+            Help {
+                topic: i18nc("@item help topic", "the floating key step")
+                toolTipText: i18nc("@info:tooltip", "How far one press of a move or resize key goes for a floating window. i3: move left 10 px, resize grow width 10 px")
             }
         }
         RowLayout {
@@ -70,7 +78,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "focus follows the mouse")
-                toolTipText: i18n("The window under the pointer takes the focus at once; turned off, a click focuses. While kwin-i3 runs this replaces Plasma's focus setting, which is left as it is. i3: focus_follows_mouse")
+                toolTipText: i18nc("@info:tooltip", "The window under the pointer takes the focus at once; turned off, a click focuses. This takes the place of Plasma's focus setting, which is left as it is. i3: focus_follows_mouse")
             }
         }
         RowLayout {
@@ -90,7 +98,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "the pointer")
-                toolTipText: i18n("When a key moves the focus to another screen, the pointer goes to the middle of the focused window. i3: mouse_warping")
+                toolTipText: i18nc("@info:tooltip", "When the focus moves to another screen (a key, Alt+Tab, a click in the task manager), the pointer goes to the middle of the focused window, or of the screen when its workspace is empty, unless it is on that screen already. i3: mouse_warping")
             }
         }
         RowLayout {
@@ -122,7 +130,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "focus wrapping")
-                toolTipText: i18n("Where focus goes from the last window in a direction. Always wrap stays inside the split. i3: focus_wrapping")
+                toolTipText: i18nc("@info:tooltip", "Where focus goes from the last window in a direction. Always wrap stays inside the split. i3: focus_wrapping")
             }
         }
         RowLayout {
@@ -155,7 +163,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "dragging tiling windows")
-                toolTipText: i18n("Dropped beside another window, a tiling window moves there; dropped on its middle, the two are grouped or swapped. Meta+Shift+drag floats a tiling window, or tiles a floating one. i3: tiling_drag")
+                toolTipText: i18nc("@info:tooltip", "Dropped beside another window, a tiling window moves there; dropped on its middle, the two are grouped or swapped. Meta+Shift+drag floats a tiling window, or tiles a floating one. i3: tiling_drag")
             }
         }
         // holdEnabled; holdTimeoutMs is an internal value, kwinrc only (plan.md, "Settings").
@@ -177,7 +185,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "layout changes")
-                toolTipText: i18n("A new layout appears in one go, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
+                toolTipText: i18nc("@info:tooltip", "A new layout appears in one go, instead of window by window as each app redraws. Needs kwin-i3's plugins.")
             }
         }
     }

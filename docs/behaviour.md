@@ -1049,7 +1049,7 @@ list). Only the options that place, focus or look; `bar`, `exec`, `font`, `ipc-s
   script runs them, in a framed list with a line between rules, every box the same: its
   application and what it does (floats, tiles, opens on workspace N, opens on output X) on the
   first line, its title and role (a pattern each) and window type always on the second. The application is a name, picked or typed, matched whole; a rule whose application is a pattern shows as text, as one with other criteria. The
-  shipped rules, when they run first, are a list of their own ("Defaults") above "Your rules",
+  shipped rules, when they run first, are a list of their own ("Defaults") above "Added rules",
   else one "Rules" list with them marked "default"; an empty list says so, with Add Rule. A rule
   with other criteria is shown as text and edited there; a text rule the script can't read or run
   says "not used", and i3's `for_window` or `assign` before one is taken as the setting it names.

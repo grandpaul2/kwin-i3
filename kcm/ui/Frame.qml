@@ -46,7 +46,7 @@ KCM.SimpleKCM {
                 }
                 Help {
                     topic: i18nc("@item help topic", "how tiling windows look")
-                    toolTipText: i18n("A frame: a thin coloured line around each window, in place of its titlebar. Titlebars: Plasma's own. i3: default_border")
+                    toolTipText: i18nc("@info:tooltip", "A frame: a thin coloured line around each window, in place of its titlebar. Titlebars: Plasma's own. i3: default_border")
                 }
             }
             // Nothing marks the focused window then; KWin's own effect can.
@@ -78,12 +78,11 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "the frame's width")
-                toolTipText: i18n("i3: default_border pixel")
+                toolTipText: i18nc("@info:tooltip", "i3: default_border pixel")
             }
         }
         // i3's colour classes, two (focused_inactive left out; docs/behaviour.md §7 L3), one
-        // colour a row. The split indicator shows only until the focus leaves its window (L4), so
-        // the unfocused class's indicator is almost never seen: it keeps its default, off the page.
+        // colour a row, each class's split indicator too (L4).
         ColourRow {
             columnWidth: root.frameColumn
             Kirigami.FormData.label: i18nc("@label", "Focused frame:")
@@ -105,7 +104,19 @@ KCM.SimpleKCM {
             name: i18nc("@action:button", "Split indicator colour")
             Help {
                 topic: i18nc("@item help topic", "the split indicator")
-                toolTipText: i18n("Marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused indicator")
+                toolTipText: i18nc("@info:tooltip", "Marks the side where the next window opens, on a window alone in its split, after Split H, Split V or Toggle Split until the focus leaves it. i3: client.focused indicator")
+            }
+        }
+        ColourRow {
+            columnWidth: root.frameColumn
+            Kirigami.FormData.label: i18nc("@label", "Unfocused split indicator:")
+            settingName: "frameIndicatorInactive"
+            // Empty in kwinrc: the unfocused frame's colour, shown as such.
+            shown: root.settings.frameIndicatorInactive || root.settings.frameInactive
+            name: i18nc("@action:button", "Split indicator colour of unfocused windows")
+            Help {
+                topic: i18nc("@item help topic", "the unfocused split indicator")
+                toolTipText: i18nc("@info:tooltip", "The split indicator's colour on an unfocused window. i3: client.unfocused indicator")
             }
         }
         RowLayout {
@@ -146,7 +157,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "hiding the frame")
-                toolTipText: i18n("Hides the frame at the screen's edges, or on a window alone on its workspace. i3: hide_edge_borders")
+                toolTipText: i18nc("@info:tooltip", "Hides the frame at the screen's edges, or on a window alone on its workspace. i3: hide_edge_borders")
             }
         }
         // Drawn by kwini3hold, so they need the plugins too; a title bar brings its theme's corners.
@@ -180,7 +191,7 @@ KCM.SimpleKCM {
             }
             Help {
                 topic: i18nc("@item help topic", "the frame on floating windows")
-                toolTipText: i18n("Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
+                toolTipText: i18nc("@info:tooltip", "Floating windows lose their titlebar too and get the frame. i3: default_floating_border")
             }
         }
     }
